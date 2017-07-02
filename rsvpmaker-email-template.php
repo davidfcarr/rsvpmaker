@@ -107,11 +107,17 @@ Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.';
 
 $content = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/hqdefault.jpg" width="480" height="360" /></a>',$content);
 
+global $templatefooter;
 $chimp_text = rsvpmaker_text_version($content, $chimpfooter_text);
+if($templatefooter)
+	$rsvp_html = $chimp_html = $content;
+else
+{
 $chimp_html = str_replace('<!-- footer -->', $htmlfooter,$content);
+$rsvp_html = str_replace('<!-- footer -->', $rsvp_htmlfooter,$content);
+}
 
 $rsvp_text = rsvpmaker_text_version($content, $rsvpfooter_text);
-$rsvp_html = str_replace('<!-- footer -->', $rsvp_htmlfooter,$content);
 
 $cron = get_post_meta($post->ID,'rsvpmaker_cron_email', true);
 
@@ -226,6 +232,7 @@ else
 			$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],'This message was sent to you as member of '.get_bloginfo('name'));
 			$result = rsvpmailer($mail);		
 			print_r($result);
+			update_option('rsvpmaker_cron_preview_result',$result.': '.var_export($mail,true));
 		}	
 
 	}

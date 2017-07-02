@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 4.7.4
-Stable tag: 4.6.5
+Tested up to: 4.8
+Stable tag: 4.6.8
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -36,6 +36,7 @@ If you hold events on a recurring schedule, such as First Monday or Every Friday
 In addition to being useful for event invitations, the MailChimp integration can be used to generate newsletters incorporating roundups of upcoming events and recent blog posts.
 
 [__RSVPMaker.com__](http://www.rsvpmaker.com/)
+[RSVPMaker on GitHub](https://github.com/davidfcarr/rsvpmaker)
 
 Extensions:
 
@@ -115,6 +116,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.6.8 =
+
+* RSVP form fields can now be set to appear only on the guest form, not on the main RSVP form. Previously, all fields appeared on the main form and only displaying them on the guest form was optional.
+
+= 4.6.7 =
+
+Tweaks for compatibility with PHP 7
 
 = 4.6.4 =
 

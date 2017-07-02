@@ -882,7 +882,7 @@ else
 	// cron for follow up messages
 
 $sql = "SELECT * 
-FROM  `wp_postmeta` 
+FROM  `$wpdb->postmeta` 
 WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}'
 AND  `post_id` = " . $event;
 	$results = $wpdb->get_results($sql);
@@ -1127,6 +1127,7 @@ else
 	}
 
 setcookie ( 'rsvp_for_'.$post->ID, $rsvp_id, time()+60*60*24*90, "/" , $_SERVER['SERVER_NAME'] );
+setcookie ( 'rsvpmaker', $rsvp_id, time()+60*60*24*90, "/" , $_SERVER['SERVER_NAME'] );
 
 if(isset($_POST["timeslot"]))
 	{
@@ -3042,7 +3043,7 @@ global $wpdb;
 global $rsvp_options;
 
 $today = date('Y-m-d');
-$sql = "SELECT * FROM `wp_postmeta` WHERE `meta_key` LIKE '_rsvp_reminder' AND `meta_value`='$today'";
+$sql = "SELECT * FROM `$wpdb->postmeta` WHERE `meta_key` LIKE '_rsvp_reminder' AND `meta_value`='$today'";
 if( $reminders = $wpdb->get_results($sql) )
 	{
 	foreach($reminders as $reminder)
@@ -3229,7 +3230,14 @@ if( isset($atts["select"]) && !isset($atts["selectfield"])  ) $atts["selectfield
 if(is_admin() && !isset($_REQUEST["edit_rsvp"]))
 	{
 	$output = '';
-	$guestfield = (isset($atts["guestfield"])) ? ' checked="checked" ' : '';
+	$guestfield = (isset($atts["guestfield"])) ? (int) $atts["guestfield"] : 0;
+	$guestoptions = array(__('main form','rsvpmaker'),__('main+guest','rsvpmaker'),__('guest form only','rsvpmaker'));
+	$goptions = '';
+	foreach($guestoptions as $index => $option)
+		{
+			$s = ($index == $guestfield) ? ' selected="selected" ' : '';
+			$goptions .= '<option value="'.$index.'" '.$s.'>'.$option.'</option>';
+		}	
 	$private = (isset($atts["private"]) && $atts["private"]) ? ' checked="checked" ' : '';
 	if(isset($atts["textfield"])) {
 		$field = $atts["textfield"];
@@ -3240,9 +3248,8 @@ if(is_admin() && !isset($_REQUEST["edit_rsvp"]))
 		$label = ucfirst(str_replace('_',' ',$field));
 		global $extrafield;
 		$extrafield++;
-		$output = '<select name="type'.$extrafield.'" id="type'.$extrafield.'"><option value="text" selected="selected">text</option><option value="hidden">hidden</option><option value="radio">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select>
+		$output = '<select name="type'.$extrafield.'" id="type'.$extrafield.'"><option value="text" selected="selected">text</option><option value="hidden">hidden</option><option value="radio">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select> '.__('Show','rsvpmaker').': <select id="guest'.$extrafield.'" name="guest'.$extrafield.'">'.$goptions.'</select>
 <input type="checkbox" id="private'.$extrafield.'" name="private'.$extrafield.'" value="1" '.$private.' /> '.__('private','rsvpmaker').'
-<input type="checkbox" id="guest'.$extrafield.'" name="guest'.$extrafield.'" value="1" '.$guestfield.' /> '.__('include on guest form','rsvpmaker').'
 <br /><input type="text" name="extra'.$extrafield.'" id="extra'.$extrafield.'" value="'.$label.'"  class="text ui-widget-content ui-corner-all" />';
 		}
 
@@ -3265,9 +3272,8 @@ if(is_admin() && !isset($_REQUEST["edit_rsvp"]))
 		$label = ucfirst(str_replace('_',' ',$field));
 		global $extrafield;
 		$extrafield++;
-		$output = '<select id="type'.$extrafield.'"><option value="text">text</option><option value="hidden">hidden</option><option value="radio"  selected="selected">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select>
+		$output = '<select id="type'.$extrafield.'"><option value="text">text</option><option value="hidden">hidden</option><option value="radio"  selected="selected">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select> '.__('Show','rsvpmaker').': <select id="guest'.$extrafield.'" name="guest'.$extrafield.'">'.$goptions.'</select>
 <input type="checkbox" id="private'.$extrafield.'" name="private'.$extrafield.'" value="1" '.$private.' /> '.__('private','rsvpmaker').'
-<input type="checkbox" id="guest'.$extrafield.'" value="1" '.$guestfield.' /> '.__('include on guest form','rsvpmaker').'
 <br /><input type="text" id="extra'.$extrafield.'" value="'.$label.':'.$atts["options"].'"  class="text ui-widget-content ui-corner-all" />';
 		}
 
@@ -3281,13 +3287,14 @@ if(is_admin() && !isset($_REQUEST["edit_rsvp"]))
 		global $extrafield;
 		$extrafield++;
 		$output = '<select id="type'.$extrafield.'"><option value="text">text</option><option value="hidden">hidden</option><option value="radio">radio</option><option value="select" selected="selected">select</option><option value="checkbox">checkbox</option></select> 
-<input type="checkbox" id="private'.$extrafield.'" name="private'.$extrafield.'" value="1" '.$private.' /> '.__('private','rsvpmaker').'		
-<input type="checkbox" id="guest'.$extrafield.'" value="1" '.$guestfield.' /> '.__('include on guest form','rsvpmaker').'
+'.__('Show','rsvpmaker').': <select id="guest'.$extrafield.'" name="guest'.$extrafield.'">'.$goptions.'</select> <input type="checkbox" id="private'.$extrafield.'" name="private'.$extrafield.'" value="1" '.$private.' /> '.__('private','rsvpmaker').'		
 <br /><input type="text" id="extra'.$extrafield.'" value="'.$label.':'.$atts["options"].'"  class="text ui-widget-content ui-corner-all" />';
 		}
 				
 		return $output;
 	}
+
+//front end behavior
 
 if(isset($atts["textfield"])) {
 	$field = $atts["textfield"];
@@ -3395,7 +3402,11 @@ if(isset($atts["demo"]))
 	}
 
 if(isset($atts["guestfield"]) && $atts["guestfield"])
+	{
 	$guestextra[$field] = $atts;
+	if($atts["guestfield"] == 2)
+		return; // guest only don't display on main form
+	}
 
 return $output;
 
@@ -4566,6 +4577,7 @@ foreach($eds as $user_id)
 		$label = $member->first_name.' '.$member->last_name;
 	else
 		$label = $member->user_login;
+	$label .= ' '.$member->user_email;
 	echo $label.sprintf(' <strong>( <input type="checkbox" name="remove_editor[]" value="%d"> %s)</strong><br />',$user_id,__('Remove','rsvpmaker'));
 	}
 }

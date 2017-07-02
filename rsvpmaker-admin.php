@@ -457,7 +457,7 @@ echo $label;
           var $db_option = 'RSVPMAKER_Options';
           
           // Initialize the plugin
-          function RSVPMAKER_Options()
+          function __construct()
           {
               $this->plugin_url = plugins_url('',__FILE__).'/';
 
@@ -508,13 +508,14 @@ echo $label;
                   $newoptions["social_title_date"] = (isset($_POST["option"]["social_title_date"]) && $_POST["option"]["social_title_date"]) ? 1 : 0;
                   $newoptions["rsvp_count"] = (isset($_POST["option"]["rsvp_count"]) && $_POST["option"]["rsvp_count"]) ? 1 : 0;
                   $newoptions["show_attendees"] = (isset($_POST["option"]["show_attendees"]) && $_POST["option"]["show_attendees"]) ? 1 : 0;
-                  $newoptions["missing_members"] = (isset($_POST["option"]["missing_members"]) && $_POST["option"]["missing_members"]) ? 1 : 0;
-                  $newoptions["additional_editors"] = (isset($_POST["option"]["additional_editors"]) && $_POST["option"]["additional_editors"]) ? 1 : 0;
+                  $newoptions["missing_members"] = (isset($_POST["option"]["missing_members"]) && $_POST["option"]["missing_members"]) ? 1 : 0;                  $newoptions["additional_editors"] = (isset($_POST["option"]["additional_editors"]) && $_POST["option"]["additional_editors"]) ? 1 : 0;
 				  $newoptions["dbversion"] = $options["dbversion"]; // gets set by db upgrade routine
 				$nfparts = explode('|',$_POST["currency_format"]);
 				$newoptions["eventpage"] = $_POST["option"]["eventpage"];
 				$newoptions["currency_decimal"] = $nfparts[0];
 				$newoptions["currency_thousands"] = $nfparts[1];
+                  $newoptions["log_email"] = (isset($_POST["option"]["log_email"]) && $_POST["option"]["log_email"]) ? 1 : 0;
+
 				
 				  $options = $newoptions;
 				  
@@ -837,9 +838,10 @@ if(!empty($options["smtp"]))
 <h3><?php _e('Troubleshooting','rsvpmaker'); ?></h3>
   <input type="checkbox" name="option[flush]" value="1" <?php if(isset($options["flush"]) && $options["flush"]) echo ' checked="checked" ';?> /> <strong><?php _e('Tweak Permalinks','rsvpmaker'); ?></strong> <?php _e('Check here if you are getting &quot;page not found&quot; errors for event content (should not be necessary for most users).','rsvpmaker'); ?> 
 	<br />
-  <input type="checkbox" name="option[debug]" value="1" <?php if(isset($options["debug"]) && $options["debug"]) echo ' checked="checked" ';?> /> <strong><?php _e('Debug','rsvpmaker'); ?>:</strong>
+  <input type="checkbox" name="option[debug]" value="1" <?php if(isset($options["debug"]) && $options["debug"]) echo ' checked="checked" ';?> /> <strong><?php _e('Debug','rsvpmaker'); ?></strong>
 	<br />
-
+  <input type="checkbox" name="option[log_email]" value="1" <?php if(isset($options["log_email"]) && $options["log_email"]) echo ' checked="checked" ';?> /> <strong><?php _e('Log email','rsvpmaker'); ?>: Monitor notification/confirmation messages generated</strong>
+	<br />
 					<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 			</form>
 
@@ -1747,7 +1749,10 @@ add_action('admin_notices', 'rsvpmaker_admin_notice');
 
 function rsvpmailer($mail) {
 	global $rsvp_options;
-	
+	global $post;
+
+	if(!empty($rsvp_options["log_email"]) && isset($post->ID))
+		add_post_meta($post->ID, '_rsvpmaker_email_log',$mail);
 	$rsvp_options = apply_filters('rsvp_email_options',$rsvp_options);
 
 	if(!isset($rsvp_options["smtp"]) || empty($rsvp_options["smtp"]))
@@ -1866,9 +1871,17 @@ if($mail["html"])
 function set_rsvpmaker_order_in_admin( $wp_query ) {
   if ( is_admin() && isset($_GET["rsvpsort"]) && ($_GET["rsvpsort"]=="chronological") ) {
 add_filter('posts_join', 'rsvpmaker_join',99 );
-add_filter('posts_where', 'rsvpmaker_where',99 );
 add_filter('posts_groupby', 'rsvpmaker_groupby',99 );
-add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
+if(isset($_GET["past"]))
+	{
+	add_filter('posts_where', 'rsvpmaker_where_past',99 );
+	add_filter('posts_orderby', 'rsvpmaker_orderby_past',99 );
+	}
+else
+	{
+	add_filter('posts_where', 'rsvpmaker_where',99 );
+	add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
+	}
 add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
   }
 return $wp_query;
@@ -1882,7 +1895,7 @@ function rsvpmaker_sort_message() {
 		if(isset($_GET["rsvpsort"]) && ($_GET["rsvpsort"] == 'chronological'))
 			echo '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=newest').'">'.__('Sort By Newest','rsvpmaker').'</a>';
 		else
-			echo '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Sort By Event Date','rsvpmaker').'</a>';
+			echo '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Future Events','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological&past=1').'">'.__('Past Events','rsvpmaker').'</a>';
 		echo '</div>';
 	}
 }
@@ -2259,12 +2272,12 @@ if(isset($_GET["message_type"])) {
 			if($hours < 0)
 				{
 				$subject = "REMINDER: ".$event->post_title.' '.$prettydate;
-				$sql = "SELECT * FROM  `wp_postmeta` WHERE meta_key REGEXP '_rsvp_reminder_msg_-[0-9]{1,2}' AND  `post_id` = " . $post_id. ' ORDER BY meta_key';
+				$sql = "SELECT * FROM  `$wpdb->postmeta` WHERE meta_key REGEXP '_rsvp_reminder_msg_-[0-9]{1,2}' AND  `post_id` = " . $post_id. ' ORDER BY meta_key';
 				}
 			else
 				{
 				$subject = "Follow up from  ".$event->post_title;
-				$sql = "SELECT * FROM  `wp_postmeta` WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}' AND  `post_id` = " . $post_id. ' ORDER BY meta_key';
+				$sql = "SELECT * FROM  `$wpdb->postmeta` WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}' AND  `post_id` = " . $post_id. ' ORDER BY meta_key';
 				}					
 			$row = $wpdb->get_row($sql);
 			if($row)
@@ -2511,7 +2524,7 @@ global $post;
 $rsvppost = array('post.php','post-new.php','options-general.php');
 	if(in_array($hook,$rsvppost) || (isset($_GET["page"]) && ($_GET["page"] == 'rsvpmaker-admin.php') ) )
 		{
-		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.1' );
+		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.3' );
 		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.1' );
 		wp_enqueue_script('jquery-ui-dialog');
 		//wp_enqueue_style('jquery-ui-dialog-css',includes_url('/css/jquery-ui-dialog.min.css'));

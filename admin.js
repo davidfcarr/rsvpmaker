@@ -28,10 +28,7 @@ else
 '<p><label>Last Name:</label> [rsvpfield textfield="last" required="1"]</p>'  +"\n" +
 '<p><label>Email:</label> [rsvpfield textfield="email" required="1"]</p>' +"\n";
 
-if( $('#guest_phoneandtype').is(':checked') )
-	guestfield = ' guestfield="1" ';
-else
-	guestfield = '';
+	guestfield = ' guestfield="' + $('#guest_phoneandtype').val()+'" ';
 
 var note = '<p>Note:<br />'+"\n"+'<textarea name="note" cols="60" rows="2" id="note">[rsvpnote]</textarea></p>';
 var extrafields = $("#extrafields").val();
@@ -44,10 +41,7 @@ for(i=1; i <= extrafields; i++)
 		type = 'textfield';
 	if(extra != '')
 		{
-		if( $('#guest' + i).is(':checked') )
-			guestfield = ' guestfield="1" ';
-		else
-			guestfield = '';
+		guestfield = ' guestfield="' + $('#guest' + i).val() + '" ';
 		if( $('#private' + i).is(':checked') )
 			private = ' private="1" ';
 		else
