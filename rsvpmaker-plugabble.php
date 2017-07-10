@@ -2578,7 +2578,7 @@ function format_rsvp_details($results) {
 		}
 
 global $phpexcel_enabled; // set if excel extension is active
-if($fields && !isset($_GET["rsvp_print"]))
+if($fields && !isset($_GET["rsvp_print"]) && !isset($_GET["limit"]))
 	{
 	$fields[]='note';
 	$fields[]='timestamp';	 

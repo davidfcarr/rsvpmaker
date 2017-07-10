@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8
-Stable tag: 4.6.8
+Stable tag: 4.6.9
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -20,8 +20,6 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 * Register attendees, prompting them to enter whatever information you need, including the names of guests.
 * Collect money using PayPal.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
-
-Tune in for our [next RSVPMaker webinar](http://rsvpmaker.com/next-webinar/) and check out the [YouTube Live event tutorial](http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/).
 
 https://www.youtube.com/watch?v=Qgp4Ugr-n_Q
 
@@ -116,6 +114,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.6.9 =
+
+* Cleanup of utility functions.
 
 = 4.6.8 =
 
