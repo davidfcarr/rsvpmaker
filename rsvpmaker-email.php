@@ -1879,8 +1879,6 @@ global $rsvp_options;
 return ob_get_clean();
 }
 
-add_filter( 'jetpack_relatedposts_filter_options', 'winwar_no_related_posts' );
-
 function mailchimp_list_dropdown($apikey, $chosen = '') {
 if(empty($apikey))
 	return '<option value="">none</option>';

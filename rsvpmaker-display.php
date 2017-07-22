@@ -1648,4 +1648,14 @@ if(is_archive() && ($wp_query->query["post_type"] == 'rsvpmaker'))
 
 add_action('loop_end','rsvpmaker_archive_loop_end');
 
+//keep jetpack from messing up
+function rsvpmaker_no_related_posts( $options ) {
+    global $post;
+	if(($post->post_type =='rsvpmaker' ) || ($post->post_type =='rsvpemail' ))
+	{
+        $options['enabled'] = false;
+    }
+    return $options;
+}
+add_filter( 'jetpack_relatedposts_filter_options', 'rsvpmaker_no_related_posts' );
 ?>
