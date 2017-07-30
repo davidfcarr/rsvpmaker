@@ -278,16 +278,15 @@ echo $displayhour;
 
 <?php _e("Minutes",'rsvpmaker'); ?>: <select id="minutes" name="sked[minutes]">
 <?php
-$displayminutes = '
-<option value="'.$minutes.'">'.$minutes.'</option>
-<option value="00">00</option>
-<option value="15">15</option>
-<option value="30">30</option>
-<option value="45">45</option>
-</select> - ';
-echo $displayminutes;
-
-echo __('Duration','rsvpmaker');?> *<?php echo $duration; ?>* <select name="<?php echo $prefix; ?>sked[duration]">
+echo '<option value="'.$minutes.'">'.$minutes.'</option>';
+for($i = 0; $i < 60; $i++)
+{
+$zpad = ($i < 10) ? '0' : '';
+	printf('<option value="%s%d">%s%d</option>',$zpad,$i,$zpad,$i);
+}
+?>
+</select>
+<?php echo __('Duration','rsvpmaker');?> <select name="sked[duration]">
 <option value=""><?php echo __('Not set (optional)','rsvpmaker');?></option>
 <option value="allday" <?php if(isset($duration) && ($duration == 'allday')) echo ' selected="selected" '; ?>><?php echo __("All day/don't show time in headline",'rsvpmaker');?></option>
 <?php
@@ -299,14 +298,15 @@ if(!empty($duration) && ($duration != 'allday') && ($duration != 0))
 		$hlabel = 'hours';	
 	printf('<option value="%s" selected="selected">%s %s</option>',$duration, $duration, $hlabel);
 	}
-for($h = 1; $h < 24; $h++) {
-	 ;?>
-<option value="<?php echo $h;?>" ><?php echo $h;?> hours</option>
-<option value="<?php echo $h;?>:15" ><?php echo $h;?>:15</option>
-<option value="<?php echo $h;?>:30" ><?php echo $h;?>:30</option>
-
-<option value="<?php echo $h;?>:45" ><?php echo $h;?>:45</option>
-<?php } ;?>
+for($h = 0; $h < 24; $h++) {
+	 $increment = ($h) ? 15 : 5;
+	 if($h)
+	 	echo '<option value="'.$h.'" >'.$h.' hours</option>';
+	for($i = 0; $i < 60; $i += $increment)
+		if($i >= 10)
+			printf('<option value="%s:%s" >%s:%s</option>',$h,$i,$h,$i);
+	} 
+?>
 </select>
 <br />
 <em><?php if(isset($debug)) echo $debug; 

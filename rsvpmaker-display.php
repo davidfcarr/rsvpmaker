@@ -364,7 +364,7 @@ if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 add_action('widgets_init', create_function('', 'return register_widget("RSVPTypeWidget");'));
 
 
-function get_next_events_link( $label = '' ) {
+function get_next_events_link( $label = '', $no_events = '' ) {
 global $last_time;
 global $wpdb;
 
@@ -372,7 +372,11 @@ $sql = "SELECT post_id from $wpdb->postmeta JOIN $wpdb->posts ON $wpdb->postmeta
 
 $at_least_one = $wpdb->get_var($sql);
 if(!$at_least_one)
+	{
+	if(!empty($no_events))
+		echo '<p class="no_events">'.$no_events.'</p>';
 	return;
+	}
 	
 	$link = get_rsvpmaker_archive_link();
 	$link .= (strpos($link,'?')) ? "&" : '?';
@@ -380,7 +384,7 @@ if(!$at_least_one)
 		$attr = apply_filters( 'next_posts_link_attributes', '' );
 		$link = '<a href="' . $link ."\" $attr>" . $label . ' &raquo;</a>';
 	if(isset($link))
-		echo "<p>$link</p>";
+		echo "<p class=\"more_events\">$link</p>";
 }
 
 function rsvpmaker_select($select) {
@@ -508,6 +512,8 @@ global $showbutton;
 global $startday;
 global $rsvp_options;
 global $datelimit;
+global $last_time;
+$last_time = time();
 $listings = '';
 $showbutton = true;
 
@@ -647,11 +653,11 @@ if(is_admin() )
 endwhile;
 ?>
 <p><?php
-if(!(isset($atts['one']) && $atts['one']))
+if(isset($atts['one']) && $atts['one'])
 	get_next_events_link(__('More Events','rsvpmaker'));
 } 
 else
-	echo "<p>$no_events</p>\n";
+	get_next_events_link(__('More Events','rsvpmaker'),$no_events);
 echo '</div><!-- end rsvpmaker_upcoming -->';
 
 $wp_query = $backup;

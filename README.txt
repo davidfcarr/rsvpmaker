@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8
-Stable tag: 4.7
+Stable tag: 4.7.1
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.7.1 =
+
+* Fix to rsvpmaker_upcoming display so doesn't show "No events listed" when future events out of date range
+* Meeting durations of 10-55 minutes now supported in dropdown; 15 minute increments after 1 hour
 
 = 4.7 =
 

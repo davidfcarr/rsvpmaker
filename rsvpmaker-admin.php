@@ -308,10 +308,11 @@ if(isset($duration) && is_numeric($duration) )
 	$dparts = explode('.',$diff);
 	$dh = (int) $dparts[0];
 	$decimal = (isset($dparts[1]) ) ? (int) $dparts[1] : 0;
+	$dminutes = round((('0.'.$decimal) * 60));
 	}
 else
 	{
-		$dh = $decimal = NULL;
+		$dminutes = $dh = $decimal = NULL;
 	}
 for($h = 0; $h < 24; $h++) {
 
@@ -321,12 +322,24 @@ if($h != 0)
 <option value="<?php echo $h;?>" <?php if(($h == $dh) && ($decimal == 0) ) echo ' selected="selected" '; ?> ><?php echo $h.' '.__('hours','rsvpmaker');?></option>
 <?php
 }
+if($h == 0)
+{ // 5 minute increments for the first hour
+for($i = 10; $i < 60; $i+=5)
+	{
+		?>
+	<option value="<?php echo $h;?>:<? echo $i; ?>" <?php if(($h == $dh) && ($dminutes == $i) ) echo ' selected="selected" '; ?> ><?php echo $h;?>:<?php echo $i; ?></option>
+		<?php
+	}
+}
+else
+{
 ?>
 <option value="<?php echo $h;?>:15" <?php if(($h == $dh) && ($decimal == 25) ) echo ' selected="selected" '; ?> ><?php echo $h;?>:15</option>
 <option value="<?php echo $h;?>:30"  <?php if(($h == $dh) && ($decimal == 5) ) echo ' selected="selected" '; ?> ><?php echo $h;?>:30</option>
-
 <option value="<?php echo $h;?>:45"  <?php if(($h == $dh) && ($decimal == 75) ) echo ' selected="selected" '; ?> ><?php echo $h;?>:45</option>
-<?php } ;?>
+<?php
+}
+} ;?>
 </select>
 <br /> 
 </td> 
@@ -1096,7 +1109,6 @@ wp_nonce_field(-1,'add_date'.$i);
 <option  value="23">11 p.m.</option></select> 
  
 <?php _e('Minutes','rsvpmaker'); ?>: <select name="recur_minutes[<?php echo $i;?>]"> 
-<option value="00">00</option> 
 <option value="00">00</option> 
 <option value="15">15</option> 
 <option value="30">30</option> 
