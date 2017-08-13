@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 4.8
-Stable tag: 4.7.1
+Tested up to: 4.8.1
+Stable tag: 4.7.2
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.7.2 =
+
+* Improvements to clone event / create template from event functions
+* Fix to prevent other plugins from modifying the mce editor on reminders editor page
 
 = 4.7.1 =
 

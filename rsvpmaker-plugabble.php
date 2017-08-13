@@ -2486,7 +2486,7 @@ if($eventlist && !isset($_GET["rsvp_print"]))
 
 if(!function_exists('format_rsvp_details') )
 {
-function format_rsvp_details($results) {
+function format_rsvp_details($results, $editor_options = true) {
 	
 	global $rsvp_options;
 	$print_nonce = wp_create_nonce('rsvp_print');
@@ -2548,7 +2548,7 @@ function format_rsvp_details($results) {
 		echo 'posted: '.strftime($rsvp_options["short_date"],$t);
 		echo "</p>";
 		
-		if(!isset($_GET["rsvp_print"]) && current_user_can('edit_others_posts'))
+		if(!isset($_GET["rsvp_print"]) && current_user_can('edit_others_posts') && $editor_options)
 			echo sprintf('<p><a href="%s&delete=%d">Delete record for: %s %s</a></p>',admin_url().'edit.php?post_type=rsvpmaker&page=rsvp',$row["id"],esc_attr($row["first"]),esc_attr($row["last"]) );
 		$userrsvps[] = $row["user_id"];
 		}

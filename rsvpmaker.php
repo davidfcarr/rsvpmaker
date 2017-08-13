@@ -5,7 +5,7 @@ Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
 Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together.RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>.
 Author: David F. Carr
-Version: 4.7.1
+Version: 4.7.2
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
@@ -133,7 +133,7 @@ $defaults = array(
 );
 
 
-if(strpos($_SERVER['REQUEST_URI'],'post-new.php'))
+if(strpos($_SERVER['REQUEST_URI'],'post-new.php') && !isset($_GET['clone']))
 	{
 	$custom['_rsvp_on'][0] = $rsvp_options['rsvp_on'];
 	foreach($defaults as $default_key => $custom_key)

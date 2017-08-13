@@ -17,7 +17,8 @@ class MailChimpRSVP
 {
     private $api_key;
     private $api_endpoint = 'https://<dc>.api.mailchimp.com/3.0';
-    /*  SSL Verification
+    private $data_center;
+	/*  SSL Verification
         Read before disabling:
         http://snippets.webaware.com.au/howto/stop-turning-off-curlopt_ssl_verifypeer-and-fix-your-php-config/
     */
@@ -40,13 +41,19 @@ class MailChimpRSVP
         list(, $data_center) = explode('-', $this->api_key);
         $this->api_endpoint  = str_replace('<dc>', $data_center, $this->api_endpoint);
         $this->last_response = array('headers' => null, 'body' => null);
+		$this->data_center = $data_center;
     }
+	/* when saved as draft, direct user to url for draft */
+	public function draft_link() {
+	return 'https://'.$this->data_center.'.admin.mailchimp.com/campaigns/';
+	}
+
     /**
      * Create a new instance of a Batch request. Optionally with the ID of an existing batch.
      * @param string $batch_id Optional ID of an existing batch, if you need to check its status for example.
      * @return Batch            New Batch object.
      */
-    public function new_batch($batch_id = null)
+	public function new_batch($batch_id = null)
     {
         return new Batch($this, $batch_id);
     }
@@ -919,20 +926,30 @@ return $title;
 function default_rsvpemail_content($content) {
 global $post;
 
+if(!empty($_GET["get_post"]) && empty($_GET["rsvpemail"]) )
+	{
+	$post = get_post($_GET["get_post"]);
+	return $post->post_content; // used for creating post draft based on email
+	}
+
 if(!empty($_GET["get_post"]))
 	{
+		if(isset($_GET["rsvpemail"]))
+		{
 		//don't add embed code for YouTube etc
 		remove_filter( 'the_content', array( $GLOBALS['wp_embed'], 'autoembed' ), 8 );
 		$content .= "INTRO\n\n";
+		}
 		$parts = explode(':',$_GET["get_post"]);
 		if(!empty($parts[1]))
 			$cq = new WP_Query('posts_per_page='.$parts[1]);
 		else
 			$cq = new WP_Query('posts_per_page=1&p='. (int) $_GET["get_post"]);
+
 ob_start();
-//// print_r($cq);
 while ( $cq->have_posts() ) : $cq->the_post();
 global $post;
+
 $post_backup = $post;
 if(!$subject)
 	$subject = get_the_title();
@@ -1235,11 +1252,19 @@ if(!$MailChimp->success())
 	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
 	return;
 	}
+if(empty($_POST["chimp_send_now"]))
+	{
+	$link = $MailChimp->draft_link();
+	echo '<div><a target="_blank" href="'.$link.'">'.__('View draft','rsvpmaker').'</a> '. __('on mailchimp.com','rsvpmaker').'</div>';
+	}
+else // send now
+	{
 $send_result = $MailChimp->post("campaigns/".$campaign["id"].'/actions/send');
 if($MailChimp->success())
 	echo '<div>'.__('Sent MailChimp campaign','rsvpmaker').': '.$campaign["id"].'</div>';
 else
 	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
+	}
 }
 
 }
@@ -1277,7 +1302,7 @@ if(!empty($chimp_options["chimp-key"]))
 $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_list"][0] : $chimp_options["chimp-list"];
 echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 ?>
-</select> </div>
+</select> <select name="chimp_send_now"><option value="1"><?php _e('Send now','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php _e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select></div>
 <?php
 }
 
@@ -1672,7 +1697,28 @@ $posts = '<optgroup label="'.__('Recent Posts','rsvpmaker').'">'.$posts."</optgr
 <li><strong><?php _e('Excerpt','rsvpmaker');?></strong> <?php _e('Show only short excerpt with a link to the rest of the post.','rsvpmaker');?></li>
 </ul>
 <p><?php _e('These parameters are not applied to the events.','rsvpmaker');?></p>
-  <?php
+
+<h2>Create Draft Blog Post from Email</h2>
+
+<?php
+$posts = '';
+$sql = "SELECT ID, post_title FROM $wpdb->posts WHERE post_status='publish' AND post_type='rsvpemail' ORDER BY ID DESC LIMIT 0, 50";
+$wpdb->show_errors();
+$results = $wpdb->get_results($sql, ARRAY_A);
+if($results)
+{
+foreach ($results as $row)
+	{
+	$posts .= sprintf("<option value=\"%d\">%s</option>\n",$row["ID"],substr($row["post_title"],0,80));
+	}
+}
+?>
+<form action="<?php echo admin_url('post-new.php'); ?>" method="get">
+<p><?php _e('Posts','rsvpmaker');?>: <select name="get_post"><?php echo $options.$posts; ?></select>
+</p>
+<button><?php _e('Create Draft','rsvpmaker');?></button>
+</form>
+<?php
 } // end chimp get content
 
 function rsvpmaker_email_list_okay ($rsvp) {

@@ -1657,11 +1657,31 @@ add_action('loop_end','rsvpmaker_archive_loop_end');
 //keep jetpack from messing up
 function rsvpmaker_no_related_posts( $options ) {
     global $post;
-	if(($post->post_type =='rsvpmaker' ) || ($post->post_type =='rsvpemail' ))
+	if(($post->post_type == 'rsvpmaker' ) || ($post->post_type == 'rsvpemail' ))
 	{
-        $options['enabled'] = false;
+        $options['enabled'] = $options['headline'] = false;
     }
     return $options;
 }
 add_filter( 'jetpack_relatedposts_filter_options', 'rsvpmaker_no_related_posts' );
+
+function rsvp_report_this_post() {
+global $wpdb;
+global $rsvp_options;
+global $post;
+if(empty($post->ID))
+	return;
+
+	$eventid = $post->ID;
+$o = "<h2>".__("RSVPs",'rsvpmaker')."</h2>\n";
+	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$eventid  ORDER BY yesno DESC, last, first";
+	$wpdb->show_errors();
+	$results = $wpdb->get_results($sql, ARRAY_A);
+	if(empty($results))
+		return $o . '<p>'.__('None','rsvpmaker').'</p>';
+	ob_start();
+	format_rsvp_details($results, false);
+	$o .= ob_get_clean();
+return $o;
+}
 ?>

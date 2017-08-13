@@ -2033,22 +2033,6 @@ $sql = "SELECT email FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post_id AND id
 	$mail["from"] = $rsvp_to;
 	$mail["fromname"] = get_bloginfo('name');
 	rsvpmaker_tx_email(get_post($post_id), $mail);
-	/*
-		if(isset($rsvp_options["smtp"]) && !empty($rsvp_options["smtp"]) )
-			{
-			$mail["subject"] = $subject;
-			$mail["html"] = $confirm;
-			$mail["to"] = $notify;
-			$mail["from"] = $rsvp_to;
-			$mail["fromname"] = get_bloginfo('name');
-			$result = rsvpmailer($mail);
-			}
-		else
-			{
-			echo wpautop("Notification to $notify");
-			wp_mail($notify,$subject,$notification,"From: $rsvpto\nContent-Type: text/html; charset=UTF-8");
-			}
-	*/
 }
 
 // RSVPMaker Reminders
@@ -2324,7 +2308,17 @@ echo "<p>".__( 'Edit and save this text to create an email reminder.','rsvpmaker
 
 if(empty($content) )
 	$content = get_post_meta($post_id,'_rsvp_confirm',true);
-$settings = array();
+
+$settings = array(
+	'media_buttons' => false,
+    'tinymce'       => array(
+        'toolbar1'      => 'bold,italic,separator,alignleft,aligncenter,alignright,separator,link,unlink,undo,redo',
+        'toolbar2'      => '',
+        'toolbar3'      => '',
+    ),
+);
+//prevent other plugins from modifying editor
+add_filter('mce_external_plugins',function( $p ) { return array(); },99);
 wp_editor( $content, $editor_id, $settings );
 ?>
 <p><button>Save</button></p>
@@ -2899,4 +2893,10 @@ if(is_admin() && empty($hook))
 printf("\n".'<hr /><p><small>%s</small></p></div>',$hook);
 }
 
+function rsvpmaker_editors() {
+if(isset($_GET['page']) && ($_GET['page'] ='rsvp_reminders'))
+	wp_enqueue_editor();
+}
+
+add_action('admin_init','rsvpmaker_editors');
 ?>
