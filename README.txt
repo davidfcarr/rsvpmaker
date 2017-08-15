@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8.1
-Stable tag: 4.7.2
+Stable tag: 4.7.3
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.7.3 =
+
+* Fix for bug overwriting $_GET["page"] on admin screens
 
 = 4.7.2 =
 

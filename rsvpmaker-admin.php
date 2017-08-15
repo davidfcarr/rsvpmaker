@@ -2894,7 +2894,7 @@ printf("\n".'<hr /><p><small>%s</small></p></div>',$hook);
 }
 
 function rsvpmaker_editors() {
-if(isset($_GET['page']) && ($_GET['page'] ='rsvp_reminders'))
+if(isset($_GET['page']) && ($_GET['page'] == 'rsvp_reminders'))
 	wp_enqueue_editor();
 }
 
