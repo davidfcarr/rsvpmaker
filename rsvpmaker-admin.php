@@ -2195,6 +2195,8 @@ global $current_user;
 	
 }
 
+function no_mce_plugins( $p ) { return array(); }
+
 function rsvp_reminders () {
 global $wpdb;
 global $rsvp_options;
@@ -2318,7 +2320,7 @@ $settings = array(
     ),
 );
 //prevent other plugins from modifying editor
-add_filter('mce_external_plugins',function( $p ) { return array(); },99);
+add_filter('mce_external_plugins','no_mce_plugins',99);
 wp_editor( $content, $editor_id, $settings );
 ?>
 <p><button>Save</button></p>
