@@ -354,7 +354,7 @@ function save_rsvp_meta($postID)
 {
 $setrsvp = $_POST["setrsvp"];
 
-$checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','yesno');
+$checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno');
 foreach($checkboxes as $check)
 	{
 		if(!isset($setrsvp[$check]))
@@ -513,6 +513,7 @@ echo $label;
                   $newoptions = stripslashes_deep($_POST["option"]);
                   $newoptions["rsvp_on"] = (isset($_POST["option"]["rsvp_on"]) && $_POST["option"]["rsvp_on"]) ? 1 : 0;
                   $newoptions["confirmation_include_event"] = (isset($_POST["option"]["confirmation_include_event"]) && $_POST["option"]["confirmation_include_event"]) ? 1 : 0;
+                  $newoptions['rsvpmaker_send_confirmation_email'] = (isset($_POST["option"]['rsvpmaker_send_confirmation_email']) && $_POST["option"]['rsvpmaker_send_confirmation_email']) ? 1 : 0;
                   $newoptions["login_required"] = (isset($_POST["option"]["login_required"]) && $_POST["option"]["login_required"]) ? 1 : 0;
                   $newoptions["rsvp_captcha"] = (isset($_POST["option"]["rsvp_captcha"]) && $_POST["option"]["rsvp_captcha"]) ? 1 : 0;
                   $newoptions["rsvp_yesno"] = (isset($_POST["option"]["rsvp_yesno"]) && $_POST["option"]["rsvp_yesno"]) ? 1 : 0;
@@ -663,7 +664,7 @@ if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 	<br />
 					<h3><?php _e('Confirmation Message','rsvpmaker'); ?>:</h3>
   <textarea name="option[rsvp_confirm]"  rows="5" cols="80" id="rsvp_confirm"><?php if( isset($options["rsvp_confirm"]) ) echo $options["rsvp_confirm"];?></textarea><br />
-  <input type="checkbox" name="option[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( isset($options["confirmation_include_event"]) && $options["confirmation_include_event"] ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
+ <input type="checkbox" name="option[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if( isset($options["rsvpmaker_send_confirmation_email"]) && $options["rsvpmaker_send_confirmation_email"] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?> <input type="checkbox" name="option[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( isset($options["confirmation_include_event"]) && $options["confirmation_include_event"] ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 	<br />
 					<h3><?php _e('RSVP Form','rsvpmaker'); ?> (<a href="#" id="enlarge"><?php _e('Enlarge','rsvpmaker'); ?></a>):</h3>
   <textarea name="option[rsvp_form]"  rows="5" cols="80" id="rsvpform"><?php if( isset($options["rsvp_form"]) ) echo htmlentities($options["rsvp_form"]);?></textarea>
@@ -1672,6 +1673,8 @@ global $rsvp_options;
 global $current_user;
 global $post;
 $timezone_string = get_option('timezone_string');
+$cleared = get_option('cleared_rsvpmaker_notices');
+$cleared = is_array($cleared) ? $cleared : array();
 
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') ) {
 if($landing = get_post_meta($post->ID,'_webinar_landing_page_id',true))
@@ -1704,10 +1707,10 @@ if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 if(current_user_can('manage_options') && function_exists('my_chimpblasts_menu'))
 	echo '<div class="notice notice-warning"><p>'.__('ChimpBlast has been replaced by the RSVP Mailer function of RSVPMaker and should be uninstalled','rsvpmaker').'</p></div>';
 
-if(empty($timezone_string))
-	printf('<div class="notice notice-warning is-dismissible">
-    <p>%s <a href="%s">%s</a> %s</p>
-</div>',__('RSVPMaker needs you to','rsvpmaker'),admin_url('options-general.php'),__('set the timezone for your website','rsvpmaker'), __('using a region/city string like America/New York','rsvpmaker') );
+if(empty($timezone_string)) {
+	$message = sprintf('%s <a href="%s">%s</a> %s',__('RSVPMaker needs you to','rsvpmaker'),admin_url('options-general.php'),__('set the timezone for your website','rsvpmaker'), __('using a region/city string like America/New York','rsvpmaker') );
+rsvpmaker_admin_notice_format($message, 'rsvp_timezone', $cleared, $type='warning');	
+}
 
 if(isset($_GET["update"]) && ($_GET["update"] == "eventslug"))
 	{
@@ -1741,8 +1744,11 @@ elseif( (!isset($rsvp_options["eventpage"]) || empty($rsvp_options["eventpage"])
 		$rsvp_options["eventpage"] = get_permalink($id);
 		update_option('RSVPMAKER_Options',$rsvp_options);
 		}
-	else
-		echo '<div class="notice notice-warning"><p>'.__('RSVPMaker needs you to create a page with the [rsvpmaker_upcoming] shortcode to display event listings','rsvpmaker').'. (<a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php&create_calendar_page=1').'">'.__('Create page','rsvpmaker').'</a>: &quot;'.__('Calendar','rsvpmaker').'&quot; | <a href="'.admin_url('/?noeventpageok=1').'">'.__('Turn off this warning','rsvpmaker').'</a>)</p></div>';
+	else {
+		$message = __('RSVPMaker needs you to create a page with the [rsvpmaker_upcoming] shortcode to display event listings','rsvpmaker').'. (<a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php&create_calendar_page=1').'">'.__('Create page','rsvpmaker').'</a>: &quot;'.__('Calendar','rsvpmaker').'&quot; | <a href="'.admin_url('/?noeventpageok=1').'">'.__('Turn off this warning','rsvpmaker').'</a>';
+		rsvpmaker_admin_notice_format($message, 'create_calendar_page', $cleared, $type='warning');
+	}
+		
 	}
 	
 	if(isset($_GET["smtptest"]))
@@ -1854,7 +1860,7 @@ if(!empty($mail["replyto"]))
  $rsvpmail->Subject = $mail["subject"];
 if($mail["html"])
 	{
-	if($mail["text"])
+	if(isset($mail["text"]))
 		$rsvpmail->AltBody = $mail["text"];
 	else
 		$rsvpmail->AltBody = trim(strip_tags($mail["html"]) );
@@ -1901,7 +1907,7 @@ return $wp_query;
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
 
 function rsvpmaker_sort_message() {
-	if((basename($_SERVER['SCRIPT_NAME']) == 'edit.php') && ($_GET["post_type"]=="rsvpmaker") && !isset($_GET["page"]))
+	if((basename($_SERVER['SCRIPT_NAME']) == 'edit.php') && isset($_GET["post_type"]) &&  ($_GET["post_type"]=="rsvpmaker") && !isset($_GET["page"]))
 	{
 		echo '<div style="padding: 10px; ">';
 		if(isset($_GET["rsvpsort"]) && ($_GET["rsvpsort"] == 'chronological'))
@@ -2530,15 +2536,11 @@ add_action('init','rsvpmaker_placeholder_image');
 function rsvpmaker_admin_enqueue($hook) {
 global $post;
 $rsvppost = array('post.php','post-new.php','options-general.php');
-	if(in_array($hook,$rsvppost) || (isset($_GET["page"]) && ($_GET["page"] == 'rsvpmaker-admin.php') ) )
-		{
-		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.3' );
-		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.1' );
-		wp_enqueue_script('jquery-ui-dialog');
-		//wp_enqueue_style('jquery-ui-dialog-css',includes_url('/css/jquery-ui-dialog.min.css'));
-		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
-		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
-		}
+	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
+	wp_enqueue_script('jquery-ui-dialog');
+	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.7' );
+	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.1' );
+	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
 }
 add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
 
@@ -2901,4 +2903,27 @@ if(isset($_GET['page']) && ($_GET['page'] == 'rsvp_reminders'))
 }
 
 add_action('admin_init','rsvpmaker_editors');
+
+function rsvpmaker_admin_notice_format($message, $slug, $cleared, $type='info')
+{
+if(in_array($slug,$cleared))
+	return;
+printf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notice="%s">
+<p>%s</p>
+</div>',$type,$slug,$message);
+}
+
+add_action( 'wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
+
+/**
+ * AJAX handler to store the state of dismissible notices.
+ */
+function rsvpmaker_ajax_notice_handler() {
+$cleared = get_option('cleared_rsvpmaker_notices');
+$cleared = is_array($cleared) ? $cleared : array();
+    // Pick up the notice "type" - passed via jQuery (the "data-notice" attribute on the notice)
+    $cleared[] = $_REQUEST['type'];
+    update_option('cleared_rsvpmaker_notices',$cleared);
+}
+
 ?>

@@ -5,7 +5,7 @@ Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
 Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together.RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>.
 Author: David F. Carr
-Version: 4.7.4
+Version: 4.7.8
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
@@ -44,6 +44,7 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "rsvp_to" => get_bloginfo('admin_email'),
 "rsvp_confirm" => __('Thank you!','rsvpmaker'), 
 "confirmation_include_event" => 0,
+"rsvpmaker_send_confirmation_email" => 1,
 "rsvp_instructions" => '',
 "rsvp_count" => 1, 
 "rsvp_count_party" => 1, 
@@ -69,9 +70,9 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "stripe" => 0,
 "show_screen_recurring" => 0,
 "show_screen_multiple" => 0,
-"rsvp_form" => '<p><label>'.__('First Name','rsvpmaker').':</label> [rsvpfield textfield="first" required="1"]</p>
+"rsvp_form" => '<p><label>'.__('Email','rsvpmaker').':</label> [rsvpfield textfield="email" required="1"]</p>
+<p><label>'.__('First Name','rsvpmaker').':</label> [rsvpfield textfield="first" required="1"]</p>
 <p><label>'.__('Last Name','rsvpmaker').':</label> [rsvpfield textfield="last" required="1"]</p>
-<p><label>'.__('Email','rsvpmaker').':</label> [rsvpfield textfield="email" required="1"]</p>
 [rsvpprofiletable show_if_empty="phone"]
 <p><label>'.__('Phone','rsvpmaker').':</label> [rsvpfield textfield="phone" size="20"]</p>
 <p><label>'.__('Phone Type','rsvpmaker').':</label> [rsvpfield selectfield="phone_type" options="Work Phone,Mobile Phone,Home Phone"]</p>
@@ -118,6 +119,7 @@ $defaults = array(
 "calendar_icons" => "_calendar_icons",
 "rsvp_to" => "_rsvp_to",
 "rsvp_confirm" => "_rsvp_confirm", 
+"rsvpmaker_send_confirmation_email" => "_rsvp_rsvpmaker_send_confirmation_email",
 "confirmation_include_event" => "_rsvp_confirmation_include_event",
 "rsvp_instructions" => "_rsvp_instructions",
 "rsvp_count" => "_rsvp_count", 
@@ -751,5 +753,13 @@ add_post_meta($event, '_paypal_log', $message);
 }
 
 add_action('sc_after_charge','rsvpmaker_sc_after_charge');
+
+function rsvpmaker_before_post_display_action (){
+	global $post;
+	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
+	do_action('rsvpmaker_before_display');
+}
+
+add_action('wp','rsvpmaker_before_post_display_action');
 
 ?>

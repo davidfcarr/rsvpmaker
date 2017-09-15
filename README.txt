@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8.1
-Stable tag: 4.7.4
+Stable tag: 4.7.8
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,23 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.7.8 =
+
+* Fix for email lookup on multisite
+
+= 4.7.7 =
+
+* Fixed lookup of contact info based on email. Also checks for prior rsvps for the current event.
+
+= 4.7.6 =
+
+* Fixing bug in the tracking of "private data on file"
+
+= 4.7.5 =
+
+* Try to minimize duplicate RSVPs by searching RSVP list by email address, as the user is typing their email address into the form. On match, they are prompted to update their existing registration rather than adding a new one.
+* Option to turn off email confirmations
 
 = 4.7.4 =
 

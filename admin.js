@@ -19,10 +19,13 @@ jQuery(document).ready(function( $ ) {
 	var guestfield = '';
 	var checked = '';
 	var field = '';
-	
-	
-if( $('#name_email_hidden').is(':checked') )
-	var newform = '[rsvpfield hidden="first" ][rsvpfield hidden="last"][rsvpfield hidden="email"';
+	var name_email_hidden = $('#name_email_hidden').val();
+		
+if(name_email_hidden == 'hidden')
+	var newform = '[rsvpfield hidden="first" ][rsvpfield hidden="last"][rsvpfield hidden="email"]';
+else if(name_email_hidden == 'email_first')
+	var newform = '<p><label>Email:</label> [rsvpfield textfield="email" required="1"]</p>' +"\n" + '<p><label>First Name:</label> [rsvpfield textfield="first" required="1"]</p>' +"\n" +
+'<p><label>Last Name:</label> [rsvpfield textfield="last" required="1"]</p>'  +"\n";
 else
 	var newform = '<p><label>First Name:</label> [rsvpfield textfield="first" required="1"]</p>' +"\n" +
 '<p><label>Last Name:</label> [rsvpfield textfield="last" required="1"]</p>'  +"\n" +
@@ -178,4 +181,20 @@ $.post(
 });
   } );
 
+$( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
+	// Read the "data-notice" information to track which notice
+	// is being dismissed and send it via AJAX
+	var type = $( this ).closest( '.rsvpmaker-notice' ).data( 'notice' );
+	// Make an AJAX call
+	// Since WP 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+	$.ajax( ajaxurl,
+	  {
+		type: 'POST',
+		data: {
+		  action: 'rsvpmaker_dismissed_notice_handler',
+		  type: type,
+		}
+	  } );
+  } );		
+	
 });

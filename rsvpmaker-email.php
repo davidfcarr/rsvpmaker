@@ -1138,6 +1138,9 @@ global $custom_fields;
 global $wpdb;
 global $current_user;
 global $unsubscribed;
+global $rsvpmaker_cron_context;
+if(!empty($rsvpmaker_cron_context))
+	return;
 $chimp_options = get_option('chimp');
 
 ob_start();
@@ -2298,14 +2301,6 @@ $notification_body = $templates['notification']['body'];
 foreach($rsvpdata as $field => $value)
 	$notification_body = str_replace('['.$field.']',$value,$notification_body);
 
-$confirmation_subject = $templates['confirmation']['subject']; 
-foreach($rsvpdata as $field => $value)
-	$confirmation_subject = str_replace('['.$field.']',$value,$confirmation_subject);
-
-$confirmation_body = $templates['confirmation']['body']; 
-foreach($rsvpdata as $field => $value)
-	$confirmation_body = str_replace('['.$field.']',$value,$confirmation_body);
-	
 	$rsvp_to_array = explode(",", $rsvp_to);
 	foreach($rsvp_to_array as $to)
 	{
@@ -2316,7 +2311,17 @@ foreach($rsvpdata as $field => $value)
 	$mail["html"] = wpautop($notification_body);
 	rsvpmaker_tx_email($post, $mail);
 	}
-	
+
+$send_confirmation = get_post_meta($post->ID,'_rsvp_rsvpmaker_send_confirmation_email',true);
+if($send_confirmation ||!is_numeric($send_confirmation))//if it hasn't been set to 0, send it
+{
+$confirmation_subject = $templates['confirmation']['subject']; 
+foreach($rsvpdata as $field => $value)
+	$confirmation_subject = str_replace('['.$field.']',$value,$confirmation_subject);
+
+$confirmation_body = $templates['confirmation']['body']; 
+foreach($rsvpdata as $field => $value)
+	$confirmation_body = str_replace('['.$field.']',$value,$confirmation_body);	
 	$mail["html"] = wpautop($confirmation_body);
 	if(isset($post->ID)) // not for replay
 	$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"]);
@@ -2325,6 +2330,8 @@ foreach($rsvpdata as $field => $value)
 	$mail["fromname"] = get_bloginfo('name');
 	$mail["subject"] = $confirmation_subject;
 	rsvpmaker_tx_email($post, $mail);	
+}
+
 }
 
 ?>

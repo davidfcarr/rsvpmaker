@@ -112,6 +112,38 @@ if(jQuery("#email").val() === '') leftblank = leftblank + '<' + 'div class="rsvp
 		return true;
 });
 
+//search for previous rsvps
+var searchRequest = null;
+
+$(function () {
+    var minlength = 3;
+
+    $("#email").keyup(function () {
+        var that = this,
+        value = $(this).val();
+		var post_id = $('#event').val();
+        if (value.length >= minlength ) {
+            if (searchRequest != null) 
+                searchRequest.abort();
+            searchRequest = $.ajax({
+                type: "POST",
+                url: '<?php echo site_url('?rsvp_email_lookup=1'); ?>',
+                data: {
+                    'action' : 'rsvp_email_lookup',
+					'post_id' : post_id,
+                    'email_search' : value
+                },
+                success: function(msg){
+                    //we need to check if the value is the same
+					if (value==$(that).val()) {
+						$('#rsvp_email_lookup').html(msg);
+                    //Receiving the result of search here
+                    }
+                }
+            });
+        }
+    });
+});	
 
 });
 </script>
@@ -1605,7 +1637,7 @@ if(isset($rsvp_required_field) )
         <p> 
           <input type="submit" id="rsvpsubmit" name="Submit" value="<?php  _e('Submit','rsvpmaker');?>" /> 
         </p> 
-<input type="hidden" name="rsvp_id" value="" /><input type="hidden" name="event" value="<?php echo $event_id;?>" /><input type="hidden" name="landing_id" value="<?php echo $post->ID;?>" /><?php wp_nonce_field('rsvp_replay','rsvp_replay_nonce'); ?>
+<input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo $event_id;?>" /><input type="hidden" name="landing_id" value="<?php echo $post->ID;?>" /><?php wp_nonce_field('rsvp_replay','rsvp_replay_nonce'); ?>
 </form>	
 <?php
 return ob_get_clean();

@@ -471,6 +471,7 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <br /><?php echo __('Confirmation Message','rsvpmaker');?>:<br />
 <textarea id="rsvp[confirm]" name="setrsvp[confirm]" cols="80" style="max-width: 95%;"><?php if(isset($rsvp_confirm)) echo $rsvp_confirm;?></textarea>
 <br />
+  <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 <?php
 if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"]))
@@ -652,6 +653,7 @@ blankcount++;
 $('#priceper').append(newblank);
 });
 
+
 });
 </script>
 <?php
@@ -684,17 +686,55 @@ $("#rsvpdetails").hide();
 <?php
 } } // end rsvp admin ui
 
+function ajax_rsvp_email_lookup () {
+if(!isset($_REQUEST['rsvp_email_lookup']))
+	return;
+$email = $_REQUEST['email_search'];
+$event = $_REQUEST['post_id'];
+$p = get_permalink($event);
+global $wpdb;
+$wpdb->show_errors();
+$sql = $wpdb->prepare("SELECT * FROM ".$wpdb->prefix.'rsvpmaker WHERE email LIKE %s AND event=%d',$email.'%',$event);
+$results = $wpdb->get_results($sql);
+if($results)
+{	
+	echo '<div class="previous_rsvp_prompt">'.__('Did you RSVP previously?','rsvpmaker').'</div>';
+	foreach($results as $row)
+	{
+	$out = 'RSVP ';
+	$out .= ($row->yesno) ? __('YES','rsvpmaker') : __('NO','rsvpmaker');
+	$out .= ' '.$row->first.' '.$row->last;
+	$sql = $wpdb->prepare("SELECT count(*) FROM ".$wpdb->prefix.'rsvpmaker WHERE master_rsvp=%d',$row->id);
+	$guests = $wpdb->get_var($sql);
+	if($guests)
+		$out .= ' + '.$guests.' '.__('guests','rsvpmaker');
+	printf('<div><a href="%s">%s</a> %s</div>',add_query_arg(array('e' => $row->email,'update' => $row->id),$p),__('Update','rsvpmaker'),$out);
+	}
+}
+	else echo '';
+die();
+}
+
+add_action('init','ajax_rsvp_email_lookup');
+
 function rsvp_form_setup_form($rsvp_form) {
 
 $hidden = (strpos($rsvp_form,'hidden="email"'));
 $email_list_ok = (strpos($rsvp_form,'checkbox="email_list_ok"'));
+preg_match('/textfield="([^"]+)"/',$rsvp_form,$match);
+$emailfirst = ($match[1] == 'email') ? ' checked="checked" ' : '';
 ?>
 <div id="rsvp-dialog-form" title="Form setup">
-  <p><?php _e('First Name, Last Name, Email (required)','rsvpmaker');?> <input type="checkbox" id="name_email_hidden" name="name_email_hidden" value="1" <?php if($hidden) echo 'checked="checked"'; ?> /> <?php _e('hidden (for example, if user login required)','rsvpmaker'); ?></p>
+  <p><?php _e('First Name, Last Name, Email (required)','rsvpmaker');?> Display options: <select id="name_email_hidden" name="name_email_hidden">
+	  <option value="email_first" <?php if($emailfirst) echo 'selected="selected"'; ?> ><?php _e('email, then name','rsvpmaker');?></option>
+	  <option value="name_first" <?php if(!$emailfirst && !$hidden) echo 'selected="selected"'; ?> ><?php _e('name, then email','rsvpmaker');?></option>
+	  <option value="hidden" <?php if($hidden) echo 'selected="selected"'; ?> ><?php _e('hidden (use with login required)','rsvpmaker');?></option>
+	  </select>
+</p>
   <p><?php _e('For radio buttons or select fields, use the format Label:option 1, option 2','rsvpmaker');?> (<em><?php _e('Meal:Steak,Chicken,Vegitarian','rsvpmaker');?></em>)</p> 
     <fieldset>
 <?php
-
+	
 preg_match_all('/(\[.+\])/',$rsvp_form,$matches);
 $codes = implode($matches[1]);
 $codes .= '[rsvpfield textfield=""][rsvpfield textfield=""][rsvpfield textfield=""]';
@@ -915,6 +955,7 @@ global $rsvp_options;
 global $post;
 global $rsvp_id;
 global $rsvpdata;
+$rsvp_id = (isset($_POST["rsvp_id"])) ? $_POST["rsvp_id"] : 0;
 
 if(isset($_POST["withdraw"]) )
 	{
@@ -1023,17 +1064,14 @@ if(isset($rsvp["email"]))
 		}
 	}
 
-if(isset($_POST["onfile"]))
+if($rsvp_id)
 	{
-	$sql = $wpdb->prepare("SELECT details FROM ".$wpdb->prefix."rsvpmaker WHERE event='$event' AND email LIKE %s AND first LIKE %s AND last LIKE %s  ORDER BY id DESC",$rsvp["email"],$rsvp["first"],$rsvp["last"]);
+	$sql = "SELECT details FROM ".$wpdb->prefix."rsvpmaker WHERE id=".$rsvp_id;
 	
 	$details = $wpdb->get_var($sql);
 	if($details)
 		$contact = unserialize($details);
-	else	
-		$contact = rsvpmaker_profile_lookup($rsvp["email"]);
-		
-	if($contact)
+	if(is_array($contact))
 		{
 		foreach($contact as $name => $value)
 			{
@@ -1109,8 +1147,6 @@ global $current_user; // if logged in
 $rsvp_sql = $wpdb->prepare(" SET first=%s, last=%s, email=%s, yesno=%d, event=%d, note=%s, details=%s, participants=%d, user_id=%d ", $rsvp["first"], $rsvp["last"], $rsvp["email"],$yesno,$event, $note, serialize($rsvp), $participants, $current_user->ID );
 
 capture_email($rsvp);
-
-$rsvp_id = (isset($_POST["rsvp_id"])) ? $_POST["rsvp_id"] : 0;
 
 if($rsvp_id)
 	{
@@ -1238,7 +1274,6 @@ rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata);
 	}
 
 } } // end save rsvp
-
 
 if(!function_exists('rsvp_notifications') )
 {
@@ -1756,6 +1791,7 @@ global $showbutton;
 global $blanks_allowed;
 $rsvpconfirm = '';
 $display = array();
+$rsvp_id = 0;
 
 //On return from paypal payment process, show confirmation
 if(isset($_GET["PayerID"]))
@@ -1775,6 +1811,8 @@ if ( post_password_required( $post ) ) {
 
 global $custom_fields; // make this globally accessible
 $custom_fields = get_rsvpmaker_custom($post->ID);
+
+$content = apply_filters('rsvpmaker_event_content_top',$content, $custom_fields);
 
 // if requiring passcode, check code (unless RSVP cookie is set)
 if(isset($custom_fields['_require_webinar_passcode'][0]) && $custom_fields['_require_webinar_passcode'][0] && !isset($_COOKIE["rsvp_for_".$post->ID]))
@@ -1821,6 +1859,8 @@ if($profile)
 	{
 	$first = $profile["first"];
 	$last = $profile["last"];
+	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$e.'" AND event='.$post->ID.' ORDER BY id DESC';
+	$rsvp_id = $wpdb->get_var($sql);	
 	}
 
 if(isset($_GET["rsvp"]))
@@ -1830,9 +1870,10 @@ if(isset($_GET["rsvp"]))
 <p>'.nl2br($rsvp_confirm).'</p>
 ';
 	}
-elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !is_user_logged_in() )
+elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !is_user_logged_in() || $rsvp_id)
 	{
-	$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
+	if(!$rsvp_id)
+		$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=".$rsvp_id;
 	$rsvprow = $wpdb->get_row($sql, ARRAY_A);
 	
@@ -2158,7 +2199,7 @@ if(isset($rsvp_required_field) )
         <p> 
           <input type="submit" id="rsvpsubmit" name="Submit" value="<?php  _e('Submit','rsvpmaker');?>" /> 
         </p> 
-<input type="hidden" name="rsvp_id" value="<?php if(isset($profile["id"])) echo $profile["id"];?>" /><input type="hidden" name="event" value="<?php echo $post->ID;?>" /><?php wp_nonce_field('rsvp','rsvp_nonce'); ?>
+<input type="hidden" name="rsvp_id" id="rsvp_id" value="<?php if(isset($profile["id"])) echo $profile["id"];?>" /><input type="hidden" name="event" id="event" value="<?php echo $post->ID;?>" /><?php wp_nonce_field('rsvp','rsvp_nonce'); ?>
 </form>	
 </div>
 <?php
@@ -2188,6 +2229,7 @@ $terms = get_the_term_list($post->ID,'rsvpmaker-type','',',',' ');
 if($terms && is_string($terms))
 	$content .= '<p class="rsvpmeta">'.__('Event Types','rsvpmaker').': '.$terms.'</p>';
 
+$content = apply_filters('rsvpmaker_event_content_bottom',$content, $custom_fields);
 return $content;
 } } // end event content
 
@@ -2791,7 +2833,7 @@ else
 }
 
 echo do_shortcode($form);
-printf('<input type="hidden" name="rsvp_id" value="%s" /><input type="hidden" name="event" value="%s" /><input type="hidden" name="rsvp_nonce" value="%s" /><p><button>Submit</button></p></form>',$id,$event,wp_create_nonce('rsvp'));
+printf('<input type="hidden" name="rsvp_id" id="rsvp_id" value="%s" /><input type="hidden" id="event" name="event" value="%s" /><input type="hidden" name="rsvp_nonce" value="%s" /><p><button>Submit</button></p></form>',$id,$event,wp_create_nonce('rsvp'));
 echo '<p>'.__('Tip: If you do not have an email address for someone you registered offline, you can use the format firstnamelastname@example.com (example.com is an Internet domain reserved for examples and testing). You will get an error message if you try to leave it blank').'</p>';
 
 echo rsvp_form_jquery();
@@ -2973,10 +3015,25 @@ function widgetlink($evdates,$plink,$evtitle) {
 
 if(!function_exists('rsvpmaker_profile_lookup') ) {
 function rsvpmaker_profile_lookup($email = '') {
+global $wpdb;
 $profile = array();
 if(isset($_GET["blank"]))
 	return NULL;
 
+$sql = 'SELECT details FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$email.'" ORDER BY id DESC';
+$details = $wpdb->get_var($sql);
+if(!empty($details))
+{
+	$details = unserialize($details);
+	$profile["email"] = $details["email"];
+	$profile["first"] = $details["first"];
+	$profile["last"] = $details["last"];
+	foreach($details as $name => $value)
+	{
+		if(strpos($name,'phone') !== false)
+			$profile[$name] = $value;
+	}
+}
 // placeholder - override to implement alternate profile lookup based on login, membership, email list, etc.
 if(!$email)
 	{
@@ -3408,6 +3465,8 @@ if(isset($atts["guestfield"]) && $atts["guestfield"])
 		return; // guest only don't display on main form
 	}
 
+if($field == 'email')
+	$output .= '<div id="rsvp_email_lookup"></div>';
 return $output;
 
 }
