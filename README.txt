@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8.1
-Stable tag: 4.7.8
+Stable tag: 4.7.9
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.7.9 =
+
+* Changed defaults, such as number of days listed on calendar page, to match most common usage.
+* Added a button for inserting a single event on a page, covering variations to show full event with button or form, form only, or button only. Useful for building landing pages promoting one or more events.
 
 = 4.7.8 =
 

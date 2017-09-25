@@ -1696,10 +1696,6 @@ if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 	_e('Related messages:','rsvpmaker');
 	printf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$event,__('Confirmation','rsvpmaker'));	
 	echo rsvpmaker_reminders_list($event);
-/*
-	printf(' | <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&hours=-2&page=rsvp_reminders&message_type=reminder&post_id=').$event,__('Reminder','rsvpmaker'));	
-	printf(' | <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&hours=2&page=rsvp_reminders&message_type=reminder&post_id=').$event,__('Follow Up','rsvpmaker'));	
-*/
 	echo '</p></div>';
 	}
 }
@@ -1719,7 +1715,7 @@ if(isset($_GET["update"]) && ($_GET["update"] == "eventslug"))
 if(isset($_GET["create_calendar_page"]))
 	{
 	$post = array(
-	  'post_content'   => '[rsvpmaker_upcoming calendar="1" comment="This placeholder code displays the calendar of events."]',
+	  'post_content'   => '[rsvpmaker_upcoming calendar="1" days="180" posts_per_page="10" type="" one="0" hideauthor="1" past="0" no_events="No events currently listed" nav="bottom"]',
 	  'post_name'      => 'calendar',
 	  'post_title'     => 'Calendar',
 	  'post_status'    => 'publish',
@@ -1727,7 +1723,7 @@ if(isset($_GET["create_calendar_page"]))
 	  'post_author'    => $current_user->ID,
 	  'ping_status'    => 'closed'
 	);
-	wp_insert_post($post);		
+	wp_insert_post($post);
 	}
 if(isset($_GET["noeventpageok"]) && $_GET["noeventpageok"])
 	{
@@ -1759,7 +1755,7 @@ elseif( (!isset($rsvp_options["eventpage"]) || empty($rsvp_options["eventpage"])
 	$mail["subject"] = __("Testing SMTP email notification",'rsvpmaker');
 	$mail["html"] = '<p>'. __('Test from RSVPMaker.','rsvpmaker').'</p>';
 	$result = rsvpmailer($mail);
-	echo '<div class="updated" style="background-color:#fee;">'."<strong>".__('Sending test email','rsvpmaker').' '.$result ."</strong></div>";
+	echo '<div class="updated" style="background-color:#fee;">'."<strong>".__('Sending test email','rsvpmaker').' '.$result .'</strong> <a href="'.admin_url('index.php?smtptest=1&debug=1').'">(debug)</a></div>';
 		}
 }
 
@@ -1831,7 +1827,7 @@ function rsvpmailer($mail) {
 	$rsvpmail->Host = $rsvp_options["smtp_server"]; // SMTP server
 	$rsvpmail->SMTPAuth=true;
 	if(isset($rsvp_options["smtp_prefix"]) && $rsvp_options["smtp_prefix"] )
-		$rsvpmail->SMTPSecure = $rsvp_options["smtp_prefix"];                 // sets the prefix to the servier
+		$rsvpmail->SMTPSecure = $rsvp_options["smtp_prefix"];                 // sets the prefix to the server
 	$rsvpmail->Port=$rsvp_options["smtp_port"];
 	}
  	
@@ -1843,9 +1839,9 @@ function rsvpmailer($mail) {
  if(isset($mail["cc"]) )
  	$rsvpmail->AddCC($mail["cc"]);
 $via = (isset($_SERVER['SERVER_NAME']) && !empty($_SERVER['SERVER_NAME'])) ? ' (via '.$_SERVER['SERVER_NAME'].')' : '';
-if(is_admin() && isset($_GET["debug"]))
-	$rsvpmail->SMTPDebug = 2;
- if(!empty($rsvp_options["smtp_useremail"]))
+if(is_admin() && isset($_GET['debug']))
+	$rsvpmail->SMTPDebug = 4;
+if(!empty($rsvp_options["smtp_useremail"]))
  	{
 	 $rsvpmail->SetFrom($rsvp_options["smtp_useremail"], $mail["fromname"]. $via);
 	 $rsvpmail->AddReplyTo($mail["from"], $mail["fromname"]);
@@ -1882,15 +1878,32 @@ if($mail["html"])
 	} catch (Exception $e) {
 		echo $e->getMessage(); //Boring error messages from anything else!
 	}
-	
 	return $rsvpmail->ErrorInfo;
 }
 
 function set_rsvpmaker_order_in_admin( $wp_query ) {
-  if ( is_admin() && isset($_GET["rsvpsort"]) && ($_GET["rsvpsort"]=="chronological") ) {
+if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker') ) // don't mess with front end or other post types
+	return $wp_query;
+global $current_user;
+		
+if(isset($_GET["rsvpsort"])) {
+  if($_GET["rsvpsort"]=="chronological")
+	  $sort = (isset($_GET["past"])) ? 'past' : 'future';
+  else
+	  $sort = 'all';	  
+  update_user_meta($current_user->ID,'rsvpsort',$sort);
+}
+if(empty($sort))
+	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
+if(empty($sort))
+	$sort = 'future';
+if(isset($_GET['s']))
+	$sort = 'all';
+	
+	if($sort != "all") {
 add_filter('posts_join', 'rsvpmaker_join',99 );
 add_filter('posts_groupby', 'rsvpmaker_groupby',99 );
-if(isset($_GET["past"]))
+if($sort == 'past')
 	{
 	add_filter('posts_where', 'rsvpmaker_where_past',99 );
 	add_filter('posts_orderby', 'rsvpmaker_orderby_past',99 );
@@ -1902,18 +1915,24 @@ else
 	}
 add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
   }
-return $wp_query;
 }
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
 
 function rsvpmaker_sort_message() {
 	if((basename($_SERVER['SCRIPT_NAME']) == 'edit.php') && isset($_GET["post_type"]) &&  ($_GET["post_type"]=="rsvpmaker") && !isset($_GET["page"]))
 	{
+	global $current_user;
+	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
+	if(empty($sort))
+		$sort = 'future';
+				
 		echo '<div style="padding: 10px; ">';
-		if(isset($_GET["rsvpsort"]) && ($_GET["rsvpsort"] == 'chronological'))
-			echo '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=newest').'">'.__('Sort By Newest','rsvpmaker').'</a>';
+		if($sort == 'future')
+			echo ' '.__('Sort: Future','rsvpmaker').' <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=newest').'">'.__('Show All','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological&past=1').'">'.__('Past Events','rsvpmaker').'</a>';
+		elseif($sort == 'past')
+			echo ' '.__('Sort: Past','rsvpmaker').' <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=newest').'">'.__('Show All','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Future Events','rsvpmaker').'</a>';
 		else
-			echo '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Future Events','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological&past=1').'">'.__('Past Events','rsvpmaker').'</a>';
+			echo ' '.__('Sort: All','rsvpmaker').' <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Future Events','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological&past=1').'">'.__('Past Events','rsvpmaker').'</a>';
 		echo '</div>';
 	}
 }
@@ -2504,17 +2523,18 @@ $im = imagecreate(800, 50);
 imagefilledrectangle($im,5,5,790,45, imagecolorallocate($im, 50, 50, 255));
 }
 
-// White background and blue text
 $bg = imagecolorallocate($im, 200, 200, 255);
 $border = imagecolorallocate($im, 0, 0, 0);
 $textcolor = imagecolorallocate($im, 255, 255, 255);
 
-$text = __('Events','rsvpmaker').': ';
+$text = (isset($_GET['post_id'])) ? __('Event','rsvpmaker').': ' : __('Events','rsvpmaker').': ';
 $tip = '('.__('double-click for popup editor','rsvpmaker').')';
 
 foreach ($_GET as $name => $value)
 	{
 	if($name == 'rsvpmaker_placeholder')
+		continue;
+	if(empty($value))
 		continue;
 	$text .= $name.'='.$value.' '; 
 	}
@@ -2538,9 +2558,12 @@ global $post;
 $rsvppost = array('post.php','post-new.php','options-general.php');
 	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 	wp_enqueue_script('jquery-ui-dialog');
-	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.7' );
-	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.1' );
 	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
+	if(is_admin())
+	{
+	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.7' );
+	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.2' );		
+	}
 }
 add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
 
@@ -2550,6 +2573,7 @@ function rsvp_mce_buttons( $buttons ) {
 	if(($post->post_type=='rsvpmaker') || (isset($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpmaker')) )
 		return $buttons;
     array_push( $buttons, 'rsvpmaker_upcoming' );
+    array_push( $buttons, 'rsvpmaker_one' );
     return $buttons;
 }
 add_filter( 'mce_buttons', 'rsvp_mce_buttons' );
@@ -2560,7 +2584,8 @@ function rsvp_mce_plugins ( $plugin_array ) {
 	if(($post->post_type=='rsvpmaker') || (isset($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpmaker')) )
 		return $plugin_array;
 	
-    $plugin_array['rsvpmaker_upcoming'] = plugins_url( 'mce.js' , __FILE__ );
+    $plugin_array['rsvpmaker_upcoming'] = plugins_url( 'mce.js?v=2.2' , __FILE__ );
+    $plugin_array['rsvpmaker_one'] = plugins_url( 'mce-single-event.js?v=0.9' , __FILE__ );
     return $plugin_array;
 }
 add_filter( 'mce_external_plugins', 'rsvp_mce_plugins');
@@ -2592,6 +2617,7 @@ ORDER BY meta_value";
 	 
 	 $results = $wpdb->get_results($sql);
 	 $row[] = "{text: 'Pick One?', value: '0'}";
+	$row[] = "{text: 'Next Event', value: 'next'}";
 	 foreach ($results as $r)
 	 	$row[] = sprintf("{text: '%s', value: '%d'}",addslashes($r->post_title).' '.date('r',strtotime($r->datetime)),$r->ID);   
 
@@ -2926,4 +2952,41 @@ $cleared = is_array($cleared) ? $cleared : array();
     update_option('cleared_rsvpmaker_notices',$cleared);
 }
 
+function rsvpmaker_log($msg) {
+$upload_dir   = wp_upload_dir();
+ 
+if ( ! empty( $upload_dir['basedir'] ) ) {
+    $fname = $upload_dir['basedir'].'/rsvpmaker_log.txt';
+	file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
+}
+
+}
+
+function is_rsvpmaker_additional_editor($user_id,$post_id) {
+global $wpdb;
+$is_editor = false;
+	$recurid = get_post_meta($post_id,'_meet_recur',true);
+	if($recurid)
+		$sql = "SELECT meta_value FROM $wpdb->postmeta WHERE (post_id=$recurid OR post_id=$post_id) AND meta_value=$user_id AND meta_key='_additional_editors'";
+	else
+		$sql = "SELECT meta_value from $wpdb->postmeta WHERE post_id=$post_id AND meta_value=$user_id AND meta_key='_additional_editors'";
+	$is_editor = $wpdb->get_var($sql);
+//die($sql);
+	return $is_editor;
+}
+
+function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
+    if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
+    {
+        $post_id = $args[0];
+		if(is_rsvpmaker_additional_editor($user_id,$post_id) )
+        {
+            /* Set an empty array for the caps. */
+            $caps = array(); 
+            $caps[] = 'edit_rsvpmakers';
+        }
+    }
+    /* Return the capabilities required by the user. */
+    return $caps;
+}
 ?>

@@ -4466,30 +4466,33 @@ global $rsvp_options;
 if(isset($rsvp_options["additional_editors"]) && $rsvp_options["additional_editors"])
 	{
 		add_action('save_post','save_additional_editor');
-		add_filter( 'user_has_cap', 'rsvpmaker_cap_filter', 99, 3 );
+		//add_filter( 'user_has_cap', 'rsvpmaker_cap_filter', 99, 3 );
+		add_filter( 'map_meta_cap', 'rsvpmaker_map_meta_cap', 10, 4 );
 	}
 }
 }
 
-add_action('init','additional_editors_setup');
+add_action('admin_init','additional_editors_setup');
 
 if(!function_exists('rsvpmaker_cap_filter_test') )
 {
-function rsvpmaker_cap_filter_test( $cap ) {
+function rsvpmaker_cap_filter_test( $cap, $post_id ) {
 	
 	if(strpos($cap,'rsvpmaker') )
 		return true;
-	else
-		return false;
-
- 	global $post;
-	if($post->post_type == 'rsvpmaker')
-		return true;
+	elseif($post = get_post($post_id))
+	{
+		if(isset($post->post_type) && ($post->post_type =='rsvpmaker'))
+			return true;
+		else
+			return false;
+	}
 	else
 		return false;
 }
 }
 
+/*
 if(!function_exists('rsvpmaker_cap_filter') )
 {
 function rsvpmaker_cap_filter( $allcaps, $cap, $args ) {
@@ -4506,36 +4509,43 @@ function rsvpmaker_cap_filter( $allcaps, $cap, $args ) {
  *                       [1] User ID
  *                       [2] Associated object ID
  */
- 	if(!isset($cap[0]))
-		return $allcaps;	
-	if(!rsvpmaker_cap_filter_test($cap[0]))
+/*	global $post;
+	if(!isset($cap[0]))
 		return $allcaps;
-	global $eds;
-	global $update_rsvpmaker_test;
 	$user = (isset($args[1])) ? $args[1] : 0;
 	$post_id = (isset($args[2])) ? $args[2] : 0;
 	if(!$post_id)
-		{
-			global $post;
-			if(isset($post)) $post_id = $post->ID;
-		}
-	if($allcaps[$cap[0]]) // if already true
+		return $allcaps;
+	if(!rsvpmaker_cap_filter_test($cap[0],$post_id))
+		return $allcaps;
+	$msg = 'start allcaps: '.var_export($allcaps, true).' cap '. var_export($cap,true).' args ' .var_export($args,true).' request '.var_export($_REQUEST,true);
+	if($cap[0] == 'edit_post')
+	rsvpmaker_log($msg);
+	
+	global $eds;
+	global $update_rsvpmaker_test;
+	if(!empty($allcaps[$cap[0]])) // if already true
 		return $allcaps;
 	
-	if(!$eds[$post_id])
+	if(empty($eds[$post_id]))
 	$eds[$post_id] = get_additional_editors($post_id);
 		
-	if(!$eds[$post_id])
+	if(empty($eds[$post_id]))
 		return $allcaps;
 
 	if( in_array($user,$eds[$post_id]) )
 		{
 		foreach($cap as $value)
 			$allcaps[$value] = true;
+		$allcaps['edit_post'] = true;		
 		}
+	$msg = 'end allcaps: '.var_export($allcaps, true).' cap '. var_export($cap,true).' args ' .var_export($args,true).' eds '.var_export($eds,true);
+	if($cap[0] == 'edit_post')
+	rsvpmaker_log($msg);
 	return $allcaps;
 }
-} // end function exists
+} 
+*/// end function exists
 
 if(!function_exists('get_additional_editors') )
 {
@@ -4550,7 +4560,6 @@ $eds = false;
 	}
 	else
 		$eds = get_post_meta($post_id,'_additional_editors',false);
-
 
 return $eds;
 }
@@ -4647,7 +4656,7 @@ foreach($eds as $user_id)
 if(isset($custom_fields["_meet_recur"][0]));
 	{
 	echo "<strong>".__("Template",'rsvpmaker').' '.__("Editors",'rsvpmaker').":</strong><br />";
-	$t = $custom_fields["_meet_recur"][0];	
+	$t = isset($custom_fields["_meet_recur"][0]) ? $custom_fields["_meet_recur"][0] : 0;	
 
 	$eds = get_post_meta($t,'_additional_editors',false);
 	if($eds)

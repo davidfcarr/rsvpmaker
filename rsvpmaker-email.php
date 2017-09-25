@@ -705,7 +705,7 @@ foreach($recent as $blog)
 	}
 
 ?>
-<h3><?php _e("Add Editor's Note for",'rsvpmaker'); echo $stamp;?></h3>
+<h3 id="editorsnote"><?php _e("Add Editor's Note for",'rsvpmaker'); echo $stamp;?></h3>
 <input type="hidden" name="editorsnote[stamp]" value="<?php echo $stamp; ?>">
 
 <p><?php _e("There are two ways to add an Editor's Note to add to a scheduled email on a specific date.",'rsvpmaker');?></p>
@@ -1021,7 +1021,7 @@ function create_rsvpemail_post_type() {
     ),
     'hierarchical' => false,
     'menu_position' => 20,
-	'menu_icon' => plugins_url('/email.gif',__FILE__),
+	'menu_icon' => 'dashicons-email-alt',
     'supports' => array('title','editor')
     )
   );

@@ -563,7 +563,7 @@ if(isset($atts["posts_per_page"]))
 if(isset($atts["days"]))
 		$datelimit = $atts["days"].' DAY';
 else
-		$datelimit = '30 DAY';
+		$datelimit = '180 DAY';
 
 add_filter('posts_join', 'rsvpmaker_join' );
 add_filter('posts_groupby', 'rsvpmaker_groupby' );
@@ -1502,11 +1502,32 @@ global $rsvp_options;
 $showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
 
 if(isset($atts["post_id"]))
-	$post_id = (int) $atts["post_id"];
+{
+	if($atts["post_id"] == 'next')
+		return rsvpmaker_next($atts);
+	$post_id = (int) $atts["post_id"];	
+}
 elseif(isset($atts["one"]))
 	$post_id = (int) $atts["one"];
 else
 	return;
+
+if(!empty($atts["one_format"]) )
+{
+	if($atts["one_format"] == 'button_only')
+	{
+	$rsvplink = get_permalink($post_id);
+	if(strpos($rsvplink,'?') )
+		$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
+	return sprintf($rsvp_options['rsvplink'],$rsvplink);		
+	}
+	elseif($atts["one_format"] == 'next') {
+		return rsvpmaker_next($atts);
+	}
+	elseif($atts["one_format"] == 'form') {
+		return rsvpmaker_form($atts);
+	}
+}
 $backup_post = $post;
 $backup_query = $wp_query;
 
@@ -1554,11 +1575,9 @@ $wp_query = $backup_query;
 wp_reset_postdata();
 
 return ob_get_clean();
-
 }
 
 add_shortcode("rsvpmaker_one","rsvpmaker_one");
-
 
 function rsvpmaker_form( $atts, $form_content='' ) {
 if(isset($atts["post_id"]))
@@ -1716,4 +1735,21 @@ $o = "<h2>".__("RSVPs",'rsvpmaker')."</h2>\n";
 	$o .= ob_get_clean();
 return $o;
 }
+
+function rsvpmaker_hide_menu ($menu)
+{
+	global $post;
+	if($post->post_type != 'page')
+		return $menu;
+	if(isset($_GET['hide_menu']))
+	{
+		update_post_meta($post->ID,'rsvpmaker_hide_menu',$_GET['hide_menu']);
+		return '';		
+	}
+	elseif(get_post_meta($post->ID,'rsvpmaker_hide_menu',true))
+		return '';
+	return $menu;
+}
+
+add_filter('wp_nav_menu','rsvpmaker_hide_menu');
 ?>
