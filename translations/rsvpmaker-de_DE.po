@@ -49,7 +49,7 @@ msgstr "Nicht festgelegt (optional)"
 
 #: ../rsvpmaker-admin.php:277 ../rsvpmaker-admin.php:1271
 msgid "All day/don't show time in headline"
-msgstr "Den ganzen Tag / zeigen keine Zeit in Überschrift"
+msgstr "Den ganzen Tag / zeige keine Zeit in Überschrift"
 
 #: ../rsvpmaker-admin.php:517
 msgid "Note: This site also implements custom code in"
@@ -97,7 +97,7 @@ msgstr "Teilnehmer-Liste öffentlich"
 
 #: ../rsvpmaker-admin.php:555 ../rsvpmaker-plugabble.php:345
 msgid "Show RSVP Count"
-msgstr "Zeile Anzahl Teilnehmer"
+msgstr "Zeige Anzahl Teilnehmer"
 
 #: ../rsvpmaker-admin.php:558
 msgid "Show RSVP Yes/No Radio Buttons"
@@ -151,7 +151,7 @@ msgstr ""
 "und dem Bemerkungen-Textfeld, werden die Felder vom Shortcode  [rsvpfield "
 "textfield=&quot;fieldname&quot;] oder [rsvpfield selectfield=&quot;"
 "fieldname&quot; options=&quot;option1,option2&quot;] repräsentiert. Es gibt "
-"ebenso einen [rsvpprofiletable show_if_empty=&quot;phone&quot;] shorcode, "
+"ebenso einen [rsvpprofiletable show_if_empty=&quot;phone&quot;] shortcode, "
 "welcher ein optionaler Block ist, der nicht gezeigt wird, wenn die "
 "benötigten Felder (wie Telefonnummer) schon von einer vorherigen Anmeldung "
 "vorhanden sind. Damit dies funktioniert, muss es auch einen schließenden [/"
@@ -213,9 +213,9 @@ msgid ""
 "home/account/public_html/"
 msgstr ""
 "Um PayPal-Zahlungen zu aktivieren, musst du eine Konfigurationsdatei manuell "
-"erstellen. Beispiele sind in dieser Distribution enthalten. Ais "
-"Sicherheitsgründen empfehlen wird, die Datei außerhalb des Wurzelverzeichnis "
-"zu platzieren, zB. unter /home/account/paypal_config.php, wenn sich der Web-"
+"erstellen. Beispiele sind in dieser Distribution enthalten. Aus "
+"Sicherheitsgründen empfehlen wir, die Datei außerhalb des Wurzelverzeichnis "
+"zu platzieren, z.B. unter /home/account/paypal_config.php, wenn sich der Web-"
 "Inhalt unter /home/account/public_html/ befindet."
 
 #: ../rsvpmaker-admin.php:631
@@ -324,7 +324,7 @@ msgstr "SMTP Port"
 
 #: ../rsvpmaker-admin.php:707
 msgid "Send SMTP Test to RSVP To address"
-msgstr "Sende SMTP Test  zum Teilnehmen an Adresse"
+msgstr "Sende SMTP Test zum Teilnehmen an Adresse"
 
 #: ../rsvpmaker-admin.php:713 ../rsvpmaker-plugabble.php:10
 msgid "Additional Editors"
@@ -384,7 +384,7 @@ msgstr "Zeige alle"
 #: ../rsvpmaker-admin.php:868
 msgid "Use this form to enter multiple events quickly with basic formatting"
 msgstr ""
-"Benutze dies Formular, um mehrere Events mit Basis-Formatierung schnell "
+"Benutze dieses Formular, um mehrere Events mit Basis-Formatierung schnell "
 "einzugeben"
 
 #: ../rsvpmaker-admin.php:882 ../rsvpmaker-plugabble.php:2174
@@ -413,7 +413,7 @@ msgstr "Übertrage"
 
 #: ../rsvpmaker-admin.php:1173
 msgid "Enter Recurring Events"
-msgstr "Gebe sich wiederholende Evens ein"
+msgstr "Gib sich wiederholende Events ein"
 
 #: ../rsvpmaker-admin.php:1417
 msgid "Event Dates"
@@ -625,11 +625,11 @@ msgid ""
 "future meetings using the generic template and update those event listings "
 "as needed when the event date grows closer."
 msgstr ""
-"Dieses Formular dient zu Angabe von allgemeinen und Standard-Informationen, "
+"Dieses Formular dient zur Angabe von allgemeinen und Standard-Informationen, "
 "nicht von speziellen Event-Details oder Zeiträumen. Gruppen, die sich "
 "monatlich treffen, können ihren üblichen Zeitplan, den Ort und "
-"Kontaktinformationen eingeben, um die individuellen Evens zu vereinfachen. "
-"Du kannst auch mehrere zukünftige Evens posten, indem du das allgemeine "
+"Kontaktinformationen eingeben, um die individuellen Events zu vereinfachen. "
+"Du kannst auch mehrere zukünftige Events posten, indem du das allgemeine "
 "Template benutzt und die Event-Listen aktualisierst, wenn das Event näher "
 "kommt."
 
@@ -913,7 +913,7 @@ msgstr "Zahle für"
 
 #: ../rsvpmaker-plugabble.php:1281
 msgid "Type the hidden security message"
-msgstr "Tippe die versteckte Sicherheitsnachricht"
+msgstr "Gib die versteckte Sicherheitsnachricht ein"
 
 #: ../rsvpmaker-plugabble.php:1314
 msgid "Error: Security code not entered correctly"
@@ -937,7 +937,7 @@ msgstr "Anmelden für"
 
 #: ../rsvpmaker-plugabble.php:1524
 msgid "Showing future events only"
-msgstr "Zeige nur zukünftige Evens"
+msgstr "Zeige nur zukünftige Events"
 
 #: ../rsvpmaker-plugabble.php:1558
 msgid "RSVP"
@@ -1000,7 +1000,7 @@ msgid ""
 "Profile details on file. To update profile, \n"
 "or RSVP for someone else"
 msgstr ""
-"Profil-Dateils in Datei. Um das Profil upzudaten\n"
+"Profil-Details in Datei. Um das Profil zu aktualisieren\n"
 "oder jemand anderen anzumelden"
 
 #: ../rsvpmaker-plugabble.php:1977
@@ -1216,7 +1216,7 @@ msgstr "Privat"
 
 #: ../rsvpmaker.php:114
 msgid "RSVP Events"
-msgstr "RSVP Evens"
+msgstr "RSVP Events"
 
 #: ../rsvpmaker.php:121
 msgid "Add New Event"
