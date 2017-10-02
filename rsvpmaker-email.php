@@ -1339,6 +1339,12 @@ $listId = $chimp_options["chimp-list"];
 
 	foreach($emails as $email)
 		{
+			$email = strtolower($email);
+			$unique[$email] = $email;
+		}
+	sort($unique);
+	foreach($unique as $email)
+		{
 		$email = strtolower($email);
 		$hash = md5($email);
 		if(!empty($_POST["in_mailchimp"]))

@@ -60,7 +60,9 @@
 							{text: 'Event with Form', value: ''},
 							{text: 'Event with Button', value: 'button'},
 							{text: 'Form Only', value: 'form'},
-							{text: 'Button Only', value: 'button_only'}
+							{text: 'Button Only', value: 'button_only'},
+							{text: 'Compact (Headline/Date/Button)', value: 'compact'},
+							{text: 'Dates Only', value: 'embed_dateblock'}
 						],
 						tooltip: 'Output format (does not apply to "Next")'
 					},

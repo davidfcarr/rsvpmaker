@@ -428,10 +428,7 @@ function rsvpmaker_select($select) {
 
 function rsvpmaker_join($join) {
   global $wpdb;
-
-    $join .= " JOIN ".$wpdb->postmeta." ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'";
-
-  return $join;
+    return $join." JOIN ".$wpdb->postmeta." ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'";
 }
 
 function rsvpmaker_groupby($groupby) {
@@ -618,12 +615,8 @@ if(isset($atts["past"]) && $atts["past"])
 	remove_filter('posts_where', 'rsvpmaker_where_past' );
 	remove_filter('posts_orderby', 'rsvpmaker_orderby_past' );
 	}
-else
-	{
-	remove_filter('posts_where', 'rsvpmaker_where' );
-	remove_filter('posts_orderby', 'rsvpmaker_orderby' );
-	}
-
+remove_filter('posts_where', 'rsvpmaker_where' );
+remove_filter('posts_orderby', 'rsvpmaker_orderby' );
 
 ob_start();
 
@@ -726,7 +719,6 @@ elseif(isset($_GET["startday"]))
 	}
 else
 	$d = ' CURDATE() ';
-
 	return $where . " AND meta_value > ".$d.' AND meta_value < DATE_ADD('.$d.', INTERVAL 5 WEEK) ';
 }
 
@@ -770,7 +762,7 @@ $backup = $wp_query;
 
 //removing groupby, which interferes with display of multi-day events
 add_filter('posts_join', 'rsvpmaker_join' );
-add_filter('posts_where', 'rsvpmaker_calendar_where' );
+add_filter('posts_where', 'rsvpmaker_calendar_where',99 );
 add_filter('posts_orderby', 'rsvpmaker_orderby' );
 add_filter('posts_groupby', 'rsvpmaker_calendar_clear' );
 add_filter('posts_distinct', 'rsvpmaker_calendar_clear' );
@@ -795,7 +787,7 @@ $wp_query = new WP_Query($querystring);
 
 // clean up so this doesn't interfere with other operations
 remove_filter('posts_join', 'rsvpmaker_join' );
-remove_filter('posts_where', 'rsvpmaker_calendar_where' );
+remove_filter('posts_where', 'rsvpmaker_calendar_where',99 );
 remove_filter('posts_orderby', 'rsvpmaker_orderby' );
 remove_filter('posts_groupby', 'rsvpmaker_calendar_clear' );
 remove_filter('posts_distinct', 'rsvpmaker_calendar_clear' );
@@ -1026,14 +1018,12 @@ function rsvpmaker_template_fields($select) {
 
 function rsvpmaker_template_join($join) {
   global $wpdb;
-  $join .= " JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID ";
-
-  return $join;
+  return $join." JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID ";
 }
 
 function rsvpmaker_template_where($where) {
 
-	return $where . " AND meta_key='_sked'";
+	return " meta_key='_sked'";
 
 }
 
@@ -1093,6 +1083,13 @@ if(!empty($atts['end']))
 return $content;
 
 }
+
+function debug_request_rsvp($sql) {
+	rsvpmaker_debug_log($sql);
+	return $sql;
+}
+
+add_filter('posts_request','debug_request_rsvp');
 
 add_shortcode('rsvpmaker_timed','rsvpmaker_timed');
 
@@ -1516,16 +1513,29 @@ if(!empty($atts["one_format"]) )
 {
 	if($atts["one_format"] == 'button_only')
 	{
-	$rsvplink = get_permalink($post_id);
-	if(strpos($rsvplink,'?') )
-		$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
-	return sprintf($rsvp_options['rsvplink'],$rsvplink);		
+	if(is_rsvpmaker_future($post_id)) 
+		{
+		$rsvplink = get_permalink($post_id);
+		if(strpos($rsvplink,'?') )
+			$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
+		return sprintf($rsvp_options['rsvplink'],$rsvplink);				
+		}
+	else
+		{
+		return __('Event date is past','rsvpmaker');
+		}
 	}
 	elseif($atts["one_format"] == 'next') {
 		return rsvpmaker_next($atts);
 	}
+	elseif($atts["one_format"] == 'embed_dateblock') {
+		return rsvpmaker_next($atts);
+	}
 	elseif($atts["one_format"] == 'form') {
 		return rsvpmaker_form($atts);
+	}
+	elseif($atts["one_format"] == 'compact') {
+		return rsvpmaker_compact($atts);
 	}
 }
 $backup_post = $post;
@@ -1577,6 +1587,84 @@ wp_reset_postdata();
 return ob_get_clean();
 }
 
+function rsvpmaker_compact ($atts)
+{
+global $post;
+global $wp_query;
+global $wpdb;
+global $showbutton;
+global $startday;
+global $rsvp_options;
+if(isset($atts["post_id"]))
+{
+	$post_id = (int) $atts["post_id"];	
+}
+elseif(isset($atts["one"]))
+	$post_id = (int) $atts["one"];
+else
+	return;
+	
+$backup_post = $post;
+$backup_query = $wp_query;
+
+$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1&p=".$post_id;
+
+$wp_query = new WP_Query($querystring);
+$wp_query->is_single = false;
+
+global $rsvp_options;
+$time_format = $rsvp_options["time_format"];
+if(!strpos($time_format,'%Z'))
+	{
+	if(get_post_meta($post_id,'_add_timezone',true))
+		$time_format .= ' %Z';
+	}
+
+ob_start();
+
+echo '<div class="rsvpmaker_compact">';
+
+if ( have_posts() ) {
+global $events_displayed;
+while ( have_posts() ) : the_post();
+
+	$datestamp = get_rsvp_date($post_id);
+	$dur = get_post_meta($post_id,'_'.$datestamp, true);
+	fix_timezone();
+	$t = strtotime($datestamp);
+	$dateblock = ', '.utf8_encode(strftime($rsvp_options["short_date"],$t));
+	if($dur != 'allday')
+		{
+		$dateblock .= strftime(', '.$time_format,$t);
+		}
+	// dchange
+	$dateblock = str_replace(':00','',$dateblock);
+	
+?>
+<div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
+<p class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><?php the_title(); echo $dateblock; ?></span></p>
+<?php
+if(is_rsvpmaker_future($post_id))
+{
+	$rsvplink = get_permalink($post_id);
+	if(strpos($rsvplink,'?') )
+		$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
+	printf($rsvp_options['rsvplink'],$rsvplink);	
+}
+	else
+		_e('Event date is past','rsvpmaker');
+endwhile;
+}
+echo '</div></div><!-- end rsvpmaker_upcoming -->';
+
+$wp_query = $backup_query;
+wp_reset_postdata();
+
+return ob_get_clean();
+}
+
+
+
 add_shortcode("rsvpmaker_one","rsvpmaker_one");
 
 function rsvpmaker_form( $atts, $form_content='' ) {
@@ -1586,8 +1674,13 @@ elseif(isset($atts["one"]))
 	$post_id = (int) $atts["one"];
 else
 	return;
+	
+if(!is_rsvpmaker_future($post_id)) 
+	return __('Event date is past','rsvpmaker');
+	
 global $post;
 global $wp_query;
+global $rsvp_options;
 $backup_post = $post;
 $backup_query = $wp_query;
 $post = get_post($post_id);
@@ -1649,6 +1742,7 @@ if($captcha)
 <?php
 do_action('rsvpmaker_after_captcha');
 }
+rsvpmaker_recaptcha_output();
 global $rsvp_required_field;
 if(isset($rsvp_required_field) )
 	echo '<div id="jqerror"></div><input type="hidden" name="required" value="'.implode(",",$rsvp_required_field).'" />';
@@ -1660,6 +1754,32 @@ if(isset($rsvp_required_field) )
 </form>	
 <?php
 return ob_get_clean();
+}
+
+function rsvpmaker_recaptcha_output() {
+global $rsvp_options;
+if(!empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
+	{
+?>
+<div class="g-recaptcha" data-sitekey="<?php echo $rsvp_options["rsvp_recaptcha_site_key"]; ?>"></div>
+<script type="text/javascript"
+		src="https://www.google.com/recaptcha/api.js?hl=<?php echo get_locale(); ?>">
+</script>
+<?php	
+	}
+
+}
+
+function rsvpmaker_recaptcha_check ($siteKey,$secret) {
+require_once 'recaptcha-master/src/autoload.php';
+if (!isset($_POST['g-recaptcha-response']))
+	return false;
+	$recaptcha = new \ReCaptcha\ReCaptcha($secret);
+    $resp = $recaptcha->verify($_POST['g-recaptcha-response'], $_SERVER['REMOTE_ADDR']);
+	if ($resp->isSuccess())
+		return true;
+	else
+		return false;
 }
 
 add_filter('the_content','timezone_js',99);
@@ -1741,15 +1861,47 @@ function rsvpmaker_hide_menu ($menu)
 	global $post;
 	if($post->post_type != 'page')
 		return $menu;
-	if(isset($_GET['hide_menu']))
-	{
-		update_post_meta($post->ID,'rsvpmaker_hide_menu',$_GET['hide_menu']);
-		return '';		
-	}
-	elseif(get_post_meta($post->ID,'rsvpmaker_hide_menu',true))
+	if(get_post_meta($post->ID,'rsvpmaker_hide_menu',true))
 		return '';
 	return $menu;
 }
 
 add_filter('wp_nav_menu','rsvpmaker_hide_menu');
+
+function rsvplanding_register_meta_boxes() {
+    add_meta_box( 'rsvplanding-box-id', __( 'Hide The Menu on This Page', 'rsvpmaker' ), 'rsvplanding_my_display_callback', 'page', 'advanced', 'low' );
+}
+add_action( 'add_meta_boxes', 'rsvplanding_register_meta_boxes' );
+
+function rsvplanding_my_display_callback( $post ) {
+$on = get_post_meta($post->ID,'rsvpmaker_hide_menu',true);
+$checked = ($on) ? ' checked="checked" ' : '';
+printf('<input type="checkbox" name="rsvpmaker_hide_menu" value="1" %s> Hide menu (<em>Turn a full-width page template into a landing page</em>)', $checked);
+wp_nonce_field( 'rsvpmaker_hide_menu_action', 'rsvpmaker_hide_menu_nonce' );
+	// Display code/markup goes here. Don't forget to include nonces!
+}
+
+function rsvplanding_save_meta_box( $post_id ) {
+	if(isset($_POST['rsvpmaker_hide_menu_nonce']) && wp_verify_nonce( $_POST['rsvpmaker_hide_menu_nonce'], 'rsvpmaker_hide_menu_action' ))
+		update_post_meta($post_id,'rsvpmaker_hide_menu',isset($_POST['rsvpmaker_hide_menu']));
+}
+add_action( 'save_post', 'rsvplanding_save_meta_box' );
+
+function clear_rsvp_cookies () {
+	if(isset($_GET['clear']))
+	{
+		if(isset($_COOKIE))
+			foreach($_COOKIE as $name => $value)
+			{
+				if(strpos($name,'svp_for'))
+				{
+					setcookie($name,0);//set to no value
+					echo ' clear '.$name;
+				}
+			}
+	}
+}
+
+add_action('wp','clear_rsvp_cookies');
+
 ?>

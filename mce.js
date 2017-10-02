@@ -56,10 +56,9 @@
 			
 			var calendar = '1';
 			var posts_per_page = '10';
-			var days = '28';
+			var days = '180';
 			var type = '';
-			var one = '';
-			var hideauthor = '0';
+			var hideauthor = '1';
 			var past = '0';
 			var no_events = 'No events currently listed';
 			var nav = 'bottom';
@@ -75,8 +74,6 @@
 				type = v.type;
 			if (v.hideauthor)
 				hideauthor = v.hideauthor;
-			if (v.one)
-				one = v.one;
 			if (v.past)
 				past = v.past;
 			if (typeof v.no_events != 'undefined')
@@ -174,14 +171,6 @@
 					},
 					{
 						type: 'listbox',
-						name: 'one',
-						label: 'Target One Post',
-						value: one,
-						'values': upcoming,
-						tooltip: 'Upcoming or past (reverse chronology)'
-					},
-					{
-						type: 'listbox',
 						name: 'past',
 						label: 'Upcoming Events?',
 						value: past,
@@ -204,7 +193,7 @@
 					}
 				],
 				onsubmit: function( e ) {
-					var shortcode_str = '[' + sh_tag + ' calendar="'+e.data.calendar+'"' + ' days="'+e.data.days+'"' + ' posts_per_page="'+e.data.posts_per_page+'"'+ ' type="'+e.data.type+'"'+ ' one="'+e.data.one+'"'+ ' hideauthor="'+e.data.hideauthor+'"'+ ' past="'+e.data.past+'"'+ ' no_events="'+e.data.no_events+'"'+ ' nav="'+e.data.nav+'"]'+'\n\n';
+					var shortcode_str = '[' + sh_tag + ' calendar="'+e.data.calendar+'"' + ' days="'+e.data.days+'"' + ' posts_per_page="'+e.data.posts_per_page+'"'+ ' type="'+e.data.type+'"'+ ' hideauthor="'+e.data.hideauthor+'"'+ ' past="'+e.data.past+'"'+ ' no_events="'+e.data.no_events+'"'+ ' nav="'+e.data.nav+'"]'+'\n\n';
 					//insert shortcode to tinymce
 					editor.insertContent( shortcode_str);
 				}
@@ -245,7 +234,6 @@
 					posts_per_page   : getAttr(title,'posts_per_page'),
 					days   : getAttr(title,'days'),
 					type   : getAttr(title,'type'),
-					one   : getAttr(title,'one'),
 					hideauthor   : getAttr(title,'hideauthor'),
 					past   : getAttr(title,'past'),
 					no_events   : getAttr(title,'no_events'),

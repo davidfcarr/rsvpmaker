@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 4.8.1
-Stable tag: 4.7.9
+Tested up to: 4.8.2
+Stable tag: 4.8.9
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -21,7 +21,7 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 * Collect money using PayPal.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
 
-https://www.youtube.com/watch?v=Qgp4Ugr-n_Q
+https://www.youtube.com/watch?v=a85yK-yCBOg
 
 Creating and Managing Events
 
@@ -114,6 +114,26 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.8.9 =
+
+* Added embed_dateblock shortcode
+* Bug fix, properly removing calendar sql filter
+* Bug fix, css for admin screens
+
+= 4.8.8 =
+
+* Event templates can now be set to let RSVPMaker automatically add dates to the end of the specified schedule
+* Fixed a bug with the recording of timeslot signups (often used to enroll volunteers for specific shifts)
+
+= 4.8.7 =
+
+* Adding support for Google ReCaptcha by incorporating Google's PHP library
+
+= 4.8 =
+
+* Never show "0 signed up so far" (start at 1)
+* Checkbox for pages to supress the display of page menu on the front end. Intended as a simple way of turning a full width page template into a landing page, reducing temptation for visitors to click away rather than completing a call to action such as registering for an event embedded in the page.
 
 = 4.7.9 =
 

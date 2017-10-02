@@ -150,6 +150,10 @@ margin-top: 5px;
 div.guest_blank {
 margin-top: 20px;
 }
+.rsvpmaker-compact-title {
+	font-weight: bold;
+	font-size: large;
+}
 
 
 /*! jQuery UI - v1.11.4 - 2016-05-11

@@ -2,8 +2,8 @@
 jQuery(document).ready(function( $ ) {
 
 	$(document).on( 'click', '.nav-tab-wrapper a', function() {
-		$('section').hide();
-		$('section').eq($(this).index()).show();
+		$('section.rsvpmaker').hide();
+		$('section.rsvpmaker').eq($(this).index()).show();
 		return false;
 	});
 
