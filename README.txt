@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8.2
-Stable tag: 4.8.9
+Stable tag: 4.9.1
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,16 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.9.1 =
+
+* Changed the way the "additional editors" function works, if activated in settings. This allows users with authoring but not editing rights to share the right to edit an RSVPMaker event or all the events based on a particular template. To make this work more reliably, the author ID # on the post is now changed when another authorized user (designated by the original author) updates the post.
+* Events embedded in a post or page using the rsvpmaker_one shortcode can now be set to automatically stop displaying when the event date is past.
+* Added new RSVP Mailer options for sending to all past event attendees or all who registered within a specified timeframe.
+
+= 4.9 =
+
+* Test for PHP version before loading code that requires namespace support (introduced in PHP 5.3). Required for ReCaptcha library.
 
 = 4.8.9 =
 

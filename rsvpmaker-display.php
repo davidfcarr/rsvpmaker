@@ -1497,7 +1497,7 @@ global $showbutton;
 global $startday;
 global $rsvp_options;
 $showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
-
+	
 if(isset($atts["post_id"]))
 {
 	if($atts["post_id"] == 'next')
@@ -1509,6 +1509,13 @@ elseif(isset($atts["one"]))
 else
 	return;
 
+if(!empty($atts["hide_past"]))
+{
+$offset = $atts["hide_past"];
+if(!is_rsvpmaker_future($post_id, $offset))
+	return;
+}
+	
 if(!empty($atts["one_format"]) )
 {
 	if($atts["one_format"] == 'button_only')
@@ -1529,7 +1536,7 @@ if(!empty($atts["one_format"]) )
 		return rsvpmaker_next($atts);
 	}
 	elseif($atts["one_format"] == 'embed_dateblock') {
-		return rsvpmaker_next($atts);
+		return embed_dateblock($atts);
 	}
 	elseif($atts["one_format"] == 'form') {
 		return rsvpmaker_form($atts);
@@ -1754,32 +1761,6 @@ if(isset($rsvp_required_field) )
 </form>	
 <?php
 return ob_get_clean();
-}
-
-function rsvpmaker_recaptcha_output() {
-global $rsvp_options;
-if(!empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
-	{
-?>
-<div class="g-recaptcha" data-sitekey="<?php echo $rsvp_options["rsvp_recaptcha_site_key"]; ?>"></div>
-<script type="text/javascript"
-		src="https://www.google.com/recaptcha/api.js?hl=<?php echo get_locale(); ?>">
-</script>
-<?php	
-	}
-
-}
-
-function rsvpmaker_recaptcha_check ($siteKey,$secret) {
-require_once 'recaptcha-master/src/autoload.php';
-if (!isset($_POST['g-recaptcha-response']))
-	return false;
-	$recaptcha = new \ReCaptcha\ReCaptcha($secret);
-    $resp = $recaptcha->verify($_POST['g-recaptcha-response'], $_SERVER['REMOTE_ADDR']);
-	if ($resp->isSuccess())
-		return true;
-	else
-		return false;
 }
 
 add_filter('the_content','timezone_js',99);

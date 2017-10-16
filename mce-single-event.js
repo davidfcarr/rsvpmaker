@@ -18,6 +18,7 @@
 			var hideauthor = '1';
 			var showbutton = '0';
 			var post_id = [0,'Not Set'];
+			var hide_past = '';
 			
 			if (v.one_format)
 				one_format = v.one_format;
@@ -29,6 +30,8 @@
 				hideauthor = v.hideauthor;
 			if (v.post_id)
 				post_id = v.post_id;
+			if (v.hide_past)
+				hide_past = v.hide_past;
 						
 			editor.windowManager.open( {
 				title: 'Embed Single Event in Page',
@@ -68,6 +71,27 @@
 					},
 					{
 						type: 'listbox',
+						name: 'hide_past',
+						label: 'Hide After',
+						value: hide_past,
+						'values': [
+							{text: 'None', value: ''},
+							{text: '1 hour', value: '1'},
+							{text: '2 hours', value: '2'},
+							{text: '3 hours', value: '3'},
+							{text: '4 hours', value: '4'},
+							{text: '5 hours', value: '5'},
+							{text: '6 hours', value: '6'},
+							{text: '7 hours', value: '7'},
+							{text: '8 hours', value: '8'},
+							{text: '12 hours', value: '12'},
+							{text: '18 hours', value: '18'},
+							{text: '24 hours', value: '24'}
+						],
+						tooltip: 'Prevents display when event is past'
+					},
+					{
+						type: 'listbox',
 						name: 'hideauthor',
 						label: 'Show Author/Post Date',
 						value: hideauthor,
@@ -93,6 +117,8 @@
 					var shortcode_str = '[' + shortcode_tag + ' post_id="'+post_id+'"'+ ' hideauthor="'+e.data.hideauthor+'"'+ ' showbutton="'+showbutton+'"';
 					if(format)
 					shortcode_str = shortcode_str.concat(' one_format="'+format+'"');
+					if(e.data.hide_past)
+					shortcode_str = shortcode_str.concat(' hide_past="'+e.data.hide_past+'"');
 					if(e.data.type)
 					shortcode_str = shortcode_str.concat(' type="'+e.data.type+'"');
 					shortcode_str = shortcode_str.concat(']');

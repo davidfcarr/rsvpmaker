@@ -1171,13 +1171,23 @@ if(!empty($_POST["preview"]))
 
 if(!empty($_POST["attendees"]) && !empty($_POST["event"]))
 {
-$event = (int) $_POST["event"];
-$event_post = get_post($event);
 $unsub = get_option('rsvpmail_unsubscribed');
 if(empty($unsub)) $unsub = array();
+
+if($_POST["event"] == 'any')
+{
+$sql = "SELECT DISTINCT email 
+FROM  `".$wpdb->prefix."rsvpmaker`";
+$title = 'one of our previous events';	
+}
+else {
+$event = (int) $_POST["event"];
+$event_post = get_post($event);
 $sql = "SELECT * 
 FROM  `".$wpdb->prefix."rsvpmaker` 
 WHERE  `event` = ".$event." ORDER BY  `email` ASC";
+$title = $event_post->post_title;
+}
 $results = $wpdb->get_results($sql);
 if(!empty($results))
 {
@@ -1193,14 +1203,50 @@ foreach($results as $row)
 	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
 	$mail["fromname"] =  stripslashes($_POST["from_name"]);
 	$mail["subject"] =  stripslashes($_POST["subject"]);
-	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title);
-	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title);
+	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title);
+	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title);
 	rsvpmailer($mail);
 	}
 }
 
 }
 
+if(!empty($_POST["rsvps_since"]) && !empty($_POST["since"]))
+{
+$unsub = get_option('rsvpmail_unsubscribed');
+if(empty($unsub)) $unsub = array();
+
+$t = strtotime('-'.$_POST["since"].' days');
+
+$date = date('Y-m-d',$t);
+
+$sql = "SELECT DISTINCT email 
+FROM  `".$wpdb->prefix."rsvpmaker` WHERE `timestamp` > '$date'";
+$title = 'one of our previous events';
+
+$results = $wpdb->get_results($sql);
+if(!empty($results))
+{
+echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('RSVPs within the last ','rsvpmaker').' '.$_POST["since"].' days</p>';
+foreach($results as $row)
+	{
+	if(in_array(strtolower($row->email),$unsub))
+		{
+			$unsubscribed[] = $row->email;
+			continue;
+		}
+	$mail["to"] = $row->email;
+	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
+	$mail["fromname"] =  stripslashes($_POST["from_name"]);
+	$mail["subject"] =  stripslashes($_POST["subject"]);
+	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title);
+	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title);
+	rsvpmailer($mail);
+	}
+}
+
+}	
+	
 if(!empty($_POST["members"]))
 {
 $users = get_users();
@@ -1310,7 +1356,10 @@ echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 }
 
 ?>
-<div><input type="checkbox" name="attendees" value="1"> <?php _e('Attendees','rsvpmaker');?> <select name="event"><?php echo get_events_dropdown (); ?></select></div>
+	<div><input type="checkbox" name="attendees" value="1"> <?php _e('Attendees','rsvpmaker');?> <select name="event"><option value=""><?php _e('Select Event','rsvpmaker');?></option><option value="any"><?php _e('Any event','rsvpmaker');?></option><?php echo get_events_dropdown (); ?></select></div>
+
+	<div><input type="checkbox" name="rsvps_since" value="1"> <?php _e('RSVPs more recent than ','rsvpmaker');?> <input type="text" name="since" value="30" /> <?php _e('Days','rsvpmaker');?></div>
+
 <?php
 do_action("rsvpmaker_email_send_ui_options");
 

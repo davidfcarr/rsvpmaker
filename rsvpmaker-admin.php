@@ -516,8 +516,10 @@ echo $label;
                   $newoptions['rsvpmaker_send_confirmation_email'] = (isset($_POST["option"]['rsvpmaker_send_confirmation_email']) && $_POST["option"]['rsvpmaker_send_confirmation_email']) ? 1 : 0;
                   $newoptions["login_required"] = (isset($_POST["option"]["login_required"]) && $_POST["option"]["login_required"]) ? 1 : 0;
                   $newoptions["rsvp_captcha"] = (isset($_POST["option"]["rsvp_captcha"]) && $_POST["option"]["rsvp_captcha"]) ? 1 : 0;
+				  if(isset($_POST["option"]["rsvp_recaptcha_site_key"])) {
                   $newoptions["rsvp_recaptcha_site_key"] = $_POST["option"]["rsvp_recaptcha_site_key"];
-                  $newoptions["rsvp_recaptcha_secret"] = $_POST["option"]["rsvp_recaptcha_secret"];
+                  $newoptions["rsvp_recaptcha_secret"] = $_POST["option"]["rsvp_recaptcha_secret"];		  
+				  }
                   $newoptions["rsvp_yesno"] = (isset($_POST["option"]["rsvp_yesno"]) && $_POST["option"]["rsvp_yesno"]) ? 1 : 0;
                   $newoptions["calendar_icons"] = (isset($_POST["option"]["calendar_icons"]) && $_POST["option"]["calendar_icons"]) ? 1 : 0;
                   $newoptions["convert_timezone"] = (isset($_POST["option"]["convert_timezone"]) && $_POST["option"]["convert_timezone"]) ? 1 : 0;
@@ -636,11 +638,16 @@ if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 <?php _e('check to turn on by default','rsvpmaker'); ?>	<br />    
 
 <input type="checkbox" name="option[rsvp_captcha]" value="1" <?php if(isset($options["rsvp_captcha"]) && $options["rsvp_captcha"]) echo ' checked="checked" ';?> /> <strong><?php _e('RSVP CAPTCHA On','rsvpmaker'); ?></strong> <?php _e('check to turn on by default','rsvpmaker'); ?><br />
-
+<?php
+if(function_exists('rsvpmaker_recaptcha_output'))
+{
+?>
 <strong>Or use Google ReCaptcha </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a><br />
 ReCaptcha Site Key: <input type="text" name="option[rsvp_recaptcha_site_key]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_site_key"]) echo $options["rsvp_recaptcha_site_key"];?>"><br />
 ReCaptcha Secret: <input type="text" name="option[rsvp_recaptcha_secret]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_secret"]) echo $options["rsvp_recaptcha_secret"];?>"><br />
-
+<?php
+}
+?>
 <input type="checkbox" name="option[login_required]" value="1" <?php if(isset($options["login_required"]) && $options["login_required"]) echo ' checked="checked" ';?> /> <strong><?php _e('Login Required to RSVP','rsvpmaker'); ?></strong> <?php _e('check to turn on by default','rsvpmaker'); ?>
 <br />
 
@@ -1946,6 +1953,9 @@ add_action('manage_posts_extra_tablenav','rsvpmaker_sort_message');
 
 function rsvpmaker_get_projected($template) {
 
+if(!isset($template["week"]))
+	return;
+
 //backward compatability
 if(is_array($template["week"]))
 	{
@@ -2591,7 +2601,7 @@ function rsvp_mce_plugins ( $plugin_array ) {
 		return $plugin_array;
 	
     $plugin_array['rsvpmaker_upcoming'] = plugins_url( 'mce.js?v=2.2' , __FILE__ );
-    $plugin_array['rsvpmaker_one'] = plugins_url( 'mce-single-event.js?v=2' , __FILE__ );
+    $plugin_array['rsvpmaker_one'] = plugins_url( 'mce-single-event.js?v=2.4' , __FILE__ );
     return $plugin_array;
 }
 add_filter( 'mce_external_plugins', 'rsvp_mce_plugins', 10000);
@@ -2971,34 +2981,31 @@ global $rsvp_options;
 $upload_dir   = wp_upload_dir();
  
 if ( ! empty( $upload_dir['basedir'] ) ) {
-    $fname = $upload_dir['basedir'].'/rsvpmaker_log.txt';
+    $fname = $upload_dir['basedir'].'/rsvpmaker_log_'.date('Y-m-d').'.txt';
 	file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
 }
 
 }
 
-function is_rsvpmaker_additional_editor($user_id,$post_id) {
-global $wpdb;
-$is_editor = false;
-	$recurid = get_post_meta($post_id,'_meet_recur',true);
-	if($recurid)
-		$sql = "SELECT meta_value FROM $wpdb->postmeta WHERE (post_id=$recurid OR post_id=$post_id) AND meta_value=$user_id AND meta_key='_additional_editors'";
-	else
-		$sql = "SELECT meta_value from $wpdb->postmeta WHERE post_id=$post_id AND meta_value=$user_id AND meta_key='_additional_editors'";
-	$is_editor = $wpdb->get_var($sql);
-//die($sql);
-	return $is_editor;
-}
-
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
     if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
     {
-        $post_id = $args[0];
-		if(is_rsvpmaker_additional_editor($user_id,$post_id) )
+        global $wpdb;
+		$post_id = $args[0];
+		$author = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID=".$post_id);
+		$eds = get_additional_editors($post_id);
+		if(!current_user_can($cap[0]) && ($author != $user_id) && in_array($user_id, $eds) )
         {
             /* Set an empty array for the caps. */
             $caps = array(); 
             $caps[] = 'edit_rsvpmakers';
+			if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
+			{
+			//if the current author is not already on the editors list, add them
+			if(!$wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key='_additional_editors' AND meta_value=$author"))
+				add_post_meta($post_id, '_additional_editors',$author);				
+			wp_update_post(array('ID' => $post_id, 'post_author' => $user_id));
+			}
         }
     }
     /* Return the capabilities required by the user. */
@@ -3014,6 +3021,8 @@ if(!empty($sofar))
 	$fts = strtotime($farthest->datetime);
 }
 $sked = get_post_meta($template_id,'_sked',true);
+if(!isset($sked["week"]))
+	return;
 rsvpmaker_debug('sked for t='.$template_id.' '.var_export($sked,true));
 $projected = rsvpmaker_get_projected($sked);
 rsvpmaker_debug('projected '.var_export($projected,true));
@@ -3063,43 +3072,22 @@ function add_rsvpmaker_from_template($t, $template, $date) {
 				add_post_meta($postID,'_meet_recur',$t,true);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$postID);
 				update_post_meta($postID,"_updated_from_template",$ts);
-				$terms = get_the_terms( $t, 'rsvpmaker-type' );						
-				if ( $terms && ! is_wp_error( $terms ) ) { 
-					$rsvptypes = array();
-
-					foreach ( $terms as $term ) {
-						$rsvptypes[] = $term->term_id;
-					}
-				wp_set_object_terms( $postID, $rsvptypes, 'rsvpmaker-type', true );
 				}
-
-//copy metadata
-$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$t");
-	rsvpmaker_debug_log('autorenew source metadata '.var_export($post_meta_infos,true));
-		if (count($post_meta_infos)!=0) {
-			$sql_query = "INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value) ";
-			foreach ($post_meta_infos as $meta_info) {
-				$meta_key = $meta_info->meta_key;
-				if(($meta_key == '_rsvp_reminder') || ($meta_key == '_sked')  || ($meta_key == '_edit_lock'))
-					continue;
-				$meta_value = addslashes($meta_info->meta_value);
-				$sql_query_sel[]= "SELECT $postID, '$meta_key', '$meta_value'";
-			}
-			$sql_query.= implode(" UNION ALL ", $sql_query_sel);
-			rsvpmaker_debug_log('autorenew metadata sql '.var_export($sql_query,true));
-			$wpdb->query($sql_query);
-		}
-				
-	}//end successful post insert	
+		rsvpmaker_copy_metadata($t, $postID);
 }
 
 function rsvpautorenew_test () {
 global $rsvp_options;
-if(empty($rsvp_options["debug"]))
-	return;
 	
 	global $wpdb;
 	$wpdb->show_errors();
+
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='rsvpautorenew'
+	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_sked'  
+	 WHERE a1.meta_value = 1";
+
 	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' ";
 	//echo $sql;
 	$results = $wpdb->get_results($sql);
@@ -3113,4 +3101,39 @@ if(empty($rsvp_options["debug"]))
 
 add_shortcode('rsvpautorenew_test','rsvpautorenew_test');
 
+function rsvpmaker_copy_metadata($source_id, $target_id) {
+global $wpdb;
+//copy metadata
+$meta_keys = array();
+$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$source_id");
+$post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
+
+		if (count($post_meta_infos)!=0) {
+			foreach ($post_meta_infos as $meta_info) {
+				$meta_key = $meta_info->meta_key;
+				if(in_array($meta_key,$meta_keys))
+					continue;
+				$meta_keys[] = $meta_key;
+				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew');
+				if(in_array($meta_key, $meta_protect) )
+					continue;
+				if(is_serialized($meta_info->meta_value))
+					update_post_meta($target_id,$meta_key,unserialize($meta_info->meta_value));
+				else
+					update_post_meta($target_id,$meta_key,$meta_info->meta_value);
+			}
+		}
+
+$terms = get_the_terms( $source_id, 'rsvpmaker-type' );						
+if ( $terms && ! is_wp_error( $terms ) ) { 
+	$rsvptypes = array();
+
+	foreach ( $terms as $term ) {
+		$rsvptypes[] = $term->term_id;
+	}
+wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
+
+	} // if terms
+
+}
 ?>

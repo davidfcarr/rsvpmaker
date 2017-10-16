@@ -3,9 +3,9 @@
 /*
 Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
-Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together.RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>.
+Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together.RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>
 Author: David F. Carr
-Version: 4.8.9
+Version: 4.9.1
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
@@ -160,6 +160,10 @@ include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-admin.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-display.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-plugabble.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-email.php";
+
+if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+    include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-recaptcha.php";
+}
 
 add_action( 'init', 'rsvpmaker_create_post_type' );
 
@@ -762,4 +766,29 @@ function rsvpmaker_before_post_display_action (){
 
 add_action('wp','rsvpmaker_before_post_display_action');
 
+add_action('init','add_rsvpmaker_roles');
+
+function add_rsvpmaker_roles() {
+$rsvpmakereditor = get_role('rsvpmakereditor');
+if(!$rsvpmakereditor)
+
+add_role( 'rsvpmakereditor', 'RSVPMaker Editor', array( 
+'read' => true,
+'upload_files' => true,
+'delete_posts' => true,
+'delete_private_posts' => true,
+'delete_published_posts' => true,
+'edit_posts' => true,
+'edit_private_posts' => true,
+'edit_published_posts' => true,
+'publish_posts' => true,
+'delete_others_rsvpmakers' => true,
+'delete_rsvpmakers' => true,
+'edit_rsvpmakers' => true,
+'edit_others_rsvpmakers' => true,
+'edit_published_rsvpmakers' => true,
+'publish_rsvpmakers' => true,
+'read_private_rsvpmakers' => true
+ ) );
+}
 ?>

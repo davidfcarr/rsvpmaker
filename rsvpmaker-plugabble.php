@@ -243,13 +243,8 @@ jQuery(function () {
 </script>
 
 <p><?php _e('Stop date (optional)','rsvpmaker');?>: <input type="text" name="sked[stop]" value="<?php if(isset($template["stop"])) echo $template["stop"];?>" placeholder="<?php _e('example','rsvpmaker'); echo ": ".date('Y').'-12-31' ?>" /> <em>(<?php _e('format','rsvpmaker'); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
-<?php
-if(!empty($rsvp_options["debug"]))
-{
-?>
 <p><input type="checkbox" name="rsvpautorenew" id="rsvpautorenew" <?php if(get_post_meta($post->ID,'rsvpautorenew',true)) echo 'checked="checked"'?> /> <?php _e('Automatically add dates according to this schedule','rsvpmaker');?></em></p>
 <?php
-}
 
 $h = (int) $template["hour"];
 $minutes = $template["minutes"];
@@ -578,8 +573,10 @@ if(isset($custom_fields["_per"][0]))
 	{
 	$per = unserialize($custom_fields["_per"][0]);
 	}
-else
+
+ if(empty($per["unit"][0]))
 	{
+	$per = array();
 	$per["unit"][0] = __("Tickets",'rsvpmaker');
 	}
 
@@ -2528,10 +2525,8 @@ $results = $wpdb->get_results($sql);
 
 	if(isset($rsvp_options["debug"]))
 		{
-		echo "<p>$sql</p>";
-		echo "<pre>Results:\n";
-		print_r($results);
-		echo "</pre>";
+		rsvpmaker_debug_log('rsvp_report sql '.$sql);
+		rsvpmaker_debug_log('rsvp_report sql '.var_export($results,true));
 		}
 
 if($results)
@@ -3057,6 +3052,8 @@ $profile = array();
 if(isset($_GET["blank"]))
 	return NULL;
 
+if(!empty($email))
+{
 $sql = 'SELECT details FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$email.'" ORDER BY id DESC';
 $details = $wpdb->get_var($sql);
 if(!empty($details))
@@ -3070,9 +3067,9 @@ if(!empty($details))
 		if(strpos($name,'phone') !== false)
 			$profile[$name] = $value;
 	}
+}	
 }
-// placeholder - override to implement alternate profile lookup based on login, membership, email list, etc.
-if(!$email)
+else
 	{
 	// if members are registered and logged in, retrieve basic info for profile
 	if(is_user_logged_in() )
@@ -3826,10 +3823,19 @@ $add_date_checkbox = $updatelist = $editlist = $nomeeting = '';
 $template = get_post_meta($t,'_sked',true);
 $hour = (int) $template["hour"];
 $minutes = $template["minutes"];
-$cy = date("Y");
-$cm = date("m");
-$cd = date("j");
+$cy = date("Y");$template_editor = false;
+if(current_user_can('edit_others_rsvpmakers'))
+	$template_editor = true;
+else
+	{
+	$eds = get_post_meta($t,'_additional_editors',false);
+	$eds[] = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID = $t");
+	$template_editor = in_array($current_user->ID,$eds);		
+	}
 
+$cm = date("m");
+$cd = date("j");	
+	
 	global $current_user;
 	
 	$sched_result = get_events_by_template($t);
@@ -4064,27 +4070,8 @@ if(isset($_POST["update_from_template"]))
 				
 				$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$post->post_title,$post->post_content,$target_id);
 				$wpdb->query($sql);
+		rsvpmaker_copy_metadata($t, $target_id);
 
-//copy metadata
-$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$t");
-$post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
-
-		if (count($post_meta_infos)!=0) {
-			$sql_query = "INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value) ";
-			$sql_log = "";
-			foreach ($post_meta_infos as $meta_info) {
-				$meta_key = $meta_info->meta_key;
-				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock');
-				if(in_array($meta_key, $meta_protect) )
-					continue;
-				$meta_value = addslashes($meta_info->meta_value);
-				if($wpdb->get_results("SELECT meta_value FROM $wpdb->postmeta WHERE post_id=$target_id AND meta_key='$meta_key'")) // yes if one or more rows exists even if value is blank
-					$sql = "UPDATE $wpdb->postmeta set meta_value='$meta_value' WHERE post_id=$target_id AND meta_key='$meta_key'";
-				else
-					$sql = "INSERT INTO $wpdb->postmeta set meta_value='$meta_value', post_id=$target_id, meta_key='$meta_key'";
-				$wpdb->query($sql);
-			}
-		}
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				if(empty($template["duration"])) $template["duration"] = '';
@@ -4159,23 +4146,8 @@ if(isset($_POST["recur_check"]) )
 				add_post_meta($postID,'_meet_recur',$t,true);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$postID);
 				update_post_meta($postID,"_updated_from_template",$ts);
-
-				if(isset($rsvptypes)) wp_set_object_terms( $postID, $rsvptypes, 'rsvpmaker-type', true );
-
-//copy metadata
-$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$t");
-		if (count($post_meta_infos)!=0) {
-			$sql_query = "INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value) ";
-			foreach ($post_meta_infos as $meta_info) {
-				$meta_key = $meta_info->meta_key;
-				if(($meta_key == '_rsvp_reminder') || ($meta_key == '_sked')  || ($meta_key == '_edit_lock'))
-					continue;
-				$meta_value = addslashes($meta_info->meta_value);
-				$sql_query_sel[]= "SELECT $postID, '$meta_key', '$meta_value'";
-			}
-			$sql_query.= implode(" UNION ALL ", $sql_query_sel);
-			$wpdb->query($sql_query);
-		}
+				
+				rsvpmaker_copy_metadata($t, $postID);
 				
 				}
 		
@@ -4520,74 +4492,33 @@ function rsvpmaker_cap_filter_test( $cap, $post_id ) {
 }
 }
 
-/*
-if(!function_exists('rsvpmaker_cap_filter') )
-{
-function rsvpmaker_cap_filter( $allcaps, $cap, $args ) {
-/**
- * author_cap_filter()
- *
- * Filter on the current_user_can() function.
- * This function is used to explicitly allow authors to edit contributors and other
- * authors rsvpmakers if they are published or pending.
- *
- * @param array $allcaps All the capabilities of the user
- * @param array $cap     [0] Required capability
- * @param array $args    [0] Requested capability
- *                       [1] User ID
- *                       [2] Associated object ID
- */
-/*	global $post;
-	if(!isset($cap[0]))
-		return $allcaps;
-	$user = (isset($args[1])) ? $args[1] : 0;
-	$post_id = (isset($args[2])) ? $args[2] : 0;
-	if(!$post_id)
-		return $allcaps;
-	if(!rsvpmaker_cap_filter_test($cap[0],$post_id))
-		return $allcaps;
-	$msg = 'start allcaps: '.var_export($allcaps, true).' cap '. var_export($cap,true).' args ' .var_export($args,true).' request '.var_export($_REQUEST,true);
-	if($cap[0] == 'edit_post')
-	rsvpmaker_debug_log($msg);
-	
-	global $eds;
-	global $update_rsvpmaker_test;
-	if(!empty($allcaps[$cap[0]])) // if already true
-		return $allcaps;
-	
-	if(empty($eds[$post_id]))
-	$eds[$post_id] = get_additional_editors($post_id);
-		
-	if(empty($eds[$post_id]))
-		return $allcaps;
-
-	if( in_array($user,$eds[$post_id]) )
-		{
-		foreach($cap as $value)
-			$allcaps[$value] = true;
-		$allcaps['edit_post'] = true;		
-		}
-	$msg = 'end allcaps: '.var_export($allcaps, true).' cap '. var_export($cap,true).' args ' .var_export($args,true).' eds '.var_export($eds,true);
-	if($cap[0] == 'edit_post')
-	rsvpmaker_debug_log($msg);
-	return $allcaps;
-}
-} 
-*/// end function exists
-
 if(!function_exists('get_additional_editors') )
 {
 function get_additional_editors($post_id) {
 global $wpdb;
-$eds = false;
+$eds = array();
 	$recurid = get_post_meta($post_id,'_meet_recur',true);
 	if($recurid)
 	{
 		$eds = get_post_meta($recurid,'_additional_editors',false);
-		$eds[] = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID = $recurid");
+		$author = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID = $recurid");
+		if(!in_array($author, $eds))
+		{
+			$eds[] = $author;
+		}
 	}
-	else
-		$eds = get_post_meta($post_id,'_additional_editors',false);
+	$post_eds = get_post_meta($post_id,'_additional_editors',false);
+	$author = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID = $post_id");		
+	if(!in_array($author, $post_eds))
+	{
+		$post_eds[] = $author;
+	}
+
+	foreach($post_eds as $this_eds)
+	{
+		if(!in_array($this_eds, $eds))
+			$eds[] = $this_eds;
+	}
 
 return $eds;
 }
@@ -4703,6 +4634,7 @@ if(isset($custom_fields["_meet_recur"][0]));
 		_e('None','rsvpmaker');
 	printf('<p><a href="%s">'.__('Edit Template','rsvpmaker').'</a></p>', admin_url('post.php?action=edit&post='.$t));
 	}
+do_action('rsvpmaker_additional_editors');
 }
 } // function exists
 
