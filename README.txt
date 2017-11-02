@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 4.8.2
-Stable tag: 4.9.1
+Tested up to: 4.8.3
+Stable tag: 4.9.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,19 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.9.4 =
+
+* Fixes to RSVP Mailer functions for setting up email design templates, pulling content from the blog or calendar.
+
+= 4.9.3 =
+
+* Better organization of the RSVPMaker settings screen, divided into tabs
+
+= 4.9.2 =
+
+* Option to have RSVPMaker calculate event fees, even if you haven't set up an online payment service. This "Cash or Custom" option also allows you to add a custom payment gateway.
+* Added hook for custom payment methods, 'rsvpmaker_cash_or_custom' action [documentation](https://rsvpmaker.com/blog/2017/10/18/adding-custom-payment-gateway-rsvpmaker/)
 
 = 4.9.1 =
 

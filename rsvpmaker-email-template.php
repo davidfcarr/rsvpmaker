@@ -4,6 +4,19 @@
  *
  */
 
+global $wp_filter;
+$corefilters = array('convert_chars','wpautop','wptexturize');
+foreach($wp_filter["the_content"] as $priority => $filters)
+	foreach($filters as $name => $details)
+		{
+		//keep only core text processing or shortcode
+		if(!in_array($name,$corefilters) && !strpos($name,'hortcode'))
+			{
+			$r = remove_filter( 'the_excerpt', $name, $priority );
+			$r = remove_filter( 'the_content', $name, $priority );
+			}
+		}
+
 if ( have_posts() ) : the_post();
 
 $templates = get_rsvpmaker_email_template();

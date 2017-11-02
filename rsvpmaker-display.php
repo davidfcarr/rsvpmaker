@@ -810,7 +810,8 @@ while ( have_posts() ) : the_post();
 		}
 	if(isset($_GET["debug"]))
 		{
-			printf('<p>%s<br />%s %s</p>',$post->post_title,$post->datetime,$post->meta_id);
+			$msg = sprintf('%s %s %s',$post->post_title,$post->datetime,$post->meta_id);
+			rsvpmaker_debug_log($msg);
 		}	
 	$key = date('Y-m-d',$t);
 	$eventarray[$key] = (isset($eventarray[$key])) ? $eventarray[$key] . '<div><a class="calendar_item '.rsvpmaker_item_class($post->ID,$post->post_title).'" href="'.get_post_permalink($post->ID).'" title="'.htmlentities($post->post_title).'">'.$post->post_title.$time."</a></div>\n" : '<div><a class="calendar_item '.rsvpmaker_item_class($post->ID,$post->post_title).'" href="'.get_post_permalink($post->ID).'" title="'.htmlentities($post->post_title).'">'.$post->post_title.$time."</a></div>\n";
@@ -1085,7 +1086,7 @@ return $content;
 }
 
 function debug_request_rsvp($sql) {
-	rsvpmaker_debug_log($sql);
+	rsvpmaker_debug_log($sql,'request sql rsvp');
 	return $sql;
 }
 

@@ -449,15 +449,14 @@ function rsvpmaker_menu_security($label, $slug,$options) {
 
 echo $label;
 ?>
- <select name="option[<?php echo $slug; ?>]" id="<?php echo $slug; ?>">
+ <select name="security_option[<?php echo $slug; ?>]" id="<?php echo $slug; ?>">
   <option value="manage_options" <?php if(isset($options[$slug]) && ($options[$slug] == 'manage_options')) echo ' selected="selected" ';?> ><?php _e('Administrator','rsvpmaker');?> (manage_options)</option>
-  <option value="edit_others_rsvpmakers" <?php if(isset($options[$slug]) && ($options[$slug] == 'edit_others_rsvpmakers')) echo ' selected="selected" ';?><?php _e('Editor','rsvpmaker');?> (edit_others_rsvpmakers)</option>
+  <option value="edit_others_rsvpmakers" <?php if(isset($options[$slug]) && ($options[$slug] == 'edit_others_rsvpmakers')) echo ' selected="selected" ';?>><?php _e('Editor','rsvpmaker');?> (edit_others_rsvpmakers)</option>
   <option value="publish_rsvpmakers" <?php if(isset($options[$slug]) && ($options[$slug] == 'publish_rsvpmakers')) echo ' selected="selected" ';?> ><?php _e('Author','rsvpmaker');?> (publish_rsvpmakers)</option>
   <option value="edit_rsvpmakers" <?php if(isset($options[$slug]) && ($options[$slug] == 'edit_rsvpmakers')) echo ' selected="selected" ';?> ><?php _e('Contributor','rsvpmaker');?> (edit_rsvpmakers)</option>
   </select><br />
 <?php
 }
-
   
   // Avoid name collisions.
   if (!class_exists('RSVPMAKER_Options'))
@@ -504,8 +503,39 @@ echo $label;
           function handle_options()
           {
               $options = $this->get_options();
-              
-              if (isset($_POST['submitted'])) {
+			  if(isset($_POST["payment_option"])) {
+              $newoptions = stripslashes_deep($_POST["payment_option"]);
+				$newoptions["stripe"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'stripe')) ? 1 : 0;	$newoptions["cash_or_custom"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'cash_or_custom')) ? 1 : 0;
+				$nfparts = explode('|',$_POST["currency_format"]);
+				$newoptions["currency_decimal"] = $nfparts[0];
+				$newoptions["currency_thousands"] = $nfparts[1];
+
+				foreach($newoptions as $name => $value)
+				  $options[$name] = $value;
+				  
+                  update_option($this->db_option, $options);
+                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').'</p></div>';				  
+			  }	
+
+			  if(isset($_POST["enotify_option"])) {
+              $newoptions = stripslashes_deep($_POST["enotify_option"]);
+				foreach($newoptions as $name => $value)
+				  $options[$name] = $value;
+                  update_option($this->db_option, $options);
+                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - email server.','rsvpmaker').'</p></div>';
+			  }	
+			  
+			  if(isset($_POST["security_option"])) {
+              $newoptions = stripslashes_deep($_POST["security_option"]);
+				  $newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
+				foreach($newoptions as $name => $value)
+				  $options[$name] = $value;
+                  update_option($this->db_option, $options);
+                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - security.','rsvpmaker').'</p></div>';
+
+			  }	
+
+			  if (isset($_POST['submitted'])) {
               		
               		//check security
               		check_admin_referer('calendar-nonce');
@@ -526,16 +556,15 @@ echo $label;
                   $newoptions["social_title_date"] = (isset($_POST["option"]["social_title_date"]) && $_POST["option"]["social_title_date"]) ? 1 : 0;
                   $newoptions["rsvp_count"] = (isset($_POST["option"]["rsvp_count"]) && $_POST["option"]["rsvp_count"]) ? 1 : 0;
                   $newoptions["show_attendees"] = (isset($_POST["option"]["show_attendees"]) && $_POST["option"]["show_attendees"]) ? 1 : 0;
-                  $newoptions["missing_members"] = (isset($_POST["option"]["missing_members"]) && $_POST["option"]["missing_members"]) ? 1 : 0;                  $newoptions["additional_editors"] = (isset($_POST["option"]["additional_editors"]) && $_POST["option"]["additional_editors"]) ? 1 : 0;
+                  $newoptions["missing_members"] = (isset($_POST["option"]["missing_members"]) && $_POST["option"]["missing_members"]) ? 1 : 0;
+				  
 				  $newoptions["dbversion"] = $options["dbversion"]; // gets set by db upgrade routine
-				$nfparts = explode('|',$_POST["currency_format"]);
+				  
 				$newoptions["eventpage"] = $_POST["option"]["eventpage"];
-				$newoptions["currency_decimal"] = $nfparts[0];
-				$newoptions["currency_thousands"] = $nfparts[1];
                   $newoptions["log_email"] = (isset($_POST["option"]["log_email"]) && $_POST["option"]["log_email"]) ? 1 : 0;
 
-				
-				  $options = $newoptions;
+				foreach($newoptions as $name => $value)
+				  $options[$name] = $value;
 				  
                   update_option($this->db_option, $options);
                   
@@ -584,7 +613,10 @@ if(isset($_GET["reminder_reset"]))
 
     <h2 class="nav-tab-wrapper">
       <a class="nav-tab nav-tab-active" href="#calendar">Calendar Settings</a>
-      <a class="nav-tab" href="#email">Email List</a>
+      <a class="nav-tab" href="#security">Security</a>
+      <a class="nav-tab" href="#payments">Payments</a>
+      <a class="nav-tab" href="#notification_email">Email Server</a>
+      <a class="nav-tab" href="#email">Mailing List</a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
@@ -746,62 +778,6 @@ foreach($templates as $tname => $tfile)
 	}
 ?></select> <br /><em><?php _e('Template from your theme to be used in the absence of a single-rsvpmaker.php file.','rsvpmaker'); ?></em>
 
-<br />					<h3><?php _e('PayPal Configuration File','rsvpmaker'); ?>:</h3>
-  <input type="text" name="option[paypal_config]" id="paypal_config" value="<?php if(isset($options["paypal_config"]) ) echo $options["paypal_config"];?>" size="80" /><button id="paypal_setup"><?php _e('PayPal Setup','rsvpmaker'); ?></button>
-<?php
-if( !empty($options["paypal_config"]) )
-{
-$config = $options["paypal_config"];
-
-if(isset($config) && file_exists($config) )
-	echo ' <span style="color: green;">'.__('OK','rsvpmaker').'</span>';
-else
-	echo ' <span style="color: red;">'.__('error: file not found','rsvpmaker').'</span>';
-}
-?>	
-    <br /><em><?php _e('The PayPal setup button will help you create a configuration file containing your API credentials. See documentation.','rsvpmaker'); echo ': <a href="http://rsvpmaker.com/blog/category/paypal/">http://rsvpmaker.com/blog/category/paypal/</a>'; ?>
-</em>
-<div id="pp-dialog-form">
-<?php _e('User','rsvpmaker');?>:<br /><input type="text" id="pp_user" name="user">
-<br /><?php _e('Password','rsvpmaker')?>:<br /><input type="text" id="pp_password" name="password">
-<br /><?php _e('Signature','rsvpmaker');?>:<br /><input type="text" id="pp_signature" name="signature">
-</div>
-
-<br /><h3><?php _e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
-<br />
-<input type="radio" name="option[paypal_invoiceno]" value ="1" <?php if($options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> Yes
-<input type="radio" name="option[paypal_invoiceno]" value ="0" <?php if(!$options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> No
-<br /><em>Must be enabled for RSVPMaker to track payments</em>
-<br /><h3><?php _e('Payment Currency','rsvpmaker'); ?>:</h3>
-<input type="text" name="option[paypal_currency]" value="<?php if(isset($options["paypal_currency"])) echo $options["paypal_currency"];?>" size="5" /> <a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_currency_codes">(list of codes)</a>
-
-<select name="currency_format">
-<option value="<?php if(isset($options["currency_decimal"]) ) echo $options["currency_decimal"];?>|<?php if(isset($options["currency_thousands"])) echo $options["currency_thousands"];?>"><?php echo number_format(1000.00, 2, $options["currency_decimal"],  $options["currency_thousands"]); ?></option>
-<option value=".|,"><?php echo number_format(1000.00, 2, '.',  ','); ?></option>
-<option value=",|."><?php echo number_format(1000.00, 2, ',',  '.'); ?></option>
-<option value=",| "><?php echo number_format(1000.00, 2, ',',  ' '); ?></option>
-</select>    
-<br />
-
-<?php
-if (class_exists('Stripe_Checkout_Functions'))
-	{
-	$s = (!empty($options["stripe"])) ? 'checked="checked"' : '';
-	echo '<h3>'.__('WP Simple Pay Lite for Stripe plugin detected','rsvpmaker').'</h3><p><input type="checkbox" name="option[stripe]" value="1" '.$s.' /> '.__('Use Stripe instead of PayPal','rsvpmaker').'</p>';
-	}
-else
-	echo '<h3>'.__('WP Simple Pay Lite for Stripe','rsvpmaker').'</h3><p>'.__('To use Stripe instead of PayPal, enable the <a href="https://wordpress.org/plugins/stripe/" target="_blank">WP Simple Pay Lite for Stripe plugin</a>','rsvpmaker').'</p>';
-?>
-
-<h3><?php _e('Menu Security','rsvpmaker'); ?>:</h3>
-<?php
-rsvpmaker_menu_security( __("RSVP Report",'rsvpmaker'),  "menu_security", $options );
-rsvpmaker_menu_security(__("Event Templates",'rsvpmaker'),"rsvpmaker_template",$options );
-rsvpmaker_menu_security( __("Recurring Event",'rsvpmaker'), "recurring_event", $options );
-rsvpmaker_menu_security( __("Multiple Events",'rsvpmaker'), "multiple_events",$options );
-rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$options );
-?>
-<p><em><?php _e('Security level required to access custom menus (RSVP Report, Documentation)','rsvpmaker'); ?></em></p>
 
 <h3><?php _e('Dashboard','rsvpmaker');?></h3>
 <select name="option[dashboard]">
@@ -812,55 +788,6 @@ rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$optio
 <br /><?php _e('Note','rsvpmaker'); ?>
 <br />
 <textarea name="option[dashboard_message]" style="width:90%;"><?php echo $options["dashboard_message"]; ?></textarea>
-
-<h3 id="smtp"><?php _e('SMTP for Notifications','rsvpmaker'); ?></h3>
-<p><?php _e('For more reliable delivery of email notifications, enable delivery through the SMTP email protocol. Standard server parameters will be used for Gmail and the SendGrid service, or specify the server port number and security protocol','rsvpmaker'); ?>.</p>
-<p><?php _e('If you are using another plugin that improves the delivery of email notifications, such one of the <a href="https://wordpress.org/plugins/sendgrid-email-delivery-simplified/">SendGrid plugin</a> (which uses the SendGrid API rather than SMTP), leave this set to "None - use wp_mail()."','rsvpmaker'); ?>.</p>
-  <select name="option[smtp]" id="smtp">
-  <option value="" <?php if(isset($options["smtp"]) && ($options["smtp"] == '' )) {echo ' selected="selected" ';}?> ><?php _e('None - use wp_mail()','rsvpmaker'); ?></option>
-  <option value="gmail" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'gmail')) {echo ' selected="selected" ';}?> >Gmail</option>
-  <option value="sendgrid" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'sendgrid')) {echo ' selected="selected" ';}?> >SendGrid (SMTP)</option>
-  <option value="other" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'other')) {echo ' selected="selected" ';}?> ><?php _e('Other SMTP (specified below)','rsvpmaker'); ?></option>
-  </select>
-<br />
-<?php _e('Email Account for Notifications','rsvpmaker'); ?>
-<br />
-<input type="text" name="option[smtp_useremail]" value="<?php if(isset($options["smtp_useremail"])) echo $options["smtp_useremail"];?>" size="15" />
-<br />
-<?php _e('Email Username','rsvpmaker'); ?>
-<br />
-<input type="text" name="option[smtp_username]" value="<?php if(isset($options["smtp_username"])) echo $options["smtp_username"];?>" size="15" />
-<br />
-<?php _e('Email Password','rsvpmaker'); ?>
-<br />
-<input type="text" name="option[smtp_password]" value="<?php if(isset($options["smtp_password"])) echo $options["smtp_password"];?>" size="15" />
-<br />
-<?php _e('Server (parameters below not necessary if you specified Gmail or SendGrid)','rsvpmaker'); ?><br />
-<input type="text" name="option[smtp_server]" value="<?php if(isset($options["smtp_server"])) echo $options["smtp_server"];?>" size="15" />
-<br />
-<?php _e('SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)','rsvpmaker'); ?> 
-<br />
-<input type="text" name="option[smtp_prefix]" value="<?php if(isset($options["smtp_prefix"])) echo $options["smtp_prefix"];?>" size="15" />
-<br />
-<?php _e('SMTP Port','rsvpmaker'); ?>
-<br />
-<input type="text" name="option[smtp_port]" value="<?php if(isset($options["smtp_port"])) echo $options["smtp_port"];?>" size="15" />
-<br />
-
-<p><?php _e('See <a href="http://www.wpsitecare.com/gmail-smtp-settings/">this article</a> for additional guidance on using Gmail (requires a tweak to security settings in your Google account). If you have trouble getting Gmail or ssl or tls connections to work, an unencrypted port 25 connection to an email account on the same server that hosts your website should be reasonably secure since no data will be passed over the network.','rsvpmaker');?></p>
-
-<?php 
-if(!empty($options["smtp"]))
-	{
-?>
-<a href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php&smtptest=1'); ?>"><?php _e('Send SMTP Test to RSVP To address','rsvpmaker'); ?></a>
-<?php
-	}
-
-?>
-<h3><?php _e('Event Templates','rsvpmaker'); ?></h3>
-  <input type="checkbox" name="option[additional_editors]" value="1" <?php if(isset($options["additional_editors"]) && $options["additional_editors"]) echo ' checked="checked" ';?> /> <strong><?php _e('Additional Editors','rsvpmaker'); ?></strong> <em><?php _e('Allow users to share editing rights for event templates and related events.','rsvpmaker'); ?></em> 
-	<br />
 
 <h3><?php _e('Troubleshooting','rsvpmaker'); ?></h3>
   <input type="checkbox" name="option[flush]" value="1" <?php if(isset($options["flush"]) && $options["flush"]) echo ' checked="checked" ';?> /> <strong><?php _e('Tweak Permalinks','rsvpmaker'); ?></strong> <?php _e('Check here if you are getting &quot;page not found&quot; errors for event content (should not be necessary for most users).','rsvpmaker'); ?> 
@@ -884,7 +811,143 @@ if(!empty($options["smtp"]))
 	</div>
 
 </section>
-    <section id="email" class="rsvpmaker">
+<section id="security" class="rsvpmaker">
+<form name="rsvpmaker_security_options" action="<?php echo $action_url ;?>" method="post">
+
+<h3><?php _e('Menu Security','rsvpmaker'); ?>:</h3>
+<?php
+rsvpmaker_menu_security( __("RSVP Report",'rsvpmaker'),  "menu_security", $options );
+rsvpmaker_menu_security(__("Event Templates",'rsvpmaker'),"rsvpmaker_template",$options );
+rsvpmaker_menu_security( __("Recurring Event",'rsvpmaker'), "recurring_event", $options );
+rsvpmaker_menu_security( __("Multiple Events",'rsvpmaker'), "multiple_events",$options );
+rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$options );
+?>
+<p><em><?php _e('Security level required to access custom menus (RSVP Report, Documentation)','rsvpmaker'); ?></em></p>
+<h3><?php _e('Additional Editors / Co-Authors','rsvpmaker'); ?></h3>
+  <input type="checkbox" name="security_option[additional_editors]" value="1" <?php if(isset($options["additional_editors"]) && $options["additional_editors"]) echo ' checked="checked" ';?> /> <strong><?php _e('Additional Editors','rsvpmaker'); ?></strong> <em><?php _e('Allow users to share editing rights for event templates and related events.','rsvpmaker'); ?></em>
+	<p><strong>How this works: </strong> When this function is enabled, event authors have the option of allowing other users to be additional editors or co-authors for an event or a series of events based  on a template. This is useful for community websites where multiple organizations post their events. The organization can appoint multiple officers or representatives to have equal rights to update the events template for their meetings and all the individual events based on that template.</p>
+	<p>Note that to unlock events for editing, RSVPMaker changes the author ID for a post to the ID of the authorized user editing the post.</p>				
+				 				 				
+					<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
+	</form>
+</section>
+<section id="payments" class="rsvpmaker">
+<form name="rsvpmaker_payment_options" action="<?php echo $action_url ;?>" method="post">
+
+<?php do_action('rsvpmaker_payment_settings'); ?>
+<br /><h3><?php _e('PayPal Configuration File','rsvpmaker'); ?>:</h3>
+  <input type="text" name="payment_option[paypal_config]" id="paypal_config" value="<?php if(isset($options["paypal_config"]) ) echo $options["paypal_config"];?>" size="80" /><button id="paypal_setup"><?php _e('PayPal Setup','rsvpmaker'); ?></button>
+<?php
+if( !empty($options["paypal_config"]) )
+{
+$config = $options["paypal_config"];
+
+if(isset($config) && file_exists($config) )
+	echo ' <span style="color: green;">'.__('OK','rsvpmaker').'</span>';
+else
+	echo ' <span style="color: red;">'.__('error: file not found','rsvpmaker').'</span>';
+}
+?>	
+    <br /><em><?php _e('The PayPal setup button will help you create a configuration file containing your API credentials. See documentation.','rsvpmaker'); echo ': <a href="http://rsvpmaker.com/blog/category/paypal/">http://rsvpmaker.com/blog/category/paypal/</a>'; ?>
+</em>
+<div id="pp-dialog-form">
+<?php _e('User','rsvpmaker');?>:<br /><input type="text" id="pp_user" name="user">
+<br /><?php _e('Password','rsvpmaker')?>:<br /><input type="text" id="pp_password" name="password">
+<br /><?php _e('Signature','rsvpmaker');?>:<br /><input type="text" id="pp_signature" name="signature">
+</div>
+
+<br /><h3><?php _e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
+<br />
+<input type="radio" name="payment_option[paypal_invoiceno]" value ="1" <?php if($options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> Yes
+<input type="radio" name="payment_option[paypal_invoiceno]" value ="0" <?php if(!$options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> No
+<br /><em>Must be enabled for RSVPMaker to track payments</em>
+<br /><h3><?php _e('Payment Currency','rsvpmaker'); ?>:</h3>
+<input type="text" name="payment_option[paypal_currency]" value="<?php if(isset($options["paypal_currency"])) echo $options["paypal_currency"];?>" size="5" /> <a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_currency_codes">(list of codes)</a>
+
+<select name="currency_format">
+<option value="<?php if(isset($options["currency_decimal"]) ) echo $options["currency_decimal"];?>|<?php if(isset($options["currency_thousands"])) echo $options["currency_thousands"];?>"><?php echo number_format(1000.00, 2, $options["currency_decimal"],  $options["currency_thousands"]); ?></option>
+<option value=".|,"><?php echo number_format(1000.00, 2, '.',  ','); ?></option>
+<option value=",|."><?php echo number_format(1000.00, 2, ',',  '.'); ?></option>
+<option value=",| "><?php echo number_format(1000.00, 2, ',',  ' '); ?></option>
+</select>    
+<br />
+
+<?php
+$stripe_option = '';
+if (class_exists('Stripe_Checkout_Functions'))
+	{
+	$s_stripe = (!empty($options["stripe"])) ? 'selected="selected"' : '';
+	$stripe_option = sprintf('<option value="stripe" %s>Stripe</option>',$s_stripe);
+	echo '<h3>'.__('WP Simple Pay Lite for Stripe plugin detected','rsvpmaker').'</h3>';
+	}
+else
+	echo '<h3>'.__('WP Simple Pay Lite for Stripe','rsvpmaker').'</h3><p>'.__('To use Stripe instead of PayPal, enable the <a href="https://wordpress.org/plugins/stripe/" target="_blank">WP Simple Pay Lite for Stripe plugin</a>','rsvpmaker').'</p>';
+$s_cash = (!empty($options["cash_or_custom"]))  ? 'selected="selected"' : '';
+
+?>
+<h3><?php _e('Default Payment Gateway','rsvpmaker'); ?>:</h3>
+<select name="payment_gateway">
+<option value=""><?php _e('PayPal','rsvpmaker'); ?></option>
+<?php echo $stripe_option; ?>
+<option value="cash_or_custom" <?php echo $s_cash;?> ><?php _e('Cash or Custom','rsvpmaker'); ?></option>
+</select>
+<br /><?php _e('Cash or Custom option allows you to have RSVPMaker calculate fees, even if you are requesting payment by cash or check (rather than an online payment). Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/16/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?>
+<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
+</form>
+
+</section>
+<section id="notification_email" class="rsvpmaker">
+<form name="notify_options" action="<?php echo $action_url ;?>" method="post">
+<?php do_action('rsvpmaker_email_settings'); ?>
+<p><?php _e('These settings are related to transactional emails, such as registration confirmation messages. If you are using another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults.','rsvpmaker'); ?></p>
+<h3 id="smtp"><?php _e('SMTP for Notifications','rsvpmaker'); ?></h3>
+<p><?php _e('For more reliable delivery of email notifications, enable delivery through the SMTP email protocol. Standard server parameters will be used for Gmail and the SendGrid service, or specify the server port number and security protocol','rsvpmaker'); ?>.</p>
+<p><?php _e('If you are using another plugin that improves the delivery of email notifications, such one of the <a href="https://wordpress.org/plugins/sendgrid-email-delivery-simplified/">SendGrid plugin</a> (which uses the SendGrid API rather than SMTP), leave this set to "None - use wp_mail()."','rsvpmaker'); ?>.</p>
+  <select name="enotify_option[smtp]" id="smtp">
+  <option value="" <?php if(isset($options["smtp"]) && ($options["smtp"] == '' )) {echo ' selected="selected" ';}?> ><?php _e('None - use wp_mail()','rsvpmaker'); ?></option>
+  <option value="gmail" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'gmail')) {echo ' selected="selected" ';}?> >Gmail</option>
+  <option value="sendgrid" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'sendgrid')) {echo ' selected="selected" ';}?> >SendGrid (SMTP)</option>
+  <option value="other" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'other')) {echo ' selected="selected" ';}?> ><?php _e('Other SMTP (specified below)','rsvpmaker'); ?></option>
+  </select>
+<br />
+<?php _e('Email Account for Notifications','rsvpmaker'); ?>
+<br />
+<input type="text" name="enotify_option[smtp_useremail]" value="<?php if(isset($options["smtp_useremail"])) echo $options["smtp_useremail"];?>" size="15" />
+<br />
+<?php _e('Email Username','rsvpmaker'); ?>
+<br />
+<input type="text" name="enotify_option[smtp_username]" value="<?php if(isset($options["smtp_username"])) echo $options["smtp_username"];?>" size="15" />
+<br />
+<?php _e('Email Password','rsvpmaker'); ?>
+<br />
+<input type="text" name="enotify_option[smtp_password]" value="<?php if(isset($options["smtp_password"])) echo $options["smtp_password"];?>" size="15" />
+<br />
+<?php _e('Server (parameters below not necessary if you specified Gmail or SendGrid)','rsvpmaker'); ?><br />
+<input type="text" name="enotify_option[smtp_server]" value="<?php if(isset($options["smtp_server"])) echo $options["smtp_server"];?>" size="15" />
+<br />
+<?php _e('SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)','rsvpmaker'); ?> 
+<br />
+<input type="text" name="enotify_option[smtp_prefix]" value="<?php if(isset($options["smtp_prefix"])) echo $options["smtp_prefix"];?>" size="15" />
+<br />
+<?php _e('SMTP Port','rsvpmaker'); ?>
+<br />
+<input type="text" name="enotify_option[smtp_port]" value="<?php if(isset($options["smtp_port"])) echo $options["smtp_port"];?>" size="15" />
+<br />
+
+<p><?php _e('See <a href="http://www.wpsitecare.com/gmail-smtp-settings/">this article</a> for additional guidance on using Gmail (requires a tweak to security settings in your Google account). If you have trouble getting Gmail or ssl or tls connections to work, an unencrypted port 25 connection to an email account on the same server that hosts your website should be reasonably secure since no data will be passed over the network.','rsvpmaker');?></p>
+
+<?php 
+if(!empty($options["smtp"]))
+	{
+?>
+<a href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php&smtptest=1'); ?>"><?php _e('Send SMTP Test to RSVP To address','rsvpmaker'); ?></a>
+<?php
+	}
+?>
+<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
+</form>
+</section>
+<section id="email" class="rsvpmaker">
 
 <?php
 global $RSVPMaker_Email_Options;
@@ -2974,10 +3037,15 @@ $cleared = is_array($cleared) ? $cleared : array();
     update_option('cleared_rsvpmaker_notices',$cleared);
 }
 
-function rsvpmaker_debug_log($msg) {
+function rsvpmaker_debug_log($msg, $label = '') {
 global $rsvp_options;
 	if(empty($rsvp_options["debug"]))
 		return;
+	
+if(!is_string($msg))
+	$msg = var_export($msg,true);
+if(!empty($label))
+	$msg = $label.":\n".$msg;
 $upload_dir   = wp_upload_dir();
  
 if ( ! empty( $upload_dir['basedir'] ) ) {

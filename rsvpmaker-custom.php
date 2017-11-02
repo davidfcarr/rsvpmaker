@@ -93,4 +93,28 @@ function widgetlink($evdates,$plink,$evtitle) {
 	return sprintf('%s <a href="%s">%s</a> ',$evdates,$plink,$evtitle);
 }
 
+//do_action('rsvpmaker_cash_or_custom',$charge,$invoice_id,$rsvp_id,$details,$profile,$post);
+
+add_action('rsvpmaker_cash_or_custom','my_cash_or_custom',10,6);
+
+function my_cash_or_custom($charge,$invoice_id,$rsvp_id,$details,$profile,$post)
+{
+	echo '<h1>Variables Passed to My Custom Function</h1>';
+	echo '<h3>Charge</h3>';
+	echo '<p>'.$charge."</p>\n";
+	echo '<h3>Invoice ID #</h3>';
+	echo '<p>'.$invoice_id."</p>\n";
+	echo "<p><em>Tracking # for payments</em></p>";
+	echo '<h3>RSVP ID #</h3>';
+	echo "<p><em>Unique ID for main database record for registration</em></p>";
+	echo '<p>'.$rsvp_id."</p>\n";
+	echo '<h3>Details</h3>';
+	echo "<p><em>Details about the transaction</em></p>";
+	echo '<pre>'.var_export($details,true)."</pre>\n";
+	echo '<h3>Profile</h3>';
+	echo "<p><em>Details about the person</em></p>";
+	echo '<pre>'.var_export($profile,true)."</pre>\n";
+	echo '<h3>Post</h3>';
+	echo '<pre>'.var_export($post,true)."</pre>\n";	
+}
 ?>

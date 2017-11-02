@@ -5,7 +5,7 @@ Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
 Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together.RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>
 Author: David F. Carr
-Version: 4.9.1
+Version: 4.9.4
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
@@ -757,6 +757,20 @@ add_post_meta($event, '_paypal_log', $message);
 }
 
 add_action('sc_after_charge','rsvpmaker_sc_after_charge');
+
+function rsvpmaker_custom_payment($method,$paid,$rsvp_id,$event,$tx_id=0) {
+global $wpdb;
+	$charge = $paid;
+	$paid_amounts = get_post_meta($event,'_paid_'.$rsvp_id);
+	if(!empty($paid_amounts))
+	foreach($paid_amounts as $payment)
+		$paid += $payment;
+	$wpdb->query("UPDATE ".$wpdb->prefix."rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id ");
+	add_post_meta($event,'_'.$method.'_'.$tx_id,$charge);
+	add_post_meta($event,'_paid_'.$rsvp_id,$charge);
+	delete_post_meta($event,'_open_invoice_'.$rsvp_id);
+	delete_post_meta($event,'_invoice_'.$rsvp_id);	
+}
 
 function rsvpmaker_before_post_display_action (){
 	global $post;

@@ -385,15 +385,15 @@ class MailChimpRSVP
 							}
 					}
                   
-                  echo '<div class="updated fade"><p>'.__('Plugin settings saved.','rsvpmaker').'</p></div>';
+                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - mailing list.','rsvpmaker').'</p></div>';
               }
               
               // URL for form submit, equals our current page
               $action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
 ; ?>
 <div class="wrap" style="max-width:950px !important;">
-	<h2><?php _e('RSVPMaker Email List','rsvpmaker');?></h2>
-				
+	<h3><?php _e('RSVPMaker Email List','rsvpmaker');?></h3>
+	<p><?php _e("These settings are related to integration with the MailChimp broadcast email service, as well as RSVPMaker's own functions for broadcasting email to website members or people who have registered for your events.",'rsvpmaker');?></p>			
 	<div id="poststuff" style="margin-top:10px;">
 
 	 <div id="mainblock" style="width:710px">
@@ -449,7 +449,7 @@ if($slug == 'administrator')
 
               <div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker');?>" /></div>
 			</form>
-<p>See also: <a target="_blank" href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php#smtp'); ?>">SMTP Server Settings</a></p>
+<p>See also: <a target="_blank" href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>">Email Template</a></p>
 
 		</div>
 				
@@ -926,13 +926,9 @@ return $title;
 function default_rsvpemail_content($content) {
 global $post;
 
-if(!empty($_GET["get_post"]) && empty($_GET["rsvpemail"]) )
-	{
-	$post = get_post($_GET["get_post"]);
-	return $post->post_content; // used for creating post draft based on email
-	}
-
-if(!empty($_GET["get_post"]))
+if(!empty($_GET["get_post"]) && !empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpemail'))
+{
+if(strpos($_GET["get_post"],':'))
 	{
 		if(isset($_GET["rsvpemail"]))
 		{
@@ -951,7 +947,7 @@ while ( $cq->have_posts() ) : $cq->the_post();
 global $post;
 
 $post_backup = $post;
-if(!$subject)
+if(!isset($subject))
 	$subject = get_the_title();
 ; ?>
 <div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
@@ -971,6 +967,12 @@ endwhile;
 $content .= ob_get_clean();
 $post = $post_backup;
 	}
+else
+	{
+	$post = get_post($_GET["get_post"]);
+	return $post->post_content; // used for creating post draft based on email
+	}	
+} // end if get_post
 
 if(!empty($_GET["event"]))
 	{
@@ -1519,10 +1521,10 @@ $t_index = (int) get_option('rsvpmaker_tx_template');
 ?>
 <p><?php _e('Template For Confirmation/Reminder Messages','rsvpmaker');?> <select name="rsvpmaker_tx_template">
 <?php
-foreach($template as $index => $value)
+foreach($template as $in => $value)
 	{
-	$c = ( $index == $t_index) ? ' selected="selected" ' : '';
-	echo sprintf('<option value="%d" %s>%s</option>',$index,$c,$value["slug"]);
+	$c = ( $in == $t_index) ? ' selected="selected" ' : '';
+	echo sprintf('<option value="%d" %s>%s</option>',$in,$c,$value["slug"]);
 	}
 ; ?>
 </select></p>
@@ -1530,6 +1532,8 @@ foreach($template as $index => $value)
 <p>
 <button><?php _e('Save','rsvpmaker');?></button>
 </p>
+
+	<p><a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template&reset_email_template=1'); ?>"><?php _e('Reset to default template','rsvpmaker');?></a></p>
 
 <script>
 function remove_template(id) {

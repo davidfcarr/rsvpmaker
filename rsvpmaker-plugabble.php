@@ -546,10 +546,10 @@ if (class_exists('Stripe_Checkout_Functions') && empty($rsvp_options["stripe"]))
 	echo '<h3>'.__('WP Simple Pay Lite for Stripe plugin detected','rsvpmaker').'</h3><p><input type="checkbox" name="setrsvp[stripe]" value="1" '.$s.' /> '.__('Use Stripe instead of PayPal','rsvpmaker').'</p>';
 	}
 
-if(!empty($rsvp_options["paypal_config"]) || !empty($rsvp_options["stripe"]) || !empty($custom_fields["_rsvp_stripe"][0]) )
+if(!empty($rsvp_options["paypal_config"]) || !empty($rsvp_options["stripe"]) || !empty($custom_fields["_rsvp_stripe"][0]) || !empty($rsvp_options["cash_or_custom"]))
 {
 ?>
-<p><strong><?php echo __('Pricing for Online Payments','rsvpmaker');?></strong></p>
+<p><strong><?php echo __('Pricing','rsvpmaker');?></strong></p>
 <p><?php echo __('You can set a different price for members vs. non-members, adults vs. children, etc.','rsvpmaker');?></p>
 <p><input type="radio" name="setrsvp[count_party]" value="1" <?php if($rsvp_count_party) echo ' checked="checked" '; ?> > Multiply price times size of party
 <br /><input type="radio" name="setrsvp[count_party]" value="0" <?php if(!$rsvp_count_party) echo ' checked="checked" '; ?> > Let user specify number of admissions per category
@@ -601,7 +601,6 @@ if($rsvp_count_party && !empty($newfields))
 	{
 		foreach($newfields as $field)
 			{
-				//print_r($hide[$i]);
 				if(isset($hide[$i]) && is_array($hide[$i]) && in_array($field,$hide[$i]))
 					{
 						$showcheck = '';
@@ -670,7 +669,7 @@ if(isset($_GET["debug"]))
 	preg_match_all('/(textfield|selectfield|radio|checkbox)="([^"]+)"/',$rsvp_form,$matches);
 	$newfields = array_diff($matches[2],$defaultfields);
 	if(!empty($newfields))
-	print_r($newfields);
+	rsvpmaker_debug_log(var_export($newfields,true));
 }
 
 } // end paypal enabled section
@@ -1970,8 +1969,14 @@ if(($e && isset($_GET["rsvp"]) ) || is_user_logged_in() )
 			}
 			if($charge > 0)
 			{
-			if(!empty($rsvp_options["stripe"]) || !empty($custom_fields['_rsvp_stripe'][0]) )
+			if(class_exists('Stripe_Checkout_Functions') && (!empty($rsvp_options["stripe"]) || !empty($custom_fields['_rsvp_stripe'][0]) ))
 			$rsvpconfirm .= '<p>'.do_shortcode('[stripe amount="'.($charge*100).'" description="'.htmlentities($post->post_title).' '.$details["payingfor"].'" ]').'</p>';
+			elseif(!empty($rsvp_options["cash_or_custom"]) || !empty($custom_fields['_cash_or_custom'][0]) )
+			{
+				ob_start();
+				do_action('rsvpmaker_cash_or_custom',$charge,$invoice_id,$rsvp_id,$details,$profile,$post);
+				$rsvpconfirm .= ob_get_clean();
+			}
 			else
 			$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="'.$permalink.'">
 <input type="hidden" name="paypal" value="payment" /> 
@@ -2188,7 +2193,7 @@ if(isset($custom_fields["_rsvp_count_party"][0]) && $custom_fields["_rsvp_count_
 					foreach($display as $index => $value)
 						{
 						
-						$s = ($index == $profile["pricechoice"]) ? ' selected="selected" ' : '';
+						$s = (isset($profile["pricechoice"]) && ($index == $profile["pricechoice"])) ? ' selected="selected" ' : '';
 						$options .= sprintf('<option value="%d" %s>%s</option>',$index, $s, $value);
 						}
 					printf('<div id="guest_count_pricing">'.__('Options','rsvpmaker').': <select name="guest_count_price"  id="guest_count_price">%s</select></div>',$options);
@@ -2441,13 +2446,8 @@ if(isset($_GET["edit_rsvp"]) && current_user_can('edit_rsvpmakers'))
 
 	format_rsvp_details($results);
 		
-	if(isset($rsvp_options["debug"]))
-		{
-		echo "<p>DEBUG: $sql</p>";
-		echo "<pre>Results:\n";
-		print_r($results);
-		echo "</pre>";
-		}
+	rsvpmaker_debug_log($sql,'rsvp sql');
+	rsvpmaker_debug_log($results,'rsvp results');
 
 	}
 elseif(isset($_GET["detail"]))
