@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8.3
-Stable tag: 4.9.4
+Stable tag: 4.9.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.9.5 =
+
+* Updates to the rsvpmaker_timed shortcode, including the addition of a post_id attribute (post_id="123" will insert headline and body of the post with the ID 123). You can also include a style attribute for CSS wrapper code such as a border, padding, and background color for the block. If no post_id is specified, the output will be all the content from the start tag to the end tag. With a post_id, no end tag is required. Include the attributes start and/or end to specify a start or end time for the display of a post, for example start="2017-11-01 07:00" end="2017-12-31 23:00" or start="November 1, 2017" end="December 31, 2017 11 pm"
+* The style attribute now also works with the rsvpmaker_one shortcode. Fixed it so you can specify something like [rsvpmaker_one post_id="next" one_format="compact"] and the one_format attribute will be respected. (In the last release, specifying "next" instead of a number would always output the full post).
 
 = 4.9.4 =
 

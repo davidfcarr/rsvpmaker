@@ -1050,7 +1050,7 @@ else
 	return false;
 }
 
-function rsvpmaker_timed ($atts, $content) {
+function rsvpmaker_timed ($atts, $content = '') {
 if(!empty($atts['start']))
 	{
 		$start = strtotime($atts['start']);
@@ -1080,7 +1080,32 @@ if(!empty($atts['end']))
 			}
 	}
 
-// if we clear these two hurdles, return the content unchanged.
+if(!empty($atts["post_id"]))
+{
+$cq = new WP_Query('posts_per_page=1&p='. (int) $atts["post_id"]);
+if ( $cq->have_posts() ) : $cq->the_post();
+ob_start();
+global $post;
+$post_backup = $post;
+?>
+<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+<h2 class="entry-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+<div class="entry-content">
+<?php 
+the_content();
+?>
+</div><!-- .entry-content -->
+</div>
+<?php 
+$content = ob_get_clean();	
+$post = $post_backup;
+endif;
+}
+
+// if we clear these two hurdles, return the content
+if(!empty($atts["style"]))
+	$content = '<div style="'.$atts["style"].'">'.$content.'</div>';
+	
 return $content;
 
 }
@@ -1501,8 +1526,8 @@ $showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
 	
 if(isset($atts["post_id"]))
 {
-	if($atts["post_id"] == 'next')
-		return rsvpmaker_next($atts);
+//	if($atts["post_id"] == 'next')
+//		return rsvpmaker_next($atts);
 	$post_id = (int) $atts["post_id"];	
 }
 elseif(isset($atts["one"]))
@@ -1510,13 +1535,38 @@ elseif(isset($atts["one"]))
 else
 	return;
 
+$backup_post = $post;
+$backup_query = $wp_query;
+
+if($atts["post_id"] == 'next')
+{
+$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1";
+if(isset($atts["type"]))
+	$querystring .= "&rsvpmaker-type=".$atts["type"];
+if(isset($atts["add_to_query"]))
+	{
+		if(!strpos($atts["add_to_query"],'&'))
+			$atts["add_to_query"] = '&'.$atts["add_to_query"];
+		$querystring .= $atts["add_to_query"];
+	}
+}
+else
+	$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1&p=". (int) $atts["post_id"];
+$wp_query = new WP_Query($querystring);
+if(!$showbutton)
+$wp_query->is_single = true;
+	
+if ( have_posts() ) {
+global $events_displayed;
+the_post();
+$atts["post_id"] = $post_id = $post->ID;
 if(!empty($atts["hide_past"]))
 {
 $offset = $atts["hide_past"];
 if(!is_rsvpmaker_future($post_id, $offset))
 	return;
 }
-	
+
 if(!empty($atts["one_format"]) )
 {
 	if($atts["one_format"] == 'button_only')
@@ -1526,44 +1576,31 @@ if(!empty($atts["one_format"]) )
 		$rsvplink = get_permalink($post_id);
 		if(strpos($rsvplink,'?') )
 			$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
-		return sprintf($rsvp_options['rsvplink'],$rsvplink);				
+		$content = sprintf($rsvp_options['rsvplink'],$rsvplink);				
 		}
 	else
 		{
-		return __('Event date is past','rsvpmaker');
+		$content = __('Event date is past','rsvpmaker');
 		}
 	}
-	elseif($atts["one_format"] == 'next') {
-		return rsvpmaker_next($atts);
-	}
 	elseif($atts["one_format"] == 'embed_dateblock') {
-		return embed_dateblock($atts);
+		$content = embed_dateblock($atts);
 	}
 	elseif($atts["one_format"] == 'form') {
-		return rsvpmaker_form($atts);
+		if(is_rsvpmaker_future($post_id)) 
+			$content = rsvpmaker_form($atts);
+		else
+			$content = __('Event date is past','rsvpmaker');
 	}
 	elseif($atts["one_format"] == 'compact') {
-		return rsvpmaker_compact($atts);
+		$content = rsvpmaker_compact($atts);
 	}
 }
-$backup_post = $post;
-$backup_query = $wp_query;
-
-$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1&p=".$post_id;
-
-$wp_query = new WP_Query($querystring);
-if(!$showbutton)
-$wp_query->is_single = true;
-
+else
+{//one post loop
 ob_start();
-
-echo '<div class="rsvpmaker_upcoming">';
-	
-if ( have_posts() ) {
-global $events_displayed;
-while ( have_posts() ) : the_post();
 ?>
-
+<div class="rsvpmaker_embedded">
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
 
 <?php 
@@ -1585,14 +1622,19 @@ if(is_admin() )
 	{
 		echo '<p><a href="'.admin_url('post.php?action=edit&post='.$post->ID).'">Edit</a></p>';
 	}
-endwhile;
+echo '</div></div><!-- end rsvpmaker_embedded -->';
+$content = ob_get_clean();	
 }
-echo '</div></div><!-- end rsvpmaker_upcoming -->';
+}
 
 $wp_query = $backup_query;
+$post = $backup_post;
 wp_reset_postdata();
 
-return ob_get_clean();
+if(!empty($atts["style"]))
+	$content = '<div style="'.$atts["style"].'">'.$content.'</div>';
+
+return $content;
 }
 
 function rsvpmaker_compact ($atts)
