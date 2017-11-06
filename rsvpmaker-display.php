@@ -197,7 +197,7 @@ foreach($results as $row)
 	else
 		$dateline[$row["postID"]] .= ", ";
 	$dateline[$row["postID"]] .= strftime($date_format,$t);
-	if(!empty($row["current"]) && !$eventlist[$row["postID"]])
+	if(!empty($row["current"]) && empty($eventlist[$row["postID"]]))
 		$eventlist[$row["postID"]] = $row;
 	}
 
@@ -1414,102 +1414,8 @@ add_shortcode('ylchat','ylchat');
 
 function rsvpmaker_next ($atts)
 {
-$no_events = (isset($atts["no_events"])) ? $atts["no_events"] : 'No events currently listed.';
-
-global $post;
-global $wp_query;
-global $wpdb;
-global $showbutton;
-global $startday;
-global $rsvp_options;
-$listings = '';
-$showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
-
-$backup = $wp_query;
-
-if(isset($_GET["debug_query"]))
-	add_filter('posts_request','rsvpmaker_examine_query');
-
-if(isset($atts["startday"]))
-	$startday = $atts["startday"];
-
-$limit = 1;
-
-add_filter('posts_join', 'rsvpmaker_join' );
-add_filter('posts_groupby', 'rsvpmaker_groupby' );
-add_filter('posts_distinct', 'rsvpmaker_distinct' );
-add_filter('posts_fields', 'rsvpmaker_select' );
-add_filter('posts_where', 'rsvpmaker_where' );
-add_filter('posts_orderby', 'rsvpmaker_orderby' );
-
-$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1";
-
-if(isset($atts["one"]) && !empty($atts["one"]))
-	{
-	if(is_numeric($atts["one"]))
-		$querystring .= '&p='.$atts["one"];
-	elseif($atts["one"] != 'next')
-		$querystring .= '&name='.$atts["one"];
-	}
-if(isset($atts["type"]))
-	$querystring .= "&rsvpmaker-type=".$atts["type"];
-if(isset($atts["add_to_query"]))
-	{
-		if(!strpos($atts["add_to_query"],'&'))
-			$atts["add_to_query"] = '&'.$atts["add_to_query"];
-		$querystring .= $atts["add_to_query"];
-	}
-
-$wpdb->show_errors();
-
-$wp_query = new WP_Query($querystring);
-
-if(!$showbutton)
-$wp_query->is_single = true;
-// clean up so this doesn't interfere with other operations
-remove_filter('posts_join', 'rsvpmaker_join' );
-remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-remove_filter('posts_fields', 'rsvpmaker_select' );
-remove_filter('posts_where', 'rsvpmaker_where' );
-remove_filter('posts_orderby', 'rsvpmaker_orderby' );
-
-ob_start();
-	
-if ( !have_posts() )
-	{
-	$none = (isset($atts["none"])) ? $atts["none"] : '';
-	return $none;
-	}
-global $events_displayed;
-while ( have_posts() ) : the_post();
-?>
-
-<div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
-
-<?php 
-if(!isset($atts["hide_title"]) || !$atts["hide_title"])
-{
-?>
-<h1 class="rsvpmaker-entry-title"><a href="<?php the_permalink(); ?>"  itemprop="url"><span itemprop="name"><?php the_title(); ?></span></a></h1>
-<?php
-}
-?>
-<div class="rsvpmaker-entry-content">
-
-<?php the_content(); ?>
-
-</div></div><!-- .entry-content -->
-
-<?php
-endwhile;
-
-$wp_query = $backup;
-wp_reset_postdata();
-
-$listings .= ob_get_clean();
-return $listings;
-
+$atts["post_id"] = 'next';
+return $rsvpmaker_one($atts);
 }
 
 add_shortcode("rsvpmaker_next","rsvpmaker_next");
@@ -1540,6 +1446,12 @@ $backup_query = $wp_query;
 
 if($atts["post_id"] == 'next')
 {
+add_filter('posts_join', 'rsvpmaker_join' );
+add_filter('posts_groupby', 'rsvpmaker_groupby' );
+add_filter('posts_distinct', 'rsvpmaker_distinct' );
+add_filter('posts_fields', 'rsvpmaker_select' );
+add_filter('posts_where', 'rsvpmaker_where' );
+add_filter('posts_orderby', 'rsvpmaker_orderby' );
 $querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1";
 if(isset($atts["type"]))
 	$querystring .= "&rsvpmaker-type=".$atts["type"];
@@ -1549,10 +1461,20 @@ if(isset($atts["add_to_query"]))
 			$atts["add_to_query"] = '&'.$atts["add_to_query"];
 		$querystring .= $atts["add_to_query"];
 	}
+$wp_query = new WP_Query($querystring);
+
+remove_filter('posts_join', 'rsvpmaker_join' );
+remove_filter('posts_groupby', 'rsvpmaker_groupby' );
+remove_filter('posts_distinct', 'rsvpmaker_distinct' );
+remove_filter('posts_fields', 'rsvpmaker_select' );
+remove_filter('posts_where', 'rsvpmaker_where' );
+remove_filter('posts_orderby', 'rsvpmaker_orderby' );
 }
 else
-	$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1&p=". (int) $atts["post_id"];
-$wp_query = new WP_Query($querystring);
+{
+$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1&p=". (int) $atts["post_id"];
+$wp_query = new WP_Query($querystring);	
+}
 if(!$showbutton)
 $wp_query->is_single = true;
 	
@@ -1593,6 +1515,10 @@ if(!empty($atts["one_format"]) )
 			$content = __('Event date is past','rsvpmaker');
 	}
 	elseif($atts["one_format"] == 'compact') {
+		$content = rsvpmaker_compact($atts);
+	}
+	elseif($atts["one_format"] == 'compact_form') {
+		$atts["show_form"] = 1;
 		$content = rsvpmaker_compact($atts);
 	}
 }
@@ -1696,10 +1622,14 @@ while ( have_posts() ) : the_post();
 <?php
 if(is_rsvpmaker_future($post_id))
 {
+	if(isset($atts["show_form"]))
+		echo rsvpmaker_form($atts);
+	else{
 	$rsvplink = get_permalink($post_id);
 	if(strpos($rsvplink,'?') )
 		$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
 	printf($rsvp_options['rsvplink'],$rsvplink);	
+	}
 }
 	else
 		_e('Event date is past','rsvpmaker');
