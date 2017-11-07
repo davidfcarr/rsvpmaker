@@ -1024,7 +1024,7 @@ function rsvpmaker_template_join($join) {
 
 function rsvpmaker_template_where($where) {
 
-	return " meta_key='_sked'";
+	return " AND meta_key='_sked'";
 
 }
 
@@ -1082,7 +1082,10 @@ if(!empty($atts['end']))
 
 if(!empty($atts["post_id"]))
 {
-$cq = new WP_Query('posts_per_page=1&p='. (int) $atts["post_id"]);
+$qs = 'posts_per_page=1&p='. (int) $atts["post_id"];
+if($atts["post_type"])
+	$qs .= '&post_type='.$atts["post_type"];
+$cq = new WP_Query($qs);
 if ( $cq->have_posts() ) : $cq->the_post();
 ob_start();
 global $post;
@@ -1415,7 +1418,7 @@ add_shortcode('ylchat','ylchat');
 function rsvpmaker_next ($atts)
 {
 $atts["post_id"] = 'next';
-return $rsvpmaker_one($atts);
+return rsvpmaker_one($atts);
 }
 
 add_shortcode("rsvpmaker_next","rsvpmaker_next");
@@ -1722,7 +1725,8 @@ if($captcha)
 <?php
 do_action('rsvpmaker_after_captcha');
 }
-rsvpmaker_recaptcha_output();
+if(function_exists('rsvpmaker_recaptcha_output'))
+	rsvpmaker_recaptcha_output();
 global $rsvp_required_field;
 if(isset($rsvp_required_field) )
 	echo '<div id="jqerror"></div><input type="hidden" name="required" value="'.implode(",",$rsvp_required_field).'" />';

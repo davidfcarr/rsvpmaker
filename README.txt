@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 4.8.3
-Stable tag: 4.9.6
+Stable tag: 4.9.9
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 4.9.8 =
+
+* Adding support for post_type attribute in rsvpmaker_timed shortcode
+
+= 4.9.7 =
+
+* bug fix for rsvpmaker_next shortcode
+* check to make sure function exists before calling rsvpmaker_recaptcha_output (not loaded for older PHP versions)
 
 = 4.9.5 =
 
