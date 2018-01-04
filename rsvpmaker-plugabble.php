@@ -1689,10 +1689,29 @@ global $rsvp_options;
 	$myStyleUrl = (isset($rsvp_options["custom_css"]) && $rsvp_options["custom_css"]) ? $rsvp_options["custom_css"] : WP_PLUGIN_URL . '/rsvpmaker/style.css';
 	wp_register_style('rsvp_style', $myStyleUrl, array(), '4.4.7');
 	wp_enqueue_style( 'rsvp_style');
-	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker/rsvpmaker.js'), array(), 0.1);
+	wp_localize_script( 'rsvpmaker_ajaxurl', 'ajaxurl', admin_url('admin-ajax.php') );
+	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker/rsvpmaker.js'), array(), 0.8);
 } } // end event scripts
 
 add_action('wp_enqueue_scripts','rsvpmaker_event_scripts',10000);
+
+add_action('init','rsvpmaker_localdate');
+
+function rsvpmaker_localdate() {
+	if(empty($_REQUEST['action']) || $_REQUEST['action'] != 'rsvpmaker_localstring')
+		return;
+	$output = '';
+	global $rsvp_options;
+	if(!empty($_REQUEST['localstring']))
+	{
+		preg_match('/(.+:00 ).+\(([^)]+)/',$_REQUEST['localstring'],$matches);
+		$tf = str_replace('%Z','',$rsvp_options["time_format"]);
+		$t = strtotime($matches[1]);
+		$output = strftime($rsvp_options["long_date"],$t).' '.strftime($tf,$t).' '.$matches[2];
+	}
+echo $output;
+wp_die();
+}
 
 if(!function_exists('basic_form') ) {
 function basic_form( $form = '') {
@@ -1751,10 +1770,10 @@ foreach($results as $row)
 		$dur = strtotime($dur);
 	if(is_numeric($dur) )
 		$dateblock .= " ".__('to','rsvpmaker')." ".strftime($time_format,$dur);
-	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '">'."\n";
+	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
 	if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0])
 	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
-	$dateblock .= '</span></div>';
+	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
 	}
 
 //gcal link
@@ -2565,6 +2584,7 @@ function format_rsvp_details($results, $editor_options = true) {
 	global $rsvp_options;
 	$print_nonce = wp_create_nonce('rsvp_print');
 	$missing = $owed_list = '';
+	$members = $nonmembers = 0;
 	if($results)
 	$fields = array('yesno','first','last','email','guestof','amountpaid');
 	foreach($results as $index => $row)
@@ -2572,6 +2592,11 @@ function format_rsvp_details($results, $editor_options = true) {
 		$row["yesno"] = ($row["yesno"]) ? "YES" : "NO";
 		if($row["yesno"])
 			$emails[$row["email"]] = $row["email"];
+
+		if(get_user_by('email',$row["email"]))
+			$members++;
+		else
+			$nonmembers++;
 		echo '<h3>'.$row["yesno"]." ".esc_attr($row["first"])." ".esc_attr($row["last"])." ".$row["email"];
 		if($row["guestof"])
 			echo " (". __('guest of','rsvpmaker')." ".esc_attr($row["guestof"]).")";
@@ -2593,7 +2618,7 @@ function format_rsvp_details($results, $editor_options = true) {
 		if(isset($details["total"]))
 			echo '<div style="font-weight: bold;">'.__('Total','rsvpmaker').': '.$details["total"]."</div>";		
 		if($row["amountpaid"] > 0)		
-			echo '<div style="color: #006400;font-weight: bold;">'.__('Paid','rsvpmaker').': '.$row["amountpaid"]."</div>";		
+			echo '<div style="color: #006400;font-weight: bold;">'.__('Paid','rsvpmaker').': '.$row["amountpaid"]."</div>";
 		if(isset($details["total"]))
 			{
 			$owed = $details["total"] - $row["amountpaid"];
@@ -2651,6 +2676,9 @@ function format_rsvp_details($results, $editor_options = true) {
 			printf('<p><a href="mailto:%s">%s: %s</a>',$attendees,$label,$attendees);
 		}
 
+	if($members && $nonmembers)
+		printf('<p>Responses from %d members with user accounts and %d nonmembers.</p>',$members, $nonmembers);
+	
 global $phpexcel_enabled; // set if excel extension is active
 if($fields && !isset($_GET["rsvp_print"]) && !isset($_GET["limit"]))
 	{

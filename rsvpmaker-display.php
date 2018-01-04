@@ -1740,37 +1740,6 @@ if(isset($rsvp_required_field) )
 return ob_get_clean();
 }
 
-add_filter('the_content','timezone_js',99);
-
-function timezone_js ($content) {
-if(!strpos($content,'rsvpmaker'))
-	return $content;
-global $post;
-if(!get_post_meta($post->ID,'_convert_timezone', true))
-	return $content;
-
-return $content .= "
-<script>
-jQuery(document).ready(function($) {
-	
-	$('.timezone_on').click( function () {
-
-		$('.timezone_hint').each( function () {
-		
-		var utc = $(this).attr('utc');
-		var localdate = new Date(utc);
-		localstring = localdate.toString();
-		$(this).html('<br />'+localstring);
-		
-		});
-
-	});
-	
-});
-</script>
-";
-}
-
 function rsvpmaker_archive_loop_end () {
 global $wp_query;
 if(is_archive() && ($wp_query->query["post_type"] == 'rsvpmaker'))

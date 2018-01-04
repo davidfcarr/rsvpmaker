@@ -2220,7 +2220,7 @@ else
 	echo '<p>'.__('Unsubscribed from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
 	$chimp_options = get_option('chimp');
-	if(!empty($chimp_options) && isset($chimp_options["chimp-key"]))
+	if(!empty($chimp_options) && !empty($chimp_options["chimp-key"]))
 	{
 	$apikey = $chimp_options["chimp-key"];
 	$listId = $chimp_options["chimp-list"];
