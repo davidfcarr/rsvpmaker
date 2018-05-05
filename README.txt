@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 4.9.1
-Stable tag: 5.1.3
+Tested up to: 4.9.5
+Stable tag: 5.2.2
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,28 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 5.2.1 =
+
+* Calendar view now shows events from earlier in the month. In the default styling, past dates are shown with a gray background - to override, change styling for #cpcalendar td.past
+* Unsubscribed emails list now allows you to remove email addresses from the unsubscribed list.
+
+= 5.1.8 =
+
+* Added a server-side check on RSVPs exceeding the maximum count allowed (helps counter some form spam issues)
+
+= 5.1.7 =
+
+* Added setting for RSVP form title
+* Bug fix related to limited time pricing ("early bird" scenario)
+
+= 5.1.6 =
+
+* Tweak to tabbed js and css for settings screen.
+
+= 5.1.4 =
+
+* Apply Template / Switch Template options added on editing screen. Makes it easier to apply a new template to the current post.
 
 = 5.1 =
 

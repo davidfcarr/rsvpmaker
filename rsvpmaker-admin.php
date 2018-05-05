@@ -218,6 +218,8 @@ else
 	$minutes = (isset($rsvp_options["defaultmin"])) ? ( (int) $rsvp_options["defaultmin"]) : 0;
 	}
 
+$futureyear = 5 + (int) date('Y');
+
 ?>
 <div id="<?php echo $prefix; ?>date<?php echo $index;?>" style="border-bottom: thin solid #888;">
 <table width="100%">
@@ -251,9 +253,7 @@ echo "<option ";
 <?php echo __('Year','rsvpmaker');?>
 <select  id="year<?php echo $index;?>" name="<?php echo $prefix; ?>year[<?php echo $index ;?>]"> 
 <?php
-$y = (int) date('Y');
-$limit = $y + 3;
-for($i = $y; $i < $limit; $i++)
+for($i = 2000; $i < $futureyear; $i++)
 {
 echo "<option ";
 	if($i == $year)
@@ -556,7 +556,7 @@ echo $label;
                   $newoptions["social_title_date"] = (isset($_POST["option"]["social_title_date"]) && $_POST["option"]["social_title_date"]) ? 1 : 0;
                   $newoptions["rsvp_count"] = (isset($_POST["option"]["rsvp_count"]) && $_POST["option"]["rsvp_count"]) ? 1 : 0;
                   $newoptions["show_attendees"] = (isset($_POST["option"]["show_attendees"]) && $_POST["option"]["show_attendees"]) ? 1 : 0;
-                  $newoptions["missing_members"] = (isset($_POST["option"]["missing_members"]) && $_POST["option"]["missing_members"]) ? 1 : 0;
+                  $newoptions["debug"] = (isset($_POST["option"]["debug"]) && $_POST["option"]["debug"]) ? 1 : 0;
 				  
 				  $newoptions["dbversion"] = $options["dbversion"]; // gets set by db upgrade routine
 				  
@@ -611,12 +611,12 @@ if(isset($_GET["reminder_reset"]))
 
 <div class="wrap" style="max-width:950px !important;">
 
-    <h2 class="nav-tab-wrapper">
-      <a class="nav-tab nav-tab-active" href="#calendar">Calendar Settings</a>
-      <a class="nav-tab" href="#security">Security</a>
-      <a class="nav-tab" href="#payments">Payments</a>
-      <a class="nav-tab" href="#notification_email">Email Server</a>
-      <a class="nav-tab" href="#email">Mailing List</a>
+    <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
+      <a class="rsvpmaker-nav-tab nav-tab rsvpmaker-nav-tab-active nav-tab-active" href="#calendar">Calendar Settings</a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#security">Security</a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#payments">Payments</a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#notification_email">Email Server</a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#email">Mailing List</a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
@@ -726,9 +726,14 @@ jQuery('#enlarge').click(function() {
 </script>
 	<br />
 					<h3><?php _e('RSVP Link','rsvpmaker'); ?>:</h3>
+
   <textarea name="option[rsvplink]"  rows="5" cols="80" id="rsvplink"><?php if(isset($options["rsvplink"]) ) echo $options["rsvplink"];?></textarea>
-	<br />
-					<h3><?php _e('Date Format (long)','rsvpmaker'); ?>:</h3>
+	<br />Example:
+<?php if(isset($options["rsvplink"]) ) echo $options["rsvplink"];?>
+					<h3><?php _e('RSVP Form Title','rsvpmaker'); ?>:</h3>
+  <input type="text" name="option[rsvp_form_title]"  rows="5" cols="80" id="rsvp_form_title" value="<?php if(isset($options["rsvp_form_title"]) ) echo $options["rsvp_form_title"];?>" />
+	<br />		
+			<h3><?php _e('Date Format (long)','rsvpmaker'); ?>:</h3>
   <input type="text" name="option[long_date]"  id="long_date" value="<?php if(isset($options["long_date"]) ) echo $options["long_date"];?>" /> (used in event display, PHP <a target="_blank" href="http://php.net/manual/en/function.strftime.php">date format string</a>)
 	<br />
 					<h3><?php _e('Date Format (short)','rsvpmaker'); ?>:</h3>
@@ -761,7 +766,7 @@ if(isset($options["custom_css"]) && $options["custom_css"])
 		}
 
 	}
-$dstyle = plugins_url('/style.css',__FILE__);
+$dstyle = plugins_url('style.css',__FILE__);
 ?>
 
     <br /><em><?php _e('Allows you to override the standard styles from','rsvpmaker'); ?> <br /><a href="<?php echo $dstyle;?>"><?php echo $dstyle;?></a></em>
@@ -789,10 +794,10 @@ foreach($templates as $tname => $tfile)
 <br />
 <textarea name="option[dashboard_message]" style="width:90%;"><?php echo $options["dashboard_message"]; ?></textarea>
 
-<h3><?php _e('Troubleshooting','rsvpmaker'); ?></h3>
+<h3><?php _e('Troubleshooting and Logging','rsvpmaker'); ?></h3>
   <input type="checkbox" name="option[flush]" value="1" <?php if(isset($options["flush"]) && $options["flush"]) echo ' checked="checked" ';?> /> <strong><?php _e('Tweak Permalinks','rsvpmaker'); ?></strong> <?php _e('Check here if you are getting &quot;page not found&quot; errors for event content (should not be necessary for most users).','rsvpmaker'); ?> 
 	<br />
-  <input type="checkbox" name="option[debug]" value="1" <?php if(isset($options["debug"]) && $options["debug"]) echo ' checked="checked" ';?> /> <strong><?php _e('Debug','rsvpmaker'); ?></strong>
+  <input type="checkbox" name="option[debug]" value="1" <?php if(isset($options["debug"]) && $options["debug"]) echo ' checked="checked" ';?> /> <strong><?php _e('Debug and log. Log messages will be saved in the uploads directory with file names in the pattern rsvpmaker_log_2018-01-01.txt','rsvpmaker'); ?></strong>
 	<br />
   <input type="checkbox" name="option[log_email]" value="1" <?php if(isset($options["log_email"]) && $options["log_email"]) echo ' checked="checked" ';?> /> <strong><?php _e('Log email','rsvpmaker'); ?>: Monitor notification/confirmation messages generated</strong>
 	<br />
@@ -1544,6 +1549,21 @@ list-style-type: circle;
 <?php _e('<p>Explanation:</p><p>[rsvpfield textfield=&quot;myfield&quot;] outputs a text field coded to capture data for &quot;myfield&quot;</p><p>[rsvpfield textfield=&quot;myfield&quot; required=&quot;1&quot;] treats &quot;myfield&quot; as a required field.</p><p>[rsvpfield selectfield=&quot;phone_type&quot; options=&quot;Work Phone,Mobile Phone,Home Phone&quot;] HTML select field with specified options</p><p>[rsvpfield checkbox=&quot;checkboxtest&quot; value=&quot;1&quot;] Checkbox named checkboxtext with a value of 1 when checked.</p><p>[rsvpfield checkbox=&quot;checkboxtest&quot; value=&quot;1&quot; checked=&quot;1&quot;] Checkbox checked by default.</p><p>[rsvpfield radio=&quot;radiotest&quot; options=&quot;one,two,three,four&quot;] When checked, records one of the 4 values for the field &quot;radiotest&quot;</p><p>[rsvpfield radio=&quot;radiotest&quot; options=&quot;one,two,three,four&quot; checked=&quot;two&quot;] choice &quot;two&quot; is checked by default</p><p>[rsvpfield radio=&quot;radiotest&quot; options=&quot;one,two,three,four&quot; checked=&quot;two&quot; sep=&quot; &quot;] separate choices with a space (by default, each appears on a separate line)</p><p>[rsvpprofiletable show_if_empty=&quot;phone&quot;]CONDITIONAL CONTENT GOES HERE[/rsvpprofiletable] This section only shown if the required field is empty; otherwise displays a message that the info is &quot;on file&quot;. Because RSVPMaker is capable of looking up profile data based on an email address, you may want some data to be hidden for privacy reasons.</p><p>[rsvpguests] Outputs the guest blanks.</p>','rsvpmaker'); ?>
 
 <p><?php _e("If you're having trouble with the form fields not being formatted correctly",'rsvpmaker')?>, <a href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php&amp;reset_form=1');?>"><?php _e('Reset default RSVP Form','rsvpmaker');?></a></p>
+
+<h3>Timed Content</h3>
+
+<p>To make a set a start or end time for the display of a block of content, wrap it in the rsvpmaker_timed shortcode.</p>
+
+<p>Example:</p>
+
+<p>[rsvpmaker_timed start="June 1, 2018" end="June 15, 2018" too_soon="Sorry, too soon" too_late="Sorry, too late"]</p>
+
+<p>Timed Content goes here ...<br />continues until close tag.</p>
+
+<p>[/rsvpmaker_timed]</p>
+
+<p>Include either a start or end attribute, or both. For more precision, use a database style YYYY-MM-DD format for the date. Example: start="2018-06-01 13:00" for the content to start displaying June 1 after 1 pm local time.</p>
+<p>The too_soon and too_late attributes are optional, for the output of messages before and after the specified time time period. Leave them out or leave them blank, and no content will be displayed outside the specified time period. </p>
 
 <h3>YouTube Live webinars</h3>
 <p>When embedding a YouTube Live stream in a page or post of your WordPress site, you can use the shortcode [ylchat] to embed the associated comment stream (which can be used to take questions from the audience). This extracts the video ID from the YouTube link included in the page and constructs the iframe for the chat window, according to Google's specifications. You can add attributes for width and height to override the default values (100% wide x 200 pixels tall). You can add a note to be displayed above the comments field using the note parameter, as in [ylchat note=&quot;During the program, please post questions and comments in the chat box below.&quot;]</p>
@@ -2729,8 +2749,8 @@ $rsvppost = array('post.php','post-new.php','options-general.php');
 	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
 	if(is_admin())
 	{
-	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.9' );
-	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.3.7');		
+	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.9.3' );
+	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.3.9');		
 	}
 }
 add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
@@ -3238,12 +3258,6 @@ global $rsvp_options;
 	
 	global $wpdb;
 	$wpdb->show_errors();
-
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='rsvpautorenew'
-	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_sked'  
-	 WHERE a1.meta_value = 1";
 
 	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' ";
 	//echo $sql;

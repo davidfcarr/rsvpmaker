@@ -1648,7 +1648,21 @@ function unsubscribed_list () {
 printf('<h1>%s</h1><p>%s</p>',__('Unsubscribed List','rsvpmaker'),__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here.','rsvpmaker'));
 	$unsub = get_option('rsvpmail_unsubscribed');
 if(!empty($unsub))
-echo implode('<br />',$unsub);
+{
+printf('<form method="post" action="%s"><table><tr><th>Unblock</th><th>Email</th></tr>',admin_url('edit.php?post_type=rsvpemail&page=unsubscribed_list'));
+foreach($unsub as $index => $e)
+{
+	if(isset($_POST['remove']) && in_array($e,$_POST['remove']))
+		unset($unsub[$index]);
+	else
+		printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td></tr>',$e,$e);	
+}
+echo '</table><p><input type="submit" value="Submit"></p></form>';
+	
+if(isset($_POST['remove']))
+	update_option('rsvpmail_unsubscribed',$unsub);
+}
+
 }
 
 add_action('admin_menu', 'my_rsvpemail_menu');
@@ -2031,7 +2045,7 @@ function event_to_embed($post_id, $embed = NULL) {
 		if(get_post_meta($post_id,'_rsvp_on',true))
 		{
 		$login_required = get_post_meta($post_id, '_rsvp_login_required', true);
-		$rsvplink = ($login_required) ? wp_login_url( get_post_permalink( $post_id ) ) : get_post_permalink( $post_id );
+		$rsvplink = ($login_required) ? wp_login_url( get_permalink( $post_id ) ) : get_permalink( $post_id );
 		if(strpos($rsvplink,'?') )
 			$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
 		$event_embed["content"] .= sprintf($rsvp_options['rsvplink'],$rsvplink);

@@ -85,11 +85,15 @@ max-width: 70%
 table#cpcalendar {
 width: 100%;
 }
-td.today {
-background-color: #FFA;
+#cpcalendar td.today {
+background-color: #FFFFDD;
+border: thin solid #AAA;
 }
-td.past {
+#cpcalendar td.past {
 background-color: #EEE;
+}
+#cpcalendar td.future {
+background-color: #FFFFFF;
 }
 #cpcalendar th {
 color: #fff;

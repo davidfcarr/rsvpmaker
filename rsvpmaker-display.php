@@ -233,11 +233,13 @@ foreach($eventlist as $event)
  */
 class CPEventsWidget extends WP_Widget {
     function __construct() {
-        parent::__construct(false, $name = 'RSVPMaker Events');	
+        parent::__construct(false, $name = 'RSVPMaker Events');
     }
 
     function widget($args, $instance) {		
         extract( $args );
+		global $rsvpwidget;
+		$rsvpwidget = true;
 		$title = (isset($instance['title'])) ? $instance['title'] : __('Events','rsvpmaker');
         $title = apply_filters('widget_title', $title);
 		$atts["limit"] = (isset($instance["limit"])) ? $instance["limit"] : 10;
@@ -276,6 +278,7 @@ class CPEventsWidget extends WP_Widget {
 			  			  
 			  echo $after_widget;?>
         <?php
+		$rsvpwidget = false;
     }
 
     /** @see WP_Widget::update */
@@ -406,8 +409,7 @@ $at_least_one = $wpdb->get_var($sql);
 if(!$at_least_one)
 	{
 	if(!empty($no_events))
-		echo '<p class="no_events">'.$no_events.'</p>';
-	return;
+		return '<p class="no_events">'.$no_events.'</p>';;
 	}
 	
 	$link = get_rsvpmaker_archive_link();
@@ -416,19 +418,19 @@ if(!$at_least_one)
 		$attr = apply_filters( 'next_posts_link_attributes', '' );
 		$link = '<a href="' . $link ."\" $attr>" . $label . ' &raquo;</a>';
 	if(isset($link))
-		echo "<p class=\"more_events\">$link</p>";
+		return "<p class=\"more_events\">$link</p>";
 }
 
 function rsvpmaker_select($select) {
   global $wpdb;
 
-    $select .= ", meta_value as datetime, meta_id";
+    $select .= ", rsvpdates.meta_value as datetime, meta_id";
   return $select;
 }
 
 function rsvpmaker_join($join) {
   global $wpdb;
-    return $join." JOIN ".$wpdb->postmeta." ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'";
+    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_rsvp_dates'";
 }
 
 function rsvpmaker_groupby($groupby) {
@@ -446,88 +448,88 @@ function rsvpmaker_where($where) {
 global $startday;
 global $datelimit;
 
-$where .= " AND meta_key='_rsvp_dates' ";
+$where .= " AND rsvpdates.meta_key='_rsvp_dates' ";
 
 if(isset($_REQUEST["cd"]))
 	{
-	$where .= " AND meta_value >= '".$_REQUEST["cy"]."-".$_REQUEST["cm"].'-'.$_REQUEST["cd"]."' ";
+	$where .= " AND rsvpdates.meta_value >= '".$_REQUEST["cy"]."-".$_REQUEST["cm"].'-'.$_REQUEST["cd"]."' ";
 	if(!empty($datelimit))
-	$where .= "AND meta_value < DATE_ADD('".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-01',INTERVAL $datelimit) ";
+	$where .= "AND rsvpdates.meta_value < DATE_ADD('".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-01',INTERVAL $datelimit) ";
 	return $where;
 	}
 elseif(isset($_REQUEST["cm"]))
 	{
-	$where .= " AND meta_value >= '".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-01' ";
+	$where .= " AND rsvpdates.meta_value >= '".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-01' ";
 	if(!empty($datelimit))
-	$where .= "AND meta_value < DATE_ADD('".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-01',INTERVAL $datelimit) ";
+	$where .= "AND rsvpdates.meta_value < DATE_ADD('".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-01',INTERVAL $datelimit) ";
 	return $where;
 	}
 elseif(isset($startday) && $startday)
 	{
 		$t = strtotime($startday);
 		$d = date('Y-m-d',$t);
-		 $where .= " AND meta_value > '$d' ";
+		 $where .= " AND rsvpdates.meta_value > '$d' ";
 		 if(!empty($datelimit))
-		 	$where .= " AND meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";
+		 	$where .= " AND rsvpdates.meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";
 		 return $where;
 	}
 elseif(!empty($startday))
 	{
 		$t = strtotime($startday);
 		$d = date('Y-m-d',$t);
-		$where .= " AND meta_value > '$d' AND meta_value > '$d' ";
+		$where .= " AND rsvpdates.meta_value > '$d' AND rsvpdates.meta_value > '$d' ";
 		if(!empty($datelimit))
-			$where .= "AND meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";
+			$where .= "AND rsvpdates.meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";
 		return $where;
 	}
 elseif(isset($_GET["startdate"]))
 	{
 		$d = $_GET["startdate"];
-		$where .= " AND meta_value > '$d' ";
+		$where .= " AND rsvpdates.meta_value > '$d' ";
 		if(!empty($datelimit))
-			$where .=  " AND meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";		
+			$where .=  " AND rsvpdates.meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";		
 		return $where;
 	}
 else
 	{
-		$where .= " AND meta_value > CURDATE( ) ";
+		$where .= " AND rsvpdates.meta_value > CURDATE( ) ";
 		if(!empty($datelimit))
-			$where .=  " AND meta_value < DATE_ADD(CURDATE( ),INTERVAL $datelimit) ";		
+			$where .=  " AND rsvpdates.meta_value < DATE_ADD(CURDATE( ),INTERVAL $datelimit) ";		
 		return $where;
 	}
 }
 
 function rsvpmaker_orderby($orderby) {
-  return " meta_value ";
+  return " rsvpdates.meta_value ";
 }
 
 // if listing past dates
 function rsvpmaker_where_past($where) {
 
 global $startday;
-$where .= " AND meta_key='_rsvp_dates' ";
+$where .= " AND rsvpdates.meta_key='_rsvp_dates' ";
 
 if(isset($_REQUEST["cm"]))
-	return $where . " AND meta_value < '".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-31'";
+	return $where . " AND rsvpdates.meta_value < '".$_REQUEST["cy"]."-".$_REQUEST["cm"]."-31'";
 elseif(isset($startday) && $startday)
 	{
 		$t = strtotime($startday);
 		$d = date('Y-m-d',$t);
-		return $where . " AND meta_value < '$d'";
+		return $where . " AND rsvpdates.meta_value < '$d'";
 	}
 elseif(isset($_GET["startday"]))
 	{
 		$t = strtotime($_GET["startday"]);
 		$d = date('Y-m-d',$t);
-		return $where . " AND meta_value < '$d'";
+		return $where . " AND rsvpdates.meta_value < '$d'";
 	}
 else
-	return $where . " AND meta_value < CURDATE( )";
+	return $where . " AND rsvpdates.meta_value < CURDATE( )";
 
 }
 
 function rsvpmaker_orderby_past($orderby) {
-  return " meta_value DESC";
+  return " rsvpdates.meta_value DESC";
 }
 
 function rsvpmaker_upcoming ($atts)
@@ -679,10 +681,10 @@ endwhile;
 ?>
 <p><?php
 if(isset($atts['one']) && $atts['one'])
-	get_next_events_link(__('More Events','rsvpmaker'));
+	echo get_next_events_link(__('More Events','rsvpmaker'));
 } 
 else
-	get_next_events_link(__('More Events','rsvpmaker'),$no_events);
+	echo get_next_events_link(__('More Events','rsvpmaker'),$no_events);
 echo '</div><!-- end rsvpmaker_upcoming -->';
 
 $wp_query = $backup;
@@ -718,7 +720,8 @@ elseif(isset($_GET["startday"]))
 		$d = "'".date('Y-m-d',$t)."'";
 	}
 else
-	$d = ' CURDATE() ';
+		$d = "'".date('Y-m')."-01'";
+	//$d = ' CURDATE() ';
 	return $where . " AND meta_value > ".$d.' AND meta_value < DATE_ADD('.$d.', INTERVAL 5 WEEK) ';
 }
 
@@ -927,6 +930,9 @@ for ($days = $i = date("w",$bom); $i > $weekstart; $i--) {
 }
 $days = $days - $weekstart;// adjust if first day not sunday
 
+if(isset($_GET['debugpast']))
+	$todaydate = date('Y-m-d',strtotime('+2 weeks'));
+else
 $todaydate = date('Y-m-d');
 // Print out all the days in this month
 for ($i = 1; $i <= date("t",$bom); $i++) {
@@ -936,6 +942,8 @@ for ($i = 1; $i <= date("t",$bom); $i++) {
 	$class = ($thisdate == $todaydate ) ? 'today day' : 'day';
 	if($thisdate < $todaydate)
 		$class .= ' past';
+	if($thisdate > $todaydate)
+		$class .= ' future';
    $content .= '<td valign="top" class="'.$class.'">';
    if(!empty($eventarray[$thisdate]) )
    {
@@ -1013,18 +1021,18 @@ return $content;
 
 
 function rsvpmaker_template_fields($select) {
-  $select .= ", meta_value as sked";
+  $select .= ", tmeta.meta_value as sked";
   return $select;
 }
 
 function rsvpmaker_template_join($join) {
   global $wpdb;
-  return $join." JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID ";
+  return $join." JOIN $wpdb->postmeta tmeta ON tmeta.post_id = $wpdb->posts.ID ";
 }
 
 function rsvpmaker_template_where($where) {
 
-	return " AND meta_key='_sked'";
+	return " AND tmeta.meta_key='_sked'";
 
 }
 
@@ -1071,7 +1079,7 @@ if(!empty($atts['end']))
 		$now = current_time('timestamp');
 		if($now > $end)
 			{
-				if($_GET["debug"])
+				if(isset($_GET["debug"]))
 					return sprintf('<p>end %s / now %s</p>',date('r',$end), date('r',$now));
 				elseif(isset($atts["too_late"]))
 					return '<p>'.$atts["too_late"].'</p>';
@@ -1742,6 +1750,9 @@ return ob_get_clean();
 
 function rsvpmaker_archive_loop_end () {
 global $wp_query;
+global $rsvpwidget;
+if ($rsvpwidget)
+	return;
 if(is_archive() && ($wp_query->query["post_type"] == 'rsvpmaker'))
 	{
 ?>

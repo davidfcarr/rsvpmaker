@@ -5,7 +5,7 @@ Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
 Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together. RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>
 Author: David F. Carr
-Version: 5.1.3
+Version: 5.2.2
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
@@ -57,6 +57,7 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 'convert_timezone' => 0,
 'add_timezone' => 0,
 'rsvplink' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s?e=*|EMAIL|*#rsvpnow">'. __('RSVP Now!','rsvpmaker').'</a></p>',
+"rsvp_form_title" => __('RSVP Now!','rsvpmaker'),
 'defaulthour' => 19,
 'defaultmin' => 0,
 "long_date" => '%A %B %e, %Y',
@@ -385,7 +386,7 @@ $key = "pquery_".$id;
 $p = wp_cache_get($key);
 if(!$p)
 	{
-		$p = get_post_permalink($id);
+		$p = get_permalink($id);
 		$p .= strpos($p,'?') ? '&' : '?';
 		wp_cache_set($key,$p);
 	}
@@ -448,12 +449,12 @@ global $wpdb;
 	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
 	 FROM ".$wpdb->posts."
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE a1.meta_value > CURDATE() AND (post_status='publish' OR post_status='draft') ";
-	 if( !empty($where) )
-	 	{
+	 WHERE (post_status='publish' OR post_status='draft') ";
+	if(empty($where))
+		$where = ' a1.meta_value > CURDATE() ';
+	else
 		$where = str_replace('datetime','a1.meta_value',$where);
-		$sql .= ' AND '.$where.' ';
-		}
+	$sql .= ' AND '.$where.' ';
 	$sql .= ' ORDER BY a1.meta_value ';
 return $wpdb->get_row($sql);
 }
@@ -669,7 +670,6 @@ $wp_query = $backup;
 wp_reset_postdata();
 return $events;
 }
-
 
 function rsvpmaker_duplicate_dates() {
 global $wpdb;

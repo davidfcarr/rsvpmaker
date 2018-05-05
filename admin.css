@@ -36,7 +36,7 @@ margin-top: 5px;
 margin-bottom: 10px;
 }
 
-h2.nav-tab-wrapper {
+h2.rsvpmaker-nav-tab-wrapper {
 	margin:22px 0 0 0;
 }
 
@@ -55,7 +55,7 @@ section.rsvpmaker:first-child {
 	display:block;
 }
 
-.no-js h2.nav-tab-wrapper {
+.no-js h2.rsvpmaker-nav-tab-wrapper {
 	display:none;
 }
 
