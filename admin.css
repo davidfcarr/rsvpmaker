@@ -75,3 +75,7 @@ section.rsvpmaker:first-child {
 	padding:0px;
 	border:0px;
 }
+a.update_from_template {
+	color:red;
+	font-weight: bold;
+}

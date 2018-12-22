@@ -70,7 +70,10 @@ for(i=1; i <= extrafields; i++)
 
 	if(extras != '')
 		newform = newform.concat(extras);
-	if( $('#guests').is(':checked') )
+	var maxguests = parseInt($('#maxguests').val());
+	if( $('#guests').is(':checked') && maxguests)
+		newform = newform.concat('[rsvpguests max_party="'+(maxguests + 1)+'"]'+"\n");
+	else if( $('#guests').is(':checked') )
 		newform = newform.concat('[rsvpguests]'+"\n");
 	if( $('#note').is(':checked') )
 		newform = newform.concat(note);			
@@ -109,10 +112,6 @@ for(i=1; i <= extrafields; i++)
 $('#enlarge').click(function() {
   jQuery('#rsvpform').attr('rows','40');
   return false;
-});
-
-$("#setrsvpon").change(function() {
-	$("#rsvpdetails").show();
 });
 
 $(function() {
@@ -187,8 +186,6 @@ $( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
 	// Read the "data-notice" information to track which notice
 	// is being dismissed and send it via AJAX
 	var type = $( this ).closest( '.rsvpmaker-notice' ).data( 'notice' );
-	// Make an AJAX call
-	// Since WP 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
 	$.ajax( ajaxurl,
 	  {
 		type: 'POST',
@@ -199,96 +196,9 @@ $( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
 	  } );
   } );		
 
-  $( function() {
-    var locdialog, locform;
-	
-	function addLocation () {
-		//
-		var name = $('#name').val();
-		var address = $('#address').val();
-		var city = $('#city').val();
-		var state = $('#state').val();
-		var postal = $('#postal').val();
-		var map = $('#map').val();
-		if(!map)
-			{
-				var query = address+' '+city+', '+state+' '+postal;
-				query = encodeURIComponent(query);
-				map = 'https://www.google.com/maps/search/?api=1&query='+query;
-			}
-		var output = '\n\n<span class="rsvplocation"><span class="locname">'+name+'</span><br />' +
-'<span class="locaddress">'+address+'</span><br /><span class="citystatezip"><span class="loccity">'+city+'</span>'+', <span class="state">'+state+'</span> <span class="postal">'+postal+'</span>&nbsp;<a target="_blank" class="map" href="'+map+'">(Map)</a></span></span>\n\n';
-		wp.media.editor.insert(output);
-		
-$.post(
-   ajaxurl, 
-    {
-        'action': 'save_rsvpmaker_location',
-		'post_title' : name,
-		'post_content' : output,
-		'state' : state
-	});
- 		
-      locdialog.dialog( "close" );
-	}
- 
-    locdialog = $( "#location-dialog-form" ).dialog({
-      autoOpen: false,
-      height: 650,
-      width: 600,
-      modal: true,
-		open: function (event, ui) {
-		 $('.ui-dialog').css('z-index',2000);
-		 $('.ui-widget-overlay').css('z-index',1500);
-		},
-		buttons: {
-        "Add": addLocation,
-        Cancel: function() {
-          locdialog.dialog( "close" );
-        }
-      },
-      close: function() {
-        locform[ 0 ].reset();
-      }
-    });
- 
-    locform = locdialog.find( "form" ).on( "submit", function( event ) {
-      event.preventDefault();
-      addLocation();
-    });
- 
-    $( "#rsvpmaker-add-location" ).button().on( "click", function() {
-      locdialog.dialog( "open" );
-    });
-    $( "#chooseloc" ).button().on( "click", function(event) {
-      event.preventDefault();
-	var id = $('#locselect option:selected').val();
-		
-$.get(
-   ajaxurl, 
-    {
-        'action': 'get_rsvpmaker_location',
-		'ID' : id
-    }, 
-    function(response){
-	wp.media.editor.insert('\n\n'+response+'\n\n');
-    }
-);
-    locdialog.dialog( "close" );
-			
-    });
-
-  } );
-
-    $( "#editloc" ).button().on( "click", function(event) {
-      event.preventDefault();
-	var id = $('#locselect option:selected').val();
-	var link = $("#editloc").attr('baseurl') + id;
-	$('#loceditlink').html('<a target="_blank" href="'+link+'">Edit in new window</a>');
-    });
-
 $("#multireminder #checkall").click(function(){
     $('#multireminder input:checkbox').not(this).prop('checked', this.checked);
 });	
+
 	
 });

@@ -145,16 +145,15 @@ if(isset($_POST["edit_month"]))
 	if(isset($_POST["setrsvp"]) )
 	{ // if rsvp parameters were set, was RSVP box checked?
 	if(isset($_POST["setrsvp"]["on"]))
-		save_rsvp_meta($postID);
-	else
-		update_post_meta($postID, '_rsvp_on', 0);
+		update_post_meta($postID, '_rsvp_on', $_POST["setrsvp"]["on"]);
 	}
 	
 	if(isset($_POST["sked"]["week"]))
 		{
 		save_rsvp_template_meta($postID);
 		}
-
+	if(!isset($_POST["sked"]) && !isset($_POST["setrsvp"]))
+		return;
 	if(isset($_POST['add_timezone']) && $_POST['add_timezone'])
 		update_post_meta($postID,'_add_timezone',1);
 	else
@@ -353,7 +352,11 @@ else
 function save_rsvp_meta($postID)
 {
 $setrsvp = $_POST["setrsvp"];
-
+if(empty($setrsvp['form']))
+{
+rsvpmaker_defaults_for_post($postID); //if details not set, import defaults
+return;
+}
 $checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno');
 foreach($checkboxes as $check)
 	{
@@ -440,10 +443,6 @@ if(isset($_POST["unit"]))
 		rsvpmaker_youtube_live($postID, $ylive);
 		}
 }
-
-add_action('admin_menu', 'my_events_menu');
-
-add_action('save_post','save_calendar_data');
 
 function rsvpmaker_menu_security($label, $slug,$options) {
 
@@ -732,7 +731,24 @@ jQuery('#enlarge').click(function() {
 <?php if(isset($options["rsvplink"]) ) echo $options["rsvplink"];?>
 					<h3><?php _e('RSVP Form Title','rsvpmaker'); ?>:</h3>
   <input type="text" name="option[rsvp_form_title]"  rows="5" cols="80" id="rsvp_form_title" value="<?php if(isset($options["rsvp_form_title"]) ) echo $options["rsvp_form_title"];?>" />
-	<br />		
+	<br />
+<h3 id="privacy_consent"><?php _e('Privacy Consent','rsvpmaker'); ?>:</h3>
+				<p>For compliance with the European Union's General Data Protection Regulation (GDPR) and other data privacy and security regulations, you can add a checkbox to your form requiring the user to agree to your privacy policy. WordPress 4.9.6 added a privacy policy tool, and you can consult the <a href="https://rsvpmaker.com/privacy-policy/#rsvpmaker">rsvpmaker.com privacy policy</a> for suggested language about the use of this plugin. RSVPMaker also hooks into the WordPress tools for exporting or deleting a user's information on demand. See the <a href="https://rsvpmaker.com/blog/2018/05/20/control-of-personal-data-gdpr-compliance/">blog post</a>.</p>
+				<p><input type="radio" name="option[privacy_confirmation]" value="1" <?php if(!empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> Yes <input type="radio" name="option[privacy_confirmation]" value="0" <?php if(empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> No - Add checkbox?</p>
+				<?php 
+			  	$privacy_page = get_option('wp_page_for_privacy_policy');
+			  if($privacy_page)
+			  {
+				  $privacy_url = get_permalink($privacy_page);
+			  }
+			  elseif(empty($privacy_url))
+			  {
+				$privacy_url = site_url('privacy-policy');
+				  printf('<p><em>Note: no privacy policy page registered in WordPress. Showing default value in confirmation message.</em></p>');
+			  }
+				?>
+				<p><textarea name="option[privacy_confirmation_message]" style="width: 95%"><?php if(empty($options['privacy_confirmation_message'])) printf('I consent to the <a target="_blank" href="%s">privacy policy</a> site of this site for purposes of follow up to this registration.',$privacy_url); else echo $options['privacy_confirmation_message'] ?></textarea></p>
+				
 			<h3><?php _e('Date Format (long)','rsvpmaker'); ?>:</h3>
   <input type="text" name="option[long_date]"  id="long_date" value="<?php if(isset($options["long_date"]) ) echo $options["long_date"];?>" /> (used in event display, PHP <a target="_blank" href="http://php.net/manual/en/function.strftime.php">date format string</a>)
 	<br />
@@ -801,7 +817,7 @@ foreach($templates as $tname => $tfile)
 	<br />
   <input type="checkbox" name="option[log_email]" value="1" <?php if(isset($options["log_email"]) && $options["log_email"]) echo ' checked="checked" ';?> /> <strong><?php _e('Log email','rsvpmaker'); ?>: Monitor notification/confirmation messages generated</strong>
 	<br />
-					<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
+			  <div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 			</form>
 
 <form action="<?php echo admin_url('options-general.php'); ?>" method="get"><input type="hidden" name="page" value="rsvpmaker-admin.php" /><?php _e('RSVP Reminders scheduled for','rsvpmaker'); ?>: <?php echo date('F jS, g:i A / H:i',wp_next_scheduled( 'rsvp_daily_reminder_event' )).' GMT offset '.get_option('gmt_offset').' hours'; // ?><br />
@@ -905,6 +921,11 @@ $s_cash = (!empty($options["cash_or_custom"]))  ? 'selected="selected"' : '';
 <form name="notify_options" action="<?php echo $action_url ;?>" method="post">
 <?php do_action('rsvpmaker_email_settings'); ?>
 <p><?php _e('These settings are related to transactional emails, such as registration confirmation messages. If you are using another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults.','rsvpmaker'); ?></p>
+
+<p>
+<?php _e('From Email Address for All Notifications','rsvpmaker'); ?><br />
+<input type="text" name="enotify_option[from_always]" value="<?php if(!empty($options["from_always"])) echo $options["from_always"]; elseif(!empty($options["smtp_useremail"])) echo $options["smtp_useremail"];?>" size="15" />
+</p>
 <h3 id="smtp"><?php _e('SMTP for Notifications','rsvpmaker'); ?></h3>
 <p><?php _e('For more reliable delivery of email notifications, enable delivery through the SMTP email protocol. Standard server parameters will be used for Gmail and the SendGrid service, or specify the server port number and security protocol','rsvpmaker'); ?>.</p>
 <p><?php _e('If you are using another plugin that improves the delivery of email notifications, such one of the <a href="https://wordpress.org/plugins/sendgrid-email-delivery-simplified/">SendGrid plugin</a> (which uses the SendGrid API rather than SMTP), leave this set to "None - use wp_mail()."','rsvpmaker'); ?>.</p>
@@ -981,9 +1002,6 @@ $RSVPMaker_Email_Options->handle_options();
       // register the activation function by passing the reference to our instance
       register_activation_hook(__FILE__, array(&$RSVPMAKER_Options, 'install'));
   }
-
-add_action('init','save_rsvp');
-
 
 function admin_event_listing() {
 global $wpdb;
@@ -1654,7 +1672,24 @@ if(isset($_GET["author"]))
 }
 
 //my_events_rsvp function in rsvpmaker-pluggable.php
-add_action('admin_menu', 'my_rsvp_menu');
+
+function rsvpmaker_admin_menu() {
+global $rsvp_options;
+do_action('rsvpmaker_admin_menu_top');
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup", "rsvpmaker_setup" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Templates",'rsvpmaker'), __("Event Templates",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
+if($rsvp_options["show_screen_recurring"])
+	add_submenu_page('edit.php?post_type=rsvpmaker', __("Recurring Event",'rsvpmaker'), __("Recurring Event",'rsvpmaker'), $rsvp_options["recurring_event"], "add_dates", "add_dates" );
+if(!empty($rsvp_options["show_screen_multiple"]))
+	add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events","rsvpmaker"), __("Multiple Events",'rsvpmaker'), $rsvp_options["multiple_events"], "multiple", "multiple" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Documentation",'rsvpmaker'), __("Documentation",'rsvpmaker'), $rsvp_options["documentation"], "rsvpmaker_doc", "rsvpmaker_doc" );
+if(isset($rsvp_options["debug"]) && $rsvp_options["debug"])
+	add_submenu_page('edit.php?post_type=rsvpmaker', "Debug", "Debug", 'manage_options', "rsvpmaker_debug", "rsvpmaker_debug");
+do_action('rsvpmaker_admin_menu_bottom');
+add_submenu_page('tools.php',__('Export RSVPMaker'),__('Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
+}
 
 add_filter('manage_posts_columns', 'rsvpmaker_columns');
 function rsvpmaker_columns($defaults) {
@@ -1664,8 +1699,6 @@ function rsvpmaker_columns($defaults) {
     	$defaults['rsvpmaker_cron'] = __('Scheduled','rsvpmaker');
     return $defaults;
 }
-
-add_action('manage_posts_custom_column', 'rsvpmaker_custom_column', 10, 2);
 
 function rsvpmaker_custom_column($column_name, $post_id) {
     global $wpdb;
@@ -1764,6 +1797,11 @@ return $txt;
 }
 
 function rsvpmaker_admin_notice() {
+if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
+	return; //don't clutter edit page with admin notices. Gutenberg hides them anyway.
+if(isset($_GET['post_type']) && ($_GET['post_type'] == 'rsvpmaker') && !isset($_GET['page']))
+	return; //don't clutter post listing page with admin notices
+
 global $wpdb;
 global $rsvp_options;
 global $current_user;
@@ -1771,6 +1809,9 @@ global $post;
 $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
+
+if(!isset($rsvp_options["privacy_confirmation"]) && !strpos($_SERVER['REQUEST_URI'],'rsvpmaker-admin.php'))
+	echo '<div class="notice notice-warning"><p>'.__('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php#privacy_consent').'">(settings)</a>. This is particularly important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').'</p></div>';	
 
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') ) {
 if($landing = get_post_meta($post->ID,'_webinar_landing_page_id',true))
@@ -1780,9 +1821,6 @@ if($landing = get_post_meta($post->ID,'_webinar_landing_page_id',true))
 	_e('Related messages:','rsvpmaker');
 	printf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post->ID,__('Confirmation','rsvpmaker'));
 	echo rsvpmaker_reminders_list($post->ID);
-/*	printf(' | <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&hours=-2&page=rsvp_reminders&message_type=reminder&post_id=').$post->ID,__('Reminder','rsvpmaker'));	
-	printf(' | <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&hours=2&page=rsvp_reminders&message_type=reminder&post_id=').$post->ID,__('Follow Up','rsvpmaker'));	
-*/
 	echo '</p></div>';
 	}
 if($event = get_post_meta($post->ID,'_webinar_event_id',true))
@@ -1855,127 +1893,6 @@ elseif( (!isset($rsvp_options["eventpage"]) || empty($rsvp_options["eventpage"])
 		}
 }
 
-add_action('admin_notices', 'rsvpmaker_admin_notice');
-
-function rsvpmailer($mail) {
-	global $rsvp_options;
-	global $post;
-
-	if(!empty($rsvp_options["log_email"]) && isset($post->ID))
-		add_post_meta($post->ID, '_rsvpmaker_email_log',$mail);
-	$rsvp_options = apply_filters('rsvp_email_options',$rsvp_options);
-
-	if(!isset($rsvp_options["smtp"]) || empty($rsvp_options["smtp"]))
-		{
-		$to = $mail["to"];
-		$subject = $mail["subject"];
-		if(!empty($mail["html"]))
-			{
-				$body = $mail["html"];
-				if(function_exists('set_html_content_type') ) // if using sendgrid plugin
-					add_filter('wp_mail_content_type', 'set_html_content_type');
-				else
-					$headers[] = 'Content-Type: text/html; charset=UTF-8';
-			}
-		else
-				$body = $mail["text"];
-		$headers[] = 'From: '.$mail["fromname"]. ' <'.$mail["from"].'>'."\r\n";
-		if(!empty($mail["replyto"]))
-			$headers[] = 'Reply-To: '.$mail["replyto"] ."\r\n";
-		$attachments = NULL;
-		if(isset($mail["ical"]))
-			{
-			$temp = tmpfile();
-			fwrite($temp, $mail["ical"]);
-			$metaDatas = stream_get_meta_data($temp);
-			$tmpFilename = $metaDatas['uri'];
-			$icalname = $tmpFilename .'.ics';
-			rename($tmpFilename,$icalname);
-			$attachments[] = $icalname;
-			}
-			
-		wp_mail( $to, $subject, $body, $headers, $attachments );
-		if(function_exists('set_html_content_type') )
-			remove_filter('wp_mail_content_type', 'set_html_content_type');
-		return;
-		}
-	
-	require_once ABSPATH . WPINC . '/class-phpmailer.php';
-	require_once ABSPATH . WPINC . '/class-smtp.php';
-	$rsvpmail = new PHPMailer();
-	
-	if(!empty($rsvp_options["smtp"]))
-	{
-		$rsvpmail->IsSMTP(); // telling the class to use SMTP
-	
-	if($rsvp_options["smtp"] == "gmail") {
-		$rsvpmail->SMTPAuth   = true;                  // enable SMTP authentication
-		$rsvpmail->SMTPSecure = "tls";                 // sets the prefix to the servier
-		$rsvpmail->Host       = "smtp.gmail.com";      // sets GMAIL as the SMTP server
-		$rsvpmail->Port       = 587;                   // set the SMTP port for the GMAIL server
-	}
-	elseif($rsvp_options["smtp"] == "sendgrid") {
-	$rsvpmail->SMTPAuth   = true;                  // enable SMTP authentication
-	$rsvpmail->Host = 'smtp.sendgrid.net';
-	$rsvpmail->Port = 587; 
-	}
-	elseif(!empty($rsvp_options["smtp"]) ) {
-	$rsvpmail->Host = $rsvp_options["smtp_server"]; // SMTP server
-	$rsvpmail->SMTPAuth=true;
-	if(isset($rsvp_options["smtp_prefix"]) && $rsvp_options["smtp_prefix"] )
-		$rsvpmail->SMTPSecure = $rsvp_options["smtp_prefix"];                 // sets the prefix to the server
-	$rsvpmail->Port=$rsvp_options["smtp_port"];
-	}
- 	
-	}
-	
- $rsvpmail->Username= (!empty($rsvp_options["smtp_username"]) ) ? $rsvp_options["smtp_username"] : '';
- $rsvpmail->Password= (!empty($rsvp_options["smtp_password"]) ) ? $rsvp_options["smtp_password"] : '';
- $rsvpmail->AddAddress($mail["to"]);
- if(isset($mail["cc"]) )
- 	$rsvpmail->AddCC($mail["cc"]);
-$via = (isset($_SERVER['SERVER_NAME']) && !empty($_SERVER['SERVER_NAME'])) ? ' (via '.$_SERVER['SERVER_NAME'].')' : '';
-if(is_admin() && isset($_GET['debug']))
-	$rsvpmail->SMTPDebug = 4;
-if(!empty($rsvp_options["smtp_useremail"]))
- 	{
-	 $rsvpmail->SetFrom($rsvp_options["smtp_useremail"], $mail["fromname"]. $via);
-	 $rsvpmail->AddReplyTo($mail["from"], $mail["fromname"]);
-	}
- else
-	 $rsvpmail->SetFrom($mail["from"], $mail["fromname"]. $via); 
- $rsvpmail->ClearReplyTos();
- $rsvpmail->AddReplyTo($mail["from"], $mail["fromname"]);
-if(!empty($mail["replyto"]))
- $rsvpmail->AddReplyTo($mail["replyto"]);
-
- $rsvpmail->Subject = $mail["subject"];
-if($mail["html"])
-	{
-	if(isset($mail["text"]))
-		$rsvpmail->AltBody = $mail["text"];
-	else
-		$rsvpmail->AltBody = trim(strip_tags($mail["html"]) );
-	$rsvpmail->MsgHTML($mail["html"]);
-	}
-	else
-		{
-			$rsvpmail->Body = $mail["text"];
-			$rsvpmail->WordWrap = 150;
-		}
-
-	if(isset($mail["ical"]))
-		$rsvpmail->Ical = $mail["ical"];
-	
-	try {
-		$rsvpmail->Send();
-	} catch (phpmailerException $e) {
-		echo $e->errorMessage();
-	} catch (Exception $e) {
-		echo $e->getMessage(); //Boring error messages from anything else!
-	}
-	return $rsvpmail->ErrorInfo;
-}
 
 function set_rsvpmaker_order_in_admin( $wp_query ) {
 if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker') ) // don't mess with front end or other post types
@@ -1983,26 +1900,43 @@ if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker
 global $current_user;
 		
 if(isset($_GET["rsvpsort"])) {
-  if($_GET["rsvpsort"]=="chronological")
-	  $sort = (isset($_GET["past"])) ? 'past' : 'future';
-  else
-	  $sort = 'all';	  
-  update_user_meta($current_user->ID,'rsvpsort',$sort);
+	$sort = $_GET["rsvpsort"];
+update_user_meta($current_user->ID,'rsvpsort',$sort);
 }
 if(empty($sort))
 	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
 if(empty($sort))
 	$sort = 'future';
 if(isset($_GET['s']))
-	$sort = 'all';
-	
-	if($sort != "all") {
-add_filter('posts_join', 'rsvpmaker_join',99 );
-add_filter('posts_groupby', 'rsvpmaker_groupby',99 );
+	return;
+if($sort == 'all')
+	return;
+
+if(($sort == "past") || ($sort == "future")) {
+	add_filter('posts_join', 'rsvpmaker_join',99 );
+	add_filter('posts_groupby', 'rsvpmaker_groupby',99 );
+	}
 if($sort == 'past')
 	{
 	add_filter('posts_where', 'rsvpmaker_where_past',99 );
 	add_filter('posts_orderby', 'rsvpmaker_orderby_past',99 );
+	}
+elseif($sort == 'templates')
+	{
+	add_filter('posts_join', 'rsvpmaker_join_template',99 );
+	add_filter('posts_where', function($content) {return '';}, 9999 );
+	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
+	}
+elseif($sort == 'special')
+	{
+	add_filter('posts_join', 'rsvpmaker_join_special',99 );
+	add_filter('posts_where', function($content) {return '';}, 99 );
+	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
+	}
+elseif($sort == 'all')
+	{
+	add_filter('posts_where', function($content) {return " AND post_type='rsvpmaker' AND (wp_posts.post_status = 'publish' OR wp_posts.post_status = 'future' OR wp_posts.post_status = 'draft' OR wp_posts.post_status = 'pending' OR wp_posts.post_status = 'private')";}, 99 );
+	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
 	}
 else
 	{
@@ -2010,9 +1944,17 @@ else
 	add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
 	}
 add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
-  }
 }
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
+
+function rsvpmaker_join_template($join) {
+  global $wpdb;
+    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_sked'";
+}
+function rsvpmaker_join_special($join) {
+  global $wpdb;
+    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_rsvpmaker_special'";
+}
 
 function rsvpmaker_sort_message() {
 	if((basename($_SERVER['SCRIPT_NAME']) == 'edit.php') && isset($_GET["post_type"]) &&  ($_GET["post_type"]=="rsvpmaker") && !isset($_GET["page"]))
@@ -2021,18 +1963,29 @@ function rsvpmaker_sort_message() {
 	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
 	if(empty($sort))
 		$sort = 'future';
+		$current_sort = $o = '';
+		$sortoptions = array('future' => 'Future Events','past' => 'Past Events','all' => 'All','templates' => 'Templates','special' => 'Special');
+		foreach($sortoptions as $key => $option)
+		{
+			if(isset($_GET['s']))
+			{
+				$current_sort = __('Showing','rsvpmaker').': '.__('Search Results','rsvpmaker');
+			}
+			if($key == $sort)
+			{
+				$current_sort = __('Showing','rsvpmaker').': '.$sortoptions[$key];
+			}
+			else
+			{
+				$o .= '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort='.$key).'">'.$option.'</a> ';
+			}
+		}
 				
-		echo '<div style="padding: 10px; ">';
-		if($sort == 'future')
-			echo ' '.__('Sort: Future','rsvpmaker').' <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=newest').'">'.__('Show All','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological&past=1').'">'.__('Past Events','rsvpmaker').'</a>';
-		elseif($sort == 'past')
-    		echo ' '.__('Sort: Past','rsvpmaker').' <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=newest').'">'.__('Show All','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Future Events','rsvpmaker').'</a>';
-		else
-			echo ' '.__('Sort: All','rsvpmaker').' <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological').'">'.__('Future Events','rsvpmaker').'</a> <a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort=chronological&past=1').'">'.__('Past Events','rsvpmaker').'</a>';
+		echo '<div style="padding: 10px; ">'.$current_sort.$o;
 		echo '</div>';
 	}
 }
-add_action('manage_posts_extra_tablenav','rsvpmaker_sort_message');
+
 
 function rsvpmaker_get_projected($template) {
 
@@ -2043,7 +1996,7 @@ if(!isset($template["week"]))
 if(is_array($template["week"]))
 	{
 		$weeks = $template["week"];
-		$dows = $template["dayofweek"];
+		$dows = (empty($template["dayofweek"])) ? 0 : $template["dayofweek"];
 	}
 else
 	{
@@ -2059,6 +2012,8 @@ if(!empty($template["stop"]))
 	$stopdate = strtotime($template["stop"].' 23:59:59');
 	}
 
+if(empty($dows))
+	$dows = array(0 => 0);
 foreach($weeks as $week)
 foreach($dows as $dow) {
 
@@ -2113,6 +2068,8 @@ else {
 }
 
 //order by timestamp
+if(empty($projected))
+	return array();
 ksort($projected);
 
 return $projected; 
@@ -2132,7 +2089,7 @@ wp_clear_scheduled_hook( 'rsvpmaker_replay_email', array( $post_id, $rsvp_id, $h
 wp_schedule_single_event( $reminder_time, 'rsvpmaker_replay_email', array( $post_id, $rsvp_id, $hours ) );
 }
 
-add_action('rsvpmaker_replay_email','rsvpmaker_replay_email',10,3);
+
 
 function rsvpmaker_replay_email ( $post_id, $rsvp_id, $hours ) {
 global $wpdb;
@@ -2181,7 +2138,7 @@ wp_clear_scheduled_hook( 'rsvpmaker_send_reminder_email', array( $post_id, $hour
 wp_schedule_single_event( $reminder_time, 'rsvpmaker_send_reminder_email', array( $post_id, $hours ) );
 }
 
-add_action('rsvpmaker_send_reminder_email','rsvpmaker_send_reminder_email',10,2);
+
 
 function rsvpmaker_send_reminder_email ( $post_id, $hours ) {
 global $wpdb;
@@ -2324,18 +2281,34 @@ global $current_user;
 
 function no_mce_plugins( $p ) { return array(); }
 
+function rsvpmaker_template_reminder_add($hours,$post_id) {
+	$cron = get_post_meta($post_id,'rsvpmaker_template_reminder',true);
+	if(!is_array($cron))
+		$cron = array();
+	if(!in_array($hours,$cron))
+		$cron[] = $hours;
+	update_post_meta($post_id, 'rsvpmaker_template_reminder', $cron);
+}
+
 function rsvp_reminders () {
 global $wpdb;
 global $rsvp_options;
 global $current_user;
 $existing = $options = '';
+$templates = rsvpmaker_get_templates();
 fix_timezone();
 ?>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
 <h1><?php _e('RSVP Reminders','rsvpmaker'); ?></h1> 
 <?php
-
+if(isset($_REQUEST["post_id"]))
+{
+$post_id = (int) $_REQUEST["post_id"];
+if(rsvpmaker_is_template($post_id))
+	printf('<p><em>%s</em></p>',__('This is an event template: The confirmation and reminder messages you set here will become the defaults for future events based on this template. The [datetime] placeholder in subject lines will be replaced with the specific event date.','rsvpmaker'));
+}
+	
 if(isset($_POST['timeid']))
 {
 	$source_id = (int) $_POST['to_template_source'];
@@ -2357,8 +2330,7 @@ if(isset($_POST['timeid']))
 		printf('<div class="updated">Setting follow up for %s hours after %s</div>',$hours, strftime($rsvp_options["long_date"],$ts));
 		}
 	else
-		printf('<div class="updated">Setting reminder for %s hours before %s</div>',abs($hours), strftime($rsvp_options["long_date"],$ts));
-		
+		printf('<div class="updated">Setting reminder for %s hours before %s</div>',abs($hours), strftime($rsvp_options["long_date"],$ts));		
 	}
 }
 	
@@ -2407,6 +2379,7 @@ if(isset($_POST["hours"]))
 {
 	$hours = (int) $_POST["hours"];
 	$post_id = (int) $_POST["post_id"];
+	$ist = rsvpmaker_is_template($post_id);
 	$start_time = $_POST["start_time"];
 	$ts = strtotime($start_time);
 	$message = $_POST["message"];
@@ -2415,14 +2388,20 @@ if(isset($_POST["hours"]))
 	update_post_meta($post_id, '_rsvp_reminder_subject_'.$hours,$subject);
 	if($hours > 0)
 		{
-		printf('<div class="updated">Setting follow up for %s hours after %s</div>',$hours, strftime($rsvp_options["long_date"],$ts));
+		printf('<div class="updated">Setting follow up for %s hours after start time</div>',$hours);
 		}
 	else
-		printf('<div class="updated">Setting reminder for %s hours before %s</div>',abs($hours), strftime($rsvp_options["long_date"],$ts));
-	if(is_template($post_id))
+		printf('<div class="updated">Setting reminder for %s hours before start time</div>',abs($hours));
+	if(rsvpmaker_is_template($post_id))
+	{
 		echo 'This is a template';
+		rsvpmaker_template_reminder_add($hours,$post_id);
+		rsvpautorenew_test (); // will add to the next scheduled event associated with template
+	}
 	else
-		rsvpmaker_reminder_cron($hours, $start_time, $post_id);		
+	{
+		rsvpmaker_reminder_cron($hours, $start_time, $post_id);
+	}
 }
 
 if(isset($_POST["_rsvp_confirm"])) {
@@ -2442,10 +2421,10 @@ if(isset($_GET["delete_reminder"])) {
 if(isset($_GET["message_type"])) {
 	$type = $_GET["message_type"];
 	$post_id = (int) $_GET["post_id"];
-	if(is_template($post_id))
+	if(rsvpmaker_is_template($post_id))
 	{
 		$event = get_post($post_id);
-		$prettydate = 'Template';
+		$prettydate = '[datetime]';
 	}
 	else
 	{
@@ -2454,7 +2433,7 @@ if(isset($_GET["message_type"])) {
 		JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates' 
 		WHERE $wpdb->posts.ID =" . $post_id;
 		$event = $wpdb->get_row($sql);
-		$prettydate = date('l F jS g:i A T',strtotime($event->datetime));		
+		$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
 	}
 	$titledate = $event->post_title.' '.$prettydate;
 
@@ -2520,7 +2499,7 @@ $settings = array(
 );
 //prevent other plugins from modifying editor
 add_filter('mce_external_plugins','no_mce_plugins',99);
-wp_editor( $content, $editor_id, $settings );
+rsvpmaker_wp_editor( $content, $editor_id, $settings );
 ?>
 <p><button>Save</button></p>
 </form>
@@ -2530,7 +2509,7 @@ wp_editor( $content, $editor_id, $settings );
 if(isset($_REQUEST["post_id"]))
 	{
 	$id = (int) $_REQUEST["post_id"];
-	if(is_template($id))
+	if(rsvpmaker_is_template($id))
 	{
 	$event = get_post($id);
 	$prettydate = 'Template';
@@ -2571,7 +2550,7 @@ foreach ($reminders as $reminder)
 	$template_prompt = '';
 	if($template = has_template($event->ID))
 		$template_prompt = sprintf(' | <a href="%s">Apply to Events with Same Template</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders').'&to_template='.$template.'&hours='.$hour.'&post_id='.$event->ID);
-	elseif($template = is_template($event->ID))
+	elseif($template = rsvpmaker_is_template($event->ID))
 		$template_prompt = sprintf(' | <a href="%s">Apply to Events with Same Template</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders').'&to_template='.$template.'&hours='.$hour.'&post_id='.$event->ID);
 
 	$existing .= sprintf('<h3>Subject: %s</h3>',$subject);	
@@ -2612,8 +2591,31 @@ foreach ($cron_jobs as $key => $job)
 	$existing .= sprintf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a> %s </p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder').'&hours='.$hour.'&post_id='.$reminder_event,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete_reminder=1').'&hours='.$hour.'&post_id='.$reminder_event,$template_prompt );
 			}
 	}
+	
+	$tlist = rsvpmaker_get_templates();
+	if($tlist)
+	{
+		foreach($tlist as $t)
+		{
+			$rcron = get_post_meta($t->ID,'rsvpmaker_template_reminder',true);
+			if(!empty($rcron))
+			{
+				foreach($rcron as $hours)
+				$existing .= sprintf('<p>Template reminders: <a href="%s">%s (%d hours)</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder&hours='.$hours.'&post_id='.$t->ID),$t->post_title,$hours);	
+			}
+		}
+	}
+	
 if(!empty($existing))
 	echo '<h3>Previously Set Reminders</h3>'.$existing;	
+
+foreach($templates as $event)
+{
+$confirm = get_post_meta($event->ID,'_rsvp_confirm',true);
+$titledate = 'Template: '.$event->post_title;
+$s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->ID ) ? ' selected="selected" ' : '';
+$options .= sprintf('<option value="%d" %s>%s</option>',$event->ID, $s, $titledate);		
+}
 
 // future events
 $sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
@@ -2632,7 +2634,7 @@ $s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->postID ) ? 
 
 $options .= sprintf('<option value="%d" %s>%s</option>',$event->postID, $s, $titledate);
 }
-
+	
 // past events
 $past_options = '<optgroup label="' .__('Recent Events','rsvpmaker').'">';
 $sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
@@ -2643,7 +2645,7 @@ ORDER BY meta_value DESC LIMIT 0, 50";
 $events = $wpdb->get_results($sql);
 foreach ($events as $event)
 {
-	$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
+$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
 $titledate = $event->post_title.' '.$prettydate;
 
 $s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->postID ) ? ' selected="selected" ' : '';
@@ -2698,11 +2700,7 @@ wget -qO- <?php echo site_url('/wp-cron.php?doing_wp_cron=1');?>  &> /dev/null
 <?php
 }
 
-add_action('admin_menu', 'reminder_events_menu');
-
 function rsvpmaker_placeholder_image () {
-if(!isset($_GET["rsvpmaker_placeholder"]))
-	return;
 $impath = dirname( __FILE__ ).DIRECTORY_SEPARATOR.'placeholder.png';
 $im = imagecreatefrompng($impath);
 if(!$im)
@@ -2739,22 +2737,6 @@ imagedestroy($im);
 exit();
 }
 
-add_action('init','rsvpmaker_placeholder_image');
-
-function rsvpmaker_admin_enqueue($hook) {
-global $post;
-$rsvppost = array('post.php','post-new.php','options-general.php');
-	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
-	wp_enqueue_script('jquery-ui-dialog');
-	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
-	if(is_admin())
-	{
-	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(),'4.9.3' );
-	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),'4.3.9');		
-	}
-}
-add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
-
 function rsvp_mce_buttons( $buttons ) {
 	global $post;
 	if(empty($post)) return $buttons;
@@ -2778,7 +2760,6 @@ function rsvp_mce_plugins ( $plugin_array ) {
 }
 add_filter( 'mce_external_plugins', 'rsvp_mce_plugins', 10000);
 
-add_action('admin_head','rsvpmaker_upcoming_admin_js');
 function rsvpmaker_upcoming_admin_js() {
 
     global $current_screen;
@@ -2810,7 +2791,7 @@ ORDER BY meta_value";
 	 	$row[] = sprintf("{text: '%s', value: '%d'}",addslashes($r->post_title).' '.date('r',strtotime($r->datetime)),$r->ID);   
 
 $terms = get_terms('rsvpmaker-type');
-$t[] = "{text: 'None', value: ''}";
+$t[] = "{text: 'Any', value: ''}";
 if ( ! empty( $terms ) && ! is_wp_error( $terms ) ){
      foreach ( $terms as $term ) {
        $t[] = sprintf("{text: '%s', value: '%s'}",$term->name,$term->slug);
@@ -2874,7 +2855,7 @@ if($results)
 	}
 
 }
-add_action('export_wp','export_rsvpmaker');
+
 
 function import_rsvpmaker() {
 global $wpdb;
@@ -2932,10 +2913,6 @@ $wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_key='_export_rsvp_volunteer
 }
 
 }
-
-add_action('import_end','import_rsvpmaker');
-
-add_action('wp_ajax_rsvpmaker_paypal_config','rsvpmaker_paypal_config_ajax');
 
 function rsvpmaker_paypal_config_ajax () {
 $filename = rsvpmaker_paypal_config_write($_POST["user"],$_POST["password"],$_POST["signature"]);
@@ -3089,7 +3066,6 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 		}
 	}
 }//end rsvpmaker_add_one
-add_action('admin_init','rsvpmaker_add_one');
 
 function rsvpmaker_admin_page_top($headline) {
 
@@ -3122,7 +3098,6 @@ if(isset($_GET['page']) && ($_GET['page'] == 'rsvp_reminders'))
 	wp_enqueue_editor();
 }
 
-add_action('admin_init','rsvpmaker_editors');
 
 function rsvpmaker_admin_notice_format($message, $slug, $cleared, $type='info')
 {
@@ -3133,7 +3108,7 @@ printf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notic
 </div>',$type,$slug,$message);
 }
 
-add_action( 'wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
+
 
 /**
  * AJAX handler to store the state of dismissible notices.
@@ -3225,7 +3200,7 @@ function add_rsvpmaker_from_template($t, $template, $date) {
 	$my_post['post_status'] = 'publish';
 	$my_post['post_author'] = $post->post_author;
 	$my_post['post_type'] = 'rsvpmaker';
-	rsvpmaker_debug_log('autorenew source'.var_export($my_post,true));
+	//rsvpmaker_debug_log('autorenew source'.var_export($my_post,true));
 			if(empty($template["duration"]))
 				$template["duration"] = '';			
 			$dpart = explode(':',$template["duration"]);
@@ -3264,9 +3239,37 @@ global $rsvp_options;
 	$results = $wpdb->get_results($sql);
 	foreach($results as $row)
 	{
-		rsvpmaker_debug_log('test template '.$row->post_title.' ID '.$row->ID);
+		//rsvpmaker_debug_log('test template '.$row->post_title.' ID '.$row->ID);
 		//echo $row->post_title.'<br />';
 		auto_renew_project ($row->ID);
+	}
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpmaker_template_reminder' ";
+	//echo $sql;
+	fix_timezone();
+	$results = $wpdb->get_results($sql);
+	//rsvpmaker_debug_log($results,'templates with reminders');
+	foreach($results as $row)
+	{		
+		$thours = unserialize($row->meta_value);
+		//rsvpmaker_debug_log($thours,'hours array');
+		$next = rsvpmaker_next_by_template($row->ID);
+		//rsvpmaker_debug_log($next,'next event');
+		$message = get_post_meta($next->ID, '_rsvp_reminder_msg_'.$thours[0], true);
+		//rsvpmaker_debug_log($message,'existing message');
+		if(!empty($message))
+			continue; // already set
+		$start_time = strtotime($next->datetime);
+		$prettydate = date('l F jS g:i A T',strtotime($next->datetime));
+		$include_event = get_post_meta($row->ID, '_rsvp_confirmation_include_event', true);
+		update_post_meta($next->ID, '_rsvp_confirmation_include_event',$include_event);
+		foreach($thours as $hours) {
+			$message = get_post_meta($row->ID, '_rsvp_reminder_msg_'.$hours, true);
+			$subject = get_post_meta($row->ID, '_rsvp_reminder_subject_'.$hours, true);
+			$subject = str_replace('[datetime]',$prettydate,$subject);
+			update_post_meta($next->ID, '_rsvp_reminder_msg_'.$hours,$message);
+			update_post_meta($next->ID, '_rsvp_reminder_subject_'.$hours,$subject);
+			rsvpmaker_reminder_cron($hours, $start_time, $next->ID);
+		}
 	}
 }
 
@@ -3274,6 +3277,7 @@ add_shortcode('rsvpautorenew_test','rsvpautorenew_test');
 
 function rsvpmaker_copy_metadata($source_id, $target_id) {
 global $wpdb;
+$log = '';
 //copy metadata
 $meta_keys = array();
 $post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$source_id");
@@ -3287,12 +3291,20 @@ $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_met
 				$meta_keys[] = $meta_key;
 				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew');
 				if(in_array($meta_key, $meta_protect) )
-					continue;
+				{
+					$log .= 'Skip '.$meta_key.'<br />';
+					continue;					
+				}
+				else
+				{
+					$log .= 'Copy '.$meta_key.': '.$meta_info->meta_value.'<br />';			
+				}
 				if(is_serialized($meta_info->meta_value))
 					update_post_meta($target_id,$meta_key,unserialize($meta_info->meta_value));
 				else
 					update_post_meta($target_id,$meta_key,$meta_info->meta_value);
 			}
+		////rsvpmaker_debug_log($log,'copy metadata from template '.$source_id.' to '.$target_id);
 		}
 
 $terms = get_the_terms( $source_id, 'rsvpmaker-type' );						
@@ -3308,103 +3320,867 @@ wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
 
 }
 
-function rsvpmaker_location($special) {
-	if($special == 'Location')
-	{
+//kludge for gutenberg autosave failed issues
+/*
+function rsvpmaker_api_slug( $slug ) {
+ return 'wpjson';
+}
+// Hook.
+add_filter( 'rest_url_prefix', 'rsvpmaker_api_slug' );
+*/
+
+function rsvp_time_options ($post_id) {
+global $rsvp_options;
+$icons = get_post_meta($post_id,"_calendar_icons",true);
+$add_timezone = get_post_meta($post_id,"_add_timezone",true);
+$convert_timezone = get_post_meta($post_id,"_convert_timezone",true);
+$rsvp_timezone = get_post_meta($post_id,"_rsvp_timezone_string",true);
 ?>
-<p>RSVPMaker saves locations as posts containing basic address information and a link, by default. You can add location images or other enhancements, for example to guide people to a difficult-to-find location.</p>
-
-<p>You can browse or search for location listings by going to RSVPMaker Events and clicking "Show All" (as opposed to past or future events), or follow the link from the Locations popup in the editor.</p>.
-<?php	
-	}
+<input type="checkbox" name="calendar_icons" value="1" <?php if($icons) echo ' checked="checked" ';?> /> <?php _e('Show Add to Google / Download to Outlook (iCal) icons','rsvpmaker'); ?> 
+<br />
+<p id="timezone_options">
+<?php
+if(!strpos($rsvp_options["time_format"],'T') )
+{
+?>
+<input type="checkbox" name="add_timezone" value="1" <?php if($add_timezone) echo ' checked="checked" '; ?> /><?php _e('Display timezone code as part of date/time','rsvpmaker'); echo ' '; ?>
+<?php
+}
+?>
+<input type="checkbox" name="convert_timezone" value="1" <?php if($convert_timezone) echo ' checked="checked" '; ?> /><?php _e('Show timezone conversion button next to calendar icons','rsvpmaker'); ?>
+</p>
+<?php if(isset($_GET['page']) && $_GET['page'] == 'rsvpmaker_details') {
+?>
+<p>Timezone <select id="timezone_string" name="setrsvp[timezone_string]">
+	<option value="<?php echo $rsvp_timezone?>"><?php echo (empty($rsvp_timezone)) ? __('Default','rsvpmaker') : $rsvp_timezone?></option>
+<optgroup label="U.S. Mainland">
+<option value="America/New_York">New York</option>
+<option value="America/Chicago">Chicago</option>
+<option value="America/Denver">Denver</option>
+<option value="America/Los_Angeles">Los Angeles</option>
+</optgroup>
+<optgroup label="Africa">
+<option value="Africa/Abidjan">Abidjan</option>
+<option value="Africa/Accra">Accra</option>
+<option value="Africa/Addis_Ababa">Addis Ababa</option>
+<option value="Africa/Algiers">Algiers</option>
+<option value="Africa/Asmara">Asmara</option>
+<option value="Africa/Bamako">Bamako</option>
+<option value="Africa/Bangui">Bangui</option>
+<option value="Africa/Banjul">Banjul</option>
+<option value="Africa/Bissau">Bissau</option>
+<option value="Africa/Blantyre">Blantyre</option>
+<option value="Africa/Brazzaville">Brazzaville</option>
+<option value="Africa/Bujumbura">Bujumbura</option>
+<option value="Africa/Cairo">Cairo</option>
+<option value="Africa/Casablanca">Casablanca</option>
+<option value="Africa/Ceuta">Ceuta</option>
+<option value="Africa/Conakry">Conakry</option>
+<option value="Africa/Dakar">Dakar</option>
+<option value="Africa/Dar_es_Salaam">Dar es Salaam</option>
+<option value="Africa/Djibouti">Djibouti</option>
+<option value="Africa/Douala">Douala</option>
+<option value="Africa/El_Aaiun">El Aaiun</option>
+<option value="Africa/Freetown">Freetown</option>
+<option value="Africa/Gaborone">Gaborone</option>
+<option value="Africa/Harare">Harare</option>
+<option value="Africa/Johannesburg">Johannesburg</option>
+<option value="Africa/Juba">Juba</option>
+<option value="Africa/Kampala">Kampala</option>
+<option value="Africa/Khartoum">Khartoum</option>
+<option value="Africa/Kigali">Kigali</option>
+<option value="Africa/Kinshasa">Kinshasa</option>
+<option value="Africa/Lagos">Lagos</option>
+<option value="Africa/Libreville">Libreville</option>
+<option value="Africa/Lome">Lome</option>
+<option value="Africa/Luanda">Luanda</option>
+<option value="Africa/Lubumbashi">Lubumbashi</option>
+<option value="Africa/Lusaka">Lusaka</option>
+<option value="Africa/Malabo">Malabo</option>
+<option value="Africa/Maputo">Maputo</option>
+<option value="Africa/Maseru">Maseru</option>
+<option value="Africa/Mbabane">Mbabane</option>
+<option value="Africa/Mogadishu">Mogadishu</option>
+<option value="Africa/Monrovia">Monrovia</option>
+<option value="Africa/Nairobi">Nairobi</option>
+<option value="Africa/Ndjamena">Ndjamena</option>
+<option value="Africa/Niamey">Niamey</option>
+<option value="Africa/Nouakchott">Nouakchott</option>
+<option value="Africa/Ouagadougou">Ouagadougou</option>
+<option value="Africa/Porto-Novo">Porto-Novo</option>
+<option value="Africa/Sao_Tome">Sao Tome</option>
+<option value="Africa/Tripoli">Tripoli</option>
+<option value="Africa/Tunis">Tunis</option>
+<option value="Africa/Windhoek">Windhoek</option>
+</optgroup>
+<optgroup label="America">
+<option value="America/Adak">Adak</option>
+<option value="America/Anchorage">Anchorage</option>
+<option value="America/Anguilla">Anguilla</option>
+<option value="America/Antigua">Antigua</option>
+<option value="America/Araguaina">Araguaina</option>
+<option value="America/Argentina/Buenos_Aires">Argentina - Buenos Aires</option>
+<option value="America/Argentina/Catamarca">Argentina - Catamarca</option>
+<option value="America/Argentina/Cordoba">Argentina - Cordoba</option>
+<option value="America/Argentina/Jujuy">Argentina - Jujuy</option>
+<option value="America/Argentina/La_Rioja">Argentina - La Rioja</option>
+<option value="America/Argentina/Mendoza">Argentina - Mendoza</option>
+<option value="America/Argentina/Rio_Gallegos">Argentina - Rio Gallegos</option>
+<option value="America/Argentina/Salta">Argentina - Salta</option>
+<option value="America/Argentina/San_Juan">Argentina - San Juan</option>
+<option value="America/Argentina/San_Luis">Argentina - San Luis</option>
+<option value="America/Argentina/Tucuman">Argentina - Tucuman</option>
+<option value="America/Argentina/Ushuaia">Argentina - Ushuaia</option>
+<option value="America/Aruba">Aruba</option>
+<option value="America/Asuncion">Asuncion</option>
+<option value="America/Atikokan">Atikokan</option>
+<option value="America/Bahia">Bahia</option>
+<option value="America/Bahia_Banderas">Bahia Banderas</option>
+<option value="America/Barbados">Barbados</option>
+<option value="America/Belem">Belem</option>
+<option value="America/Belize">Belize</option>
+<option value="America/Blanc-Sablon">Blanc-Sablon</option>
+<option value="America/Boa_Vista">Boa Vista</option>
+<option value="America/Bogota">Bogota</option>
+<option value="America/Boise">Boise</option>
+<option value="America/Cambridge_Bay">Cambridge Bay</option>
+<option value="America/Campo_Grande">Campo Grande</option>
+<option value="America/Cancun">Cancun</option>
+<option value="America/Caracas">Caracas</option>
+<option value="America/Cayenne">Cayenne</option>
+<option value="America/Cayman">Cayman</option>
+<option value="America/Chicago">Chicago</option>
+<option value="America/Chihuahua">Chihuahua</option>
+<option value="America/Costa_Rica">Costa Rica</option>
+<option value="America/Creston">Creston</option>
+<option value="America/Cuiaba">Cuiaba</option>
+<option value="America/Curacao">Curacao</option>
+<option value="America/Danmarkshavn">Danmarkshavn</option>
+<option value="America/Dawson">Dawson</option>
+<option value="America/Dawson_Creek">Dawson Creek</option>
+<option value="America/Denver">Denver</option>
+<option value="America/Detroit">Detroit</option>
+<option value="America/Dominica">Dominica</option>
+<option value="America/Edmonton">Edmonton</option>
+<option value="America/Eirunepe">Eirunepe</option>
+<option value="America/El_Salvador">El Salvador</option>
+<option value="America/Fortaleza">Fortaleza</option>
+<option value="America/Glace_Bay">Glace Bay</option>
+<option value="America/Godthab">Godthab</option>
+<option value="America/Goose_Bay">Goose Bay</option>
+<option value="America/Grand_Turk">Grand Turk</option>
+<option value="America/Grenada">Grenada</option>
+<option value="America/Guadeloupe">Guadeloupe</option>
+<option value="America/Guatemala">Guatemala</option>
+<option value="America/Guayaquil">Guayaquil</option>
+<option value="America/Guyana">Guyana</option>
+<option value="America/Halifax">Halifax</option>
+<option value="America/Havana">Havana</option>
+<option value="America/Hermosillo">Hermosillo</option>
+<option value="America/Indiana/Indianapolis">Indiana - Indianapolis</option>
+<option value="America/Indiana/Knox">Indiana - Knox</option>
+<option value="America/Indiana/Marengo">Indiana - Marengo</option>
+<option value="America/Indiana/Petersburg">Indiana - Petersburg</option>
+<option value="America/Indiana/Tell_City">Indiana - Tell City</option>
+<option value="America/Indiana/Vevay">Indiana - Vevay</option>
+<option value="America/Indiana/Vincennes">Indiana - Vincennes</option>
+<option value="America/Indiana/Winamac">Indiana - Winamac</option>
+<option value="America/Inuvik">Inuvik</option>
+<option value="America/Iqaluit">Iqaluit</option>
+<option value="America/Jamaica">Jamaica</option>
+<option value="America/Juneau">Juneau</option>
+<option value="America/Kentucky/Louisville">Kentucky - Louisville</option>
+<option value="America/Kentucky/Monticello">Kentucky - Monticello</option>
+<option value="America/Kralendijk">Kralendijk</option>
+<option value="America/La_Paz">La Paz</option>
+<option value="America/Lima">Lima</option>
+<option value="America/Los_Angeles">Los Angeles</option>
+<option value="America/Lower_Princes">Lower Princes</option>
+<option value="America/Maceio">Maceio</option>
+<option value="America/Managua">Managua</option>
+<option value="America/Manaus">Manaus</option>
+<option value="America/Marigot">Marigot</option>
+<option value="America/Martinique">Martinique</option>
+<option value="America/Matamoros">Matamoros</option>
+<option value="America/Mazatlan">Mazatlan</option>
+<option value="America/Menominee">Menominee</option>
+<option value="America/Merida">Merida</option>
+<option value="America/Metlakatla">Metlakatla</option>
+<option value="America/Mexico_City">Mexico City</option>
+<option value="America/Miquelon">Miquelon</option>
+<option value="America/Moncton">Moncton</option>
+<option value="America/Monterrey">Monterrey</option>
+<option value="America/Montevideo">Montevideo</option>
+<option value="America/Montserrat">Montserrat</option>
+<option value="America/Nassau">Nassau</option>
+<option value="America/New_York">New York</option>
+<option value="America/Nipigon">Nipigon</option>
+<option value="America/Nome">Nome</option>
+<option value="America/Noronha">Noronha</option>
+<option value="America/North_Dakota/Beulah">North Dakota - Beulah</option>
+<option value="America/North_Dakota/Center">North Dakota - Center</option>
+<option value="America/North_Dakota/New_Salem">North Dakota - New Salem</option>
+<option value="America/Ojinaga">Ojinaga</option>
+<option value="America/Panama">Panama</option>
+<option value="America/Pangnirtung">Pangnirtung</option>
+<option value="America/Paramaribo">Paramaribo</option>
+<option value="America/Phoenix">Phoenix</option>
+<option value="America/Port-au-Prince">Port-au-Prince</option>
+<option value="America/Port_of_Spain">Port of Spain</option>
+<option value="America/Porto_Velho">Porto Velho</option>
+<option value="America/Puerto_Rico">Puerto Rico</option>
+<option value="America/Rainy_River">Rainy River</option>
+<option value="America/Rankin_Inlet">Rankin Inlet</option>
+<option value="America/Recife">Recife</option>
+<option value="America/Regina">Regina</option>
+<option value="America/Resolute">Resolute</option>
+<option value="America/Rio_Branco">Rio Branco</option>
+<option value="America/Santa_Isabel">Santa Isabel</option>
+<option value="America/Santarem">Santarem</option>
+<option value="America/Santiago">Santiago</option>
+<option value="America/Santo_Domingo">Santo Domingo</option>
+<option value="America/Sao_Paulo">Sao Paulo</option>
+<option value="America/Scoresbysund">Scoresbysund</option>
+<option value="America/Sitka">Sitka</option>
+<option value="America/St_Barthelemy">St Barthelemy</option>
+<option value="America/St_Johns">St Johns</option>
+<option value="America/St_Kitts">St Kitts</option>
+<option value="America/St_Lucia">St Lucia</option>
+<option value="America/St_Thomas">St Thomas</option>
+<option value="America/St_Vincent">St Vincent</option>
+<option value="America/Swift_Current">Swift Current</option>
+<option value="America/Tegucigalpa">Tegucigalpa</option>
+<option value="America/Thule">Thule</option>
+<option value="America/Thunder_Bay">Thunder Bay</option>
+<option value="America/Tijuana">Tijuana</option>
+<option value="America/Toronto">Toronto</option>
+<option value="America/Tortola">Tortola</option>
+<option value="America/Vancouver">Vancouver</option>
+<option value="America/Whitehorse">Whitehorse</option>
+<option value="America/Winnipeg">Winnipeg</option>
+<option value="America/Yakutat">Yakutat</option>
+<option value="America/Yellowknife">Yellowknife</option>
+</optgroup>
+<optgroup label="Antarctica">
+<option value="Antarctica/Casey">Casey</option>
+<option value="Antarctica/Davis">Davis</option>
+<option value="Antarctica/DumontDUrville">DumontDUrville</option>
+<option value="Antarctica/Macquarie">Macquarie</option>
+<option value="Antarctica/Mawson">Mawson</option>
+<option value="Antarctica/McMurdo">McMurdo</option>
+<option value="Antarctica/Palmer">Palmer</option>
+<option value="Antarctica/Rothera">Rothera</option>
+<option value="Antarctica/Syowa">Syowa</option>
+<option value="Antarctica/Troll">Troll</option>
+<option value="Antarctica/Vostok">Vostok</option>
+</optgroup>
+<optgroup label="Arctic">
+<option value="Arctic/Longyearbyen">Longyearbyen</option>
+</optgroup>
+<optgroup label="Asia">
+<option value="Asia/Aden">Aden</option>
+<option value="Asia/Almaty">Almaty</option>
+<option value="Asia/Amman">Amman</option>
+<option value="Asia/Anadyr">Anadyr</option>
+<option value="Asia/Aqtau">Aqtau</option>
+<option value="Asia/Aqtobe">Aqtobe</option>
+<option value="Asia/Ashgabat">Ashgabat</option>
+<option value="Asia/Baghdad">Baghdad</option>
+<option value="Asia/Bahrain">Bahrain</option>
+<option value="Asia/Baku">Baku</option>
+<option value="Asia/Bangkok">Bangkok</option>
+<option value="Asia/Beirut">Beirut</option>
+<option value="Asia/Bishkek">Bishkek</option>
+<option value="Asia/Brunei">Brunei</option>
+<option value="Asia/Chita">Chita</option>
+<option value="Asia/Choibalsan">Choibalsan</option>
+<option value="Asia/Colombo">Colombo</option>
+<option value="Asia/Damascus">Damascus</option>
+<option value="Asia/Dhaka">Dhaka</option>
+<option value="Asia/Dili">Dili</option>
+<option value="Asia/Dubai">Dubai</option>
+<option value="Asia/Dushanbe">Dushanbe</option>
+<option value="Asia/Gaza">Gaza</option>
+<option value="Asia/Hebron">Hebron</option>
+<option value="Asia/Ho_Chi_Minh">Ho Chi Minh</option>
+<option value="Asia/Hong_Kong">Hong Kong</option>
+<option value="Asia/Hovd">Hovd</option>
+<option value="Asia/Irkutsk">Irkutsk</option>
+<option value="Asia/Jakarta">Jakarta</option>
+<option value="Asia/Jayapura">Jayapura</option>
+<option value="Asia/Jerusalem">Jerusalem</option>
+<option value="Asia/Kabul">Kabul</option>
+<option value="Asia/Kamchatka">Kamchatka</option>
+<option value="Asia/Karachi">Karachi</option>
+<option value="Asia/Kathmandu">Kathmandu</option>
+<option value="Asia/Khandyga">Khandyga</option>
+<option value="Asia/Kolkata">Kolkata</option>
+<option value="Asia/Krasnoyarsk">Krasnoyarsk</option>
+<option value="Asia/Kuala_Lumpur">Kuala Lumpur</option>
+<option value="Asia/Kuching">Kuching</option>
+<option value="Asia/Kuwait">Kuwait</option>
+<option value="Asia/Macau">Macau</option>
+<option value="Asia/Magadan">Magadan</option>
+<option value="Asia/Makassar">Makassar</option>
+<option value="Asia/Manila">Manila</option>
+<option value="Asia/Muscat">Muscat</option>
+<option value="Asia/Nicosia">Nicosia</option>
+<option value="Asia/Novokuznetsk">Novokuznetsk</option>
+<option value="Asia/Novosibirsk">Novosibirsk</option>
+<option value="Asia/Omsk">Omsk</option>
+<option value="Asia/Oral">Oral</option>
+<option value="Asia/Phnom_Penh">Phnom Penh</option>
+<option value="Asia/Pontianak">Pontianak</option>
+<option value="Asia/Pyongyang">Pyongyang</option>
+<option value="Asia/Qatar">Qatar</option>
+<option value="Asia/Qyzylorda">Qyzylorda</option>
+<option value="Asia/Rangoon">Rangoon</option>
+<option value="Asia/Riyadh">Riyadh</option>
+<option value="Asia/Sakhalin">Sakhalin</option>
+<option value="Asia/Samarkand">Samarkand</option>
+<option value="Asia/Seoul">Seoul</option>
+<option value="Asia/Shanghai">Shanghai</option>
+<option value="Asia/Singapore">Singapore</option>
+<option value="Asia/Srednekolymsk">Srednekolymsk</option>
+<option value="Asia/Taipei">Taipei</option>
+<option value="Asia/Tashkent">Tashkent</option>
+<option value="Asia/Tbilisi">Tbilisi</option>
+<option value="Asia/Tehran">Tehran</option>
+<option value="Asia/Thimphu">Thimphu</option>
+<option value="Asia/Tokyo">Tokyo</option>
+<option value="Asia/Ulaanbaatar">Ulaanbaatar</option>
+<option value="Asia/Urumqi">Urumqi</option>
+<option value="Asia/Ust-Nera">Ust-Nera</option>
+<option value="Asia/Vientiane">Vientiane</option>
+<option value="Asia/Vladivostok">Vladivostok</option>
+<option value="Asia/Yakutsk">Yakutsk</option>
+<option value="Asia/Yekaterinburg">Yekaterinburg</option>
+<option value="Asia/Yerevan">Yerevan</option>
+</optgroup>
+<optgroup label="Atlantic">
+<option value="Atlantic/Azores">Azores</option>
+<option value="Atlantic/Bermuda">Bermuda</option>
+<option value="Atlantic/Canary">Canary</option>
+<option value="Atlantic/Cape_Verde">Cape Verde</option>
+<option value="Atlantic/Faroe">Faroe</option>
+<option value="Atlantic/Madeira">Madeira</option>
+<option value="Atlantic/Reykjavik">Reykjavik</option>
+<option value="Atlantic/South_Georgia">South Georgia</option>
+<option value="Atlantic/Stanley">Stanley</option>
+<option value="Atlantic/St_Helena">St Helena</option>
+</optgroup>
+<optgroup label="Australia">
+<option value="Australia/Adelaide">Adelaide</option>
+<option value="Australia/Brisbane">Brisbane</option>
+<option value="Australia/Broken_Hill">Broken Hill</option>
+<option value="Australia/Currie">Currie</option>
+<option value="Australia/Darwin">Darwin</option>
+<option value="Australia/Eucla">Eucla</option>
+<option value="Australia/Hobart">Hobart</option>
+<option value="Australia/Lindeman">Lindeman</option>
+<option value="Australia/Lord_Howe">Lord Howe</option>
+<option value="Australia/Melbourne">Melbourne</option>
+<option value="Australia/Perth">Perth</option>
+<option value="Australia/Sydney">Sydney</option>
+</optgroup>
+<optgroup label="Europe">
+<option value="Europe/Amsterdam">Amsterdam</option>
+<option value="Europe/Andorra">Andorra</option>
+<option value="Europe/Athens">Athens</option>
+<option value="Europe/Belgrade">Belgrade</option>
+<option value="Europe/Berlin">Berlin</option>
+<option value="Europe/Bratislava">Bratislava</option>
+<option value="Europe/Brussels">Brussels</option>
+<option value="Europe/Bucharest">Bucharest</option>
+<option value="Europe/Budapest">Budapest</option>
+<option value="Europe/Busingen">Busingen</option>
+<option value="Europe/Chisinau">Chisinau</option>
+<option value="Europe/Copenhagen">Copenhagen</option>
+<option value="Europe/Dublin">Dublin</option>
+<option value="Europe/Gibraltar">Gibraltar</option>
+<option value="Europe/Guernsey">Guernsey</option>
+<option value="Europe/Helsinki">Helsinki</option>
+<option value="Europe/Isle_of_Man">Isle of Man</option>
+<option value="Europe/Istanbul">Istanbul</option>
+<option value="Europe/Jersey">Jersey</option>
+<option value="Europe/Kaliningrad">Kaliningrad</option>
+<option value="Europe/Kiev">Kiev</option>
+<option value="Europe/Lisbon">Lisbon</option>
+<option value="Europe/Ljubljana">Ljubljana</option>
+<option value="Europe/London">London</option>
+<option value="Europe/Luxembourg">Luxembourg</option>
+<option value="Europe/Madrid">Madrid</option>
+<option value="Europe/Malta">Malta</option>
+<option value="Europe/Mariehamn">Mariehamn</option>
+<option value="Europe/Minsk">Minsk</option>
+<option value="Europe/Monaco">Monaco</option>
+<option value="Europe/Moscow">Moscow</option>
+<option value="Europe/Oslo">Oslo</option>
+<option value="Europe/Paris">Paris</option>
+<option value="Europe/Podgorica">Podgorica</option>
+<option value="Europe/Prague">Prague</option>
+<option value="Europe/Riga">Riga</option>
+<option value="Europe/Rome">Rome</option>
+<option value="Europe/Samara">Samara</option>
+<option value="Europe/San_Marino">San Marino</option>
+<option value="Europe/Sarajevo">Sarajevo</option>
+<option value="Europe/Simferopol">Simferopol</option>
+<option value="Europe/Skopje">Skopje</option>
+<option value="Europe/Sofia">Sofia</option>
+<option value="Europe/Stockholm">Stockholm</option>
+<option value="Europe/Tallinn">Tallinn</option>
+<option value="Europe/Tirane">Tirane</option>
+<option value="Europe/Uzhgorod">Uzhgorod</option>
+<option value="Europe/Vaduz">Vaduz</option>
+<option value="Europe/Vatican">Vatican</option>
+<option value="Europe/Vienna">Vienna</option>
+<option value="Europe/Vilnius">Vilnius</option>
+<option value="Europe/Volgograd">Volgograd</option>
+<option value="Europe/Warsaw">Warsaw</option>
+<option value="Europe/Zagreb">Zagreb</option>
+<option value="Europe/Zaporozhye">Zaporozhye</option>
+<option value="Europe/Zurich">Zurich</option>
+</optgroup>
+<optgroup label="Indian">
+<option value="Indian/Antananarivo">Antananarivo</option>
+<option value="Indian/Chagos">Chagos</option>
+<option value="Indian/Christmas">Christmas</option>
+<option value="Indian/Cocos">Cocos</option>
+<option value="Indian/Comoro">Comoro</option>
+<option value="Indian/Kerguelen">Kerguelen</option>
+<option value="Indian/Mahe">Mahe</option>
+<option value="Indian/Maldives">Maldives</option>
+<option value="Indian/Mauritius">Mauritius</option>
+<option value="Indian/Mayotte">Mayotte</option>
+<option value="Indian/Reunion">Reunion</option>
+</optgroup>
+<optgroup label="Pacific">
+<option value="Pacific/Apia">Apia</option>
+<option value="Pacific/Auckland">Auckland</option>
+<option value="Pacific/Chatham">Chatham</option>
+<option value="Pacific/Chuuk">Chuuk</option>
+<option value="Pacific/Easter">Easter</option>
+<option value="Pacific/Efate">Efate</option>
+<option value="Pacific/Enderbury">Enderbury</option>
+<option value="Pacific/Fakaofo">Fakaofo</option>
+<option value="Pacific/Fiji">Fiji</option>
+<option value="Pacific/Funafuti">Funafuti</option>
+<option value="Pacific/Galapagos">Galapagos</option>
+<option value="Pacific/Gambier">Gambier</option>
+<option value="Pacific/Guadalcanal">Guadalcanal</option>
+<option value="Pacific/Guam">Guam</option>
+<option value="Pacific/Honolulu">Honolulu</option>
+<option value="Pacific/Johnston">Johnston</option>
+<option value="Pacific/Kiritimati">Kiritimati</option>
+<option value="Pacific/Kosrae">Kosrae</option>
+<option value="Pacific/Kwajalein">Kwajalein</option>
+<option value="Pacific/Majuro">Majuro</option>
+<option value="Pacific/Marquesas">Marquesas</option>
+<option value="Pacific/Midway">Midway</option>
+<option value="Pacific/Nauru">Nauru</option>
+<option value="Pacific/Niue">Niue</option>
+<option value="Pacific/Norfolk">Norfolk</option>
+<option value="Pacific/Noumea">Noumea</option>
+<option value="Pacific/Pago_Pago">Pago Pago</option>
+<option value="Pacific/Palau">Palau</option>
+<option value="Pacific/Pitcairn">Pitcairn</option>
+<option value="Pacific/Pohnpei">Pohnpei</option>
+<option value="Pacific/Port_Moresby">Port Moresby</option>
+<option value="Pacific/Rarotonga">Rarotonga</option>
+<option value="Pacific/Saipan">Saipan</option>
+<option value="Pacific/Tahiti">Tahiti</option>
+<option value="Pacific/Tarawa">Tarawa</option>
+<option value="Pacific/Tongatapu">Tongatapu</option>
+<option value="Pacific/Wake">Wake</option>
+<option value="Pacific/Wallis">Wallis</option>
+</optgroup>
+<optgroup label="UTC">
+<option value="UTC">UTC</option>
+</optgroup>
+<optgroup label="Manual Offsets">
+<option value="UTC-12">UTC-12</option>
+<option value="UTC-11.5">UTC-11:30</option>
+<option value="UTC-11">UTC-11</option>
+<option value="UTC-10.5">UTC-10:30</option>
+<option value="UTC-10">UTC-10</option>
+<option value="UTC-9.5">UTC-9:30</option>
+<option value="UTC-9">UTC-9</option>
+<option value="UTC-8.5">UTC-8:30</option>
+<option value="UTC-8">UTC-8</option>
+<option value="UTC-7.5">UTC-7:30</option>
+<option value="UTC-7">UTC-7</option>
+<option value="UTC-6.5">UTC-6:30</option>
+<option value="UTC-6">UTC-6</option>
+<option value="UTC-5.5">UTC-5:30</option>
+<option value="UTC-5">UTC-5</option>
+<option value="UTC-4.5">UTC-4:30</option>
+<option value="UTC-4">UTC-4</option>
+<option value="UTC-3.5">UTC-3:30</option>
+<option value="UTC-3">UTC-3</option>
+<option value="UTC-2.5">UTC-2:30</option>
+<option value="UTC-2">UTC-2</option>
+<option value="UTC-1.5">UTC-1:30</option>
+<option value="UTC-1">UTC-1</option>
+<option value="UTC-0.5">UTC-0:30</option>
+<option value="UTC+0">UTC+0</option>
+<option value="UTC+0.5">UTC+0:30</option>
+<option value="UTC+1">UTC+1</option>
+<option value="UTC+1.5">UTC+1:30</option>
+<option value="UTC+2">UTC+2</option>
+<option value="UTC+2.5">UTC+2:30</option>
+<option value="UTC+3">UTC+3</option>
+<option value="UTC+3.5">UTC+3:30</option>
+<option value="UTC+4">UTC+4</option>
+<option value="UTC+4.5">UTC+4:30</option>
+<option value="UTC+5">UTC+5</option>
+<option value="UTC+5.5">UTC+5:30</option>
+<option value="UTC+5.75">UTC+5:45</option>
+<option value="UTC+6">UTC+6</option>
+<option value="UTC+6.5">UTC+6:30</option>
+<option value="UTC+7">UTC+7</option>
+<option value="UTC+7.5">UTC+7:30</option>
+<option value="UTC+8">UTC+8</option>
+<option value="UTC+8.5">UTC+8:30</option>
+<option value="UTC+8.75">UTC+8:45</option>
+<option value="UTC+9">UTC+9</option>
+<option value="UTC+9.5">UTC+9:30</option>
+<option value="UTC+10">UTC+10</option>
+<option value="UTC+10.5">UTC+10:30</option>
+<option value="UTC+11">UTC+11</option>
+<option value="UTC+11.5">UTC+11:30</option>
+<option value="UTC+12">UTC+12</option>
+<option value="UTC+12.75">UTC+12:45</option>
+<option value="UTC+13">UTC+13</option>
+<option value="UTC+13.75">UTC+13:45</option>
+<option value="UTC+14">UTC+14</option>
+</optgroup></select>
+	</p>
+<?php
+}
+?>
+	
+<p>
+	<?php
+	if(!isset($_GET['page']))
+	printf('<a href="%s" >%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),__('More Event Options','rsvpmaker')); ?>
+</p>
+<?php
 }
 
-add_action('rsvpmaker_special_metabox','rsvpmaker_location');
-
-function rsvpmaker_location_button() {
+function rsvpmaker_details() {
 	global $post;
-	if(isset($post->post_type) && $post->post_type == 'rsvpmaker')
-    echo '<button type="button" id="rsvpmaker-add-location" class="button"><img src="'.plugins_url('rsvpmaker/images/if_map-marker_173052.png').'" width="25" height="25" style="margin-left: -12px;"> Location</button>';
-}
-
-add_action('media_buttons', 'rsvpmaker_location_button', 30);
-
-function rsvpmaker_location_form() {
-global $wpdb;
-global $post;
-if(!isset($post->post_type) || $post->post_type != 'rsvpmaker')
-return;
-	?>
-<div id="location-dialog-form" title="Location">
- 
-  <form>
-    <fieldset>
-		<label>Saved Locations</label>
-		<select id="locselect">
-		<?php
-	$options = '<option value="">Pick a Saved Location</option>';;
-	$sql = "SELECT ID,post_title from $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvpmaker_special' AND meta_value='Location' AND (post_status='publish' OR post_status='draft') ORDER BY post_title ";
-	$results = $wpdb->get_results($sql);
-	if($results) {
-		foreach($results as $row)
-		{
-			$options .= sprintf('<option value="%s">%s</option>',$row->ID,$row->post_title);
-		}
+	global $custom_fields;
+	global $rsvp_options;
+?>
+<div class="wrap"> 
+	<div id="icon-edit" class="icon32"><br /></div>
+<h1><?php _e('RSVP Details','rsvpmaker'); ?></h1>
+<?php
+	
+if(isset($_REQUEST['post_id']))
+	$post = get_post($_REQUEST['post_id']);
+if($post->post_status != 'publish')
+	printf('<h2>Post not published, status = <span style="color:red">%s</span></h2>',$post->post_status);
+if(isset($_POST["_require_webinar_passcode"]))
+	{
+	update_post_meta($post->ID,'_require_webinar_passcode',$_POST["_require_webinar_passcode"]);
+	}
+elseif(isset($_POST['post_id']))
+{
+	printf('<div class="notice notice-info"><p>%s</p></div>',__('Saving RSVP Options','rsvpmaker'));
+	if(isset($_POST['setrsvp']))
+	{
+	save_calendar_data($post->ID);
+	save_rsvp_meta($post->ID);		
 	}
 	else
-		$options = '<option value="">No Saved Locations</option>';
-	echo $options;
-	?>
-		</select>
-		<br />
-		<button id="chooseloc">Choose</button> <button id="editloc" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" baseurl="<?php echo admin_url('post.php?action=edit&post='); ?>">Edit</button> <span id="loceditlink"></span>
-     
-		<h3>New Location</h3>
-     
-      <label for="name">Location Name</label>
-      <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
-      <label for="address">Street Address</label>
-      <input type="text" name="address" id="address" value="" class="text ui-widget-content ui-corner-all">
-      <label for="city">City</label>
-      <input type="text" name="city" id="city" value="" class="text ui-widget-content ui-corner-all">
-      <label for="state">State</label>
-      <input type="text" name="state" id="state" value="<?php echo get_option('location_default_state'); ?>" class="text ui-widget-content ui-corner-all">
-      <label for="postal">Postal Code</label>
-      <input type="text" name="postal" id="postal" value="" class="text ui-widget-content ui-corner-all">
-      <label for="map">Map Link</label>
-      <input type="text" name="map" id="map" value="" class="text ui-widget-content ui-corner-all">
-
-		<p class="validateTips">Leave <strong>Map Link</strong> blank to generate a Google Maps link based on the address you entered.</p>
-      
-      <!-- Allow form submission with keyboard without duplicating the dialog button -->
-      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
-    </fieldset>
-  </form>
-</div>
+		do_action('save_post',$post->ID);
+}
 	
+if(empty($post->ID))
+{
+global $wpdb;
+$sql = "SELECT DISTINCT $wpdb->posts.ID as post_id, $wpdb->posts.*, date_format(a1.meta_value,'%M %e, %Y') as date
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 WHERE a1.meta_value > NOW() ORDER BY a1.meta_value";
+
+$results = $wpdb->get_results($sql);
+$options = '<optgroup label="'.__('Future Events','rsvpmaker').'">';
+if(!empty($results))
+foreach($results as $row)
+	{
+		$s = '';
+		if(isset($_REQUEST["post_id"]) && ($row->ID == $_REQUEST["post_id"]))
+			$s = ' selected="selected" ';
+		$options .= sprintf('<option value="%d" %s>%s %s</option>',$row->ID,$s,$row->post_title,$row->date);
+	}
+$options .= '</optgroup><optgroup label="'.__('Event Templates','rsvpmaker').'">';
+$sql = "SELECT DISTINCT $wpdb->posts.ID as post_id, $wpdb->posts.*
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_sked'
+	 ORDER BY post_title";
+
+$results = $wpdb->get_results($sql);
+if(!empty($results))
+foreach($results as $row)
+	{
+		$s = '';
+		if(isset($_REQUEST["post_id"]) && ($row->ID == $_REQUEST["post_id"]))
+			$s = ' selected="selected" ';
+		$options .= sprintf('<option value="%d" %s>%s</option>',$row->ID,$s,$row->post_title);
+	}
+$options .= '</optgroup>';
+	
+printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_details" /><select name="post_id">%s</select> <button>Get</button></form>',admin_url('edit.php'),$options);
+
+}
+else
+{
+	?>
+<p><?php _e('Use this form for additional RSVPMaker settings.','rsvpmaker')?> <?php printf('<a href="%s">%s</a>',admin_url('post.php?post='.$post->ID.'&action=edit'),__('Return to editor','rsvpmaker'))?></p>	
 	<?php
+printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID));
+	
+$date = get_rsvp_date($post->ID);
+	$datef = (empty($date)) ? '' : date('F j, Y',strtotime($date));
+	$custom_fields = get_rsvpmaker_custom($post->ID);
+	
+	$t = strtotime($date);
+	printf('<h3>%s<br />%s</h3>',$post->post_title,$datef);
+	$drawresult = draw_eventdates();
+	if($drawresult != 'special')
+	{
+	GetRSVPAdminForm($post->ID);
+	if(isset($rsvp_options["additional_editors"]) && $rsvp_options["additional_editors"])
+		additional_editors();		
+	}
+
+submit_button();
+printf('<input type="hidden" name="post_id" value="%d" /></form>',$post->ID);
 }
 
-add_action('admin_footer','rsvpmaker_location_form');
-
-add_action('wp_ajax_save_rsvpmaker_location','save_rsvpmaker_location');
-function save_rsvpmaker_location () {
-	$post["post_title"] = $_POST['post_title'];
-	$post["post_content"] = $_POST['post_content'];
-	$post["post_type"] = 'rsvpmaker';
-	$post["post_status"] = 'draft';
-	$id = wp_insert_post($post);
-	add_post_meta($id,'_rsvpmaker_special','Location');
-	$state = $_POST['state'];
-	if(!empty($state) && (strlen($state) == 2))
-		update_option('location_default_state',$state);
-	die('added as post #'.$id);
+?>
+</div>
+<?php
 }
-add_action('wp_ajax_get_rsvpmaker_location','get_rsvpmaker_location');
-function get_rsvpmaker_location () {
-	$id = (int) $_GET['ID'];
-	$post = get_post($id);
-	echo wpautop($post->post_content);
-	die();
+
+function rsvpmaker_admin_enqueue($hook) {
+global $post;
+	if((!function_exists('do_blocks') && isset($_GET['action'])) || ((isset($_GET['page']) && strpos($_GET['page'],'rsvp') !== false )) )
+	{
+	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
+	wp_enqueue_script('jquery-ui-dialog');
+	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
+	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(), get_rsvpversion() );
+	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),get_rsvpversion());
+	//add localize_script to show template sked in rest
+	}
+}
+
+
+function ajax_rsvpmaker_date_handler() {
+	$post_id = (int) $_REQUEST['post_id'];
+	if(!$post_id)
+		wp_die();
+	if(isset($_REQUEST['date']))
+	{
+	$t = strtotime($_REQUEST['date']);
+	$date = date("Y-m-d H:i:s",$t);
+	$current_date = get_rsvp_date($post_id);
+	update_post_meta($post_id,'_rsvp_dates',$date,$current_date);		
+	}
+    wp_die();
+}
+
+function ajax_rsvpmaker_template_handler () {
+	$post_id=$_POST['post_id'];
+	update_post_meta($post_id,'_sked',$_POST['sked']);
+	wp_die();
+}
+
+function rsvpmaker_rest_api_date () {
+	update_option('rsvpmaker_rest_api_date',$_REQUEST);
+}
+
+function rest_api_init_rsvpmaker () {
+	register_rest_route( 'rsvpmaker/v1', '/restdate/', array(
+                'methods' => 'POST',
+                'callback' => 'rsvpmaker_rest_api_date'
+        ) );
+}
+
+function toolbar_rsvpmaker( $wp_admin_bar ) {
+global $post;
+if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
+	{
+	$args = array(
+		'id'    => 'rsvpmaker_options',
+		'title' => 'RSVP / Event Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+	$wp_admin_bar->add_node( $args );
+	
+	if(rsvpmaker_is_template())
+	{
+	$args = array(
+		'id'    => 'rsvpmaker_create_update',
+		'title' => 'Create / Update',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post->ID),
+		'meta'  => array( 'class' => 'rsvpmaker-create-update')
+	);
+	$wp_admin_bar->add_node( $args );		
+	}
+	
+	}
+if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_details') && isset($_GET['post_id']) )
+	{
+	$args = array(
+		'id'    => 'edit-event',
+		'title' => 'Edit Event',
+		'href'  => admin_url('post.php?action=edit&post='.$_GET['post_id']),
+		'meta'  => array( 'class' => 'edit-event')
+	);
+	$wp_admin_bar->add_node( $args );	
+	$args = array(
+		'id'    => 'view-event',
+		'title' => 'View Event',
+		'href'  => get_permalink($_GET['post_id']),
+		'meta'  => array( 'class' => 'view-event')
+	);
+	$wp_admin_bar->add_node( $args );	
+	}
+
+if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_scheduled_email_list') && isset($_GET['post_id']) )
+	{
+	$args = array(
+		'id'    => 'edit-email',
+		'title' => 'Edit Email',
+		'href'  => admin_url('post.php?action=edit&post='.$_GET['post_id']),
+		'meta'  => array( 'class' => 'edit-email')
+	);
+	$wp_admin_bar->add_node( $args );	
+	$args = array(
+		'id'    => 'view-email',
+		'title' => 'View Email',
+		'href'  => get_permalink($_GET['post_id']),
+		'meta'  => array( 'class' => 'view-email')
+	);
+	$wp_admin_bar->add_node( $args );	
+	}
+if(isset($post->post_type) && ($post->post_type == 'rsvpemail') && (is_admin()  || current_user_can('edit_post',$post->ID)) )
+	{
+	$args = array(
+		'id'    => 'rsvpemail_schedule',
+		'title' => 'Scheduled Email',
+		'href'  => admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post->ID),
+		'meta'  => array( 'class' => 'edit-rsvpemail_schedule')
+	);
+	$wp_admin_bar->add_node( $args );	
+	}	
+}
+
+function rsvpmaker_setup () {
+global $rsvp_options;
+?>
+<div class="wrap"> 
+	<div id="icon-edit" class="icon32"><br /></div> 
+<h2><?php _e('Set Event Title and Schedule','rsvpmaker'); ?></h2> 
+<?php
+if(!isset($_GET['new_template'])){
+	echo '<div style="float: right; background-color: #fff; padding: 10px; border: thin dotted #555; width: 200px;">';
+	printf('%s<br />%s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('switch to' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
+	do_action('rsvpmaker_setup_template_prompt');
+	echo '</div>';
+}
+	
+printf('<p><em>%s</em></p>',__('Start by entering an event title and date or schedule details. A draft event post will be created and loaded into the editor.'));
+printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
+echo '<h1 style="font-size: 20px;">Title: <input type="text" name="rsvpmaker_new_post" style="font-size: 20px; width: 60%" /></h1>';
+draw_eventdates();
+$rsvp_on = $rsvp_options['rsvp_on'];
+?>
+<p>
+<?php _e('Collect RSVPs','rsvpmaker');?>
+  <input type="radio" name="setrsvp[on]" id="setrsvpon" value="1" <?php if( $rsvp_on ) echo 'checked="checked" ';?> />
+<?php _e('YES','rsvpmaker');?> <input type="radio" name="setrsvp[on]" id="setrsvpon" value="0" <?php if( !$rsvp_on ) echo 'checked="checked" ';?> />
+<?php _e('NO','rsvpmaker');?> </p>
+<?php
+submit_button();
+echo '</form></div>';
+}
+
+function rsvpmaker_setup_post () {
+if(!empty($_POST["rsvpmaker_new_post"]))
+	{
+		$post_id = wp_insert_post(array('post_title' => stripslashes($_POST["rsvpmaker_new_post"]),'post_type' => 'rsvpmaker','post_status' => 'draft','post_content' => ''));
+		if($post_id)
+		{
+		if(!empty($_POST['setrsvp']['on']))
+			rsvpmaker_defaults_for_post($post_id);
+		$editurl = admin_url('post.php?action=edit&post='.$post_id);
+		wp_redirect($editurl);
+		die();			
+		}
+	}
+	
+	//post-new.php?post_type=rsvpmaker
+	if(strpos($_SERVER['REQUEST_URI'],'post-new.php?post_type=rsvpmaker'))
+	{
+		wp_redirect(admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
+		die();
+	}
+}
+
+
+function rsvpmaker_import_cleanup () {
+	global $wpdb;
+	$sql = "SELECT ID, post_title from $wpdb->posts WHERE post_type='rsvpmaker' AND post_title LIKE '%rsvpid%' ";
+	$results = $wpdb->get_results($sql);
+	foreach($results as $post)
+	{
+	$title = preg_replace('/rsvpid.+/','',$post->post_title);
+	$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s WHERE ID=%d",$title,$post->ID);
+	$wpdb->query($sql);
+	}
+}
+
+
+function rsvpmaker_export_screen () {
+?>
+	<h1>Export RSVPMaker Events</h1>
+	<?php
+	if(isset($_GET['select']))
+	{
+		include plugin_dir_path(__FILE__).'export.php';
+		echo '<p>Generating Export Files</p>';
+		rsvpmaker_export_wp();
+	}
+	?>
+	<p>RSVPMaker posts are excluded from the standard WordPress export function because event posts require special handling, particularly those that have the same title but different dates (which by default WordPress rejects as duplicate posts).</p>
+	<p>Use the form below to export your RSVPMaker event posts. You will then be able to use the standard WordPress import routine to load them into another website that also has RSVPMaker installed and activated.</p>
+	<p>Optionally, you can also include other WordPress content (posts and pages).</p>
+	<p>You can set the export file size to be less than the limit set by the web host you will be importing content into (2 MB is a common default).</p>
+	<form method="get" action="<?php echo admin_url('tools.php'); ?>"><input type="hidden" name="page" value="rsvpmaker_export_screen">
+		<p><input type="radio" name="select" value="default" checked="checked"> Future events, plus templates and special documents</p>
+		<p><input type="radio" name="select" value="all" > All RSVPMaker event posts</p>
+		<p><input type="checkbox" name="standard" value="1" /> Also include pages, posts, and other standard WordPress content.</p>
+		<p>File Size Limit <select name="limit">
+		<option value="1">1 MB</option>
+		<option value="2" selected="selected">2 MB</option>
+		<option value="3">3 MB</option>
+		<option value="4">4 MB</option>
+		<option value="5">5 MB</option>
+		<option value="6">6 MB</option>
+		<option value="7">7 MB</option>
+		<option value="8">8 MB</option>
+		<option value="9">9 MB</option>
+		<option value="10">10 MB</option>
+		</select></p>
+<?php	echo submit_button('Generate Export Files'); ?>
+	</form>
+<?php
+									 
 }
 ?>

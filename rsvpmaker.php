@@ -5,11 +5,14 @@ Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
 Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together. RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>
 Author: David F. Carr
-Version: 5.2.2
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
+Version: 5.7.2
 */
+function get_rsvpversion(){
+return '5.7.1';
+}
 
 global $wp_version;
 
@@ -19,7 +22,7 @@ if (version_compare($wp_version,"3.0","<"))
 function rsvpmaker_load_plugin_textdomain() {
     load_plugin_textdomain( 'rsvpmaker', FALSE, basename( dirname( __FILE__ ) ) . '/translations/' );
 }
-add_action( 'plugins_loaded', 'rsvpmaker_load_plugin_textdomain' );
+
 
 global $rsvp_options;
 $rsvp_options = get_option('RSVPMAKER_Options');
@@ -84,6 +87,8 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "dashboard_message" => ''
 );
 
+$rsvp_defaults = apply_filters('rsvpmaker_defaults',$rsvp_defaults);
+
 foreach($rsvp_defaults as $index => $value)
 	{
 		if(!isset($rsvp_options[$index]))
@@ -111,7 +116,30 @@ if(isset($_GET["reset_form"]))
 	}
 }
 
-add_action('init','rsvp_options_defaults',1);
+function rsvpmaker_defaults_for_post($post_id) {
+global $rsvp_options;
+$defaults = array("calendar_icons",
+"social_title_date", 
+"rsvp_to",
+"rsvp_confirm", 
+"confirmation_include_event",
+"rsvpmaker_send_confirmation_email",
+"rsvp_instructions",
+"rsvp_count", 
+"rsvp_count_party", 
+"rsvp_yesno", 
+"rsvp_max",
+"login_required",
+"rsvp_captcha",
+"show_attendees",
+'convert_timezone',
+'add_timezone',
+'rsvp_form',
+'rsvp_form_title'
+);
+foreach($defaults as $label)
+	update_post_meta($post_id,'_'.$label,$rsvp_options[$label]);
+}
 
 function get_rsvpmaker_custom($post_id) {
 global $rsvp_options;
@@ -161,12 +189,24 @@ include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-admin.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-display.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-plugabble.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-email.php";
+include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-privacy.php";
+include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-util.php";
+include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-actions.php";
+
+if(!function_exists('do_blocks'))
+	include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-classic.php";
+
+function rsvpmaker_gutenberg_check () {
+global $carr_gut_test;
+if(function_exists('register_block_type') && !isset($carr_gut_test))
+	require_once plugin_dir_path( __FILE__ ) . 'gutenberg/src/init.php';
+}
+
 
 if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
     include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-recaptcha.php";
 }
 
-add_action( 'init', 'rsvpmaker_create_post_type' );
 
 function rsvpmaker_create_post_type() {
 global $rsvp_options;
@@ -184,6 +224,7 @@ $supports = array('title','editor','author','excerpt','custom-fields','thumbnail
       ),
     'menu_icon' => 'dashicons-calendar-alt',
 	'public' => true,
+	'can_export' => false,
     'publicly_queryable' => true,
     'show_ui' => true, 
     'query_var' => true,
@@ -194,6 +235,7 @@ $supports = array('title','editor','author','excerpt','custom-fields','thumbnail
     'hierarchical' => false,
     'menu_position' => 5,
     'supports' => $supports,
+	'show_in_rest' => true,
 	'taxonomies' => array('rsvpmaker-type','post_tag')
     )
   );
@@ -217,6 +259,7 @@ $supports = array('title','editor','author','excerpt','custom-fields','thumbnail
     'hierarchical' => true,
     'labels' => $labels,
     'show_ui' => true,
+	'show_in_rest' => true,
     'query_var' => true,
   ));
 
@@ -235,8 +278,6 @@ if( isset($current_user) )
 }
 
 //make sure new rules will be generated for custom post type - flush for admin but not for regular site visitors
-if(!isset($rsvp_options["flush"]))
-	add_action('admin_init','flush_rewrite_rules');
 
 function cpevent_activate() {
 global $wpdb;
@@ -359,12 +400,6 @@ return $templates;
 }
 add_filter( 'single_template', 'rsvpmaker_template_order',99 );
 
-//add_filter( 'template_include', 'var_template_include', 1000 );
-function var_template_include( $t ){
-	echo $t;
-	exit();
-}
-
 function log_paypal($message) {
 global $post;
 $ts = date('r');
@@ -376,7 +411,6 @@ $message .= "\n<br />Time: ".$ts;
 add_post_meta($post->ID, '_paypal_log', $message);
 }
 
-add_action('log_paypal','log_paypal');
 
 if(!function_exists('rsvpmaker_permalink_query') )
 {
@@ -407,153 +441,17 @@ else
 } // end function exists
 
 function fix_timezone($timezone = '' ) {
+global $post;
 if(empty($timezone))
 	$timezone = get_option('timezone_string');
+if(isset($post->ID))
+{
+	$post_tz = get_post_meta($post->ID,'_rsvp_timezone_string',true);
+	if(!empty($post_tz) && $post_tz != $timezone)
+		$timezone = $post_tz;
+}
 if(!empty($timezone) )
 	date_default_timezone_set($timezone);
-}
-
-function get_rsvp_date($post_id)
-{
-global $wpdb;
-$wpdb->show_errors();
-$sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
-return $wpdb->get_var($sql);
-}
-
-function get_rsvp_dates($post_id, $obj = false)
-{
-global $wpdb;
-$wpdb->show_errors();
-$sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
-$results = $wpdb->get_results($sql);
-$dates = array();
-if($results)
-foreach($results as $row)
-	{
-	$drow = array();
-	$datetime = $row->meta_value;
-	$drow["meta_id"] = $row->meta_id;
-	$drow["datetime"] = $datetime;
-	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
-	if($obj)
-		$drow = (object) $drow;
-	$dates[] = $drow;
-	}
-return $dates;
-}
-
-function get_rsvp_event($where = '', $output = OBJECT)
-{
-global $wpdb;
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE (post_status='publish' OR post_status='draft') ";
-	if(empty($where))
-		$where = ' a1.meta_value > CURDATE() ';
-	else
-		$where = str_replace('datetime','a1.meta_value',$where);
-	$sql .= ' AND '.$where.' ';
-	$sql .= ' ORDER BY a1.meta_value ';
-return $wpdb->get_row($sql);
-}
-
-function get_events_by_template($template_id, $order = 'ASC', $output = OBJECT) {
-global $wpdb;
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." 
-	 WHERE a1.meta_value > CURDATE() AND post_status='publish'
-	 ORDER BY a1.meta_value ".$order;
-	$wpdb->show_errors();
-	return $wpdb->get_results($sql, $output);
-}
-
-function get_future_events ($where = '', $limit='', $output = OBJECT, $offset_hours = 0) {
-global $wpdb;
-$wpdb->show_errors();
-$startfrom = ($offset_hours) ? ' DATE_SUB(NOW(), INTERVAL '.$offset_hours.' HOUR) ' : ' NOW() ';
-
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
-	 if( !empty($where) )
-	 	{
-		$where = trim($where);
-		$where = str_replace('datetime','a1.meta_value',$where);
-		$sql .= ' AND '.$where.' ';
-		}
-	$sql .= ' ORDER BY a1.meta_value ';
-	 if( !empty($limit) )
-		$sql .= ' LIMIT 0,'.$limit.' ';
-	if(!empty($_GET["debug_sql"]))
-		echo $sql;
-	return $wpdb->get_results($sql, $output);
-}
-
-function count_future_events () {
-global $wpdb;
-$wpdb->show_errors();
-	$sql = "SELECT COUNT(*)
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE a1.meta_value > NOW() AND post_status='publish' ";
-	return $wpdb->get_var($sql);
-}
-
-function count_recent_posts($blog_weeks_ago = 1) {
-global $wpdb;
-	$week_ago_stamp = strtotime('-'.$blog_weeks_ago.' week');
-	$week_ago = date('Y-m-d H:i:s',$week_ago_stamp);
-    $where = " AND post_date > '" . $week_ago . "'";
-$wpdb->show_errors();
-	$sql = "SELECT COUNT(*)
-	 FROM ".$wpdb->posts."
-	 WHERE post_type='post' AND post_status='publish' ".$where;
-	return $wpdb->get_var($sql);
-}
-
-function get_past_events ($where = '', $limit='', $output = OBJECT) {
-global $wpdb;
-$wpdb->show_errors();
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(a1.meta_value,'%M %e, %Y') as date
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE a1.meta_value < NOW() AND (post_status='publish' OR post_status='draft') ";
-	 if( !empty($where) )
-	 	{
-		$where = trim($where);
-		$where = str_replace('datetime','a1.meta_value',$where);
-		$sql .= ' AND '.$where.' ';
-		}
-	$sql .= ' ORDER BY a1.meta_value DESC';
-	 if( !empty($limit) )
-		$sql .= ' LIMIT 0,'.$limit.' ';
-	return $wpdb->get_results($sql);
-}
-
-function get_events_dropdown () {
-$options = '<optgroup label="'.__('Future Events','rsvpmaker').'">'."\n";
-$future = get_future_events();
-foreach($future as $event)
-	{
-	if(get_post_meta($event->ID,'_rsvp_on',true))
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',strtotime($event->datetime)));
-	}
-$options .= "<optiongroup>"."\n";
-
-$options .= '<optgroup label="'.__('Recent Events','rsvpmaker').'">'."\n";
-$past = get_past_events('',50);
-foreach($past as $event)
-	{
-	if(get_post_meta($event->ID,'_rsvp_on',true))
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',strtotime($event->datetime)));
-	}
-$options .= "<optiongroup>"."\n";
-return $options;
 }
 
 function format_cddate($year,$month,$day,$hours,$minutes )
@@ -603,16 +501,6 @@ add_post_meta($postID,'_'.$cddate,$duration);
 function update_rsvpmaker_date($postID,$cddate,$duration='') {
 update_post_meta($postID,'_rsvp_dates',$cddate);
 update_post_meta($postID,'_'.$cddate,$duration);
-}
-
-function is_rsvpmaker_future($event_id, $offset_hours = 0) {
-global $wpdb;
-if($offset_hours)
-	$sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE meta_key='_rsvp_dates' AND meta_value + INTERVAL $offset_hours HOUR > NOW() AND post_id=".$event_id;
-else
-	$sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE meta_key='_rsvp_dates' AND meta_value > NOW() AND post_id=".$event_id;
-$date = $wpdb->get_var($sql);
-return (!empty($date));
 }
 
 function rsvpmaker_upcoming_data ($atts)
@@ -693,8 +581,6 @@ foreach($results as $row)
 	}
 exit();
 }
-if(isset($_GET["clean_duplicate_dates"]))
-	add_action('init','rsvpmaker_duplicate_dates');
 
 function rsvpmaker_menu_order($menu_ord) {
     if (!$menu_ord || !is_array($menu_ord)) return true;
@@ -756,8 +642,6 @@ add_post_meta($event, '_paypal_log', $message);
 
 }
 
-add_action('sc_after_charge','rsvpmaker_sc_after_charge');
-
 function rsvpmaker_custom_payment($method,$paid,$rsvp_id,$event,$tx_id=0) {
 global $wpdb;
 	$charge = $paid;
@@ -777,10 +661,6 @@ function rsvpmaker_before_post_display_action (){
 	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
 	do_action('rsvpmaker_before_display');
 }
-
-add_action('wp','rsvpmaker_before_post_display_action');
-
-add_action('init','add_rsvpmaker_roles');
 
 function add_rsvpmaker_roles() {
 $rsvpmakereditor = get_role('rsvpmakereditor');
@@ -806,26 +686,34 @@ add_role( 'rsvpmakereditor', 'RSVPMaker Editor', array(
  ) );
 }
 
-function is_template ($post_id = 0) {
-	global $post;
-	if(!$post_id)
-	{
-		if(isset($post->ID))
-			$post_id = $post->ID;
-		else
-			return false;
-	}
-	return get_post_meta($post_id,'_sked',true);
+function get_rsvpmaker_meta($post_id,$label,$prefix='_')
+{
+	global $rsvp_options;
+	$meta = get_post_meta($post_id,$prefix.$label,true);
+	if(($meta == '') && isset($rsvp_options[$label]))
+		$meta = $rsvp_options[$label];
+	return $meta;
 }
-function has_template ($post_id = 0) {
-	global $post;
-	if(!$post_id)
-	{
-		if(isset($post->ID))
-			$post_id = $post->ID;
-		else
-			return false;
-	}
-	return get_post_meta($post_id,'_meet_recur',true);
+
+function rsvpmaker_wp_editor($content, $editor_id, $settings = array())
+{
+if(function_exists('do_blocks')) //gutenberg world
+	printf('<p><textarea rows="10" cols="80" id="%s" name=%s>%s</textarea></p>',$editor_id,$editor_id,$content);
+else
+	wp_editor($content, $editor_id, $settings);
 }
+
+function rsvpmaker_dequeue_script() {
+   wp_dequeue_script( 'tiny_mce' );
+}
+
+function rsvpautog($content) {
+	if(strpos($content,'<!-- /wp:paragraph -->'))
+		return $content; //already coded for gutenberg
+	$content = wpautop($content);
+	$content = str_replace('</p>',"</p>\n<!-- /wp:paragraph -->\n",$content);
+	$content = str_replace('<p>',"<!-- wp:paragraph -->\n<p>",$content);
+	return $content;
+}
+
 ?>

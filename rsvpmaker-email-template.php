@@ -33,7 +33,16 @@ $custom_fields = get_post_custom($post->ID);
 $t_index = isset($custom_fields["_email_template"][0]) ? $custom_fields["_email_template"][0] : 0;
 $template = $templates[$t_index]["html"];
 
-$content = rsvpmaker_inline_styles( do_shortcode($template) );
+if(isset($_POST['handles']))
+{
+$email_style_handles = $_POST['handles'];
+update_option('email_style_handles',$_POST['handles']);
+}
+
+$styles = rsvpmaker_included_styles();
+$template = str_replace('</head>','<style>'.$styles.'</style></head>',$template);
+
+$content = do_shortcode($template);
 
 endif;
 
@@ -118,7 +127,7 @@ Our mailing address is:
 *|LIST:ADDRESS|*
 Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.';
 
-$content = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/hqdefault.jpg" width="480" height="360" /></a>',$content);
+$content = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/hqdefault.jpg" width="480" height="360" /></a></p>',$content);
 
 global $templatefooter;
 $chimp_text = rsvpmaker_text_version($content, $chimpfooter_text);
@@ -133,36 +142,34 @@ $rsvp_html = str_replace('<!-- footer -->', $rsvp_htmlfooter,$content);
 $rsvp_text = rsvpmaker_text_version($content, $rsvpfooter_text);
 
 $cron = get_post_meta($post->ID,'rsvpmaker_cron_email', true);
-
+//rsvpmaker_debug_log($post,'cron post');
+//rsvpmaker_debug_log($cron,'cron email');
 if(isset($cron["cronday"]))
 {
 	$subject = $post->post_title;
-	$days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
-	$t = strtotime($days[$cron["cronday"]]);
-	$stamp = date('Y-m-d',$t);
-	$editorsnote = get_post_meta($post->ID,'editorsnote',true);
-	if(isset($editorsnote["stamp"]) && ($editorsnote["stamp"] == $stamp))
+	$notekey = get_rsvp_notekey();
+	//rsvpmaker_debug_log($notekey,'notekey');
+	$chosen = (int) get_post_meta($post->ID,$notekey,true);
+	if($chosen)
 		{
-		if($editorsnote["chosen"])
-		{
-			$backup = $wp_query;
-			$was = $post;
-			$wp_query = new WP_Query( array('post_type' => 'post','p' => $editorsnote["chosen"]) );
-			the_post();
-			$editorsnote["add_to_head"] = $post->post_title;
-			$editorsnote["note"] = get_the_excerpt();
-			$wp_query = $backup;
-			$post = $was;
-		}
+		$notepost = get_post($chosen);
+		$editorsnote["add_to_head"] = $notepost->post_title;
+		$postparts = explode('<!--more-->',$notepost->post_content);
+		$note = str_replace('<!-- wp:more -->','',$postparts[0]);
+		if(!empty($postparts[1]))
+			$note .= sprintf('<p><a href="%s">%s</a>',get_permalink($chosen),__('Read more','rsvpmaker'));			
+		$editorsnote["note"] = $note;
 
 		if(!empty($editorsnote["add_to_head"]))
 		$subject .= ' - ' .$editorsnote["add_to_head"];
 		if(!empty($editorsnote["note"]))
 			{
-			$chimp_html = str_replace('<!-- editors note goes here -->',"<h2>".$editorsnote["add_to_head"]."</h2>\n".wpautop($editorsnote["note"]),$chimp_html);
-			$rsvp_html = str_replace('<!-- editors note goes here -->',"<h2>".$editorsnote["add_to_head"]."</h2>\n".wpautop($editorsnote["note"]),$chimp_html);
-			$chimp_text = $editorsnote["add_to_head"]."\n\n" . $chimp_text."\n\n" ;
-			$rsvp_text = $editorsnote["add_to_head"]."\n\n" . $rsvp_text."\n\n" ;
+			if(!strpos($editorsnote["note"],'</p>'))
+				$editorsnote["note"] = wpautop($editorsnote["note"]);
+			$chimp_html = str_replace('<!-- editors note goes here -->',"<h2>".$editorsnote["add_to_head"]."</h2>\n".$editorsnote["note"],$chimp_html);
+			$rsvp_html = str_replace('<!-- editors note goes here -->',"<h2>".$editorsnote["add_to_head"]."</h2>\n".$editorsnote["note"],$chimp_html);
+			$chimp_text = $editorsnote["add_to_head"]."\n\n" . strip_tags($editorsnote["note"]) ."\n\n". $chimp_text."\n\n" ;
+			$rsvp_text = $editorsnote["add_to_head"]."\n\n" . strip_tags($editorsnote["note"]) ."\n\n". $rsvp_text."\n\n" ;
 			}
 		}
 }
@@ -179,11 +186,21 @@ if(!empty($_GET["debug"]))
 
 if($rsvpmaker_cron_context && $cron_active)
 	{
-	
+	$scheduled_email = get_post_meta($post->ID,'scheduled_email',true);
+	if(!empty($scheduled_email))
+	{
+	$from_name = $scheduled_email['email-name'];
+	$from_email = $scheduled_email['email-from'];
+	$previewto = $scheduled_email['preview_to'];
+	$chimp_list = $scheduled_email['list'];
+	}
+	else
+	{
 	$from_name = $custom_fields["_email_from_name"][0];
 	$from_email = $custom_fields["_email_from_email"][0];
 	$previewto = $custom_fields["_email_preview_to"][0];
-	$chimp_list = $custom_fields["_email_list"][0];
+	$chimp_list = $custom_fields["_email_list"][0];		
+	}
 	$chimp_options = get_option('chimp');
 
 	if($cron["cron_mailchimp"] && ($rsvpmaker_cron_context == 2))
@@ -235,6 +252,18 @@ else
 			}
 		}	
 
+	if(!empty($cron["cron_to"]) && ($rsvpmaker_cron_context == 2))
+		{
+			$mail["to"] = $cron["cron_to"];
+			$mail["from"] = $from_email;
+			$mail["fromname"] =  $from_name;
+			$mail["subject"] =  $subject;
+			$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],'This message was sent to you as a member of '.get_bloginfo('name'));
+			$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],'This message was sent to you as a member of '.get_bloginfo('name'));
+			$result = rsvpmailer($mail);		
+			print_r($result);
+		}	
+		
 	if($cron["cron_preview"]  && ($rsvpmaker_cron_context == 1))
 		{
 			$mail["to"] = $previewto;

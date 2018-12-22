@@ -18,4 +18,18 @@ jQuery(document).ready(function($) {
 		
 		});
 	});
+
+$('.signed_up_ajax').each( function () {
+
+var post = $(this).attr('post');
+var data = {
+	'action': 'signed_up',
+	'event_count': post,
+};
+jQuery.get(window.location.href, data, function(response) {
+$('#signed_up_'+post).html(response);
+});
+
+});
+	
 });

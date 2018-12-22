@@ -1,3 +1,7 @@
+article.rsvpmaker div.entry-meta {
+	display: none;
+}
+
 h1.rsvpmaker-entry-title {
 margin-bottom: 0.1em;
 }
