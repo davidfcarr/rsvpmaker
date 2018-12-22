@@ -1,4 +1,4 @@
-# Rsvpmaker
+# RSVPMaker
 RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it to:
 
 * Schedule and promote events of all sorts: conferences, classes, seminars, speaking events, parties and weddings are a few common uses.
