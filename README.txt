@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 5.0
-Stable tag: 5.7.2
+Tested up to: 5.0.2
+Stable tag: 5.7.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 5.7.4 =
+
+* The guest blanks at the bottom of the RSVP form can now be changed to use another label other than "Guest" and alter the text of the "Add to guests" link. This is not supported by the visual form builder, but you can alter the rsvpguests shortcode with attributes such as [rsvpguests label="Athlete" addmore="Add more athletes"]
+* Send RSVP Email link in admin bar and editor listing for posts and RSVPMaker events.
 
 = 5.7.2 =
 

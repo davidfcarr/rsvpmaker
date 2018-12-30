@@ -4012,6 +4012,10 @@ function rest_api_init_rsvpmaker () {
 
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
+
+if(isset($post->post_type) && ($post->post_type == 'post') && current_user_can('edit_post',$post->ID) )
+	$wp_admin_bar->add_menu(array('title' => __('Send RSVP Email'), 'id' => 'post-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'post-to-email')));
+	
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
 	{
 	$args = array(
@@ -4021,6 +4025,8 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
 	);
 	$wp_admin_bar->add_node( $args );
+	
+	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Send RSVP Email'), 'id' => 'rsvpmaker-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'rsvpmaker-to-email')));
 	
 	if(rsvpmaker_is_template())
 	{

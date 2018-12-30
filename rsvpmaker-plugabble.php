@@ -3255,6 +3255,8 @@ if(!function_exists('rsvpguests') )
 function rsvpguests($atts) {
 if(is_admin())
 	return;
+$label = (isset($atts['label'])) ? $atts['label'] : __('Guest','rsvpmaker');
+$addmore = (isset($atts['addmore'])) ? $atts['addmore'] : __('Add more guests','rsvpmaker');
 global $guestextra;
 global $wpdb;
 global $blanks_allowed;
@@ -3272,7 +3274,7 @@ if($results = $wpdb->get_results($guestsql, ARRAY_A) )
 	foreach($results as $row)
 		{
 			$guestprofile = rsvp_row_to_profile($row);
-			$output .= sprintf('<div class="guest_blank"><p><strong>'.__('Guest','rsvpmaker').' %d</strong></p>',$count)."\n";
+			$output .= sprintf('<div class="guest_blank"><p><strong>%s %d</strong></p>',$label,$count)."\n";
 			$output .= guestfield(array('textfield' => 'first'), $guestprofile, $count);
 			$output .= guestfield(array('textfield' => 'last'), $guestprofile, $count);
 			if(is_array($guestextra))
@@ -3299,7 +3301,7 @@ elseif($max_guests && ($count >= $max_guests))
 	return $output.'<p><em>'.__('No room for additional guests (max per party)','rsvpmaker').'</em><p>'; // limit by # of guests per person
 
 			$output .= '<input type="hidden" id="max_guests" value="'.$max_guests.'" />';
-			$output .= '<div class="guest_blank" id="first_blank"><p><strong>Guest ###</strong></p>'."\n";
+			$output .= '<div class="guest_blank" id="first_blank"><p><strong>'.$label.' ###</strong></p>'."\n";
 			$output .= guestfield(array('textfield' => 'first'), array(), '');
 			$output .= guestfield(array('textfield' => 'last'), array(), '');
 			if(is_array($guestextra))
@@ -3309,7 +3311,7 @@ elseif($max_guests && ($count >= $max_guests))
 
 $output = '<div id="guest_section" tabindex="-1">'."\n".$output.'</div>'."<!-- end of guest section-->";
 if($max_guests > ($count + 1))
-	$output .= "<p><a href=\"#guest_section\" id=\"add_guests\" name=\"add_guests\">(+) ". __('Add more guests','rsvpmaker')."</a><!-- end of guest section--></p>\n";
+	$output .= "<p><a href=\"#guest_section\" id=\"add_guests\" name=\"add_guests\">(+) ".$addmore."</a><!-- end of guest section--></p>\n";
 
 $output .= '<script type="text/javascript"> var guestcount ='.$count.'; </script>';
 

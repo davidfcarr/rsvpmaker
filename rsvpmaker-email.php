@@ -2230,11 +2230,13 @@ function rsvpmaker_cron_email_preview_now() {
 
 add_filter( 'post_row_actions', 'rsvpmaker_row_actions', 10, 2 );
 function rsvpmaker_row_actions( $actions, WP_Post $post ) {
-    if ( $post->post_type != 'rsvpmaker' ) {
+	$allowed = array('rsvpmaker','post');
+    if ( !in_array($post->post_type,$allowed)) {
         return $actions;
     }
+	if($post->post_type == 'rsvpmaker')
 	$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID,__('Event Options','rsvpmaker'));
-    $actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Send Invitation','rsvpmaker'));
+    $actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Send RSVP Email','rsvpmaker'));
     return $actions;
 }
 
