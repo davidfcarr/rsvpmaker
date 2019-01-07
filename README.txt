@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.0.2
-Stable tag: 5.7.4
+Stable tag: 5.7.6
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP.
 
 == Changelog ==
+
+= 5.7.6 =
+
+* Fix for some issues with items being added twice.
+* RSVP On radio buttons now displayed in Gutenberg sidebar.
+
+= 5.7.5 =
+
+* Bug fix, positioning of navigation links at top and/or bottom of calendar.
 
 = 5.7.4 =
 

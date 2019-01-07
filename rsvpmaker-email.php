@@ -736,9 +736,7 @@ global $post;
 			update_post_meta($post->ID,'scheduled_email',$_POST['scheduled_email']);
 		printf('<h3>Email Post: %s</h3><p><a href="post.php?action=edit&post=%s">Edit Post</a> | <a href="%s">View Post</a></p>',$post->post_title,$post->ID,get_permalink($post->ID));
 		printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id=').$post->ID);
-		save_rsvpemail_data($post->ID);
 		RSVPMaker_draw_blastoptions();
-		//cron_schedule_options ();
 		echo '<button>Save</button></form>';
 	}
 	else {
@@ -985,18 +983,19 @@ if(!function_exists('do_blocks'))
 add_meta_box( 'BlastBox', 'RSVPMaker Email Options', 'RSVPMaker_email_notice', 'rsvpemail', 'normal', 'high' );
 }
 
-function save_rsvpemail_data($postID) {
-if($parent_id = wp_is_post_revision($postID))
-		{
-		$postID = $parent_id;
-		}
+add_action('admin_init','save_rsvpemail_data');
+
+function save_rsvpemail_data() {
+
+if(empty($_POST) || empty($_REQUEST['post_id']) || empty($_REQUEST['page']) || ($_REQUEST['page'] != 'rsvpmaker_scheduled_email_list'))
+	return;
+$postID = $_REQUEST['post_id'];
 
 if(!empty($_POST["email"]["from_name"]))
 	{
 	global $wpdb;
 	global $current_user;
-	
-		
+			
 		$ev = $_POST["email"];
 		if(empty($ev["headline"]))
 			$ev["headline"] = 0;
@@ -1037,7 +1036,8 @@ if(!empty($_POST["email"]["from_name"]))
 	
 	if(!empty($_POST['notekey']))	
 		update_post_meta($postID,$_POST['notekey'],$chosen);
-
+	//rsvpmaker_debug_log($_POST,'schedule email message');
+	//rsvpmaker_debug_log($chosen,'chosen schedule email message');
 	$args = array('post_id' => $postID);
 	$cron_checkboxes = array("cron_active", "cron_mailchimp", "cron_members", "cron_preview");
 	foreach($cron_checkboxes as $check)
@@ -1087,6 +1087,8 @@ if(!empty($_POST["email"]["from_name"]))
 		wp_clear_scheduled_hook( 'rsvpmaker_cron_email_preview', $args );
 		}
 	
+	header('Location: ' . site_url($_SERVER['REQUEST_URI']));
+	die();
 	//$message = var_export($args,true).var_export($_POST,true);
 	}
 }

@@ -10,6 +10,7 @@ add_action('admin_head','rsvpmaker_upcoming_admin_js');
 add_action('admin_head','rsvpmaker_template_admin_title');
 
 add_action( 'admin_init', 'rsvpmaker_plugin_add_privacy_policy_content' );
+add_action('admin_init','rsvpmaker_template_checkbox_post');
 
 add_action('admin_init','rsvpmaker_add_one');
 add_action('admin_init','rsvpmaker_editors');
@@ -53,7 +54,6 @@ add_action('rsvpmaker_send_reminder_email','rsvpmaker_send_reminder_email',10,2)
 
 add_action( 'save_post', 'rsvplanding_save_meta_box' );
 add_action('save_post','save_calendar_data');
-add_action('save_post','save_rsvpemail_data');
 //stripe
 add_action('sc_after_charge','rsvpmaker_sc_after_charge');
 
@@ -89,6 +89,7 @@ if(isset($rsvp_options["dashboard"]) && !empty($rsvp_options["dashboard"]) )
 	add_action('wp_dashboard_setup', 'rsvpmaker_add_dashboard_widgets' );
 
 add_action( 'wp_ajax_rsvpmaker_date', 'ajax_rsvpmaker_date_handler' );
+add_action( 'wp_ajax_rsvpmaker_meta', 'ajax_rsvpmaker_meta_handler' );
 add_action( 'wp_ajax_rsvpmaker_dateformat', 'ajax_rsvpmaker_dateformat_handler' );
 add_action('wp_ajax_rsvpmaker_paypal_config','rsvpmaker_paypal_config_ajax');
 add_action('wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
@@ -120,22 +121,4 @@ if(isset($_GET['show_rsvpmaker_included_styles']))
 	show_rsvpmaker_included_styles();
 }
 
-/*
-
-add_action('init','show_rsvpmaker_included_styles');
-add_action('init','signed_up_ajax');
-add_action('init','add_rsvpmaker_roles');
-add_action( 'init', 'rsvpmaker_create_post_type' );
-add_action('init','rsvp_options_defaults',1);
-add_action('init','');
-add_action('init','rsvpmaker_localdate');
-add_action("init","paypal_start");
-add_action('init','save_replay_rsvp');
-add_action('init','ajax_rsvp_email_lookup');
-add_action('init','rsvpmaker_placeholder_image');
-add_action('init','save_rsvp');
-add_action( 'init', 'create_rsvpemail_post_type' );
-add_action('init','previewtest');
-
-*/
 ?>

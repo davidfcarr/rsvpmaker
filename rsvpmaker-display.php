@@ -696,7 +696,7 @@ $authorlink = sprintf( '<span class="author vcard"><a class="url fn n" href="%1$
 ?>
 </div>
 <?php
-if(is_admin() )
+if(current_user_can('edit_post',$post->ID) )
 	{
 		echo '<p><a href="'.admin_url('post.php?action=edit&post='.$post->ID).'">Edit</a></p>';
 	}
@@ -770,6 +770,8 @@ return $class;
 add_shortcode("rsvpmaker_calendar","rsvpmaker_calendar");
 function rsvpmaker_calendar($atts) 
 {
+if(is_admin())
+	return 'output reserved for front end';
 global $post;
 $post_backup = $post;
 global $wp_query;
@@ -902,8 +904,6 @@ $monthafter = mktime(0, 0, 1, $cm+2, 1, $cy);
 // Begin the calendar table
 $content = '';
 if(($nav == 'top') || ($nav == 'both')) // either it's top or both
-//$content .= '<div style="width: 100%; text-align: right;" class="nav"><span class="navprev">'. $prev_link. '</span> / <span class="navnext">'.
-     '' . $next_link . "</span></div>";
 $content .= '<div class="rsvpmaker_nav"><span class="navprev">'. $prev_link. '</span> '.$current_link.' <span class="navnext">'.
      '' . $next_link . "</span></div>";
 

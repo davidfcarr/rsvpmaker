@@ -1810,6 +1810,12 @@ $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
 
+if(isset($_GET['update_messages']) && isset($_GET['t']))
+{
+   echo get_post_meta($_GET['t'],'update_messages',true);
+	delete_post_meta($_GET['t'],'update_messages');
+}
+	
 if(!isset($rsvp_options["privacy_confirmation"]) && !strpos($_SERVER['REQUEST_URI'],'rsvpmaker-admin.php'))
 	echo '<div class="notice notice-warning"><p>'.__('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php#privacy_consent').'">(settings)</a>. This is particularly important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').'</p></div>';	
 
@@ -3275,6 +3281,152 @@ global $rsvp_options;
 
 add_shortcode('rsvpautorenew_test','rsvpautorenew_test');
 
+function rsvpmaker_template_checkbox_post () {
+
+if(empty($_POST) || empty($_REQUEST['t']) || empty($_REQUEST['page']) || ($_REQUEST['page'] != 'rsvpmaker_template_list'))
+	return;
+global $wpdb, $current_user;
+$t = $_REQUEST['t'];
+$post = get_post($_REQUEST['t']);
+$sked = get_post_meta($t,'_sked',true);
+$hour = $sked['hour'];
+$minutes = $sked['minutes'];
+$update_messages = '';
+if(isset($_POST["update_from_template"]))
+	{
+		foreach($_POST["update_from_template"] as $target_id)
+			{
+				if(!current_user_can('publish_rsvpmakers'))
+					{
+						$update_messages .= '<div class="updated">Error</div>';
+						break;
+					}
+				
+				$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$post->post_title,$post->post_content,$target_id);
+				$wpdb->query($sql);
+		rsvpmaker_copy_metadata($t, $target_id);
+
+				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
+				update_post_meta($target_id,"_updated_from_template",$ts);
+				if(empty($template["duration"])) $template["duration"] = '';
+				$dpart = explode(':',$template["duration"]);			
+				if( is_numeric($dpart[0]) )
+					{
+					$cddate = get_post_meta($target_id,'_rsvp_dates',true);
+					$dtext = $cddate.' +'.$dpart[0].' hours';
+					if(!empty($dpart[1]))
+						$dtext .= ' +'.$dpart[1].' minutes';
+					$dt = strtotime($dtext);
+					$duration = date('Y-m-d H:i:s',$dt);
+					}
+				else
+					$duration = $template["duration"];
+				if(!empty($cddate))
+					update_post_meta($target_id,'_'.$cddate,$duration);				
+				if(isset($rsvptypes))
+					wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
+
+				$update_messages .= '<div class="updated">Updated: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
+			}
+	}
+
+
+if(isset($_POST["recur_check"]) )
+{
+
+	$my_post['post_title'] = $post->post_title;
+	$my_post['post_content'] = $post->post_content;
+	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
+	$my_post['post_author'] = $current_user->ID;
+	$my_post['post_type'] = 'rsvpmaker';
+
+	foreach($_POST["recur_check"] as $index => $on)
+		{
+			$year = $_POST["recur_year"][$index];
+			$cddate = format_cddate($year, $_POST["recur_month"][$index], $_POST["recur_day"][$index], $hour, $minutes);
+			$y = (int) $_POST["recur_year"][$index];
+			$m = (int) $_POST["recur_month"][$index];
+			$d = (int) $_POST["recur_day"][$index];
+			if($m < 10) $m = '0'.$m;
+			$d = (int) $_POST["recur_day"][$index];
+			if($d < 10) $d = '0'.$d;
+			$date = $y.'-'.$m.'-'.$d;
+			if(empty($template["duration"]))
+				$template["duration"] = '';			
+			$dpart = explode(':',$template["duration"]);
+			
+			if( is_numeric($dpart[0]) )
+				{
+				$dtext = $cddate.' +'.$dpart[0].' hours';
+				if(!empty($dpart[1]))
+					$dtext .= ' +'.$dpart[1].' minutes';
+				$dt = strtotime($dtext);
+				$duration = date('Y-m-d H:i:s',$dt);
+				}
+			else
+				$duration = (isset($template["duration"])) ? $template["duration"] : '';
+			
+			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$date );
+			$singular = __('Event','rsvpmaker');
+// Insert the post into the database
+  			if($postID = wp_insert_post( $my_post ) )
+				{
+				add_rsvpmaker_date($postID,$cddate,$duration);
+				if($my_post["post_status"] == 'publish')
+					$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$postID.'">Edit</a> / <a href="'.get_post_permalink($postID).'">View</a></div>';
+				else
+					$update_messages .= '<div class="updated">Draft for '.$cddate.' <a href="post.php?action=edit&post='.$postID.'">Edit</a> / <a href="'.get_post_permalink($postID).'">Preview</a></div>';
+				
+				add_post_meta($postID,'_meet_recur',$t,true);
+				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$postID);
+				update_post_meta($postID,"_updated_from_template",$ts);
+				
+				rsvpmaker_copy_metadata($t, $postID);
+				
+				}
+		
+		}
+}
+
+if(isset($_POST["nomeeting"]) )
+{
+	$my_post['post_title'] = __('No Meeting','rsvpmaker').': '.$post->post_title;
+	$my_post['post_content'] = $_POST["nomeeting_note"];
+	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
+	$my_post['post_author'] = $current_user->ID;
+	$my_post['post_type'] = 'rsvpmaker';
+	
+	if(!strpos($_POST["nomeeting"],'-'))
+		{ //update vs new post
+			$id = (int) $_POST["nomeeting"];
+			$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$my_post['post_title'],$my_post['post_content'],$id);
+			$wpdb->show_errors();
+			$return = $wpdb->query($sql);
+			if($return == false)
+				$update_messages .= '<div class="updated">'."Error: $sql.</div>\n";
+			else
+				$update_messages .=  '<div class="updated">Updated: no meeting <a href="post.php?action=edit&post='.$postID.'">Edit</a> / <a href="'.get_post_permalink($id).'">View</a></div>';	
+		}
+	else
+		{
+			$cddate = $_POST["nomeeting"];
+			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$cddate );
+
+// Insert the post into the database
+  			if($postID = wp_insert_post( $my_post ) )
+				{
+				add_rsvpmaker_date($postID,$cddate,'allday');
+				$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$postID.'">Edit</a> / <a href="'.get_post_permalink($postID).'">View</a></div>';	
+				add_post_meta($postID,'_meet_recur',$t,true);
+				}
+		}		
+}
+	update_post_meta($t,'update_messages',$update_messages);
+	header('Location: ' . site_url($_SERVER['REQUEST_URI']).'&update_messages=1');
+	die();
+}
+
+
 function rsvpmaker_copy_metadata($source_id, $target_id) {
 global $wpdb;
 $log = '';
@@ -3993,6 +4145,22 @@ function ajax_rsvpmaker_date_handler() {
     wp_die();
 }
 
+function ajax_rsvpmaker_meta_handler () {
+	$post_id = (int) $_REQUEST['post_id'];
+	if(!$post_id)
+		wp_die();
+	if(isset($_POST['key']) && isset($_POST['value']))
+	{
+		if($_POST['key'] = '_rsvp_on')
+			$value = ($_POST['value'] == 'Yes') ? 1 : 0;
+		else
+			$value = $_POST['value'];
+		update_post_meta($post_id,$_POST['key'],$value);
+	}
+	wp_die();
+}
+
+
 function ajax_rsvpmaker_template_handler () {
 	$post_id=$_POST['post_id'];
 	update_post_meta($post_id,'_sked',$_POST['sked']);
@@ -4189,4 +4357,5 @@ function rsvpmaker_export_screen () {
 <?php
 									 
 }
+
 ?>

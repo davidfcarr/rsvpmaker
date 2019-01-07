@@ -1,26 +1,22 @@
 /*
-Error: Undefined variable: "$black".
-        on line 10 of C:\wamp64\www\beta\wp-content\plugins\rsvpmaker\gutenberg\src\block\editor.scss
+Error: Undefined variable: "$green".
+        on line 9 of C:\wamp64\www\beta\wp-content\plugins\rsvpmaker-block\src\block\editor.scss
 
+4:  * CSS for just Backend enqueued after style.scss
 5:  * which makes it higher in priority.
 6:  *\/
 7: 
-8: .wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event  {
-9:   background: #ddd;
+8: .wp-block-cgb-block-rsvpmaker-block  {
+9:   background: $green;
 10:   border: 0.2rem solid $black;
 11:   color: $black;
 12:   margin: 0 auto;
 13:   max-width: 740px;
 14:   padding: 2rem;
-15: }
 
 Backtrace:
-C:\wamp64\www\beta\wp-content\plugins\rsvpmaker\gutenberg\src\block\editor.scss:10
+C:\wamp64\www\beta\wp-content\plugins\rsvpmaker-block\src\block\editor.scss:9
 C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/script/tree/variable.rb:49:in `_perform'
-C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/script/tree/node.rb:50:in `perform'
-C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/script/tree/list_literal.rb:75:in `block in _perform'
-C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/script/tree/list_literal.rb:75:in `map'
-C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/script/tree/list_literal.rb:75:in `_perform'
 C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/script/tree/node.rb:50:in `perform'
 C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/tree/visitors/perform.rb:402:in `visit_prop'
 C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/lib/ruby/gems/2.4.0/gems/sass-3.5.3/lib/sass/tree/visitors/base.rb:36:in `visit'
@@ -65,4 +61,4 @@ C:/Program Files/Adobe/Adobe Dreamweaver CC 2018/ruby/bin/sass:23:in `<main>'
 body:before {
   white-space: pre;
   font-family: monospace;
-  content: "Error: Undefined variable: \"$black\".\A         on line 10 of C:\wamp64\www\beta\wp-content\plugins\rsvpmaker\gutenberg\src\block\editor.scss\A \A 5:  * which makes it higher in priority.\A 6:  */\A 7: \A 8: .wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event  {\A 9:   background: #ddd;\A 10:   border: 0.2rem solid $black;\A 11:   color: $black;\A 12:   margin: 0 auto;\A 13:   max-width: 740px;\A 14:   padding: 2rem;\A 15: }"; }
+  content: "Error: Undefined variable: \"$green\".\A         on line 9 of C:\wamp64\www\beta\wp-content\plugins\rsvpmaker-block\src\block\editor.scss\A \A 4:  * CSS for just Backend enqueued after style.scss\A 5:  * which makes it higher in priority.\A 6:  */\A 7: \A 8: .wp-block-cgb-block-rsvpmaker-block  {\A 9:   background: $green;\A 10:   border: 0.2rem solid $black;\A 11:   color: $black;\A 12:   margin: 0 auto;\A 13:   max-width: 740px;\A 14:   padding: 2rem;"; }
