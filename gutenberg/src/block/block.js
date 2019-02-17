@@ -8,11 +8,12 @@
 //  Import CSS.
 import './style.scss';
 import './editor.scss';
-import './rsvpmaker-sidebar.js';		
-import './rsvpemail-sidebar.js';		
+import './rsvpmaker-sidebar.js';		import './rsvpemail-sidebar.js';		
+import './limited_time.js';		
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
+const { SelectControl, TextControl } = wp.components;
 
 /**
  * Register: aa Gutenberg Block.
@@ -311,6 +312,223 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
 	save: function( props ) {
+		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/stripecharge', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'Stripe Charge (RSVPMaker)' ), // Block title.
+	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Payment' ),
+		__( 'Charge' ),
+	],
+       attributes: {
+            description: {
+            type: 'string',
+            default: '',
+            },
+            showdescription: {
+            type: 'string',
+            default: 'no',
+            },
+            amount: {
+            type: 'string',
+            default: '',
+            },
+            paymentType: {
+            type: 'string',
+            default: 'once',
+            },
+            amount: {
+            type: 'string',
+            default: '',
+            },
+            january: {
+            type: 'string',
+            default: '',
+            },
+            february: {
+            type: 'string',
+            default: '',
+            },
+            march: {
+            type: 'string',
+            default: '',
+            },
+            april: {
+            type: 'string',
+            default: '',
+            },
+            may: {
+            type: 'string',
+            default: '',
+            },
+            june: {
+            type: 'string',
+            default: '',
+            },
+            july: {
+            type: 'string',
+            default: '',
+            },
+            august: {
+            type: 'string',
+            default: '',
+            },
+            september: {
+            type: 'string',
+            default: '',
+            },
+            october: {
+            type: 'string',
+            default: '',
+            },
+            november: {
+            type: 'string',
+            default: '',
+            },
+            december: {
+            type: 'string',
+            default: '',
+            },
+        },
+	edit: function( props ) {
+		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
+	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december }, setAttributes, isSelected } = props;
+		var show = (paymentType.toString() == 'schedule') ? true : false;
+		//alert(show);
+		
+		if(!isSelected)
+			return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-products"><strong>Payment Button</strong>: Embed in any post or page (not meant to be included in events). Clicke to set price and options.
+				</p>
+				</div>
+			);
+		
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-products"><strong>Payment Button</strong>: Embed in any post or page (not meant to be included in events).
+				</p>
+	<TextControl
+        label={ __( 'Description', 'rsvpmaker' ) }
+        value={ description }
+        onChange={ ( description ) => setAttributes( { description } ) }
+    />	
+<div>		<SelectControl
+			label={ __( 'Show Amount/Description Under Button', 'rsvpmaker' ) }
+			value={ showdescription }
+			onChange={ ( showdescription ) => setAttributes( { showdescription } ) }
+			options={ [
+				{ value: 'yes', label: __( 'Yes', 'rsvpmaker' ) },
+				{ value: 'no', label: __( 'No', 'rsvpmaker' ) },
+			] }
+		/>
+
+		<SelectControl
+			label={ __( 'Payment Type', 'rsvpmaker' ) }
+			value={ paymentType }
+			onChange={ ( paymentType ) => setAttributes( { paymentType } ) }
+			options={ [
+				{ value: 'one-time', label: __( 'One time, fixed fee', 'rsvpmaker' ) },
+				{ value: 'schedule', label: __( 'Dues schedule', 'rsvpmaker' ) },
+				{ value: 'subscription:1 year', label: __( 'Subscription, yearly', 'rsvpmaker' ) },
+				{ value: 'subscription:6 months', label: __( 'Subscription, every 6 months', 'rsvpmaker' ) },
+				{ value: 'subscription:monthly', label: __( 'Subscription, monthly', 'rsvpmaker' ) },
+				{ value: 'donation', label: __( 'Donation', 'rsvpmaker' ) },
+			] }
+		/>
+				</div>
+{
+!show &&	<TextControl
+        label={ __( 'Fee', 'rsvpmaker' ) }
+        value={ amount }
+		placeholder="$0.00"
+        onChange={ ( amount ) => setAttributes( { amount } ) }
+    />			
+}
+			{
+show &&	
+<div>    <TextControl
+        label={ __( 'January', 'rsvpmaker' ) }
+        value={ january }
+        onChange={ ( january ) => setAttributes( { january } ) }
+    />
+    <TextControl
+        label={ __( 'February', 'rsvpmaker' ) }
+        value={ february }
+        onChange={ ( february ) => setAttributes( { february } ) }
+    />
+    <TextControl
+        label={ __( 'March', 'rsvpmaker' ) }
+        value={ march }
+        onChange={ ( march ) => setAttributes( { march } ) }
+    />
+    <TextControl
+        label={ __( 'April', 'rsvpmaker' ) }
+        value={ april }
+        onChange={ ( april ) => setAttributes( { april } ) }
+    />
+    <TextControl
+        label={ __( 'May', 'rsvpmaker' ) }
+        value={ may }
+        onChange={ ( may ) => setAttributes( { may } ) }
+    />
+    <TextControl
+        label={ __( 'June', 'rsvpmaker' ) }
+        value={ june }
+        onChange={ ( june ) => setAttributes( { june } ) }
+    />
+    <TextControl
+        label={ __( 'July', 'rsvpmaker' ) }
+        value={ july }
+        onChange={ ( july ) => setAttributes( { july } ) }
+    />
+    <TextControl
+        label={ __( 'August', 'rsvpmaker' ) }
+        value={ august }
+        onChange={ ( august ) => setAttributes( { august } ) }
+    />
+    <TextControl
+        label={ __( 'September', 'rsvpmaker' ) }
+        value={ september }
+        onChange={ ( september ) => setAttributes( { september } ) }
+    />
+    <TextControl
+        label={ __( 'October', 'rsvpmaker' ) }
+        value={ october }
+        onChange={ ( october ) => setAttributes( { october } ) }
+    />
+    <TextControl
+        label={ __( 'November', 'rsvpmaker' ) }
+        value={ november }
+        onChange={ ( november ) => setAttributes( { november } ) }
+    />
+    <TextControl
+        label={ __( 'December', 'rsvpmaker' ) }
+        value={ december }
+        onChange={ ( december ) => setAttributes( { december } ) }
+    />
+</div>
+ }
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function() {
+		// server render
 		return null;
 	},
 } );

@@ -513,6 +513,13 @@ echo $label;
 				  $options[$name] = $value;
 				  
                   update_option($this->db_option, $options);
+			  if(!empty($_POST['rsvpmaker_stripe_pk']))
+				  {
+					  update_option('rsvpmaker_stripe_pk',$_POST['rsvpmaker_stripe_pk']);
+					  update_option('rsvpmaker_stripe_sk',$_POST['rsvpmaker_stripe_sk']);
+					  update_option('rsvpmaker_stripe_notify',$_POST['rsvpmaker_stripe_notify']);
+				  }
+				  
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').'</p></div>';				  
 			  }	
 
@@ -566,6 +573,7 @@ echo $label;
 				  $options[$name] = $value;
 				  
                   update_option($this->db_option, $options);
+				  
                   
                   echo '<div class="updated fade"><p>Plugin settings saved.</p></div>';
               }
@@ -855,9 +863,32 @@ rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$optio
 <section id="payments" class="rsvpmaker">
 <form name="rsvpmaker_payment_options" action="<?php echo $action_url ;?>" method="post">
 
+<p>If you wish to collect online payments for an event, please set up API access to the payment gateway of your choice.</p>
 <?php do_action('rsvpmaker_payment_settings'); ?>
-<br /><h3><?php _e('PayPal Configuration File','rsvpmaker'); ?>:</h3>
-  <input type="text" name="payment_option[paypal_config]" id="paypal_config" value="<?php if(isset($options["paypal_config"]) ) echo $options["paypal_config"];?>" size="80" /><button id="paypal_setup"><?php _e('PayPal Setup','rsvpmaker'); ?></button>
+<h3><?php _e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
+<div>
+<input type="radio" name="payment_option[paypal_invoiceno]" value ="1" <?php if($options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> Yes
+	<input type="radio" name="payment_option[paypal_invoiceno]" value ="0" <?php if(!$options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> No</div>
+	<div><em>Must be enabled for RSVPMaker to track payments</em></div>
+<h3><?php _e('Send Payment Reminder','rsvpmaker'); ?>:</h3>
+<div>
+<input type="radio" name="payment_option[send_payment_reminders]" value ="1" <?php if($options["send_payment_reminders"]) echo ' checked="checked" ' ?> /> Yes
+	<input type="radio" name="payment_option[send_payment_reminders]" value ="0" <?php if(!$options["send_payment_reminders"]) echo ' checked="checked" ' ?> /> No</div>
+	<div><em>If someone RSVPs but does not pay, send an email reminder that their registration is not complete without payment.</em></div>
+
+<h3><?php _e('Payment Currency','rsvpmaker'); ?>:</h3>
+<div><input type="text" name="payment_option[paypal_currency]" value="<?php if(isset($options["paypal_currency"])) echo $options["paypal_currency"];?>" size="5" /> <a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_currency_codes">(list of codes)</a>
+
+<select name="currency_format">
+<option value="<?php if(isset($options["currency_decimal"]) ) echo $options["currency_decimal"];?>|<?php if(isset($options["currency_thousands"])) echo $options["currency_thousands"];?>"><?php echo number_format(1000.00, 2, $options["currency_decimal"],  $options["currency_thousands"]); ?></option>
+<option value=".|,"><?php echo number_format(1000.00, 2, '.',  ','); ?></option>
+<option value=",|."><?php echo number_format(1000.00, 2, ',',  '.'); ?></option>
+<option value=",| "><?php echo number_format(1000.00, 2, ',',  ' '); ?></option>
+</select>    
+</div>
+	
+<h3><?php _e('PayPal Configuration File','rsvpmaker'); ?>:</h3>
+	<div>  <input type="text" name="payment_option[paypal_config]" id="paypal_config" value="<?php if(isset($options["paypal_config"]) ) echo $options["paypal_config"];?>" size="80" /><button id="paypal_setup"><?php _e('PayPal Setup','rsvpmaker'); ?></button>
 <?php
 if( !empty($options["paypal_config"]) )
 {
@@ -870,49 +901,31 @@ else
 }
 ?>	
     <br /><em><?php _e('The PayPal setup button will help you create a configuration file containing your API credentials. See documentation.','rsvpmaker'); echo ': <a href="http://rsvpmaker.com/blog/category/paypal/">http://rsvpmaker.com/blog/category/paypal/</a>'; ?>
-</em>
+		</em></div>
 <div id="pp-dialog-form">
 <?php _e('User','rsvpmaker');?>:<br /><input type="text" id="pp_user" name="user">
 <br /><?php _e('Password','rsvpmaker')?>:<br /><input type="text" id="pp_password" name="password">
 <br /><?php _e('Signature','rsvpmaker');?>:<br /><input type="text" id="pp_signature" name="signature">
 </div>
 
-<br /><h3><?php _e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
-<br />
-<input type="radio" name="payment_option[paypal_invoiceno]" value ="1" <?php if($options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> Yes
-<input type="radio" name="payment_option[paypal_invoiceno]" value ="0" <?php if(!$options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> No
-<br /><em>Must be enabled for RSVPMaker to track payments</em>
-<br /><h3><?php _e('Payment Currency','rsvpmaker'); ?>:</h3>
-<input type="text" name="payment_option[paypal_currency]" value="<?php if(isset($options["paypal_currency"])) echo $options["paypal_currency"];?>" size="5" /> <a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_currency_codes">(list of codes)</a>
-
-<select name="currency_format">
-<option value="<?php if(isset($options["currency_decimal"]) ) echo $options["currency_decimal"];?>|<?php if(isset($options["currency_thousands"])) echo $options["currency_thousands"];?>"><?php echo number_format(1000.00, 2, $options["currency_decimal"],  $options["currency_thousands"]); ?></option>
-<option value=".|,"><?php echo number_format(1000.00, 2, '.',  ','); ?></option>
-<option value=",|."><?php echo number_format(1000.00, 2, ',',  '.'); ?></option>
-<option value=",| "><?php echo number_format(1000.00, 2, ',',  ' '); ?></option>
-</select>    
-<br />
-
 <?php
-$stripe_option = '';
 if (class_exists('Stripe_Checkout_Functions'))
 	{
-	$s_stripe = (!empty($options["stripe"])) ? 'selected="selected"' : '';
-	$stripe_option = sprintf('<option value="stripe" %s>Stripe</option>',$s_stripe);
 	echo '<h3>'.__('WP Simple Pay Lite for Stripe plugin detected','rsvpmaker').'</h3>';
+	printf('<div>Use WP Simple Pay <select name="stripe"><option value ="1" %s>Yes</option><option value ="0" %s>No</option></select></div>', ((!empty($options["stripe"])) ? 'selected="selected"' : ''), ((empty($options["stripe"])) ? 'selected="selected"' : '') );
+	echo '<div><em>'.__('Note: RSVPMaker now includes its own independent support for Stripe. You can enter the API keys below.').'</em></div>';
 	}
-else
-	echo '<h3>'.__('WP Simple Pay Lite for Stripe','rsvpmaker').'</h3><p>'.__('To use Stripe instead of PayPal, enable the <a href="https://wordpress.org/plugins/stripe/" target="_blank">WP Simple Pay Lite for Stripe plugin</a>','rsvpmaker').'</p>';
-$s_cash = (!empty($options["cash_or_custom"]))  ? 'selected="selected"' : '';
-
 ?>
-<h3><?php _e('Default Payment Gateway','rsvpmaker'); ?>:</h3>
-<select name="payment_gateway">
-<option value=""><?php _e('PayPal','rsvpmaker'); ?></option>
-<?php echo $stripe_option; ?>
-<option value="cash_or_custom" <?php echo $s_cash;?> ><?php _e('Cash or Custom','rsvpmaker'); ?></option>
-</select>
-<br /><?php _e('Cash or Custom option allows you to have RSVPMaker calculate fees, even if you are requesting payment by cash or check (rather than an online payment). Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/16/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?>
+<h3>Stripe</h3>
+<p>Publishable Key:<br />
+	<input name="rsvpmaker_stripe_pk" value="<?php echo get_option('rsvpmaker_stripe_pk'); ?>"></p>
+<p>Secret Key:<br />
+	<input name="rsvpmaker_stripe_sk" value="<?php echo get_option('rsvpmaker_stripe_sk'); ?>"></p>
+<p>Notification Email for Stripe (optional):<br />
+	<input name="rsvpmaker_stripe_notify" value="<?php echo get_option('rsvpmaker_stripe_notify'); ?>"></p>	
+	
+<p><?php _e('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/16/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
+
 <div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 </form>
 
@@ -4193,6 +4206,22 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
 	);
 	$wp_admin_bar->add_node( $args );
+	
+	if($t = has_template($post->ID))
+	{
+	$wp_admin_bar->add_menu(array('parent' => 'edit', 'title' => __('Edit Template'), 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'meta' => array('class' => 'rsvpmaker-edit-template')));		
+
+	$args = array(
+		'parent'    => 'rsvpmaker_options',
+		'id' => 'template-options',
+		'title' => 'Template Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t),
+		'meta'  => array( 'class' => 'template-options')
+	);
+	$wp_admin_bar->add_node( $args );
+		
+	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template')));		
+	}
 	
 	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Send RSVP Email'), 'id' => 'rsvpmaker-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'rsvpmaker-to-email')));
 	

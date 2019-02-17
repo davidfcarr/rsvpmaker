@@ -24,6 +24,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/event', ['render_callback' => 'rsvpmaker_one']);	
 	register_block_type('rsvpmaker/upcoming', ['render_callback' => 'rsvpmaker_upcoming']);	
+	register_block_type('rsvpmaker/stripecharge', ['render_callback' => 'rsvpmaker_stripecharge']);	
+	register_block_type('rsvpmaker/limited', ['render_callback' => 'rsvpmaker_limited_time']);	
 }
 
 add_action('init','rsvpmaker_server_block_render');
@@ -154,3 +156,53 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 
 // Hook: Editor assets.
 add_action( 'enqueue_block_editor_assets', 'rsvpmaker_block_cgb_editor_assets' );
+
+function rsvpmaker_limited_time ($atts, $content) {
+	global $post;
+	$debug = '';
+	if(isset($_GET['debug']))
+		$debug .= ' attributes: '. var_export($atts, true);
+	if(empty($atts['start_on']) && empty($atts['end_on']))
+		return $content.$debug; // no parameters set
+	fix_timezone();
+	$now = time();
+	if(!empty($atts['start_on']) && !empty($atts['start']))
+	{
+	//test to see if we're before the start time
+	$start = strtotime($atts['start']);
+	if(isset($_GET['debug']))
+		$debug .= sprintf('<p>Start time %s = %s, now = %s</p>',$atts['start'],$start,$now);
+	if($now < $start)
+		return $debug;
+	}
+	if(!empty($atts['end_on']) && !empty($atts['end']))
+	{
+	//test to see if we're past the end time
+	$end = strtotime($atts['end']);
+	$pattern = '/<!-- wp:rsvpmaker\/limited.+"end":"'.$atts["end"].'".+(\/wp:rsvpmaker\/limited -->)/sU';
+	if(isset($_GET['debug']))
+	{
+		$debug .= sprintf('<p>End time %s = %s, now = %s</p>',$atts['end'],$end,$now);
+		preg_match($pattern,$post->post_content,$matches);
+		if(empty($matches[0]))
+			$debug .= 'Regex failed';
+		else
+			$debug .= htmlentities($matches[0]);
+	}
+	if($now > $end)
+	{
+		if(!empty($atts['delete_expired']))
+		{
+		$update['ID'] = $post->ID;
+		$update['post_content'] = preg_replace($pattern,'',$post->post_content);
+		if(!empty($update['post_content']))
+			wp_update_post($update);
+		else
+			$debug .= 'Preg replace came back empty';
+		}
+		return $debug;
+	}
+		
+	}
+return $content.$debug;
+}

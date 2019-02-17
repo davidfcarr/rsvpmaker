@@ -1,13 +1,13 @@
 ﻿=== RSVPMaker ===
 Contributors: davidfcarr
 Donate: http://www.rsvpmaker.com
-Tags: event, calendar, rsvp, custom post type, paypal, email, mailchimp, gutenberg
+Tags: event, calendar, rsvp, custom post type, paypal, stripe, email, mailchimp, gutenberg
 Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 5.0.2
-Stable tag: 5.7.6
+Tested up to: 5.1
+Stable tag: 5.8.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -16,10 +16,11 @@ Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it to:
 
 * Schedule and promote events of all sorts: conferences, classes, seminars, speaking events, parties and weddings are a few common uses.
-* Promote your event on social media and send out email list invitations using the integration with MailChimp.
 * Register attendees, prompting them to enter whatever information you need, including the names of guests.
-* Collect money using PayPal.
+* Collect money using PayPal or Stripe.
+* Promote your event on social media and send out email list invitations using the integration with MailChimp. Can also be used to for email newsletters based on blog posts or event roundups from your website.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
+* Use the Limited Time Content Gutenberg block -- a wrapper block that can include paragraphs, images, and other content -- to set a start and/or end time for the display of content. Useful for promoting events and limited time pricing on your home page or in the body of a blog post, without looking foolish if you forget to take down those promotions.
 
 https://www.youtube.com/watch?v=a85yK-yCBOg
 
@@ -27,7 +28,7 @@ Creating and Managing Events
 
 RSVPMaker events are created and edited just like blog posts in the WordPress editor, with the addition of parameters like event date (so the items can be listed chronologically and displayed on a calendar grid). Supports the Gutenberg editor as well as the classic WordPress editor.
 
-Turning on the RSVP function displays additional options for sending email notifications, customizing confirmation and reminder messages, and setting a price or prices if you will be requesting online payments via PayPal.
+You can use RSVPMaker for event announcements, or turn on the Collect RSVPs function and set additional options for sending email notifications, customizing confirmation and reminder messages, and setting a price or prices if you will be requesting online payments via PayPal.
 
 RSVP reports can be viewed on the administrator's dashboard or downloaded as spreadsheets.
 
@@ -65,23 +66,15 @@ Thank you!
 1. Upload the entire `rsvpmaker` folder to the `/wp-content/plugins/` directory.
 1. Activate the plugin through the 'Plugins' menu in WordPress.
 1. Visit the RSVPMaker options page to configure default values for RSVP email notifications, etc.
-1. Ensure you have enabled directory-style permalinks so the address to events is displayed in the format /rsvpmaker/my-event/ rather than ?rsvpmaker=my-event -- see [http://codex.wordpress.org/Using_Permalinks](http://codex.wordpress.org/Using_Permalinks)
 1. Check that you have set the timezone for your site on the Settings -> General WordPress admin screen
-1. See the documentation for shortcodes you can use to create an events listing page, or a list of event headlines for the home page. Use the RSVPMaker widget if you would like to add an events listing to your WordPress sidebar.
+1. Add the Gutenberg block for the RSVPMaker events listing to a page on your site. For the Classic Editor, see the documentation for shortcodes you can use to create an events listing page, or a list of event headlines for the home page. Use the RSVPMaker widget if you would like to add an events listing to your WordPress sidebar.
 1. OPTIONAL: Depending on your theme, you may want to create a single-rsvpmaker.php template to prevent confusion between the post date and the event date (move the post date display code to the bottom or just remove it). A sample for the Twentyten theme is included with this distribution.
-1. OPTIONAL: To enable online payments for events, obtain a PayPal API signature and password, edit the included paypal-constants.php file, and upload it (ideally to a location outside of web root). Record the file location on the settings screen.
+1. OPTIONAL: To enable online payments for events, obtain a PayPal API signature and password.
 1. OPTIONAL: Install [RSVPMaker Excel](http://wordpress.org/extend/plugins/rsvpmaker-excel) if you want the ability to export RSVP reports to a spreadsheet.
-1. OPTIONAL: You can override any of the functions in rsvpmaker-pluggable.php by creating your own rsvpmaker-custom.php file and adding it to the plugins directory (the directory above the rsvpmaker folder). You can, for example, override the function that displays the RSVP form to include more, fewer, or different fields.
 
 For basic usage, you can also have a look at the [plugin homepage](http://www.rsvpmaker.com/).
 
 == Frequently Asked Questions ==
-
-= Why am I getting a "page not found" error? =
-
-A minority of users report that the RSVPMaker permalinks don't function properly in the default configuration. Go to the RSVPMaker options settings screen and check the box for "Tweak Permalinks." This should clear up the problem by making WordPress reset the permalinks.
-
-Also ensure you have enabled directory-style permalinks so the address to events is displayed in the format /rsvpmaker/my-event/ rather than ?rsvpmaker=my-event -- see [http://codex.wordpress.org/Using_Permalinks](http://codex.wordpress.org/Using_Permalinks).
 
 = Where can I get more information about using RSVPMaker? =
 
@@ -99,7 +92,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 == Credits ==
 
     RSVPMaker
-    Copyright (C) 2010 David F. Carr
+    Copyright (C) 2010-2019 David F. Carr
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -114,9 +107,37 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     See the GNU General Public License at <http://www.gnu.org/licenses/gpl-2.0.html>.
 	
 	RSVPMaker also includes code derived from the PayPal NVP API software
-	development kit for PHP.
+	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 5.8.5 =
+
+* Limited Time Content block now allows you to set expired content to automatically be deleted from a post. By default, expired content is hidden (you can go back and change it or remove it manually). If you have WordPress set to save revisions, deleted content will be preserved as part of a past revision.
+
+= 5.8.4 =
+
+* Support for coupon codes (discount pricing for events)
+* Option to send a payment reminders. If someone registers but does not pay, they will get an email reminder after 30 minutes.
+
+= 5.8.3 =
+
+* Added the Limited Time Content block (a wrapper for content with a start time and/or end time specified for how long it should be displayed)
+
+= 5.8.2 =
+
+Improvements to the Stripe payment functions
+
+= 5.8 =
+
+* Update Template Based on Event option added to admin bar - adjust template based on changes to the latest event in a series, rather than the other way around.
+* If an event is based on a template, Edit Template appears under the main Edit link on the admin bar.
+* Added action - do_action('rsvpmaker_stripe_payment',$vars) - other plugins can detect when a successful Stripe online payment transaction is logged.
+
+= 5.7.9 =
+
+* Native support for Stripe online payments (previously supported through an integration with WP Simple Pay)
+* Stripe Charge block for Gutenberg for processing other sorts of charges, such as dues payments or consulting fees, in addition to event payments.
 
 = 5.7.6 =
 

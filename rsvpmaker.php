@@ -1,17 +1,16 @@
 <?php
-
 /*
 Plugin Name: RSVPMaker
 Plugin URI: http://www.rsvpmaker.com
-Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together. RSVPMaker now also specifically supports organizing online events or webinars with Google's <a href="http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-with-a-landing-page-on-your-wordpress-website/">YouTube Live</a> video broadcast service (formerly Hangouts on Air). <a href="options-general.php?page=rsvpmaker-admin.php">Options</a> / <a href="edit.php?post_type=rsvpmaker&page=rsvpmaker_doc">Shortcode documentation</a>
+Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. PayPal payments can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together. <a href="options-general.php?page=rsvpmaker-admin.php">Options</a>
 Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 5.7.6
+Version: 5.8.5
 */
 function get_rsvpversion(){
-return '5.7.6';
+return '5.8.5';
 }
 
 global $wp_version;
@@ -51,7 +50,8 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "rsvp_instructions" => '',
 "rsvp_count" => 1, 
 "rsvp_count_party" => 1, 
-"rsvp_yesno" => 1, 
+"rsvp_yesno" => 1,
+'send_payment_reminders' => 1,
 "rsvp_on" => 0,
 "rsvp_max" => 0,
 "login_required" => 0,
@@ -195,6 +195,8 @@ include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-actions.php";
 
 if(!function_exists('do_blocks'))
 	include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-classic.php";
+if(get_option('rsvpmaker_stripe_sk'))
+	include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-stripe.php";
 
 function rsvpmaker_gutenberg_check () {
 global $carr_gut_test;
@@ -211,7 +213,7 @@ if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
 function rsvpmaker_create_post_type() {
 global $rsvp_options;
 $menu_label = (isset($rsvp_options["menu_label"])) ? $rsvp_options["menu_label"] : __("RSVP Events",'rsvpmaker');
-$supports = array('title','editor','author','excerpt','custom-fields','thumbnail');
+$supports = array('title','editor','author','excerpt','custom-fields','thumbnail','revisions');
 
   register_post_type( 'rsvpmaker',
     array(

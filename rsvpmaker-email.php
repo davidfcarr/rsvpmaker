@@ -13,7 +13,7 @@ function rsvpmailer($mail) {
 	global $post;
 	
 	if(empty($rsvp_options["from_always"]) && !empty($rsvp_options["smtp_useremail"]))
-		$rsvp_options["from_always"] = $options["smtp_useremail"];
+		$rsvp_options["from_always"] = $rsvp_options["smtp_useremail"];
 	
 	if(!empty($rsvp_options['from_always']) && ($rsvp_options['from_always'] != $mail['from']))
 	{
@@ -1424,17 +1424,64 @@ $MailChimp = new MailChimpRSVP($chimp_options["chimp-key"]);
 $listID = $_POST["mailchimp_list"];
 update_post_meta($post->ID, "_email_list",$listID);
 $custom_fields["_email_list"][0] = $listID;
-$campaign = $MailChimp->post("campaigns", array(
+
+$segment_opts = array();	
+
+if(!empty($_POST["mailchimp_exclude_rsvp"]))
+{
+$event = (int) $_POST["mailchimp_exclude_rsvp"];	
+$sql = "SELECT * 
+FROM  `".$wpdb->prefix."rsvpmaker` 
+WHERE  `event` = ".$event;
+$results = $wpdb->get_results($sql);
+foreach($results as $row)
+	$rsvped[] = array('field' => 'EMAIL','condition_type' => 'EmailAddress','op' => 'not','value' => $row->email);
+if(!empty($rsvped))
+	$segment_opts = array('match' => 'all','conditions' => $rsvped );
+/*	
+$segment_id = get_post_meta($event, 'mailchimp_rsvp_segment', true);
+if(empty($segment_id))
+{
+$segment_result = $MailChimp->post("lists/".$listID.'/segments', array('name' => $slug,'static_segment' => $rsvped));
+echo '<pre>';
+print_r($segment_result);
+echo '</pre>';
+if($segment_result->id)
+	{
+		$segment_id = $segment_result->id;
+		update_post_meta($event,'mailchimp_rsvp_segment',$segment_id);
+	}
+}
+else
+	{
+	$bulk = $MailChimp->post("lists/".$listID.'/segments/'.$segment_id, array('members_to_add' => $rsvped));
+echo '<pre>';
+print_r($bulk);
+echo '</pre>';
+	}
+*/
+}
+
+$input = array(
                 'type' => 'regular',
                 'recipients'        => array('list_id' => $listID),
+                'segment_opts'        => $segment_opts,
 				'settings' => array('subject_line' => stripslashes($_POST["subject"]),'from_email' => $_POST["from_email"], 'from_name' => $_POST["from_name"], 'reply_to' => $_POST["from_email"])
-));
+);
+
+echo '<pre>';
+echo json_encode($input);
+echo '</pre>';
+
+$campaign = $MailChimp->post("campaigns", $input);
 if(!$MailChimp->success())
 	{
 	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
 	return;
 	}
-
+else {
+	printf('<pre>%s</pre>',var_export($campaign, true));
+}
 if(!empty($campaign["id"]))
 {
 $content_result = $MailChimp->put("campaigns/".$campaign["id"].'/content', array(
@@ -1496,6 +1543,8 @@ global $wp_styles;
 	echo '<div style="width: 48%; float: left;">';
 	printf('<input type="checkbox" name="handles[]" value="%s" %s /> %s</div>',$handle,$c,$handle);
     endforeach;		
+
+$events_dropdown = get_events_dropdown ();	
 ?>
 	
 <p style="clear:both;"><?php _e('Send','rsvpmaker');?></p>
@@ -1511,11 +1560,18 @@ $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_lis
 echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 ?>
 </select> <select name="chimp_send_now"><option value="1"><?php _e('Send now','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php _e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select></div>
+<div style="margin-left: 20px;">
+<?php _e('Exclude Recipients who RSVPed to','rsvpmaker');?> <select name="mailchimp_exclude_rsvp">
+<?php
+echo $events_dropdown;
+?>
+</select>	
+	</div>
 <?php
 }
 
 ?>
-	<div><input type="checkbox" name="attendees" value="1"> <?php _e('Attendees','rsvpmaker');?> <select name="event"><option value=""><?php _e('Select Event','rsvpmaker');?></option><option value="any"><?php _e('Any event','rsvpmaker');?></option><?php echo get_events_dropdown (); ?></select></div>
+	<div><input type="checkbox" name="attendees" value="1"> <?php _e('Attendees','rsvpmaker');?> <select name="event"><option value=""><?php _e('Select Event','rsvpmaker');?></option><option value="any"><?php _e('Any event','rsvpmaker');?></option><?php echo $events_dropdown; ?></select></div>
 
 	<div><input type="checkbox" name="rsvps_since" value="1"> <?php _e('RSVPs more recent than ','rsvpmaker');?> <input type="text" name="since" value="30" /> <?php _e('Days','rsvpmaker');?></div>
 <?php
@@ -2485,6 +2541,11 @@ $templates = get_option('rsvpmaker_notification_templates');
 //$template_forms represents the defaults
 $template_forms['notification'] = array('subject' => 'RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "Just signed up:\n\n[rsvpdetails]");
 $template_forms['confirmation'] = array('subject' => 'Confirming RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "[rsvpmessage]\n\n[rsvpdetails]\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
+$template_forms['payment_reminder'] = array('subject' => 'Payment Required: [rsvptitle] on [rsvpdate]','body' => "We received your registration, but it is not complete without a payment. Please follow the link below to complete your registration and payment.
+
+[rsvpupdate]
+
+[rsvpdetails]");
 $template_forms = apply_filters('rsvpmaker_notification_template_forms',$template_forms);
 if(empty($templates))
 	return $template_forms;
@@ -2574,6 +2635,69 @@ foreach($rsvpdata as $field => $value)
 	rsvpmaker_tx_email($post, $mail);	
 }
 
+}
+
+function rsvp_payment_reminder ($rsvp_id) {
+rsvpmaker_debug_log($rsvp_id,'payment_reminder_test');
+global $post;
+global $rsvp_options;
+global $wpdb;
+$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
+$rsvp = (array) $wpdb->get_row($sql);
+$post = get_post($rsvp['event']);
+$rsvpdata = unserialize($rsvp['details']);
+rsvpmaker_debug_log($rsvpdata,'payment_reminder_test');
+if($rsvpdata['total'] <= $rsvp['amountpaid'])
+	return;
+	
+$details = '';
+foreach($rsvpdata as $label => $value)
+	$details .= sprintf('%s: %s'."\n",$label,$value);;
+$rsvpdata['rsvptitle'] = $post->post_title;
+$ts = strtotime(get_rsvp_date($rsvp['event']));
+$rsvpdata['rsvpdate'] = strftime($rsvp_options['long_date'],$ts);
+
+$templates = get_rsvpmaker_notification_templates();
+$rsvp_to = get_post_meta($post->ID,'_rsvp_to',true);
+$rsvp_to_array = explode(",", $rsvp_to);
+$notification_subject = $templates['payment_reminder']['subject']; 
+foreach($rsvpdata as $field => $value)
+	$notification_subject = str_replace('['.$field.']',$value,$notification_subject);
+
+$notification_body = $templates['payment_reminder']['body']; 
+foreach($rsvpdata as $field => $value)
+	$notification_body = str_replace('['.$field.']',$value,$notification_body);
+$notification_body = str_replace('[rsvpdetails]',$details,$notification_body);
+
+$url = get_permalink($rsvp['event']);
+$url = add_query_arg('rsvp',$rsvp['id'],$url);
+$url = add_query_arg('e',$rsvp['email'],$url);
+
+$notification_body = str_replace('[rsvpupdate]',sprintf('<a href="%s">Complete Registration</a>',$url),$notification_body);
+	
+$notification_body = do_shortcode($notification_body);
+$mail["to"] = $rsvp['email'];
+$mail["from"] = $rsvp_to_array[0];
+$mail["fromname"] = get_bloginfo('name');
+$mail["subject"] = $notification_subject;
+$mail["html"] = wpautop($notification_body);
+rsvpmaker_tx_email($post, $mail);
+
+}
+
+add_action('init','rsvp_payment_reminder_test');
+function rsvp_payment_reminder_test () {
+	if(!isset($_GET['payrem']))
+		return;
+	rsvp_payment_reminder($_GET['payrem']);
+}
+
+add_action('rsvp_payment_reminder','rsvp_payment_reminder',10,1);
+
+function rsvpmaker_payment_reminder_cron ($rsvp_id) {
+	$time = strtotime('+30 minutes');
+	wp_clear_scheduled_hook( 'rsvp_payment_reminder',array($rsvp_id) );
+	wp_schedule_single_event($time,'rsvp_payment_reminder',array($rsvp_id));
 }
 
 function previewtest () {

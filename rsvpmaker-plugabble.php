@@ -535,17 +535,16 @@ for($i = 1; $i < 13; $i++)
 <div>
  <button id="create-form">Generate form</button>
 </div>
-<br />
+<h3>Payment Gateways</h3>
+	<p>PayPal <?php echo (!empty($rsvp_options["paypal_config"])) ? "enabled" : "NOT enabled"; ?></p>
+	<p>Stripe <?php echo (!empty($rsvp_options["rsvpmaker_stripe_sk"])) ? "enabled" : "NOT enabled"; ?></p>
+	<p>WP Simple Pay for Stripe integration <?php echo (class_exists('Stripe_Checkout_Functions')) ? "enabled" : "NOT enabled"; ?></p>
 <?php
-
-if (class_exists('Stripe_Checkout_Functions') && empty($rsvp_options["stripe"]))
+if ((class_exists('Stripe_Checkout_Functions') || (!empty($rsvp_options["rsvpmaker_stripe_sk"]))) && empty($rsvp_options["stripe"]) && !empty($rsvp_options["paypal_config"]))
 	{
-	$s = ( !empty($custom_fields["_rsvp_stripe"][0]) ) ? 'checked="checked"' : '';
-	echo '<h3>'.__('WP Simple Pay Lite for Stripe plugin detected','rsvpmaker').'</h3><p><input type="checkbox" name="setrsvp[stripe]" value="1" '.$s.' /> '.__('Use Stripe instead of PayPal','rsvpmaker').'</p>';
+	$s = ( !empty($custom_fields["_rsvp_stripe"][0]) ) ? 'checked="checked"' : '';	
+	echo '<p><input type="checkbox" name="setrsvp[stripe]" value="1" '.$s.' /> '.__('Use Stripe instead of PayPal','rsvpmaker').'</p>';
 	}
-
-if(!empty($rsvp_options["paypal_config"]) || !empty($rsvp_options["stripe"]) || !empty($custom_fields["_rsvp_stripe"][0]) || !empty($rsvp_options["cash_or_custom"]))
-{
 ?>
 <p><strong><?php echo __('Pricing','rsvpmaker');?></strong></p>
 <p><?php echo __('You can set a different price for members vs. non-members, adults vs. children, etc.','rsvpmaker');?></p>
@@ -616,7 +615,6 @@ if($rsvp_count_party && !empty($newfields))
 </div>
 <?php
 }
-
 $pad = ($start < 3) ? 5 : 1;
 
 for($i = $start; $i < ($start + $pad); $i++)
@@ -632,7 +630,7 @@ if($rsvp_count_party && !empty($newfields))
 	{
 		foreach($newfields as $field)
 			{
-				printf('<div class="pricelabel">%s:</div><div class="pricevalue"><input type="radio" name="showhide[%d][%s]" value="0" checked="checked" /> Show <input type="radio" name="showhide[%d][%s]" value="1" /> Hide</div>',$field,$i,$field,$i,$field);
+				printf('<div class="pricelabel">%s: </div> <div class="pricevalue"> <input type="radio" name="showhide[%d][%s]" value="0" checked="checked" /> Show <input type="radio" name="showhide[%d][%s]" value="1" /> Hide</div>',$field,$i,$field,$i,$field);
 			}
 	}
 ?>
@@ -642,7 +640,55 @@ if($rsvp_count_party && !empty($newfields))
 echo '</div>';
 ?>
 <p><a id="add_blanks" href="#">+ More Prices</a></p>
-<script type="text/javascript">
+	
+	<h3>Coupon Codes</h3>
+	<p>Optional: Set one or more codes for a discounted fee or a percent off the total.</p>
+	<?php
+	if(isset($_POST['coupon_code']))
+	{
+	delete_post_meta($post->ID,'_rsvp_coupon_code');
+	delete_post_meta($post->ID,'_rsvp_coupon_discount');
+	delete_post_meta($post->ID,'_rsvp_coupon_method');
+	foreach($_POST['coupon_code'] as $index => $value)
+	{
+		$discount = $_POST['coupon_discount'][$index];
+		if(!empty($value) && !empty($discount))
+		{
+			$method = $_POST['coupon_method'][$index];
+			add_post_meta($post->ID,'_rsvp_coupon_code',$value);
+			add_post_meta($post->ID,'_rsvp_coupon_discount',$discount);
+			add_post_meta($post->ID,'_rsvp_coupon_method',$method);		
+		}
+	}
+	}
+	
+	$coupon_codes = get_post_meta($post->ID,'_rsvp_coupon_code');
+	if(empty($coupon_codes))
+	{
+		$coupon_codes = array();
+		$coupon_methods = array('amount');
+		$coupon_discounts = array();
+	}
+	else
+	{
+	$coupon_methods = get_post_meta($post->ID,'_rsvp_coupon_method');
+	$coupon_methods[] = 'amount'; //gives us one blank row
+	$coupon_discounts = get_post_meta($post->ID,'_rsvp_coupon_discount');		
+	}
+
+	foreach($coupon_methods as $index => $coupon_method)
+	{
+	$coupon_code = (isset($coupon_codes[$index])) ? $coupon_codes[$index] : '';
+	$coupon_discount = (isset($coupon_discounts[$index])) ? $coupon_discounts[$index] : '';
+?>
+	<p><?php _e('Coupon Code','rsvpmaker');?> <input type="text" name="coupon_code[]" value="<?php echo $coupon_code; ?>" /> <?php _e('Method','rsvpmaker');?>: <select name="coupon_method[]"><option value="amount" <?php if($coupon_method =='amount') echo 'selected="selected"'; ?> >Discounted Fee</option><option value="percent" <?php if($coupon_method =='percent') echo 'selected="selected"'; ?> >Percent Off</option></select> <?php _e('Discount','rsvpmaker');?>: <input type="text" name="coupon_discount[]" value="<?php echo $coupon_discount; ?>" /> <br /></p>
+<?php	
+	}
+	?>
+	<div id="morecodes"></div>
+<p><a id="add_codes" href="#">+ More Codes</a></p>
+
+<script type="text/javascript">	
 jQuery(document).ready(function($) {
 var blankcount = <?php echo $starterblanks; ?>;
 var lastblank = blankcount - 1;
@@ -654,6 +700,12 @@ var newblank = '<' + 'div class="priceblock" id="blank_'+blankcount+'">' +
 	'<' + '/div>';
 blankcount++;
 $('#priceper').append(newblank);
+});
+
+$('#add_codes').click(function(event){
+	event.preventDefault();
+var newblank = '<p>Coupon Code <input type="text" name="coupon_code[]" value="" /> Method: <select name="coupon_method[]"><option value="amount" selected="selected" >Discounted Fee</option><option value="percent"  >Percent Off</option></select> Discount: <input type="text" name="coupon_discount[]" value="" /> </p>';
+$('#morecodes').append(newblank);
 });
 
 
@@ -670,7 +722,6 @@ if(isset($_GET["debug"]))
 	rsvpmaker_debug_log(var_export($newfields,true));
 }
 
-} // end paypal enabled section
 ?>
 </div><!-- end rsvpdetails -->
 
@@ -1102,6 +1153,7 @@ if(isset($_POST["payingfor"]) && is_array($_POST["payingfor"]) )
 		$value = (int) $value;
 		$unit = esc_attr($_POST["unit"][$index]);
 		$price = (float) $_POST["price"][$index];
+		$price = check_coupon_code($price);
 		$cost = $value * $price;
 		if(isset($rsvp["payingfor"]) && $rsvp["payingfor"])
 			$rsvp["payingfor"] .= ", ";
@@ -1146,6 +1198,7 @@ if($participants && isset($_POST["guest_count_price"]))
 		$index = (int) $_POST["guest_count_price"];
 		$per = unserialize($custom_fields["_per"][0]);
 		$price = $per["price"][$index];
+		$price = check_coupon_code($price);
 		$unit = $per["unit"][$index];
 		$rsvp["total"] = $price * $participants;
 		$rsvp["payingfor"] .= "$participants $unit @ ".number_format($price,2,$rsvp_options["currency_decimal"],$rsvp_options["currency_thousands"]);		
@@ -1153,7 +1206,10 @@ if($participants && isset($_POST["guest_count_price"]))
 	}
 
 global $current_user; // if logged in
-
+global $rsvpmaker_coupon_message;
+if(!empty($rsvpmaker_coupon_message))
+$rsvp['coupon'] = $rsvpmaker_coupon_message;
+	
 $rsvp_sql = $wpdb->prepare(" SET first=%s, last=%s, email=%s, yesno=%d, event=%d, note=%s, details=%s, participants=%d, user_id=%d ", $rsvp["first"], $rsvp["last"], $rsvp["email"],$yesno,$event, $note, serialize($rsvp), $participants, $current_user->ID );
 
 capture_email($rsvp);
@@ -1181,6 +1237,8 @@ else
 	
 	}
 
+if(!empty($rsvp_options['send_payment_reminders']) && isset($price) && ($price >0) )	
+	rsvpmaker_payment_reminder_cron($rsvp_id);
 setcookie ( 'rsvp_for_'.$post->ID, $rsvp_id, time()+60*60*24*90, "/" , $_SERVER['SERVER_NAME'] );
 setcookie ( 'rsvpmaker', $rsvp_id, time()+60*60*24*90, "/" , $_SERVER['SERVER_NAME'] );
 
@@ -1594,7 +1652,6 @@ echo $message;
 
 } } // end admin payment
 
-
 if(!function_exists('paypal_error'))
 {
 function paypal_error() {
@@ -1846,7 +1903,7 @@ global $blanks_allowed;
 $rsvpconfirm = '';
 $display = array();
 $rsvp_id = 0;
-	
+
 //On return from paypal payment process, show confirmation
 if(isset($_GET["PayerID"]))
 	return paypal_payment();
@@ -1935,7 +1992,7 @@ elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
 	$permalink .= (strpos($permalink,'?')) ? '&' : '?';
 	$rsvpconfirm = '
 <h4>'.__('Update RSVP?','rsvpmaker').'</h4>	
-<p><a href="'.$permalink.'rsvp='.$rsvp_id.'&e='.$rsvprow["email"].'#rsvpnow">'.__('Yes','rsvpmaker').'</a>, '.__('I want to update a previous RSVP for ').$rsvprow["first"].' '.$rsvprow["last"].'</p>
+<p><a href="'.$permalink.'rsvp='.$rsvp_id.'&e='.$rsvprow["email"].'#rsvpnow">'.__('Yes','rsvpmaker').'</a>, '.__('I want to update a previous RSVP for ','rsvpmaker').$rsvprow["first"].' '.$rsvprow["last"].'</p>
 ';
 	//rsvpmaker_debug_log('Yes I want to update RSVP '.$sql.' cookie '.var_export($_COOKIE,true));
 	}
@@ -1992,18 +2049,25 @@ if(($e && isset($_GET["rsvp"]) ) || is_user_logged_in() )
 			}
 			if($charge > 0)
 			{
-			if(class_exists('Stripe_Checkout_Functions') && (!empty($rsvp_options["stripe"]) || !empty($custom_fields['_rsvp_stripe'][0]) ))
+			if(get_option('rsvpmaker_stripe_sk'))
+			{
+			$rsvprow['amount'] = $charge;
+			$rsvprow['rsvp_id'] = $rsvp_id;
+			$rsvpconfirm .= rsvpmaker_to_stripe($rsvprow);	
+			}
+			elseif(class_exists('Stripe_Checkout_Functions') && (!empty($rsvp_options["stripe"]) || !empty($custom_fields['_rsvp_stripe'][0]) ))
 			$rsvpconfirm .= '<p>'.do_shortcode('[stripe amount="'.($charge*100).'" description="'.htmlentities($post->post_title).' '.$details["payingfor"].'" ]').'</p>';
-			elseif(!empty($rsvp_options["cash_or_custom"]) || !empty($custom_fields['_cash_or_custom'][0]) )
+			if(!empty($rsvp_options["cash_or_custom"]))
 			{
 				ob_start();
 				do_action('rsvpmaker_cash_or_custom',$charge,$invoice_id,$rsvp_id,$details,$profile,$post);
 				$rsvpconfirm .= ob_get_clean();
 			}
-			else
-			$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="'.$permalink.'">
+			if( !empty($rsvp_options["paypal_config"]) && empty($rsvp_options["stripe"]) && empty($custom_fields['_rsvp_stripe'][0]) )
+			$rsvpconfirm .= '<h3>PayPal</h3>
+			<form method="post" name="donationform" id="donationform" action="'.$permalink.'">
 <input type="hidden" name="paypal" value="payment" /> 
-<p><input name="paymentAmount" type="hidden" id="paymentAmount" size="10" value="'.$charge.'"> '.$rsvp_options["paypal_currency"].'
+<p><input name="paymentAmount" type="hidden" id="paymentAmount" size="10" value="'.$charge.'"> '.$charge.' '.$rsvp_options["paypal_currency"].'
     </p>
   <p>Email: <input name="email" type="text" id="paypal_email" size="40"  value="'.$e.'" >
     </p>
@@ -2236,6 +2300,13 @@ else
 	if(!empty($pf))
 		echo  "<h3>".__('Paying For','rsvpmaker')."</h3><p>".$pf."</p>\n";
 	}
+
+//coupon code
+$coupon_code = $custom_fields["_rsvp_coupon_code"][0];
+$coupon_method = $custom_fields["_rsvp_coupon_method"][0];
+$coupon_discount = $custom_fields["_rsvp_coupon_discount"][0];
+if(!empty(trim($coupon_code)))
+printf('<p>Coupon Code: <input type="text" name="coupon_code" size="10" /><br /><em>If you have a coupon code, enter it above</em>.</p>');
 }
 
 basic_form($form);
@@ -3641,7 +3712,7 @@ add_filter('wp_title','date_title', 1, 3);
 if(!function_exists('rsvpmaker_template_list'))
 {
 function rsvpmaker_template_list () {
-
+global $rsvp_options, $wpdb;
 ?>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
@@ -3649,7 +3720,37 @@ function rsvpmaker_template_list () {
 printf(' <a href="%s"  class="add-new-h2">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
 ?>  </h2> 
 <?php
-
+if(isset($_GET['override_template']) || (isset($_GET['t']) && isset($_GET['overconfirm']))) {
+	$t = (isset($_GET['override_template'])) ? (int) $_GET['override_template'] : (int) $_GET['t'];
+	$e = (int) $_GET['event'];
+	$ts = get_rsvp_date($e);
+	if(isset($_GET['overconfirm']))
+	{
+	$event = get_post($e);
+	$newpost = array('ID' => $t, 'post_title' => $event->post_title, 'post_content' => $event->post_content);
+	wp_update_post($newpost);
+	printf('<h1>Template updated based on contents of event for %s</h1>',strftime($rsvp_options['long_date'],strtotime($ts)));
+	$sql = "select * from $wpdb->postmeta WHERE post_id=".$e;//." AND meta_key LIKE '_rsvp%' ";
+	$results = $wpdb->get_results($sql);
+	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons
+','tm_sidebar','sidebar_officers');
+		foreach($results as $row)
+		{
+			if((strpos($row->meta_key,'rsvp') && ($row->meta_key != '_rsvp_dates')) || (in_array($row->meta_key, $docopy )))
+			{
+				update_post_meta($t,$row->meta_key,$row->meta_value);
+				$copied[] = $row->meta_key;
+			}
+		}
+	if(!empty($copied))
+		printf('<p>Settings copied: %s</p>',implode(", ",$copied));
+	}
+	else {
+	printf('<h1 style="color: red;">Update Template?</h1><p>Click &quot;Confirm&quot; to override template with the contents of your %s event<p><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" /><input type="hidden" name="t" value="%d" /><input type="hidden" name="event" value="%d" /><input type="hidden" name="overconfirm" value="1" /><button>Confirm</button></form> ',strftime($rsvp_options['long_date'],strtotime($ts)),admin_url('edit.php'),$t,$e);		
+	}
+}
+									 
+									 
 do_action('rsvpmaker_template_list_top');
 									 
 if(isset($_GET["t"]))
@@ -4612,5 +4713,39 @@ $wp_meta_boxes['dashboard']['normal']['core'] = $sorted_dashboard;
 }
 
 // Hook into the 'wp_dashboard_setup' action to register our other functions
+
+function check_coupon_code($price) {
+	global $post;
+	global $rsvpmaker_coupon_message;
+	$coupon_message = '';
+	$codes = get_post_meta($post->ID,'_rsvp_coupon_code'); //array of codes
+	//printf('<p>Initial price %s %s</p>',$price,$code);
+	if(!empty($codes) && !empty($_POST['coupon_code']))
+	{
+	$user_code = trim($_POST['coupon_code']);
+	if((in_array($user_code,$codes)))
+		{
+		$index = array_search($user_code,$codes);
+		$discounts = get_post_meta($post->ID,'_rsvp_coupon_discount');
+		$methods = get_post_meta($post->ID,'_rsvp_coupon_method');
+		$discount = $discounts[$index];
+		$method = (float) $methods[$index];
+		$rsvpmaker_coupon_message = 'Coupon code applied: '.$user_code;
+		if($method == 'percent')
+		{
+			$price = $price - ($price * ($discount/100));
+		}
+		else
+		{
+			$price = $discount;
+		}
+		}
+	else
+		{
+		$rsvpmaker_coupon_message = 'Coupon code not recognized';
+		}
+	}
+return $price;
+}
 
 ?>
