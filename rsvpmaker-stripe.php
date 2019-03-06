@@ -465,7 +465,7 @@ function rsvpmaker_stripecharge ($atts) {
 }
 
 function rsvpmaker_stripe_payment_log($vars,$confkey) {
-global $post, $current_user;
+global $post, $current_user, $wpdb;
 fix_timezone();
 $vars['timestamp'] = date('r');
 if(is_user_logged_in())
@@ -483,8 +483,17 @@ else {
 		add_user_meta($user->ID,'rsvpmaker_stripe_payment',$vars);
 		rsvpmaker_stripe_notify($vars);
 	}
-	else
-		stripe_prompt_for_name($vars,$confkey); // try to get name for log and notification
+	else {
+		$sql = 'SELECT first, last FROM '.$wpdb->prefix."rsvpmaker WHERE email LIKE '".$vars['email']."' ORDER BY id DESC";
+		$row = $wpdb->get_row($sql);
+		if(!empty($row->first))
+		{
+		$vars = array('name' => $row->first.' '.$row->last)+$vars;
+		rsvpmaker_stripe_notify($vars);
+		}
+		else
+			stripe_prompt_for_name($vars,$confkey); // try to get name for log and notification		
+	}
 }	
 add_post_meta($post->ID,'rsvpmaker_stripe_payment',$vars);
 do_action('rsvpmaker_stripe_payment',$vars);

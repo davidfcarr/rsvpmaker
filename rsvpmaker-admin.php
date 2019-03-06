@@ -401,6 +401,8 @@ if(isset($_POST["unit"]))
 			continue;
 		$per["unit"][$index] = $value;
 		$per["price"][$index] = $_POST["price"][$index];
+		if(isset($_POST["price_multiple"][$index]) && ($_POST["price_multiple"][$index] > 1))
+			$per["price_multiple"][$index] = $_POST["price_multiple"][$index];
 		if(!empty($_POST["price_deadline"][$index]))
 			{
 			fix_timezone();
@@ -1809,6 +1811,28 @@ if($results)
 return $txt;
 }
 
+add_action('admin_init','rsvpmaker_create_calendar_page');
+
+function rsvpmaker_create_calendar_page() {
+global $current_user;
+if(isset($_GET["create_calendar_page"]))
+	{
+	$content = (function_exists('register_block_type')) ? '<!-- wp:rsvpmaker/upcoming {"calendar":"1","nav":"both"} /-->' : '[rsvpmaker_upcoming calendar="1" days="180" posts_per_page="10" type="" one="0" hideauthor="1" past="0" no_events="No events currently listed" nav="bottom"]';
+	$post = array(
+	  'post_content'   => $content,
+	  'post_name'      => 'calendar',
+	  'post_title'     => 'Calendar',
+	  'post_status'    => 'publish',
+	  'post_type'      => 'page',
+	  'post_author'    => $current_user->ID,
+	  'ping_status'    => 'closed'
+	);
+	$id = wp_insert_post($post);
+	wp_redirect(admin_url('post.php?action=edit&post=').$id);
+	exit();
+	}
+}
+
 function rsvpmaker_admin_notice() {
 if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
 	return; //don't clutter edit page with admin notices. Gutenberg hides them anyway.
@@ -1865,26 +1889,13 @@ if(isset($_GET["update"]) && ($_GET["update"] == "eventslug"))
 	{
 	$wpdb->query("UPDATE $wpdb->posts SET post_type='rsvpmaker' WHERE post_type='event' OR post_type='rsvp-event' ");
 	}
-if(isset($_GET["create_calendar_page"]))
-	{
-	$post = array(
-	  'post_content'   => '[rsvpmaker_upcoming calendar="1" days="180" posts_per_page="10" type="" one="0" hideauthor="1" past="0" no_events="No events currently listed" nav="bottom"]',
-	  'post_name'      => 'calendar',
-	  'post_title'     => 'Calendar',
-	  'post_status'    => 'publish',
-	  'post_type'      => 'page',
-	  'post_author'    => $current_user->ID,
-	  'ping_status'    => 'closed'
-	);
-	wp_insert_post($post);
-	}
 if(isset($_GET["noeventpageok"]) && $_GET["noeventpageok"])
 	{
 	update_option('noeventpageok',1);
 	}
 elseif( (!isset($rsvp_options["eventpage"]) || empty($rsvp_options["eventpage"]) ) && !get_option('noeventpageok') && !is_plugin_active('rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php') )
 	{
-	$sql = "SELECT ID from $wpdb->posts WHERE post_type='page' AND post_status='publish' AND post_content LIKE '%[rsvpmaker_upcoming%' ";
+	$sql = "SELECT ID from $wpdb->posts WHERE post_type='page' AND post_status='publish' AND post_content LIKE '%rsvpmaker_upcoming%' ";
 	$front = get_option('page_on_front');
 	if($front)
 		$sql .= " AND ID != $front ";
@@ -1894,7 +1905,7 @@ elseif( (!isset($rsvp_options["eventpage"]) || empty($rsvp_options["eventpage"])
 		update_option('RSVPMAKER_Options',$rsvp_options);
 		}
 	else {
-		$message = __('RSVPMaker needs you to create a page with the [rsvpmaker_upcoming] shortcode to display event listings','rsvpmaker').'. (<a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php&create_calendar_page=1').'">'.__('Create page','rsvpmaker').'</a>: &quot;'.__('Calendar','rsvpmaker').'&quot; | <a href="'.admin_url('/?noeventpageok=1').'">'.__('Turn off this warning','rsvpmaker').'</a>';
+		$message = __('RSVPMaker can add a calendar or events listing page to your site automatically, which you can then add to your website menu.','rsvpmaker').'. (<a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php&create_calendar_page=1').'">'.__('Create page','rsvpmaker').'</a>: &quot;'.__('Calendar','rsvpmaker').'&quot; | <a href="'.admin_url('/?noeventpageok=1').'">'.__('Turn off this warning','rsvpmaker').'</a>';
 		rsvpmaker_admin_notice_format($message, 'create_calendar_page', $cleared, $type='warning');
 	}
 		
@@ -2809,17 +2820,17 @@ ORDER BY meta_value";
 	 foreach ($results as $r)
 	 	$row[] = sprintf("{text: '%s', value: '%d'}",addslashes($r->post_title).' '.date('r',strtotime($r->datetime)),$r->ID);   
 
-$terms = get_terms('rsvpmaker-type');
+$terms = get_terms('rsvpmaker-type', array('hide_empty' => false));
 $t[] = "{text: 'Any', value: ''}";
 if ( ! empty( $terms ) && ! is_wp_error( $terms ) ){
      foreach ( $terms as $term ) {
        $t[] = sprintf("{text: '%s', value: '%s'}",$term->name,$term->slug);
      }
 }
-		?>
+	?>
         <script type="text/javascript">
         var upcoming = [<?php echo implode(",\n",$row); ?>];
-        var rsvpmaker_types = [<?php echo implode(",\n",$t); ?>];
+		var rsvpmaker_types = [<?php echo implode(",\n",$t); ?>];
         </script>
         <?php
     }
@@ -4121,7 +4132,11 @@ $date = get_rsvp_date($post->ID);
 		additional_editors();		
 	}
 
-submit_button();
+
+echo '<div style="margin-top: 150px;"></div><div style="position: fixed; bottom: 30px; right: 0px; width: 100%; height: 75px; padding: 10px;background-color:rgba(230, 230, 230, 0.5);"><div style="width: 100px; margin-left:auto; margin-right: auto;">';
+submit_button();	
+echo '</div></div>';
+	
 printf('<input type="hidden" name="post_id" value="%d" /></form>',$post->ID);
 }
 

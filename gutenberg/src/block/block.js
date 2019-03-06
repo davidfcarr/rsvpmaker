@@ -10,10 +10,12 @@ import './style.scss';
 import './editor.scss';
 import './rsvpmaker-sidebar.js';		import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
+import apiFetch from '@wordpress/api-fetch';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const { SelectControl, TextControl } = wp.components;
+
 
 /**
  * Register: aa Gutenberg Block.
@@ -62,9 +64,8 @@ registerBlockType( 'rsvpmaker/event', {
             },
         },
 	edit: function( props ) {
-		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
 	const { attributes: { post_id, type, one_hideauthor, one_format, hide_past }, setAttributes, isSelected } = props;
-	
+		
 	function setPostID( event ) {
 		const selected = event.target.querySelector( '#post_id option:checked' );
 		setAttributes( { post_id: selected.value } );		
@@ -217,7 +218,11 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
 	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type }, setAttributes, isSelected } = props;
-
+/*
+apiFetch( { path: '/wp-json/rsvpmaker/v1/types' } ).then( rsvpmaker_types => {
+	console.log(rsvpmaker_types);
+} );
+*/		
 	function setCalendarDisplay( event ) {
 		const selected = event.target.querySelector( '#calendar option:checked' );
 		setAttributes( { calendar: selected.value } );
@@ -277,6 +282,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
 						<option valu="365">1 Year</option>
 					</select></p>
 				<p id="rsvpcontrol-event-type"><label>Event Type</label> <select id="type" value={ type } onChange={ setEventType }>
+				<option value=""></option>
 					{rsvpmaker_types.map(function(opt, i){
                     return <option value={ opt.value }>{opt.text}</option>;
                 })}</select></p>				

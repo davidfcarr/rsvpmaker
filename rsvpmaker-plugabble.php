@@ -1,5 +1,4 @@
 <?php
-
 // start customizable functions, can be overriden by adding a rsvpmaker-custom.php file to the plugins directory (one level up from rsvpmaker directory)
 
 if(!function_exists('my_events_menu')) {
@@ -593,6 +592,7 @@ $start = $i + 1;
 <div class="pricelabel"><?php _e('Units','rsvpmaker');?>:</div><div class="pricevalue"><input name="unit[<?php if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["unit"][$i])) echo $per["unit"][$i];?>" /></div>
 <div class="pricelabel">@ <?php _e('Price','rsvpmaker');?>:</div><div class="pricevalue"><input name="price[<?php  if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["price"][$i])) echo $per["price"][$i];?>" /> <?php if(isset($rsvp_options["paypal_currency"])) echo $rsvp_options["paypal_currency"]; ?></div>
 <div class="pricelabel"><?php _e('Deadline (optional)','rsvpmaker');?>:</div><div class="pricevalue"><input name="price_deadline[<?php  if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["price_deadline"][$i])) echo date("Y-m-d H:i:s", (int) $per["price_deadline"][$i]); ?>" placeholder="<?php echo date('Y-m-d 23:59:00'); ?>" /></div>
+	<div class="pricelabel"><?php _e('Multiple Admissions','rsvpmaker');?>:</div><div class="pricevalue"><input name="price_multiple[<?php  if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["price_multiple"][$i])) echo (int) $per["price_multiple"][$i]; else echo 1; ?>" /><br /><em><?php echo __('Example: If the price is for a table of 8, enter "8"','rsvpmaker'); ?></em></div>
 <?php
 if($rsvp_count_party && !empty($newfields))
 	{
@@ -625,6 +625,8 @@ $starterblanks = $i + 1;
 <div class="pricelabel"><?php _e('Units','rsvpmaker');?>:</div><div class="pricevalue"><input name="unit[<?php if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["unit"][$i])) echo $per["unit"][$i];?>" /></div>
 <div class="pricelabel">@ <?php _e('Price','rsvpmaker');?>:</div><div class="pricevalue"><input name="price[<?php  if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["price"][$i])) echo $per["price"][$i];?>" /> <?php if(isset($rsvp_options["paypal_currency"])) echo $rsvp_options["paypal_currency"]; ?></div>
 <div class="pricelabel"><?php _e('Deadline (optional)','rsvpmaker');?>:</div><div class="pricevalue"><input name="price_deadline[<?php  if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["price_deadline"][$i])) echo date("Y-m-d H:i:s", (int) $per["price_deadline"][$i]); ?>" placeholder="<?php echo date('Y-m-d 23:59:00'); ?>" /></div>
+	<div class="pricelabel"><?php _e('Multiple Admissions','rsvpmaker');?>:</div><div class="pricevalue"><input name="price_multiple[<?php  if(isset($i)) echo $i;?>]" value="<?php  if(isset($per["price_multiple"][$i])) echo (int) $per["price_multiple"][$i]; else echo 1; ?>" /><br /><em><?php echo __('Example: If the price is for a table of 8, enter "8"','rsvpmaker'); ?></em>	
+	</div>
 <?php
 if($rsvp_count_party && !empty($newfields))
 	{
@@ -652,7 +654,7 @@ echo '</div>';
 	foreach($_POST['coupon_code'] as $index => $value)
 	{
 		$discount = $_POST['coupon_discount'][$index];
-		if(!empty($value) && !empty($discount))
+		if(!empty($value) && is_numeric($discount))
 		{
 			$method = $_POST['coupon_method'][$index];
 			add_post_meta($post->ID,'_rsvp_coupon_code',$value);
@@ -1043,6 +1045,8 @@ $rsvp_confirm = (isset($custom_fields["_rsvp_confirm"][0])) ? $custom_fields["_r
 $rsvp_max = $custom_fields["_rsvp_max"][0];
 $count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE event=$event AND yesno=1");
 //if permalinks are not turned on, we need to append to query string not add our own ?
+$guest_sql = array();
+$guest_text = array();
 
 if(empty($rsvp["email"]) || empty($rsvp["first"]) || empty($rsvp["last"]) )
 	{
@@ -1195,12 +1199,27 @@ if(!$yesno)
 
 if($participants && isset($_POST["guest_count_price"]))
 	{
+		$cleanmessage .= " Participants $participants ";
 		$index = (int) $_POST["guest_count_price"];
 		$per = unserialize($custom_fields["_per"][0]);
 		$price = $per["price"][$index];
-		$price = check_coupon_code($price);
 		$unit = $per["unit"][$index];
-		$rsvp["total"] = $price * $participants;
+		$multiple = (int) (isset($per["price_multiple"][$index])) ? $per["price_multiple"][$index] : 1;
+		if($multiple == 1) //coupon codes not applied to multiple admission "table" pricing
+			$price = check_coupon_code($price);
+		if($multiple > 1)
+		{
+		$rsvp['total'] = $price;
+		if($participants > $multiple)
+			$multiple_warning = '<div style="color:red;">'."Warning: party of $participants exceeds table size".'</div>';
+		else
+		{
+		$padguests = $multiple - $participants;
+		$participants = $multiple;
+		}
+		}
+		else
+			$rsvp["total"] = $price * $participants;
 		$rsvp["payingfor"] .= "$participants $unit @ ".number_format($price,2,$rsvp_options["currency_decimal"],$rsvp_options["currency_thousands"]);		
 		$rsvp["pricechoice"] = $index;
 	}
@@ -1267,8 +1286,6 @@ foreach($rsvp as $name => $value)
 		$cleanmessage .= $name.": ".$value."\n";
 	}
 $guestof = $rsvp["first"]." ".$rsvp["last"];
-$guest_sql = array();
-$guest_text = array();
 
 if(isset($_POST["guest"]["first"]) )
 foreach ($_POST["guest"]["first"] as $index => $first)
@@ -1277,8 +1294,22 @@ foreach ($_POST["guest"]["first"] as $index => $first)
 			{
 			$guest_sql[$index] = $wpdb->prepare(" SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s",$event, $yesno, $rsvp_id, $guestof, $first, $_POST["guest"]["last"][$index]);
 			$guest_text[$index] = sprintf("Guest: %s %s\n",$first,$_POST["guest"]["last"][$index]);
+			$lastguest = $index;
 			}
 	}
+
+if(!empty($padguests))
+{
+	for($i = 0; $i < $padguests; $i++)
+	{
+		$index = $i + 100;
+		$tbd = $i + 1;
+		$guest_sql[$index] = $wpdb->prepare(" SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s",$event, $yesno, $rsvp_id, $guestof, 'Placeholder', 'Guest TBD '.$tbd);
+		$guest_text[$index] = sprintf("Guest: %s %s\n",'Placeholder', 'Guest TBD '.$tbd);
+		$newrow[$index]['first'] = 'Placeholder';
+		$newrow[$index]['last'] = 'Guest TBD '.$tbd;
+	}
+}
 
 if(sizeof($guest_sql))
 foreach($_POST["guest"] as $field => $column)
@@ -1329,7 +1360,9 @@ if(sizeof($guest_sql))
 
 if(!empty($guest_text))
 	$cleanmessage .= implode("\n",$guest_text);
-
+if(!empty($multiple_warning))
+	$cleanmessage .= $multiple_warning;
+	
 if(!is_admin() )
 {
 if(!empty($_POST["note"]))
@@ -1992,7 +2025,7 @@ elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
 	$permalink .= (strpos($permalink,'?')) ? '&' : '?';
 	$rsvpconfirm = '
 <h4>'.__('Update RSVP?','rsvpmaker').'</h4>	
-<p><a href="'.$permalink.'rsvp='.$rsvp_id.'&e='.$rsvprow["email"].'#rsvpnow">'.__('Yes','rsvpmaker').'</a>, '.__('I want to update a previous RSVP for ','rsvpmaker').$rsvprow["first"].' '.$rsvprow["last"].'</p>
+<p><a href="'.$permalink.'update='.$rsvp_id.'&e='.$rsvprow["email"].'#rsvpnow">'.__('Yes','rsvpmaker').'</a>, '.__('I want to update a previous RSVP for ','rsvpmaker').$rsvprow["first"].' '.$rsvprow["last"].'</p>
 ';
 	//rsvpmaker_debug_log('Yes I want to update RSVP '.$sql.' cookie '.var_export($_COOKIE,true));
 	}
@@ -2116,6 +2149,16 @@ $rsvpconfirm = '<div id="rsvpconfirm">'.$rsvpconfirm.'</div>';
 if(!$formonly && !empty($dateblock))
 	$content = '<div class="dateblock">'.$dateblock."\n</div>\n".$rsvpconfirm.$content;
 
+if(isset($_GET['rsvp']))	
+{
+	//don't repeat form
+	$link = get_permalink();
+	$args = array('e' => $_GET['e'],'update' => $_GET['rsvp']);
+	$link = add_query_arg($args,$link);
+	$content .= sprintf('<p><a href="%s#rsvpnow">%s</a>',$link, __('Update RSVP?','rsvpmaker'));
+	return $content;
+}
+	
 $showbutton = apply_filters('rsvpmaker_showbutton',$showbutton);
 	
 if(isset($rsvp_on) && $rsvp_on)
@@ -2302,10 +2345,7 @@ else
 	}
 
 //coupon code
-$coupon_code = $custom_fields["_rsvp_coupon_code"][0];
-$coupon_method = $custom_fields["_rsvp_coupon_method"][0];
-$coupon_discount = $custom_fields["_rsvp_coupon_discount"][0];
-if(!empty(trim($coupon_code)))
+if(!empty($custom_fields["_rsvp_coupon_code"][0]))
 printf('<p>Coupon Code: <input type="text" name="coupon_code" size="10" /><br /><em>If you have a coupon code, enter it above</em>.</p>');
 }
 
@@ -3339,7 +3379,7 @@ $max_party = (isset($atts["max_party"])) ? (int) $atts["max_party"] : 0;
 
 if(isset($master_rsvp) && $master_rsvp)
 {
-$guestsql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=".$master_rsvp;
+$guestsql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=".$master_rsvp.' ORDER BY id';
 if($results = $wpdb->get_results($guestsql, ARRAY_A) )
 	{
 	foreach($results as $row)
@@ -4728,8 +4768,8 @@ function check_coupon_code($price) {
 		$index = array_search($user_code,$codes);
 		$discounts = get_post_meta($post->ID,'_rsvp_coupon_discount');
 		$methods = get_post_meta($post->ID,'_rsvp_coupon_method');
-		$discount = $discounts[$index];
-		$method = (float) $methods[$index];
+		$discount = (float) $discounts[$index];
+		$method = $methods[$index];
 		$rsvpmaker_coupon_message = 'Coupon code applied: '.$user_code;
 		if($method == 'percent')
 		{

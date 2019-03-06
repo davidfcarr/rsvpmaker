@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1
-Stable tag: 5.8.5
+Stable tag: 5.9.0
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -82,12 +82,13 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Screenshots ==
 
-1. Edit events like WordPress posts, setting date, time, and RSVP options.
-2. Example of an event listing with an RSVP Now! button (click to display a customizable form with info you want to collect).
-3. Event templates let you schedule multiple events that occur on a regular schedule, projecting future dates and adding them as a batch. You can also track events associated with the template. Individual events can still be customized as needed.
-4. Use the RSVPMaker Upcoming block for Gutenberg or the rsvpmaker_upcoming shortcode to add events listing and/or calendar.
-5. Use the built-in mailer to send email newsletters, such as roundups of events.
-6. Updated events editor for Gutenberg.
+1. Example of an event listing with an RSVP Now! button (click to display a customizable form with info you want to collect).
+2. Edit events like WordPress posts, setting date, time, and RSVP options.
+3. Event Options screen allows you to set additional parameters, such as event pricing and RSVP deadlines
+4. Event templates let you schedule multiple events that occur on a regular schedule, projecting future dates and adding them as a batch. You can also track events associated with the template. Individual events can still be customized as needed.
+5. Use the RSVPMaker Upcoming block for Gutenberg or the rsvpmaker_upcoming shortcode to add events listing and/or calendar.
+6. Collect event fees using integrations with PayPal and Stripe.
+7. Use the built-in mailer to send invitations and email newsletters, such as roundups of events. Integrates with MailChimp.
 
 == Credits ==
 
@@ -110,6 +111,21 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 5.8.9 =
+
+* Tweaks to Event Options screen, routine for automatically adding a Calendar page (uses block format for WordPress 5.0)
+
+= 5.8.8 =
+
+* After registration, form is no longer displayed on the confirmation page unless the user clicks Update RSVP link (removes a source of confusion)
+* Adding API endpoints /wp-json/rsvpmaker/v1/future /wp-json/rsvpmaker/v1/types /wp-json/rsvpmaker/vi/type/slug-goes-here
+* Fixed display of event types in RSVPMaker Upcoming Events block
+
+= 5.8.6 =
+
+* Fix to coupon codes
+* Multiple Admissions option for pricing (Example: reserving a table of 6, rather than counting host/guests individually)
 
 = 5.8.5 =
 
