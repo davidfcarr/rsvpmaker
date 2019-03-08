@@ -60,7 +60,7 @@ function get_template_prompt () {
 }
 
 const RSVPMakerSidebarPlugin = function() {
-
+	
 if(rsvpmaker_ajax.template_msg)
 	{//if this is a template
 		
@@ -247,3 +247,51 @@ wp.plugins.registerPlugin( 'rsvpmaker-sidebar-postpublish', {
 } );
 
 }// end initial test that rsvpmaker is set
+
+if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
+
+		let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+		let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+		let wasPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
+		// determine whether to show notice
+		subscribe( () => {
+			const isSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+			const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+			const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
+			const hasActiveMetaBoxes = wp.data.select( 'core/edit-post' ).hasMetaBoxes();
+
+			// Save metaboxes on save completion, except for autosaves that are not a post preview.
+			const shouldTriggerTemplateNotice = (
+					( wasSavingPost && ! isSavingPost && ! wasAutosavingPost ) ||
+					( wasAutosavingPost && wasPreviewingPost && ! isPreviewingPost )
+				);
+
+			// Save current state for next inspection.
+			wasSavingPost = isSavingPost;
+			wasAutosavingPost = isAutosavingPost;
+			wasPreviewingPost = isPreviewingPost;
+
+			if ( shouldTriggerTemplateNotice ) {
+	wp.data.dispatch('core/notices').createNotice(
+		'info', // Can be one of: success, info, warning, error.
+		__('After updating this template, click'), // Text string to display.
+		{
+			isDismissible: true, // Whether the user can dismiss the notice.
+			// Any actions the user can perform.
+			actions: [
+				{
+					url: rsvpmaker_json.projected_url,
+					label: __('create / update events')
+				}
+			]
+		}
+	);
+			}
+			/* placeholder for logic to remove notice
+			else {
+				console.log('remove notice');
+			}
+			*/
+} );
+	
+}

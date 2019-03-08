@@ -180,7 +180,7 @@ function rsvp_url_date_query ($direction = '') {
 	return $date;
 }
 
-function event_listing($atts) {
+function event_listing($atts = array()) {
 
 global $wpdb;
 global $rsvp_options;
@@ -552,7 +552,7 @@ function rsvpmaker_orderby_past($orderby) {
   return " rsvpdates.meta_value DESC";
 }
 
-function rsvpmaker_upcoming ($atts)
+function rsvpmaker_upcoming ($atts = array())
 {
 $no_events = (isset($atts["no_events"])) ? $atts["no_events"] : 'No events currently listed.';
 
@@ -768,7 +768,7 @@ return $class;
 }
 
 add_shortcode("rsvpmaker_calendar","rsvpmaker_calendar");
-function rsvpmaker_calendar($atts) 
+function rsvpmaker_calendar($atts = array()) 
 {
 if(is_admin())
 	return 'output reserved for front end';
@@ -1080,7 +1080,7 @@ else
 	return false;
 }
 
-function rsvpmaker_timed ($atts, $content = '') {
+function rsvpmaker_timed ($atts = array(), $content = '') {
 if(!empty($atts['start']))
 	{
 		$start = strtotime($atts['start']);
@@ -1432,7 +1432,7 @@ return $note . sprintf('<iframe src="%s" width="%s" height="%s"></iframe>',$url,
 
 add_shortcode('ylchat','ylchat');
 
-function rsvpmaker_next ($atts)
+function rsvpmaker_next ($atts = array())
 {
 $atts["post_id"] = 'next';
 return rsvpmaker_one($atts);
@@ -1440,7 +1440,7 @@ return rsvpmaker_one($atts);
 
 add_shortcode("rsvpmaker_next","rsvpmaker_next");
 
-function rsvpmaker_one ($atts)
+function rsvpmaker_one ($atts = array())
 {
 global $post;
 global $wp_query;
@@ -1601,7 +1601,7 @@ if(!empty($atts["style"]))
 return $content;
 }
 
-function rsvpmaker_compact ($atts)
+function rsvpmaker_compact ($atts = array())
 {
 global $post;
 global $wp_query;
@@ -1685,7 +1685,7 @@ return ob_get_clean();
 
 add_shortcode("rsvpmaker_one","rsvpmaker_one");
 
-function rsvpmaker_form( $atts, $form_content='' ) {
+function rsvpmaker_form( $atts = array(), $form_content='' ) {
 if(isset($atts["post_id"]))
 	$post_id = (int) $atts["post_id"];
 elseif(isset($atts["one"]))

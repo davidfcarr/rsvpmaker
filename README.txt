@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1
-Stable tag: 5.9.0
+Stable tag: 5.9.2
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -111,6 +111,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 5.9.2 =
+
+* Better implementation of the custom Gutenberg notification for RSVPMaker templates.
+
+= 5.9.1 =
+
+* Notice on Gutenberg editing screen prompting user editing template to create / update individual events
+* Tweak to shortcodes such as rsvpmaker_next
 
 = 5.8.9 =
 
