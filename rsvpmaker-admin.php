@@ -2168,16 +2168,19 @@ wp_clear_scheduled_hook( 'rsvpmaker_send_reminder_email', array( $post_id, $hour
 wp_schedule_single_event( $reminder_time, 'rsvpmaker_send_reminder_email', array( $post_id, $hours ) );
 }
 
-
-
 function rsvpmaker_send_reminder_email ( $post_id, $hours ) {
 global $wpdb;
 global $rsvp_options;
 $wpdb->show_errors();
-	$confirm = get_post_meta($post_id, '_rsvp_reminder_msg_'.$hours, true);
-	$subject = get_post_meta($post_id, '_rsvp_reminder_subject_'.$hours, true);
+	$reminder = rsvp_get_reminder($post_id,$hours);
+	$confirm = $reminder->post_content;
+	$subject = $reminder->post_title;
 	$include_event = get_post_meta($post_id, '_rsvp_confirmation_include_event', true);
-
+	
+	$date = get_rsvp_date($post_id);
+	fix_timezone();
+	$prettydate = date('l F jS g:i A T',strtotime($date));
+	$subject = str_replace('[datetime]',$prettydate);
 	if(!empty($confirm))
 	{
 	$confirm = wpautop($confirm);				
@@ -2186,7 +2189,6 @@ $wpdb->show_errors();
 	if($hours < 0)
 	{	
 	$confirm .= "<p>".__("This is an automated reminder that we have you on the RSVP list for the event shown below. If your plans have changed, you can update your response by clicking on the RSVP button again.",'rsvpmaker')."</p>";
-	$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
 		if($include_event)
 		{
 			$event_content = event_to_embed($post_id);
@@ -2306,7 +2308,6 @@ global $current_user;
 
 	if($show)
 		printf('<p>%s <a href="%s">%s</a> (<a href="%s">%s</a>)</p>',__('YouTube Live landing page created at'),$landing_permalink,$landing_permalink, admin_url('post.php?action=edit&post='.$landing_id), __('Edit','rsvpmaker'));
-	
 }
 
 function no_mce_plugins( $p ) { return array(); }
@@ -2320,6 +2321,78 @@ function rsvpmaker_template_reminder_add($hours,$post_id) {
 	update_post_meta($post_id, 'rsvpmaker_template_reminder', $cron);
 }
 
+function rsvp_get_confirm($post_id) {
+	global $rsvp_options;
+	$content = get_post_meta($post_id,'_rsvp_confirm',true);
+	if(empty($content))
+		$content = $rsvp_options['rsvp_confirm'];
+	if(is_numeric($content))
+	{
+		$id = $content;
+		$conf_post= get_post($id);
+		if(function_exists('do_blocks'))
+			$conf_post->post_content = do_blocks($conf_post->post_content);
+	}
+	else {
+		if(function_exists('do_blocks'))
+			$content = rsvpautog($content);
+		$conf_post = array('post_title'=>'Confirmation:'.$post_id, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish');
+		$conf_post['ID'] = $id = wp_insert_post($conf_post);
+		$conf_post = (object) $conf_post;
+		update_post_meta($post_id,'_rsvp_confirm',$id);
+		update_post_meta($id,'_rsvpmaker_special','Confirmation:'.$post_id);
+		update_post_meta($id,'_rsvpmaker_parent',$post_id);
+	}
+	return $conf_post;
+}
+
+function rsvp_get_reminder($post_id,$hours) {
+	global $rsvp_options;
+	$key = '_rsvp_reminder_msg_'.$hours;
+	if(isset($_GET['was']))
+	{
+		$content = get_post_meta((int) $_GET['was'], $key,true);		
+	}
+	else
+		$content = get_post_meta($post_id, $key,true);
+	
+	if(empty($content) && ($t = has_template($post_id)) )
+		$content = get_post_meta($t, $key,true);
+	
+	if(empty($content))
+	{
+		$content = $rsvp_options['rsvp_confirm'];
+		$post = get_post($post_id);
+		$type = ($hours > 0) ? 'Follow Up: ' : 'Reminder: ';
+		$subject = $type.$post->post_title.' [datetime]';
+	}
+	if(is_numeric($content))
+	{
+		$id = $content;
+		$conf_post= get_post($id);
+		$conf_post->post_content = do_shortcode($conf_post->post_content);
+		if(function_exists('do_blocks'))
+			$conf_post->post_content = do_blocks($conf_post->post_content);
+	}
+	else {
+		if(empty($subject))
+			$subject = get_post_meta($post_id,'_rsvp_reminder_subject_'.$hours,true);
+		if(function_exists('do_blocks'))
+			$content = rsvpautog($content);
+		$conf_post = array('post_title'=>$subject, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish');
+		$conf_post['ID'] = $id = wp_insert_post($conf_post);
+		$conf_post = (object) $conf_post;
+		update_post_meta($post_id,$key,$id);
+		update_post_meta($id,'_rsvpmaker_special','Reminder ('.$hours.' hours) '.$subject);
+		update_post_meta($id,'_rsvpmaker_parent',$post_id);
+	}
+	
+	if(!strpos($conf_post->post_content,'</p>'))
+		$conf_post->post_content = wpautop($conf_post->post_content);
+	
+	return $conf_post;
+}
+
 function rsvp_reminders () {
 global $wpdb;
 global $rsvp_options;
@@ -2330,15 +2403,108 @@ fix_timezone();
 ?>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
-<h1><?php _e('RSVP Reminders','rsvpmaker'); ?></h1> 
+<h1><?php _e('Confirmation / Reminder Messages','rsvpmaker'); ?></h1> 
 <?php
-if(isset($_REQUEST["post_id"]))
+
+$post_id = (isset($_REQUEST["post_id"])) ? (int) $_REQUEST["post_id"] : false;
+$hours = (isset($_REQUEST["hours"])) ? (int) $_REQUEST["hours"] : false;
+
+if(isset($_GET["webinar"]))
+	{
+		$post_id = $_GET["post_id"];
+		$ylive = $_GET["youtube_live"];	
+		rsvpmaker_youtube_live($post_id, $ylive, true);
+	}	
+	
+if(isset($_GET['delete']))
 {
-$post_id = (int) $_REQUEST["post_id"];
+	$key = '_rsvp_reminder_msg_'.$_GET['delete'];
+	printf('<p>Deleting %s</p>',$key);
+	delete_post_meta($post_id,$key);
+}
+
+if($post_id && $hours)
+{
+	$reminder = rsvp_get_reminder($post_id,$hours);
+	if(!empty($reminder))
+	{
+		printf('<p>%s %s %s</p><h2>%s</h2>%s<p><a href="%s">%s</a></p>',__('Added reminder ','rsvpmaker'),$_GET['hours'],__('hours','rsvpmaker'),$reminder->post_title,$reminder->post_content,admin_url('post.php?action=edit&post='.$reminder->ID),__('Edit','rsvpmaker'));	
+	if(rsvpmaker_is_template($post_id))
+	{
+		echo 'This is a template';
+		rsvpmaker_template_reminder_add($hours,$post_id);
+		rsvpautorenew_test (); // will add to the next scheduled event associated with template
+	}
+	else
+	{
+		$start_time = strtotime( get_rsvp_date($post_id) );
+		rsvpmaker_reminder_cron($hours, $start_time, $post_id);
+	}
+		
+	}
+	else '<h2>Error Adding Reminder</h2>';
+}
+
+if($post_id)
+{
 if(rsvpmaker_is_template($post_id))
 	printf('<p><em>%s</em></p>',__('This is an event template: The confirmation and reminder messages you set here will become the defaults for future events based on this template. The [datetime] placeholder in subject lines will be replaced with the specific event date.','rsvpmaker'));
+
+$conf_post = rsvp_get_confirm($post_id);
+printf('<h2>Confirmation</h2>');
+echo $conf_post->post_content;
+printf('<p><a href="%s">Edit</a></p>',admin_url('post.php?action=edit&post='.$conf_post->ID));
+
+$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
+
+$results = $wpdb->get_results($sql);
+if($results)
+foreach($results as $row)
+{
+	$hours = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
+	$type = ($hours > 0) ? 'FOLLOW UP' : 'REMINDER';
+	$reminder = rsvp_get_reminder($post_id,$hours);
+	printf('<h2>%s (%s hours)</h2><h3>%s</h3>%s',$type,$hours,$reminder->post_title,$reminder->post_content);
+	$parent = get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
+	if($parent != $post_id)
+		printf('<p>%s<br /><a href="%s">%s</a></p>',__('This is the standard reminder from the event template','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post='.$post_id.'&hours='.$hours.'&was='. $reminder->ID),__('Customize for this event','rsvpmaker'));
+	printf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a></p>',admin_url('post.php?action=edit').'&post='.$reminder->ID,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete=').$hours.'&post_id='.$post_id);
 }
+
+$hour_options = rsvp_reminder_options();
+	printf('<form method="get" action="%s"><input type="hidden" name="page" value="rsvp_reminders"><input type="hidden" name="post_type" value="rsvpmaker"><input type="hidden" name="post_id" value="%s">%s <select name="hours">%s</select><button>Get</button></form>',admin_url('edit.php'),$post_id,__('Add Reminder','rsvpmaker'),$hour_options);
+
+?>
+<h3><?php _e('Webinar Setup','rsvpmaker'); ?></h3>
+<form method="get" action = "<?php echo admin_url('edit.php'); ?>">
+<p><?php _e('This utility sets up a landing page and suggested confirmation and reminder messages, linked to that page. RSVPMaker explicitly supports webinars based on YouTube Live, but you can also embed the coding required for another webinar of your choice.','rsvpmaker'); ?></p>
+<input type="hidden" name="post_type" value="rsvpmaker" >
+<input type="hidden" name="page" value="rsvp_reminders" >
+<input type="hidden" name="webinar" value="1" >
+<input type="hidden" name="post_id" value="<?php echo $post_id; ?>">
+<p>YouTube Live url: <input type="text" name="youtube_live" value=""> <input type="checkbox" name="youtube_require_passcode" value="1" /> <?php _e('Require passcode to view','rsvpmaker');?></p>
+<p><button><?php _e('Create','rsvpmaker');?></button></p>
+</form>
+<?php
+
+}
+else {
+	$o = '<option value="">Select Event or Event Template</option>';
+	$templates = rsvpmaker_get_templates();
+	foreach($templates as $event)
+	{
+		$o .= sprintf('<option value="%s">TEMPLATE: %s</option>',$event->ID,$event->post_title);
+	}
+	$future = get_future_events();
+	foreach($future as $event)
+	{
+		$o .= sprintf('<option value="%s">%s - %s</option>',$event->ID,$event->post_title,$event->date);
+	}
 	
+	printf('<form method="get" action="%s"><input type="hidden" name="page" value="rsvp_reminders"><input type="hidden" name="post_type" value="rsvpmaker"><select name="post_id">%s</select><button>Get</button></form>',admin_url('edit.php'),$o);
+}
+
+/*
 if(isset($_POST['timeid']))
 {
 	$source_id = (int) $_POST['to_template_source'];
@@ -2397,13 +2563,6 @@ if(isset($_GET['to_template']))
 	submit_button();
 	echo '</form>';
 }
-	
-if(isset($_GET["webinar"]))
-	{
-		$post_id = $_GET["post_id"];
-		$ylive = $_GET["youtube_live"];	
-		rsvpmaker_youtube_live($post_id, $ylive, true);
-	}
 
 if(isset($_POST["hours"]))
 {
@@ -2517,7 +2676,8 @@ echo "<p>".__( 'Edit and save this text to create an email reminder.','rsvpmaker
 	}
 
 if(empty($content) )
-	$content = get_post_meta($post_id,'_rsvp_confirm',true);
+	$content = get_post_meta($post_id,'_rsvp_confirm',true);	
+	
 
 $settings = array(
 	'media_buttons' => false,
@@ -2703,18 +2863,8 @@ $past_options .= '</optgroup>';
 <p><select name="post_id"><?php echo $options; echo $past_options; ?></select></p>
 <p><button><?php _e('Load','rsvpmaker');?></button></p>
 </form>
-
-<h3><?php _e('Webinar Setup','rsvpmaker'); ?></h3>
-<form method="get" action = "<?php echo admin_url('edit.php'); ?>">
-<p><?php _e('This utility sets up a landing page and suggested confirmation and reminder messages, linked to that page. RSVPMaker explicitly supports webinars based on YouTube Live, but you can also embed the coding required for another webinar of your choice.','rsvpmaker'); ?></p>
-<input type="hidden" name="post_type" value="rsvpmaker" >
-<input type="hidden" name="page" value="rsvp_reminders" >
-<input type="hidden" name="webinar" value="1" >
-<p><select name="post_id"><?php echo $options; ?></select></p>
-<p>YouTube Live url: <input type="text" name="youtube_live" value=""> <input type="checkbox" name="youtube_require_passcode" value="1" /> <?php _e('Require passcode to view','rsvpmaker');?></p>
-<p><button><?php _e('Create','rsvpmaker');?></button></p>
-</form>
-
+*/
+?>
 <h3><?php _e('A Note on More Reliable Scheduling','rsvpmaker');?></h3>
 <p><?php _e('RSVPMaker takes advantage of WP Cron, a standard WordPress scheduling mechanism. Because it only checks for scheduled tasks to be run when someone visits your website, WP Cron can be imprecise -- which could be a problem if you want to make sure a reminder will go out an hour before your event, if that happens to be a low traffic site. Caching plugins can also get in the way of regular WP Cron execution. Consider following <a href="http://code.tutsplus.com/articles/insights-into-wp-cron-an-introduction-to-scheduling-tasks-in-wordpress--wp-23119">these directions</a> to make sure your server checks for scheduled tasks to run on a more regular schedule, like once every 5 or 15 minutes.','rsvpmaker');?></p>
 
@@ -3205,9 +3355,9 @@ if(!empty($sofar))
 $sked = get_post_meta($template_id,'_sked',true);
 if(!isset($sked["week"]))
 	return;
-rsvpmaker_debug('sked for t='.$template_id.' '.var_export($sked,true));
+rsvpmaker_debug_log('sked for t='.$template_id.' '.var_export($sked,true));
 $projected = rsvpmaker_get_projected($sked);
-rsvpmaker_debug('projected '.var_export($projected,true));
+rsvpmaker_debug_log('projected '.var_export($projected,true));
 
 foreach($projected as $i => $ts)
 {
@@ -3283,6 +3433,8 @@ global $rsvp_options;
 		$thours = unserialize($row->meta_value);
 		//rsvpmaker_debug_log($thours,'hours array');
 		$next = rsvpmaker_next_by_template($row->ID);
+		if(empty($next))
+			return;
 		//rsvpmaker_debug_log($next,'next event');
 		$message = get_post_meta($next->ID, '_rsvp_reminder_msg_'.$thours[0], true);
 		//rsvpmaker_debug_log($message,'existing message');
@@ -3446,7 +3598,7 @@ if(isset($_POST["nomeeting"]) )
 		}		
 }
 	update_post_meta($t,'update_messages',$update_messages);
-	header('Location: ' . site_url($_SERVER['REQUEST_URI']).'&update_messages=1');
+	header('Location: ' . admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&update_messages=1&t='.$t));
 	die();
 }
 
@@ -4209,11 +4361,52 @@ function rest_api_init_rsvpmaker () {
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
 
+	if(isset($_GET['page']) && isset($_GET['post_id']) && ($_GET['page'] == 'rsvp_reminders'))
+	{
+	$post = get_post($_GET['post_id']);
+		$args = array(
+		'id'    => 'rsvpmaker_parent',
+		'title' => __('Edit Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$post->ID),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options'));
+	$wp_admin_bar->add_node( $args );
+	}
+	
+	//blog post to email
 if(isset($post->post_type) && ($post->post_type == 'post') && current_user_can('edit_post',$post->ID) )
 	$wp_admin_bar->add_menu(array('title' => __('Send RSVP Email'), 'id' => 'post-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'post-to-email')));
 	
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
 	{
+	$rsvp_parent = get_post_meta($post->ID,'_rsvpmaker_parent',true);
+	if($rsvp_parent)
+	{
+		$args = array(
+		'id'    => 'rsvpmaker_parent',
+		'title' => __('Edit Parent Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+	$wp_admin_bar->add_node( $args );
+	$args = array(
+		'parent'    => 'rsvpmaker_parent',
+		'id'    => 'rsvpmaker_options',
+		'title' => 'RSVP / Event Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+	$wp_admin_bar->add_node( $args );
+		
+	$args = array(
+		'parent'    => 'rsvpmaker_parent',
+		'id' => 'confirmation_reminders',
+		'title' => 'Confirmation / Reminder Messages',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$rsvp_parent),
+		'meta'  => array( 'class' => 'confirmation_reminders')
+	);
+	$wp_admin_bar->add_node( $args );
+	return;
+	}
 	$args = array(
 		'id'    => 'rsvpmaker_options',
 		'title' => 'RSVP / Event Options',
@@ -4221,10 +4414,19 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
 	);
 	$wp_admin_bar->add_node( $args );
-	
+		
+	$args = array(
+		'parent'    => 'rsvpmaker_options',
+		'id' => 'confirmation_reminders',
+		'title' => 'Confirmation / Reminder Messages',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
+		'meta'  => array( 'class' => 'confirmation_reminders')
+	);
+	$wp_admin_bar->add_node( $args );
+		
 	if($t = has_template($post->ID))
 	{
-	$wp_admin_bar->add_menu(array('parent' => 'edit', 'title' => __('Edit Template'), 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'meta' => array('class' => 'rsvpmaker-edit-template')));		
+	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Edit Template'), 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'meta' => array('class' => 'rsvpmaker-edit-template')));		
 
 	$args = array(
 		'parent'    => 'rsvpmaker_options',
@@ -4312,7 +4514,7 @@ if(!isset($_GET['new_template'])){
 	do_action('rsvpmaker_setup_template_prompt');
 	echo '</div>';
 }
-	
+
 printf('<p><em>%s</em></p>',__('Start by entering an event title and date or schedule details. A draft event post will be created and loaded into the editor.'));
 printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
 echo '<h1 style="font-size: 20px;">Title: <input type="text" name="rsvpmaker_new_post" style="font-size: 20px; width: 60%" /></h1>';

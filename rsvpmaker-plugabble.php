@@ -393,7 +393,7 @@ $include_event = $custom_fields["_rsvp_confirmation_include_event"][0];
 $login_required = $custom_fields["_rsvp_login_required"][0];
 $rsvp_to = $custom_fields["_rsvp_to"][0];
 $rsvp_instructions = $custom_fields["_rsvp_instructions"][0];
-$rsvp_confirm = $custom_fields["_rsvp_confirm"][0];
+$confirm = rsvp_get_confirm($post->ID);
 $rsvp_form = $custom_fields["_rsvp_form"][0];
 $rsvp_max = $custom_fields["_rsvp_max"][0];
 $rsvp_count = $custom_fields["_rsvp_count"][0]; //else $rsvp_count = 1;
@@ -469,27 +469,23 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <?php echo __('Email Address for Notifications','rsvpmaker');?>: <input id="setrsvp[to]" name="setrsvp[to]" type="text" value="<?php echo $rsvp_to;?>"><br />
 <br /><?php echo __('Instructions for User','rsvpmaker');?>:<br />
 <textarea id="setrsvp[instructions]" name="setrsvp[instructions]" cols="80" style="max-width: 95%;"><?php echo $rsvp_instructions;?></textarea>
-<br /><?php echo __('Confirmation Message','rsvpmaker');?>:<br />
-<textarea id="rsvp[confirm]" name="setrsvp[confirm]" cols="80" style="max-width: 95%;"><?php if(isset($rsvp_confirm)) echo $rsvp_confirm;?></textarea>
 <br />
   <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
+<br /><?php echo __('Confirmation Message','rsvpmaker');?>:<br />
+<?php
+echo $confirm->post_content;
+
+$confedit = admin_url('post.php?action=edit&post='.$confirm->ID);
+$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
+
+printf('<div><a href="%s">Edit</a></div><div><a href="%s">Create / Edit Reminders</a></div>',$confedit,$reminders);	
+?>
 <?php
 if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"]))
 	echo '<br /><strong>'.__('Webinar Setup','rsvpmaker').'</strong><br />YouTube Live: <input type="text" name="youtube_live" /> <input type="checkbox" name="webinar_other" value="1" /> '.__('Other webinar','rsvpmaker').' <input type="checkbox" name="youtube_require_passcode" value="1" /> '.__('Require passcode to view','rsvpmaker').'<br /><em>'.__('If your event is a webinar, entering a YouTube Live url or checking &quot;Other webinar&quot; will create a landing page, plus suggested cofirmation and reminder messages to get you started. For YouTube Live, RSVPMaker adds the codes for the video player and chat.','rsvpmaker').'.</em>';
 ?>
-<br /><?php 
-if(isset($post->post_title) && !empty($post->post_title) )
-	{
-	printf('%s <a href="%s">%s</a>',__('More confirmation message and reminder message options available: ','rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post->ID,__('RSVP Reminders Editor','rsvpmaker'));
-	$reminders = rsvpmaker_reminders_list($post->ID);
-	if(!empty($reminders))
-	echo $reminders;
-	}
-else
-	_e('Additional Confirmation/Reminder Message options will appear after you save this event.','rsvpmaker');
-?>
-<br /><strong><?php echo __('Special Options','rsvpmaker'); ?></strong>
+<br /><br /><strong><?php echo __('Special Options','rsvpmaker'); ?></strong>
 
 <table><tr><td><?php echo __('Deadline (optional)','rsvpmaker').'</td><td> '.__('Month','rsvpmaker');?>: <input type="text" name="deadmonth" id="deadmonth" value="<?php if(isset($deadmonth)) echo $deadmonth;?>" size="2" /> <?php echo __('Day','rsvpmaker');?>: <input type="text" name="deadday" id="deadday" value="<?php  if(isset($deadday)) echo $deadday;?>" size="2" /> <?php echo __('Year','rsvpmaker');?>: 
 <input type="text" name="deadyear" id="deadyear" value="<?php  if(isset($deadyear)) echo $deadyear;?>" size="4" /> <?php rsvptimes ($deadtime,'deadtime'); ?> </td></tr>
@@ -1824,6 +1820,9 @@ function rsvp_date_block($post_id, $custom_fields = array()) {
 global $rsvp_options;
 global $last_time;
 global $post;
+	
+if(empty($custom_fields["_rsvp_dates"][0]) && empty($custom_fields["_sked"][0]))
+	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
 $time_format = $rsvp_options["time_format"];
 $dur = $tzbutton = '';
 $firstrow = array();
@@ -1987,7 +1986,8 @@ if(isset($custom_fields["_rsvp_deadline"][0]) && $custom_fields["_rsvp_deadline"
 if(isset($custom_fields["_rsvp_start"][0]) && $custom_fields["_rsvp_start"][0])
 	$rsvpstart = (int) $custom_fields["_rsvp_start"][0];
 $rsvp_instructions = (isset($custom_fields["_rsvp_instructions"][0])) ? $custom_fields["_rsvp_instructions"][0] : NULL;
-$rsvp_confirm = (isset($custom_fields["_rsvp_confirm"][0])) ? $custom_fields["_rsvp_confirm"][0] : NULL;
+$conf = rsvp_get_confirm($post->ID);
+$rsvp_confirm = $conf->post_content;
 $rsvp_yesno = (isset($custom_fields["_rsvp_yesno"][0])) ? $custom_fields["_rsvp_yesno"][0] : 1;
 $replay = (isset($custom_fields["_replay"][0])) ? $custom_fields["_replay"][0] : NULL;
 
@@ -2009,10 +2009,9 @@ if($profile)
 
 if(isset($_GET["rsvp"]))
 	{
-	$rsvp_confirm .= "\n\n".get_post_meta($post->ID, '_rsvp_'.$e, true);
+	$rsvp_confirm .= "\n\n".wpautop(get_post_meta($post->ID, '_rsvp_'.$e, true));
 	$rsvpconfirm = '<h3>'.__('RSVP Recorded','rsvpmaker').'</h3>	
-<p>'.nl2br($rsvp_confirm).'</p>
-';
+'.$rsvp_confirm;
 	}
 elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
 	{

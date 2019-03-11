@@ -1282,6 +1282,7 @@ global $wpdb;
 global $current_user;
 global $unsubscribed;
 global $rsvpmaker_cron_context;
+global $rsvp_options;
 if(!empty($rsvpmaker_cron_context))
 	return;
 $chimp_options = get_option('chimp');
@@ -1469,9 +1470,7 @@ $input = array(
 				'settings' => array('subject_line' => stripslashes($_POST["subject"]),'from_email' => $_POST["from_email"], 'from_name' => $_POST["from_name"], 'reply_to' => $_POST["from_email"])
 );
 
-echo '<pre>';
-echo json_encode($input);
-echo '</pre>';
+rsvpmaker_debug_log(json_encode($input),'mailchimp request');
 
 $campaign = $MailChimp->post("campaigns", $input);
 if(!$MailChimp->success())
@@ -1480,7 +1479,7 @@ if(!$MailChimp->success())
 	return;
 	}
 else {
-	printf('<pre>%s</pre>',var_export($campaign, true));
+	rsvpmaker_debug_log($campaign,'mailchimp result');
 }
 if(!empty($campaign["id"]))
 {
@@ -1560,14 +1559,19 @@ $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_lis
 echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 ?>
 </select> <select name="chimp_send_now"><option value="1"><?php _e('Send now','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php _e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select></div>
+<?php if(!empty($rsvp_options['debug']))
+{ //only if debug is on, show this feature.
+?>
 <div style="margin-left: 20px;">
 <?php _e('Exclude Recipients who RSVPed to','rsvpmaker');?> <select name="mailchimp_exclude_rsvp">
+<option value="">Choose Event</option>
 <?php
 echo $events_dropdown;
 ?>
 </select>	
-	</div>
+</div>	
 <?php
+} // end if debug
 }
 
 ?>
