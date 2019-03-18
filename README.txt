@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 5.1
-Stable tag: 5.9.2
+Tested up to: 5.1.1
+Stable tag: 5.9.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -22,7 +22,9 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
 * Use the Limited Time Content Gutenberg block -- a wrapper block that can include paragraphs, images, and other content -- to set a start and/or end time for the display of content. Useful for promoting events and limited time pricing on your home page or in the body of a blog post, without looking foolish if you forget to take down those promotions.
 
-https://www.youtube.com/watch?v=a85yK-yCBOg
+https://youtu.be/gt6fE07a8bc
+
+RSVPMaker is free and open source, with no upsell to a premium version. We occasionally create custom features on contract, but where possible those enhancements are folded back into the coe plugin code. RSVPMaker is also developer friendly, allowing you to build event-centric applications on top of it.
 
 Creating and Managing Events
 
@@ -111,6 +113,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 5.9.4 =
+
+* Yet a better implementation of the custom Gutenberg notification for RSVPMaker templates (no longer displayed more than once if user saves template again)
+* Bug fix related to date display in email newsletter output.
 
 = 5.9.2 =
 

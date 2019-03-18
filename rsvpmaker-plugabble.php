@@ -1820,7 +1820,11 @@ function rsvp_date_block($post_id, $custom_fields = array()) {
 global $rsvp_options;
 global $last_time;
 global $post;
-	
+if(empty($post_id))
+	$post_id = $post->ID;
+if(empty($custom_fields))
+	$custom_fields = get_post_custom($post_id);
+
 if(empty($custom_fields["_rsvp_dates"][0]) && empty($custom_fields["_sked"][0]))
 	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
 $time_format = $rsvp_options["time_format"];
@@ -1833,6 +1837,7 @@ if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $c
 	}
 $permalink = get_permalink($post_id);
 $results = get_rsvp_dates($post_id);
+rsvpmaker_debug_log($results,'results from get_rsvp_dates');
 if($results)
 {
 fix_timezone();
@@ -1861,7 +1866,6 @@ foreach($results as $row)
 	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
 	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
 	}
-
 //gcal link
 if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calendar_icons"][0])) || !empty($custom_fields["_calendar_icons"][0]) ) && !is_email_context ())
 	{
@@ -1915,7 +1919,9 @@ elseif(isset($custom_fields["_sked"][0]))
 			$dateblock .= sprintf('<br /><a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id),__('Create/update events from template','rsvpmaker'));
 	}
 	else // no dates, no sked, maybe this is an agenda or a landing page
-		return array('dateblock' => '','dur' => NULL, 'last_time' => NULL);	
+	{
+		return array('dateblock' => '','dur' => NULL, 'last_time' => NULL);			
+	}
 	
 return array('dateblock' => $dateblock,'dur' => $dur, 'last_time' => $last_time, 'firstrow' => $firstrow);
 }

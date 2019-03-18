@@ -259,7 +259,8 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
 			const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
 			const hasActiveMetaBoxes = wp.data.select( 'core/edit-post' ).hasMetaBoxes();
-
+			const currentNotices = wp.data.select('core/notices').getNotices();
+			
 			// Save metaboxes on save completion, except for autosaves that are not a post preview.
 			const shouldTriggerTemplateNotice = (
 					( wasSavingPost && ! isSavingPost && ! wasAutosavingPost ) ||
@@ -271,11 +272,14 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			wasAutosavingPost = isAutosavingPost;
 			wasPreviewingPost = isPreviewingPost;
 
+			console.log(currentNotices);
+			
 			if ( shouldTriggerTemplateNotice ) {
 	wp.data.dispatch('core/notices').createNotice(
 		'info', // Can be one of: success, info, warning, error.
 		__('After updating this template, click'), // Text string to display.
 		{
+			id: 'rsvptemplateupdate', //assigning an ID prevents the notice from being added repeatedly
 			isDismissible: true, // Whether the user can dismiss the notice.
 			// Any actions the user can perform.
 			actions: [
