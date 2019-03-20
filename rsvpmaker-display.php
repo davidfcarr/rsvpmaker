@@ -1916,4 +1916,22 @@ echo '<p class="signed_up">'.$output.'</p>';
 die();
 }
 
+
+function rsvpmaker_exclude_templates_special( $query ) {
+    if( is_admin() || !$query->is_search())
+        return;
+$query->set('meta_query', array(
+        array(
+            'key'   => '_rsvpmaker_special',
+            'compare' => 'NOT EXISTS'
+        ),
+        array(
+            'key'   => '_sked',
+            'compare' => 'NOT EXISTS'
+        )
+    ) );
+}
+add_action('pre_get_posts','rsvpmaker_exclude_templates_special');
+
+
 ?>

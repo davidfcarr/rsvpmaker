@@ -3671,6 +3671,12 @@ if( isset($atts["select"]) && !isset($atts["selectfield"])  ) $atts["selectfield
 if(isset($atts["textfield"])) {
 	$field = $atts["textfield"];
 	$label = ucfirst(str_replace('_',' ',$field));
+	$firstlabel = __('First','rsvpmaker');
+	$lastlabel = __('Last','rsvpmaker');
+	if(($label == 'First') && ($label != $firstlabel))
+		$label = str_replace('First',$firstlabel, $label);
+	if(($label == 'Last') && ($label != $lastlabel))
+		$label = str_replace('Last',$lastlabel, $label);
 	$size = ( isset($atts["size"]) ) ? ' size="'.$atts["size"].'" ' : '';
 	$data = ( isset($profile[$field]) ) ? ' value="'.$profile[$field].'" ' : '';
 	$output = '<div class="'.$field.'"><label>' . $label.':</label> <input type="text" name="guest['.$field.']['.$count.']" id="'.$field.$fieldcount++.'" '.$size.$data.'  class="'.$field.'" /></div>';

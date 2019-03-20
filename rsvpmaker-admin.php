@@ -4215,7 +4215,8 @@ if(isset($_POST["_require_webinar_passcode"]))
 	}
 elseif(isset($_POST['post_id']))
 {
-	printf('<div class="notice notice-info"><p>%s</p></div>',__('Saving RSVP Options','rsvpmaker'));
+	$template_prompt = (isset($_POST['sked'])) ? sprintf(' - <a href="%s">%s</a> %s',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=') . $post->ID, __('Create/update events','rsvpmaker'),__('based on this template','rsvpmaker') ) : '';
+	printf('<div class="notice notice-info"><p>%s%s</p></div>',__('Saving RSVP Options','rsvpmaker'),$template_prompt);
 	if(isset($_POST['setrsvp']))
 	{
 	save_calendar_data($post->ID);
@@ -4511,6 +4512,8 @@ global $rsvp_options;
 if(!isset($_GET['new_template'])){
 	echo '<div style="float: right; background-color: #fff; padding: 10px; border: thin dotted #555; width: 200px;">';
 	printf('%s<br />%s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('switch to' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
+	//if(!empty($list))
+		//printf('<h3>%s</h3><ul>%s</ul>',__('Templates You Can Edit','rsvpmaker'),$list);
 	do_action('rsvpmaker_setup_template_prompt');
 	echo '</div>';
 }
@@ -4529,6 +4532,27 @@ $rsvp_on = $rsvp_options['rsvp_on'];
 <?php
 submit_button();
 echo '</form></div>';
+	
+	$templates = rsvpmaker_get_templates();
+	$tedit = $list = '';
+	foreach($templates as $template)
+	{
+	if(current_user_can('edit_rsvpmaker',$template->ID))
+	{
+		$tedit .= sprintf('<option value="%s">%s</option>',$template->ID,$template->post_title);
+	}
+
+	}
+	if(!empty($tedit))
+	{
+		printf('<h3>%s</h3><p>%s</p>',__('Your Templates','rsvpmaker'),__('Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series.','rsvpmaker'));
+		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>',admin_url('post.php'),$tedit,get_submit_button(__('Edit','rsvpmaker')));
+		printf('<form action="%s" method="get">
+		<input type="hidden" name="post_type" value="rsvpmaker">
+		<input type="hidden" name="page" value="rsvpmaker_template_list">
+		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Create/Update','rsvpmaker')));
+	}
+	
 }
 
 function rsvpmaker_setup_post () {

@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1.1
-Stable tag: 5.9.4
+Stable tag: 5.9.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 5.9.5 =
+
+* More template options shown on Event Setup screen. Trying to make the choice between creating an individual event and using a template clearer from the user interface.
+* Excluding templates and special documents (such as confirmation messages) from search.
 
 = 5.9.4 =
 
