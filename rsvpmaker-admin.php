@@ -2322,7 +2322,7 @@ function rsvpmaker_template_reminder_add($hours,$post_id) {
 }
 
 function rsvp_get_confirm($post_id) {
-	global $rsvp_options;
+	global $rsvp_options, $post;
 	$content = get_post_meta($post_id,'_rsvp_confirm',true);
 	if(empty($content))
 		$content = $rsvp_options['rsvp_confirm'];
@@ -2332,16 +2332,24 @@ function rsvp_get_confirm($post_id) {
 		$conf_post= get_post($id);
 		if(function_exists('do_blocks'))
 			$conf_post->post_content = do_blocks($conf_post->post_content);
+		$title = (!empty($post->post_title)) ? $post->post_title : 'not set';
+		$context = (is_admin()) ? 'admin' : 'not admin';
+		$log = sprintf('retrieve conf post ID %s for %s %s',$id,$title,$context);
+		rsvpmaker_debug_log($log,'rsvp_get_confirm');
 	}
 	else {
 		if(function_exists('do_blocks'))
 			$content = rsvpautog($content);
-		$conf_post = array('post_title'=>'Confirmation:'.$post_id, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish');
+		$conf_post = array('post_title'=>'Confirmation:'.$post_id, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish','post_parent' => $post_id);
 		$conf_post['ID'] = $id = wp_insert_post($conf_post);
 		$conf_post = (object) $conf_post;
 		update_post_meta($post_id,'_rsvp_confirm',$id);
 		update_post_meta($id,'_rsvpmaker_special','Confirmation:'.$post_id);
-		update_post_meta($id,'_rsvpmaker_parent',$post_id);
+		//update_post_meta($id,'_rsvpmaker_parent',$post_id);
+		$title = (!empty($post->post_title)) ? $post->post_title : 'not set';
+		$context = (is_admin()) ? 'admin' : 'not admin';
+		$log = sprintf('adding conf post ID %s for %s %s',$id,$title,$context);
+		rsvpmaker_debug_log($log,'rsvp_get_confirm');
 	}
 	return $conf_post;
 }
@@ -2358,10 +2366,11 @@ function rsvp_get_reminder($post_id,$hours) {
 	
 	if(empty($content) && ($t = has_template($post_id)) )
 		$content = get_post_meta($t, $key,true);
-	
+
 	if(empty($content))
 	{
-		$content = $rsvp_options['rsvp_confirm'];
+		$conf_post = rsvp_get_confirm($post_id);
+		$content = $conf_post->post_content;
 		$post = get_post($post_id);
 		$type = ($hours > 0) ? 'Follow Up: ' : 'Reminder: ';
 		$subject = $type.$post->post_title.' [datetime]';
@@ -2370,21 +2379,30 @@ function rsvp_get_reminder($post_id,$hours) {
 	{
 		$id = $content;
 		$conf_post= get_post($id);
-		$conf_post->post_content = do_shortcode($conf_post->post_content);
+		$content = do_shortcode($conf_post->post_content);
 		if(function_exists('do_blocks'))
-			$conf_post->post_content = do_blocks($conf_post->post_content);
+			$content = do_blocks($content);
+		$subject = $conf_post->post_title;
 	}
 	else {
 		if(empty($subject))
 			$subject = get_post_meta($post_id,'_rsvp_reminder_subject_'.$hours,true);
 		if(function_exists('do_blocks'))
 			$content = rsvpautog($content);
-		$conf_post = array('post_title'=>$subject, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish');
+		$conf_post = array('post_title'=>$subject, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish','post_parent' => $post_id);
 		$conf_post['ID'] = $id = wp_insert_post($conf_post);
 		$conf_post = (object) $conf_post;
 		update_post_meta($post_id,$key,$id);
 		update_post_meta($id,'_rsvpmaker_special','Reminder ('.$hours.' hours) '.$subject);
-		update_post_meta($id,'_rsvpmaker_parent',$post_id);
+		//update_post_meta($id,'_rsvpmaker_parent',$post_id);
+	}
+
+	if(isset($_GET['was']))
+	{
+		update_post_meta($post_id,$key,$id);
+		update_post_meta($id,'_rsvpmaker_special','Reminder ('.$hours.' hours) '.$subject);
+		$wpdb->query("UPDATE $wpdb->posts SET post_parent=$post_id WHERE ID=$id");
+		//update_post_meta($id,'_rsvpmaker_parent',$post_id);		
 	}
 	
 	if(!strpos($conf_post->post_content,'</p>'))
@@ -2465,9 +2483,9 @@ foreach($results as $row)
 	$type = ($hours > 0) ? 'FOLLOW UP' : 'REMINDER';
 	$reminder = rsvp_get_reminder($post_id,$hours);
 	printf('<h2>%s (%s hours)</h2><h3>%s</h3>%s',$type,$hours,$reminder->post_title,$reminder->post_content);
-	$parent = get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
+	$parent = $reminder->post_parent;//get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
 	if($parent != $post_id)
-		printf('<p>%s<br /><a href="%s">%s</a></p>',__('This is the standard reminder from the event template','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post='.$post_id.'&hours='.$hours.'&was='. $reminder->ID),__('Customize for this event','rsvpmaker'));
+		printf('<p>%s<br /><a href="%s">%s</a></p>',__('This is the standard reminder from the event template','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id.'&hours='.$hours.'&was='. $reminder->ID),__('Customize for this event','rsvpmaker'));
 	printf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a></p>',admin_url('post.php?action=edit').'&post='.$reminder->ID,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete=').$hours.'&post_id='.$post_id);
 }
 
@@ -4379,7 +4397,7 @@ if(isset($post->post_type) && ($post->post_type == 'post') && current_user_can('
 	
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
 	{
-	$rsvp_parent = get_post_meta($post->ID,'_rsvpmaker_parent',true);
+	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
 	if($rsvp_parent)
 	{
 		$args = array(

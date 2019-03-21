@@ -532,7 +532,7 @@ for($i = 1; $i < 13; $i++)
 </div>
 <h3>Payment Gateways</h3>
 	<p>PayPal <?php echo (!empty($rsvp_options["paypal_config"])) ? "enabled" : "NOT enabled"; ?></p>
-	<p>Stripe <?php echo (!empty($rsvp_options["rsvpmaker_stripe_sk"])) ? "enabled" : "NOT enabled"; ?></p>
+	<p>Stripe <?php echo (get_option('rsvpmaker_stripe_sk')) ? "enabled" : "NOT enabled"; ?></p>
 	<p>WP Simple Pay for Stripe integration <?php echo (class_exists('Stripe_Checkout_Functions')) ? "enabled" : "NOT enabled"; ?></p>
 <?php
 if ((class_exists('Stripe_Checkout_Functions') || (!empty($rsvp_options["rsvpmaker_stripe_sk"]))) && empty($rsvp_options["stripe"]) && !empty($rsvp_options["paypal_config"]))
@@ -1992,8 +1992,6 @@ if(isset($custom_fields["_rsvp_deadline"][0]) && $custom_fields["_rsvp_deadline"
 if(isset($custom_fields["_rsvp_start"][0]) && $custom_fields["_rsvp_start"][0])
 	$rsvpstart = (int) $custom_fields["_rsvp_start"][0];
 $rsvp_instructions = (isset($custom_fields["_rsvp_instructions"][0])) ? $custom_fields["_rsvp_instructions"][0] : NULL;
-$conf = rsvp_get_confirm($post->ID);
-$rsvp_confirm = $conf->post_content;
 $rsvp_yesno = (isset($custom_fields["_rsvp_yesno"][0])) ? $custom_fields["_rsvp_yesno"][0] : 1;
 $replay = (isset($custom_fields["_replay"][0])) ? $custom_fields["_replay"][0] : NULL;
 
@@ -2015,12 +2013,16 @@ if($profile)
 
 if(isset($_GET["rsvp"]))
 	{
+	$conf = rsvp_get_confirm($post->ID);
+	$rsvp_confirm = $conf->post_content;
 	$rsvp_confirm .= "\n\n".wpautop(get_post_meta($post->ID, '_rsvp_'.$e, true));
 	$rsvpconfirm = '<h3>'.__('RSVP Recorded','rsvpmaker').'</h3>	
 '.$rsvp_confirm;
 	}
 elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
 	{
+	$conf = rsvp_get_confirm($post->ID);
+	$rsvp_confirm = $conf->post_content;
 	$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post->ID AND id=".$rsvp_id;
 	$rsvprow = $wpdb->get_row($sql, ARRAY_A);
@@ -3763,7 +3765,7 @@ add_filter('wp_title','date_title', 1, 3);
 if(!function_exists('rsvpmaker_template_list'))
 {
 function rsvpmaker_template_list () {
-global $rsvp_options, $wpdb;
+global $rsvp_options, $wpdb, $current_user;
 ?>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
@@ -3771,6 +3773,36 @@ global $rsvp_options, $wpdb;
 printf(' <a href="%s"  class="add-new-h2">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
 ?>  </h2> 
 <?php
+if(!empty($_POST["override"]))
+{
+	$override = (int) $_POST["override"];
+	$overridden = (int) $_POST["overridden"];
+	$opost = get_post($override);
+	$target = get_post($overridden);
+	$sk = get_post_meta($overridden,'_sked',true);
+	if($sk)
+		wp_update_post(array('ID' => $override,'post_title' => $opost->post_title. ' (backup)'));
+	$newpost = array('ID' => $overridden, 'post_title' => $opost->post_title, 'post_content' => $opost->post_content, 'post_name' => $target->post_name);
+	wp_update_post($newpost);
+	update_post_meta($overridden, '_meet_recur', $override );
+	printf('<div class="updated notice notice-success">Applied "%s" template: <a href="%s">View</a> | <a href="%s">Edit</a></div>',$opost->post_title,get_permalink($overridden),admin_url('post.php?action=edit&post='.$overridden));
+	
+	$sql = "select * from $wpdb->postmeta WHERE post_id=".$override;//." AND meta_key LIKE '_rsvp%' ";
+	$results = $wpdb->get_results($sql);
+	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons
+','tm_sidebar','sidebar_officers');
+		foreach($results as $row)
+		{
+			if((strpos($row->meta_key,'rsvp') && ($row->meta_key != '_rsvp_dates')) || (in_array($row->meta_key, $docopy )))
+			{
+				update_post_meta($overridden,$row->meta_key,$row->meta_value);
+				$copied[] = $row->meta_key;
+			}
+		}
+	if(!empty($copied))
+		printf('<p>Settings copied: %s</p>',implode(", ",$copied));
+}
+	
 if(isset($_GET['override_template']) || (isset($_GET['t']) && isset($_GET['overconfirm']))) {
 	$t = (isset($_GET['override_template'])) ? (int) $_GET['override_template'] : (int) $_GET['t'];
 	$e = (int) $_GET['event'];
@@ -3800,7 +3832,33 @@ if(isset($_GET['override_template']) || (isset($_GET['t']) && isset($_GET['overc
 	printf('<h1 style="color: red;">Update Template?</h1><p>Click &quot;Confirm&quot; to override template with the contents of your %s event<p><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" /><input type="hidden" name="t" value="%d" /><input type="hidden" name="event" value="%d" /><input type="hidden" name="overconfirm" value="1" /><button>Confirm</button></form> ',strftime($rsvp_options['long_date'],strtotime($ts)),admin_url('edit.php'),$t,$e);		
 	}
 }
-									 
+
+if(isset($_POST['event_to_template'])) {
+	$e = (int) $_POST['event_to_template'];
+	$ts = get_rsvp_date($e);
+	$tsexplode = preg_split('/[\s:]/',$ts);
+	$event = get_post($e);
+	$newpost = array('post_title' => $event->post_title, 'post_content' => $event->post_content,'post_type' => 'rsvpmaker', 'post_author'=> $current_user->ID, 'post_status'=>'publish');
+	$t = wp_insert_post($newpost);
+	update_post_meta($t,'_sked',array('week' => array(0),'dayofweek'=>array(0),'hour'=>$tsexplode[1],'minutes'=>$tsexplode[2]));
+	//Array ( [week] => Array ( [0] => 0 ) [stop] => [hour] => 19 [minutes] => 00 [duration] => [dayofweek] => Array ( [0] => 0 ) )
+	printf('<h1>Template updated based on contents of event for %s</h1>',strftime($rsvp_options['long_date'],strtotime($ts)));
+	$sql = "select * from $wpdb->postmeta WHERE post_id=".$e;//." AND meta_key LIKE '_rsvp%' ";
+	$results = $wpdb->get_results($sql);
+	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons
+','tm_sidebar','sidebar_officers');
+		foreach($results as $row)
+		{
+			if((strpos($row->meta_key,'rsvp') && ($row->meta_key != '_rsvp_dates')) || (in_array($row->meta_key, $docopy )))
+			{
+				update_post_meta($t,$row->meta_key,$row->meta_value);
+				$copied[] = $row->meta_key;
+			}
+		}
+	if(!empty($copied))
+		printf('<p>Settings copied: %s</p>',implode(", ",$copied));
+}
+
 									 
 do_action('rsvpmaker_template_list_top');
 									 
@@ -3819,6 +3877,7 @@ $wpdb->show_errors();
 global $current_user;
 global $rsvp_options;
 $current_template = $event_options = $template_options = '';
+$template_override = '';
 									 
 $sql = "SELECT DISTINCT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND meta_key='_sked' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
 
@@ -3876,8 +3935,8 @@ foreach ( $results as $post )
 				$s .= ' '.strftime($rsvp_options["time_format"],$time);				
 				}
 			}
-
 		$eds = get_additional_editors($post->ID); 
+		
 		if(($post->post_author == $current_user->ID) || in_array($current_user->ID,$eds) || current_user_can('edit_post',$post->ID) )
 			{
 			$template_edit_url = admin_url('post.php?action=edit&post='.$post->ID);
@@ -3885,6 +3944,7 @@ foreach ( $results as $post )
 			if(strpos($post->post_content,'[toastmaster') && function_exists('agenda_setup_url')) // rsvpmaker for toastmasters
 				$title .= sprintf(' (<a href="%s">Toastmasters %s</a>)',agenda_setup_url($post->ID),__('Agenda Setup','rsvptoast'));
 			$template_options .= sprintf('<option value="%d">%s</option>',$post->ID,$post->post_title);
+			$template_override .= sprintf('<option value="%d">APPLY TO TEMPLATE: %s</option>',$post->ID,$post->post_title);
 			$template_recur_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post->ID);
 			printf('<tr><td>%s</td><td>%s</td><td><a href="%s">'.__('Projected Dates','rsvpmaker').'</a></td><td>%s</td></tr>'."\n",$title,$s,$template_recur_url,next_or_recent($post->ID));
 			}
@@ -3904,17 +3964,6 @@ if(isset($template_options))
 	{
 echo '<div id="applytemplate"></div><h3>Apply Template to Existing Event</h3>';
 
-if(!empty($_POST["override"]))
-{
-	$override = (int) $_POST["override"];
-	$overridden = (int) $_POST["overridden"];
-	$opost = get_post($override);
-	$target = get_post($overridden);
-	$newpost = array('ID' => $overridden, 'post_title' => $opost->post_title, 'post_content' => $opost->post_content, 'post_name' => $target->post_name);
-	wp_update_post($newpost);
-	update_post_meta($overridden, '_meet_recur', $override );
-	printf('<div class="updated notice notice-success">Applied "%s" template: <a href="%s">View</a> | <a href="%s">Edit</a></div>',$opost->post_title,get_permalink($overridden),admin_url('post.php?action=edit&post='.$overridden));
-}
 		
 		$target_id = isset($_GET['apply_target']) ? (int) $_GET['apply_target'] : 0;
 		if($target_id)
@@ -3938,7 +3987,7 @@ ORDER BY meta_value LIMIT 0,100";
 			
 		$action = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list');
 		
-		printf('<form method="post" action="%s"><p>Apply <select name="override">%s</select> to <select name="overridden">%s</select></p>',$action, $current_template . $template_options, $event_options);
+		printf('<form method="post" action="%s"><p>Apply <select name="override">%s</select> to <select name="overridden">%s</select></p>',$action, $current_template . $template_options, $event_options.$template_override);
 		submit_button();
 		echo '</form>';
 
@@ -3957,22 +4006,21 @@ ORDER BY meta_value LIMIT 0,100";
 			{
 			$event_options .= sprintf('<option value="%d">%s %s</option>',$r->postID,$r->post_title,$r->datetime);
 			}			
-		$action = admin_url('post-new.php');
+		$action = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list');
 
 		echo "<h3>Create Template Based on Existing Event</h3>";
-		printf('<form method="get" action="%s"><p>%s <select name="clone">%s</select>
-		<input type="hidden" name="post_type" value="rsvpmaker"><input type="hidden" name="new_template" value="1" />
+		printf('<form method="post" action="%s"><p>%s <select name="event_to_template">%s</select>
 		</p>',$action,__("Copy",'rsvpmaker'), $event_options);
 		submit_button(__("Copy Event",'rsvpmaker'));
 		echo '</form>';
-
+/*
 		echo "<h3>Clone Event</h3>";
 		printf('<form method="get" action="%s"><p>%s <select name="clone">%s</select>
 		<input type="hidden" name="post_type" value="rsvpmaker">
 		</p>',$action,__("Copy",'rsvpmaker'), $event_options);
 		submit_button(__("Copy Event",'rsvpmaker'));
 		echo '</form>';
-
+*/
 ?>
 
 </div>

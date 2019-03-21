@@ -690,7 +690,7 @@ $authorlink = sprintf( '<span class="author vcard"><a class="url fn n" href="%1$
 	sprintf( esc_attr__( 'View all posts by %s', 'rsvpmaker' ), get_the_author() ),
 	get_the_author());
 ?>
-<div class="event_author"><?php _e('Posted by','rsvpmaker'); echo " $authorlink on ";?><span class="updated" datetime="<?php the_modified_date('c');?>"><?php the_modified_date(); ?></span></div>
+<div class="event_author"><?php _e('Posted by','rsvpmaker'); echo " $authorlink on ";?><span class="rsvpupdated" datetime="<?php the_modified_date('c');?>"><?php the_modified_date(); ?></span></div>
 <?php 
 }
 ?>
@@ -1933,5 +1933,14 @@ $query->set('meta_query', array(
 }
 add_action('pre_get_posts','rsvpmaker_exclude_templates_special');
 
+function rsvpmaker_author_page ($query) {
+	if(is_author() && empty($query->query_vars['suppress_filters'])) {
+		$query->set('post_type', array('post','rsvpmaker'));
+		$query->set('post_parent', 0);
+	}
+	return $query;
+}
+
+add_filter('pre_get_posts','rsvpmaker_author_page');
 
 ?>

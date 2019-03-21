@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1.1
-Stable tag: 5.9.5
+Stable tag: 5.9.7
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,16 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 5.9.7 =
+
+* Tweaked data model for relationship between confirmation / reminder messages and their parent posts.
+* Updated the Event Templates screen, particularly the features for applying a template to an existing event and for creating a template based on an existing event.
+
+= 5.9.6 =
+
+* Fix for DB performance issues
+* Updates to event reminder messages functions
 
 = 5.9.5 =
 

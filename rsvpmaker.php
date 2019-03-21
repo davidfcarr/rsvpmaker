@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 5.9.5
+Version: 5.9.7
 */
 function get_rsvpversion(){
-return '5.9.5';
+return '5.9.7';
 }
 
 global $wp_version;
@@ -317,7 +317,7 @@ $sql = "CREATE TABLE `".$wpdb->prefix."rsvp_volunteer_time` (
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 dbDelta($sql);
 
-$rsvp_options["dbversion"] = 6;
+$rsvp_options["dbversion"] = 7;
 update_option('RSVPMAKER_Options',$rsvp_options);
 
 $sql = "SELECT slug FROM ".$wpdb->prefix."terms JOIN `".$wpdb->prefix."term_taxonomy` on ".$wpdb->prefix."term_taxonomy.term_id= ".$wpdb->prefix."terms.term_id WHERE taxonomy='rsvpmaker-type' AND slug='featured'";
@@ -355,7 +355,19 @@ elseif($rsvp_options["dbversion"] < 5)
 if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 6))
 	{
 	convert_date_meta();
-	$rsvp_options["dbversion"] = 6;
+	}
+if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 7))
+	{
+	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='_rsvpmaker_parent'";
+	$results = $wpdb->get_results($sql);
+	if($results)
+	{
+		foreach($results as $row)
+		{
+			wp_update_post(array('ID' => $row->post_id,'post_parent' => $row->meta_value));
+		}
+	}
+	$rsvp_options["dbversion"] = 7;
 	update_option('RSVPMAKER_Options',$rsvp_options);
 	}
 
