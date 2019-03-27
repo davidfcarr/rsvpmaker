@@ -1,7 +1,11 @@
 <?php
 function get_rsvp_date($post_id)
 {
-global $wpdb;
+global $wpdb, $rsvpdates;
+if(empty($rsvpdates))
+	cache_rsvp_dates(50);
+if(!empty($rsvpdates[$post_id]))
+	return $rsvpdates[$post_id][0];
 $wpdb->show_errors();
 $sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
 return $wpdb->get_var($sql);
@@ -9,7 +13,21 @@ return $wpdb->get_var($sql);
 
 function get_rsvp_dates($post_id, $obj = false)
 {
-global $wpdb;
+global $wpdb, $rsvpdates;
+if(empty($rsvpdates))
+	cache_rsvp_dates(50);
+if(!empty($rsvpdates[$post_id]))
+{
+	foreach($rsvpdates[$post_id] as $datetime)
+	{
+	$drow['datetime'] = $datetime;
+	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
+	if($obj)
+		$drow = (object) $drow;
+	$dates[] = $drow;		
+	}
+	return $dates;
+}	
 $wpdb->show_errors();
 $sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
 $results = $wpdb->get_results($sql);
@@ -21,11 +39,13 @@ foreach($results as $row)
 	$datetime = $row->meta_value;
 	$drow["meta_id"] = $row->meta_id;
 	$drow["datetime"] = $datetime;
+	$rsvpdates[$post_id][] = $datetime;
 	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
 	if($obj)
 		$drow = (object) $drow;
 	$dates[] = $drow;
 	}
+set_transient('rsvpmakerdates',$rsvpdates, HOUR_IN_SECONDS); 
 return $dates;
 }
 
@@ -192,6 +212,22 @@ function has_template ($post_id = 0) {
 			return false;
 	}
 	return get_post_meta($post_id,'_meet_recur',true);
+}
+
+function cache_rsvp_dates($limit) {
+global $rsvpdates, $wpdb;
+if(!empty($rsvpdates))
+	return;//if some other process already retrieved the dates
+$rsvpdates = get_transient('rsvpmakerdates');
+if(!empty($rsvpdates))
+	return;
+$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='_rsvp_dates' AND meta_value > NOW() ORDER BY meta_value LIMIT 0, $limit";
+$results = $wpdb->get_results($sql);
+if($results)
+foreach($results as $row) {
+	$rsvpdates[$row->post_id][] = $row->meta_value;
+}
+set_transient('rsvpmakerdates',$rsvpdates, HOUR_IN_SECONDS); 
 }
 
 ?>

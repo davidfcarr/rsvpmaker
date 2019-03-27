@@ -104,6 +104,7 @@ if(isset($_POST["event_month"]) )
 
 if(isset($_POST["edit_month"]))
 	{
+	delete_transient('rsvpmakerdates');//invalidate cached values
 	foreach($_POST["edit_year"] as $index => $year)
 		{
 			$cddate = format_cddate($year,$_POST["edit_month"][$index],  $_POST["edit_day"][$index], $_POST["edit_hour"][$index], $_POST["edit_minutes"][$index]);
@@ -717,7 +718,13 @@ ReCaptcha Secret: <input type="text" name="option[rsvp_recaptcha_secret]" value=
   <textarea name="option[rsvp_instructions]"  rows="5" cols="80" id="rsvp_instructions"><?php if(isset($options["rsvp_instructions"]) ) echo $options["rsvp_instructions"];?></textarea>
 	<br />
 					<h3><?php _e('Confirmation Message','rsvpmaker'); ?>:</h3>
-  <textarea name="option[rsvp_confirm]"  rows="5" cols="80" id="rsvp_confirm"><?php if( isset($options["rsvp_confirm"]) ) echo $options["rsvp_confirm"];?></textarea><br />
+<?php
+$confirm = get_post($options['rsvp_confirm']);
+echo (strpos($confirm->post_content,'</p>')) ? $confirm->post_content : wpautop($confirm->post_content);
+$confedit = admin_url('post.php?action=edit&post='.$confirm->ID);
+printf('<div id="editconfirmation"><a target="_blank" href="%s">Edit</a></div>',$confedit);				
+?>
+<br />
  <input type="checkbox" name="option[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if( isset($options["rsvpmaker_send_confirmation_email"]) && $options["rsvpmaker_send_confirmation_email"] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?> <input type="checkbox" name="option[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( isset($options["confirmation_include_event"]) && $options["confirmation_include_event"] ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 	<br />
 					<h3><?php _e('RSVP Form','rsvpmaker'); ?> (<a href="#" id="enlarge"><?php _e('Enlarge','rsvpmaker'); ?></a>):</h3>
@@ -1107,7 +1114,7 @@ if(isset($_POST))
   			if($postID = wp_insert_post( $my_post ) )
 				{
 				add_post_meta($postID,'_rsvp_dates',$cddate);
-				echo '<div class="updated">'."Added post # $postID for $cddate.</div>\n";	
+				echo '<div class="updated">'."Added post # $postID for $cddate.</div>\n";
 				}
 			}		
 		}
@@ -2194,7 +2201,7 @@ $wpdb->show_errors();
 			$event_content = event_to_embed($post_id);
 		}
 		else
-			$event_content = $rsvp_options['rsvplink'];
+			$event_content = get_rsvp_link($post_id);
 	}
 			$rsvpto = get_post_meta($post_id,'_rsvp_to',true);			
 			
@@ -2340,12 +2347,10 @@ function rsvp_get_confirm($post_id) {
 	else {
 		if(function_exists('do_blocks'))
 			$content = rsvpautog($content);
-		$conf_post = array('post_title'=>'Confirmation:'.$post_id, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish','post_parent' => $post_id);
+		$conf_post = array('post_title'=>'Confirmation:'.$post_id, 'post_content'=>$content,'post_type' => 'rsvpemail','post_status' => 'publish','post_parent' => $post_id);
 		$conf_post['ID'] = $id = wp_insert_post($conf_post);
 		$conf_post = (object) $conf_post;
 		update_post_meta($post_id,'_rsvp_confirm',$id);
-		update_post_meta($id,'_rsvpmaker_special','Confirmation:'.$post_id);
-		//update_post_meta($id,'_rsvpmaker_parent',$post_id);
 		$title = (!empty($post->post_title)) ? $post->post_title : 'not set';
 		$context = (is_admin()) ? 'admin' : 'not admin';
 		$log = sprintf('adding conf post ID %s for %s %s',$id,$title,$context);
@@ -2389,7 +2394,7 @@ function rsvp_get_reminder($post_id,$hours) {
 			$subject = get_post_meta($post_id,'_rsvp_reminder_subject_'.$hours,true);
 		if(function_exists('do_blocks'))
 			$content = rsvpautog($content);
-		$conf_post = array('post_title'=>$subject, 'post_content'=>$content,'post_type' => 'rsvpmaker','post_status' => 'publish','post_parent' => $post_id);
+		$conf_post = array('post_title'=>$subject, 'post_content'=>$content,'post_type' => 'rsvpemail','post_status' => 'publish','post_parent' => $post_id);
 		$conf_post['ID'] = $id = wp_insert_post($conf_post);
 		$conf_post = (object) $conf_post;
 		update_post_meta($post_id,$key,$id);
@@ -4339,7 +4344,8 @@ function ajax_rsvpmaker_date_handler() {
 	$t = strtotime($_REQUEST['date']);
 	$date = date("Y-m-d H:i:s",$t);
 	$current_date = get_rsvp_date($post_id);
-	update_post_meta($post_id,'_rsvp_dates',$date,$current_date);		
+	update_post_meta($post_id,'_rsvp_dates',$date,$current_date);
+	delete_transient('rsvpmakerdates');
 	}
     wp_die();
 }
@@ -4394,7 +4400,21 @@ global $post;
 	//blog post to email
 if(isset($post->post_type) && ($post->post_type == 'post') && current_user_can('edit_post',$post->ID) )
 	$wp_admin_bar->add_menu(array('title' => __('Send RSVP Email'), 'id' => 'post-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'post-to-email')));
-	
+
+if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpemail')) && current_user_can('edit_post',$post->ID) )
+	{
+	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+		$args = array(
+		'id'    => 'rsvpmaker_parent',
+		'title' => __('Edit Parent Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+	$wp_admin_bar->add_node( $args );
+	if($post->post_type == 'rsvpemail')
+		return; // next 2 do not apply
+	}
+
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
 	{
 	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
@@ -4407,6 +4427,7 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
 	);
 	$wp_admin_bar->add_node( $args );
+
 	$args = array(
 		'parent'    => 'rsvpmaker_parent',
 		'id'    => 'rsvpmaker_options',
@@ -4508,7 +4529,7 @@ if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_scheduled_email_list') &
 	);
 	$wp_admin_bar->add_node( $args );	
 	}
-if(isset($post->post_type) && ($post->post_type == 'rsvpemail') && (is_admin()  || current_user_can('edit_post',$post->ID)) )
+if(isset($post->post_type) && ($post->post_type == 'rsvpemail') && (is_admin()  || current_user_can('edit_post',$post->ID)) && empty($post->post_parent) && !strpos($post->post_title,':Default') )
 	{
 	$args = array(
 		'id'    => 'rsvpemail_schedule',

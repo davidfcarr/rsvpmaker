@@ -387,6 +387,21 @@ function GetRSVPAdminForm($postID)
 global $custom_fields;
 global $post;
 global $rsvp_options;
+	
+if(isset($_GET['customize'])) {
+	$old = get_post((int) $_GET['customize']);
+	if($old)
+	{
+	$new["post_title"] = "Confirmation:".$post->ID;
+	$new["post_parent"] = $post->ID;
+	$new["post_status"] = 'publish';
+	$new["post_type"] = 'rsvpemail';
+	$new["post_content"] = $old->post_content;
+	$id = wp_insert_post($new);
+	if($id)
+		update_post_meta($post->ID,'_rsvp_confirm',$id);		
+	}
+}
 
 $rsvp_on = (isset($custom_fields["_rsvp_on"][0]) && (!$custom_fields["_rsvp_on"][0])) ? 0 : 1;
 $include_event = $custom_fields["_rsvp_confirmation_include_event"][0];
@@ -472,14 +487,21 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <br />
   <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
-<br /><?php echo __('Confirmation Message','rsvpmaker');?>:<br />
+<h3 id="confirmation"><?php echo __('Confirmation Message','rsvpmaker');?></h3>
 <?php
 echo $confirm->post_content;
 
 $confedit = admin_url('post.php?action=edit&post='.$confirm->ID);
+$customize = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='. $post->ID. '&customize='.$confirm->ID.'#confirmation');
 $reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
-
-printf('<div><a href="%s">Edit</a></div><div><a href="%s">Create / Edit Reminders</a></div>',$confedit,$reminders);	
+	
+if($confirm->post_parent == 0)
+	printf('<div id="editconfirmation"><a href="%s">Edit Default Confirmation Message</a></div><div><a href="%s">Customize Confirmation Message</a></div>',$confedit,$customize);
+elseif($confirm->post_parent != $post->ID)
+	printf('<div id="editconfirmation"><a href="%s">Edit Template Confirmation Message</a></div><div><a href="%s">Customize Confirmation Message</a></div>',$confedit,$customize);	
+else
+	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$confedit);
+printf('<div><a href="%s">Create / Edit Reminders</a></div>',$reminders);	
 ?>
 <?php
 if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"]))
@@ -947,6 +969,14 @@ else
 	$wpdb->show_errors();
 	$wpdb->query($rsvp_sql);
 	$rsvp_id = $wpdb->insert_id;
+	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
+	rsvpmaker_debug_log($sql,'event check');
+	if(empty($wpdb->get_var($sql)))
+	   {
+		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
+		rsvpmaker_debug_log($sql,'rsvpmaker_event');
+		$wpdb->query($sql);
+	   }
 	}
 
 setcookie ( 'rsvp_for_'.$event, $rsvp_id, time()+(60*60*24*90), "/" , $_SERVER['SERVER_NAME'] );
@@ -1248,6 +1278,16 @@ else
 	$wpdb->show_errors();
 	$wpdb->query($rsvp_sql);
 	$rsvp_id = $wpdb->insert_id;
+		
+	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
+	rsvpmaker_debug_log($sql,'event check');
+	if(empty($wpdb->get_var($sql)))
+	   {
+		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
+		rsvpmaker_debug_log($sql,'rsvpmaker_event');
+		$wpdb->query($sql);
+	   }
+	
 	}
 	
 	}
@@ -1376,11 +1416,7 @@ $rsvpdata["rsvpmessage"] = $rsvp_confirm; // confirmation message from editor
 $rsvpdata["rsvptitle"] = $post->post_title;
 $rsvpdata["rsvpyesno"] = $answer;
 $rsvpdata["rsvpdate"] = $date;
-$login_required = get_post_meta($post->ID, '_rsvp_login_required', true);
-$rsvplink = ($login_required) ? wp_login_url( $req_uri ) : $req_uri;
-if(strpos($rsvplink,'?') )
-	$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
-$rsvp_options["rsvplink"] = sprintf($rsvp_options["rsvplink"],$rsvplink);
+$rsvp_options["rsvplink"] = get_rsvp_link($post->ID);
 $rsvpdata["rsvpupdate"] = preg_replace('/#rsvpnow">[^<]+/','#rsvpnow">'.__('Update RSVP','rsvptoast'),str_replace('*|EMAIL|*',$rsvp["email"].'&update='.$rsvp_id, $rsvp_options["rsvplink"]));
 
 rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata);
@@ -2007,8 +2043,8 @@ if($profile)
 	{
 	$first = $profile["first"];
 	$last = $profile["last"];
-	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$e.'" AND event='.$post->ID.' ORDER BY id DESC';
-	$rsvp_id = $wpdb->get_var($sql);	
+	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$profile["email"].'" AND event='.$post->ID.' ORDER BY id DESC';
+	$rsvp_id = $wpdb->get_var($sql);
 	}
 
 if(isset($_GET["rsvp"]))
@@ -2192,9 +2228,7 @@ if($rsvp_count) {
 }	
 
 $now = current_time('timestamp');
-$rsvplink = ($login_required) ? wp_login_url( get_permalink( $post->ID ) ) : get_permalink( $post->ID );
-if(strpos($rsvplink,'?') )
-	$rsvp_options["rsvplink"] = str_replace('?','&',$rsvp_options["rsvplink"]);
+$rsvplink = get_rsvp_link($post->ID,true);
 
 if(isset($deadline) && ($now  > $deadline  ) )
 	$content .= '<p class="rsvp_status">'.__('RSVP deadline is past','rsvpmaker').'</p>';
@@ -2444,6 +2478,17 @@ function rsvp_report() {
 
 global $wpdb;
 global $rsvp_options;
+$wpdb->show_errors();
+$sql = "SELECT post_title, event, meta_value FROM `".$wpdb->prefix."rsvpmaker` join $wpdb->posts ON ".$wpdb->prefix."rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
+$results = $wpdb->get_results($sql);
+if($results)
+foreach($results as $row) {
+	$sql = $wpdb->prepare("REPLACE INTO `".$wpdb->prefix."rsvpmaker_event` SET event=%d, post_title=%s, date=%s ",$row->event,$row->post_title,$row->meta_value);
+	$wpdb->query($sql);
+}
+	
+
+	
 $guest_check = '';
 $print_nonce = wp_create_nonce('rsvp_print');
 
@@ -2493,11 +2538,10 @@ if(isset($_GET["delete"]) && current_user_can('edit_others_posts'))
 if(isset($_GET["event"]))
 	{
 	$eventid = (int) $_GET["event"];
-	$date = get_rsvp_date($eventid);
-	$post = get_post($eventid);
+	$event_row = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$eventid");
+	$date = $event_row->date;
 	$t = strtotime($date);
-	$title = $post->post_title ." ".date('F jS',$t);
-	
+	$title = $event_row->post_title ." ".strftime($rsvp_options['long_date'],$t);
 	echo "<h2>".__("RSVPs for",'rsvpmaker')." ".$title."</h2>\n";
 	if(!isset($_GET["rsvp_print"]))
 		{
@@ -2634,13 +2678,11 @@ else
 
 $eventlist = "";
 
-$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN ".$wpdb->posts." ON ".$wpdb->postmeta.".post_id = ".$wpdb->posts.".ID and meta_key='_rsvp_dates' ";
+$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker_event JOIN $wpdb->postmeta ON ".$wpdb->prefix."rsvpmaker_event.event=$wpdb->postmeta.post_id WHERE meta_key='_rsvp_on' and meta_value=1 ";
 
 if(!isset($_GET["show"]))
 	{
-	$sql .= " AND meta_value > CURDATE( ) ";
+	$sql .= " AND date > CURDATE( ) ORDER BY date";
 	$eventlist .= '<p>'.__('Showing future events only','rsvpmaker').' (<a href="'.$_SERVER['REQUEST_URI'].'&show=all">show all</a>)<p>';
 ?>
 <form action="edit.php" method="get">
@@ -2663,25 +2705,22 @@ if(!isset($_GET["show"]))
 <?php
 	}
 else
+{
 	$eventlist .= '<p>'.__('Showing past events (for which RSVPs were collected) as well as upcoming events.','rsvpmaker').'<p>';
-
-$sql .= " ORDER BY meta_value";
-
+	$sql .= " ORDER BY date DESC";
+}
 
 $wpdb->show_errors();
 $results = $wpdb->get_results($sql);
 
 if($results)
 {
-
 foreach($results as $row)
 	{
-	if(!get_post_meta($row->postID,'_rsvp_on',true))
-		continue;
-	if(!isset($events[$row->postID]))
-		$events[$row->postID] = $row->post_title;
-	$t = strtotime($row->datetime);
-	$events[$row->postID] .= " ".date('F jS',$t);
+	if(empty($events[$row->event]))
+		$events[$row->event] = $row->post_title;
+	$t = strtotime($row->date);
+	$events[$row->event] .= " ".strftime($rsvp_options['long_date'],$t);
 	}
 }
 

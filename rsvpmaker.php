@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 5.9.7
+Version: 5.9.9
 */
 function get_rsvpversion(){
-return '5.9.7';
+return '5.9.9';
 }
 
 global $wp_version;
@@ -43,7 +43,6 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "social_title_date" => 1, 
 "default_content" => '', 
 "rsvp_to" => get_bloginfo('admin_email'),
-"rsvp_confirm" => __('Thank you!','rsvpmaker'), 
 "confirmation_include_event" => 0,
 "rsvpmaker_send_confirmation_email" => 1,
 "rsvp_instructions" => '',
@@ -58,7 +57,7 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "show_attendees" => 0,
 'convert_timezone' => 0,
 'add_timezone' => 0,
-'rsvplink' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s?e=*|EMAIL|*#rsvpnow">'. __('RSVP Now!','rsvpmaker').'</a></p>',
+'rsvplink' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">'. __('RSVP Now!','rsvpmaker').'</a></p>',
 "rsvp_form_title" => __('RSVP Now!','rsvpmaker'),
 'defaulthour' => 19,
 'defaultmin' => 0,
@@ -112,6 +111,25 @@ if(isset($_GET["reset_form"]))
 	{
 	$rsvp_options["rsvp_form"] = $rsvp_defaults["rsvp_form"];
 	update_option('RSVPMAKER_Options',$rsvp_options);
+	}
+if(strpos($rsvp_options['rsvplink'],'*|EMAIL|*')) {
+	$rsvp_options['rsvplink'] = str_replace('?e=*|EMAIL|*#rsvpnow','',$rsvp_options['rsvplink']);
+	update_option('RSVPMAKER_Options',$rsvp_options);	
+	}
+if(empty($rsvp_options['rsvp_confirm']))
+	{
+	$message = '<!-- wp:paragraph -->
+<p>'.__('Thank you!','rsvpmaker').'</p>
+<!-- /wp:paragraph -->';
+	$rsvp_options['rsvp_confirm'] = wp_insert_post(array('post_title'=>'Confirmation:Default','post_content'=>$message, 'post_status'=>'publish','post_type'=>'rsvpemail','post_parent' => 0));
+	update_option('RSVPMAKER_Options',$rsvp_options);	
+	}
+elseif(!is_numeric($rsvp_options['rsvp_confirm']))
+	{
+	$rsvp_options['rsvp_confirm'] = wp_insert_post(array('post_title'=>'Confirmation:Default',
+	'post_content'=> rsvpautog($rsvp_options['rsvp_confirm']),
+	'post_status'=>'publish','post_type'=>'rsvpemail', 'post_parent' => 0));
+	update_option('RSVPMAKER_Options',$rsvp_options);		
 	}
 }
 
@@ -307,6 +325,22 @@ $sql = "CREATE TABLE `".$wpdb->prefix."rsvpmaker` (
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 dbDelta($sql);
 
+$sql = "CREATE TABLE `".$wpdb->prefix."rsvpmaker_event` (
+  `event` int(11) NOT NULL default '0',
+  `post_title` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
+  `date` datetime,
+  PRIMARY KEY  (`event`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+dbDelta($sql);
+
+$sql = "SELECT post_title, event, meta_value FROM `".$wpdb->prefix."rsvpmaker` join $wpdb->posts ON ".$wpdb->prefix."rsvpmaker.event=wp_posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = wp_postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
+$results = $wpdb->get_results($sql);
+if($results)
+foreach($results as $row) {
+	$sql = $wpdb->prepare("REPLACE INTO `".$wpdb->prefix."rsvpmaker_event` SET event=%d, post_title=%s, date=%s ",$row->event,$row->post_title,$row->meta_value);
+	$wpdb->query($sql);
+}
+	
 $sql = "CREATE TABLE `".$wpdb->prefix."rsvp_volunteer_time` (
   `id` int(11) NOT NULL auto_increment,
   `event` int(11) NOT NULL default '0',
@@ -316,9 +350,6 @@ $sql = "CREATE TABLE `".$wpdb->prefix."rsvp_volunteer_time` (
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 dbDelta($sql);
-
-$rsvp_options["dbversion"] = 7;
-update_option('RSVPMAKER_Options',$rsvp_options);
 
 $sql = "SELECT slug FROM ".$wpdb->prefix."terms JOIN `".$wpdb->prefix."term_taxonomy` on ".$wpdb->prefix."term_taxonomy.term_id= ".$wpdb->prefix."terms.term_id WHERE taxonomy='rsvpmaker-type' AND slug='featured'";
 
@@ -333,6 +364,12 @@ if(! $wpdb->get_var($sql) )
   )
 );
 	}
+
+$sql = "UPDATE $wpdb->posts SET post_type='rsvpemail' WHERE post_type='rsvpmaker' AND post_parent != 0 ";
+$wpdb->query($sql);
+
+$rsvp_options["dbversion"] = 10;
+update_option('RSVPMAKER_Options',$rsvp_options);
 }
 
 register_activation_hook( __FILE__, 'cpevent_activate' );
@@ -340,7 +377,6 @@ register_activation_hook( __FILE__, 'cpevent_activate' );
 //upgrade database if necessary
 if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 4))
 	{
-	cpevent_activate();
 	//correct character encoding error in early releases
 	global $wpdb;
 	$wpdb->query("ALTER TABLE `wp_rsvpmaker` CHANGE `first` `first` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''");
@@ -350,14 +386,13 @@ if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 4))
 	$wpdb->query("ALTER TABLE `wp_rsvpmaker` CHANGE `details` `details` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ");	
 	$wpdb->query("ALTER TABLE `wp_rsvpmaker` CHANGE `note` `note` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ");
 	}
-elseif($rsvp_options["dbversion"] < 5)
-	cpevent_activate();
 if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 6))
 	{
 	convert_date_meta();
 	}
 if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 7))
 	{
+	global $wpdb;
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='_rsvpmaker_parent'";
 	$results = $wpdb->get_results($sql);
 	if($results)
@@ -367,9 +402,9 @@ if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 7))
 			wp_update_post(array('ID' => $row->post_id,'post_parent' => $row->meta_value));
 		}
 	}
-	$rsvp_options["dbversion"] = 7;
-	update_option('RSVPMAKER_Options',$rsvp_options);
 	}
+if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 10))
+	cpevent_activate();
 
 function convert_date_meta() {
 global $wpdb;
@@ -505,6 +540,7 @@ if(!empty($missing) )
 function delete_rsvpmaker_date($postID,$cddate) {
 delete_post_meta($postID,'_rsvp_dates',$cddate);
 delete_post_meta($postID,'_'.$cddate);
+delete_transient('rsvpmakerdates');
 }
 
 function add_rsvpmaker_date($postID,$cddate,$duration='') {
@@ -515,6 +551,7 @@ add_post_meta($postID,'_'.$cddate,$duration);
 function update_rsvpmaker_date($postID,$cddate,$duration='') {
 update_post_meta($postID,'_rsvp_dates',$cddate);
 update_post_meta($postID,'_'.$cddate,$duration);
+delete_transient('rsvpmakerdates');
 }
 
 function rsvpmaker_upcoming_data ($atts)
@@ -730,4 +767,13 @@ function rsvpautog($content) {
 	return $content;
 }
 
+function clean_confirmations () {
+    global $wpdb;
+    $sql = "SELECT * FROM $wpdb->postmeta JOIN $wpdb->posts ON post_id = post_parent WHERE `meta_key` LIKE '_rsvp_dates' AND meta_value < CURDATE() AND post_title LIKE 'Confirmation%'";
+    $results = $wpdb->get_results($sql);
+    foreach($results as $row) 
+        $wpdb->query("DELETE FROM $wpdb->posts WHERE ID=".$row->ID);
+}
+
+add_action('init','clean_confirmations');
 ?>
