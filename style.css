@@ -68,7 +68,7 @@ max-width: 90%;
 display: inline-block;
 width: 25%;
 }
-#rsvpform input[type=text], #rsvpform select {
+#rsvpform input[type=text], #rsvpform input[type=email], #rsvpform select {
 max-width: 70%
 }
 #cpcalendar td, #cpcalendar th {

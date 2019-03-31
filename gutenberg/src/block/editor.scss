@@ -27,3 +27,21 @@
 	font-size: small;
 	color: #555;
 }
+
+.wp-block-rsvpmaker-formfield label,
+.wp-block-rsvpmaker-formselect label,
+.wp-block-rsvpmaker-formradio label,
+{
+display: inline-block;
+width: 25%;
+}
+.wp-block-rsvpmaker-formfield input[type=text],
+.wp-block-rsvpmaker-formselect select {
+max-width: 70%
+}
+.wp-block-rsvpmaker-guests {
+	border: thin dotted #000;
+}
+textarea {
+width: 90%;
+}

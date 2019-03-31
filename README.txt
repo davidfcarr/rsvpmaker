@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1.1
-Stable tag: 5.9.9
+Stable tag: 6.0
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,13 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 6.0 =
+
+* New RSVP form, customizable using the Gutenberg editor.
+* Further refinements to setup for confirmation / reminder messages and navigation back to parent post.
+* RSVP reports can now be run on past events that have been deleted as posts. Event titles and dates are tracked in a separate custom DB table.
+* RSVPMaker Cleanup utility added under tools to make it easier to delete old events.
 
 = 5.9.9 =
 

@@ -10,6 +10,7 @@ import './style.scss';
 import './editor.scss';
 import './rsvpmaker-sidebar.js';		import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
+import './form.js';		
 import apiFetch from '@wordpress/api-fetch';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
@@ -203,7 +204,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
             },
             hideauthor: {
                 type: 'boolean',
-                default: true,
+                default: false,
             },
         },
 	/**
@@ -293,7 +294,15 @@ apiFetch( { path: '/wp-json/rsvpmaker/v1/types' } ).then( rsvpmaker_types => {
 					<p>Text to show for no events listed<br />
 				<input type="text" id="no_events" onChange={setNoEvents} defaultValue={no_events} /> 
 				</p>
-				
+				<SelectControl
+        label={__("Show Event Author",'rsvpmaker')}
+        value={ hideauthor }
+        options={ [
+            { label: 'No', value: true },
+            { label: 'Yes', value: false },
+        ] }
+        onChange={ ( hideauthor ) => { setAttributes( { hideauthor: hideauthor } ) } }
+    />
 				</form>
 			);
 		}

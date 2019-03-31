@@ -26,6 +26,11 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/upcoming', ['render_callback' => 'rsvpmaker_upcoming']);	
 	register_block_type('rsvpmaker/stripecharge', ['render_callback' => 'rsvpmaker_stripecharge']);	
 	register_block_type('rsvpmaker/limited', ['render_callback' => 'rsvpmaker_limited_time']);	
+	register_block_type('rsvpmaker/formfield', ['render_callback' => 'rsvp_form_field']);	
+	register_block_type('rsvpmaker/formtextarea', ['render_callback' => 'rsvp_form_field']);	
+	register_block_type('rsvpmaker/formselect', ['render_callback' => 'rsvp_form_field']);	
+	register_block_type('rsvpmaker/formradio', ['render_callback' => 'rsvp_form_field']);	
+	register_block_type('rsvpmaker/guests', ['render_callback' => 'rsvp_form_guests']);	
 }
 
 add_action('init','rsvpmaker_server_block_render');

@@ -91,7 +91,7 @@ global $wpdb;
 
 function rsvpmaker_get_templates() {
 	global $wpdb;
-	$sql = "SELECT DISTINCT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_sked' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
+	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_sked' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
 return $wpdb->get_results($sql);
 }
 
@@ -230,4 +230,51 @@ foreach($results as $row) {
 set_transient('rsvpmakerdates',$rsvpdates, HOUR_IN_SECONDS); 
 }
 
+function rsvpmaker_cleanup () {
+	global $wpdb;
+?>
+<h1>RSVPMaker Cleanup</h1>
+<?php
+if(isset($_POST['older_than']))
+{
+$older = (int) $_POST['older_than'];
+if(!isset($_POST['confirm']))
+{
+?>
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+<input type="hidden" name="confirm" value="1" />
+<input type="hidden" name="older_than" value="<?php echo $older; ?>" /> 
+<?php submit_button('Confirm Delete') ?>
+</form>
+<div>Preview</div>
+<?php	
+}
+	$sql = "SELECT DISTINCT ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(a1.meta_value,'%M %e, %Y') as date
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 WHERE a1.meta_value < DATE_SUB(NOW(),INTERVAL $older DAY) AND (post_status='publish' OR post_status='draft') ";
+	//echo $sql;
+	$results = $wpdb->get_results($sql);
+	foreach($results as $event)
+	{
+		$deleted = '';
+		if(isset($_POST['confirm']))
+		{
+			wp_delete_post($event->ID,true);
+			$deleted = '<span style="color:red">Deleted</span> ';
+		}
+		printf('<div>%s %s %s</div>',$deleted,$event->post_title,$event->date);
+	}
+}
+if(!isset($_POST['older_than']))
+{
+?>
+<p>Use this tool to clean up old events.</p>
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+Delete events older than <input type="text" name="older_than" value="30" /> days 
+<?php submit_button('Delete') ?>
+</form>
+<?php
+}//end initial form
+}
 ?>

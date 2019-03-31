@@ -35,7 +35,7 @@ var dateaction = "action=rsvpmaker_date&nonce="+rsvpmaker_ajax.ajax_nonce+"&post
 function related_link() {
 	if(rsvpmaker_ajax.special)
 		{
-		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>Additional Options</a></p></div>;	33
+		return <div class="rsvp_related_links"><p></p></div>;
 		}
 	if(rsvpmaker_json.projected_url)
 		{
@@ -259,7 +259,6 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
 			const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
 			const hasActiveMetaBoxes = wp.data.select( 'core/edit-post' ).hasMetaBoxes();
-			const currentNotices = wp.data.select('core/notices').getNotices();
 			
 			// Save metaboxes on save completion, except for autosaves that are not a post preview.
 			const shouldTriggerTemplateNotice = (
@@ -271,9 +270,7 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			wasSavingPost = isSavingPost;
 			wasAutosavingPost = isAutosavingPost;
 			wasPreviewingPost = isPreviewingPost;
-
-			console.log(currentNotices);
-			
+	
 			if ( shouldTriggerTemplateNotice ) {
 	wp.data.dispatch('core/notices').createNotice(
 		'info', // Can be one of: success, info, warning, error.
@@ -291,11 +288,6 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 		}
 	);
 			}
-			/* placeholder for logic to remove notice
-			else {
-				console.log('remove notice');
-			}
-			*/
 } );
 	
 }
