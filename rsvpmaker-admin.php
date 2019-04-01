@@ -727,11 +727,25 @@ printf('<div id="editconfirmation"><a target="_blank" href="%s">Edit</a></div>',
 <br />
  <input type="checkbox" name="option[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if( isset($options["rsvpmaker_send_confirmation_email"]) && $options["rsvpmaker_send_confirmation_email"] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?> <input type="checkbox" name="option[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( isset($options["confirmation_include_event"]) && $options["confirmation_include_event"] ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 	<br />
-					<h3><?php _e('RSVP Form','rsvpmaker'); ?> (<a href="#" id="enlarge"><?php _e('Enlarge','rsvpmaker'); ?></a>):</h3>
+<?php
+if(isset($options["rsvp_form"]) && is_numeric($options["rsvp_form"]))
+{
+echo '<h3>RSVP Form</h3>';
+$fpost = get_post($options["rsvp_form"]);
+$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
+$note = (strpos($fpost->post_content,'name="note"')) ? 'Yes' : 'No';
+preg_match_all('/\[([A-Za-z0_9_]+)/',$fpost->post_content,$matches);
+foreach($matches[1] as $match)
+	$fields[$match] = $match;
+printf('<div>Fields: %s<br />Guests: %s<br />Note field: %s</div>',implode(',',$fields),$guest,$note);
+$edit = admin_url('post.php?action=edit&post='.$options["rsvp_form"]);
+printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$edit);	
+}
+else
+{
+?>
+<h3><?php _e('RSVP Form','rsvpmaker'); ?> (<a href="#" id="enlarge"><?php _e('Enlarge','rsvpmaker'); ?></a>):</h3>
   <textarea name="option[rsvp_form]"  rows="5" cols="80" id="rsvpform"><?php if( isset($options["rsvp_form"]) ) echo htmlentities($options["rsvp_form"]);?></textarea>
-  
-<?php rsvp_form_setup_form($options["rsvp_form"]); ?>
-  
 <br /><button id="create-form">Generate Form</button> or <a href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php&reset_form=1'); ?>"><?php _e('Reset to default','rsvpmaker'); ?></a>
 <br /><?php _e("This is a customizable template for the RSVP form, introduced as part of the Aug. 2012 update. With the exception of the yes/no radio buttons and the notes textarea, fields are represented by the shortcodes [rsvpfield textfield=&quot;fieldname&quot;] or [rsvpfield selectfield=&quot;fieldname&quot; options=&quot;option1,option2&quot;]. There is also a [rsvpprofiletable show_if_empty=&quot;phone&quot;] shortcode which is an optional block that will not be displayed if the required details (such as a phone number) are already &quot;on file&quot; from a prior RSVP. For this to work, there must also be a [/rsvpprofiletable] closing tag. The guest section of the form is represented by [rsvpguests] (no parameters). If you don't want the guest blanks to show up, you can remove this. The form code you supply will be wrapped in a form tag with the CSS ID of",'rsvpmaker'); ?> &quot;rsvpform&quot;.
 <script>
@@ -740,6 +754,10 @@ jQuery('#enlarge').click(function() {
   return false;
 });
 </script>
+<?php
+rsvp_form_setup_form($options["rsvp_form"]);
+}
+?>
 	<br />
 					<h3><?php _e('RSVP Link','rsvpmaker'); ?>:</h3>
 
@@ -1855,8 +1873,8 @@ $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
 
-if(!is_numeric($rsvp_options['rsvp_form']))
-	echo '<div class="notice notice-info"><p>'.__('A new RSVP / registration form is available that is easier to customize','rsvpmaker').' <a href="'.admin_url('?upgrade_rsvpform=1').'">'.__("Updgrade?",'rsvpmaker').'</a><p></p>'.__('Note: if you previously customized the form, you will need to redo your custotomizations for the new format.').'.</p></div>';
+if(function_exists('do_blocks') && !is_numeric($rsvp_options['rsvp_form']))
+	echo '<div class="notice notice-info"><p>'.__('A new RSVP / registration form is available that is easier to customize','rsvpmaker').' <a href="'.admin_url('?upgrade_rsvpform=1').'">'.__("Upgrade?",'rsvpmaker').'</a><p></p>'.__('Note: if you previously customized the form, you will need to redo your custotomizations for the new format.').'.</p></div>';
 
 if(isset($_GET['update_messages']) && isset($_GET['t']))
 {
@@ -2994,6 +3012,7 @@ ORDER BY meta_value";
 	 $results = $wpdb->get_results($sql);
 	 $row[] = "{text: 'Pick One?', value: '0'}";
 	$row[] = "{text: 'Next Event', value: 'next'}";
+	$row[] = "{text: 'Next Event - RSVP On', value: 'nextrsvp'}";
 	 foreach ($results as $r)
 	 	$row[] = sprintf("{text: '%s', value: '%d'}",addslashes($r->post_title).' '.date('r',strtotime($r->datetime)),$r->ID);   
 
@@ -4400,7 +4419,20 @@ function rest_api_init_rsvpmaker () {
 
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
-
+//if(isset($post->post_type) && ($post->post_type=='rsvpmaker'))
+	//$special = get_post_meta($post->ID,'_rsvpmaker_special',true);
+	
+if(isset($post->post_title) && ( ($post->post_title == 'Confirmation:Default') || ($post->post_title == 'RSVP Form:Default') ) )
+{
+	$args = array(
+	'id'    => 'rsvpmaker_settings',
+	'title' => __('RSVPMaker Settings','rsvpmaker'),
+	'href'  => admin_url('options-general.php?page=rsvpmaker-admin.php'),
+	'meta'  => array( 'class' => 'edit-rsvpmaker-options'));
+	$wp_admin_bar->add_node( $args );
+	return;
+}
+	
 	if(isset($_GET['page']) && isset($_GET['post_id']) && ($_GET['page'] == 'rsvp_reminders'))
 	{
 	$post = get_post($_GET['post_id']);
@@ -4428,7 +4460,8 @@ if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type =
 	$wp_admin_bar->add_node( $args );
 	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
 		$args = array(
-		'id'    => 'rsvpmaker_parent',
+		'id'    => 'view_parent',
+		'parent'    => 'rsvpmaker_parent',
 		'title' => __('View Parent Event','rsvpmaker'),
 		'href'  => get_permalink($rsvp_parent),
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
@@ -4452,7 +4485,8 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 	$wp_admin_bar->add_node( $args );
 	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
 		$args = array(
-		'id'    => 'rsvpmaker_parent',
+		'parent'    => 'rsvpmaker_parent',
+		'id'    => 'view_parent',
 		'title' => __('View Parent Event','rsvpmaker'),
 		'href'  => get_permalink($rsvp_parent),
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
@@ -4541,6 +4575,16 @@ if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_details') && isset($_GET
 		'meta'  => array( 'class' => 'view-event')
 	);
 	$wp_admin_bar->add_node( $args );	
+	
+	$args = array(
+		'parent'    => 'edit-event',
+		'id' => 'confirmation_reminders',
+		'title' => 'Confirmation / Reminder Messages',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$_GET['post_id']),
+		'meta'  => array( 'class' => 'confirmation_reminders')
+	);
+	$wp_admin_bar->add_node( $args );
+	
 	}
 
 if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_scheduled_email_list') && isset($_GET['post_id']) )

@@ -45,7 +45,7 @@ registerBlockType( 'rsvpmaker/formfield', {
             },
         },
 	edit: function( props ) {
-	const { attributes: { label, slug, required }, setAttributes, isSelected } = props;
+	const { attributes: { label, slug, required, guestform }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
@@ -67,7 +67,7 @@ registerBlockType( 'rsvpmaker/formfield', {
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
 	save: function(props) {
-	const { attributes: { label, slug, required } } = props;
+	const { attributes: { label, slug, required, guestform } } = props;
 	var profilename = 'profile['+slug+']';
 	var type = (slug == 'email') ? 'email' : 'text';
 		// server render
@@ -102,9 +102,13 @@ registerBlockType( 'rsvpmaker/formtextarea', {
             type: 'string',
             default: '3',
             },
+            guestform: {
+            type: 'boolean',
+            default: false,
+            },
         },
 	edit: function( props ) {
-	const { attributes: { label, slug, rows }, setAttributes, isSelected } = props;
+	const { attributes: { label, slug, rows, guestform }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
@@ -126,7 +130,7 @@ registerBlockType( 'rsvpmaker/formtextarea', {
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
 	save: function(props) {
-	const { attributes: { label, slug, rows }, setAttributes, isSelected } = props;
+	const { attributes: { label, slug, rows, guestform }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';	
 			return (
 			<div className={ props.className }>
@@ -148,10 +152,11 @@ class FieldInspector extends Component {
 			setAttributes({label: label});
 			return;
 			}
-		let simpleSlug = label.replace(/[^A-Za-z0-9]+/,'_');
+		let simpleSlug = label.replace(/[^A-Za-z0-9]+/g,'_');
 		simpleSlug = simpleSlug.trim().toLowerCase();
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});
+		setAttributes({guestform: true});
 	}
 	function setRequired(toggleRequired) {
 		let required = (toggleRequired) ? 'required' : '';
@@ -186,10 +191,11 @@ class TextAreaInspector extends Component {
 	const { attributes, setAttributes, className } = this.props;
 	function setLabel(label) {
 		const slug = attributes.slug;
-		let simpleSlug = label.replace(/[^A-Za-z0-9]+/,'_');
+		let simpleSlug = label.replace(/[^A-Za-z0-9]+/g,'_');
 		simpleSlug = simpleSlug.trim().toLowerCase();
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});
+		setAttributes({guestform: true});
 	}
 		return (
 			<InspectorControls key="fieldinspector">
@@ -215,6 +221,13 @@ class TextAreaInspector extends Component {
         ] }
         onChange={ ( rows ) => { setAttributes( { rows: rows } ) } }
     />
+			<ToggleControl
+				label={ __( 'Include on Guest Form', 'rsvpmaker' ) }
+				checked={ attributes.guestform }
+				help={ attributes.required ? 'Included' : 'Not included' } 
+				onChange={ ( guestform ) => {setAttributes( {guestform: guestform} ) }}
+				 
+			/>
 				</PanelBody>
 				</InspectorControls>
 		);	} }
@@ -249,7 +262,7 @@ registerBlockType( 'rsvpmaker/formselect', {
         },
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
-	const { attributes: { label, slug, choicearray }, setAttributes, isSelected } = props;
+	const { attributes: { label, slug, choicearray, guestform }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
@@ -265,7 +278,7 @@ registerBlockType( 'rsvpmaker/formselect', {
 	},
 
 	save: function(props) {
-	const { attributes: { label, slug, choicearray } } = props;
+	const { attributes: { label, slug, choicearray, guestform } } = props;
 	var profilename = 'profile['+slug+']';
 		// server render
 			return (
@@ -308,7 +321,7 @@ registerBlockType( 'rsvpmaker/formradio', {
         },
 	edit: function( props ) {
 		// Creates a <p class='w-p-block-cgb-block-toast-block'></p>.
-	const { attributes: { label, slug, choicearray }, setAttributes, isSelected } = props;
+	const { attributes: { label, slug, choicearray, guestform }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
@@ -324,7 +337,7 @@ registerBlockType( 'rsvpmaker/formradio', {
 	},
 
 	save: function(props) {
-	const { attributes: { label, slug, choicearray } } = props;
+	const { attributes: { label, slug, choicearray, guestform } } = props;
 	var profilename = 'profile['+slug+']';
 		// server render
 			return (
@@ -342,10 +355,11 @@ class ChoiceInspector extends Component {
 	const { attributes, setAttributes, className } = this.props;
 	const choices =attributes.choicearray.join(',');
 	function setLabel(label) {
-		let simpleSlug = label.replace(/[^A-Za-z0-9]+/,'_');
+		let simpleSlug = label.replace(/[^A-Za-z0-9]+/g,'_');
 		simpleSlug = simpleSlug.trim().toLowerCase();
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});
+		setAttributes({guestform: true});
 	}
 		
 	function setChoices(choices) {
@@ -416,7 +430,7 @@ registerBlockType( 'rsvpmaker/guests', {
         ] }
         onChange={ ( limit ) => { setAttributes( { limit: limit } ) } }
     />
-<div className="guests">{__('Guests section will include fields you checked off above (such as First Name, Last Name), plus any others you embed below (to be collected from guests ONLY).','rsvpmaker')}<ul><li>{__('You MUST check "Include on Guest Form"','rsvpmaker')}</li><li>{__('"Required" checkbox does not work in guest fields','rsvpmaker')}</li></ul></div>
+<div className="guestnote">{__('Guests section will include fields you checked off above (such as First Name, Last Name), plus any others you embed below (information to be collected about guests ONLY).','rsvpmaker')}<ul><li>{__('You MUST check "Include on Guest Form"','rsvpmaker')}</li><li>{__('"Required" checkbox does not work in guest fields','rsvpmaker')}</li><li>{__('This block is not intended for use outside of an RSVPMaker RSVP Form document','rsvpmaker')}</li></ul></div>
 	<InnerBlocks />
 </div>
 		);

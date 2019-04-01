@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 6.0
+Version: 6.0.4
 */
 function get_rsvpversion(){
-return '6.0';
+return '6.0.4';
 }
 
 global $wp_version;
@@ -369,6 +369,12 @@ if(! $wpdb->get_var($sql) )
 
 $sql = "UPDATE $wpdb->posts SET post_type='rsvpemail' WHERE post_type='rsvpmaker' AND post_parent != 0 ";
 $wpdb->query($sql);
+
+if(empty($rsvp_options["dbversion"]) && function_exists('do_blocks'))
+	{
+	//if this is a new install and gutenberg editor is available
+	upgrade_rsvpform(false);
+	}
 
 $rsvp_options["dbversion"] = 10;
 update_option('RSVPMAKER_Options',$rsvp_options);

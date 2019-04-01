@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1.1
-Stable tag: 6.0
+Stable tag: 6.0.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 

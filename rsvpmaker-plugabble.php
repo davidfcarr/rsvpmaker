@@ -386,8 +386,7 @@ function GetRSVPAdminForm($postID)
 {
 global $custom_fields;
 global $post;
-global $rsvp_options;
-	
+global $rsvp_options;	
 
 $rsvp_on = (isset($custom_fields["_rsvp_on"][0]) && (!$custom_fields["_rsvp_on"][0])) ? 0 : 1;
 $include_event = $custom_fields["_rsvp_confirmation_include_event"][0];
@@ -533,16 +532,31 @@ for($i = 1; $i < 13; $i++)
 <br /><em><?php echo __('Used for volunteer shift signups. Duration must also be set.','rsvpmaker');?></em>
 <?php
 if(is_numeric($rsvp_form)) {
+	
+if(!empty($_POST['reset_form'])){
+	$rsvp_form = (int) $_POST['reset_form'];
+	update_post_meta($post->ID,'_rsvp_form',$rsvp_form);
+}
+	
 $fpost = get_post($rsvp_form);	
 $edit = admin_url('post.php?action=edit&post='.$fpost->ID);
 $customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
 echo '<h3 id="rsvpform">'. __('RSVP Form','rsvpmaker').'</h3>';	
+$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
+$note = (strpos($fpost->post_content,'name="note"')) ? 'Yes' : 'No';
+preg_match_all('/\[([A-Za-z0_9_]+)/',$fpost->post_content,$matches);
+foreach($matches[1] as $match)
+	$fields[$match] = $match;
+printf('<div>Fields: %s<br />Guests: %s<br />Note field: %s</div>',implode(',',$fields),$guest,$note);
 if($fpost->post_parent == 0)
 	printf('<div id="editconfirmation"><a href="%s">Edit Default Form</a></div><div><a href="%s">Customize</a></div>',$edit,$customize);
 elseif($fpost->post_parent != $post->ID)
 	printf('<div id="editconfirmation"><a href="%s">Edit Form From Template</a></div><div><a href="%s">Customize</a></div>',$edit,$customize);	
 else
+{
 	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$edit);
+	printf('<div><input type="checkbox" name="reset_form" value="%d" /> Reset to default form',$rsvp_options['rsvp_form']);
+}
 	}
 else {
 ?>
@@ -862,12 +876,6 @@ $rsvp_confirm = (isset($custom_fields["_rsvp_confirm"][0])) ? $custom_fields["_r
 
 //if permalinks are not turned on, we need to append to query string not add our own ?
 
-if(empty($rsvp["email"]) || empty($rsvp["first"]) || empty($rsvp["last"]) )
-	{
-	header('Location: '.$req_uri.'&err='.urlencode(__('Required fields: first, last, email','rsvpmaker')));
-	exit();
-	}
-
 if(isset($custom_fields["_rsvp_captcha"][0]) && $custom_fields["_rsvp_captcha"][0])
 	{
 	if(!isset($_SESSION["captcha_key"]))
@@ -887,9 +895,11 @@ if(!empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsv
 		}	
 	}
 		
-if(isset($_POST["required"]))
+if(isset($_POST["required"]) || empty($rsvp['email']))
 	{
 		$required = explode(",",$_POST["required"]);
+		if(!in_array('email',$required))
+			$required .= 'email';
 		$missing = "";
 		foreach($required as $r)
 			{
@@ -1081,12 +1091,6 @@ $count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE e
 $guest_sql = array();
 $guest_text = array();
 
-if(empty($rsvp["email"]) || empty($rsvp["first"]) || empty($rsvp["last"]) )
-	{
-	$req_uri = site_url('?post_type=rsvpmaker&p='.$event);
-	header('Location: '.$req_uri.'&err='.urlencode(__('Required fields: first, last, email','rsvpmaker')));
-	exit();
-	}
 if(is_admin())
 {
 	$req_uri = admin_url('edit.php?page=rsvp&post_type=rsvpmaker&event='.$event);
@@ -1115,9 +1119,11 @@ if(!empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsv
 		}	
 	}
 
-if(isset($_POST["required"]))
+if(isset($_POST["required"]) || empty($rsvp['email']))
 	{
 		$required = explode(",",$_POST["required"]);
+		if(!in_array('email',$required))
+			$required .= 'email';
 		$missing = "";
 		foreach($required as $r)
 			{
@@ -1130,6 +1136,10 @@ if(isset($_POST["required"]))
 			exit();
 			}
 	}
+if(!isset($rsvp['first']))
+	$rsvp['first'] = '';
+if(!isset($rsvp['last']))
+	$rsvp['last'] = '';
 if( isset($_POST["note"]) && preg_match_all('/http/',$_POST["note"],$matches) > 2 )
 	{
 	header('Location: '.$req_uri.'&err=Invalid input');
@@ -1852,13 +1862,12 @@ wp_die();
 if(!function_exists('basic_form') ) {
 function basic_form( $form = '') {
 global $rsvp_options;
-global $custom_fields;
-if(!empty($form))
-	echo do_shortcode($form);
-if(isset($custom_fields["_rsvp_form"][0]))
-	$form = $custom_fields["_rsvp_form"][0];
-else
+global $post;
+if(empty($form))
+	$form = get_post_meta($post->ID,'_rsvp_form',true);
+if(empty($form))
 	$form = $rsvp_options["rsvp_form"];
+	
 if(is_numeric($form))
 {
 	$fpost = get_post($form);

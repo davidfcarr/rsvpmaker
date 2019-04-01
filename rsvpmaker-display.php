@@ -27,7 +27,7 @@ return $content . rsvp_form_jquery();
 }
 
 function rsvp_form_jquery() {
-global $rsvp_required_field; // todo
+global $rsvp_required_field;
 global $post;
 ob_start();
 ?>
@@ -1436,7 +1436,10 @@ add_shortcode('ylchat','ylchat');
 
 function rsvpmaker_next ($atts = array())
 {
-$atts["post_id"] = 'next';
+if(!empty($atts['rsvp_on']))
+	$atts['post_id'] = 'nextrsvp';
+else
+	$atts["post_id"] = 'next';
 return rsvpmaker_one($atts);
 }
 
@@ -1453,18 +1456,43 @@ global $rsvp_options;
 $showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
 $content = '';
 
-if(isset($atts["one_format"]) && (($atts["one_format"] == 'button') || ($atts["one_format"] == 'button_only')))
-	$showbutton = 1;
-if(isset($atts["post_id"]))
-{
-//	if($atts["post_id"] == 'next')
-//		return rsvpmaker_next($atts);
-	$post_id = $atts["post_id"];	
+if(empty($atts['type'])) {
+//event type lookup is more complicated, but here are simple cases
+	if(isset($atts["one"]))
+		$atts['post_id'] = $atts["one"];
+	if(empty($atts['post_id']))
+		$atts['post_id'] = 'next';
+
+	if($atts['post_id'] == 'nextrsvp') 
+	{
+		$event = get_next_rsvp_on();
+		if(empty($event))
+			return;
+		$atts['post_id'] = $event->ID;
+	}
+	elseif($atts['post_id'] == 'next')
+	{
+		if(isset($atts['one_format']) && ( ($atts['one_format'] == 'button_only') || ($atts['one_format'] == 'form') || !empty($atts["showbutton"]) ) )
+			$event = get_next_rsvp_on();
+		else
+			$event = get_next_rsvpmaker();
+		if(empty($event))
+			return;
+		$atts['post_id']=$event->ID;
+	}
+
+	if(isset($atts['one_format'])) {
+		if($atts['one_format'] == 'button_only')
+			return get_rsvp_link($event->ID);
+		if($atts['one_format'] == 'form')
+			return rsvpmaker_form($atts['post_id']);
+	}
 }
-elseif(isset($atts["one"]))
-	$post_id = $atts["one"];
-else
-	return;
+
+if(isset($atts["one_format"]) && (($atts["one_format"] == 'button') || ($atts["one_format"] == 'button_only')) )
+	$showbutton = 1;
+
+$post_id = $atts["post_id"];	
 
 $backup_post = $post;
 $backup_query = $wp_query;
@@ -1512,9 +1540,10 @@ $offset = $atts["hide_past"];
 if(!is_rsvpmaker_future($post_id, $offset))
 	return;
 }
-
+rsvpmaker_debug_log($atts,'rsvpmaker_one atts');
 if(empty($atts["one_format"]) || ($atts["one_format"] == 'button'))
 {//one post loop
+rsvpmaker_debug_log('loop for event plus button','rsvpmaker_one atts');
 ob_start();
 ?>
 <div class="rsvpmaker_embedded">
@@ -1532,7 +1561,7 @@ if(!isset($atts["hide_title"]) || !$atts["hide_title"])
 
 <?php 
 	
-	if(isset($atts['one_format']) && ($atts["one_format"] == 'button')) {
+	if(isset($atts['one_format']) && ($atts["one_format"] == 'button_only')) {
 		$content = embed_dateblock($atts);
 	if(is_rsvpmaker_future($post_id)) 
 		{
@@ -1560,6 +1589,7 @@ else
 {
 	if($atts["one_format"] == 'button_only')
 	{
+	rsvpmaker_debug_log('one_format att = button_only','rsvpmaker_one atts');
 	if(is_rsvpmaker_future($post_id)) 
 		{
 		$content = get_rsvp_link($post_id);
@@ -1718,8 +1748,6 @@ if(is_rsvpmaker_future($event_id, 1))
 		return sprintf('<a href="%s">%s</a>',$permalink,__('Please register'));
 	}
 ; // if start time in the future (or within one hour)
-
-	
 	
 global $post;
 $permalink = get_permalink($post->ID);
@@ -1740,7 +1768,7 @@ if(isset($_GET["err"]))
   <?php if($rsvp_instructions) echo '<p>'.nl2br($rsvp_instructions).'</p>';?>
 
 <?php 
-echo do_shortcode($form);
+basic_form($form);
 
 if($captcha)
 {
@@ -1756,8 +1784,8 @@ do_action('rsvpmaker_after_captcha');
 if(function_exists('rsvpmaker_recaptcha_output'))
 	rsvpmaker_recaptcha_output();
 global $rsvp_required_field;
-if(isset($rsvp_required_field) )
-	echo '<div id="jqerror"></div><input type="hidden" name="required" id="required" value="'.implode(",",$rsvp_required_field).'" />';
+$rsvp_required_field['email'] = 'email';//at a minimum
+echo '<div id="jqerror"></div><input type="hidden" name="required" id="required" value="'.implode(",",$rsvp_required_field).'" />';
 ?>
         <p
           <input type="submit" id="rsvpsubmit" name="Submit" value="<?php  _e('Submit','rsvpmaker');?>" /> 

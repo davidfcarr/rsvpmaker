@@ -65,6 +65,32 @@ global $wpdb;
 return $wpdb->get_row($sql);
 }
 
+function get_events_rsvp_on($limit = 0) {
+global $wpdb;
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_rsvp_on' AND a2.meta_value=1 
+	 WHERE a1.meta_value > CURDATE() AND post_status='publish'
+	 ORDER BY a1.meta_value ASC ";
+	if($limit)
+		$sql .= " LIMIT 0,".$limit;
+	$wpdb->show_errors();
+	return $wpdb->get_results($sql);
+}
+
+function get_next_rsvp_on() {
+global $wpdb;
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_rsvp_on' AND a2.meta_value=1 
+	 WHERE a1.meta_value > CURDATE() AND post_status='publish'
+	 ORDER BY a1.meta_value ASC ";
+	$wpdb->show_errors();
+	return $wpdb->get_row($sql);
+}
+
 function get_events_by_template($template_id, $order = 'ASC', $output = OBJECT) {
 global $wpdb;
 	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
@@ -93,6 +119,25 @@ function rsvpmaker_get_templates() {
 	global $wpdb;
 	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_sked' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
 return $wpdb->get_results($sql);
+}
+
+function get_next_rsvpmaker ($where = '', $offset_hours = 0) {
+global $wpdb;
+$wpdb->show_errors();
+$startfrom = ($offset_hours) ? ' DATE_SUB(NOW(), INTERVAL '.$offset_hours.' HOUR) ' : ' NOW() ';
+
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
+	 if( !empty($where) )
+	 	{
+		$where = trim($where);
+		$where = str_replace('datetime','a1.meta_value',$where);
+		$sql .= ' AND '.$where.' ';
+		}
+	$sql .= ' ORDER BY a1.meta_value ';
+	return $wpdb->get_row($sql);
 }
 
 function get_future_events ($where = '', $limit='', $output = OBJECT, $offset_hours = 0) {

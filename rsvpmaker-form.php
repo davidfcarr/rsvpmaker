@@ -69,7 +69,7 @@ if(isset($_GET['customize_rsvpconfirm'])) {
 	$old = get_post($source);
 	if($old)
 	{
-	$new["post_title"] = "Confirmation:".$post->ID;
+	$new["post_title"] = "Confirmation:".$parent;
 	$new["post_parent"] = $parent;
 	$new["post_status"] = 'publish';
 	$new["post_type"] = 'rsvpemail';
@@ -85,7 +85,7 @@ if(isset($_GET['customize_form'])) {
 	$parent = (int) $_GET['post_id'];
 	if($old)
 	{
-	$new["post_title"] = "RSVP Form:".$source;
+	$new["post_title"] = "RSVP Form:".$parent;
 	$new["post_parent"] = $parent;
 	$new["post_status"] = 'publish';
 	$new["post_type"] = 'rsvpmaker';
@@ -123,15 +123,26 @@ function rsvp_field_apply_default($content,$slug,$default) {
 
 function rsvp_form_field($atts, $content) {
 	global $post;
+	global $rsvp_required_field;
+	if(empty($atts["slug"]) || empty($atts["label"]))
+		return;
 	$slug = $atts["slug"];
 	$label = $atts["label"];
+	
+	$output = '';
+if(isset($atts["required"]) || isset($atts["require"]))
+	{
+		$output = '<span class="required">'.$output.'</span>';
+		$rsvp_required_field[$slug] = $slug;
+	}	
+
 	update_post_meta($post->ID,'rsvpform'.$slug,$label);
 	global $profile;
 	//$profile = array('first' => 'David','last' => 'Carr','meal'=>'Chicken','dessert'=>'pie','email'=>'david@carrcommunications.com');
 	global $guestprofile;
 	if(!empty($guestprofile))
 		$profile = $guestprofile;
-	if(!empty($atts['guestform']))
+	if(!empty($atts['guestform'])) // if not set, default is true
 		rsvp_add_guest_field($content,$slug);
 	if(empty($profile[$slug]))
 		return $content;//.$slug.': no default'.var_export($profile,true);
