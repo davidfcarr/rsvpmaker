@@ -1,4 +1,4 @@
-﻿=== RSVPMaker ===
+=== RSVPMaker ===
 Contributors: davidfcarr
 Donate: http://www.rsvpmaker.com
 Tags: event, calendar, rsvp, custom post type, paypal, stripe, email, mailchimp, gutenberg
@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1.1
-Stable tag: 6.0.4
+Stable tag: 6.1.3
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,29 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 6.1.1 =
+
+* RSVPMaker Setup screen now gives more context on previously published events and works for adding a single event based on a template.
+* Notice after template is saved (in Gutenberg) now gives 2 options: New Event from template or Create / Update events.
+
+= 6.1.0 =
+
+* Trying to fix an issue with confirmation messages / payment buttons not showing up for logged in users.
+* Assigning slug to new draft posts.
+
+= 6.0.7 =
+
+Backwards compatibility for sites not running Gutenberg, specifically for confirmation messages.
+
+= 6.0.6 =
+
+* Important bug fix. Options screen was not working properly
+
+= 6.0.5 =
+
+* Added Edit / Customize RSVP Form to admin bar, where relevant
+* More bug fixes (also 6.0.1 to 6.0.4)
 
 = 6.0 =
 

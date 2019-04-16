@@ -58,7 +58,7 @@ elseif(isset($custom_fields["_sked"][0]) || isset($_GET["new_template"]) )
 
 if(isset($custom_fields["_meet_recur"][0]))
 	{
-		$t = (int) $custom_fields["_meet_recur"][0];
+	$t = (int) $custom_fields["_meet_recur"][0];
 if($post_id)
 printf('<p><a href="%s">%s</a> | <a href="%s">%s</a> | <a href="%s">%s</a> | <a href="%s">%s</a></p>',admin_url('post.php?action=edit&post='.$t),__('Edit Template Content','rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t), __('Edit Template Options','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t),__('See Related Events','rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target='.$post->ID.'&apply_current='.$t.'#applytemplate
 '),__('Switch Template','rsvpmaker'));
@@ -86,7 +86,7 @@ foreach($results as $index => $row)
 		$dur = strtotime($dur);
 	if($dur != 'allday')
 		echo strftime(' '.$rsvp_options["time_format"],$t);
-	if(is_numeric($dur) )
+	if(is_numeric($dur)  )
 		echo " to ".strftime ($rsvp_options["time_format"],$dur);
 	echo sprintf(' <input type="checkbox" name="delete_date[]" value="%s" /> %s<br />',$row["datetime"],__('Delete','rsvpmaker'));
 	rsvpmaker_date_option($row, $index, date('Y-m-d',$t));
@@ -99,7 +99,21 @@ else
 	echo '<p><em>'.__('Enter one or more dates. For an event starting at 1:30 p.m., you would select 1 p.m. (or 13: for 24-hour format) and then 30 minutes. Specifying the duration is optional.','rsvpmaker').'</em> </p>';
 	$t = time();
 	}
-if($start == 0)
+
+if(isset($_GET['t']))
+{
+	$t = (int) $_GET['t'];
+	$sked = get_post_meta($t,'_sked',true);
+	$times = rsvpmaker_get_projected($sked);
+	foreach($times as $ts)
+	{
+		if($ts > time())
+			break;
+	}
+	rsvpmaker_date_option($ts, 0, date('Y-m-d',$ts));
+	$start = 1;
+}
+elseif($start == 0)
 	{
 	$start = 1;
 	$date = (isset($_GET["add_date"]) ) ? $_GET["add_date"] : 'today';
@@ -121,6 +135,7 @@ rsvpmaker_date_option($date, $i, date('Y-m-d',$t));
 if(isset($add_dates_div))
 	echo "\n</div><!--add dates-->\n";
 
+if(!isset($_GET['t'])) // if this is based on a template, use the template defaults
 rsvp_time_options($post_id);
 
 if(isset($_GET["debug"]))
@@ -361,7 +376,7 @@ global $wp_roles;
 if(!isset($wp_roles) )
 	$wp_roles = new WP_Roles();
 // if roles persist from previous session, return
-if($wp_roles->roles["administrator"]["capabilities"]["edit_rsvpmakers"])
+if(!empty($wp_roles->roles["administrator"]["capabilities"]["edit_rsvpmakers"]))
 	return;
 
 if(isset($wp_roles->roles))
@@ -476,17 +491,17 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <?php
 echo $confirm->post_content;
 
-$confedit = admin_url('post.php?action=edit&post='.$confirm->ID);
+$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID);
 $customize = admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
 $reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
 	
 if($confirm->post_parent == 0)
-	printf('<div id="editconfirmation"><a href="%s">Edit Default Confirmation Message</a></div><div><a href="%s">Customize</a></div>',$confedit,$customize);
+	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
 elseif($confirm->post_parent != $post->ID)
-	printf('<div id="editconfirmation"><a href="%s">Edit Template Confirmation Message</a></div><div><a href="%s">Customize</a></div>',$confedit,$customize);	
+	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
 else
-	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$confedit);
-printf('<div><a href="%s">Create / Edit Reminders</a></div>',$reminders);	
+	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
+printf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);	
 ?>
 <?php
 if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"]))
@@ -539,7 +554,7 @@ if(!empty($_POST['reset_form'])){
 }
 	
 $fpost = get_post($rsvp_form);	
-$edit = admin_url('post.php?action=edit&post='.$fpost->ID);
+$edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$postID);
 $customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
 echo '<h3 id="rsvpform">'. __('RSVP Form','rsvpmaker').'</h3>';	
 $guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
@@ -549,12 +564,12 @@ foreach($matches[1] as $match)
 	$fields[$match] = $match;
 printf('<div>Fields: %s<br />Guests: %s<br />Note field: %s</div>',implode(',',$fields),$guest,$note);
 if($fpost->post_parent == 0)
-	printf('<div id="editconfirmation"><a href="%s">Edit Default Form</a></div><div><a href="%s">Customize</a></div>',$edit,$customize);
+	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 elseif($fpost->post_parent != $post->ID)
-	printf('<div id="editconfirmation"><a href="%s">Edit Form From Template</a></div><div><a href="%s">Customize</a></div>',$edit,$customize);	
+	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 else
 {
-	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$edit);
+	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$edit);
 	printf('<div><input type="checkbox" name="reset_form" value="%d" /> Reset to default form',$rsvp_options['rsvp_form']);
 }
 	}
@@ -1202,9 +1217,11 @@ if(isset($_POST["payingfor"]) && is_array($_POST["payingfor"]) )
 		$price = (float) $_POST["price"][$index];
 		$price = check_coupon_code($price);
 		$cost = $value * $price;
+		/*
 		if(isset($rsvp["payingfor"]) && $rsvp["payingfor"])
 			$rsvp["payingfor"] .= ", ";
-		$rsvp["payingfor"] .= "$value $unit @ ".number_format($price,2,$rsvp_options["currency_decimal"],$rsvp_options["currency_thousands"]) . ' '.$rsvp_options["paypal_currency"];
+		*/
+		$rsvp["payingfor"] .= '<div class="payingfor">'."$value $unit @ ".number_format($price,2,$rsvp_options["currency_decimal"],$rsvp_options["currency_thousands"]) . ' '.$rsvp_options["paypal_currency"].'</div>';
 		$rsvp["total"] += $cost;
 		$participants += $value;
 		}
@@ -2109,13 +2126,13 @@ elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
 	
 if(($e && isset($_GET["rsvp"]) ) || is_user_logged_in() )
 	{
-	if(is_user_logged_in())
+	if(isset($_GET["rsvp"]))
+		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE ".$wpdb->prepare("event=%d AND email=%s AND id=%d",$post->ID,$e,$_GET["rsvp"]);	
+	elseif(is_user_logged_in())
 		{
 		global $current_user;
 		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE ".$wpdb->prepare("event=%d AND email=%s",$post->ID,$current_user->user_email);
 		}
-	else
-		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE ".$wpdb->prepare("event=%d AND email=%s AND id=%d",$post->ID,$e,$_GET["rsvp"]);
 	$rsvprow = $wpdb->get_row($sql, ARRAY_A);
 	$e = (isset($rsvprow["email"])) ? $rsvprow["email"] : '';
 	if($rsvprow && is_single() ) // don't display in an events listing
@@ -2314,7 +2331,7 @@ elseif($rsvp_on && (is_single() || is_admin() ) ) //
 <?php if ($rsvp_yesno) { echo '<p>'.__('Your Answer','rsvpmaker');?>: <input name="yesno" type="radio" value="1" <?php if(!isset($rsvprow) || $rsvprow["yesno"]) echo 'checked="checked"';?> /> <?php echo __('Yes','rsvpmaker');?> <input name="yesno" type="radio" value="0" <?php if(isset($rsvprow["yesno"]) && ($rsvprow["yesno"] == 0)) echo 'checked="checked"';?> /> <?php echo __('No','rsvpmaker').'</p>'; } else echo '<input name="yesno" type="hidden" value="1" />'; ?> 
 <?php
 
-if($dur && ( $slotlength = $custom_fields["_rsvp_timeslots"][0] ))
+if($dur && ( $slotlength = !empty($custom_fields["_rsvp_timeslots"][0]) ))
 {
 ?>
 <div><?php echo __('Number of Participants','rsvpmaker');?>: <select name="participants">
@@ -4640,25 +4657,13 @@ $eds = array();
 	if($recurid)
 	{
 		$eds = get_post_meta($recurid,'_additional_editors',false);
-		$author = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID = $recurid");
-		if(!in_array($author, $eds))
-		{
-			$eds[] = $author;
-		}
 	}
 	$post_eds = get_post_meta($post_id,'_additional_editors',false);
-	$author = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID = $post_id");		
-	if(!in_array($author, $post_eds))
-	{
-		$post_eds[] = $author;
-	}
-
 	foreach($post_eds as $this_eds)
 	{
 		if(!in_array($this_eds, $eds))
 			$eds[] = $this_eds;
 	}
-
 return $eds;
 }
 }// end if exists

@@ -109,7 +109,7 @@ global $wpdb;
 	 FROM ".$wpdb->posts."
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
 	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." 
-	 WHERE a1.meta_value > CURDATE() AND post_status='publish'
+	 WHERE a1.meta_value > CURDATE() AND (post_status='publish' OR post_status='draft')
 	 ORDER BY a1.meta_value ".$order;
 	$wpdb->show_errors();
 	return $wpdb->get_row($sql, $output);
@@ -139,6 +139,27 @@ $startfrom = ($offset_hours) ? ' DATE_SUB(NOW(), INTERVAL '.$offset_hours.' HOUR
 	$sql .= ' ORDER BY a1.meta_value ';
 	return $wpdb->get_row($sql);
 }
+
+function get_events_by_author ($author, $limit='', $status = "") {
+global $wpdb;
+$wpdb->show_errors();	
+	if($status == 'publish')
+		$status_sql = " AND post_status='publish' ";
+	else
+		$status_sql = " AND ($wpdb->posts.post_status='publish' OR $wpdb->posts.post_status='draft') ";
+	
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 WHERE $wpdb->posts.post_author=$author AND a1.meta_value > NOW()".$status_sql;
+	$sql .= ' ORDER BY a1.meta_value ';
+	 if( !empty($limit) )
+		$sql .= ' LIMIT 0,'.$limit.' ';
+	if(!empty($_GET["debug_sql"]))
+		echo $sql;
+	return $wpdb->get_results($sql);
+}
+
 
 function get_future_events ($where = '', $limit='', $output = OBJECT, $offset_hours = 0) {
 global $wpdb;
@@ -266,6 +287,7 @@ if(!empty($rsvpdates))
 $rsvpdates = get_transient('rsvpmakerdates');
 if(!empty($rsvpdates))
 	return;
+$rsvpdates = array();
 $sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='_rsvp_dates' AND meta_value > NOW() ORDER BY meta_value LIMIT 0, $limit";
 $results = $wpdb->get_results($sql);
 if($results)

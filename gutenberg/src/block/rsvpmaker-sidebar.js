@@ -272,6 +272,7 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			wasPreviewingPost = isPreviewingPost;
 	
 			if ( shouldTriggerTemplateNotice ) {
+				var newurl = rsvpmaker_json.projected_url.replace('template_list','setup');
 	wp.data.dispatch('core/notices').createNotice(
 		'info', // Can be one of: success, info, warning, error.
 		__('After updating this template, click'), // Text string to display.
@@ -281,9 +282,16 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			// Any actions the user can perform.
 			actions: [
 				{
+					url: newurl,
+					label: __('New Event based on template'),
+				},
+				{
+					label: ' or ',
+				},
+				{
 					url: rsvpmaker_json.projected_url,
-					label: __('create / update events')
-				}
+					label: __('Create / Update events'),
+				},
 			]
 		}
 	);

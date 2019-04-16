@@ -667,12 +667,13 @@ if ( have_posts() ) {
 global $events_displayed;
 while ( have_posts() ) : the_post();
 $events_displayed[] = $post->ID;
-
+/*
 if(is_email_context ()) {
 	$embed = event_to_embed($post->ID,$post); // simplified formatting for email
-	echo $embed["content"];
+	echo $embed["content"].'<p>email version</em>';
 	continue;
 }
+*/
 ?>
 
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
@@ -698,7 +699,7 @@ $authorlink = sprintf( '<span class="author vcard"><a class="url fn n" href="%1$
 ?>
 </div>
 <?php
-if(current_user_can('edit_post',$post->ID) )
+if(current_user_can('edit_post',$post->ID) && !is_email_context())
 	{
 		echo '<p><a href="'.admin_url('post.php?action=edit&post='.$post->ID).'">Edit</a></p>';
 	}

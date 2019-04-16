@@ -176,7 +176,9 @@ function rsvpmaker_date_option($datevar = NULL, $index = NULL, $jquery_date = NU
 global $rsvp_options;
 $prefix = "event_";
 fix_timezone();
-if(is_array($datevar) )
+if(is_int($datevar))
+	$t = $datevar;
+elseif(is_array($datevar) )
 {
 	$datestring = $datevar["datetime"];
 	//dchange - check this
@@ -191,23 +193,18 @@ else
 {
 	$datestring = $datevar;
 }
-
-if(strpos($datestring,'-'))
+if(!empty($datestring))
 	{
+	$datestring = str_replace('Every','Next',$datestring);
 	$t = strtotime($datestring);
+	}
+if(!empty($t))
+{
 	$month =  (int) date('m',$t);
 	$year =  (int) date('Y',$t);
 	$day =  (int) date('d',$t);
 	$hour =  (int) date('G',$t);
 	$minutes =  (int) date('i',$t);
-	}
-elseif($datestring == 'today')
-	{
-	$month =  (int) date('m');
-	$year =  (int) date('Y');
-	$day =  (int) date('d');
-	$hour = (isset($rsvp_options["defaulthour"])) ? ( (int) $rsvp_options["defaulthour"]) : 19;
-	$minutes = (isset($rsvp_options["defaultmin"])) ? ( (int) $rsvp_options["defaultmin"]) : 0;
 	}
 else
 	{
@@ -347,16 +344,14 @@ else
 </table>
 </div>
 <?php
-
 }
 
 function save_rsvp_meta($postID)
 {
 $setrsvp = $_POST["setrsvp"];
-if(empty($setrsvp['form']))
+if(empty($setrsvp['to']) )
 {
 rsvpmaker_defaults_for_post($postID); //if details not set, import defaults
-return;
 }
 $checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno');
 foreach($checkboxes as $check)
@@ -1718,13 +1713,15 @@ global $rsvp_options;
 do_action('rsvpmaker_admin_menu_top');
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
-add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Templates",'rsvpmaker'), __("Event Templates",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
+if(!empty($rsvp_options['additional_editors']))
+	add_submenu_page('edit.php?post_type=rsvpmaker', __("Share Templates",'rsvpmaker'), __("Share Templates",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_share", "rsvpmaker_share" );
 if($rsvp_options["show_screen_recurring"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Recurring Event",'rsvpmaker'), __("Recurring Event",'rsvpmaker'), $rsvp_options["recurring_event"], "add_dates", "add_dates" );
 if(!empty($rsvp_options["show_screen_multiple"]))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events","rsvpmaker"), __("Multiple Events",'rsvpmaker'), $rsvp_options["multiple_events"], "multiple", "multiple" );
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Documentation",'rsvpmaker'), __("Documentation",'rsvpmaker'), $rsvp_options["documentation"], "rsvpmaker_doc", "rsvpmaker_doc" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'manage_options', "rsvp_reminders", "rsvp_reminders" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
 if(isset($rsvp_options["debug"]) && $rsvp_options["debug"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', "Debug", "Debug", 'manage_options', "rsvpmaker_debug", "rsvpmaker_debug");
 do_action('rsvpmaker_admin_menu_bottom');
@@ -2045,7 +2042,6 @@ function rsvpmaker_sort_message() {
 	}
 }
 
-
 function rsvpmaker_get_projected($template) {
 
 if(!isset($template["week"]))
@@ -2116,7 +2112,7 @@ else {
 				$wtext = '+'. ($week - 1) .' week';
 			foreach($firstdays as $i => $firstday)
 				{
-				$datetext =  "$wtext ".rsvpmaker_day($dow,'strtotime')." ".date("F Y",$firstday);
+				$datetext =  "$wtext ".rsvpmaker_day($dow,'strtotime')." ".date("F Y",$firstday).' '.$template['hour'].':'.$template['minutes'].':00';
 				$ts = strtotime($datetext);
 				if(isset($stopdate) && $ts > $stopdate)
 					break;
@@ -2269,10 +2265,6 @@ $wpdb->show_errors();
 				}
 }
 
-function reminder_events_menu () {
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Scheduled Reminders",'rsvpmaker'), __("RSVP Reminders",'rsvpmaker'), 'manage_options', "rsvp_reminders", "rsvp_reminders" );
-}
-
 function rsvp_reminder_options($hours = -2) {
 $ho = array(-1,-2,-3,-4,-5,-6,-7,-8,-12,-16,-20,-24,-48,-72,1,2,3,4,5,6,7,8,12,16,20,24,28,32,36,40,44,48,72);
 $o = "";
@@ -2359,6 +2351,8 @@ function rsvp_get_confirm($post_id) {
 	{
 		$id = $content;
 		$conf_post= get_post($id);
+		if(!strpos($conf_post->post_content,'!-- /wp'))//if it's not Gutenberg content
+			$conf_post->post_content = wpautop($conf_post->post_content);
 		if(function_exists('do_blocks'))
 			$conf_post->post_content = do_blocks($conf_post->post_content);
 		$title = (!empty($post->post_title)) ? $post->post_title : 'not set';
@@ -2495,10 +2489,19 @@ if($post_id)
 if(rsvpmaker_is_template($post_id))
 	printf('<p><em>%s</em></p>',__('This is an event template: The confirmation and reminder messages you set here will become the defaults for future events based on this template. The [datetime] placeholder in subject lines will be replaced with the specific event date.','rsvpmaker'));
 
-$conf_post = rsvp_get_confirm($post_id);
+$confirm = rsvp_get_confirm($post_id);
 printf('<h2>Confirmation</h2>');
-echo $conf_post->post_content;
-printf('<p><a href="%s">Edit</a></p>',admin_url('post.php?action=edit&post='.$conf_post->ID));
+echo $confirm->post_content;
+
+$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post_id);
+$customize = admin_url('?post_id='. $post_id. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
+	
+if($confirm->post_parent == 0)
+	printf('<div id="editconfirmation"><a href="%s">Edit</a> (default from Settings)</div><div><a href="%s">Customize</a></div>',$confedit,$customize);
+elseif($confirm->post_parent != $post_id)
+	printf('<div id="editconfirmation"><a href="%s">Edit</a> (inherited from Template)</div><div><a href="%s">Customize</a></div>',$confedit,$customize);	
+else
+	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$confedit);
 
 $sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
 
@@ -2549,366 +2552,6 @@ else {
 	printf('<form method="get" action="%s"><input type="hidden" name="page" value="rsvp_reminders"><input type="hidden" name="post_type" value="rsvpmaker"><select name="post_id">%s</select><button>Get</button></form>',admin_url('edit.php'),$o);
 }
 
-/*
-if(isset($_POST['timeid']))
-{
-	$source_id = (int) $_POST['to_template_source'];
-	$hours = (int) $_POST['to_template_hours'];
-	$template_id = (int) $_POST['to_template_template'];
-	$message = get_post_meta($source_id, '_rsvp_reminder_msg_'.$hours,true);
-	$subject = stripslashes($_POST['to_template_subject']);
-	foreach($_POST['timeid'] as $timeid)
-	{
-	$parts = explode(':',$timeid);
-	$ts = (int) $parts[0];
-	$target_id = (int) $parts[1];
-	$reminder_subject = strftime($subject,$ts);
-	update_post_meta($target_id,'_rsvp_reminder_msg_'.$hours,$message);
-	update_post_meta($target_id,'_rsvp_reminder_subject_'.$hours,$reminder_subject);
-	rsvpmaker_reminder_cron($hours, $ts, $target_id);
-	if($hours > 0)
-		{
-		printf('<div class="updated">Setting follow up for %s hours after %s</div>',$hours, strftime($rsvp_options["long_date"],$ts));
-		}
-	else
-		printf('<div class="updated">Setting reminder for %s hours before %s</div>',abs($hours), strftime($rsvp_options["long_date"],$ts));		
-	}
-}
-	
-if(isset($_GET['to_template']))
-{
-	$t = (int) $_GET['to_template'];
-	$hours = (int) $_GET['hours'];
-	$source_id = (int) $_GET['post_id'];
-	$source_post = get_post($source_id);
-	$subject = ($hours < 0) ? 'REMINDER: ' : 'FOLLOW UP: ';
-	$subject .= $source_post->post_title.' '.$rsvp_options['long_date'].' '.$rsvp_options['time_format'];
-	$doc = '<p>See date codes <a href="http://php.net/manual/en/function.strftime.php">documentation</a></p>';
-	printf('<form method="post" action="%s">Subject:<br /><input type="text" size="80" name="to_template_subject" value="%s" />%sHours %s<input type="hidden" name="to_template_hours" value="%s" /><input type="hidden" name="to_template_template" value="%s" /><input type="hidden" name="to_template_source" value="%s" /> ',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders'),$subject,$doc,$hours,$hours,$t,$source_id);
-	$t_events = get_events_by_template($t);
-	
-	echo '<div id="multireminder"><p><input type="checkbox" id="checkall" title="Check all"> Check all</p><fieldset>';
-	foreach($t_events as $anevent)
-	{
-	$target_id = $anevent->ID;
-	$datetime = $anevent->datetime;
-	$ts = strtotime($datetime);
-	$title = $anevent->post_title;
-	//printf('<p>%s %s source %s target %s hour %s template %s</p>',$title,strftime($rsvp_options['long_date'],$ts),$source_id,$target_id,$hours,$t);
-	if($source_id == $target_id)
-	{
-		printf('<p>Source: %s %s </p>',$title, strftime($rsvp_options['long_date'],$ts));
-	}
-	else
-	{
-		printf('<p><input type="checkbox" name="timeid[]" value="%d:%d" /> %s %s </p>',$ts,$target_id, $title, strftime($rsvp_options['long_date'],$ts));
-	}
-	}
-	echo '</fieldset></div>';
-	submit_button();
-	echo '</form>';
-}
-
-if(isset($_POST["hours"]))
-{
-	$hours = (int) $_POST["hours"];
-	$post_id = (int) $_POST["post_id"];
-	$ist = rsvpmaker_is_template($post_id);
-	$start_time = $_POST["start_time"];
-	$ts = strtotime($start_time);
-	$message = $_POST["message"];
-	$subject = $_POST["subject"];
-	update_post_meta($post_id, '_rsvp_reminder_msg_'.$hours,$message);
-	update_post_meta($post_id, '_rsvp_reminder_subject_'.$hours,$subject);
-	if($hours > 0)
-		{
-		printf('<div class="updated">Setting follow up for %s hours after start time</div>',$hours);
-		}
-	else
-		printf('<div class="updated">Setting reminder for %s hours before start time</div>',abs($hours));
-	if(rsvpmaker_is_template($post_id))
-	{
-		echo 'This is a template';
-		rsvpmaker_template_reminder_add($hours,$post_id);
-		rsvpautorenew_test (); // will add to the next scheduled event associated with template
-	}
-	else
-	{
-		rsvpmaker_reminder_cron($hours, $start_time, $post_id);
-	}
-}
-
-if(isset($_POST["_rsvp_confirm"])) {
-	$post_id = (int) $_POST['post_id'];
-	update_post_meta($post_id, '_rsvp_confirm',$_POST["_rsvp_confirm"]);
-		printf('<div class="updated">Confirmation message updated. <a href="%s">Add a reminder</a>?</div>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder&hours=-2&post_id=').$post_id );
-}
-
-if(isset($_GET["delete_reminder"])) {
-	$post_id = (int) $_GET["post_id"];
-	$hours = (int) $_GET["hours"];
-	delete_post_meta($post_id, '_rsvp_reminder_msg_'.$hours);
-	delete_post_meta($post_id, '_rsvp_reminder_subject_'.$hours);
-	wp_clear_scheduled_hook( 'rsvpmaker_send_reminder_email', array( $post_id, $hours ) );
-}
-
-if(isset($_GET["message_type"])) {
-	$type = $_GET["message_type"];
-	$post_id = (int) $_GET["post_id"];
-	if(rsvpmaker_is_template($post_id))
-	{
-		$event = get_post($post_id);
-		$prettydate = '[datetime]';
-	}
-	else
-	{
-		$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-		FROM `".$wpdb->postmeta."`
-		JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates' 
-		WHERE $wpdb->posts.ID =" . $post_id;
-		$event = $wpdb->get_row($sql);
-		$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
-	}
-	$titledate = $event->post_title.' '.$prettydate;
-
-	$confirm = "";
-	if($type == 'reminder')
-	{
-		$hours = (int) $_GET["hours"];
-		$content = get_post_meta($post_id,'_rsvp_reminder_msg_'.$hours,true);
-		$subject = get_post_meta($post_id,'_rsvp_reminder_subject_'.$hours,true);
-		if(empty($subject))
-			{
-			if($hours < 0)
-				{
-				$subject = "REMINDER: ".$event->post_title.' '.$prettydate;
-				$sql = "SELECT * FROM  `$wpdb->postmeta` WHERE meta_key REGEXP '_rsvp_reminder_msg_-[0-9]{1,2}' AND  `post_id` = " . $post_id. ' ORDER BY meta_key';
-				}
-			else
-				{
-				$subject = "Follow up from  ".$event->post_title;
-				$sql = "SELECT * FROM  `$wpdb->postmeta` WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}' AND  `post_id` = " . $post_id. ' ORDER BY meta_key';
-				}					
-			$row = $wpdb->get_row($sql);
-			if($row)
-				{ // if no message for same hour, model on another reminder / follow up message
-				$content = $row->meta_value;
-				$subject = get_post_meta($post_id,str_replace('msg','subject',$row->meta_key),true);
-				}
-			}
-		
-		echo '<h2>'.__('Edit Reminder Message','rsvpmaker')."</h2>";
-		$editor_id = "message";
-?>
-<form method="post" action = "<?php echo admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders'); ?>">
-<input type="hidden" name="post_id" value="<?php echo $post_id; ?>" >
-<input type="hidden" name="start_time" value="<?php echo $event->datetime; ?>" >
-<p>Timing: <select name="hours"><?php echo rsvp_reminder_options($hours); ?></select></p>
-
-<p>Subject: <input type="text" name="subject" value="<?php echo $subject; ?>" size="100"></p>
-<?php
-echo "<p>".__( 'Edit and save this text to create an email reminder.','rsvpmaker' )."</p>";
-	}
-	else
-	{
-		echo '<h2>'.__('Edit Confirmation Message','rsvpmaker')."</h2>";
-		$editor_id = "_rsvp_confirm";
-?>
-<h3><?php echo $titledate; ?></h3>
-<form method="post" action = "<?php echo admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders'); ?>">
-<input type="hidden" name="post_id" value="<?php echo $post_id; ?>" >
-<?php
-	}
-
-if(empty($content) )
-	$content = get_post_meta($post_id,'_rsvp_confirm',true);	
-	
-
-$settings = array(
-	'media_buttons' => false,
-    'tinymce'       => array(
-        'toolbar1'      => 'bold,italic,separator,alignleft,aligncenter,alignright,separator,link,unlink,undo,redo',
-        'toolbar2'      => '',
-        'toolbar3'      => '',
-    ),
-);
-//prevent other plugins from modifying editor
-add_filter('mce_external_plugins','no_mce_plugins',99);
-rsvpmaker_wp_editor( $content, $editor_id, $settings );
-?>
-<p><button>Save</button></p>
-</form>
-<?php
-}
-
-if(isset($_REQUEST["post_id"]))
-	{
-	$id = (int) $_REQUEST["post_id"];
-	if(rsvpmaker_is_template($id))
-	{
-	$event = get_post($id);
-	$prettydate = 'Template';
-	}
-	else {
-	$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE (meta_value > CURDATE( ) OR ID=$id ) AND $wpdb->posts.post_status = 'publish'
-ORDER BY datetime LIMIT 0, 50";
-	$event = $wpdb->get_row($sql);
-	$prettydate = date('l F jS g:i A T',strtotime($event->datetime));		
-	}
-$confirm = get_post_meta($id,'_rsvp_confirm',true);
-$titledate = $event->post_title.' '.$prettydate;
-
-$s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->postID ) ? ' selected="selected" ' : '';
-
-$options .= sprintf('<option value="%d" %s>%s</option>',$event->ID, $s, $titledate);
-$confirm = get_post_meta($event->ID,'_rsvp_confirm',true);
-if(!empty($confirm))
-	{
-	printf('<h3>Confirmation Message: %s</h3>%s',$titledate,wpautop($confirm));
-	printf('<p><a href="%s">Edit</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation').'&post_id='.$event->ID);
-	}
-
-$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$event->ID AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
-$reminders = $wpdb->get_results($sql);
-foreach ($reminders as $reminder)
-	{
-	$hour = (int) str_replace('_rsvp_reminder_msg_','',$reminder->meta_key);
-	$subject = get_post_meta($event->ID,'_rsvp_reminder_subject_'.$hour,true);
-	//echo $hour;
-	if($hour < 0)
-		$existing .= '<p><em>'.sprintf(__("Set for %s hours before the start of the event",'rsvpmaker'),abs($hour)).'</em></p>';
-	else	
-		$existing .= '<p><em>'.sprintf(__("Set for %s hours after the start of the event",'rsvpmaker'),$hour).'</em></p>';
-	$template_prompt = '';
-	if($template = has_template($event->ID))
-		$template_prompt = sprintf(' | <a href="%s">Apply to Events with Same Template</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders').'&to_template='.$template.'&hours='.$hour.'&post_id='.$event->ID);
-	elseif($template = rsvpmaker_is_template($event->ID))
-		$template_prompt = sprintf(' | <a href="%s">Apply to Events with Same Template</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders').'&to_template='.$template.'&hours='.$hour.'&post_id='.$event->ID);
-
-	$existing .= sprintf('<h3>Subject: %s</h3>',$subject);	
-	$existing .= wpautop($reminder->meta_value);
-	$existing .= sprintf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a> %s</p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder').'&hours='.$hour.'&post_id='.$reminder->post_id,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete_reminder=1').'&hours='.$hour.'&post_id='.$reminder->post_id, $template_prompt );
-	}
-	
-	}
-
-$cron_jobs = _get_cron_array();
-$now = time();
-foreach ($cron_jobs as $key => $job)
-	{
-		if(($key > $now) && isset($job["rsvpmaker_send_reminder_email"]) )
-			{
-			$onejob = array_shift($job["rsvpmaker_send_reminder_email"]);
-			$reminder_event = (int) $onejob['args'][0];
-			$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-			FROM `".$wpdb->postmeta."`
-			JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates' 
-			WHERE $wpdb->posts.ID =" . $reminder_event;
-			$event = $wpdb->get_row($sql);
-			$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
-			$label = $event->post_title.' '.$prettydate.' ';
-			$hour = (int) $onejob['args'][1];
-			if($hour > 0)
-				$label .= __('Follow up','rsvpmaker').': '.$hour.' '.__('hours after','rsvpmaker');
-			else
-				$label .= __('Reminder','rsvpmaker').': '.abs($hour).' '.__('hours before','rsvpmaker');
-			$existing .= sprintf('<p><em><a href="%s">%s</a></em></p>',admin_url('edit.php?hours='.$hour.'&post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder&post_id='.$reminder_event),$label );
-	$subject = get_post_meta($event->postID,'_rsvp_reminder_subject_'.$hour,true);
-	$message = get_post_meta($event->postID,'_rsvp_reminder_msg_'.$hour,true);
-	$existing .= sprintf('<h3>Subject: %s</h3>',$subject);	
-	$existing .= wpautop($message);
-	$template_prompt = '';
-	if($template = has_template($event->ID))
-		$template_prompt = sprintf(' | <a href="%s">Apply to Events with Same Template</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders').'&to_template='.$template.'&hours='.$hour.'&post_id='.$event->ID);
-	$existing .= sprintf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a> %s </p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder').'&hours='.$hour.'&post_id='.$reminder_event,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete_reminder=1').'&hours='.$hour.'&post_id='.$reminder_event,$template_prompt );
-			}
-	}
-	
-	$tlist = rsvpmaker_get_templates();
-	if($tlist)
-	{
-		foreach($tlist as $t)
-		{
-			$rcron = get_post_meta($t->ID,'rsvpmaker_template_reminder',true);
-			if(!empty($rcron))
-			{
-				foreach($rcron as $hours)
-				$existing .= sprintf('<p>Template reminders: <a href="%s">%s (%d hours)</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=reminder&hours='.$hours.'&post_id='.$t->ID),$t->post_title,$hours);	
-			}
-		}
-	}
-	
-if(!empty($existing))
-	echo '<h3>Previously Set Reminders</h3>'.$existing;	
-
-foreach($templates as $event)
-{
-$confirm = get_post_meta($event->ID,'_rsvp_confirm',true);
-$titledate = 'Template: '.$event->post_title;
-$s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->ID ) ? ' selected="selected" ' : '';
-$options .= sprintf('<option value="%d" %s>%s</option>',$event->ID, $s, $titledate);		
-}
-
-// future events
-$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value > CURDATE( ) AND $wpdb->posts.post_status = 'publish'
-ORDER BY datetime LIMIT 0, 50";
-$events = $wpdb->get_results($sql);
-
-foreach($events as $event) {
-$confirm = get_post_meta($event->postID,'_rsvp_confirm',true);
-$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
-$titledate = $event->post_title.' '.$prettydate;
-
-$s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->postID ) ? ' selected="selected" ' : '';
-
-$options .= sprintf('<option value="%d" %s>%s</option>',$event->postID, $s, $titledate);
-}
-	
-// past events
-$past_options = '<optgroup label="' .__('Recent Events','rsvpmaker').'">';
-$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value > DATE_SUB(CURDATE(),INTERVAL 1 WEEK) && meta_value < CURDATE( ) AND $wpdb->posts.post_status = 'publish'
-ORDER BY meta_value DESC LIMIT 0, 50";
-$events = $wpdb->get_results($sql);
-foreach ($events as $event)
-{
-$prettydate = date('l F jS g:i A T',strtotime($event->datetime));
-$titledate = $event->post_title.' '.$prettydate;
-
-$s = (isset($_REQUEST["post_id"]) && $_REQUEST["post_id"] == $event->postID ) ? ' selected="selected" ' : '';
-
-$past_options .= sprintf('<option value="%d" %s>%s</option>',$event->postID, $s, $titledate);
-}
-$past_options .= '</optgroup>';
-
-?>
-<h3><?php _e('Edit Confirmation Message','rsvpmaker'); ?></h3>
-<form method="get" action = "<?php echo admin_url('edit.php'); ?>">
-<input type="hidden" name="post_type" value="rsvpmaker" >
-<input type="hidden" name="page" value="rsvp_reminders" >
-<input type="hidden" name="message_type" value="confirmation" >
-<p><select name="post_id"><?php echo $options; ?></select></p>
-<p><button><?php _e('Load','rsvpmaker');?></button></p>
-</form>
-
-<h3><?php _e('Create Reminder Message','rsvpmaker'); ?></h3>
-<form method="get" action = "<?php echo admin_url('edit.php'); ?>">
-<p><?php _e('Timing','rsvpmaker');?>: <select name="hours"><?php echo rsvp_reminder_options(); ?></select></p>
-<input type="hidden" name="post_type" value="rsvpmaker" >
-<input type="hidden" name="page" value="rsvp_reminders" >
-<input type="hidden" name="message_type" value="reminder" >
-<p><select name="post_id"><?php echo $options; echo $past_options; ?></select></p>
-<p><button><?php _e('Load','rsvpmaker');?></button></p>
-</form>
-*/
 ?>
 <h3><?php _e('A Note on More Reliable Scheduling','rsvpmaker');?></h3>
 <p><?php _e('RSVPMaker takes advantage of WP Cron, a standard WordPress scheduling mechanism. Because it only checks for scheduled tasks to be run when someone visits your website, WP Cron can be imprecise -- which could be a problem if you want to make sure a reminder will go out an hour before your event, if that happens to be a low traffic site. Caching plugins can also get in the way of regular WP Cron execution. Consider following <a href="http://code.tutsplus.com/articles/insights-into-wp-cron-an-introduction-to-scheduling-tasks-in-wordpress--wp-23119">these directions</a> to make sure your server checks for scheduled tasks to run on a more regular schedule, like once every 5 or 15 minutes.','rsvpmaker');?></p>
@@ -3362,7 +3005,6 @@ if ( ! empty( $upload_dir['basedir'] ) ) {
     $fname = $upload_dir['basedir'].'/rsvpmaker_log_'.date('Y-m-d').'.txt';
 	file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
 }
-
 }
 
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
@@ -4255,7 +3897,7 @@ function rsvpmaker_details() {
 ?>
 <div class="wrap" style="margin-right: 200px;"> 
 	<div id="icon-edit" class="icon32"><br /></div>
-<h1><?php _e('RSVP Details','rsvpmaker'); ?></h1>
+<h1><?php _e('RSVP / Event Options','rsvpmaker'); ?></h1>
 <?php
 
 if(isset($_POST['publish_draft']) && isset($_REQUEST['post_id']))
@@ -4263,13 +3905,13 @@ if(isset($_POST['publish_draft']) && isset($_REQUEST['post_id']))
 	
 if(isset($_REQUEST['post_id']))
 	$post = get_post((int) $_REQUEST['post_id']);
-if($post->post_status != 'publish')
+if(isset($post->post_status) && ($post->post_status != 'publish') )
 	printf('<h2>Post not published, status = <span style="color:red">%s</span></h2>',$post->post_status);
 if(isset($_POST["_require_webinar_passcode"]))
 	{
 	update_post_meta($post->ID,'_require_webinar_passcode',$_POST["_require_webinar_passcode"]);
 	}
-elseif(isset($_POST['post_id']))
+if(isset($_POST['post_id']))
 {
 	$template_prompt = (isset($_POST['sked'])) ? sprintf(' - <a href="%s">%s</a> %s',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=') . $post->ID, __('Create/update events','rsvpmaker'),__('based on this template','rsvpmaker') ) : '';
 	printf('<div class="notice notice-info"><p>%s%s</p></div>',__('Saving RSVP Options','rsvpmaker'),$template_prompt);
@@ -4325,7 +3967,7 @@ else
 	?>
 <p><?php _e('Use this form for additional RSVPMaker settings.','rsvpmaker')?> <?php printf('<a href="%s">%s</a>',admin_url('post.php?post='.$post->ID.'&action=edit'),__('Return to editor','rsvpmaker'))?></p>	
 	<?php
-printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID));
+printf('<form method="post" action="%s" id="rsvpmaker_details">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID));
 	
 $date = get_rsvp_date($post->ID);
 	$datef = (empty($date)) ? '' : date('F j, Y',strtotime($date));
@@ -4348,6 +3990,29 @@ submit_button();
 echo '</div>';
 	
 printf('<input type="hidden" name="post_id" value="%d" /></form>',$post->ID);
+?>
+<script>
+jQuery(document).ready(function( $ ) {
+var unsaved = false;
+$(":input").change(function(){ //triggers change in all input fields including text type
+    unsaved = true;
+});
+
+$('#rsvpmaker_details').submit(function() {
+    unsaved = false;
+});
+
+function unloadPage(){ 
+    if(unsaved){
+        return "Changes you made may not be saved.";
+    }
+}
+window.onbeforeunload = unloadPage;
+	
+});
+
+</script>
+<?php
 }
 
 ?>
@@ -4417,6 +4082,20 @@ function rest_api_init_rsvpmaker () {
         ) );
 }
 
+function rsvp_form_url($post_id) {
+	global $rsvp_options;
+	$current_form = get_post_meta($post_id,'_rsvp_form',true);
+	if(empty($current_form))
+		$current_form = $rsvp_options['rsvp_form'];
+	if(!is_numeric($current_form))
+		return;
+	$form_post = get_post($current_form);
+	if(empty($form_post->post_parent) ||($form_post->post_parent != $post_id))
+		return admin_url('?post_id='.$post_id.'&customize_form='.$current_form); // customize url 
+	else
+		return admin_url('post.php?action=edit&post=').$current_form; // edit url
+}
+
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
 //if(isset($post->post_type) && ($post->post_type=='rsvpmaker'))
@@ -4430,6 +4109,29 @@ if(isset($post->post_title) && ( ($post->post_title == 'Confirmation:Default') |
 	'href'  => admin_url('options-general.php?page=rsvpmaker-admin.php'),
 	'meta'  => array( 'class' => 'edit-rsvpmaker-options'));
 	$wp_admin_bar->add_node( $args );
+	$wp_admin_bar->remove_node( 'view' );
+	
+	if(!empty($_GET['back']))
+	{
+	$rsvp_parent = (int) $_GET['back'];//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+		
+		$args = array(
+		'id'    => 'rsvpmaker_parent',
+		'title' => __('Return to Event Editor','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit-rsvpmaker')
+	);
+	$wp_admin_bar->add_node( $args );
+	$args = array(
+		'parent'    => 'rsvpmaker_parent',
+		'id'    => 'rsvpmaker_options',
+		'title' => 'RSVP / Event Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+	$wp_admin_bar->add_node( $args );
+	}
+	
 	return;
 }
 	
@@ -4437,10 +4139,10 @@ if(isset($post->post_title) && ( ($post->post_title == 'Confirmation:Default') |
 	{
 	$post = get_post($_GET['post_id']);
 		$args = array(
-		'id'    => 'rsvpmaker_parent',
+		'id'    => 'rsvpmaker_edit',
 		'title' => __('Edit Event','rsvpmaker'),
 		'href'  => admin_url('post.php?action=edit&post='.$post->ID),
-		'meta'  => array( 'class' => 'edit-rsvpmaker-options'));
+		'meta'  => array( 'class' => 'edit-rsvpmaker'));
 	$wp_admin_bar->add_node( $args );
 	}
 	
@@ -4455,7 +4157,7 @@ if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type =
 		'id'    => 'rsvpmaker_parent',
 		'title' => __('Edit Parent Event','rsvpmaker'),
 		'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
-		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+		'meta'  => array( 'class' => 'edit-rsvpmaker')
 	);
 	$wp_admin_bar->add_node( $args );
 	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
@@ -4464,7 +4166,7 @@ if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type =
 		'parent'    => 'rsvpmaker_parent',
 		'title' => __('View Parent Event','rsvpmaker'),
 		'href'  => get_permalink($rsvp_parent),
-		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+		'meta'  => array( 'class' => 'view-rsvpmaker')
 	);
 	$wp_admin_bar->add_node( $args );
 	if($post->post_type == 'rsvpemail')
@@ -4510,6 +4212,20 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'meta'  => array( 'class' => 'confirmation_reminders')
 	);
 	$wp_admin_bar->add_node( $args );
+		
+	$formurl = rsvp_form_url($rsvp_parent);
+	if(!empty($formurl) && !strpos($post->post_title,'Form:'))
+	{
+	$args = array(
+		'parent'    => 'rsvpmaker_parent',
+		'id' => 'edit_form',
+		'title' => 'Edit / Customize Form',
+		'href'  => $formurl,
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	$wp_admin_bar->add_node( $args );		
+	}
+		
 	return;
 	}
 	$args = array(
@@ -4528,7 +4244,7 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'meta'  => array( 'class' => 'confirmation_reminders')
 	);
 	$wp_admin_bar->add_node( $args );
-		
+
 	if($t = has_template($post->ID))
 	{
 	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Edit Template'), 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'meta' => array('class' => 'rsvpmaker-edit-template')));		
@@ -4547,6 +4263,19 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 	
 	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Send RSVP Email'), 'id' => 'rsvpmaker-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'rsvpmaker-to-email')));
 	
+	$formurl = rsvp_form_url($post->ID);
+	if(!empty($formurl))
+	{	
+	$args = array(
+		'parent'    => 'rsvpmaker_options',
+		'id' => 'edit_form',
+		'title' => 'Edit / Customize RSVP Form',
+		'href'  => $formurl,
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	$wp_admin_bar->add_node( $args );
+	}
+	
 	if(rsvpmaker_is_template())
 	{
 	$args = array(
@@ -4561,17 +4290,18 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 	}
 if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_details') && isset($_GET['post_id']) )
 	{
+	$post_id = (int) $_GET['post_id'];
 	$args = array(
 		'id'    => 'edit-event',
 		'title' => 'Edit Event',
-		'href'  => admin_url('post.php?action=edit&post='.$_GET['post_id']),
+		'href'  => admin_url('post.php?action=edit&post='.$post_id),
 		'meta'  => array( 'class' => 'edit-event')
 	);
 	$wp_admin_bar->add_node( $args );	
 	$args = array(
 		'id'    => 'view-event',
 		'title' => 'View Event',
-		'href'  => get_permalink($_GET['post_id']),
+		'href'  => get_permalink($post_id),
 		'meta'  => array( 'class' => 'view-event')
 	);
 	$wp_admin_bar->add_node( $args );	
@@ -4580,10 +4310,21 @@ if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_details') && isset($_GET
 		'parent'    => 'edit-event',
 		'id' => 'confirmation_reminders',
 		'title' => 'Confirmation / Reminder Messages',
-		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$_GET['post_id']),
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id),
 		'meta'  => array( 'class' => 'confirmation_reminders')
 	);
 	$wp_admin_bar->add_node( $args );
+	
+	$formurl = rsvp_form_url($post_id);
+		
+	$args = array(
+		'parent'    => 'edit-event',
+		'id' => 'edit_form',
+		'title' => 'Edit / Customize RSVP Form',
+		'href'  => $formurl,
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	$wp_admin_bar->add_node( $args );	
 	
 	}
 
@@ -4617,13 +4358,13 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpemail') && (is_admin()  
 }
 
 function rsvpmaker_setup () {
-global $rsvp_options;
+global $rsvp_options, $current_user;
 ?>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div> 
-<h2><?php _e('Set Event Title and Schedule','rsvpmaker'); ?></h2> 
+<h2><?php _e('Event Setup','rsvpmaker'); ?></h2> 
 <?php
-if(!isset($_GET['new_template'])){
+if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	echo '<div style="float: right; background-color: #fff; padding: 10px; border: thin dotted #555; width: 200px;">';
 	printf('%s<br />%s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('switch to' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
 	//if(!empty($list))
@@ -4631,11 +4372,41 @@ if(!isset($_GET['new_template'])){
 	do_action('rsvpmaker_setup_template_prompt');
 	echo '</div>';
 }
-
+$title = '';
+$template = 0;
+if(isset($_GET['t']))
+{
+	$post = get_post((int) $_GET['t']);
+	$title = htmlentities($post->post_title);
+	$template = $post->ID;
+	$future = get_events_by_template($template);
+	$shortlist = $morelist = '';
+	if($future) {
+		foreach($future as $index => $event) {
+			$temp = sprintf('<p><a href="%s">Edit event</a>: %s %s</p>',admin_url('post.php?action=edit&post='.$event->ID),$event->post_title,$event->date);
+			if($index < 5)
+				$shortlist .= $temp;
+			else
+				$morelist .= $temp;
+		}
+	if(!empty($morelist))
+		$morelist = '<p id="morelink"><a onclick="document.getElementById'."('moreprojected').style.display='block'".';document.getElementById'."('morelink').style.display='none'".'" >Show More</a></p><div id="moreprojected" style="display: none;">'.$morelist.'</div>';
+	echo '<div style="border: medium solid #999; padding: 15px;"><h2>'.__('Previously Scheduled','rsvpmaker').'</h2>'.$shortlist.$morelist.'</div>';
+	
+	echo '<p><em>'.__('To create a new event based on this template, use the form below.','rsvpmaker').'</em><p>';
+	}
+}
+?>
+<h2><?php _e('Set Event Title and Schedule','rsvpmaker'); ?></h2> 
+<?php
 printf('<p><em>%s</em></p>',__('Start by entering an event title and date or schedule details. A draft event post will be created and loaded into the editor.'));
-printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
-echo '<h1 style="font-size: 20px;">Title: <input type="text" name="rsvpmaker_new_post" style="font-size: 20px; width: 60%" /></h1>';
+printf('<form action="%s" method="post"><input type="hidden" name="template" value="%d">', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'),$template);
+echo '<h1 style="font-size: 20px;">Title: <input type="text" name="rsvpmaker_new_post" style="font-size: 20px; width: 60%" value="'.$title.'" /></h1>';
 draw_eventdates();
+if(isset($_GET['t']))
+	echo '<p><em>'.__('Event will inherit defaults from template for RSVPs, date format options.','rsvpmaker').'</em></p>';
+else
+{
 $rsvp_on = $rsvp_options['rsvp_on'];
 ?>
 <p>
@@ -4644,23 +4415,56 @@ $rsvp_on = $rsvp_options['rsvp_on'];
 <?php _e('YES','rsvpmaker');?> <input type="radio" name="setrsvp[on]" id="setrsvpon" value="0" <?php if( !$rsvp_on ) echo 'checked="checked" ';?> />
 <?php _e('NO','rsvpmaker');?> </p>
 <?php
+}
 submit_button();
 echo '</form></div>';
+	
+	if(isset($_GET['t']))
+		return;
+	
+	$myevents = get_events_by_author($current_user->ID);
+	if($myevents)
+	{
+		printf('<h3>%s</h3>',__('Your Event Posts','rsvpmaker'));
+		foreach($myevents as $event){
+			$draft = ($event->post_status == 'draft') ? ' <strong>(draft)</strong>' : '';
+			printf('<p><a href="%s">Edit event</a>: %s %s %s</p>',admin_url('post.php?action=edit&post='.$event->ID),$event->post_title,$event->date,$draft);			
+		}
+	}
 	
 	$templates = rsvpmaker_get_templates();
 	$tedit = $list = '';
 	foreach($templates as $template)
 	{
-	if(current_user_can('edit_rsvpmaker',$template->ID))
+	$eds = get_additional_editors($template->ID);
+	if(($current_user->ID == $template->post_author) || (!empty($eds) && in_array($current_user->ID,$eds) ) )
 	{
 		$tedit .= sprintf('<option value="%s">%s</option>',$template->ID,$template->post_title);
+		$list .= '<p><strong>'.$template->post_title.'</strong></p>';
+		$event = rsvpmaker_next_by_template($template->ID);
+		if($event)
+		{
+		$draft = ($event->post_status == 'draft') ? ' <strong>(draft)</strong>' : '';
+		$list .= sprintf('<p><a href="%s">Edit next event</a>: %s %s %s</p>',admin_url('post.php?action=edit&post='.$event->ID),$event->post_title,$event->date, $draft);			
+		}
+		$list .= sprintf('<p><a href="%s">Add event</a> based on template: %s</p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&t='.$template->ID),$template->post_title);			
+		$list .= sprintf('<p><a href="%s">Create / Update</a> multiple events based on: %s</p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$template->ID),$template->post_title);		
+		$list .= sprintf('<p><a href="%s">Edit template</a> %s</p>',admin_url('post.php?action=edit&post='.$template->ID),$template->post_title);		
 	}
 
 	}
 	if(!empty($tedit))
 	{
 		printf('<h3>%s</h3><p>%s</p>',__('Your Templates','rsvpmaker'),__('Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series.','rsvpmaker'));
-		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>',admin_url('post.php'),$tedit,get_submit_button(__('Edit','rsvpmaker')));
+		echo $list;
+
+		printf('<form action="%s" method="get">
+		<input type="hidden" name="post_type" value="rsvpmaker">
+		<input type="hidden" name="page" value="rsvpmaker_setup">
+		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Add Event','rsvpmaker')));
+
+		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>',admin_url('post.php'),$tedit,get_submit_button(__('Edit Template','rsvpmaker')));
+
 		printf('<form action="%s" method="get">
 		<input type="hidden" name="post_type" value="rsvpmaker">
 		<input type="hidden" name="page" value="rsvpmaker_template_list">
@@ -4672,9 +4476,26 @@ echo '</form></div>';
 function rsvpmaker_setup_post () {
 if(!empty($_POST["rsvpmaker_new_post"]))
 	{
-		$post_id = wp_insert_post(array('post_title' => stripslashes($_POST["rsvpmaker_new_post"]),'post_type' => 'rsvpmaker','post_status' => 'draft','post_content' => ''));
+		$t = 0;
+		$title = stripslashes($_POST["rsvpmaker_new_post"]);
+		if(!empty($_POST['event_year'][0]))
+			$slug = $title.'-'.$_POST['event_year'][0].'-' .$_POST['event_month'][0] .'-'.$_POST['event_day'][0];
+		else
+			$slug = $title;
+		$content = array('post_title' => $title,'post_name' => $slug, 'post_type' => 'rsvpmaker','post_status' => 'draft','post_content' => '');
+		if(!empty($_POST['template']))
+		{	
+			$t = (int) $_POST['template'];
+			$template = get_post($t);
+			$content['post_content'] = $template->post_content;
+		}
+		$post_id = wp_insert_post($content);
 		if($post_id)
 		{
+		if($t) {
+			add_post_meta($post_id,'_meet_recur',$t);
+			rsvpmaker_copy_metadata($t, $post_id);
+		}
 		if(!empty($_POST['setrsvp']['on']))
 			rsvpmaker_defaults_for_post($post_id);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
@@ -4741,5 +4562,139 @@ function rsvpmaker_export_screen () {
 <?php
 									 
 }
+
+function rsvpmaker_override () {
+	global $post, $current_user;
+	if(!empty($_GET['post']) && !empty($_GET['action']) && ($_GET['action'] == 'edit') )
+	{
+		$post_id = (int) $_GET['post'];
+		if(current_user_can('edit_post',$post_id))
+			return; // don't mess with it
+		if(empty($post))
+		$post = get_post($post_id);
+		if($post->post_author != $current_user->ID) {
+			$eds = get_additional_editors($post_id);
+			if(in_array($current_user->ID,$eds))
+			{
+			if(!in_array($post->post_author,$eds))
+			{
+			add_post_meta($post_id, '_additional_editors',$post->post_author);
+			}
+			wp_update_post(array('ID' => $post_id, 'post_author' => $current_user->ID));
+			}
+		}
+	}
+}
+
+add_action('admin_init','rsvpmaker_override',1);
+
+function rsvpmaker_share() {
+?>	
+	<h1>Share Templates</h1>
+	<p>When you create an event template, you have the option of designating other users who will have the same authoring / editing rights to that template (and all the events based on it) as you do. This is helpful for organizations where more than one person needs to be able to post and update events.</p>
+	<p>Be careful to only grant this permission to trusted collaborators.</p>
+<?php	
+	global $current_user;
+	if(isset($_REQUEST['t']))
+		$t = (int) $_REQUEST['t'];
+	
+	if(!empty($_POST['editor_email']) && !empty($t)) {
+		$email = $_POST['editor_email'];
+		if(!is_email($email))
+		{
+			echo '<p>Invalid email</p>';
+		}
+		else {
+			$user = get_user_by('email',$email);
+			if($user) {
+				add_post_meta($t,'_additional_editors',$user->ID);
+				echo '<p>Adding '.$email.'</p>';
+			}
+			else {
+			$user["user_login"] = $email;
+			$user["user_email"] = $email;
+			$user["display_name"] = 'Editor added by '.$current_user->user_email;
+			$user["user_pass"] = wp_generate_password();
+			$user['role'] = 'author';
+			$id = wp_insert_user($user);
+			if($id)
+			{
+			add_post_meta($t,'_additional_editors',$id);
+?>
+<h3>Editor account created</h3>
+<p>Email and username are both set to <?php echo $email; ?></p>
+<p><strong>IMPORTANT</strong>: Please contact the person you have added and let them know to set their password so they will be able to assist you. Send them this link:</p>
+<p><a href="https://www.bluebroward.org/wp-login.php?action=lostpassword">https://www.bluebroward.org/wp-login.php?action=lostpassword</a></p>
+<?php
+			}
+				
+			}
+		}
+	}
+	
+	if(isset($_POST['remove_editor']) && is_array($_POST['remove_editor']))
+	foreach($_POST['remove_editor'] as $ed)
+		delete_post_meta($t,'_additional_editors',$ed);
+	
+	if(!empty($t))
+	{
+	$template = get_post($t);
+	$editors = '';
+	$eds = get_additional_editors($template->ID);
+	if(!is_array($eds))
+		$eds = array();
+	if(current_user_can('edit_rsvpmaker',$template->ID) || (!empty($eds) && in_array($current_user->ID,$eds) ) )
+	{
+		if(!in_array($template->post_author,$eds))
+		{
+			$eds[] = $template->post_author;
+		}
+		foreach($eds as $ed) {
+			$user = get_userdata($ed);
+			$remove = (isset($_GET['remove'])) ? sprintf('<input type="checkbox" name="remove_editor[]" value="%s" /> Remove ',$ed) : '';
+			$editors .= '<div>'.$remove.$user->user_email.' '.$user->display_name.'</div>';
+		}
+	}
+	
+	if(!empty($editors))
+	{
+		$editors = '<h3>Current Editors</h3>'.$editors;
+	}
+		printf('<h2>Update Editors List</h2><form action="%s" method="post">%s
+		<p><input type="hidden" name="t" value="%s" />
+		Add by Email: <input type="email" name="editor_email" />
+		%s</p></form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share'),$editors,$t,get_submit_button(__('Save','rsvpmaker')));
+	}
+	
+	$templates = rsvpmaker_get_templates();
+	$tedit = $list = '';
+	foreach($templates as $template)
+	{
+	$eds = get_additional_editors($template->ID);
+	if(current_user_can('edit_rsvpmaker',$template->ID) || (!empty($eds) && in_array($current_user->ID,$eds) ) )
+	{
+		$tedit .= sprintf('<option value="%s">%s</option>',$template->ID,$template->post_title);
+	}
+
+	}
+if(empty($tedit))
+	echo "<p>You don't have any templates</p>";
+else
+{
+		printf('<form action="%s" method="get">
+		<input type="hidden" name="post_type" value="rsvpmaker">
+		<input type="hidden" name="page" value="rsvpmaker_share">
+		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Choose Template','rsvpmaker')));
+	
+		printf('<form action="%s" method="get">
+		<input type="hidden" name="post_type" value="rsvpmaker">
+		<input type="hidden" name="page" value="rsvpmaker_share">
+		<input type="hidden" name="remove" value="1">
+		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Remove Editors','rsvpmaker')));	
+	
+}
+	
+}
+
 
 ?>

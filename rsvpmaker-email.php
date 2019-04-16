@@ -48,7 +48,7 @@ function rsvpmailer($mail) {
 		$subject = $mail["subject"];
 		if(!empty($mail["html"]))
 			{
-			$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe='.$to),$content);
+			$mail["html"] = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe='.$to),$mail["html"]);
 			
 				$body = $mail["html"];
 				
@@ -527,6 +527,8 @@ class MailChimpRSVP
 					if(isset($_POST[$name]))
 					$options[$name] = $_POST[$name];
 				  	}
+				  if(empty($_POST['chimp_add_new_users']))
+					 $options['chimp_add_new_users'] = false;
                   update_option($this->db_option, $options);
 
 				if(isset($_POST["add_cap"]))
@@ -2220,10 +2222,12 @@ function event_to_embed($post_id, $embed = NULL) {
 		$event_embed["content"] .= "<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
 		}
 		$post = $backup;
-		if(!function_exists('do_blocks')){
-			$event_embed["content"] = preg_replace('/<!--([^>]+)>/Uis', '', $event_embed["content"]);
-			$event_embed["content"] = wpautop($event_embed["content"]);
+		if(function_exists('do_blocks')){
+			$event_embed["content"] = do_blocks($event_embed["content"]);			
 		}
+		else 
+		$event_embed["content"] = wpautop($event_embed["content"]);
+
 		return $event_embed;
 }
 
@@ -2290,13 +2294,25 @@ function rsvpmaker_cron_email_preview_now() {
 
 add_filter( 'post_row_actions', 'rsvpmaker_row_actions', 10, 2 );
 function rsvpmaker_row_actions( $actions, WP_Post $post ) {
+	global $current_user;
 	$allowed = array('rsvpmaker','post');
     if ( !in_array($post->post_type,$allowed)) {
         return $actions;
     }
+	if(current_user_can('edit_post',$post->ID))
+	{
 	if($post->post_type == 'rsvpmaker')
 	$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID,__('Event Options','rsvpmaker'));
-    $actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Send RSVP Email','rsvpmaker'));
+    $actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Send RSVP Email','rsvpmaker'));		
+	}
+	else {
+	if($post->post_type == 'rsvpmaker')
+	{
+		$eds = get_additional_editors($post->ID);
+		if(!empty($eds) && in_array($current_user->ID,$eds))
+			$actions['edit_override'] = sprintf('<a href="%s">%s</a>',admin_url('post.php?action=edit&post=').$post->ID,__('Edit','rsvpmaker'));
+	}
+	}
     return $actions;
 }
 
@@ -2706,5 +2722,26 @@ function previewtest () {
 		rsvpmaker_cron_email_preview(array('post_id' => (int) $_GET['rsvpmaker_cron_email_preview']));
 		die('preview end');
 }
+
+function check_mailchimp_email ($email) {
+$chimp_options = get_option('chimp');
+$apikey = $chimp_options["chimp-key"];
+$listId = $chimp_options["chimp-list"];
+$email = trim(strtolower($email));
+$MailChimp = new MailChimpRSVP($apikey);	
+$member = $MailChimp->get("/lists/".$listId."/members/".md5($email));
+if(isset($_GET['debug']))
+{
+	echo '<pre>';
+	print_r($member);
+	echo '</pre>';
+}
+if (!empty($member["id"]) && ($member["status"] == 'subscribed'))
+	return $member;
+else
+	return false;
+}
+//$user = get_user_by( 'email', $email );
+
 
 ?>

@@ -98,6 +98,7 @@ $vars['email'] = $_POST['stripeEmail'];
 if(!empty($vars['paymentType']) && strpos($vars['paymentType'],'scription:'))
 	return rsvpmaker_stripe_subscription($vars);
 ob_start();
+echo 'processing payment ...';
 require_once('stripe-php/init.php');
 
 $public = get_option('rsvpmaker_stripe_pk');
@@ -220,21 +221,20 @@ function rsvpmaker_stripe_add_name() {
 	$vars = $row->meta_value;
 	if(!empty($vars))
 		$vars = unserialize($vars);
-	$confirmation = get_post_meta($post_id,$confkey,true);
-	if(!empty($confirmation))
+	$vars = array('name'=>$name)+$vars;
+	$sql = $wpdb->prepare("UPDATE $wpdb->postmeta SET meta_value=%s WHERE meta_id=%d",serialize($vars),$row->meta_id);
+	$ok = $wpdb->query($sql);
+	if($ok)
 	{
-		$parts = explode('<h1>Thank you!</h1>',$confirmation);
-		$confirmation = "<h1>Thank you!</h1>\n<div>name: ".$name."<\div>\n".$parts[1];
-		$vars = array('name'=>$name)+$vars;
-		$wpdb->query("UPDATE $wpdb->postmeta SET meta_value=%s WHERE meta_id=%d",$vars,$row->meta_id);
-		add_post_meta($post_id,'rsvpmaker_stripe_payment',$vars);
+		$confirmation = "<h1>Thank you!</h1>\n";
+		foreach($vars as $name => $value)
+			$confirmation .= '<div>'.$name.': '.$value.'</div>';
 		update_post_meta($post_id,$confkey,$confirmation);
 		rsvpmaker_stripe_notify($vars);
 		$url = add_query_arg('rsvpstripeconfirm',$confkey,get_permalink($post_id));
 		header('Location: '.$url);
 		exit();
 	}
-	
 	printf('<h1>Error</h1><p>key %s<br />confirmation </p>%s<br />vars:<pre>%s</pre>POST<pre>%s</pre>',$key, $confirmation, var_export($vars,true),var_export($_POST,true));
 	exit();
 }
@@ -454,6 +454,7 @@ function rsvpmaker_stripecharge ($atts) {
 	$month = $months[$index];
 	$vars['amount'] = $atts[$month];
 	$vars['description'] = $vars['description'].': '.ucfirst($month);
+	if(!empty($current_user->user_email))
 	$vars['email'] = $current_user->user_email;
 	return rsvpmaker_stripe_form($vars, $show);
 	}
@@ -470,8 +471,14 @@ fix_timezone();
 $vars['timestamp'] = date('r');
 if(is_user_logged_in())
 {
-$vars = array('name'=>$current_user->display_name)+$vars;
-$vars['user_id'] = $current_user->ID;
+if(isset($current_user->display_name))
+	$name = $current_user->display_name;
+elseif($current_user->user_login)
+	$name = $current_user->user_login;
+if(!empty($name))
+	$vars = array('name'=>$name)+$vars;
+if(isset($current_user->ID))
+	$vars['user_id'] = $current_user->ID;
 update_user_meta($current_user->ID,'rsvpmaker_stripe_payment',$vars);
 rsvpmaker_stripe_notify($vars);
 }
@@ -479,14 +486,19 @@ else {
 	$user = get_user_by( 'email', $vars['email'] );
 	if($user)
 	{
-		$vars = array('name'=>$user->display_name)+$vars;
-		add_user_meta($user->ID,'rsvpmaker_stripe_payment',$vars);
+		if(isset($user->display_name))
+			$name = $user->display_name;
+		elseif($user->user_login)
+			$name = $user->user_login;
+		if(!empty($name))
+		$vars = array('name'=>$name)+$vars;
+		//add_user_meta($user->ID,'rsvpmaker_stripe_payment',$vars);
 		rsvpmaker_stripe_notify($vars);
 	}
 	else {
 		$sql = 'SELECT first, last FROM '.$wpdb->prefix."rsvpmaker WHERE email LIKE '".$vars['email']."' ORDER BY id DESC";
 		$row = $wpdb->get_row($sql);
-		if(!empty($row->first))
+		if(!empty($row->first) && !empty($row->last))
 		{
 		$vars = array('name' => $row->first.' '.$row->last)+$vars;
 		rsvpmaker_stripe_notify($vars);
@@ -494,7 +506,7 @@ else {
 		else
 			stripe_prompt_for_name($vars,$confkey); // try to get name for log and notification		
 	}
-}	
+}
 add_post_meta($post->ID,'rsvpmaker_stripe_payment',$vars);
 do_action('rsvpmaker_stripe_payment',$vars);
 }

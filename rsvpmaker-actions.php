@@ -23,8 +23,6 @@ add_action( 'admin_init', 'add_rsvpemail_caps');
 add_action('admin_init','customize_rsvp_form');
 
 add_action('admin_menu', 'my_events_menu');
-//add_action('admin_menu', 'my_rsvp_menu');
-add_action('admin_menu', 'reminder_events_menu');
 add_action('admin_menu', 'my_rsvpemails_menu');
 add_action('admin_menu', 'my_rsvpemail_menu');
 add_action('admin_menu', 'rsvpmaker_admin_menu');
