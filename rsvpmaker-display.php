@@ -667,13 +667,7 @@ if ( have_posts() ) {
 global $events_displayed;
 while ( have_posts() ) : the_post();
 $events_displayed[] = $post->ID;
-/*
-if(is_email_context ()) {
-	$embed = event_to_embed($post->ID,$post); // simplified formatting for email
-	echo $embed["content"].'<p>email version</em>';
-	continue;
-}
-*/
+
 ?>
 
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
@@ -721,8 +715,12 @@ if(	( isset($atts["calendar"]) && $atts["calendar"]) || (isset($atts["format"]) 
 		$listings = rsvpmaker_calendar($atts);
 
 $listings .= ob_get_clean();
+if(is_email_context())
+	{
+		$listings = str_replace('>Edit<','><',$listings); //todo preg replace
+		$listings = str_replace('><a','> <a',$listings); //todo preg replace
+	}
 return $listings;
-
 }
 
 add_shortcode("rsvpmaker_upcoming","rsvpmaker_upcoming");
@@ -843,7 +841,6 @@ while ( have_posts() ) : the_post();
 	if(isset($_GET["debug"]))
 		{
 			$msg = sprintf('%s %s %s',$post->post_title,$post->datetime,$post->meta_id);
-			//rsvpmaker_debug_log($msg);
 		}	
 	$key = date('Y-m-d',$t);
 	$eventarray[$key] = (isset($eventarray[$key])) ? $eventarray[$key] . '<div><a class="calendar_item '.rsvpmaker_item_class($post->ID,$post->post_title).'" href="'.get_post_permalink($post->ID).'" title="'.htmlentities($post->post_title).'">'.$post->post_title.$time."</a></div>\n" : '<div><a class="calendar_item '.rsvpmaker_item_class($post->ID,$post->post_title).'" href="'.get_post_permalink($post->ID).'" title="'.htmlentities($post->post_title).'">'.$post->post_title.$time."</a></div>\n";
@@ -1541,10 +1538,10 @@ $offset = $atts["hide_past"];
 if(!is_rsvpmaker_future($post_id, $offset))
 	return;
 }
-rsvpmaker_debug_log($atts,'rsvpmaker_one atts');
+//rsvpmaker_debug_log($atts,'rsvpmaker_one atts');
 if(empty($atts["one_format"]) || ($atts["one_format"] == 'button'))
 {//one post loop
-rsvpmaker_debug_log('loop for event plus button','rsvpmaker_one atts');
+//rsvpmaker_debug_log('loop for event plus button','rsvpmaker_one atts');
 ob_start();
 ?>
 <div class="rsvpmaker_embedded">

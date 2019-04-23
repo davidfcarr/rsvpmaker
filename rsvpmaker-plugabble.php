@@ -110,14 +110,14 @@ if(isset($_GET['t']))
 		if($ts > time())
 			break;
 	}
-	rsvpmaker_date_option($ts, 0, date('Y-m-d',$ts));
+	rsvpmaker_date_option($ts, 0, date('Y-m-d H:i:s',$ts),$sked);
 	$start = 1;
 }
 elseif($start == 0)
 	{
 	$start = 1;
-	$date = (isset($_GET["add_date"]) ) ? $_GET["add_date"] : 'today';
-	rsvpmaker_date_option($date, 0, date('Y-m-d',$t));
+	$date = (isset($_GET["add_date"]) ) ? $_GET["add_date"] : 'today '.$rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'].':00';
+	rsvpmaker_date_option($date, 0, date('Y-m-d H:i:s',$t));
 	}
 for($i=$start; $i < $start + 6; $i++)
 {
@@ -494,13 +494,18 @@ echo $confirm->post_content;
 $confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID);
 $customize = admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
 $reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
-	
-if($confirm->post_parent == 0)
+if(current_user_can('edit_post',$confirm->ID))
+{
+	if($confirm->post_parent == 0)
 	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
 elseif($confirm->post_parent != $post->ID)
 	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
 else
 	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
+}
+else
+printf('<div id="editconfirmation"><div><a href="%s" target="_blank">Customize</a></div>',$customize);
+
 printf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);	
 ?>
 <?php
@@ -563,15 +568,21 @@ preg_match_all('/\[([A-Za-z0_9_]+)/',$fpost->post_content,$matches);
 foreach($matches[1] as $match)
 	$fields[$match] = $match;
 printf('<div>Fields: %s<br />Guests: %s<br />Note field: %s</div>',implode(',',$fields),$guest,$note);
-if($fpost->post_parent == 0)
-	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
-elseif($fpost->post_parent != $post->ID)
-	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
-else
+
+if(current_user_can('edit_post',$fpost->ID))
 {
-	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$edit);
-	printf('<div><input type="checkbox" name="reset_form" value="%d" /> Reset to default form',$rsvp_options['rsvp_form']);
+		if($fpost->post_parent == 0)
+		printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+	elseif($fpost->post_parent != $post->ID)
+		printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+	else
+	{
+		printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$edit);
+		printf('<div><input type="checkbox" name="reset_form" value="%d" /> Reset to default form',$rsvp_options['rsvp_form']);
+	}
 }
+else
+	printf('<div><a href="%s" target="_blank">Customize</a></div>',$customize);
 	}
 else {
 ?>
@@ -998,11 +1009,11 @@ else
 	$wpdb->query($rsvp_sql);
 	$rsvp_id = $wpdb->insert_id;
 	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
-	rsvpmaker_debug_log($sql,'event check');
+	//rsvpmaker_debug_log($sql,'event check');
 	if(empty($wpdb->get_var($sql)))
 	   {
 		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
-		rsvpmaker_debug_log($sql,'rsvpmaker_event');
+		//rsvpmaker_debug_log($sql,'rsvpmaker_event');
 		$wpdb->query($sql);
 	   }
 	}
@@ -1100,6 +1111,11 @@ $post = get_post($event);
 $custom_fields = get_post_custom($post->ID);
 $rsvp_to = $custom_fields["_rsvp_to"][0];
 $rsvp_confirm = (isset($custom_fields["_rsvp_confirm"][0])) ? $custom_fields["_rsvp_confirm"][0] : NULL;
+if(is_int($rsvp_confirm))
+		{
+			$rsvp_post = get_post($rsvp_confirm);
+			$rsvp_confirm = do_blocks($rsvp_post->post_content);
+		}
 $rsvp_max = $custom_fields["_rsvp_max"][0];
 $count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE event=$event AND yesno=1");
 //if permalinks are not turned on, we need to append to query string not add our own ?
@@ -1314,11 +1330,11 @@ else
 	$rsvp_id = $wpdb->insert_id;
 		
 	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
-	rsvpmaker_debug_log($sql,'event check');
+	//rsvpmaker_debug_log($sql,'event check');
 	if(empty($wpdb->get_var($sql)))
 	   {
 		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
-		rsvpmaker_debug_log($sql,'rsvpmaker_event');
+		//rsvpmaker_debug_log($sql,'rsvpmaker_event');
 		$wpdb->query($sql);
 	   }
 	
@@ -1923,7 +1939,6 @@ if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $c
 	}
 $permalink = get_permalink($post_id);
 $results = get_rsvp_dates($post_id);
-rsvpmaker_debug_log($results,'results from get_rsvp_dates');
 if($results)
 {
 fix_timezone();
@@ -1948,7 +1963,7 @@ foreach($results as $row)
 	if(is_numeric($dur) )
 		$dateblock .= " ".__('to','rsvpmaker')." ".strftime($time_format,$dur);
 	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
-	if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0])
+	if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0] && !is_email_context())
 	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
 	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
 	}

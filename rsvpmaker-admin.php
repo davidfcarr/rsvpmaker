@@ -171,7 +171,7 @@ if(isset($_POST["edit_month"]))
 
 }
 
-function rsvpmaker_date_option($datevar = NULL, $index = NULL, $jquery_date = NULL) {
+function rsvpmaker_date_option($datevar = NULL, $index = NULL, $jquery_date = NULL, $sked = NULL) {
 
 global $rsvp_options;
 $prefix = "event_";
@@ -203,8 +203,15 @@ if(!empty($t))
 	$month =  (int) date('m',$t);
 	$year =  (int) date('Y',$t);
 	$day =  (int) date('d',$t);
-	$hour =  (int) date('G',$t);
-	$minutes =  (int) date('i',$t);
+	if($sked)
+		{
+			$hour = $sked['hour'];
+			$minutes = $sked['minutes'];
+		}
+	else {
+		$hour =  (int) date('G',$t);
+		$minutes =  (int) date('i',$t);	
+		}
 	}
 else
 	{
@@ -1720,7 +1727,7 @@ if($rsvp_options["show_screen_recurring"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Recurring Event",'rsvpmaker'), __("Recurring Event",'rsvpmaker'), $rsvp_options["recurring_event"], "add_dates", "add_dates" );
 if(!empty($rsvp_options["show_screen_multiple"]))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events","rsvpmaker"), __("Multiple Events",'rsvpmaker'), $rsvp_options["multiple_events"], "multiple", "multiple" );
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'manage_options', "rsvp_reminders", "rsvp_reminders" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'edit_posts', "rsvp_reminders", "rsvp_reminders" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
 if(isset($rsvp_options["debug"]) && $rsvp_options["debug"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', "Debug", "Debug", 'manage_options', "rsvpmaker_debug", "rsvpmaker_debug");
@@ -2495,13 +2502,18 @@ echo $confirm->post_content;
 
 $confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post_id);
 $customize = admin_url('?post_id='. $post_id. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
-	
-if($confirm->post_parent == 0)
+
+if(current_user_can('edit_post',$confirm->ID))
+{
+	if($confirm->post_parent == 0)
 	printf('<div id="editconfirmation"><a href="%s">Edit</a> (default from Settings)</div><div><a href="%s">Customize</a></div>',$confedit,$customize);
 elseif($confirm->post_parent != $post_id)
 	printf('<div id="editconfirmation"><a href="%s">Edit</a> (inherited from Template)</div><div><a href="%s">Customize</a></div>',$confedit,$customize);	
 else
 	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$confedit);
+}
+else
+	printf('<div id="editconfirmation"><div><a href="%s">Customize</a></div>',$customize);
 
 $sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
 
@@ -2541,14 +2553,15 @@ else {
 	$templates = rsvpmaker_get_templates();
 	foreach($templates as $event)
 	{
+		if(current_user_can('edit_post',$event->ID))
 		$o .= sprintf('<option value="%s">TEMPLATE: %s</option>',$event->ID,$event->post_title);
 	}
 	$future = get_future_events();
 	foreach($future as $event)
 	{
+		if(current_user_can('edit_post',$event->ID))
 		$o .= sprintf('<option value="%s">%s - %s</option>',$event->ID,$event->post_title,$event->date);
-	}
-	
+	}	
 	printf('<form method="get" action="%s"><input type="hidden" name="page" value="rsvp_reminders"><input type="hidden" name="post_type" value="rsvpmaker"><select name="post_id">%s</select><button>Get</button></form>',admin_url('edit.php'),$o);
 }
 
@@ -4328,6 +4341,51 @@ if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_details') && isset($_GET
 	
 	}
 
+// template Create / Update screen
+if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_template_list') && isset($_GET['t']) )
+	{
+	$post_id = (int) $_GET['t'];
+	$args = array(
+		'id'    => 'edit-event',
+		'title' => 'Edit Event Template',
+		'href'  => admin_url('post.php?action=edit&post='.$post_id),
+		'meta'  => array( 'class' => 'edit-event')
+	);
+	$wp_admin_bar->add_node( $args );	
+
+	$args = array(
+		'parent'    => 'edit-event',
+		'id' => 'template-options',
+		'title' => 'Template Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
+		'meta'  => array( 'class' => 'template-options')
+	);
+	$wp_admin_bar->add_node( $args );	
+
+	$args = array(
+		'parent'    => 'edit-event',
+		'id' => 'confirmation_reminders',
+		'title' => 'Confirmation / Reminder Messages',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id),
+		'meta'  => array( 'class' => 'confirmation_reminders')
+	);
+	$wp_admin_bar->add_node( $args );
+	
+	$formurl = rsvp_form_url($post_id);
+		
+	$args = array(
+		'parent'    => 'edit-event',
+		'id' => 'edit_form',
+		'title' => 'Edit / Customize RSVP Form',
+		'href'  => $formurl,
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	$wp_admin_bar->add_node( $args );	
+	
+	}
+
+
+
 if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_scheduled_email_list') && isset($_GET['post_id']) )
 	{
 	$args = array(
@@ -4596,7 +4654,10 @@ function rsvpmaker_share() {
 <?php	
 	global $current_user;
 	if(isset($_REQUEST['t']))
-		$t = (int) $_REQUEST['t'];
+		{
+			$t = (int) $_REQUEST['t'];
+			$post = get_post($t);
+		}
 	
 	if(!empty($_POST['editor_email']) && !empty($t)) {
 		$email = $_POST['editor_email'];
@@ -4660,10 +4721,10 @@ function rsvpmaker_share() {
 	{
 		$editors = '<h3>Current Editors</h3>'.$editors;
 	}
-		printf('<h2>Update Editors List</h2><form action="%s" method="post">%s
+		printf('<h2>Update Editors List: %s</h2><form action="%s" method="post">%s
 		<p><input type="hidden" name="t" value="%s" />
 		Add by Email: <input type="email" name="editor_email" />
-		%s</p></form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share'),$editors,$t,get_submit_button(__('Save','rsvpmaker')));
+		%s</p></form>',$post->post_title, admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share'), $editors,$t,get_submit_button(__('Save','rsvpmaker')));
 	}
 	
 	$templates = rsvpmaker_get_templates();
@@ -4673,7 +4734,8 @@ function rsvpmaker_share() {
 	$eds = get_additional_editors($template->ID);
 	if(current_user_can('edit_rsvpmaker',$template->ID) || (!empty($eds) && in_array($current_user->ID,$eds) ) )
 	{
-		$tedit .= sprintf('<option value="%s">%s</option>',$template->ID,$template->post_title);
+		$s = (!empty($t) && ($t == $template->ID)) ? ' selected="selected" ' : '';
+		$tedit .= sprintf('<option value="%s" %s>%s</option>',$template->ID,$s,$template->post_title);
 	}
 
 	}

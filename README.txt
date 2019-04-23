@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.1.1
-Stable tag: 6.1.3
+Stable tag: 6.1.7
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,17 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 6.1.5 =
+
+* Prevent WordPress from filtering out form tags in and RSVPMaker form posts (was happening for non-admins in Gutenberg version)
+* Make standard RSVPMaker Upcoming block / shortcode work in email.
+
+= 6.1.4 =
+
+* UX changes. Tweaks to admin bar menu, other navigation labels / methods.
+* Fix for date / time display on new events (using defaults from settings screen, not defaulting to midnight)
+* Fix to the mailer utility, import of an event listing or blog post (body content wasn't being imported correctly)
 
 = 6.1.1 =
 

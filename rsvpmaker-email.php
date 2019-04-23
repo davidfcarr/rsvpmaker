@@ -2125,7 +2125,7 @@ if(function_exists('bp_set_theme_compat_active'))
 bp_set_theme_compat_active( false );//stop buddypress from causing trouble
 
 ob_start();
-$corefilters = array('convert_chars','wpautop','wptexturize');
+$corefilters = array('convert_chars','wpautop','wptexturize','event_content');
 foreach($wp_filter["the_content"] as $priority => $filters)
 	foreach($filters as $name => $details)
 		{
@@ -2211,13 +2211,11 @@ function event_to_embed($post_id, $embed = NULL) {
 <p><strong>%s</strong></p>
 <!-- /wp:paragraph -->',$dateblock).$tmlogin;			
 		}
-		$content = do_shortcode($post->post_content);
+		$event_embed["content"] .= do_shortcode($post->post_content);
 		if(get_post_meta($post_id,'_rsvp_on',true))
 		{
 		if(get_post_meta($post_id,'_rsvp_count',true))
-			$content .= rsvpcount($post_id);
-		$event_embed["content"] .= $content;
-	
+			$event_embed["content"] .= rsvpcount($post_id);
 		$rsvplink = get_rsvp_link($post_id);
 		$event_embed["content"] .= "<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
 		}
@@ -2227,7 +2225,7 @@ function event_to_embed($post_id, $embed = NULL) {
 		}
 		else 
 		$event_embed["content"] = wpautop($event_embed["content"]);
-
+		$post = $backup;
 		return $event_embed;
 }
 

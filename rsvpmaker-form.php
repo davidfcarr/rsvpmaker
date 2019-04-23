@@ -56,9 +56,8 @@ if($future)
 return $rsvp_options['rsvp_form'];
 }
 
-
 function customize_rsvp_form () {
-	
+global $current_user, $wpdb;
 if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
 	$id = upgrade_rsvpform();
 }	
@@ -72,11 +71,13 @@ if(isset($_GET['customize_rsvpconfirm'])) {
 	$new["post_title"] = "Confirmation:".$parent;
 	$new["post_parent"] = $parent;
 	$new["post_status"] = 'publish';
-	$new["post_type"] = 'rsvpemail';
+	$new["post_type"] = 'rsvpmaker';
+	$new["post_author"] = $current_user->ID;
 	$new["post_content"] = $old->post_content;
 	$id = wp_insert_post($new);
 	if($id)
 		update_post_meta($parent,'_rsvp_confirm',$id);		
+		update_post_meta($id,'_rsvpmaker_special','Confirmation Message');
 	}
 }
 if(isset($_GET['customize_form'])) {
@@ -89,8 +90,10 @@ if(isset($_GET['customize_form'])) {
 	$new["post_parent"] = $parent;
 	$new["post_status"] = 'publish';
 	$new["post_type"] = 'rsvpmaker';
+	$new["post_author"] = $current_user->ID;
 	$new["post_content"] = $old->post_content;
 	//print_r($new);
+	remove_all_filters("content_save_pre"); //don't allow form fields to be filtered out
 	$id = wp_insert_post($new);
 	//printf('<p>Insert post returned %s',$id);
 	if($id)
@@ -239,4 +242,17 @@ $output .= '<script type="text/javascript"> var guestcount ='.$count.'; </script
 return $output;
 }
 
+function remove_save_content_filters () {
+	if(isset($_REQUEST['_locale']) && ($_REQUEST['_locale'] == 'user')) {
+		$request_body = file_get_contents('php://input');
+		if(strpos($request_body,'wp:rsvpmaker/formfield'))
+		{
+			//prevent html filtering on form for non-administrators
+			remove_all_filters("content_save_pre"); //don't allow form fields to be filtered out
+			remove_all_filters("content_filtered_save_pre");//'content_filtered_save_pre', 'wp_filter_post_kses'
+		}
+	}
+}
+add_action( 'init', 'remove_save_content_filters', 99 );
+add_action( 'set_current_user', 'remove_save_content_filters', 99 );
 ?>

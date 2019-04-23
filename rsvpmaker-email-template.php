@@ -5,7 +5,7 @@
  */
 
 global $wp_filter;
-$corefilters = array('convert_chars','wpautop','wptexturize');
+$corefilters = array('convert_chars','wpautop','wptexturize','event_content');
 foreach($wp_filter["the_content"] as $priority => $filters)
 	foreach($filters as $name => $details)
 		{
