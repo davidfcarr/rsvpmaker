@@ -3,19 +3,7 @@
  * The template for displaying eblast previews.
  *
  */
-
-global $wp_filter;
-$corefilters = array('convert_chars','wpautop','wptexturize','event_content');
-foreach($wp_filter["the_content"] as $priority => $filters)
-	foreach($filters as $name => $details)
-		{
-		//keep only core text processing or shortcode
-		if(!in_array($name,$corefilters) && !strpos($name,'hortcode'))
-			{
-			$r = remove_filter( 'the_excerpt', $name, $priority );
-			$r = remove_filter( 'the_content', $name, $priority );
-			}
-		}
+email_content_minfilters();
 
 if ( have_posts() ) : the_post();
 
@@ -142,10 +130,6 @@ $rsvp_html = str_replace('<!-- footer -->', $rsvp_htmlfooter,$content);
 $rsvp_text = rsvpmaker_text_version($content, $rsvpfooter_text);
 
 $cron = get_post_meta($post->ID,'rsvpmaker_cron_email', true);
-//rsvpmaker_debug_log($post,'cron post');
-//rsvpmaker_debug_log($cron,'cron email');
-if(isset($cron["cronday"]))
-{
 	$subject = $post->post_title;
 	$notekey = get_rsvp_notekey();
 	//rsvpmaker_debug_log($notekey,'notekey');
@@ -172,7 +156,6 @@ if(isset($cron["cronday"]))
 			$rsvp_text = $editorsnote["add_to_head"]."\n\n" . strip_tags($editorsnote["note"]) ."\n\n". $rsvp_text."\n\n" ;
 			}
 		}
-}
 
 global $rsvpmaker_cron_context;
 if(isset($_GET["cronic"]) && current_user_can('publish_rsvpemails'))
@@ -187,6 +170,8 @@ if(!empty($_GET["debug"]))
 if($rsvpmaker_cron_context && $cron_active)
 	{
 	$scheduled_email = get_post_meta($post->ID,'scheduled_email',true);
+	//rsvpmaker_debug_log($scheduled_email,'scheduled email');
+	$chimp_options = get_option('chimp');
 	if(!empty($scheduled_email))
 	{
 	$from_name = $scheduled_email['email-name'];
@@ -194,14 +179,23 @@ if($rsvpmaker_cron_context && $cron_active)
 	$previewto = $scheduled_email['preview_to'];
 	$chimp_list = $scheduled_email['list'];
 	}
-	else
+	elseif(!empty($custom_fields["_email_from_name"][0]) && !empty($custom_fields["_email_from_email"][0]))
 	{
 	$from_name = $custom_fields["_email_from_name"][0];
 	$from_email = $custom_fields["_email_from_email"][0];
 	$previewto = $custom_fields["_email_preview_to"][0];
-	$chimp_list = $custom_fields["_email_list"][0];		
+	$chimp_list = $custom_fields["_email_list"][0];
 	}
-	$chimp_options = get_option('chimp');
+	else
+	{
+		$from_name = $chimp_options['email-name'];
+		$from_email = $chimp_options['email-from'];
+	}
+
+	//rsvpmaker_debug_log('name:'.$from_name.' email: '.$from_email,'cron email parameters');
+	//rsvpmaker_debug_log($chimp_options,'chimp options');
+	if(empty($from_email))
+		return;
 
 	if($cron["cron_mailchimp"] && ($rsvpmaker_cron_context == 2))
 		{

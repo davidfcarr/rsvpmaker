@@ -5,7 +5,7 @@ function rsvpmaker_to_stripe ($rsvp) {
 	$vars['description'] = $post->post_title;
 	$vars['name'] = $rsvp['first'].' '.$rsvp['last'];
 	if(isset($_GET['rsvp']))
-		$vars['rsvp_id'] = $_GET['rsvp'];
+		$vars['rsvp_id'] = (int) $_GET['rsvp'];
 	else	
 		$vars['rsvp_id'] = $rsvp['id'];
 	$include = array('amount','rsvp_id','email','event');
@@ -18,6 +18,9 @@ function rsvpmaker_to_stripe ($rsvp) {
 
 function rsvpmaker_stripe_form($vars, $show = false) {
 global $post, $rsvp_options, $current_user, $button;
+$currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp_options['paypal_currency']);
+$vars['currency'] = $currency;
+
 if(empty($button))
 	$button = 1;
 else
@@ -51,7 +54,7 @@ $price = $vars['amount'] * 100;
 		  data-email="<?php if(!empty($vars['email'])) echo $vars['email']; ?>"
           data-description="<?php echo htmlentities($vars['description']); ?>"
           data-amount="<?php echo $price; ?>"
-          data-currency="<?php echo $rsvp_options["paypal_currency"]; ?>"
+          data-currency="<?php echo $currency; ?>"
           data-locale="auto"></script>
 </form>
 </p>
@@ -83,6 +86,8 @@ add_action('wp','rsvpmaker_stripe_charge_now',999);
 
 function rsvpmaker_stripe_charge_now ()
 {
+global $rsvp_options;
+$currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp_options['paypal_currency']);
 if(isset($_POST['add_name_to_charge']))
 {
 	rsvpmaker_stripe_add_name();
@@ -91,14 +96,14 @@ if(isset($_POST['add_name_to_charge']))
 	
 if(!isset($_POST['stripeToken']))
 	return;
+
+ob_start();
 $varkey = $_REQUEST['varkey'];
 global $post, $wpdb, $current_user;
 $vars = get_post_meta($post->ID,$varkey,true);
 $vars['email'] = $_POST['stripeEmail'];
 if(!empty($vars['paymentType']) && strpos($vars['paymentType'],'scription:'))
 	return rsvpmaker_stripe_subscription($vars);
-ob_start();
-echo 'processing payment ...';
 require_once('stripe-php/init.php');
 
 $public = get_option('rsvpmaker_stripe_pk');
@@ -123,7 +128,7 @@ try {
   $charge = \Stripe\Charge::create([
       'customer' => $customer->id,
       'amount'   => $vars['amount'] * 100,
-      'currency' => 'usd',
+      'currency' => $currency,
   ]);
 $success = true;//only set on success
 }
@@ -202,6 +207,8 @@ if(!empty($vars['rsvp_id']))
 		delete_post_meta($post->ID,'_invoice_'.$rsvp_id);
 		}	
 	}	
+if(isset($vars['tracking']))
+	add_post_meta($post->ID,$vars['tracking'],$vars['amount']);
 }
 $confirmation = ob_get_clean();
 update_post_meta($post->ID,$key,$confirmation);
@@ -241,6 +248,8 @@ function rsvpmaker_stripe_add_name() {
 
 function rsvpmaker_stripe_subscription($vars) {
 global $post, $wpdb, $current_user,$rsvp_options;
+$currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp_options['paypal_currency']);
+
 ob_start();
 require_once('stripe-php/init.php');
 
@@ -267,7 +276,7 @@ if($interval == '1 year')
   "product" => [
     "name" => "Recurring charge, ".get_bloginfo('name')
   ],
-  "currency" => $rsvp_options['paypal_currency'],
+  "currency" => $currency,
   "id" => $slug
 ];
 elseif($interval == '6 months')
@@ -278,7 +287,7 @@ elseif($interval == '6 months')
   "product" => [
     "name" => "Recurring charge, ".get_bloginfo('name')
   ],
-  "currency" => $rsvp_options['paypal_currency'],
+  "currency" => $currency,
   "id" => $slug
 ];
 elseif($interval == 'monthly')
@@ -288,7 +297,7 @@ elseif($interval == 'monthly')
   "product" => [
     "name" => "Recurring charge, ".get_bloginfo('name')
   ],
-  "currency" => strtolower($rsvp_options['paypal_currency']),
+  "currency" => $currency,
   "id" => $slug
 ];
 	
@@ -422,7 +431,7 @@ function rsvpmaker_donation_prompt($defaultamount) {
 }
 
 function rsvpmaker_stripecharge ($atts) {
-	if(is_admin())
+		if(is_admin())
 		return;
 	
 	global $current_user;

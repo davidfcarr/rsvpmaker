@@ -559,6 +559,13 @@ $no_events = (isset($atts["no_events"])) ? $atts["no_events"] : 'No events curre
 if(isset($atts["calendar"]) && ($atts["calendar"] == 2) )
 	return rsvpmaker_calendar($atts);
 global $post;
+
+if(!empty($post->post_type) && ($post->post_type == 'rsvpmaker'))
+{
+	// no infinite loops, please
+	return 'The events listing cannot be displayed inside an individual event';
+}
+
 $post_backup = $post;
 global $wp_query;
 global $wpdb;
@@ -1454,6 +1461,8 @@ global $rsvp_options;
 $showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
 $content = '';
 
+email_content_minfilters();
+
 if(empty($atts['type'])) {
 //event type lookup is more complicated, but here are simple cases
 	if(isset($atts["one"]))
@@ -1557,7 +1566,7 @@ if(!isset($atts["hide_title"]) || !$atts["hide_title"])
 ?>
 <div class="rsvpmaker-entry-content">
 
-<?php 
+<?php
 	
 	if(isset($atts['one_format']) && ($atts["one_format"] == 'button_only')) {
 		$content = embed_dateblock($atts);
@@ -1622,7 +1631,9 @@ wp_reset_postdata();
 
 if(!empty($atts["style"]))
 	$content = '<div style="'.$atts["style"].'">'.$content.'</div>';
-return $content;
+if(strpos($content,'<!--') && function_exists('do_blocks'))
+	$content = do_blocks($content);
+return $content; //.$filterslist;
 }
 
 function rsvpmaker_compact ($atts = array())

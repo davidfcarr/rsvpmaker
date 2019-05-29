@@ -178,7 +178,7 @@ $label = (isset($atts['label'])) ? $atts['label'] : __('Guest','rsvpmaker');
 if(!empty($guestfields))
 	foreach($guestfields as $slug => $field)
 		$shared .= $field;
-$template = '<div class="guest_blank" id="first_blank"><p><strong>Guest ###</strong></p>'.$shared . $content.'</div>';//fields shared from master form, plus added fields
+$template = '<div class="guest_blank" id="first_blank"><p><strong>'.__('Guest','rsvpmaker').' ###</strong></p>'.$shared . $content.'</div>';//fields shared from master form, plus added fields
 	
 $addmore = (isset($atts['addmore'])) ? $atts['addmore'] : __('Add more guests','rsvpmaker');
 global $wpdb;

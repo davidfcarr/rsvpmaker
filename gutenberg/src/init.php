@@ -144,9 +144,11 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 			'bottom_message' => $bottom_message,
         )
     );
-	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
-	wp_localize_script( 'rsvpmaker_admin_script', 'rsvpemail_scheduling',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post_id)
+	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker')) {
+		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpemail_scheduling',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post_id)
     );
+
+	}
 				
 		}
 	
@@ -157,10 +159,31 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 		array( 'wp-edit-blocks' ), // Dependency to include the CSS after it.
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.editor.build.css' )
 	);
+
+
+
+
 } // End function rsvpmaker_block_cgb_editor_assets().
 
 // Hook: Editor assets.
 add_action( 'enqueue_block_editor_assets', 'rsvpmaker_block_cgb_editor_assets' );
+
+add_action( 'enqueue_block_editor_assets', 'rsvpmaker_block_hide_assets', 99 );
+
+//if this is an rsvpmaker post, hide the rsvpmaker/upcoming and rsvpmaker/event blocks (no events within events)
+
+function rsvpmaker_block_hide_assets () {
+global $post;
+if(empty($post->post_type))
+	return;
+if($post->post_type != 'rsvpmaker')
+	return;
+	wp_enqueue_script(
+		'rsvpmaker-blacklist-blocks',
+		plugins_url( 'dist/hide.js', dirname(__FILE__) ),
+		array( 'wp-blocks', 'wp-dom-ready', 'wp-edit-post', 'rsvpmaker_block-cgb-block-js' )
+	);
+}
 
 function rsvpmaker_limited_time ($atts, $content) {
 	global $post;

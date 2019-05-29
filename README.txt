@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 5.1.1
-Stable tag: 6.1.7
+Tested up to: 5.2.1
+Stable tag: 6.2.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -49,7 +49,9 @@ Extensions:
 
 [RSVPMaker Excel](http://wordpress.org/plugins/rsvpmaker-excel) lets you download RSVP reports in Excel for nicer formatting than you get with the CSV output. Uses functions from the [PHPExcel](http://www.phpexcel.net/) library.
 
-Translations:
+Translations (German is the most up-to-date):
+
+German: Markus König, Björn Wilkens
 
 Dutch: Els van der Zalm
 
@@ -58,8 +60,6 @@ Spanish: Andrew Kurtis, [__WebHostingHub__](http://www.webhostinghub.com/)
 Polish: Jarosław Żeliński
 
 Norwegian: Thomas Nybø
-
-German: Björn Wilkens
 
 Thank you!
 
@@ -113,6 +113,29 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 	development kit for PHP and the Stripe SDK under the license of their creators.
 
 == Changelog ==
+
+= 6.2.4 =
+
+* Updated German translation files, thanks to Markus König
+
+= 6.2.3 =
+
+* Fixing a glitch that caused duplicate posts to be created when a template is set to automatically generate new events according to the template schedule.
+* Fixed the function for loading blog posts into the RSVP Email editor.
+
+= 6.2.2 =
+
+* Tweaks to the scheduled email function. You can now schedule broadcasts relative to the date of the event or for an arbitrary date and time.
+
+= 6.2.1 =
+
+* Fixes for broken features: links to edit confirmation message, adding RSVP records on the back end (from RSVP Report)
+
+= 6.1.9 =
+
+* Change start time based on template
+* Series of updates in 6.1.6-8 related to confirmation / reminder messages
+* Bug fix for stripe charges in currencies other than usd
 
 = 6.1.5 =
 
