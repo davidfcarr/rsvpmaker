@@ -211,6 +211,7 @@ if(isset($vars['tracking']))
 	add_post_meta($post->ID,$vars['tracking'],$vars['amount']);
 }
 $confirmation = ob_get_clean();
+add_post_meta($post->ID,'stripepay_'.strtolower($vars['email']),array('amount' => $vars['amount'],'date' => date('r')));
 update_post_meta($post->ID,$key,$confirmation);
 $url = add_query_arg('rsvpstripeconfirm',$key,get_permalink($post->ID));
 header('Location: '.$url);
