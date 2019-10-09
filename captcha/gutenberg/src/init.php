@@ -103,7 +103,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		
 $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$date = get_rsvp_date($post_id);
-	$duration = '';
+	$end_time = $duration = '';
 	if(empty($date))
 	{
 	$date = date("Y-m-d H:i:s",strtotime('7 pm'));
@@ -117,8 +117,9 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 		$duration = get_post_meta($post_id,'_'.$date,true);
 		if(!empty($duration))
 		{
-			$diff = strtotime($duration) - strtotime($date);
-			$duration = date('H:i',$diff);
+			if($duration == 'set')
+				$end_time =  get_post_meta($post_id,'_end'.$date,true);
+				//todo localize, use in gutenberg widget
 		}
 	}
 	

@@ -1,6 +1,8 @@
 <?php
 function get_rsvp_date($post_id)
 {
+if(empty($post_id))
+	return;
 global $wpdb, $rsvpdates;
 if(empty($rsvpdates))
 	cache_rsvp_dates(50);
@@ -9,6 +11,86 @@ if(!empty($rsvpdates[$post_id]))
 $wpdb->show_errors();
 $sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
 return $wpdb->get_var($sql);
+}
+
+function rsvpmaker_duration_select ($slug, $datevar = array(), $start_time='', $index = 0) {
+global $rsvp_options;
+if(empty($datevar))
+	$datevar = array('duration' => '');
+if(!empty($datevar['duration']) && is_array($datevar['duration']))
+	$duration_type = $datevar['duration'][$index];
+elseif(!empty($datevar['duration']))
+	$duration_type = $datevar['duration'];
+else
+	$duration_type = '';
+$end_time = '';
+
+//printf('<pre>%s</pre>duration %s',var_export($datevar),$duration_type);
+
+if(!empty($datevar['end_time']))
+	{
+		$end_time = (is_array($datevar['end_time'])) ? $datevar['end_time'][$index] : $datevar['end_time'];
+	}
+elseif(!empty($datevar['end']))
+{
+	$end_time = (is_array($datevar['end'])) ? $datevar['end'][$index] : $datevar['end'];
+}
+
+echo __('End Time','rsvpmaker');
+printf(' <select name="%s" class="end_time_type" > ',$slug);
+?>
+<option value=""><?php echo __('Not set (optional)','rsvpmaker');?></option>
+<option value="set" <?php if($duration_type == 'set') echo ' selected="selected" '; ?> ><?php echo __("Set end time",'rsvpmaker');?></option>
+<option value="allday" <?php if($duration_type == 'allday') echo ' selected="selected" '; ?>><?php echo __("All day/don't show time in headline",'rsvpmaker');?></option>
+<?php
+echo '</select>';
+
+if(empty($end_time) && !empty($start_time))
+	{
+		$t = strtotime($start_time.' +1 hour');
+		$defaulthour = date('H',$t);
+		$defaultmin = date('i',$t);
+	}
+else {
+	if(empty($end_time))
+	{
+		$start_time = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
+		$t = strtotime($start_time.' +1 hour');
+		$defaulthour = date('H',$t);
+		$defaultmin = date('i',$t);
+	}
+	else {
+		$p = explode(':',$end_time);
+		$defaulthour = $p[0];
+		$defaultmin = $p[1];
+	}
+}
+
+$houropt = $minopt ="";
+
+for($i=0; $i < 24; $i++)
+	{
+	$selected = ($i == $defaulthour) ? ' selected="selected" ' : '';
+	$padded = ($i < 10) ? '0'.$i : $i;
+	if($i == 0)
+		$twelvehour = "12 a.m.";
+	elseif($i == 12)
+		$twelvehour = "12 p.m.";
+	elseif($i > 12)
+		$twelvehour = ($i - 12) ." p.m.";
+	else		
+		$twelvehour = $i." a.m.";
+
+	$houropt .= sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
+	}
+
+for($i=0; $i < 60; $i++)
+	{
+	$selected = ($i == $defaultmin) ? ' selected="selected" ' : '';
+	$padded = ($i < 10) ? '0'.$i : $i;
+	$minopt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
+	}
+printf('<span class="end_time"> <select id="endhour%d" name="hour%s" >%s</select> <select id="endminutes%d" name="min%s" >%s</select> </span>',$index,$slug,$houropt,$index,$slug,$minopt);
 }
 
 function get_rsvp_dates($post_id, $obj = false)
@@ -22,12 +104,17 @@ if(!empty($rsvpdates[$post_id]))
 	{
 	$drow['datetime'] = $datetime;
 	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
+	$drow["end_time"] = get_post_meta($post_id,'_end'.$datetime, true);
 	if($obj)
 		$drow = (object) $drow;
 	$dates[] = $drow;		
 	}
 	return $dates;
-}	
+}
+
+if(empty($post_id))
+	return array();
+
 $wpdb->show_errors();
 $sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
 $results = $wpdb->get_results($sql);
@@ -41,6 +128,21 @@ foreach($results as $row)
 	$drow["datetime"] = $datetime;
 	$rsvpdates[$post_id][] = $datetime;
 	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
+	$drow['end_time'] = '';
+	if(!empty($drow['duration']))
+	{
+		if($drow['duration'] == 'set')
+		{
+			$drow['end_time'] = get_post_meta($post_id,'_end'.$datetime, true);
+		}
+		elseif(strpos($drow['duration'],'-'))
+		{
+			//old format
+			$drow['end_time'] = date('H:i',strtotime($drow['duration']));
+			update_post_meta($post_id,'_end'.$datetime,$drow['end_time']);
+			update_post_meta($post_id,'_'.$datetime,'set');
+		}
+	}
 	if($obj)
 		$drow = (object) $drow;
 	$dates[] = $drow;
@@ -97,7 +199,7 @@ global $wpdb;
 	 FROM ".$wpdb->posts."
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
 	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." 
-	 WHERE a1.meta_value > CURDATE() AND post_status='publish'
+	 WHERE a1.meta_value > CURDATE() AND (post_status='publish' OR post_status='draft')
 	 ORDER BY a1.meta_value ".$order;
 	$wpdb->show_errors();
 	return $wpdb->get_results($sql, $output);
@@ -343,5 +445,86 @@ Delete events older than <input type="text" name="older_than" value="30" /> days
 </form>
 <?php
 }//end initial form
+}
+
+function get_rsvpmaker_payment_gateway () {
+	global $post, $rsvp_options;
+	$active_options = get_rsvpmaker_payment_options ();
+	if(!empty($post->ID)) {
+		$choice = get_post_meta($post->ID,'payment_gateway',true);
+		if($choice)
+			return $choice; // if specified for the event post
+	}
+	if(!empty($rsvp_options['payment_gateway']))
+		{
+			if($rsvp_options['payment_gateway'] == 'stripe')//legacy
+				return 'Stripe via WP Simple Pay';
+			return $rsvp_options['payment_gateway'];
+		}
+	//print_r($active_options);
+	return $active_options[0]; // if no default specified, grab the first one on the list (Cash or Custom if no others set up)
+}
+
+function get_rsvpmaker_payment_options () {
+global $rsvp_options;
+$active_options = array();
+if(get_rsvpmaker_stripe_keys ())
+	$active_options[] = 'Stripe';
+if(get_option('rsvpmaker_paypal_rest_keys'))
+	$active_options[] = 'PayPal REST API';
+if(!empty($rsvp_options['paypal_config']))
+	$active_options[] = 'PayPal (legacy)';
+if(class_exists('Stripe_Checkout_Functions') && !empty($rsvp_options['stripe']))
+	$active_options[] = 'Stripe via WP Simple Pay';
+$active_options[] = 'Cash or Custom';
+return $active_options;
+}
+
+function get_rsvpmaker_stripe_keys_all () {
+	$keys = get_option('rsvpmaker_stripe_keys');
+	if(empty($keys))
+	{
+		//older method of setting these options
+		$pk = get_option('rsvpmaker_stripe_pk');
+		if($pk) {
+			if(strpos($pk,'test'))
+			{
+			$keys['sandbox_pk'] = $pk;
+			$keys['sandbox_sk'] = get_option('rsvpmaker_stripe_sk');
+			$keys['mode'] = 'sandbox';
+			$keys['notify'] = get_option('rsvpmaker_stripe_notify');
+			$keys['pk'] = '';
+			$keys['sk'] = '';	
+			}
+			else
+			{
+			$keys['pk'] = $pk;
+			$keys['sk'] = get_option('rsvpmaker_stripe_sk');
+			$keys['mode'] = 'production';
+			$keys['notify'] = get_option('rsvpmaker_stripe_notify');
+			$keys['sandbox_pk'] = '';
+			$keys['sandbox_sk'] = '';
+			}
+		update_option('rsvpmaker_stripe_keys',$keys);
+		}
+	}
+	if(empty($keys))
+		$keys = array('pk'=>'','sk'=>'','sandbox_pk'=>'','sandbox_sk'=>'','mode'=>'','notify' => '');
+	return $keys;
+}
+
+function get_rsvpmaker_stripe_keys () {
+	$keys = get_rsvpmaker_stripe_keys_all();
+	if(!empty($keys['mode']) && ($keys['mode'] == 'production') && !empty($keys['sk']))
+		return array('sk' => $keys['sk'], 'pk' => $keys['pk'], 'mode' => 'production', 'notify' => $keys['notify']);
+	elseif(!empty($keys['mode']) && ($keys['mode'] == 'sandbox') && !empty($keys['sandbox_sk']))
+		return array('sk' => $keys['sandbox_sk'], 'pk' => $keys['sandbox_pk'], 'mode' => 'sandbox', 'notify' => $keys['notify']);
+	else
+		return false;
+}
+
+function get_rspmaker_paypal_rest_keys () {
+    $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
+    return $paypal_rest_keys;
 }
 ?>

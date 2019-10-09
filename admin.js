@@ -200,5 +200,62 @@ $("#multireminder #checkall").click(function(){
     $('#multireminder input:checkbox').not(this).prop('checked', this.checked);
 });	
 
-	
+$('.end_time').hide();
+
+$('.end_time_type').each(function() {
+	var type = $( this ).val();
+	//alert(type);
+	if(type == 'set')
+		$('.end_time').show();
+});
+
+$('.end_time_type').change(function() {
+	var type = $( this ).val();
+	//alert(type);
+	if(type == 'set')
+		$('.end_time').show();
+});
+
+$('.rsvphour').change(function() {
+	var hour = $( this ).val();
+	var target = '#end' + $( this ).attr('id');
+	var endhour = parseInt(hour) + 1;
+	var endhourstring = '';
+	if(endhour == 24)
+		endhourstring = '00';
+	else if(endhour < 10)
+		endhourstring = '0'+endhour.toString();
+	else
+		endhourstring = endhour.toString();
+	$(target).val(endhourstring);
+});
+
+$('.rsvpminutes').change(function() {
+	var minutes = $( this ).val();
+	var target = '#end' + $( this ).attr('id');
+	$(target).val(minutes);
+});
+
+$('.end_time select').change(function() {
+	$('.end_time_type').val('set');
+});
+
+$('#reset_stripe_production').click(function(event) {
+	event.preventDefault();
+	$('#stripe_production').html('<p>Publishable Key (Production):<br /><input name="rsvpmaker_stripe_keys[pk]" value=""></p><p>Secret Key (Production):<br /><input name="rsvpmaker_stripe_keys[sk]" value=""></p>');
+});
+$('#reset_stripe_sandbox').click(function(event) {
+	event.preventDefault();
+	$('#stripe_sandbox').html('<p>Publishable Key (Sandbox):<br /><input name="rsvpmaker_stripe_keys[sandbox_pk]" value=""></p><p>Secret Key (Sandbox):<br /><input name="rsvpmaker_stripe_keys[sandbox_sk]" value=""></p>');
+});
+
+$('#reset_paypal_production').click(function(event) {
+	event.preventDefault();
+	$('#paypal_production').html('<p>Client ID (Production):<br /><input name="rsvpmaker_paypal_rest_keys[client_id]" value=""></p><p>Client Secret (Production):<br /><input name="rsvpmaker_paypal_rest_keys[client_secret]" value=""></p>');
+});
+$('#reset_paypal_sandbox').click(function(event) {
+	event.preventDefault();
+	$('#paypal_sandbox').html('<p>Client ID (Sandbox):<br /><input name="rsvpmaker_paypal_rest_keys[sandbox_client_id]" value=""></p><p>Client Secret (Sandbox):<br /><input name="rsvpmaker_paypal_rest_keys[sandbox_client_secret]" value=""></p>');
+});
+
 });

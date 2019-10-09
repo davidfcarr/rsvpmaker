@@ -25,9 +25,10 @@ function rsvpmailer($mail) {
 	{
 		$mail['replyto'] = $mail['from'];
 		$mail['from'] = $rsvp_options['from_always'];
-		if(!strpos($mail['fromname'],'(via'))
-			$mail['fromname'] = $mail['fromname'] . ' (via '.$via.')';
 	}
+
+	if(!strpos($mail['fromname'],'(via'))
+		$mail['fromname'] = $mail['fromname'] . ' (via '.$via.')';
 
 	if(!empty($rsvp_options["log_email"]) && isset($post->ID))
 		add_post_meta($post->ID, '_rsvpmaker_email_log',$mail);
@@ -812,8 +813,6 @@ global $post, $wpdb, $rsvp_options;
 $event_timestamp = (int) get_post_meta($post->ID,'event_timestamp',true);
 $args = array($post->ID);
 $cron = get_post_meta($post->ID,'rsvpmaker_cron_email',true);
-echo ' current cron ';
-print_r($cron);
 $notekey = get_rsvp_notekey();
 $chimp_options = get_option('chimp');
 fix_timezone();
@@ -2419,9 +2418,9 @@ function get_rsvp_notekey() {
 		$notekey = 'editnote'.date('YmdH',time()); // live not preview broadcast or editing
 	}
 	else {
-		$stamp = rsvpmaker_next_scheduled($post->ID);
-		$stamp = preg_replace('/M [a-z]+$/','M',$stamp);
-		$notekey = 'editnote'.date('YmdH',strtotime($stamp));
+		$stamp = rsvpmaker_next_scheduled($post->ID, true);
+		//$stamp = preg_replace('/M [a-z]+$/','M',$stamp);
+		$notekey = 'editnote'.date('YmdH',$stamp);//date('YmdH',strtotime($stamp));
 	}
 	return $notekey;
 }

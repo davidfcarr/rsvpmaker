@@ -8,17 +8,44 @@
 //  Import CSS.
 import './style.scss';
 import './editor.scss';
-import './rsvpmaker-sidebar.js';		import './rsvpemail-sidebar.js';		
+import './rsvpmaker-sidebar.js';
+import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
 import './form.js';		
+import './form-wrapper.js';
 import apiFetch from '@wordpress/api-fetch';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const { SelectControl, TextControl } = wp.components;
 
+const rsvpupcoming = [{label: 'Next event',value: 'next'},{label: 'Next event - RSVP on',value: 'nextrsvp'}];
+apiFetch( {path: '/wp-json/rsvpmaker/v1/future'} ).then( events => {
+	if(Array.isArray(events)) {
+		 events.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
+	}
+	 else {
+		 var eventsarray = Object.values(events);
+		 eventsarray.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
+		}
+}).catch(err => {
+	console.log(err);
+});
+
+const rsvptypes = [{value: '', label: 'None selected (optional)'}];
+apiFetch( {path: '/wp-json/rsvpmaker/v1/types'} ).then( types => {
+	if(Array.isArray(types))
+			types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
+		else {
+			var typesarray = Object.values(types);
+			typesarray.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
+		}
+}).catch(err => {
+	console.log(err);
+});	
+
 /**
- * Register: aa Gutenberg Block.
+ * Register: a Gutenberg Block.
  *
  * Registers a new block provided a unique name and an object defining its
  * behavior. Once registered, the block is made editor as an option to any
@@ -65,78 +92,69 @@ registerBlockType( 'rsvpmaker/event', {
         },
 	edit: function( props ) {
 	const { attributes: { post_id, type, one_hideauthor, one_format, hide_past }, setAttributes, isSelected } = props;
-		
-	function setPostID( event ) {
-		const selected = event.target.querySelector( '#post_id option:checked' );
-		setAttributes( { post_id: selected.value } );		
-		event.preventDefault();
-	}	
-	function setEventType( event ) {
-		const selected = event.target.querySelector( '#type option:checked' );
-		setAttributes( { type: selected.value } );
-		event.preventDefault();
-	}
-	function setOneFormat( event ) {
-		const selected = event.target.querySelector( '#one_format option:checked' );
-		setAttributes( { one_format: selected.value } );
-		event.preventDefault();
-	}	
-	function setHideAuthor( event ) {
-		const selected = event.target.querySelector( '#one_hideauthor option:checked' );
-		setAttributes( { one_hideauthor: selected.value } );
-		event.preventDefault();
-	}	
-	function setHidePast( event ) {
-		const selected = event.target.querySelector( '#hide_past option:checked' );
-		setAttributes( { hide_past: selected.value } );
-		event.preventDefault();
-	}
-	
-		
+	if(post_id == '')
+		setAttributes( { post_id: 'next' } );
+
 	function showFormPrompt () {
 		return <p><strong>Click here to set options.</strong></p>
 	}
 
 	function showForm() {
+
 			return (
-				<form onSubmit={ setPostID, setOneFormat, setHideAuthor, setEventType, setHidePast } >
-					<p><label>Select Post</label> <select id="post_id"  value={ post_id } onChange={ setPostID }>
-						{upcoming.map(function(opt, i){
-                    return <option value={ opt.value }>{opt.text}</option>;
-                })}
-					</select></p>
-					<p><label>Format</label> <select id="one_format"  value={ one_format } onChange={ setOneFormat }>
-						<option value="">Event with Form</option>
-						<option value="button">Event with Button</option>
-						<option value="form">Form Only</option>
-						<option value="button_only">Button Only</option>
-						<option value="compact">Compact (Headline/Date/Button)</option>
-						<option value="embed_dateblock">Dates Only</option>
-					</select></p>
-					<p id="rsvpcontrol-hide-after"><label>Hide After</label> <select id="hide_past"  value={ hide_past } onChange={ setHidePast }>
-						<option value="">Not Set</option>
-						<option value="1">1 hour</option>
-						<option value="2">2 hours</option>
-						<option value="3">3 hours</option>
-						<option value="4">4 hours</option>
-						<option value="5">5 hours</option>
-						<option value="6">6 hours</option>
-						<option value="7">7 hours</option>
-						<option value="8">8 hours</option>
-						<option value="12">12 hours</option>
-						<option value="18">18 hours</option>
-						<option value="24">24 hours</option>
-						<option value="48">2 days</option>
-						<option value="72">3 days</option>
-					</select></p>
-					<p id="rsvpcontrol-event-type"><label>Event Type</label> <select id="type" value={ type } onChange={ setEventType }>
-					{rsvpmaker_types.map(function(opt, i){
-                    return <option value={ opt.value }>{opt.text}</option>;
-                })}</select></p>				
-					<p><label>Show Author</label> <select id="one_hideauthor"  value={ one_hideauthor } onChange={ setHideAuthor }>
-						<option value="1">No</option>
-						<option value="0">Yes</option>
-					</select></p>
+				<form>
+<SelectControl
+        label={__("Select Post",'rsvpmaker')}
+        value={ post_id }
+        options={ rsvpupcoming }
+        onChange={ ( post_id ) => { setAttributes( { post_id: post_id } ) } }
+    />
+<SelectControl
+        label={__("Format",'rsvpmaker')}
+        value={ one_format }
+        options={ [
+	{label: 'Event with Form', value:''},
+	{label: 'Event with Button', value:'button'},
+	{label: 'Button Only', value:'button_only'},
+	{label: 'Compact (Headline/Date/Button)', value:'compact'},
+	{label: 'Dates Only', value:'embed_dateblock'}] }
+        onChange={ ( one_format ) => { setAttributes( { one_format: one_format } ) } }
+/>
+
+<SelectControl
+        label={__("Hide After",'rsvpmaker')}
+        value={ hide_past }
+        options={ [
+	{label: 'Not Set', value:''},
+	{label: '1 hour', value:'1'},
+	{label: '2 hours', value:'2'},
+	{label: '3 hours', value:'3'},
+	{label: '4 hours', value:'4'},
+	{label: '5 hours', value:'5'},
+	{label: '6 hours', value:'6'},
+	{label: '7 hours', value:'7'},
+	{label: '8 hours', value:'8'},
+	{label: '12 hours', value:'12'},
+	{label: '18 hours', value:'18'},
+	{label: '24 hours', value:'24'},
+	{label: '2 days', value:'48'},
+	{label: '3 days', value:'72'}] }
+        onChange={ ( hide_past ) => { setAttributes( { hide_past: hide_past } ) } }
+/>
+
+<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+
+<SelectControl
+        label={__("Show Author",'rsvpmaker')}
+        value={ one_hideauthor }
+        options={ [{label: 'No', value:'1'},{label: 'Yes', value:'0'}] }
+        onChange={ ( one_hideauthor ) => { setAttributes( { one_hideauthor: one_hideauthor } ) } }
+    />
 				</form>
 			);
 		}
@@ -151,22 +169,12 @@ registerBlockType( 'rsvpmaker/event', {
 		);
 	},
 
-	/**
-	 * The save function defines the way in which the different attributes should be combined
-	 * into the final markup, which is then serialized by Gutenberg into post_content.
-	 *
-	 * The "save" property must be specified and must be a valid function.
-	 *
-	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
 	save: function() {
 		// server render
 		return null;
 	},
 } );
 
-//[rsvpmaker_one post_id="0" hideauthor="1" showbutton="0" one_format="compact"]
-				  
 registerBlockType( 'rsvpmaker/upcoming', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Upcoming Events' ), // Block title.
@@ -218,87 +226,60 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
 	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type }, setAttributes, isSelected } = props;
-/*
-apiFetch( { path: '/wp-json/rsvpmaker/v1/types' } ).then( rsvpmaker_types => {
-	console.log(rsvpmaker_types);
-} );
-*/		
-	function setCalendarDisplay( event ) {
-		const selected = event.target.querySelector( '#calendar option:checked' );
-		setAttributes( { calendar: selected.value } );
-		event.preventDefault();
-	}	
-	function setNav( event ) {
-		const selected = event.target.querySelector( '#nav option:checked' );
-		setAttributes( { nav: selected.value } );
-		event.preventDefault();
-	}	
-	function setPostsPerPage( event ) {
-		const selected = event.target.querySelector( '#posts_per_page option:checked' );
-		setAttributes( { posts_per_page: selected.value } );
-		event.preventDefault();
-	}	
-	function setDays( event ) {
-		const selected = event.target.querySelector( '#days option:checked' );
-		setAttributes( { days: selected.value } );
-		event.preventDefault();
-	}	
-	function setNoEvents( event ) {
-		var no_events = document.getElementById('no_events').value;
-		setAttributes( { agenda_note: no_events } );
-		event.preventDefault();
-	}
-	function setEventType( event ) {
-		const selected = event.target.querySelector( '#type option:checked' );
-		setAttributes( { type: selected.value } );
-		event.preventDefault();
-	}	
 
 	function showFormPrompt () {
 		return <p><strong>Click here to set options.</strong></p>
 	}
 		
 	function showForm() {
-			return (
-				<form onSubmit={ setCalendarDisplay, setNav, setNoEvents, setEventType } >
-					<p><label>Display Calendar</label> <select id="calendar"  value={ calendar } onChange={ setCalendarDisplay }>
-						<option value="1">Yes - Calendar plus events listing</option>
-						<option value="0">No - Events listing only</option>
-						<option value="2">Calendar Only</option>
-					</select></p>
-					<p><label>Events Per Page</label> <select id="posts_per_page"  value={ posts_per_page } onChange={ setPostsPerPage }>
-						<option value="5">5</option>
-						<option value="10">10</option>
-						<option value="15">15</option>
-						<option value="20">20</option>
-						<option value="25">25</option>
-						<option value="30">30</option>
-						<option value="35">35</option>
-						<option value="40">40</option>
-						<option value="45">45</option>
-						<option value="50">50</option>
-						<option value="-1">No limit</option>
-					</select></p>
-					<p><label>Date Range</label> <select id="days" value={ days } onChange={ setDays }>
-						<option value="30">30 days</option>
-						<option value="60">60 days</option>
-						<option value="90">90 days</option>
-						<option value="180">180 days</option>
-						<option valu="365">1 Year</option>
-					</select></p>
-				<p id="rsvpcontrol-event-type"><label>Event Type</label> <select id="type" value={ type } onChange={ setEventType }>
-				<option value=""></option>
-					{rsvpmaker_types.map(function(opt, i){
-                    return <option value={ opt.value }>{opt.text}</option>;
-                })}</select></p>				
-					<p><label>Calendar Navigation</label> <select id="nav"  value={ nav } onChange={ setNav }>
-						<option value="top">Top</option>
-						<option value="bottom">Bottom</option>
-						<option value="both">Both</option>
-					</select></p>
-					<p>Text to show for no events listed<br />
-				<input type="text" id="no_events" onChange={setNoEvents} defaultValue={no_events} /> 
-				</p>
+	
+		return (
+				<form  >
+					<SelectControl
+        label={__("Display Calendar",'rsvpmaker')}
+        value={ calendar }
+        options={ [{value: 1, label: __('Yes - Calendar plus events listing')},{value: 0, label:  __('No - Events listing only')},{value: 2, label: __('Calendar only')}] }
+        onChange={ ( calendar ) => { setAttributes( { calendar: calendar } ) } }
+    />
+					<SelectControl
+        label={__("Events Per Page",'rsvpmaker')}
+        value={ posts_per_page }
+        options={ [{value: 5, label: 5},
+			{value: 10, label: 10},
+			{value: 15, label: 15},
+			{value: 20, label: 20},
+			{value: 25, label: 25},
+			{value: 30, label: 30},
+			{value: 35, label: 35},
+			{value: 40, label: 40},
+			{value: 45, label: 45},
+			{value: 50, label: 50},
+			{value: '-1', label: 'No limit'}]}
+        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page: posts_per_page } ) } }
+    />
+					<SelectControl
+        label={__("Date Range",'rsvpmaker')}
+        value={ days }
+        options={ [{value: 5, label: 5},
+			{value: 30, label: '30 Days'},
+			{value: 60, label: '60 Days'},
+			{value: 90, label: '90 Days'},
+			{value: 180, label: '180 Days'},
+			{value: 366, label: '1 Year'}] }
+        onChange={ ( days ) => { setAttributes( { days: days } ) } }
+    />
+					<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+					<SelectControl
+        label={__("Calendar Navigation",'rsvpmaker')}
+        value={ nav }
+        options={ [{value: 'top', label: __('Top')},{value: 'bottom', label: __('Bottom')},{value: 'both', label: __('Both')}] }
+        onChange={ ( nav ) => { setAttributes( { nav: nav } ) } }
+    />
 				<SelectControl
         label={__("Show Event Author",'rsvpmaker')}
         value={ hideauthor }
@@ -307,6 +288,11 @@ apiFetch( { path: '/wp-json/rsvpmaker/v1/types' } ).then( rsvpmaker_types => {
             { label: 'Yes', value: false },
         ] }
         onChange={ ( hideauthor ) => { setAttributes( { hideauthor: hideauthor } ) } }
+    />
+				<TextControl
+        label={__("Text to show for no events listed",'rsvpmaker')}
+        value={ no_events }
+        onChange={ ( no_events ) => { setAttributes( { no_events: no_events } ) } }
     />
 				</form>
 			);
@@ -334,6 +320,127 @@ apiFetch( { path: '/wp-json/rsvpmaker/v1/types' } ).then( rsvpmaker_types => {
 		return null;
 	},
 } );
+
+
+registerBlockType( 'rsvpmaker/eventlisting', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Event Listing' ), // Block title.
+	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Events' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            days: {
+                type: 'int',
+				default: 180,
+            },
+            posts_per_page: {
+                type: 'int',
+				default: 10,
+            },
+            type: {
+                type: 'string',
+                default: '',
+            },
+            date_format: {
+                type: 'string',
+                default: '%A %B %e, %Y',
+            },
+        },
+	/**
+	 * The edit function describes the structure of your block in the context of the editor.
+	 * This represents what the editor will render when the block is used.
+	 *
+	 * The "edit" property must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	edit: function( props ) {
+		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
+	const { attributes: { days, posts_per_page, type, date_format }, setAttributes, isSelected } = props;
+
+	function showFormPrompt () {
+		return <p><strong>Click here to set options.</strong></p>
+	}
+		
+	function showForm() {
+			return (
+				<form  >
+					<SelectControl
+        label={__("Events Per Page",'rsvpmaker')}
+        value={ posts_per_page }
+        options={ [{value: 5, label: 5},
+			{value: 10, label: 10},
+			{value: 15, label: 15},
+			{value: 20, label: 20},
+			{value: 25, label: 25},
+			{value: 30, label: 30},
+			{value: 35, label: 35},
+			{value: 40, label: 40},
+			{value: 45, label: 45},
+			{value: 50, label: 50},
+			{value: '-1', label: 'No limit'}]}
+        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page: posts_per_page } ) } }
+    />
+					<SelectControl
+        label={__("Date Range",'rsvpmaker')}
+        value={ days }
+        options={ [{value: 5, label: 5},
+			{value: 30, label: '30 Days'},
+			{value: 60, label: '60 Days'},
+			{value: 90, label: '90 Days'},
+			{value: 180, label: '180 Days'},
+			{value: 366, label: '1 Year'}] }
+        onChange={ ( days ) => { setAttributes( { days: days } ) } }
+    />
+					<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+				<SelectControl
+        label={__("Date Format",'rsvpmaker')}
+        value={ date_format }
+        options={ [
+            { label: 'Thursday August 8, 2019', value: '%A %B %e, %Y' },
+            { label: 'August 8, 2019', value: '%B %e, %Y' },
+            { label: 'August 8', value: '%B %e' },
+            { label: 'Aug. 8', value: '%h. %e' },
+            { label: '8 August 2019', value: '%e %B %Y' },
+        ] }
+        onChange={ ( date_format ) => { setAttributes( { date_format: date_format } ) } }
+    />
+				</form>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker</strong>: Add an Events Listing and/or Calendar Display
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function( props ) {
+		return null;
+	},
+} );
+
 
 registerBlockType( 'rsvpmaker/stripecharge', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
@@ -552,3 +659,187 @@ show &&
 	},
 } );
 
+registerBlockType( 'rsvpmaker/rsvpdateblock', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Dateblock' ), // Block title.
+	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Calendar' ),
+	],
+	edit: function( props ) {
+
+			return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock">Changes placement of date/time block from default (top of the post)
+				</p>
+				</div>
+			);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/placeholder', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'Placeholder' ), // Block title.
+	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'formatting', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Placeholder' ),
+		__( 'Layout' ),
+	],
+       attributes: {
+            text: {
+            type: 'string',
+            default: '',
+            },
+        },
+	edit: function( props ) {
+		const { attributes: { text }, setAttributes, isSelected } = props;
+			
+		if(isSelected)
+		return (
+			<div className={ props.className }>
+	<TextControl
+        label={ __( 'Text', 'rsvpmaker' ) }
+        value={ text }
+        onChange={ ( text ) => setAttributes( { text } ) }
+    />	
+	<p class="dashicons-before dashicons-welcome-write-blog"><em>(Not shown on front end. Delete from finished post)</em></p>
+				</div>
+			);
+		
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-welcome-write-blog">{text} <em>(Placeholder: Not shown on front end)</em></p>
+				</div>
+			);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/upcoming-by-json', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Events (fetch via API)' ), // Block title.
+	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Events' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            limit: {
+                type: 'int',
+				default: 10,
+            },
+            url: {
+                type: 'string',
+                default: '',
+            },
+            morelink: {
+                type: 'string',
+                default: '',
+            },
+        },
+	/**
+	 * The edit function describes the structure of your block in the context of the editor.
+	 * This represents what the editor will render when the block is used.
+	 *
+	 * The "edit" property must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	edit: function( props ) {
+	const { attributes: { limit, url, morelink }, setAttributes, isSelected } = props;
+	let typelist = '';
+	if(rsvpupcoming && (rsvpupcoming.length > 2))
+	{
+		typelist = 'API urls for  this site:\n'+window.location.protocol+'//'+window.location.hostname+'/wp-json/rsvpmaker/v1/future\n';
+		rsvptypes.forEach(showTypes);	
+	}
+
+function showTypes (data, index) {
+	if(index > 0)
+		typelist = typelist.concat(window.location.protocol+'//'+window.location.hostname + '/wp-json/rsvpmaker/v1/type/'+data.value + '\n'); 
+}
+
+function showForm() {
+return (<div>
+	<TextControl
+        label={ __( 'JSON API url', 'rsvpmaker' ) }
+        value={ url }
+        onChange={ ( url ) => setAttributes( { url } ) }
+    />
+	<TextControl
+        label={ __( 'Limit', 'rsvpmaker' ) }
+        value={ limit }
+		help={__('For no limit, enter 0')}
+        onChange={ ( limit ) => setAttributes( { limit } ) }
+    />	
+	<TextControl
+        label={ __( 'Link URL for more results (optional)', 'rsvpmaker' ) }
+        value={ morelink }
+        onChange={ ( morelink ) => setAttributes( { morelink } ) }
+    />	
+	<p><em>Enter JSON API url for this site or another in the format:
+	<br />https://rsvpmaker.com/wp-json/rsvpmaker/v1/future
+	<br />or
+	<br />https://rsvpmaker.com/wp-json/rsvpmaker/v1/type/featured</em></p>
+<pre>{typelist}</pre>
+</div>);
+}
+
+function showFormPrompt () {
+    return (<p><em>Click to set options</em></p>);
+}
+
+		return (
+			<div className={ props.className }>
+				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker</strong>: Add an Events Listing that dynamically loads via JSON API endpoint
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function( props ) {
+		return null;
+	},
+} );

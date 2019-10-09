@@ -26,15 +26,36 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/upcoming', ['render_callback' => 'rsvpmaker_upcoming']);	
 	register_block_type('rsvpmaker/stripecharge', ['render_callback' => 'rsvpmaker_stripecharge']);	
 	register_block_type('rsvpmaker/limited', ['render_callback' => 'rsvpmaker_limited_time']);	
-	register_block_type('rsvpmaker/formfield', ['render_callback' => 'rsvp_form_field']);	
-	register_block_type('rsvpmaker/formtextarea', ['render_callback' => 'rsvp_form_field']);	
-	register_block_type('rsvpmaker/formselect', ['render_callback' => 'rsvp_form_field']);	
-	register_block_type('rsvpmaker/formradio', ['render_callback' => 'rsvp_form_field']);	
-	register_block_type('rsvpmaker/guests', ['render_callback' => 'rsvp_form_guests']);	
+	register_block_type('rsvpmaker/formfield', ['render_callback' => 'rsvp_form_text']);	
+	register_block_type('rsvpmaker/formtextarea', ['render_callback' => 'rsvp_form_textarea']);	
+	register_block_type('rsvpmaker/formselect', ['render_callback' => 'rsvp_form_select']);	
+	register_block_type('rsvpmaker/formradio', ['render_callback' => 'rsvp_form_radio']);	
+	register_block_type('rsvpmaker/formnote', ['render_callback' => 'rsvp_form_note']);	
+	register_block_type('rsvpmaker/guests', ['render_callback' => 'rsvp_form_guests']);
+	register_block_type('rsvpmaker/stripe-form-wrapper', ['render_callback' => 'stripe_form_wrapper']);
+	register_block_type('rsvpmaker/eventlisting', ['render_callback' => 'event_listing']);
+	register_block_type('rsvpmaker/rsvpdateblock', ['render_callback' => 'rsvpdateblock']);
+	register_block_type('rsvpmaker/upcoming-by-json', ['render_callback' => 'rsvpjsonlisting']);
+}
+
+function rsvpjsonlisting ($atts) {
+if(empty($atts['url']))
+	return;
+$url = $atts['url'];
+$limit = (empty($atts['limit'])) ? 10: (int) $atts['limit'];
+$morelink = (empty($atts['morelink'])) ? '' : $atts['morelink'];
+$slug = rand(0,1000000);
+ob_start();
+?>
+	<div id="rsvpjsonwidget-<?php echo $slug; ?>">Loading ...</div>
+<script>
+var jsonwidget<?php echo $slug; ?> = new RSVPJsonWidget('rsvpjsonwidget-<?php echo $slug; ?>','<?php echo $url; ?>',<?php echo $limit; ?>,'<?php echo $morelink; ?>');
+</script>
+<?php
+return ob_get_clean();
 }
 
 add_action('init','rsvpmaker_server_block_render');
-
 
 function rsvpmaker_block_cgb_block_assets() {
 	// Styles.

@@ -59,13 +59,12 @@ add_action('sc_after_charge','rsvpmaker_sc_after_charge');
 add_action("template_redirect", 'rsvpemail_template_redirect');
 
 add_action('user_register','RSVPMaker_register_chimpmail');
-add_action('widgets_init', create_function('', 'return register_widget("CPEventsWidget");'));
-add_action('widgets_init', create_function('', 'return register_widget("RSVPTypeWidget");'));
+add_action('widgets_init', function() {return register_widget("CPEventsWidget");});
+add_action('widgets_init', function() {return register_widget("RSVPTypeWidget");});
+add_action('widgets_init', function() {return register_widget("RSVPMakerByJSON");});
 add_action('wp','clear_rsvp_cookies');
 add_action('wp', 'rsvp_reminder_activation');
 add_action('wp','rsvpmaker_before_post_display_action');
-
-
 
 add_action('wp_enqueue_scripts','rsvpmaker_event_scripts',10000);
 

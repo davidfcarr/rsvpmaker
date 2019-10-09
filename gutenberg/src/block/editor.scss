@@ -5,13 +5,13 @@
  * which makes it higher in priority.
  */
 
-.wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event  {
+.wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event, .wp-block-rsvpmaker-rsvpdateblock, .wp-block-rsvpmaker-placeholder  {
   background: #ddd;
   border: 0.2rem solid $black;
   color: $black;
   margin: 0 auto;
   max-width: 740px;
-  padding: 2rem;
+  padding: 1rem;
 }
 .wp-block-rsvpmaker-upcoming label, .wp-block-rsvpmaker-event label {
 	display: block;

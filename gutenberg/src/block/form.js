@@ -67,16 +67,8 @@ registerBlockType( 'rsvpmaker/formfield', {
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
 	save: function(props) {
-	const { attributes: { label, slug, required, guestform } } = props;
-	var profilename = 'profile['+slug+']';
-	var type = (slug == 'email') ? 'email' : 'text';
-		// server render
-			return (
-			<div className={ props.className }>
-<p><label>{label}:</label> <span className={required}><input className={slug} type={type} name={profilename} id={slug} value="" /></span></p>
-			</div>
-			);
-	},
+	return null;
+},
 } );
 
 registerBlockType( 'rsvpmaker/formtextarea', {
@@ -130,16 +122,51 @@ registerBlockType( 'rsvpmaker/formtextarea', {
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
 	save: function(props) {
-	const { attributes: { label, slug, rows, guestform }, setAttributes, isSelected } = props;
-	var profilename = 'profile['+slug+']';	
-			return (
-			<div className={ props.className }>
-<p><label>{label}:</label></p><p><textarea rows={rows} className={slug} type="text" name={profilename} id={slug}></textarea></p>
-			</div>
-			);
+	return null;
 	},
 } );
 
+registerBlockType( 'rsvpmaker/formnote', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPField Note' ), // Block title.
+	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Form' ),
+		__( 'Note' ),
+	],
+       attributes: {
+            label: {
+            type: 'string',
+            default: 'Note',
+            },
+        },
+	edit: function( props ) {
+	const { attributes: { label }, setAttributes, isSelected } = props;
+			return (
+			<Fragment>
+			<TextAreaInspector {...props} />
+			<div>
+			</div><p>Note:<br /><textarea name="note"></textarea></p><div><em>{__('Note for bottom of RSVP form. Only one allowed. Use RSVPField Text Area for any additional text fields. Set properties in sidebar. Intended for use within an RSVPMaker registration form.','rsvpmaker')}</em>
+			</div>
+			</Fragment>
+			);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function(props) {
+	return null;
+	},
+
+} );
 
 class FieldInspector extends Component {
 	render() {
@@ -278,16 +305,7 @@ registerBlockType( 'rsvpmaker/formselect', {
 	},
 
 	save: function(props) {
-	const { attributes: { label, slug, choicearray, guestform } } = props;
-	var profilename = 'profile['+slug+']';
-		// server render
-			return (
-			<div className={ props.className }>
-<p><label>{label}:</label> <span><select className={slug} name={profilename} id={slug} >{choicearray.map(function(opt, i){
-                    return <option value={ opt }>{opt}</option>;
-                })}</select></span></p>
-			</div>
-			);
+	return null;
 	},
 } );
 
@@ -337,16 +355,7 @@ registerBlockType( 'rsvpmaker/formradio', {
 	},
 
 	save: function(props) {
-	const { attributes: { label, slug, choicearray, guestform } } = props;
-	var profilename = 'profile['+slug+']';
-		// server render
-			return (
-			<div className={ props.className }>
-<p><label>{label}:</label> <span>{choicearray.map(function(opt, i){
-                    return <span><input type="radio" className={slug} name={profilename} id={slug} value={opt} /> {opt} </span>;
-                })}</span></p>
-			</div>
-			);
+	return null;
 	},
 } );
 

@@ -181,67 +181,21 @@ function rsvp_url_date_query ($direction = '') {
 }
 
 function event_listing($atts = array()) {
-
-global $wpdb;
 global $rsvp_options;
-$eventlist = array();
-$listings = '';
-$date_format = (isset($atts["date_format"])) ? $atts["date_format"] : $rsvp_options["short_date"];
-$time_format = (isset($atts["time_format"])) ? $atts["time_format"] : $rsvp_options["time_format"];
+$events = rsvpmaker_upcoming_data($atts);
+$date_format = (isset($atts["date_format"])) ? $atts["date_format"] : $rsvp_options["long_date"];
+
 fix_timezone();
 
-if(isset($atts["past"]))
-	$sql = "SELECT *, $wpdb->posts.ID as postID, 1 as current, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value < CURDATE( ) AND $wpdb->posts.post_status = 'publish'
-ORDER BY meta_value DESC";
-elseif(isset($_GET["cy"]))
-{
-$date = rsvp_url_date_query();
-$sql = "SELECT *, $wpdb->posts.ID as postID, 1 as current, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value >= '".$date."' AND $wpdb->posts.post_status = 'publish'
-ORDER BY meta_value";
-}
-else
-	$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value > CURDATE( ) as current, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value >= '".date('Y-m')."-01' AND $wpdb->posts.post_status = 'publish'
-ORDER BY meta_value";
-
-if(isset($atts["limit"]))
-	$sql .= " LIMIT 0,".$atts["limit"];
-
-$results = $wpdb->get_results($sql,ARRAY_A);
-
-foreach($results as $row)
+foreach($events as $event)
 	{
-	$t = strtotime($row["datetime"]);
-	if(empty($dateline[$row["postID"]]))
-		$dateline[$row["postID"]] = '';
-	else
-		$dateline[$row["postID"]] .= ", ";
-	$dateline[$row["postID"]] .= strftime($date_format,$t);
-	if(!empty($row["current"]) && empty($eventlist[$row["postID"]]))
-		$eventlist[$row["postID"]] = $row;
-	}
-
-if(isset($atts["calendar"]) || (isset($atts["format"]) && $atts["format"] == 'calendar') )
-	$listings .= rsvpmaker_calendar($atts);
-
-//strpos test used to catch either "headline" or "headlines"
-if($eventlist && isset($atts["format"]) && ( $atts["format"] == 'headline' || $atts["format"] == 'headlines') )
-{
-foreach($eventlist as $event)
-	{
-	if(!empty($atts["permalinkhack"]))
-		$permalink = site_url() ."?p=".$event["postID"];
-	else
-		$permalink = get_post_permalink($event["postID"]);
-	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",$permalink,$event["post_title"],$dateline[$event["postID"]]);
+	$dateline = '';
+	foreach($event['dates'] as $date)
+		{
+		$t = strtotime($date['datetime']);
+		$dateline .= strftime($date_format, $t).' ';
+		}
+	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",$event['permalink'],$event["title"],$dateline);
 	}	
 
 	if(!empty($atts["limit"]) && !empty($rsvp_options["eventpage"]))
@@ -251,175 +205,13 @@ foreach($eventlist as $event)
 		$listings = "<p><strong>".$atts["title"]."</strong></p>\n<ul id=\"eventheadlines\">\n$listings</ul>\n";
 	else
 		$listings = "<ul id=\"eventheadlines\">\n$listings</ul>\n";
-}//end if $eventlist
+
+	if(isset($_GET['debug']))
+		$listings .= '<pre>'.var_export($events, true).'</pre>';
 
 	return $listings;
 }
 
-/**
- * CPEventsWidget Class
- */
-class CPEventsWidget extends WP_Widget {
-    function __construct() {
-        parent::__construct(false, $name = 'RSVPMaker Events');
-    }
-
-    function widget($args, $instance) {		
-        extract( $args );
-		global $rsvpwidget;
-		$rsvpwidget = true;
-		$title = (isset($instance['title'])) ? $instance['title'] : __('Events','rsvpmaker');
-        $title = apply_filters('widget_title', $title);
-		$atts["limit"] = (isset($instance["limit"])) ? $instance["limit"] : 10;
-		if(!empty($instance["event_type"]))
-		$atts["type"] = (isset($instance["event_type"])) ? $instance["event_type"] : NULL;
-		$dateformat = (isset($instance["dateformat"])) ? $instance["dateformat"] : 'M. j';
-        global $rsvp_options;
-		;?>
-              <?php echo $before_widget;?>
-                  <?php if ( $title )
-                        echo $before_title . $title . $after_title;?>
-              <?php 
-			  
-			  $events = rsvpmaker_upcoming_data($atts);
-			  if(!empty($events))
-			  {
-			  echo "\n<ul>\n";
-			  foreach($events as $event)
-			  	{
-				$datestr = '';
-				foreach($event['dates'] as $date)
-					{
-						if(!empty($datestr))
-							$datestr .= ', ';
-						$datestr .= date($dateformat,strtotime($date["datetime"]));
-					}
-				printf('<li><a href="%s">%s</a> - %s</li>',$event['permalink'],$event['title'],$datestr);
-					
-				}
-			
-			if(!empty($rsvp_options["eventpage"]))
-			  	echo '<li><a href="'.$rsvp_options["eventpage"].'">'.__("Go to Events Page",'rsvpmaker')."</a></li>";
-			
-			  echo "\n</ul>\n";
-			  }
-			  			  
-			  echo $after_widget;?>
-        <?php
-		$rsvpwidget = false;
-    }
-
-    /** @see WP_Widget::update */
-    function update($new_instance, $old_instance) {				
-	$instance = $old_instance;
-	$instance['title'] = strip_tags($new_instance['title']);
-	$instance['dateformat'] = strip_tags($new_instance['dateformat']);
-	$instance['limit'] = (int) $new_instance['limit'];
-	$instance['event_type'] = $new_instance['event_type'];
-        return $instance;
-    }
-
-    /** @see WP_Widget::form */
-    function form($instance) {				
-        $title = (isset($instance['title'])) ? esc_attr($instance['title']) : __('Events','rsvpmaker');
-		$limit = (isset($instance["limit"])) ? $instance["limit"] : 10;
-		$dateformat = (isset($instance["dateformat"])) ? $instance["dateformat"] : 'M. j';
-		$event_type = (!empty($instance["event_type"])) ? $instance["event_type"] : '';
-        ?>
-            <p><label for="<?php echo $this->get_field_id('title');?>"><?php _e('Title:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('title');?>" name="<?php echo $this->get_field_name('title');?>" type="text" value="<?php echo $title;?>" /></label></p>
-            <p><label for="<?php echo $this->get_field_id('limit');?>"><?php _e('Number to Show:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('limit');?>" name="<?php echo $this->get_field_name('limit');?>" type="text" value="<?php echo $limit;?>" /></label></p>
-
-            <p><label for="<?php echo $this->get_field_id('dateformat');?>"><?php _e('Date Format:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('dateformat');?>" name="<?php echo $this->get_field_name('dateformat');?>" type="text" value="<?php echo $dateformat;?>" /></label> (PHP <a target="_blank" href="http://us2.php.net/manual/en/function.date.php">date</a> format string)</p>
-
-<p><label for="<?php echo $this->get_field_id('event_type');?>">
-<?php
-$tax_terms = get_terms('rsvpmaker-type');
-?>
-<select class="widefat" id="<?php echo $this->get_field_id('event_type');?>" name="<?php echo $this->get_field_name('event_type');?>" ><option value=""><?php _e('All','rsvpmaker'); ?></option>
-<?php
-if(!empty($tax_terms))
-	{
-		foreach ($tax_terms as $tax_term) {
-		$s = ($tax_term->name == $event_type) ? ' selected="selected" ' : '';
-		echo '<option value="'.$tax_term->name . '" ' . $s . '>' . $tax_term->name.'</option>';
-		}
-	}
-?>
-</select>
-</p>
-
-        <?php 
-    }
-
-} // class CPEventsWidget
-
-/**
- * RSVPTypeWidget Class
- */
-class RSVPTypeWidget extends WP_Widget {
-    /** constructor */
-    function __construct() {
-        parent::__construct('rsvpmaker_type_widget', $name = 'RSVPMaker Events by Type');	
-    }
-
-    /** @see WP_Widget::widget */
-    function widget($args, $instance) {		
-        extract( $args );
-        $title = apply_filters('widget_title', $instance['title']);
-		if(empty($title))
-			$title = __('Events by Type','rsvpmaker');
-		$atts["limit"] = ($instance["limit"]) ? $instance["limit"] : 10;
-		if(!empty($instance["event_type"]))
-        global $rsvp_options;
-		;?>
-              <?php echo $before_widget;?>
-                  <?php if ( $title )
-                        echo $before_title . $title . $after_title;?>
-              <?php 
-
-
-$args = array( 'hide_empty=0' );
- 
-$terms = get_terms( 'rsvpmaker-type', $args );
-echo '<ul>';
-if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
-    $count = count( $terms );
-    $i = 0;
-    foreach ( $terms as $term ) {
-        $i++;
-		$atts["type"] = $term->name;
-	  	$events = rsvpmaker_upcoming_data($atts);
-		$count = sizeof($events);
-		$countstr = ($count) ? '('.$count.')' : '';
-		printf('<li><a href="%s">%s</a> %s</li>',esc_url( get_term_link( $term ) ),$term->name,$countstr);
-    }
-}
-	  echo "\n</ul>\n";
-		
-			  echo $after_widget;?>
-        <?php
-    }
-
-    /** @see WP_Widget::update */
-    function update($new_instance, $old_instance) {				
-	$instance = $old_instance;
-	$instance['title'] = strip_tags($new_instance['title']);
-	$instance['limit'] = (int) $new_instance['limit'];
-        return $instance;
-    }
-
-    /** @see WP_Widget::form */
-    function form($instance) {				
-        $title = (isset($instance['title'])) ? esc_attr($instance['title']) : '';
-		$limit = (isset($instance["limit"])) ? $instance["limit"] : 10;
-        ?>
-            <p><label for="<?php echo $this->get_field_id('title');?>"><?php _e('Title:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('title');?>" name="<?php echo $this->get_field_name('title');?>" type="text" value="<?php echo $title;?>" /></label></p>
-            <p><label for="<?php echo $this->get_field_id('limit');?>"><?php _e('Number to Show:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('limit');?>" name="<?php echo $this->get_field_name('limit');?>" type="text" value="<?php echo $limit;?>" /></label></p>
-
-        <?php 
-    }
-
-}
 
 
 function get_next_events_link( $label = '', $no_events = '' ) {
@@ -447,7 +239,7 @@ if(!$at_least_one)
 function rsvpmaker_select($select) {
   global $wpdb;
 
-    $select .= ", rsvpdates.meta_value as datetime, meta_id";
+    $select .= ", rsvpdates.meta_value as datetime, meta_id, date_format(rsvpdates.meta_value,'%M %e, %Y') as date";
   return $select;
 }
 
@@ -839,11 +631,12 @@ while ( have_posts() ) : the_post();
 
 	fix_timezone();
 	$t = strtotime($post->datetime);
-	$post->duration = get_post_meta($post->ID,'_'.$post->datetime, true);
-	$time = ($post->duration == 'allday') ? '' : '<br />&nbsp;'.strftime($rsvp_options["time_format"],$t);
-	if(strpos($post->duration,'-'))
+	$duration_type = get_post_meta($post->ID,'_'.$post->datetime, true);
+	$end = get_post_meta($post->ID,'_end'.$post->datetime, true);
+	$time = ($duration_type == 'allday') ? '' : '<br />&nbsp;'.strftime($rsvp_options["time_format"],$t);
+	if(($duration_type == 'set') && !empty($end) )
 		{
-		$time .= '-'.strftime($rsvp_options["time_format"],strtotime($post->duration));
+		$time .= '-'.strftime($rsvp_options["time_format"],strtotime($end));
 		}
 	if(isset($_GET["debug"]))
 		{
@@ -1009,7 +802,7 @@ $content .= '<div class="rsvpmaker_nav"><span class="navprev">'. $prev_link. '</
      '' . $next_link . "</span></div>";
 
 //jump form
-$content .= sprintf('<form id="rsvpmaker_jumpform" action="%s" method="post"> %s <input type="text" name="cm" value="%s" size="4" class="jump" />/<input type="text" name="cy" value="%s" size="4" class="jump" /><button>%s</button>%s</form>', $self,__('Month/Year','rsvpmaker'),date('m',$monthafter),date('Y',$monthafter),__('Go','rsvpmaker'),$page_id);
+$content .= sprintf('<form id="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="text" name="cm" value="%s" size="4" class="jump" />/<input type="text" name="cy" value="%s" size="4" class="jump" /><button>%s</button>%s</form>', $self,__('Month/Year','rsvpmaker'),date('m',$monthafter),date('Y',$monthafter),__('Go','rsvpmaker'),$page_id);
 
 $calj = "
 
@@ -1281,6 +1074,7 @@ function rsvp_ical_split($preamble, $value) {
 }
 
 function rsvpmaker_to_ical () {
+fix_timezone();
 global $post;
 global $rsvp_options;
 global $wpdb;
@@ -1290,9 +1084,13 @@ header('Content-type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename=' . $post->post_name.'.ics');
 $sql = "SELECT *, meta_value as datetime FROM ".$wpdb->postmeta." WHERE meta_key='_rsvp_dates' AND post_id=".$post->ID.' ORDER BY meta_value';
 $daterow = $wpdb->get_row($sql);
-$duration = get_post_meta($post->ID,'_'.$daterow->datetime, true);
-fix_timezone();
-$duration = get_utc_ical ( (strpos($duration,'-') ) ? $post->ID : $daterow->datetime . ' +1 hour' );
+$end_time = get_post_meta($post->ID,'_end'.$daterow->datetime, true);
+if(empty($end_time))
+	$ical_end = get_utc_ical ( $daterow->datetime . ' +1 hour' );
+else {
+	$p = explode(' ',$daterow->datetime);
+	$ical_end = get_utc_ical ( $p[0] . ' '.$end_time );
+}
 $start = get_utc_ical ($daterow->datetime);
 $hangout = get_post_meta($post->ID, '_hangout',true);
 $url = (!empty($hangout)) ? $hangout : get_permalink($post->ID);
@@ -1300,7 +1098,7 @@ $url = (!empty($hangout)) ? $hangout : get_permalink($post->ID);
 $desc = '';
 if(!empty($hangout))
 	$desc = "Google Hangout: ".$hangout." ";
-$desc .= "Event info:" . get_permalink($post->ID);
+$desc .= "Event info: " . get_permalink($post->ID);
 $desc = rsvp_ical_split("DESCRIPTION:", $desc);
 
 printf('BEGIN:VCALENDAR
@@ -1318,13 +1116,12 @@ DTSTART:%s
 ORGANIZER;CN=%s:MAILTO:%s
 END:VEVENT
 END:VCALENDAR
-',$duration,$start.'-'.$post->ID.'@'.$_SERVER['SERVER_NAME'],date('Ymd\THis\Z'), $desc, $url, $post->post_title, $start, get_bloginfo('name'), $rsvp_options["rsvp_to"]);
+',$ical_end,$start.'-'.$post->ID.'@'.$_SERVER['SERVER_NAME'],date('Ymd\THis\Z'), $desc, $url, $post->post_title, $start, get_bloginfo('name'), $rsvp_options["rsvp_to"]);
 exit;
 }
 
-
 function rsvpmaker_to_gcal($post,$datetime,$duration) {
-return sprintf('http://www.google.com/calendar/event?action=TEMPLATE&text=%s&dates=%s/%s&details=%s&location=&trp=false&sprop=%s&sprop=name:%s',urlencode($post->post_title),get_utc_ical ($datetime),get_utc_ical ($duration), urlencode(get_bloginfo('name')),get_permalink($post->ID), urlencode(get_bloginfo('name')) );
+return sprintf('http://www.google.com/calendar/event?action=TEMPLATE&text=%s&dates=%s/%s&details=%s&location=&trp=false&sprop=%s&sprop=name:%s',urlencode($post->post_title),get_utc_ical ($datetime),get_utc_ical ($duration), urlencode(get_bloginfo('name') ." ".get_permalink($post->ID)  ),get_permalink($post->ID), urlencode(get_bloginfo('name') ) );
 }
 
 function get_utc_ical ($timestamp) {
@@ -1808,6 +1605,9 @@ return ob_get_clean();
 function rsvpmaker_archive_loop_end () {
 global $wp_query;
 global $rsvpwidget;
+global $dataloop;
+if(!empty($dataloop))
+	return;//don't do this for rsvpmaker_upcoming_data
 if (!empty($rsvpwidget) || empty($wp_query->query["post_type"]) )
 	return;
 if(is_archive() && ($wp_query->query["post_type"] == 'rsvpmaker'))
@@ -1983,4 +1783,13 @@ function get_rsvp_link($post_id, $justlink = false) {
 		return $rsvplink; // just the link, otherwise return button
 	return sprintf($rsvp_options["rsvplink"],$rsvplink);
 }
+
+function rsvpdateblock ($atts) {
+	global $post;
+	$custom_fields = get_rsvpmaker_custom($post->ID);
+	$date_array = rsvp_date_block($post->ID, $custom_fields);
+	$dateblock = $date_array["dateblock"];
+	return '<div class="dateblock">'.$dateblock."\n</div>\n";
+}
+add_shortcode('rsvpdateblock','rsvpdateblock');
 ?>

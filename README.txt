@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 5.2.1
-Stable tag: 6.2.4
+Tested up to: 5.3
+Stable tag: 6.4.3
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -24,7 +24,7 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 
 https://youtu.be/gt6fE07a8bc
 
-RSVPMaker is free and open source, with no upsell to a premium version. We occasionally create custom features on contract, but where possible those enhancements are folded back into the coe plugin code. RSVPMaker is also developer friendly, allowing you to build event-centric applications on top of it.
+RSVPMaker is free and open source, with no upsell to a premium version. We occasionally create custom features on contract, but where possible those enhancements are folded back into the coe plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
 
 Creating and Managing Events
 
@@ -109,10 +109,73 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
     See the GNU General Public License at <http://www.gnu.org/licenses/gpl-2.0.html>.
 	
-	RSVPMaker also includes code derived from the PayPal NVP API software
-	development kit for PHP and the Stripe SDK under the license of their creators.
+	RSVPMaker also includes code derived from the software development kits for PayPal, 
+    Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 6.4.3 =
+
+* Eliminating the use of create_function (deprecated as of PHP 7.2+) in widget definitions
+
+= 6.4.2 =
+
+* Introducing widget and editor block for dynamically loading lists of events from RSVPMaker API endpoints, using JavaScript and JSON. Can be used to fetch event listings from other sites or to perform better in combination with caching solutions.
+
+= 6.4.1 =
+
+* Fix for issue where RSVP Form did not reset properly if the document was deleted.
+
+= 6.4 =
+
+* Fix for scheduled email (featured message)
+* Fix for default options not being applied correctly on event setup (Add New) screen
+* Option to change event post title when adding events from a template
+
+= 6.3.9 =
+
+* Updated support for PayPal (newer REST API) [blog post](https://rsvpmaker.com/blog/2019/09/09/paypal-rest/)
+
+= 6.3.8 =
+
+* UI tweaks to make it more obvious how to create an event based on a template.
+* Fix for an intermittent glitch that prevented Gutenberg from displaying the proper error message after saving an event post.
+
+= 6.3.7 =
+
+* Adding RSVPMaker Dateblock block - changes placement of date/time block. Same as rsvpdateblock shortcode
+* Adding Placeholder block. Add a note that only appears in the editor, not on the front end. Example: "event description goes here" text for an event template.
+
+= 6.3.6 =
+
+* In a template, option to set deadline and registration start as x days before rather than a specific date
+* When adding event posts from a template, you now have the option to add them as drafts rather than published posts
+* Tweak to function that allows you to jump ahead to a specific date
+
+= 6.3.4 =
+
+* rsvpdateblock shortcode can be inserted in the body of a post, altering where the date and time information appears.
+* Fix to preserve event end time from template to screen for creating an individual event.
+* Additional span elements wrapped around the time display within datetime block. CSS can be used to change display of span.time or span.end_time
+
+= 6.3.4 =
+
+* Fixes to event_listing shortcode
+* Addition of an RSVPMaker event listing Gutenberg block. For showing a listing of just headlines, dates and links to upcoming events.
+
+= 6.3.1 =
+
+* Corrected an issue with editing of the RSVP form. Under some circumstances, WordPress would strip HTML form field tags from the Gutenberg blocks, so now those are formatted on the server.
+* Added Stripe Form Wrapper Gutenberg component. Can be used for simple order forms for payments independent of the RSVP Form.
+
+= 6.2.6 =
+
+* Changed how event end times are set, more consistent with how other calendaring programs do it.
+
+= 6.2.5 =
+
+* If timezone is not set, suggest one based on JavaScript detection of the user's timezone. Uses https://github.com/iansinnott/jstz
+* Bug fix related to multi-day events.
 
 = 6.2.4 =
 

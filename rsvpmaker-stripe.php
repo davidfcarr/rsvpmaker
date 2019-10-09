@@ -27,9 +27,9 @@ else
 	$button++;
 ob_start();
 require_once('stripe-php/init.php');
-
-$public = get_option('rsvpmaker_stripe_pk');
-$secret = get_option('rsvpmaker_stripe_sk');
+$keys = get_rsvpmaker_stripe_keys ();
+$public = $keys['pk'];
+$secret = $keys['sk'];
 $varkey = 'button'.$button;
 $url = add_query_arg('varkey',$varkey,get_permalink($post->ID));
 
@@ -105,9 +105,9 @@ $vars['email'] = $_POST['stripeEmail'];
 if(!empty($vars['paymentType']) && strpos($vars['paymentType'],'scription:'))
 	return rsvpmaker_stripe_subscription($vars);
 require_once('stripe-php/init.php');
-
-$public = get_option('rsvpmaker_stripe_pk');
-$secret = get_option('rsvpmaker_stripe_sk');
+$keys = get_rsvpmaker_stripe_keys ();
+$public = $keys['pk'];
+$secret = $keys['sk'];
 
 \Stripe\Stripe::setApiKey($secret);
 
@@ -254,8 +254,9 @@ $currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp
 ob_start();
 require_once('stripe-php/init.php');
 
-$public = get_option('rsvpmaker_stripe_pk');
-$secret = get_option('rsvpmaker_stripe_sk');
+$keys = get_rsvpmaker_stripe_keys ();
+$public = $keys['pk'];
+$secret = $keys['sk'];
 
 \Stripe\Stripe::setApiKey($secret);
 	
@@ -522,7 +523,10 @@ do_action('rsvpmaker_stripe_payment',$vars);
 }
 
 function rsvpmaker_stripe_notify($vars) {
-	$to = get_option('rsvpmaker_stripe_notify');
+	$keys = get_rsvpmaker_stripe_keys ();
+	$public = $keys['pk'];
+	$secret = $keys['sk'];
+	$to = $keys['notify'];
 	if(empty($to))
 		return;
 	$mail['to'] = $to;
@@ -552,7 +556,12 @@ Your Name: <input type="text" name="name" />
 }
 
 function rsvpmaker_stripe_report () {
-	echo '<h1>Stripe Charges</h1>';	
+	echo '<h1>Stripe Charges</h1>';
+	
+	if(isset($_GET['history'])) {
+		stripe_balance_history();
+	}
+
 	global $wpdb;
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvpmaker_stripe_payment' ORDER BY meta_id DESC";
 	$results = $wpdb->get_results($sql);
@@ -563,6 +572,25 @@ function rsvpmaker_stripe_report () {
 			printf('<div>%s: %s</div>',$index,$value);
 		echo '</p>';
 	}
+}
+
+function stripe_balance_history () {
+	require_once('stripe-php/init.php');
+
+	$keys = get_rsvpmaker_stripe_keys ();
+	$public = $keys['pk'];
+	$secret = $keys['sk'];
+		\Stripe\Stripe::setApiKey($secret);
+	
+	\Stripe\Stripe::setAppInfo(
+		"WordPress RSVPMaker events management plugin",
+		get_rsvpversion(),
+		"https://rsvpmaker.com"
+	);
+//use https://stripe.com/docs/api/balance/balance_history
+
+$history = \Stripe\BalanceTransaction::history (array('limit' => 50));
+print_r($history);
 }
 
 add_action('admin_menu','rsvpmaker_stripe_report_menu',99);

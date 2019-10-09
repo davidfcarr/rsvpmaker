@@ -7,43 +7,38 @@
 	register_block_type('rsvpmaker/guests', ['render_callback' => 'rsvp_form_guests']);	
 */
 
-function upgrade_rsvpform ($future = true) {
+function upgrade_rsvpform ($future = true, $rsvp_form_post=0) {
 global $rsvp_options;
+$newform = true;
 
-$form = '<!-- wp:rsvpmaker/formfield {"label":"'.__('First Name','rsvpmaker').'","slug":"first","sluglocked":true,"required":"required","guestform":true} -->
-<div class="wp-block-rsvpmaker-formfield"><p><label>'.__('First Name','rsvpmaker').':</label> <span class="required"><input class="first" type="text" name="profile[first]" id="first" value=""/></span></p></div>
-<!-- /wp:rsvpmaker/formfield -->
-
-<!-- wp:rsvpmaker/formfield {"label":"'.__('Last Name','rsvpmaker').'","slug":"last","guestform":true,"sluglocked":true,"required":"required"} -->
-<div class="wp-block-rsvpmaker-formfield"><p><label>'.__('Last Name','rsvpmaker').':</label> <span class="required"><input class="last" type="text" name="profile[last]" id="last" value=""/></span></p></div>
-<!-- /wp:rsvpmaker/formfield -->
-
-<!-- wp:rsvpmaker/formfield {"label":"'.__('Email','rsvpmaker').'","slug":"email","sluglocked":true,"required":"required"} -->
-<div class="wp-block-rsvpmaker-formfield"><p><label>'.__('Email','rsvpmaker').':</label> <span class="required"><input class="email" type="email" name="profile[email]" id="email" value=""/></span></p></div>
-<!-- /wp:rsvpmaker/formfield -->
-
-<!-- wp:rsvpmaker/formfield {"label":"'.__('Phone','rsvpmaker').'","slug":"phone"} -->
-<div class="wp-block-rsvpmaker-formfield"><p><label>'.__('Phone','rsvpmaker').':</label> <span class=""><input class="phone" type="text" name="profile[phone]" id="phone" value=""/></span></p></div>
-<!-- /wp:rsvpmaker/formfield -->
-
-<!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} -->
-<div class="wp-block-rsvpmaker-formselect"><p><label>Phone Type:</label> <span><select class="phone_type" name="profile[phone_type]" id="phone_type"><option value="Mobile Phone">Mobile Phone</option><option value="Home Phone">Home Phone</option><option value="Work Phone">Work Phone</option></select></span></p></div>
-<!-- /wp:rsvpmaker/formselect -->
-
+$form = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone"} /-->
+<!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} /-->
 <!-- wp:rsvpmaker/guests -->
 <div class="wp-block-rsvpmaker-guests"><!-- wp:paragraph -->
 <p></p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:rsvpmaker/guests -->
+<!-- wp:rsvpmaker/formnote /-->';
 
-<!-- wp:paragraph -->
-<p>'.__('Note','rsvpmaker').':<br><textarea name="note"></textarea></p>
-<!-- /wp:paragraph -->';
+if($rsvp_form_post)
+	{
+	$post = get_post($rsvp_form_post);
+	if(!empty($post) && ($post->post_status == 'publish'))
+	{
+		$rsvp_options['rsvp_form'] = $rsvp_form_post;
+		wp_update_post(array('ID' => $rsvp_form_post,'post_title'=>'RSVP Form:Default','post_content'=>$form ));
+		$newform = false;	
+	}
+	}
 
-$rsvp_options['rsvp_form'] = wp_insert_post(array('post_title'=>'RSVP Form:Default','post_content'=>$form,'post_status'=>'publish','post_type'=>'rsvpmaker','post_parent' => 0));
-update_option('RSVPMAKER_Options',$rsvp_options);
-update_post_meta($rsvp_options['rsvp_form'],'_rsvpmaker_special','RSVP Form');
-
+if($newform) {
+	$rsvp_options['rsvp_form'] = wp_insert_post(array('post_title'=>'RSVP Form:Default','post_content'=>$form,'post_status'=>'publish','post_type'=>'rsvpmaker','post_parent' => 0));
+	update_option('RSVPMAKER_Options',$rsvp_options);
+	update_post_meta($rsvp_options['rsvp_form'],'_rsvpmaker_special','RSVP Form');
+	}
 if($future)
 {
 	$results = get_future_events();
@@ -124,21 +119,78 @@ function rsvp_field_apply_default($content,$slug,$default) {
 	return $content;
 }
 
-function rsvp_form_field($atts, $content) {
+function rsvp_form_text($atts, $content) {
 	global $post;
 	global $rsvp_required_field;
 	if(empty($atts["slug"]) || empty($atts["label"]))
 		return;
 	$slug = $atts["slug"];
 	$label = $atts["label"];
-	
-	$output = '';
-if(isset($atts["required"]) || isset($atts["require"]))
+	$required = '';
+	if(isset($atts["required"]) || isset($atts["require"]))
 	{
-		$output = '<span class="required">'.$output.'</span>';
 		$rsvp_required_field[$slug] = $slug;
-	}	
+		$required = 'required';
+	}
+	$content = sprintf('<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>',$required,$label,$required,$slug,$slug,$slug);
+	return rsvp_form_field($atts,$content);
+}
 
+function rsvp_form_textarea($atts, $content = '') {
+	global $post;
+	global $rsvp_required_field;
+	if(empty($atts["slug"]) || empty($atts["label"]))
+		return;
+	$slug = $atts["slug"];
+	$label = $atts["label"];
+	$rows = (empty($atts['rows'])) ? '3' : $atts['rows'];
+	$required = '';
+	$content = sprintf('<div class="wp-block-rsvpmaker-formtextarea %srsvpblock"><p><label>%s:</label></p><p><textarea rows="%d" class="%s" type="text" name="profile[%s]" id="%s"></textarea></p></div>',$required,$label,$required,$rows,$slug,$slug,$slug);
+	return rsvp_form_field($atts,$content);
+}
+
+function rsvp_form_select($atts, $content = '') {
+	global $post;
+	global $rsvp_required_field;
+	if(empty($atts["slug"]) || empty($atts["label"]))
+		return;
+	$slug = $atts["slug"];
+	$label = $atts["label"];
+	$required = '';
+	$choices = '';
+	if(isset($atts['choicearray']) && !empty($atts['choicearray']) && is_array($atts['choicearray']))
+	foreach($atts['choicearray'] as $choice)
+		$choices .= sprintf('<option value="%s">%s</option>',$choice,$choice);
+
+	$content = sprintf('<div class="wp-block-rsvpmaker-formselect %srsvpblock"><p><label>%s:</label> <span><select class="%s" name="profile[%s]" id="%s">%s</select></span></p></div>',$required,$label,$slug,$slug,$slug,$choices);
+	return rsvp_form_field($atts,$content);
+}
+
+function rsvp_form_radio($atts, $content = '') {
+	global $post;
+	global $rsvp_required_field;
+	if(empty($atts["slug"]) || empty($atts["label"]))
+		return;
+	$slug = $atts["slug"];
+	$label = $atts["label"];	$choices = '';
+	if(isset($atts['choicearray']) && !empty($atts['choicearray']) && is_array($atts['choicearray']))
+	foreach($atts['choicearray'] as $choice)
+		$choices .= sprintf('<span><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s"/> %s </span>',$slug,$slug,$slug,$choice,$choice);
+	$required = '';
+	$content = sprintf('<div class="wp-block-rsvpmaker-formradio %srsvpblock"><p><label>%s:</label> %s</p></div>',$required,$label,$choices);
+	return rsvp_form_field($atts,$content);
+}
+
+function rsvp_form_field($atts, $content = '') {
+	rsvpmaker_debug_log($atts,'form field render atts');
+	rsvpmaker_debug_log($content,'form field render $content');
+	//same for all field types
+	global $post;
+	global $rsvp_required_field;
+	if(empty($atts["slug"]) || empty($atts["label"]))
+		return;
+	$slug = $atts["slug"];
+	$label = $atts["label"];
 	update_post_meta($post->ID,'rsvpform'.$slug,$label);
 	global $profile;
 	//$profile = array('first' => 'David','last' => 'Carr','meal'=>'Chicken','dessert'=>'pie','email'=>'david@carrcommunications.com');
@@ -151,6 +203,11 @@ if(isset($atts["required"]) || isset($atts["require"]))
 		return $content;//.$slug.': no default'.var_export($profile,true);
 	$default = $profile[$slug];
 	return rsvp_field_apply_default($content,$slug,$default);
+}
+
+function rsvp_form_note ($atts = array()) {
+	$label = (empty($atts['label'])) ? 'Note' : $atts['label'];
+	return sprintf('<p>%s:<br><textarea name="note"></textarea></p>',$label);
 }
 
 function rsvp_guest_content($content) {
@@ -240,6 +297,52 @@ if($max_guests > ($count + 1))
 $output .= '<script type="text/javascript"> var guestcount ='.$count.'; </script>';
 
 return $output;
+}
+
+function stripe_form_wrapper($atts,$content) {
+	global $post;
+	$permalink = get_permalink($post->ID);
+	$amount = (isset($atts['amount'])) ? $atts['amount'] : '';
+	$vars['paymentType'] = (isset($atts['paymentType'])) ? $atts['paymentType'] : '';
+	$vars['description'] = (isset($atts['description'])) ? $atts['description'] : 'Online Payment '.get_bloginfo('name');
+	if(!empty($_POST))
+	{
+		$output = '';
+		if(!empty($_POST['profile']))
+		foreach($_POST['profile'] as $slug => $value)
+			{
+				$output .= sprintf('<p>%s: %s</p>'."\n",$slug,$value);
+				$vars[$slug] = $value;
+			}
+		foreach($_POST as $slug => $value)
+		{
+			if($slug != 'profile')
+			{
+			$output .= sprintf('<p>%s: %s</p>'."\n",$slug,$value);
+			$vars[$slug] = $value;
+			}
+		}
+		preg_match_all('/<p.+\/p>/',$content,$matches);
+		$content = $output;
+		$paragraphs = '';
+		if(!empty($matches))
+			{
+			foreach($matches[0] as $paragraph) {
+				if(!strpos($paragraph,'<input') && !strpos($paragraph,'<textarea') && !strpos($paragraph,'<select') )
+					$paragraphs .= $paragraph."\n";
+			}
+			}
+		$content .= $paragraphs;
+		if(!empty($vars['paymentType'])) {
+			$content .= sprintf('<p>Payment type: %s</p>',$vars['paymentType']);
+		}
+		$vars['contract'] = $paragraphs;
+		$content .= rsvpmaker_stripe_form($vars);
+		return $content;
+	}
+	$content = sprintf('<form method="post" action="%s">',$permalink).$content;
+	$content .= sprintf('<input type="hidden" name="amount" value="%s" /><button>Submit</button></form>',$amount);
+	return $content;
 }
 
 function remove_save_content_filters () {

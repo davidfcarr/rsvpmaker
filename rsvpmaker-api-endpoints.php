@@ -71,7 +71,7 @@ public function get_items($request) {
 class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
   public function register_routes() {
     $namespace = 'rsvpmaker/v1';
-    $path = 'type/(?P<type>[A-Za-z_]+)';	  
+    $path = 'type/(?P<type>[A-Za-z_\-]+)';	  
 	  
     register_rest_route( $namespace, '/' . $path, [
       array(
@@ -86,25 +86,28 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
   }
 
 public function get_items($request) {
+//$posts = rsvpmaker_upcoming_data($atts);
 
 add_filter('posts_join', 'rsvpmaker_join' );
 add_filter('posts_groupby', 'rsvpmaker_groupby' );
 add_filter('posts_distinct', 'rsvpmaker_distinct' );
-add_filter('posts_fields', 'rsvpmaker_select' );	
+add_filter('posts_fields', 'rsvpmaker_select' );
+add_filter('posts_where', 'rsvpmaker_where' );
+add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
 	
 	$querystring = "post_type=rsvpmaker&post_status=publish&rsvpmaker-type=".$request['type'];
 	$wp_query = new WP_Query($querystring);
+  $posts = $wp_query->get_posts();
 	
-remove_filter('posts_join', 'rsvpmaker_join' );
-remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-remove_filter('posts_fields', 'rsvpmaker_select' );
-	
-    $posts = $wp_query->get_posts();
+  remove_filter('posts_join', 'rsvpmaker_join' );
+  remove_filter('posts_groupby', 'rsvpmaker_groupby' );
+  remove_filter('posts_distinct', 'rsvpmaker_distinct' );
+  remove_filter('posts_fields', 'rsvpmaker_select' );
+  remove_filter('posts_where', 'rsvpmaker_where' );
+  remove_filter('posts_orderby', 'rsvpmaker_orderby',99 );  
 
     if (empty($posts)) {
-
-            return new WP_Error( 'empty_category', 'there is no post in this category', array( 'status' => 404 ) );
+            return new WP_Error( 'empty_category', 'there is no post in this category '.$querystring, array( 'status' => 404 ) );
     }
     return new WP_REST_Response($posts, 200);
   }
@@ -127,7 +130,7 @@ apiFetch( { path: '/rsvpmaker/v1/types' } ).then( types => {
 /rsvpmaker/v1/type/TYPE-SLUG
 */
 
-add_action('rest_api_init', function () {           
+add_action('rest_api_init', function () {
      $rsvpmaker_by_type_controller = new RSVPMaker_By_Type_Controller();
     $rsvpmaker_by_type_controller->register_routes();
      $rsvpmaker_listing_controller = new RSVPMaker_Listing_Controller();

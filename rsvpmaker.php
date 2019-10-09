@@ -7,11 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 6.2.4
+Version: 6.4.3
 */
 function get_rsvpversion(){
-return '6.2.4';
-
+return '6.4.3';
 }
 
 global $wp_version;
@@ -85,7 +84,6 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 <textarea name="note" cols="60" rows="2" id="note">[rsvpnote]</textarea></p>',
 "dashboard_message" => ''
 );
-
 
 $rsvp_defaults = apply_filters('rsvpmaker_defaults',$rsvp_defaults);
 
@@ -213,18 +211,23 @@ include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-privacy.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-util.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-actions.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-form.php";
+include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-widgets.php";
 
 if(!function_exists('do_blocks'))
 	include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-classic.php";
-if(get_option('rsvpmaker_stripe_sk'))
+
+$gateways = get_rsvpmaker_payment_options ();
+
+if(in_array('Stripe',$gateways))
 	include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-stripe.php";
+if(in_array('PayPal REST API',$gateways))
+	include WP_PLUGIN_DIR."/rsvpmaker/paypal-rest/paypal-rest.php";
 
 function rsvpmaker_gutenberg_check () {
 global $carr_gut_test;
 if(function_exists('register_block_type') && !isset($carr_gut_test))
 	require_once plugin_dir_path( __FILE__ ) . 'gutenberg/src/init.php';
 }
-
 
 if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
     include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-recaptcha.php";
@@ -530,18 +533,39 @@ function format_cddate($year,$month,$day,$hours,$minutes )
 	return $year.'-'.$month.'-'.$day.' '.$hours.':'.$minutes.':00';	
 }
 
-function update_rsvpmaker_dates($postID, $dates_array,$durations_array) {
+function update_rsvpmaker_dates($postID, $dates_array,$durations_array, $end_array = array()) {
 $current_dates = get_post_meta($postID,'_rsvp_dates',false);
+//rsvpmaker_debug_log($postID,'update dates for this ID');
+//rsvpmaker_debug_log($current_dates,'current dates');
+//rsvpmaker_debug_log($dates_array,'dates array');
+//rsvpmaker_debug_log($durations_array,'durations array');
+//rsvpmaker_debug_log($end_array,'end array');
+//rsvpmaker_debug_log($duration,'duration');
 
 foreach($dates_array as $index => $cddate)
 	{
+		//echo "<p>$index : $cddate</p>";		
+		//rsvpmaker_debug_log(),'end array');
 		$duration = $durations_array[$index];
+		$end_time = (empty($end_array[$index])) ? '' : $end_array[$index];
+		//rsvpmaker_debug_log($duration,'duration');
+		//rsvpmaker_debug_log($end_time,'end_time');
 		if(empty( $current_dates ) )
-			 add_rsvpmaker_date($postID,$cddate,$duration);
-		elseif( in_array($cddate,$current_dates) )
-			 update_post_meta($postID,'_'.$cddate,$duration);
+			 add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
+		elseif( is_array($current_dates) )
+			{
+				if(empty($current_dates[$index]))
+					{
+						add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
+						//rsvpmaker_debug_log("$postID,$cddate,$duration,$end_time",'add date parameters');	
+					}
+				else {
+					update_rsvpmaker_date($postID,$cddate,$duration,$end_time,$index);
+					//rsvpmaker_debug_log("$postID,$cddate,$duration,$end_time,$index".$current_dates[$index],'update date parameters');	
+				}
+			}
 		else
-			 add_rsvpmaker_date($postID,$cddate,$duration);
+			 add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
 		$current_dates[] = $cddate;
 	}
 
@@ -559,14 +583,32 @@ delete_post_meta($postID,'_'.$cddate);
 delete_transient('rsvpmakerdates');
 }
 
-function add_rsvpmaker_date($postID,$cddate,$duration='') {
+function add_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '') {
 add_post_meta($postID,'_rsvp_dates',$cddate);
 add_post_meta($postID,'_'.$cddate,$duration);
+if(!empty($end_time))
+	add_post_meta($postID,'_end'.$cddate,$end_time);
 }
 
-function update_rsvpmaker_date($postID,$cddate,$duration='') {
-update_post_meta($postID,'_rsvp_dates',$cddate);
+function update_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '', $index = 0) {
+//echo '<p>update_rsvpmaker_date: '.$postID.' cddate:'.$cddate.' duration:'.$duration.' end:'.$end_time.' index:'. $index .'</p>';
+$results = get_rsvp_dates($postID);
+//print_r($results);
+if(!empty($results) && is_array($results) && (!empty($results[$index]['datetime'])))
+	{
+		$datetime = $results[$index]['datetime'];
+		//echo '<p>Replace entry for '.$datetime.'<p>';
+		update_post_meta($postID,'_rsvp_dates',$cddate,$datetime);
+	}
+else
+	{
+		//echo "<p>Add: $postID,'_rsvp_dates',$cddate</p>";
+		add_post_meta($postID,'_rsvp_dates',$cddate);
+	}
+
 update_post_meta($postID,'_'.$cddate,$duration);
+if(!empty($end_time))
+	update_post_meta($postID,'_end'.$cddate,$end_time);
 delete_transient('rsvpmakerdates');
 }
 
@@ -574,6 +616,9 @@ function rsvpmaker_upcoming_data ($atts)
 {
 global $post;
 global $wp_query;
+global $dataloop;
+$dataloop = true; // prevent ui output of More Events link
+
 $backup = $wp_query;
 $limit = isset($atts["limit"]) ? $atts["limit"] : 10;
 if(isset($atts["posts_per_page"]))
@@ -582,7 +627,7 @@ if(isset($atts["days"]))
 		$datelimit = $atts["days"].' DAY';
 else
 		$datelimit = '365 DAY';
-
+add_filter('posts_select', 'rsvpmaker_select' );
 add_filter('posts_join', 'rsvpmaker_join' );
 add_filter('posts_groupby', 'rsvpmaker_groupby' );
 add_filter('posts_distinct', 'rsvpmaker_distinct' );
@@ -603,6 +648,7 @@ if(isset($atts["add_to_query"]))
 $wp_query = new WP_Query($querystring);
 
 // clean up so this doesn't interfere with other operations
+remove_filter('posts_select', 'rsvpmaker_select' );
 remove_filter('posts_join', 'rsvpmaker_join' );
 remove_filter('posts_groupby', 'rsvpmaker_groupby' );
 remove_filter('posts_distinct', 'rsvpmaker_distinct' );
@@ -720,7 +766,9 @@ global $wpdb;
 	add_post_meta($event,'_'.$method.'_'.$tx_id,$charge);
 	add_post_meta($event,'_paid_'.$rsvp_id,$charge);
 	delete_post_meta($event,'_open_invoice_'.$rsvp_id);
-	delete_post_meta($event,'_invoice_'.$rsvp_id);	
+	delete_post_meta($event,'_invoice_'.$rsvp_id);
+	$log = sprintf('%s amount: %s rsvp_id: %s event: %s, tx: %s',$method,$paid,$rsvp_id,$event,$tx_id=0);
+	rsvpmaker_debug_log($log);
 }
 
 function rsvpmaker_before_post_display_action (){
