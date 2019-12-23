@@ -595,7 +595,7 @@ print_r($history);
 
 add_action('admin_menu','rsvpmaker_stripe_report_menu',99);
 function rsvpmaker_stripe_report_menu () {
-if(empty(get_option('rsvpmaker_stripe_sk')))
+if(empty(get_option('rsvpmaker_stripe_keys')))
 	return;
 add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVPMaker Stripe Report",'rsvpmaker'), __("RSVPMaker Stripe Report",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_stripe_report", "rsvpmaker_stripe_report" );
 

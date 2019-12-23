@@ -9,6 +9,7 @@
 import './style.scss';
 import './editor.scss';
 import './rsvpmaker-sidebar.js';
+import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
 import './form.js';		
@@ -63,6 +64,7 @@ registerBlockType( 'rsvpmaker/event', {
 	title: __( 'RSVPMaker Embed Event' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a single RSVPMaker event post'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Event' ),
@@ -180,6 +182,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	title: __( 'RSVPMaker Upcoming Events' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays an RSVPMaker event listing and/or a calendar widget'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Events' ),
@@ -327,6 +330,7 @@ registerBlockType( 'rsvpmaker/eventlisting', {
 	title: __( 'RSVPMaker Event Listing' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays an RSVPMaker event listing (headlines and dates)'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Events' ),
@@ -447,6 +451,7 @@ registerBlockType( 'rsvpmaker/stripecharge', {
 	title: __( 'Stripe Charge (RSVPMaker)' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a payment widget for the Stripe service'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Payment' ),
@@ -664,6 +669,7 @@ registerBlockType( 'rsvpmaker/rsvpdateblock', {
 	title: __( 'RSVPMaker Dateblock' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Changes the display of the date / time block from the default (top of the post)'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Event' ),
@@ -698,6 +704,7 @@ registerBlockType( 'rsvpmaker/placeholder', {
 	title: __( 'Placeholder' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'formatting', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Placeholder for content to be added later'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Placeholder' ),
@@ -750,6 +757,7 @@ registerBlockType( 'rsvpmaker/upcoming-by-json', {
 	title: __( 'RSVPMaker Events (fetch via API)' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a listing of RSVPMaker events from a remote site'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Events' ),

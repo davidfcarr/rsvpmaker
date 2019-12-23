@@ -6,8 +6,8 @@ Donate link: http://rsvpmaker.com/
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
-Tested up to: 5.3
-Stable tag: 6.4.3
+Tested up to: 5.3.2
+Stable tag: 6.5.1
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,16 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 6.5 =
+
+* Event end time now displayed in Gutenberg interface (still have to click through to RSVP / Event Options screen to change)
+* More compact display of admin bar options on front end (shown as submenu under Edit RSVP Event)
+* Portugese translation (thanks to Letrajato)
+
+= 6.4.4 =
+
+* Fix for email unsubscribes
 
 = 6.4.3 =
 
@@ -500,7 +510,7 @@ Restoring saved locations feature for use with the Classic Editor. Gutenberg ver
 = 4.9.2 =
 
 * Option to have RSVPMaker calculate event fees, even if you haven't set up an online payment service. This "Cash or Custom" option also allows you to add a custom payment gateway.
-* Added hook for custom payment methods, 'rsvpmaker_cash_or_custom' action [documentation](https://rsvpmaker.com/blog/2017/10/18/adding-custom-payment-gateway-rsvpmaker/)
+* Added hook for custom payment methods, 'rsvpmaker_cash_or_custom' action [documentation](https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/)
 
 = 4.9.1 =
 

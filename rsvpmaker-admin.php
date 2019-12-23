@@ -1013,7 +1013,7 @@ else {
 <h3>Stripe</h3>
 <?php 
 $stripe_keys = get_rsvpmaker_stripe_keys_all (); 
-$checkboxes = ($stripe_keys[mode] == 'production') ? '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" checked="checked" /> Production' : '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox"  checked="checked" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" /> Production';
+$checkboxes = ($stripe_keys['mode'] == 'production') ? '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" checked="checked" /> Production' : '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox"  checked="checked" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" /> Production';
 if(!empty($stripe_keys['pk']) && !empty($stripe_keys['sk']))
 {
 ?>
@@ -1088,7 +1088,7 @@ else
 <?php
 }//end if legacy paypal active
 ?>
-<p><?php _e('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/16/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
+<p><?php _e('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
 
 <div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 </form>
@@ -4228,7 +4228,8 @@ window.onbeforeunload = unloadPage;
 
 function rsvpmaker_admin_enqueue($hook) {
 global $post;
-	if((!function_exists('do_blocks') && isset($_GET['action'])) || ((isset($_GET['page']) && strpos($_GET['page'],'rsvp') !== false )) )
+	if((!function_exists('do_blocks') && isset($_GET['action'])) || ((isset($_GET['page']) && 
+	((strpos($_GET['page'],'rsvp') !== false ) || (strpos($_GET['page'],'toast') !== false ) )  ) ) )
 	{
 	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 	wp_enqueue_script('jquery-ui-dialog');
@@ -4464,10 +4465,12 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID),
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
 	);
+	if(!is_admin())
+		$args['parent'] = 'edit';
 	$wp_admin_bar->add_node( $args );
 		
 	$args = array(
-		'parent'    => 'rsvpmaker_options',
+		'parent'    => (is_admin()) ? 'rsvpmaker_options' : 'edit',
 		'id' => 'confirmation_reminders',
 		'title' => 'Confirmation / Reminder Messages',
 		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
@@ -4477,10 +4480,10 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 
 	if($t = has_template($post->ID))
 	{
-	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Edit Template'), 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'meta' => array('class' => 'rsvpmaker-edit-template')));		
+	$wp_admin_bar->add_menu(array('parent' => (is_admin()) ? 'rsvpmaker_options' : 'edit', 'title' => __('Edit Template'), 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'meta' => array('class' => 'rsvpmaker-edit-template')));		
 
 	$args = array(
-		'parent'    => 'rsvpmaker_options',
+		'parent'    => (is_admin()) ? 'rsvpmaker_options' : 'edit',
 		'id' => 'template-options',
 		'title' => 'Template Options',
 		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t),
@@ -4488,16 +4491,16 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 	);
 	$wp_admin_bar->add_node( $args );
 		
-	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template')));		
+	$wp_admin_bar->add_menu(array('parent' => (is_admin()) ? 'rsvpmaker_options' : 'edit', 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template')));		
 	}
 	
-	$wp_admin_bar->add_menu(array('parent' => 'rsvpmaker_options', 'title' => __('Send RSVP Email'), 'id' => 'rsvpmaker-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'rsvpmaker-to-email')));
+	$wp_admin_bar->add_menu(array('parent' => (is_admin()) ? 'rsvpmaker_options' : 'edit', 'title' => __('Send RSVP Email'), 'id' => 'rsvpmaker-to-email', 'href' => admin_url('?rsvpevent_to_email=').$post->ID, 'meta' => array('class' => 'rsvpmaker-to-email')));
 	
 	$formurl = rsvp_form_url($post->ID);
 	if(!empty($formurl))
 	{	
 	$args = array(
-		'parent'    => 'rsvpmaker_options',
+		'parent'    => (is_admin()) ? 'rsvpmaker_options' : 'edit',
 		'id' => 'edit_form',
 		'title' => 'Edit / Customize RSVP Form',
 		'href'  => $formurl,
@@ -4984,6 +4987,5 @@ else
 }
 	
 }
-
 
 ?>

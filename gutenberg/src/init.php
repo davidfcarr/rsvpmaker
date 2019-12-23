@@ -38,6 +38,144 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/upcoming-by-json', ['render_callback' => 'rsvpjsonlisting']);
 }
 
+add_action( 'init', function(){
+	register_meta( 'post', '_rsvp_dates', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 register_meta( 'post', '_rsvp_on', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+ 
+	register_meta( 'post', '_rsvp_to', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+
+	 register_meta( 'post', '_add_timezone', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+	 ) );
+	 
+	 
+	 register_meta( 'post', '_convert_timezone', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_calendar_icons', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+
+    register_meta( 'post', '_rsvp_end_display', array(
+			'object_subtype' => 'rsvpmaker',
+			 'type'		=> 'string',
+			 'single'	=> true,
+			 'auth_callback' => '__return_true',
+			 'show_in_rest'	=> true,
+) );
+	 
+	 register_meta( 'post', '_rsvpmaker_send_confirmation_email', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_count', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_yesno', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_max', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_captcha', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_timezone_string', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_show_attendees', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_login_required', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 
+	 register_meta( 'post', '_rsvp_confirmation_include_event', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+});
+
 function rsvpjsonlisting ($atts) {
 if(empty($atts['url']))
 	return;
@@ -131,6 +269,10 @@ function rsvpmaker_block_cgb_editor_assets() {
 		
 $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$date = get_rsvp_date($post_id);
+	$datecount = sizeof(get_rsvp_dates($post_id));
+	$end = get_post_meta($post_id,'_end'.$date,true);
+	if(empty($end))
+		$end = date('H:i',strtotime($date." +1 hour"));
 	$duration = '';
 	if(empty($date))
 	{
@@ -155,6 +297,9 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
         array(
             'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
 			'_rsvp_first_date' => $date,
+			'_rsvp_count' => $datecount,
+			'_rsvp_end_display' => get_post_meta($post_id,'_'.$date,true),
+			'_rsvp_end' => $end,
 			'_rsvp_on' => (empty(get_post_meta($post->ID,'_rsvp_on',true)) ? 'No' : 'Yes' ),
 			'template_msg' => $template_msg,
 			'event_id' => $post_id,
@@ -180,9 +325,6 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 		array( 'wp-edit-blocks' ), // Dependency to include the CSS after it.
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.editor.build.css' )
 	);
-
-
-
 
 } // End function rsvpmaker_block_cgb_editor_assets().
 

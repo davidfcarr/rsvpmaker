@@ -94,8 +94,6 @@ add_action('wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_
 add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 
 function rsvpmaker_init_router () {
-if(isset($_GET["ajax_guest_lookup"]))
-	ajax_guest_lookup();
 if(isset($_REQUEST['rsvp_email_lookup']))
 	ajax_rsvp_email_lookup();
 add_rsvpmaker_roles();
@@ -117,6 +115,7 @@ if(isset($_GET['event_count']))
 	signed_up_ajax();
 if(isset($_GET['show_rsvpmaker_included_styles']))
 	show_rsvpmaker_included_styles();
+//add_action('rest_api_init', 'rsvpmaker_register_meta'); // defined in gutenberg init.php
 }
 
 ?>

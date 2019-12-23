@@ -468,8 +468,8 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <br /><?php echo __('Instructions for User','rsvpmaker');?>:<br />
 <textarea id="setrsvp[instructions]" name="setrsvp[instructions]" cols="80" style="max-width: 95%;"><?php echo $rsvp_instructions;?></textarea>
 <br />
-  <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
-  <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
+  <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" value="1" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
+  <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event"  value="1" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 <h3 id="confirmation"><?php echo __('Confirmation Message','rsvpmaker');?></h3>
 <?php
 echo $confirm->post_content;
@@ -1906,7 +1906,7 @@ global $rsvp_options;
 	wp_register_style('rsvp_style', $myStyleUrl, array(), get_rsvpversion());
 	wp_enqueue_style( 'rsvp_style');
 	wp_localize_script( 'rsvpmaker_ajaxurl', 'ajaxurl', admin_url('admin-ajax.php') );
-	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker/rsvpmaker.js'), array(), get_rsvpversion().'xy');
+	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker/rsvpmaker.js'), array(), get_rsvpversion());
 } } // end event scripts
 
 function rsvpmaker_localdate() {
@@ -2563,7 +2563,8 @@ if(isset($_GET["err"]))
 
 if((($rsvp_show_attendees == 1) || (($rsvp_show_attendees == 2) && is_user_logged_in() ) ) && $total && !isset($_GET["load"]) && !isset($_POST["profile"]) )
 	{
-$content .= '<p><button class="rsvpmaker_show_attendees" onclick="'."jQuery.get('".site_url()."/?ajax_guest_lookup=".$post->ID."', function(data) { jQuery('#attendees-".$post->ID."').html(data); } );". '">'. __('Show Attendees','rsvpmaker') .'</button></p>
+	//use api
+$content .= '<p><button class="rsvpmaker_show_attendees" post_id="'.$post->ID.'" >'. __('Show Attendees','rsvpmaker') .'</button></p>
 <div id="attendees-'.$post->ID.'"></div>';
 	}
 } // end if($rsvp_on)
@@ -2974,7 +2975,17 @@ global $phpexcel_enabled; // set if excel extension is active
 if($fields && !isset($_GET["rsvp_print"]) && !isset($_GET["limit"]))
 	{
 	$fields[]='note';
-	$fields[]='timestamp';	 
+	$fields[]='timestamp';
+	foreach($fields as $field)
+	{
+		// no duplicates, please
+		$i = preg_replace('/[^a-z0-9]/','_',strtolower($field));
+		if($i == 'first_name')
+			$i = 'first';
+		if($i == 'last_name')
+			$i = 'last';
+		$newfields[$i] = $i;
+	}
 ;?>
 <div id="excel" name="excel" style="padding: 10px; border: thin dotted #333; width: 300px;margin-top: 30px;">
 <h3><?php _e('Data Table / Spreadsheet','rsvpmaker'); ?></h3>
@@ -2983,8 +2994,8 @@ if($fields && !isset($_GET["rsvp_print"]) && !isset($_GET["limit"]))
 foreach($_GET as $name => $value)
 	echo sprintf('<input type="hidden" name="%s" value="%s" />',$name,$value);
 
-foreach($fields as $field)
-	echo '<input type="checkbox" name="fields[]" value="'.$field.'" checked="checked" /> '.$field . "<br />\n";
+foreach($newfields as $i => $field)
+	echo '<input type="checkbox" name="fields[]" value="'.$i.'" checked="checked" /> '.$field . "<br />\n";
 
 printf('<input type="hidden" name="rsvp_print" value="%s" />',$print_nonce);
 
@@ -3259,12 +3270,17 @@ $out = fopen('php://output', 'w');
 		$row["yesno"] = ($row["yesno"]) ? "YES" : "NO";
 		if($row["details"])
 			{
+			//rsvpmaker_debug_log($row["details"],'rsvpmaker details serialized');
 			$details = unserialize($row["details"]);
 			$row = array_merge($row,$details);
+			//rsvpmaker_debug_log($details,'details unserialized');
+			//rsvpmaker_debug_log($row,'merged row');
 			}
 		$newrow = array();
 		foreach($fields as $column => $name )
 			{
+				//rsvpmaker_debug_log($column,'column');
+				//rsvpmaker_debug_log($name,'name');
 				if(isset($row[$name]) )
 					$newrow[] = $row[$name];
 				else

@@ -32,6 +32,49 @@ $('#signed_up_'+post).html(response);
 
 });
 
+var guestlist = '';
+
+function format_guestlist(guest) {
+if(!guest.first)
+    return;
+guestlist = guestlist.concat('<h3>'+guest.first);
+if(guest.last)
+    guestlist = guestlist.concat(' '+guest.last);
+guestlist = guestlist.concat('</h3>\n');
+if(guest.note)
+    guestlist = guestlist.concat('<p>'+guest.note+'</p>');
+}
+
+function display_guestlist (post_id) {
+    fetch('/wp-json/rsvpmaker/v1/guestlist/'+post_id)
+    .then(response => {
+      return response.json()
+    })
+    .then(data => {
+        if(Array.isArray(data))
+        {
+            data.forEach(format_guestlist);
+            if(guestlist == '')
+                guestlist = '<div>?</div>';
+            $('#attendees-'+post_id).html(guestlist);
+            //alert('guestlist '+guestlist);
+        }
+
+    })
+    .catch(err => {
+      this.el.innerHTML = 'Error fetching events from '+this.url;
+      console.log(err);
+  });
+  
+}
+
+$( ".rsvpmaker_show_attendees" ).click(function( event ) {
+    var post_id = $(this).attr('post_id');
+    //var nonce = $(this).attr('nonce');
+    //alert('post ' + post_id);
+    display_guestlist(post_id);//,nonce);
+  });
+
 });
 //end jquery
 

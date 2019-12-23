@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 6.4.3
+Version: 6.5.1
 */
 function get_rsvpversion(){
-return '6.4.3';
+return '6.5.1';
 }
 
 global $wp_version;
@@ -135,27 +135,26 @@ elseif(!is_numeric($rsvp_options['rsvp_confirm']))
 
 function rsvpmaker_defaults_for_post($post_id) {
 global $rsvp_options;
-$defaults = array("calendar_icons",
-"social_title_date", 
-"rsvp_to",
-"rsvp_confirm", 
-"confirmation_include_event",
-"rsvpmaker_send_confirmation_email",
-"rsvp_instructions",
-"rsvp_count", 
-"rsvp_count_party", 
-"rsvp_yesno", 
-"rsvp_max",
-"login_required",
-"rsvp_captcha",
-"show_attendees",
-'convert_timezone',
-'add_timezone',
-'rsvp_form',
-'rsvp_form_title'
-);
-foreach($defaults as $label)
-	update_post_meta($post_id,'_'.$label,$rsvp_options[$label]);
+$defaults = array( 
+	"calendar_icons" => "_calendar_icons",
+	"rsvp_to" => "_rsvp_to",
+	"rsvp_confirm" => "_rsvp_confirm", 
+	"rsvpmaker_send_confirmation_email" => "_rsvp_rsvpmaker_send_confirmation_email",
+	"confirmation_include_event" => "_rsvp_confirmation_include_event",
+	"rsvp_instructions" => "_rsvp_instructions",
+	"rsvp_count" => "_rsvp_count", 
+	"rsvp_count_party" => "_rsvp_count_party", 
+	"rsvp_yesno" => "_rsvp_yesno", 
+	"rsvp_max" => "_rsvp_max",
+	"login_required" => "_rsvp_login_required",
+	"rsvp_captcha" => "_rsvp_captcha",
+	"show_attendees" => "_rsvp_show_attendees",
+	'convert_timezone' => '_convert_timezone',
+	'add_timezone' => '_add_timezone',
+	"rsvp_form" => "_rsvp_form"
+	);
+foreach($defaults as $index => $label)
+	update_post_meta($post_id,$label,$rsvp_options[$index]);
 }
 
 function get_rsvpmaker_custom($post_id) {

@@ -1,6 +1,6 @@
 <?php
 function rsvpmailer($mail) {
-	
+	global $post, $rsvp_options, $unsubscribed;
 	if(defined('RSVPMAILOFF'))
 	{
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
@@ -9,8 +9,15 @@ function rsvpmailer($mail) {
 	}
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
-	global $rsvp_options;
-	global $post;
+	if(empty($unsubscribed))
+	$unsubscribed = get_option('rsvpmail_unsubscribed');
+	if(empty($unsubscribed)) $unsubscribed = array();
+	//rsvpmaker_debug_log($unsubscribed,'testing unsub list vs '.$mail['to']);
+	if(in_array(strtolower($mail['to']),$unsubscribed)) {
+		$mail['html'] = '[content omitted]';
+		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
+		return $mail['to'].' sending blocked - unsubscribed list';
+	}
 	
 	if(empty($rsvp_options["from_always"]) && !empty($rsvp_options["smtp_useremail"]))
 		$rsvp_options["from_always"] = $rsvp_options["smtp_useremail"];
@@ -2004,6 +2011,8 @@ echo '</table><p><input type="submit" value="Submit"></p></form>';
 if(isset($_POST['remove']))
 	update_option('rsvpmail_unsubscribed',$unsub);
 }
+
+printf('<h2>Add an Email to Unsubscribed List</h2><form method="get" action="%s" target"_blank"><input name="rsvpmail_unsubscribe" /><button>Add</button></form>',site_url());
 
 }
 
