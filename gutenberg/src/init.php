@@ -46,6 +46,20 @@ add_action( 'init', function(){
 		 'auth_callback' => '__return_true',
  		'show_in_rest'	=> true,
  	) );
+	 register_meta( 'post', '_firsttime', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
+	 register_meta( 'post', '_endfirsttime', array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'string',
+		 'single'	=> true,
+		 'auth_callback' => '__return_true',
+ 		'show_in_rest'	=> true,
+ 	) );
 	 register_meta( 'post', '_rsvp_on', array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'string',

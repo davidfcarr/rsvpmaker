@@ -16,192 +16,11 @@ const {Fragment} = wp.element;
 const { registerPlugin } = wp.plugins;
 const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
 //const { withState } = wp.compose;
-const { DateTimePicker, RadioControl, SelectControl, TextControl } = wp.components;
-const { withSelect, withDispatch } = wp.data;
+//const { DateTimePicker, RadioControl, SelectControl, TextControl } = wp.components;
+//const { withSelect, withDispatch } = wp.data;
 //const {RSVPMakerDateTimePicker, RSVPMakerOn} = './rsvpmaker-sidebar.js';
 
-var MetaTextControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { [ props.metaKey ]: metaValue } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
-		}
-	} ) )( function( props ) {
-		return el( TextControl, {
-			label: props.title,
-			value: props.metaValue,
-			onChange: function( content ) {
-				props.setMetaValue( content );
-			},
-		});
-	}
-);
-
-var MetaRadioControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { [ props.metaKey ]: metaValue } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
-		}
-	} ) )( function( props ) {
-		return el( RadioControl, {
-			label: props.title,
-			selected: props.metaValue,
-			options: props.options,
-			onChange: function( content ) {
-				props.setMetaValue( content ), recordChange(props.metaKey, content);
-			},
-		});
-	}
-);
-
-var MetaSelectControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { [ props.metaKey ]: metaValue } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
-		}
-	} ) )( function( props ) {
-		return el( SelectControl, {
-			label: props.label,
-			value: props.metaValue,
-			options: props.options,
-			onChange: function( content ) {
-				props.setMetaValue( content ), recordChange(props.metaKey, content);
-			},
-		});
-	}
-);
-
-var MetaDateControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				metaValue = metaValue.replace('T',' ');
-				fetch('/wp-json/rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id);
-				console.log(metaValue);
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { [ props.metaKey ]: metaValue } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
-		}
-	} ) )( function( props ) {
-		console.log(props);
-		return el( DateTimePicker, {
-			label: props.label,
-			currentDate: props.metaValue,
-			options: props.options,
-			onChange: function( content ) {
-				props.setMetaValue( content );
-			},
-		});
-	}
-);
-
-/*
-var EndTimeControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setEndTime: function( endtime ) {
-				dispatch( 'rsvpevent' ).setEndTime(endtime);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			endtime: select( 'rsvpevent' ).getEndTime(),
-		}
-	} ) )( function( {endtime, setEndTime} ) {
-
-		function handleEndChange(newobj) {
-			endtime.end = newobj.time;
-			console.log(newobj.time);
-			console.log(endtime);
-			setEndTime(endtime);
-		}
-		endtime =wp.data.select( 'rsvpevent' ).getEndTime();
-		return <TextControl title="End Time" value={endtime.end} onChange={ ( time ) => handleEndChange({time})} /> //handleEndChange({time})
-
-		//var parts = endtime.end.split(':');
-		return <p><input type="text" id="endhour" value={endtime.end} onChange={ ( newhour ) => handleEndChange('hour',newhour) } /> {endtime.end} / {endtime.display}</p>
-
-		return el( RadioControl, {
-			label: props.title,
-			selected: props.metaValue,
-			options: props.options,
-			onChange: function( content ) {
-				props.setMetaValue( content ), recordChange(props.metaKey, content);
-			},
-		});
-	}
-);
-
-
-function getEndTime(post_id) {
-let url = '/wp-json/rsvpmaker/v1/endtime/'+post_id;
-console.log('fetch from '+url);
-fetch(url)
-  .then(function(data) {
-	console.log(data);
-	return data;
-    // Here you get the data to modify as you please
-    })
-  .catch(function(error) {
-  	console.log(error);  // If there is any error you will catch them here
-  });
-}
-
-//wp.data.select("core/editor").getCurrentPostId()
-
-const EndTimePicker = withState( {
-	endtime: {},
-} )( ( { endtime, setState } ) => {
-
-	endtime = getEndTime(rsvpmaker_ajax.event_id);
-
-	console.log(endtime);
-
-	return (
-		<TextControl title="End Time: " value={endttime.end} onChange={ ( newtime ) => setState({newtime}), recordChange('end',{endtime}) } />
-	);
-} );
-
-
-
-/*
-paramaters removed from datetime picker
-settings object removed
-		    locale={ settings.l10n.locale }
-*/
+import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl} from './metadata_components.js';
 
 function recordChange(metaKey, metaValue) {
 	console.log(metaKey + ': ', metaValue);
@@ -233,9 +52,18 @@ const PluginRSVPMaker = () => {
             icon="calendar-alt"
         >
 
-<p>For additional options, including event end time, multiple dates, and event pricing see: {related_link()}</p>
-<div>{(rsvpmaker_ajax._rsvp_count == '1') && <MetaDateControl metaKey='_rsvp_dates' />}</div>
-<div>{(rsvpmaker_ajax._rsvp_count != '1') && <p>{__('Event has multiple dates set. Edit on RSVP Event / Options screen.')}</p>}</div>
+<p>For additional options, events spanning multiple dates, and event pricing see: {related_link()}</p>
+{(!rsvpmaker_ajax.template_msg && !rsvpmaker_ajax.special && (rsvpmaker_ajax._rsvp_count == '1')) && <div><MetaDateControl metaKey='_rsvp_dates' /><MetaSelectControl
+		label="End Time Display"
+		metaKey="_firsttime"
+		options={ [
+			{ label: 'Not Set', value: '' },
+			{ label: 'Set End Time', value: 'set' },
+			{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+		] }
+	/><MetaEndDateControl /></div>}
+<div>{(rsvpmaker_ajax._rsvp_count != '1') && <p>{__('Event has multiple dates set. Edit on RSVP / Event Options screen.')}</p>}</div>
+
 <MetaSelectControl
 		label="Collect RSVPs"
 		metaKey="_rsvp_on"
@@ -347,4 +175,5 @@ const PluginRSVPMaker = () => {
 		</Fragment>
     )
 }
-registerPlugin( 'plugin-rsvpmaker', { render: PluginRSVPMaker } );
+if (typeof rsvpmaker_ajax !== 'undefined') 
+	registerPlugin( 'plugin-rsvpmaker', { render: PluginRSVPMaker } );

@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.3.2
-Stable tag: 6.5.1
+Stable tag: 6.5.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 6.5.4 =
+
+* Better Gutenberg sidebar access to setting start and end time and other basic variables. Multi-date events and event pricing still must be handled through RSVP / Event Options screen.
+
+= 6.5.2 =
+
+* More variables can now be edited through the Gutenberg sidebar, rather than the RSVP / Event Options screen.
 
 = 6.5 =
 

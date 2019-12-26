@@ -100,11 +100,15 @@ if(empty($rsvpdates))
 	cache_rsvp_dates(50);
 if(!empty($rsvpdates[$post_id]))
 {
-	foreach($rsvpdates[$post_id] as $datetime)
+	foreach($rsvpdates[$post_id] as $index => $datetime)
 	{
 	$drow['datetime'] = $datetime;
-	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
-	$drow["end_time"] = get_post_meta($post_id,'_end'.$datetime, true);
+	$slug = ($index == 0) ? 'firsttime' : $datetime;
+	//rsvpmaker_debug_log($index,'get_rsvp_dates cache index');
+	//rsvpmaker_debug_log($slug,'get_rsvp_dates cache slug');
+	$drow["duration"] = get_post_meta($post_id,'_'.$slug, true);
+	$drow["end_time"] = get_post_meta($post_id,'_end'.$slug, true);
+	//rsvpmaker_debug_log($drow,'get_rsvp_dates cache row');
 	if($obj)
 		$drow = (object) $drow;
 	$dates[] = $drow;		
@@ -120,30 +124,19 @@ $sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_ke
 $results = $wpdb->get_results($sql);
 $dates = array();
 if($results)
-foreach($results as $row)
+foreach($results as $index => $row)
 	{
 	$drow = array();
 	$datetime = $row->meta_value;
 	$drow["meta_id"] = $row->meta_id;
 	$drow["datetime"] = $datetime;
 	$rsvpdates[$post_id][] = $datetime;
-	$drow["duration"] = get_post_meta($post_id,'_'.$datetime, true);
-	$drow['end_time'] = '';
-	if(!empty($drow['duration']))
-	{
-		if($drow['duration'] == 'set')
-		{
-			$drow['end_time'] = get_post_meta($post_id,'_end'.$datetime, true);
-		}
-		elseif(strpos($drow['duration'],'-'))
-		{
-			//old format
-			$drow['end_time'] = date('H:i',strtotime($drow['duration']));
-			update_post_meta($post_id,'_end'.$datetime,$drow['end_time']);
-			update_post_meta($post_id,'_'.$datetime,'set');
-		}
-	}
-	if($obj)
+	$slug = ($index == 0) ? 'firsttime' : $datetime;
+	rsvpmaker_debug_log($index,'get_rsvp_dates db index');
+	rsvpmaker_debug_log($slug,'get_rsvp_dates db slug');
+	$drow["duration"] = get_post_meta($post_id,'_'.$slug, true);
+	$drow["end_time"] = get_post_meta($post_id,'_end'.$slug, true);
+if($obj)
 		$drow = (object) $drow;
 	$dates[] = $drow;
 	}
@@ -268,7 +261,7 @@ global $wpdb;
 $wpdb->show_errors();
 $startfrom = ($offset_hours) ? ' DATE_SUB(NOW(), INTERVAL '.$offset_hours.' HOUR) ' : ' NOW() ';
 
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
+	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
 	 FROM ".$wpdb->posts."
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
 	 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";

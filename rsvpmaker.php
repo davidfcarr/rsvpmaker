@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 6.5.1
+Version: 6.5.4
 */
 function get_rsvpversion(){
-return '6.5.1';
+return '6.5.4';
 }
 
 global $wp_version;
@@ -366,7 +366,7 @@ if(! $wpdb->get_var($sql) )
   array(
     'description'=> 'Featured event. Can be used to put selected events in a listing, for example on the home page',
     'slug' => 'featured'
-  )
+  ) 
 );
 	}
 
@@ -379,7 +379,7 @@ if(empty($rsvp_options["dbversion"]) && function_exists('do_blocks'))
 	upgrade_rsvpform(false);
 	}
 
-$rsvp_options["dbversion"] = 10;
+$rsvp_options["dbversion"] = 13;
 update_option('RSVPMAKER_Options',$rsvp_options);
 }
 
@@ -422,6 +422,29 @@ if(!$test)
 {
 	rsvpmaker_debug_log('cpevent_activate fired');
 	cpevent_activate();
+}
+
+add_action('init','rsvp_firsttime',1);
+function rsvp_firsttime () {
+	global $rsvp_options;
+	if($rsvp_options["dbversion"] > 12)
+		return;
+	$rsvp_options["dbversion"] = 13;
+	update_option('RSVPMAKER_Options',$rsvp_options);
+	$future = get_future_events();
+	foreach($future as $event) {
+		$post_id = $event->ID;
+		$datetime = get_rsvp_date($post_id);
+		$end = get_post_meta($post_id, '_end'.$datetime,true);
+		if(empty($end))
+			{
+				$t = strtotime($datetime . ' +1 hour');
+				$end = date('H:i',$t);
+			}
+		$duration = get_post_meta($post_id, '_'.$datetime,true);
+		update_post_meta($post_id,'_firsttime',$duration);
+		update_post_meta($post_id,'_endfirsttime',$end);
+	}
 }
 
 function convert_date_meta() {
@@ -534,28 +557,18 @@ function format_cddate($year,$month,$day,$hours,$minutes )
 
 function update_rsvpmaker_dates($postID, $dates_array,$durations_array, $end_array = array()) {
 $current_dates = get_post_meta($postID,'_rsvp_dates',false);
-//rsvpmaker_debug_log($postID,'update dates for this ID');
-//rsvpmaker_debug_log($current_dates,'current dates');
-//rsvpmaker_debug_log($dates_array,'dates array');
-//rsvpmaker_debug_log($durations_array,'durations array');
-//rsvpmaker_debug_log($end_array,'end array');
-//rsvpmaker_debug_log($duration,'duration');
 
 foreach($dates_array as $index => $cddate)
 	{
-		//echo "<p>$index : $cddate</p>";		
-		//rsvpmaker_debug_log(),'end array');
 		$duration = $durations_array[$index];
 		$end_time = (empty($end_array[$index])) ? '' : $end_array[$index];
-		//rsvpmaker_debug_log($duration,'duration');
-		//rsvpmaker_debug_log($end_time,'end_time');
 		if(empty( $current_dates ) )
-			 add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
+			 add_rsvpmaker_date($postID,$cddate,$duration,$end_time,$index);
 		elseif( is_array($current_dates) )
 			{
 				if(empty($current_dates[$index]))
 					{
-						add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
+						add_rsvpmaker_date($postID,$cddate,$duration,$end_time,$index);
 						//rsvpmaker_debug_log("$postID,$cddate,$duration,$end_time",'add date parameters');	
 					}
 				else {
@@ -564,7 +577,7 @@ foreach($dates_array as $index => $cddate)
 				}
 			}
 		else
-			 add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
+			 add_rsvpmaker_date($postID,$cddate,$duration,$end_time,$index);
 		$current_dates[] = $cddate;
 	}
 
@@ -582,15 +595,16 @@ delete_post_meta($postID,'_'.$cddate);
 delete_transient('rsvpmakerdates');
 }
 
-function add_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '') {
+function add_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '', $index = 0) {
+$slug = ($index == 0) ? 'firsttime' : $cddate;
 add_post_meta($postID,'_rsvp_dates',$cddate);
-add_post_meta($postID,'_'.$cddate,$duration);
+add_post_meta($postID,'_'.$slug,$duration);
 if(!empty($end_time))
-	add_post_meta($postID,'_end'.$cddate,$end_time);
+	add_post_meta($postID,'_end'.$slug,$end_time);
 }
 
 function update_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '', $index = 0) {
-//echo '<p>update_rsvpmaker_date: '.$postID.' cddate:'.$cddate.' duration:'.$duration.' end:'.$end_time.' index:'. $index .'</p>';
+$slug = ($index == 0) ? 'firsttime' : $cddate;
 $results = get_rsvp_dates($postID);
 //print_r($results);
 if(!empty($results) && is_array($results) && (!empty($results[$index]['datetime'])))
@@ -605,9 +619,9 @@ else
 		add_post_meta($postID,'_rsvp_dates',$cddate);
 	}
 
-update_post_meta($postID,'_'.$cddate,$duration);
+update_post_meta($postID,'_'.$slug,$duration);
 if(!empty($end_time))
-	update_post_meta($postID,'_end'.$cddate,$end_time);
+	update_post_meta($postID,'_end'.$slug,$end_time);
 delete_transient('rsvpmakerdates');
 }
 

@@ -1,6 +1,3 @@
-var display = (rsvpmaker_ajax._rsvp_end_display) ? rsvpmaker_ajax._rsvp_end_display : '';
-var end = (rsvpmaker_ajax._rsvp_end) ? rsvpmaker_ajax._rsvp_end : '';
-
 const DEFAULT_STATE = {
 	date: '',
 	endtime: {"display":display,"end":end},
@@ -27,13 +24,6 @@ function reducer( state = DEFAULT_STATE, action ) {
   return newstate;
 }
 
-function setEndTime( endtime ) {
-  return {
-    type: 'UPDATE_END_TIME',
-    endtime: endtime,
-  };
-}
-
 function setRSVPdate( date ) {
   return {
     type: 'UPDATE_DATE',
@@ -55,12 +45,7 @@ function setRSVPEnd( end ) {
   };
 }
 
-function setRSVPEndDisplay( end_display ) {
-  return {
-    type: 'UPDATE_END',
-    end_display: end_display,
-  };
-}
+
 
 function setRsvpMeta( key, value ) {
 if(key == '_rsvp_on')

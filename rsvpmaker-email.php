@@ -1980,7 +1980,7 @@ add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slu
 
 function email_log () {
 global $wpdb;
-$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key = '_rsvpmaker_email_log' ORDER BY meta_id DESC";
+$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key = '_rsvpmaker_email_log' ORDER BY meta_id DESC LIMIT 0, 100";
 $results = $wpdb->get_results($sql);
 if($results)
 foreach($results as $row)

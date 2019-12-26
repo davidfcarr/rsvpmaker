@@ -1978,7 +1978,7 @@ fix_timezone();
 $start = 2;
 $dateblock = '';
 global $last_time;
-foreach($results as $row)
+foreach($results as $index => $row)
 	{
 	if(empty($firstrow))
 		$firstrow = $row;

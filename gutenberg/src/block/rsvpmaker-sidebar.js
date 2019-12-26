@@ -1,9 +1,10 @@
-import './state.js';
+//import './state.js';
 //const { withState } = wp.compose;
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
-const { RadioControl, SelectControl, TextControl } = wp.components;
-const { withSelect, withDispatch } = wp.data;
+//const { RadioControl, SelectControl, TextControl } = wp.components;
+//const { withSelect, withDispatch } = wp.data;
+import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl} from './metadata_components.js';
 
 //const { getSettings } = wp.date; // removed from Gutenberg
 var el = wp.element.createElement;
@@ -31,15 +32,8 @@ xhr.send(dateaction);
 
 if(rsvpmaker_type == 'rsvpmaker')
 	{
-wp.data.dispatch('rsvpevent').setRSVPdate(rsvpmaker_ajax._rsvp_first_date);
-/*
-console.log('first '+rsvpmaker_ajax._rsvp_first_date);
-console.log('end '+rsvpmaker_ajax._rsvp_end);
-console.log('end display '+rsvpmaker_ajax._rsvp_end_display);
-wp.data.dispatch('rsvpevent').setRSVPEnd(rsvpmaker_ajax._rsvp_end);
-wp.data.dispatch('rsvpevent').setRSVPEndDisplay(rsvpmaker_ajax._rsvp_end_display);
-*/
-wp.data.dispatch('rsvpevent').setRsvpMeta('_rsvp_on',rsvpmaker_ajax._rsvp_on);
+//wp.data.dispatch('rsvpevent').setRSVPdate(rsvpmaker_ajax._rsvp_first_date);
+//wp.data.dispatch('rsvpevent').setRsvpMeta('_rsvp_on',rsvpmaker_ajax._rsvp_on);
 var datestring = '';
 var dateaction = "action=rsvpmaker_date&nonce="+rsvpmaker_ajax.ajax_nonce+"&post_id="+rsvpmaker_ajax.event_id;
 
@@ -71,6 +65,8 @@ function get_template_prompt () {
 }
 
 const RSVPMakerSidebarPlugin = function() {
+if(!rsvpmaker_ajax)
+	return; //not an rsvpmaker post
 const end_times = Array();
 const end_times_display = Array();
 var datecount = '';
@@ -78,10 +74,7 @@ var first_date = '';
 var additional_dates = '';
 var time_display = '';
 const rsvpdates = Array();
-var meta = wp.data.select('core/editor').getEditedPostAttribute('meta');
-console.log('select metadata');
-console.log(meta);
-if(rsvpmaker_ajax._rsvp_end_display != '')
+if(rsvpmaker_ajax && (rsvpmaker_ajax._rsvp_end_display != ''))
 	{
 		if(rsvpmaker_ajax._rsvp_end_display == 'all')
 			time_display = __('Time not displayed');
@@ -113,60 +106,6 @@ if(rsvpmaker_ajax._rsvp_end_display != '')
 if(rsvpmaker_ajax._rsvp_count && (rsvpmaker_ajax._rsvp_count != '1'))
 	additional_dates = 'This event spans multiple dates ('+rsvpmaker_ajax._rsvp_count+' total)';
 var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
-console.log(post_id + ' post_id');
-var rsvpmeta;
-/*if(post_id)
-	rsvpmeta = apiFetch( {path: '/wp-json/rsvpmaker/v1/meta/'+post_id} );
-*/
-/*then( meta => {
-		console.log('meta_date');
-		console.log(meta.first_date);
-		rsvpdates.push(meta.first_date);
-		Object.defineProperty(rsvpdateobj, 'date', {'value': meta.first_date});
-		Object.defineProperty(rsvpdateobj, 'display', {'value': meta.first_display});
-		Object.defineProperty(rsvpdateobj, 'end', {'value': meta.first_end});
-		//console.log(meta);
- if(Array.isArray(meta.end_times))
-			meta.end_times.map( function(key,value) { end_times.push(value) } );
-		if(Array.isArray(meta.end_times_display))
-			meta.end_times_display.map( function(key,value) { end_times_display.push(value) } );
-		if(Array.isArray(meta.dates))
-			meta.dates.map( function(key,value) { console.log('dates iterator'); console.log(value); rsvpdates.push(value) } );
-	}).catch(err => {
-		console.log(err);
-	});
-}
-*/
-
-//console.log('end times '+ typeof end_times);
-//console.log(end_times);
-/*
-if(Array.isArray(rsvpdates))
-	{
-		console.log('rsvpdates is array: yes');
-		console.log(rsvpdates);
-		datecount = rsvpdates.length;
-		first_date = rsvpdates.shift();
-		console.log('datecount: '+datecount);
-		console.log('first_date:' + first_date);
-		console.log('rsvpdateobject');
-		console.log(rsvpdateobj);
-	}
-else
-	console.log('rsvpdates is array: NO');
-if(Array.isArray(end_times))
-	console.log('end times is array: yes');
-else
-	console.log('end times is array: NO');
-*/
-	//console.log('rsvpdateobj');
-//console.log(rsvpdateobj);
-/*
-console.log('first end time');
-console.log(first_end);
-console.log('first end time display');
-console.log(first_display);
-*/
 
 if(rsvpmaker_ajax.template_msg)
 	{//if this is a template
@@ -178,12 +117,19 @@ if(rsvpmaker_ajax.template_msg)
 <div>
 <h3>RSVPMaker Template</h3>
 {rsvpmaker_ajax.top_message}
-<p><RSVPMakerOn /></p>
+<MetaSelectControl
+		label="Collect RSVPs"
+		metaKey="_rsvp_on"
+		options={ [
+			{ label: 'Yes', value: '1' },
+			{ label: 'No', value: '0' },
+		] }
+	/>
 <p>{rsvpmaker_ajax.template_msg}</p>
 <p>{__('To change the schedule, follow the link below.')}</p>
 <div class="rsvpmaker_related">
 {related_link()}
-<p>{__('Some options can be edited through the RSVPMaker sidebar (<span class="dashicons dashicons-calendar-alt"></span> icon above).')}</p>
+<p>{__('Some options can be edited through the RSVPMaker sidebar (calendar icon above).')}</p>
 </div>
 {rsvpmaker_ajax.bottom_message}
 </div>
@@ -217,8 +163,16 @@ else if(rsvpmaker_ajax.special)
 <div>
 <h3>RSVPMaker Event Date</h3>
 {rsvpmaker_ajax.top_message}
-<div>{(rsvpmaker_ajax._rsvp_count == '1') && <MetaDateControl metaKey='_rsvp_dates' />}</div>
-<div>{(rsvpmaker_ajax._rsvp_count != '1') && <p>{__('Event has multiple dates set. Edit on RSVP Event / Options screen.')}</p>}</div>
+{(rsvpmaker_ajax._rsvp_count == '1') && <div><MetaDateControl metaKey='_rsvp_dates' /><MetaSelectControl
+		label="End Time Display"
+		metaKey="_firsttime"
+		options={ [
+			{ label: 'Not Set', value: '' },
+			{ label: 'Set End Time', value: 'set' },
+			{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+		] }
+	/><MetaEndDateControl /></div>}
+<div>{(rsvpmaker_ajax._rsvp_count != '1') && <p>{__('Event has multiple dates set. Edit on RSVP / Event Options screen.')}</p>}</div>
 <MetaSelectControl
 		label="Collect RSVPs"
 		metaKey="_rsvp_on"
@@ -228,70 +182,14 @@ else if(rsvpmaker_ajax.special)
 		] }
 	/>
 <div class="rsvpmaker_related">
-<p>{time_display} {related_link()}</p>
-<p>{__('Some options can be edited through the RSVPMaker sidebar (calendar icon above).')}</p>
+<p>{related_link()}</p>
+<p>{__('Basic options can be edited through the RSVPMaker sidebar (calendar icon above).')}</p>
 </div>
 {rsvpmaker_ajax.bottom_message}
 </div>
 		)
 	);
 }
-
-var MetaSelectControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { [ props.metaKey ]: metaValue } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
-		}
-	} ) )( function( props ) {
-		return el( SelectControl, {
-			label: props.label,
-			value: props.metaValue,
-			options: props.options,
-			onChange: function( content ) {
-				props.setMetaValue( content ), recordChange(props.metaKey, content);
-			},
-		});
-	}
-);
-
-var MetaDateControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				metaValue = metaValue.replace('T',' ');
-				fetch('/wp-json/rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id);
-				console.log(metaValue);
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { [ props.metaKey ]: metaValue } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		return {
-			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
-		}
-	} ) )( function( props ) {
-		console.log(props);
-		return el( DateTimePicker, {
-			label: props.label,
-			currentDate: props.metaValue,
-			options: props.options,
-			onChange: function( content ) {
-				props.setMetaValue( content );
-			},
-		});
-	}
-);
 
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {
 	render: RSVPMakerSidebarPlugin,
