@@ -39,155 +39,34 @@ function rsvpmaker_server_block_render(){
 }
 
 add_action( 'init', function(){
-	register_meta( 'post', '_rsvp_dates', array(
+	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'string',
 		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 register_meta( 'post', '_firsttime', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 register_meta( 'post', '_endfirsttime', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 register_meta( 'post', '_rsvp_on', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
- 
-	register_meta( 'post', '_rsvp_to', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-
-	 register_meta( 'post', '_add_timezone', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
-	 ) );
-	 
-	 
-	 register_meta( 'post', '_convert_timezone', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_calendar_icons', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-
-    register_meta( 'post', '_rsvp_end_display', array(
-			'object_subtype' => 'rsvpmaker',
-			 'type'		=> 'string',
-			 'single'	=> true,
-			 'auth_callback' => '__return_true',
-			 'show_in_rest'	=> true,
-) );
-	 
-	 register_meta( 'post', '_rsvpmaker_send_confirmation_email', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_count', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_yesno', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_max', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_captcha', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_timezone_string', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_show_attendees', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_login_required', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
-	 
-	 register_meta( 'post', '_rsvp_confirmation_include_event', array(
-		'object_subtype' => 'rsvpmaker',
- 		'type'		=> 'string',
-		 'single'	=> true,
-		 'auth_callback' => '__return_true',
- 		'show_in_rest'	=> true,
- 	) );
+		 'show_in_rest'	=> true,
+		 'auth_callback' => function() {
+			return current_user_can('edit_posts');
+		}
+	);
+	register_meta( 'post', '_rsvp_dates', $args );
+	register_meta( 'post', '_firsttime', $args );
+	register_meta( 'post', '_endfirsttime', $args );
+	register_meta( 'post', '_rsvp_on', $args );
+	register_meta( 'post', '_rsvp_to', $args );
+	register_meta( 'post', '_add_timezone', $args );
+	register_meta( 'post', '_convert_timezone', $args ); 
+	register_meta( 'post', '_calendar_icons', $args );
+    register_meta( 'post', '_rsvp_end_display', $args );
+	register_meta( 'post', '_rsvpmaker_send_confirmation_email', $args );
+	register_meta( 'post', '_rsvp_count', $args );
+	register_meta( 'post', '_rsvp_yesno', $args );
+	register_meta( 'post', '_rsvp_max', $args );
+	register_meta( 'post', '_rsvp_captcha', $args );
+	register_meta( 'post', '_rsvp_timezone_string', $args );
+	register_meta( 'post', '_rsvp_show_attendees', $args );
+	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
+	register_meta( 'post', '_rsvp_login_required', $args );
+	register_meta( 'post', '_rsvp_confirmation_include_event', $args );
 });
 
 function rsvpjsonlisting ($atts) {
