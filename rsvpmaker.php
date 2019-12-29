@@ -599,8 +599,12 @@ function add_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '', $index 
 $slug = ($index == 0) ? 'firsttime' : $cddate;
 add_post_meta($postID,'_rsvp_dates',$cddate);
 add_post_meta($postID,'_'.$slug,$duration);
-if(!empty($end_time))
-	add_post_meta($postID,'_end'.$slug,$end_time);
+if(empty($end_time))
+{
+	$et = strtotime($cddate.' +1 hour');
+	$end_time = date('H:i',$et);
+}
+add_post_meta($postID,'_end'.$slug,$end_time);
 }
 
 function update_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '', $index = 0) {

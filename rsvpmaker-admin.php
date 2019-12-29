@@ -331,19 +331,30 @@ rsvpmaker_duration_select ($prefix.'duration['.$index.']', $datevar, $datestring
 
 }
 
-function save_rsvp_meta($postID)
+function save_rsvp_meta($postID, $new = false)
 {
 $setrsvp = $_POST["setrsvp"];
-if(empty($setrsvp['to']) )
+if($new)
 {
 rsvpmaker_defaults_for_post($postID); //if details not set, import defaults
-}
-$checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno');
+/*
+$checkboxes = array("calendar_icons","add_timezone","convert_timezone");
 foreach($checkboxes as $check)
 	{
 		if(!isset($setrsvp[$check]))
 			$setrsvp[$check] = 0;
 	}
+*/
+}
+else
+{
+	$checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno');
+	foreach($checkboxes as $check)
+		{
+			if(!isset($setrsvp[$check]))
+				$setrsvp[$check] = 0;
+		}	
+}
 
 if(isset($_POST["deadyear"]) && isset($_POST["deadmonth"]) && isset($_POST["deadday"]))
 	{
@@ -1454,12 +1465,10 @@ if(!empty($_POST["recur-title"]))
 				add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
 				echo '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$postID.'">Edit</a> / <a href="'.site_url().'/?p='.$postID.'">View</a></div>';	
 
-				if(!empty($_POST["setrsvp"]["on"]))
-					save_rsvp_meta($postID);
-				}
-			}		
+				save_rsvp_meta($postID);
+			}
 		}
-
+	}
 	}
 
 }
@@ -4765,11 +4774,7 @@ function rsvpmaker_setup_post () {
 if(!empty($_POST["rsvpmaker_new_post"]))
 	{
 		$t = 0;
-		$title = stripslashes($_POST["rsvpmaker_new_post"]);
-		if(!empty($_POST['event_year'][0]))
-			$slug = $title.'-'.$_POST['event_year'][0].'-' .$_POST['event_month'][0] .'-'.$_POST['event_day'][0];
-		else
-			$slug = $title;
+		$slug = $title = stripslashes($_POST["rsvpmaker_new_post"]);
 		$content = array('post_title' => $title,'post_name' => $slug, 'post_type' => 'rsvpmaker','post_status' => 'draft','post_content' => '');
 		if(!empty($_POST['template']))
 		{	
@@ -4784,8 +4789,8 @@ if(!empty($_POST["rsvpmaker_new_post"]))
 			add_post_meta($post_id,'_meet_recur',$t);
 			rsvpmaker_copy_metadata($t, $post_id);
 		}
-		if(!empty($_POST['setrsvp']['on']))
-			rsvpmaker_defaults_for_post($post_id);
+		else
+			save_rsvp_meta($post_id, true);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
 		wp_redirect($editurl);
 		die();			

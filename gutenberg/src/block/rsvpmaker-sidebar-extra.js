@@ -15,10 +15,7 @@ const el = wp.element.createElement;
 const {Fragment} = wp.element;
 const { registerPlugin } = wp.plugins;
 const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
-//const { withState } = wp.compose;
-//const { DateTimePicker, RadioControl, SelectControl, TextControl } = wp.components;
-//const { withSelect, withDispatch } = wp.data;
-//const {RSVPMakerDateTimePicker, RSVPMakerOn} = './rsvpmaker-sidebar.js';
+const { Panel, PanelBody, PanelRow } = wp.components;
 
 import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl} from './metadata_components.js';
 
@@ -29,9 +26,9 @@ function recordChange(metaKey, metaValue) {
 function related_link() {
 	if(rsvpmaker_ajax.special)
 		{
-		return <div class="rsvp_related_links"><p></p></div>;
+		return <div class="rsvp_related_links"></div>;
 		}
-	if(rsvpmaker_json.projected_url)
+/*	if(rsvpmaker_json.projected_url)
 		{
 		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p><p><a href={rsvpmaker_json.projected_url}>{rsvpmaker_json.projected_label}</a></p></div>;	
 		}
@@ -39,6 +36,7 @@ function related_link() {
 		{
 		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p><p><a href={rsvpmaker_json.template_url}>{rsvpmaker_json.template_label}</a></p></div>;	
 		}
+*/
 	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p></div>;	
 	}
 
@@ -51,19 +49,32 @@ const PluginRSVPMaker = () => {
             title='RSVPMaker'
             icon="calendar-alt"
         >
-
 <p>For additional options, events spanning multiple dates, and event pricing see: {related_link()}</p>
-{(!rsvpmaker_ajax.template_msg && !rsvpmaker_ajax.special && (rsvpmaker_ajax._rsvp_count == '1')) && <div><MetaDateControl metaKey='_rsvp_dates' /><MetaSelectControl
-		label="End Time Display"
+<Panel header="RSVPMaker Event Options">
+<PanelBody
+            title="Set Basic Options"
+            icon="calendar-alt"
+            initialOpen={ true }
+        >
+{(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && <div><MetaDateControl metaKey='_rsvp_dates' />
+<MetaSelectControl
+		label="Time Display"
 		metaKey="_firsttime"
 		options={ [
-			{ label: 'Not Set', value: '' },
-			{ label: 'Set End Time', value: 'set' },
+			{ label: 'End Time Not Displayed', value: '' },
+			{ label: 'Show End Time', value: 'set' },
 			{ label: 'Add Day / Do Not Show Time', value: 'allday' },
 		] }
-	/><MetaEndDateControl /></div>}
-<div>{(rsvpmaker_ajax._rsvp_count != '1') && <p>{__('Event has multiple dates set. Edit on RSVP / Event Options screen.')}</p>}</div>
-
+	/>
+	<MetaEndDateControl /></div>
+)}
+{(rsvpmaker_ajax._rsvp_count > '1') && <PanelRow><a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Multiple Dates')}</a></PanelRow>}
+{(rsvpmaker_json.projected_url && <div><PanelRow>
+<a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Template Schedule')}</a></PanelRow>
+<PanelRow><a href={rsvpmaker_json.projected_url} target="_blank">{__('Create/Update Events from Template')}</a><br />
+</PanelRow>
+</div>
+			)}
 <MetaSelectControl
 		label="Collect RSVPs"
 		metaKey="_rsvp_on"
@@ -72,7 +83,12 @@ const PluginRSVPMaker = () => {
 			{ label: 'No', value: '0' },
 		] }
 	/>
-
+</PanelBody>
+<PanelBody
+            title="Display"
+            icon="admin-settings"
+            initialOpen={ false }
+        >
 <MetaSelectControl
 		label="Show Add to Google/Outlook Calendar Icons"
 		metaKey="_calendar_icons"
@@ -99,6 +115,31 @@ const PluginRSVPMaker = () => {
 			{ label: 'No', value: '0' },
 		] }
 	/>
+<MetaSelectControl
+		label="Show RSVP Count"
+		metaKey="_rsvp_count"
+		options={ [
+			{ label: 'Yes', value: '1' },
+			{ label: 'No', value: '0' },
+		] }
+	/>
+
+<MetaSelectControl
+		label="Display attendee names / RSVP note field"
+		metaKey="_rsvp_show_attendees"
+		options={ [
+			{ label: 'No', value: '0' },
+			{ label: 'Yes', value: '1' },
+			{ label: 'Only for Logged In Users', value: '2' },
+		] }
+	/>
+
+</PanelBody>
+        <PanelBody
+            title="Notifications / Reminders"
+            icon="email"
+            initialOpen={ false }
+        >
 			<MetaTextControl title="Send notifications to:" metaKey="_rsvp_to" />
 		<MetaSelectControl
 		label="Send Confirmation Email"
@@ -109,7 +150,6 @@ const PluginRSVPMaker = () => {
 			{ label: 'No', value: '0' },
 		] }
 	/>
-
 <MetaSelectControl
 		label="Include Event Content with Confirmation"
 		metaKey="_rsvp_confirmation_include_event"
@@ -119,8 +159,22 @@ const PluginRSVPMaker = () => {
 			{ label: 'No', value: '0' },
 		] }
 	/>
-
-<MetaSelectControl
+            <PanelRow>Confirmation Message (exerpt): {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
+			<PanelRow><em>{rsvpmaker_ajax.confirmation_type}</em></PanelRow>
+<PanelRow><a href={rsvpmaker_ajax.confirmation_edit} target="_blank">{__('Edit Confirmation Message')}</a></PanelRow>
+{(rsvpmaker_ajax.confirmation_type != '') && <PanelRow><a href={rsvpmaker_ajax.confirmation_customize} target="_blank">{__('Customize Confirmation Message')}</a></PanelRow>}
+<PanelRow><a href={rsvpmaker_ajax.reminders} target="_blank">{__('Create / Edit Reminders')}</a></PanelRow>
+        </PanelBody>
+        <PanelBody
+            title="RSVP Form"
+            icon="yes-alt"
+            initialOpen={ false }
+        >
+		<PanelRow>{rsvpmaker_ajax.form_fields}</PanelRow>
+		<PanelRow><em>{rsvpmaker_ajax.form_type}</em></PanelRow>
+		<PanelRow><a href={rsvpmaker_ajax.form_edit} target="_blank">{__('Edit Form')}</a></PanelRow>
+		{((rsvpmaker_ajax.form_type != '') || !rsvpmaker_ajax.form_edit_post) && <PanelRow><a href={rsvpmaker_ajax.form_customize} target="_blank">{__('Customize Form')}</a></PanelRow>}
+		<MetaSelectControl
 		label="Login required to RSVP"
 		metaKey="_rsvp_login_required"
 		options={ [
@@ -147,33 +201,17 @@ const PluginRSVPMaker = () => {
 		] }
 	/>
 
-<MetaSelectControl
-		label="Show RSVP Count"
-		metaKey="_rsvp_count"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
-	/>
-
-<MetaSelectControl
-		label="Display attendee names / RSVP note field"
-		metaKey="_rsvp_show_attendees"
-		options={ [
-			{ label: 'No', value: '0' },
-			{ label: 'Yes', value: '1' },
-			{ label: 'Only for Logged In Users', value: '2' },
-		] }
-	/>
-
 <MetaTextControl
 		title="Maximum number of participants (0 for no limit)"
 		metaKey="_rsvp_max"
 	/>
-<div>For additional options, including event end time, multiple dates, and event pricing see: {related_link()}</div>
+		</PanelBody>
+</Panel>
+
+<div>For additional options, including multiple dates and event pricing see: {related_link()}</div>
         </PluginSidebar>
 		</Fragment>
     )
 }
-if (typeof rsvpmaker_ajax !== 'undefined') 
+if ((typeof rsvpmaker_ajax !== 'undefined') && !rsvpmaker_ajax.special) 
 	registerPlugin( 'plugin-rsvpmaker', { render: PluginRSVPMaker } );

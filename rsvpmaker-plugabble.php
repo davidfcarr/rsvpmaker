@@ -378,6 +378,30 @@ foreach ($wp_roles->roles as $role => $rolearray)
 }
 }
 
+function get_confirmation_options() {
+	global $post;
+	$confirm = rsvp_get_confirm($post->ID,true);
+	$output = sprintf('<h3 id="confirmation">%s</h3>',__('Confirmation Message','rsvpmaker'));
+	$output .= $confirm->post_content;	
+	$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID);
+	$customize = admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
+	$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
+	if(current_user_can('edit_post',$confirm->ID))
+	{
+		if($confirm->post_parent == 0)
+		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
+	elseif($confirm->post_parent != $post->ID)
+		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
+	else
+		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
+	}
+	else
+	$output .= sprintf('<div id="editconfirmation"><div><a href="%s" target="_blank">Customize</a></div>',$customize);
+	
+	$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);	
+	return $output;
+}
+
 if(! function_exists('GetRSVPAdminForm') )
 {
 function GetRSVPAdminForm($postID)
@@ -391,7 +415,6 @@ $include_event = $custom_fields["_rsvp_confirmation_include_event"][0];
 $login_required = $custom_fields["_rsvp_login_required"][0];
 $rsvp_to = $custom_fields["_rsvp_to"][0];
 $rsvp_instructions = $custom_fields["_rsvp_instructions"][0];
-$confirm = rsvp_get_confirm($post->ID,true);
 $rsvp_form = $custom_fields["_rsvp_form"][0];
 $rsvp_max = $custom_fields["_rsvp_max"][0];
 $rsvp_count = $custom_fields["_rsvp_count"][0]; //else $rsvp_count = 1;
@@ -470,28 +493,7 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <br />
   <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" value="1" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event"  value="1" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
-<h3 id="confirmation"><?php echo __('Confirmation Message','rsvpmaker');?></h3>
-<?php
-echo $confirm->post_content;
-
-$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID);
-$customize = admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
-$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
-if(current_user_can('edit_post',$confirm->ID))
-{
-	if($confirm->post_parent == 0)
-	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
-elseif($confirm->post_parent != $post->ID)
-	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
-else
-	printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
-}
-else
-printf('<div id="editconfirmation"><div><a href="%s" target="_blank">Customize</a></div>',$customize);
-
-printf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);	
-?>
-<?php
+<?php echo get_confirmation_options();
 if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"]))
 	echo '<br /><strong>'.__('Webinar Setup','rsvpmaker').'</strong><br />YouTube Live: <input type="text" name="youtube_live" /> <input type="checkbox" name="webinar_other" value="1" /> '.__('Other webinar','rsvpmaker').' <input type="checkbox" name="youtube_require_passcode" value="1" /> '.__('Require passcode to view','rsvpmaker').'<br /><em>'.__('If your event is a webinar, entering a YouTube Live url or checking &quot;Other webinar&quot; will create a landing page, plus suggested cofirmation and reminder messages to get you started. For YouTube Live, RSVPMaker adds the codes for the video player and chat.','rsvpmaker').'.</em>';
 ?>

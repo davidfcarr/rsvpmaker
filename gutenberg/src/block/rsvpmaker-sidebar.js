@@ -40,9 +40,9 @@ var dateaction = "action=rsvpmaker_date&nonce="+rsvpmaker_ajax.ajax_nonce+"&post
 function related_link() {
 	if(rsvpmaker_ajax.special)
 		{
-		return <div class="rsvp_related_links"><p></p></div>;
+		return <div class="rsvp_related_links"></div>;
 		}
-	if(rsvpmaker_json.projected_url)
+/*	if(rsvpmaker_json.projected_url)
 		{
 		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p><p><a href={rsvpmaker_json.projected_url}>{rsvpmaker_json.projected_label}</a></p></div>;	
 		}
@@ -50,6 +50,7 @@ function related_link() {
 		{
 		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p><p><a href={rsvpmaker_json.template_url}>{rsvpmaker_json.template_label}</a></p></div>;	
 		}
+*/
 	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p></div>;	
 	}
 
@@ -106,7 +107,7 @@ if(rsvpmaker_ajax && (rsvpmaker_ajax._rsvp_end_display != ''))
 if(rsvpmaker_ajax._rsvp_count && (rsvpmaker_ajax._rsvp_count != '1'))
 	additional_dates = 'This event spans multiple dates ('+rsvpmaker_ajax._rsvp_count+' total)';
 var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
-
+/*
 if(rsvpmaker_ajax.template_msg)
 	{//if this is a template
 		
@@ -137,7 +138,10 @@ if(rsvpmaker_ajax.template_msg)
 	);
 
 	}
-else if(rsvpmaker_ajax.special)
+	else 
+*/
+
+if(rsvpmaker_ajax.special)
 	{
 		
 	return (
@@ -163,7 +167,8 @@ else if(rsvpmaker_ajax.special)
 <div>
 <h3>RSVPMaker Event Date</h3>
 {rsvpmaker_ajax.top_message}
-{(rsvpmaker_ajax._rsvp_count == '1') && <div><MetaDateControl metaKey='_rsvp_dates' /><MetaSelectControl
+{(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && <div><MetaDateControl metaKey='_rsvp_dates' />
+<MetaSelectControl
 		label="End Time Display"
 		metaKey="_firsttime"
 		options={ [
@@ -171,8 +176,16 @@ else if(rsvpmaker_ajax.special)
 			{ label: 'Set End Time', value: 'set' },
 			{ label: 'Add Day / Do Not Show Time', value: 'allday' },
 		] }
-	/><MetaEndDateControl /></div>}
-<div>{(rsvpmaker_ajax._rsvp_count != '1') && <p>{__('Event has multiple dates set. Edit on RSVP / Event Options screen.')}</p>}</div>
+	/>
+	<MetaEndDateControl /></div>
+)}
+{(rsvpmaker_ajax._rsvp_count > '1') && <p><a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Multiple Dates')}</a></p>}
+{(rsvpmaker_json.projected_url && <div><p>
+<a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Template Schedule')}</a></p>
+<p><a href={rsvpmaker_json.projected_url} target="_blank">{__('Create/Update Events from Template')}</a><br />
+</p>
+</div>
+)}
 <MetaSelectControl
 		label="Collect RSVPs"
 		metaKey="_rsvp_on"

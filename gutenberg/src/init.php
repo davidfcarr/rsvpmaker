@@ -39,6 +39,13 @@ function rsvpmaker_server_block_render(){
 }
 
 add_action( 'init', function(){
+	global $post;
+	if($post->ID && empty(get_post_meta($post->ID,'_endfirsttime',true)) && ($first = get_post_meta($post->ID,'_firsttime',true)) )
+		{
+			$et = strtotime($first.' +1 hour');
+			$end = date('H:i',$et);
+			update_post_meta($post->ID,'_endfirsttime',$end);
+		}
 	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'string',
@@ -57,7 +64,7 @@ add_action( 'init', function(){
 	register_meta( 'post', '_convert_timezone', $args ); 
 	register_meta( 'post', '_calendar_icons', $args );
     register_meta( 'post', '_rsvp_end_display', $args );
-	register_meta( 'post', '_rsvpmaker_send_confirmation_email', $args );
+	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
 	register_meta( 'post', '_rsvp_count', $args );
 	register_meta( 'post', '_rsvp_yesno', $args );
 	register_meta( 'post', '_rsvp_max', $args );
@@ -124,7 +131,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_type', $post->post_type);
 	
-	global $post;
+	global $post, $rsvp_options;
 	$template_id = 0;
 	if(is_admin() && ($post->post_type == 'rsvpmaker') && isset($_GET['action']) && $_GET['action'] == 'edit')
 		{
@@ -142,6 +149,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			$top_message = $rsvpmaker_special;
 		$top_message = apply_filters('rsvpmaker_ajax_top_message',$top_message);
 		$bottom_message = apply_filters('rsvpmaker_ajax_bottom_message',$bottom_message);
+		$confirmation_options = get_confirmation_options();
 		
 		if($sked)
 		{
@@ -184,14 +192,52 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 			$duration = date('H:i',$diff);
 		}
 	}
-	
+
+	$confirm = rsvp_get_confirm($post->ID,true);
+	$confirm_edit_post = (current_user_can('edit_post',$confirm->ID));
+	$excerpt = strip_tags($confirm->post_content);
+	$excerpt = (strlen($excerpt) > 100) ? substr($excerpt, 0, 100).' ...' : $excerpt;
+	$confirmation_type = '';
+	if($confirm->post_parent == 0)
+		$confirmation_type =__('Message is default from settings','rsvpmaker');
+	elseif($confirm->post_parent != $post->ID)
+		$confirmation_type = __('Message inherited from template','rsvpmaker');
+
+	$form_id = get_post_meta($post->ID,'_rsvp_form',true);
+	if(empty($form_id))
+		$form_id = (int) $rsvp_options['rsvp_form'];
+	$fpost = get_post($form_id);
+	//rsvpmaker_debug_log($form_id);
+	$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$postID);
+	$form_customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
+	$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
+	$note = (strpos($fpost->post_content,'name="note"') || strpos($fpost->post_content,'formnote')) ? 'Yes' : 'No';
+	preg_match_all('/\[([A-Za-z0_9_]+)/',$fpost->post_content,$matches);
+	if(!empty($matches))
+	foreach($matches[1] as $match)
+		$fields[$match] = $match;
+	preg_match_all('/"slug":"([^"]+)/',$fpost->post_content,$matches);
+	if(!empty($matches))
+	foreach($matches[1] as $match)
+		$fields[$match] = $match;	
+	$merged_fields = (empty($fields)) ? '' : implode(', ',$fields);
+	$form_fields = sprintf('Fields: %s, Guests: %s, Note field: %s',$merged_fields,$guest,$note);
+	$form_type = '';
+	$form_edit_post = (current_user_can('edit_post',$fpost->ID));
+	$form_edit_post = true;
+	if($fpost->post_parent == 0)
+		$form_type = __('Form is default from settings','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+	elseif($fpost->post_parent != $post->ID)
+		$form_type = __('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+
 	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
-	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',
+	{
+		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',
         array(
             'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
 			'_rsvp_first_date' => $date,
 			'_rsvp_count' => $datecount,
-			'_rsvp_end_display' => get_post_meta($post_id,'_'.$date,true),
+			//'_rsvp_end_display' => get_post_meta($post_id,'_'.$date,true),
 			'_rsvp_end' => $end,
 			'_rsvp_on' => (empty(get_post_meta($post->ID,'_rsvp_on',true)) ? 'No' : 'Yes' ),
 			'template_msg' => $template_msg,
@@ -201,8 +247,22 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 			'rsvpmaker_details' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
 			'top_message' => $top_message,
 			'bottom_message' => $bottom_message,
-        )
-    );
+			'confirmation_excerpt' => $excerpt,
+			'confirmation_edit' => admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID),
+			'confirmation_customize' => admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation'),
+			'reminders' => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
+			'confirmation_type' => $confirmation_type,
+			'confirm_edit_post' => $confirm_edit_post,
+			'form_fields' => $form_fields,
+			'form_edit' => $form_edit,
+			'form_customize' => $form_customize,
+			'form_type' => $form_type,
+			'form_edit_post' => $form_edit_post,			
+			)
+	);
+
+	}
+
 	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker')) {
 		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpemail_scheduling',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post_id)
     );
