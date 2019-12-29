@@ -5,12 +5,8 @@
  * Simple block, renders and saves the same content without any interactivity.
  */
 
-//  Import CSS.
-//import './editor.scss';
-//import './style.scss';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
-//const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const el = wp.element.createElement;
 const {Fragment} = wp.element;
 const { registerPlugin } = wp.plugins;
@@ -28,15 +24,6 @@ function related_link() {
 		{
 		return <div class="rsvp_related_links"></div>;
 		}
-/*	if(rsvpmaker_json.projected_url)
-		{
-		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p><p><a href={rsvpmaker_json.projected_url}>{rsvpmaker_json.projected_label}</a></p></div>;	
-		}
-	if(rsvpmaker_json.template_url)
-		{
-		return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p><p><a href={rsvpmaker_json.template_url}>{rsvpmaker_json.template_label}</a></p></div>;	
-		}
-*/
 	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details}>RSVP / Event Options</a></p></div>;	
 	}
 
