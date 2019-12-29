@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.3.2
-Stable tag: 6.5.4
+Stable tag: 6.5.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -113,6 +113,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 6.5.5 =
+
+* More sidebar improvements. Now divided into panels, with links to confirmation message and RSVP form posts
 
 = 6.5.4 =
 

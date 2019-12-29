@@ -44,21 +44,12 @@ const PluginRSVPMaker = () => {
             initialOpen={ true }
         >
 {(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && <div><MetaDateControl metaKey='_rsvp_dates' />
-<MetaSelectControl
-		label="Time Display"
-		metaKey="_firsttime"
-		options={ [
-			{ label: 'End Time Not Displayed', value: '' },
-			{ label: 'Show End Time', value: 'set' },
-			{ label: 'Add Day / Do Not Show Time', value: 'allday' },
-		] }
-	/>
 	<MetaEndDateControl /></div>
 )}
 {(rsvpmaker_ajax._rsvp_count > '1') && <PanelRow><a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Multiple Dates')}</a></PanelRow>}
-{(rsvpmaker_json.projected_url && <div><PanelRow>
+{(rsvpmaker_ajax.projected_url && <div><PanelRow>
 <a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Template Schedule')}</a></PanelRow>
-<PanelRow><a href={rsvpmaker_json.projected_url} target="_blank">{__('Create/Update Events from Template')}</a><br />
+<PanelRow><a href={rsvpmaker_ajax.projected_url} target="_blank">{__('Create/Update Events from Template')}</a><br />
 </PanelRow>
 </div>
 			)}

@@ -85,18 +85,19 @@ var MetaEndDateControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
 		return {
 			setMetaValue: function( metaValue ) {
-				console.log('dispatch value');
-				console.log(metaValue);
 				dispatch( 'core/editor' ).editPost(
 					{ meta: { '_endfirsttime': metaValue } }
+				);
+			},
+			setDisplay: function( value ) {
+				dispatch( 'core/editor' ).editPost(
+					{ meta: { '_firsttime': value } }
 				);
 			}
 		}
 	} ),
 	withSelect( function( select, props ) {
 		let metaValue = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ];
-		//console.log(props);
-		//console.log(metaValue);
 		if((typeof metaValue === 'string') && (metaValue.indexOf(':') > 0))
 			var parts = metaValue.split(':');
 		else
@@ -105,6 +106,7 @@ var MetaEndDateControl = wp.compose.compose(
 			}
 		return {
 			parts: parts,
+			display: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_firsttime' ],
 			//metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ],
 		}
 	} ) )( function( props ) {
@@ -125,7 +127,34 @@ var MetaEndDateControl = wp.compose.compose(
 			props.setMetaValue(getTimeValues());
 		}
 
-		return <div>End Time: <select id="endhour" value={props.parts[0]} onChange={ handleChange }>
+		if(props.display != 'set')
+		return <SelectControl
+			label="Time Display"
+			value={props.display}
+			options={ [
+				{ label: 'End Time Not Displayed', value: '' },
+				{ label: 'Show End Time', value: 'set' },
+				{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+			] }
+			onChange={function( content ) {
+				props.setDisplay( content );
+			}}
+		/> 
+
+		return <div>
+		<SelectControl
+			label="Time Display"
+			value={props.display}
+			options={ [
+				{ label: 'End Time Not Displayed', value: '' },
+				{ label: 'Show End Time', value: 'set' },
+				{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+			] }
+			onChange={function( content ) {
+				props.setDisplay( content );
+			}}
+		/> 
+		End Time: <select id="endhour" value={props.parts[0]} onChange={ handleChange }>
 		<option value='00'>12 midnight</option>
 		<option value='01'>1 am / 01:</option>
 		<option value='02'>2 am / 02:</option>
@@ -216,8 +245,6 @@ var MetaEndDateControl = wp.compose.compose(
 		</div>
 	}
 );
-
-//  { ( minutes ) => { props.setMetaValue( document.querySelector( '#endhour option:checked' ).value+':'+{minutes} ) } } >
 
 var MetaDateControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {

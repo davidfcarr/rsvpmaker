@@ -56,21 +56,12 @@ if(rsvpmaker_ajax.special)
 <h3>RSVPMaker Event Date</h3>
 {rsvpmaker_ajax.top_message}
 {(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && <div><MetaDateControl metaKey='_rsvp_dates' />
-<MetaSelectControl
-		label="Time Display"
-		metaKey="_firsttime"
-		options={ [
-			{ label: 'End Time Not Displayed', value: '' },
-			{ label: 'Show End Time', value: 'set' },
-			{ label: 'Add Day / Do Not Show Time', value: 'allday' },
-		] }
-	/>
 	<MetaEndDateControl /></div>
 )}
 {(rsvpmaker_ajax._rsvp_count > '1') && <p><a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Multiple Dates')}</a></p>}
-{(rsvpmaker_json.projected_url && <div><p>
+{(rsvpmaker_ajax.projected_url && <div><p>
 <a href={rsvpmaker_ajax.rsvpmaker_details} target="_blank">{__('Edit Template Schedule')}</a></p>
-<p><a href={rsvpmaker_json.projected_url} target="_blank">{__('Create/Update Events from Template')}</a><br />
+<p><a href={rsvpmaker_ajax.projected_url} target="_blank">{__('Create/Update Events from Template')}</a><br />
 </p>
 </div>
 )}
@@ -152,7 +143,7 @@ wp.plugins.registerPlugin( 'rsvpmaker-sidebar-postpublish', {
 	render: RSVPPluginPostPublishPanel,
 } );
 
-if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
+if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
 
 		let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
 		let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
@@ -176,7 +167,7 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 			wasPreviewingPost = isPreviewingPost;
 	
 			if ( shouldTriggerTemplateNotice ) {
-				var newurl = rsvpmaker_json.projected_url.replace('template_list','setup');
+				var newurl = rsvpmaker_ajax.projected_url.replace('template_list','setup');
 	wp.data.dispatch('core/notices').createNotice(
 		'info', // Can be one of: success, info, warning, error.
 		__('After updating this template, click'), // Text string to display.
@@ -193,7 +184,7 @@ if((typeof rsvpmaker_json !== 'undefined' ) && rsvpmaker_json.projected_url) {
 					label: ' or ',
 				},
 				{
-					url: rsvpmaker_json.projected_url,
+					url: rsvpmaker_ajax.projected_url,
 					label: __('Create / Update events'),
 				},
 			]

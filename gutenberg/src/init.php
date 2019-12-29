@@ -163,10 +163,6 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$template_label = __('Edit Template','rsvpmaker');
 		$template_url = admin_url('post.php?action=edit&post='.$template_id);
 		}
-
-		$rsvpmaker_json = array('projected_label' => $projected_label,'projected_url' => $projected_url,'template_label' => $template_label,'template_url' => $template_url);
-		
-		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_json', $rsvpmaker_json );	
 		
 $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$date = get_rsvp_date($post_id);
@@ -234,7 +230,9 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	{
 		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',
         array(
-            'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
+			'projected_label' => $projected_label,'projected_url' => $projected_url,
+			'template_label' => $template_label,
+			'template_url' => $template_url,            'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
 			'_rsvp_first_date' => $date,
 			'_rsvp_count' => $datecount,
 			//'_rsvp_end_display' => get_post_meta($post_id,'_'.$date,true),
