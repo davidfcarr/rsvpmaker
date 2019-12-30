@@ -1,7 +1,7 @@
 const { __ } = wp.i18n; // Import __() from wp.i18n
 //const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const el = wp.element.createElement;
-const { DateTimePicker, RadioControl, SelectControl, TextControl } = wp.components;
+const { DateTimePicker, RadioControl, SelectControl, TextControl, TextareaControl,FormToggle } = wp.components;
 const { withSelect, withDispatch } = wp.data;
 
 var MetaTextControl = wp.compose.compose(
@@ -20,7 +20,7 @@ var MetaTextControl = wp.compose.compose(
 		}
 	} ) )( function( props ) {
 		return el( TextControl, {
-			label: props.title,
+			label: props.label,
 			value: props.metaValue,
 			onChange: function( content ) {
 				props.setMetaValue( content );
@@ -45,7 +45,7 @@ var MetaRadioControl = wp.compose.compose(
 		}
 	} ) )( function( props ) {
 		return el( RadioControl, {
-			label: props.title,
+			label: props.label,
 			selected: props.metaValue,
 			options: props.options,
 			onChange: function( content ) {
@@ -275,8 +275,52 @@ var MetaDateControl = wp.compose.compose(
 	}
 );
 
-function recordChange(metaKey, metaValue) {
-	console.log(metaKey + ': ', metaValue);
-}
+var MetaTextareaControl = wp.compose.compose(
+	withDispatch( function( dispatch, props ) {
+		return {
+			setMetaValue: function( metaValue ) {
+				dispatch( 'core/editor' ).editPost(
+					{ meta: { [ props.metaKey ]: metaValue } }
+				);
+			}
+		}
+	} ),
+	withSelect( function( select, props ) {
+		return {
+			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],
+		}
+	} ) )( function( props ) {
+		return el( TextareaControl, {
+			label: props.label,
+			value: props.metaValue,
+			onChange: function( content ) {
+				props.setMetaValue( content );
+			},
+		});
+	}
+);
 
-export {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl};
+var MetaFormToggle = wp.compose.compose(
+	withDispatch( function( dispatch, props ) {
+		return {
+			setMetaValue: function( metaValue ) {
+					dispatch( 'core/editor' ).editPost(
+					{ meta: { [ props.metaKey ]: metaValue } }
+				);
+			}
+		}
+	} ),
+	withSelect( function( select, props ) {
+		return {
+			metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ],//boolvalue,
+		}
+	} ) )( function( props ) {
+		return <div class="rsvpmaker_toggles"><FormToggle checked={props.metaValue} 
+		onChange={ function(  ) {
+				props.setMetaValue( !props.metaValue );
+			} }	
+		/>&nbsp;{props.label} </div>
+	}
+);
+
+export {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle, MetaTextareaControl};

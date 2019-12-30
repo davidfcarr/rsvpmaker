@@ -2,7 +2,7 @@
 //const { withState } = wp.compose;
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
-import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl} from './metadata_components.js';
+import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle} from './metadata_components.js';
 
 var el = wp.element.createElement;
 const { __ } = wp.i18n; // Import __() from wp.i18n
@@ -65,14 +65,10 @@ if(rsvpmaker_ajax.special)
 </p>
 </div>
 )}
-<MetaSelectControl
-		label="Collect RSVPs"
-		metaKey="_rsvp_on"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
-	/>
+<MetaFormToggle
+label="Collect RSVPs" 
+metaKey="_rsvp_on"/>
+
 <div class="rsvpmaker_related">
 <p>{related_link()}</p>
 <p>{__('Basic options can be edited through the RSVPMaker sidebar (calendar icon above).')}</p>

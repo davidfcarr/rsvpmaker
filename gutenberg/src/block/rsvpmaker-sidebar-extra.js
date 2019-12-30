@@ -12,13 +12,14 @@ const {Fragment} = wp.element;
 const { registerPlugin } = wp.plugins;
 const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
 const { Panel, PanelBody, PanelRow } = wp.components;
+//import {TemplateTextControl} from './template-settings.js';  
 
-import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl} from './metadata_components.js';
+import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaFormToggle} from './metadata_components.js';
 
 function recordChange(metaKey, metaValue) {
 	console.log(metaKey + ': ', metaValue);
 }
-
+//<!-- RSVPTemplate / -->
 function related_link() {
 	if(rsvpmaker_ajax.special)
 		{
@@ -53,54 +54,31 @@ const PluginRSVPMaker = () => {
 </PanelRow>
 </div>
 			)}
-<MetaSelectControl
-		label="Collect RSVPs"
-		metaKey="_rsvp_on"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
-	/>
+
+<p><MetaFormToggle
+label="Collect RSVPs" 
+metaKey="_rsvp_on"/></p>
 </PanelBody>
 <PanelBody
             title="Display"
             icon="admin-settings"
             initialOpen={ false }
         >
-<MetaSelectControl
-		label="Show Add to Google/Outlook Calendar Icons"
-		metaKey="_calendar_icons"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
-	/>
+<MetaFormToggle
+label="Show Add to Google/Outlook Calendar Icons" 
+metaKey="_calendar_icons"/>
 
-<MetaSelectControl
+<MetaFormToggle
 		label="Add Timezone to Date"
 		metaKey="_add_timezone"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
 	/>
+<MetaFormToggle
+label="Show Timezone Conversion Button" 
+metaKey="_convert_timezone"/>
 
-<MetaSelectControl
-		label="Show Timezone Conversion Button"
-		metaKey="_convert_timezone"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
-	/>
-<MetaSelectControl
-		label="Show RSVP Count"
-		metaKey="_rsvp_count"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
-	/>
+<MetaFormToggle
+label="Show RSVP Count" 
+metaKey="_rsvp_count"/>
 
 <MetaSelectControl
 		label="Display attendee names / RSVP note field"
@@ -119,23 +97,13 @@ const PluginRSVPMaker = () => {
             initialOpen={ false }
         >
 			<MetaTextControl title="Send notifications to:" metaKey="_rsvp_to" />
-		<MetaSelectControl
+		<MetaFormToggle
 		label="Send Confirmation Email"
 		metaKey="_rsvp_rsvpmaker_send_confirmation_email"
-		options={ [
-			{ label: 'Yes', value: 'on' },//past implementation used both 'on' and '1'
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
 	/>
-<MetaSelectControl
+<MetaFormToggle
 		label="Include Event Content with Confirmation"
 		metaKey="_rsvp_confirmation_include_event"
-		options={ [
-			{ label: 'Yes', value: 'on' },//past implementation used both 'on' and '1'
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
 	/>
             <PanelRow>Confirmation Message (exerpt): {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
 			<PanelRow><em>{rsvpmaker_ajax.confirmation_type}</em></PanelRow>
@@ -152,37 +120,29 @@ const PluginRSVPMaker = () => {
 		<PanelRow><em>{rsvpmaker_ajax.form_type}</em></PanelRow>
 		<PanelRow><a href={rsvpmaker_ajax.form_edit} target="_blank">{__('Edit Form')}</a></PanelRow>
 		{((rsvpmaker_ajax.form_type != '') || !rsvpmaker_ajax.form_edit_post) && <PanelRow><a href={rsvpmaker_ajax.form_customize} target="_blank">{__('Customize Form')}</a></PanelRow>}
-		<MetaSelectControl
+		<MetaFormToggle
 		label="Login required to RSVP"
 		metaKey="_rsvp_login_required"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
 	/>
 
-<MetaSelectControl
+<MetaFormToggle
 		label="Captcha security challenge"
 		metaKey="_rsvp_captcha"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No', value: '0' },
-		] }
 	/>
 
-<MetaSelectControl
+<MetaFormToggle
 		label="Show Yes/No Options on Registration Form"
 		metaKey="_rsvp_yesno"
-		options={ [
-			{ label: 'Yes', value: '1' },
-			{ label: 'No (Yes is assumed)', value: '0' },
-		] }
 	/>
 
 <MetaTextControl
-		title="Maximum number of participants (0 for no limit)"
+		label="Maximum number of participants (0 for no limit)"
 		metaKey="_rsvp_max"
 	/>
+<MetaTextareaControl
+		label="Form Instructions for User"
+		metaKey="_rsvp_instructions"
+/>
 		</PanelBody>
 </Panel>
 

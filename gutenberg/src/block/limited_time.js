@@ -5,7 +5,7 @@
 
 const { __ } = wp.i18n;
 const { registerBlockType } = wp.blocks;
-const { RichText } = wp.editor;
+const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;

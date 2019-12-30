@@ -58,8 +58,21 @@ add_action( 'init', function(){
 	register_meta( 'post', '_rsvp_dates', $args );
 	register_meta( 'post', '_firsttime', $args );
 	register_meta( 'post', '_endfirsttime', $args );
-	register_meta( 'post', '_rsvp_on', $args );
 	register_meta( 'post', '_rsvp_to', $args );
+	register_meta( 'post', '_rsvp_max', $args );
+	register_meta( 'post', '_rsvp_show_attendees', $args );
+	register_meta( 'post', '_rsvp_instructions', $args );
+	register_meta( 'post', '_sked', $args );
+	$args = array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'boolean',
+		 'single'	=> true,
+		 'show_in_rest'	=> true,
+		 'auth_callback' => function() {
+			return current_user_can('edit_posts');
+		}
+	);
+	register_meta( 'post', '_rsvp_on', $args );
 	register_meta( 'post', '_add_timezone', $args );
 	register_meta( 'post', '_convert_timezone', $args ); 
 	register_meta( 'post', '_calendar_icons', $args );
@@ -67,13 +80,12 @@ add_action( 'init', function(){
 	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
 	register_meta( 'post', '_rsvp_count', $args );
 	register_meta( 'post', '_rsvp_yesno', $args );
-	register_meta( 'post', '_rsvp_max', $args );
 	register_meta( 'post', '_rsvp_captcha', $args );
 	register_meta( 'post', '_rsvp_timezone_string', $args );
-	register_meta( 'post', '_rsvp_show_attendees', $args );
 	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
 	register_meta( 'post', '_rsvp_login_required', $args );
 	register_meta( 'post', '_rsvp_confirmation_include_event', $args );
+
 });
 
 function rsvpjsonlisting ($atts) {
@@ -282,7 +294,7 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 // Hook: Editor assets.
 add_action( 'enqueue_block_editor_assets', 'rsvpmaker_block_cgb_editor_assets' );
 
-add_action( 'enqueue_block_editor_assets', 'rsvpmaker_block_hide_assets', 99 );
+//add_action( 'enqueue_block_editor_assets', 'rsvpmaker_block_hide_assets', 99 );
 
 //if this is an rsvpmaker post, hide the rsvpmaker/upcoming and rsvpmaker/event blocks (no events within events)
 

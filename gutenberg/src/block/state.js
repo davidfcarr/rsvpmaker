@@ -1,86 +1,108 @@
 const DEFAULT_STATE = {
-	date: '',
-	endtime: {"display":display,"end":end},
+	week: [],
+  dayofweek: [],
+  hour: '12',
+  minutes: '00',
+  end: '13:00',
+  stop: '',
+  duration: '',
 };
 
 // This is the reducer
 function reducer( state = DEFAULT_STATE, action ) {
   var newstate = state;
-  if ( action.type === 'UPDATE_DATE' ) {
-    newstate.date = action.date;
+  if ( action.type === 'UPDATE_WEEK' ) {
+    newstate.week = action.week;
   }
-  if ( action.type === 'UPDATE_ON' ) {
-    newstate.on = action.on;
+  if ( action.type === 'UPDATE_DOW' ) {
+    newstate.dayofweek = action.dayofweek;
   }
-  if ( action.type === 'UPDATE_END' ) {
-    newstate.end = action.end;
+  if ( action.type === 'UPDATE_HOUR' ) {
+    newstate.hour = action.hour;
   }
-  if ( action.type === 'UPDATE_END_DISPLAY' ) {
-    newstate.end_display = action.end_display;
+  if ( action.type === 'UPDATE_MINUTES' ) {
+    newstate.minutes = action.minutes;
   }
   if ( action.type === 'UPDATE_END_TIME' ) {
-    newstate.endtime = action.endtime;
+    newstate.end = action.end;
+  }
+  if ( action.type === 'UPDATE_STOP' ) {
+    newstate.stop = action.stop;
+  }
+  if ( action.type === 'UPDATE_DURATION' ) {
+    newstate.stop = action.stop;
   }
   return newstate;
 }
 
-function setRSVPdate( date ) {
+function setWeek( week ) {
   return {
-    type: 'UPDATE_DATE',
-    date: date,
+    type: 'UPDATE_WEEK',
+    week: week,
   };
 }
-
-function setRSVPMakerOn( on ) {
+function getWeek( state ) {
+  return state.week;
+}
+function setDOW( dow ) {
   return {
-    type: 'UPDATE_ON',
-    on: on,
+    type: 'UPDATE_DOW',
+    dow: dow,
   };
 }
-
-function setRSVPEnd( end ) {
+function getDOW( state ) {
+  return state.dow;
+}
+function setHour( hour ) {
   return {
-    type: 'UPDATE_END',
+    type: 'UPDATE_HOUR',
+    hour: hour,
+  };
+}
+function getHour( state ) {
+  return state.hour;
+}
+function setMinutes( minutes ) {
+  return {
+    type: 'UPDATE_MINUTES',
+    minutes: minutes,
+  };
+}
+function getMinutes( state ) {
+  return state.minutes;
+}
+function setEnd( end ) {
+  return {
+    type: 'UPDATE_END_TIME',
     end: end,
   };
 }
-
-
-
-function setRsvpMeta( key, value ) {
-if(key == '_rsvp_on')
-  return {
-    type: 'UPDATE_ON',
-    on: value,
-  };
-}
-
-// selectors
-
-function getEndTime( state ) {
-  return state.endtime;
-}
-
-function getRSVPdate( state ) {
-  return state.date;
-}
-
-function getRSVPMakerOn( state ) {
-  return state.on;
-}
-
-function getRSVPEnd( state ) {
+function getEnd( state ) {
   return state.end;
 }
-
-function getRSVPEndDisplay( state ) {
-  return state.end_display;
+function setStop( stop ) {
+  return {
+    type: 'UPDATE_STOP',
+    stop: stop,
+  };
+}
+function getStop( state ) {
+  return state.stop;
+}
+function setDuration( duration ) {
+  return {
+    type: 'UPDATE_DURATION',
+    duration: duration,
+  };
+}
+function getDuration( state ) {
+  return state.duration;
 }
 
 // Now let's register our custom namespace
 var myNamespace = 'rsvpevent';
 wp.data.registerStore( 'rsvpevent', { 
   reducer: reducer,
-  selectors: { getRSVPdate: getRSVPdate, getRSVPMakerOn: getRSVPMakerOn, getRSVPEnd: getRSVPEnd, getRSVPEndDisplay: getRSVPEndDisplay, getEndTime, getEndTime },
-  actions: { setRSVPdate: setRSVPdate, setRsvpMeta: setRsvpMeta, setRSVPEnd: setRSVPEnd, setRSVPEndDisplay: setRSVPEndDisplay, setEndTime: setEndTime  },
+  selectors: { getWeek: getWeek, getDOW: getDOW, getHour: getHour, getMinutes: getMinutes, getEnd: getEnd, getStop: getStop, getDuration: getDuration},
+  actions: { setWeek: setWeek, setDOW: setDOW, setHour: setHour, setMinutes: setMinutes, setEnd: setEnd, setStop: setStop, setDuration: setDuration},
 } );

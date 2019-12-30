@@ -174,12 +174,10 @@ public function get_items($request) {
   }
 }
 
-
-/*
-class RSVPMaker_Meta_Controller extends WP_REST_Controller {
+class RSVPMaker_Sked_Controller extends WP_REST_Controller {
   public function register_routes() {
     $namespace = 'rsvpmaker/v1';
-    $path = 'meta/(?P<post_id>[0-9]+)';
+    $path = 'sked/(?P<post_id>[0-9]+)';///(?P<nonce>.+)
 
     register_rest_route( $namespace, '/' . $path, [
       array(
@@ -195,90 +193,16 @@ class RSVPMaker_Meta_Controller extends WP_REST_Controller {
   }
 
 public function get_items($request) {
-    global $wpdb;
-    $meta_output = array();
-    $end_times_display = $end_times = $dates = array();
-    $first_end = $first_display = '';
-    $sql = "SELECT meta_key, meta_value FROM $wpdb->postmeta where post_id=".$request['post_id'].' ORDER BY meta_key, meta_value';
-    $meta = $wpdb->get_results($sql); 
-    foreach($meta as $item) {
-      if(!strpos($item->meta_key,'@') && !strpos($item->meta_key,'reminder') && ($item->meta_key != '_activity'))
-        $meta_output[$item->meta_key] = $item->meta_value;
-      if($item->meta_key == '_rsvp_dates')
-        $dates[] = $item->meta_value;
-      if(preg_match('/_end[0-9]/',$item->meta_key))
-        $end_times[] = $item->meta_value;
-    }
-    $meta_output['dates'] = array('dates',$dates);
-    foreach($dates as $date){
-      if(!empty($meta_output['_'.$date]))
-      {
-        $end_times_display[] = $meta_output['_'.$date];
-        if(empty($first_display)) {
-          $first_display = $meta_output['_'.$date];
-          $first_end = (empty($meta_output['_end'.$date])) ? '' : $meta_output['_end'.$date];
-        }
-      }
-    }
-    $meta_output['end_times'] = $end_times;
-    $meta_output['end_times_display'] = $end_times_display;
-    $meta_output['first_date'] = $dates[0];
-    $meta_output['first_end'] = $first_end;
-    $meta_output['first_display'] = $first_display;
-    return new WP_REST_Response((object) $meta_output, 200);
+    $sked = get_post_meta($request['post_id'],'_sked',true);
+    return new WP_REST_Response($sked, 200);
   }
 }
 
-class RSVPMaker_EndTime_Controller extends WP_REST_Controller {
-  public function register_routes() {
-    $namespace = 'rsvpmaker/v1';
-    $path = 'endtime/(?P<post_id>[0-9]+)';///(?P<nonce>.+)
-
-    register_rest_route( $namespace, '/' . $path, [
-      array(
-        'methods'             => 'GET,POST',
-        'callback'            => array( $this, 'get_items' ),
-        'permission_callback' => array( $this, 'get_items_permissions_check' )
-            ),
-        ]);     
-    }
-
-  public function get_items_permissions_check($request) {
-    return true;
-  }
-
-public function get_items($request) {
-  global $post;
-  $post_id = ($request['post_id'] == 'null') ? $post->ID : $request['post_id'];
-    $date = get_rsvp_date($post_id);
-    $endtimes['display'] = get_post_meta($post_id,'_'.$date,true);
-    $endtimes['end'] = get_post_meta($post_id,'_end'.$date,true);
-    return new WP_REST_Response($endtimes, 200);
-  }
-
-public function update_items_permissions_check($request) {
-    return true;
-}
-
-public function update_items($request) {
-  $postvars = $request->get_body();
-  return new WP_REST_Response($postvars, 200);
-}
-
-public function create_item_permissions_check($request) {
-  return true;
-}
-
-public function create_item($request) {
-$postvars = $request->get_body();
-return new WP_REST_Response($postvars, 200);
-}
-
-}
-*/
 
 add_action('rest_api_init', function () {
-     $rsvpmaker_by_type_controller = new RSVPMaker_By_Type_Controller();
+  $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
+  $rsvpmaker_sked_controller->register_routes();
+   $rsvpmaker_by_type_controller = new RSVPMaker_By_Type_Controller();
     $rsvpmaker_by_type_controller->register_routes();
      $rsvpmaker_listing_controller = new RSVPMaker_Listing_Controller();
     $rsvpmaker_listing_controller->register_routes();
