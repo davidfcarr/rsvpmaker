@@ -4172,7 +4172,7 @@ echo '<div id="applytemplate"></div><h3>Apply Template to Existing Event</h3>';
 		$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
 FROM `".$wpdb->postmeta."`
 JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value >= CURDATE() AND $wpdb->posts.post_status = 'publish'
+WHERE meta_value >= '".get_sql_curdate()."' AND $wpdb->posts.post_status = 'publish'
 ORDER BY meta_value LIMIT 0,100";
 		$results = $wpdb->get_results($sql);
 		foreach ($results as $r)
@@ -4194,7 +4194,7 @@ ORDER BY meta_value LIMIT 0,100";
 		$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
 FROM `".$wpdb->postmeta."`
 JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE meta_value >= DATE_SUB(CURDATE(),INTERVAL 3 MONTH) AND $wpdb->posts.post_status = 'publish'
+WHERE meta_value >= DATE_SUB('".get_sql_curdate()."',INTERVAL 3 MONTH) AND $wpdb->posts.post_status = 'publish'
 ORDER BY meta_value LIMIT 0,100";
 		$results = $wpdb->get_results($sql);
 		foreach ($results as $r)
@@ -4707,7 +4707,7 @@ $sql = "SELECT DISTINCT $wpdb->posts.ID as postID, a1.meta_value as datetime, a2
 	 FROM ".$wpdb->posts."
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id 
 	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id 
-	 WHERE a1.meta_key='_rsvp_dates' AND a1.meta_value > CURDATE() AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." AND post_status='publish'
+	 WHERE a1.meta_key='_rsvp_dates' AND a1.meta_value > '".get_sql_curdate()."' AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." AND post_status='publish'
 	 ORDER BY a1.meta_value LIMIT 0,1";
 if($row = $wpdb->get_row($sql) )
 {
@@ -4720,7 +4720,7 @@ $sql ="SELECT DISTINCT $wpdb->posts.ID as postID, a1.meta_value as datetime, a2.
 	 FROM ".$wpdb->posts."
 	 LEFT JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id
 	 LEFT JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id 
-	 WHERE a1.meta_key='_rsvp_dates' AND a1.meta_value < CURDATE() AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." AND post_status='publish'
+	 WHERE a1.meta_key='_rsvp_dates' AND a1.meta_value < '".get_sql_curdate()."' AND a2.meta_key='_meet_recur' AND a2.meta_value=".$template_id." AND post_status='publish'
 	 ORDER BY a1.meta_value DESC LIMIT 0,1";
 	if($row = $wpdb->get_row($sql) )
 	{

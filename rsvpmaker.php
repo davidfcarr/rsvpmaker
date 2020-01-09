@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 6.5.5
+Version: 6.5.7
 */
 function get_rsvpversion(){
-return '6.5.5';
+return '6.5.7';
 }
 
 global $wp_version;
@@ -850,7 +850,7 @@ function rsvpautog($content) {
 
 function clean_confirmations () {
     global $wpdb;
-    $sql = "SELECT * FROM $wpdb->postmeta JOIN $wpdb->posts ON post_id = post_parent WHERE `meta_key` LIKE '_rsvp_dates' AND meta_value < CURDATE() AND post_title LIKE 'Confirmation%'";
+    $sql = "SELECT * FROM $wpdb->postmeta JOIN $wpdb->posts ON post_id = post_parent WHERE `meta_key` LIKE '_rsvp_dates' AND meta_value < '".get_sql_curdate()."' AND post_title LIKE 'Confirmation%'";
     $results = $wpdb->get_results($sql);
     foreach($results as $row) 
         $wpdb->query("DELETE FROM $wpdb->posts WHERE ID=".$row->ID);

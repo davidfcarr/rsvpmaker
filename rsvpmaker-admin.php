@@ -2828,7 +2828,7 @@ if(function_exists('do_blocks'))
 	 	$sql = "SELECT *, $wpdb->postmeta.meta_value as datetime, $wpdb->posts.ID as postID, 1 as current
 FROM `".$wpdb->postmeta."`
 JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-WHERE  meta_value >= NOW() AND $wpdb->posts.post_status = 'publish'
+WHERE  meta_value >= '".get_sql_now()."' AND $wpdb->posts.post_status = 'publish'
 ORDER BY meta_value";
 	 $results = $wpdb->get_results($sql);
 	 $row[] = "{text: 'Pick One?', value: '0'}";
@@ -3170,22 +3170,25 @@ $cleared = is_array($cleared) ? $cleared : array();
     update_option('cleared_rsvpmaker_notices',$cleared);
 }
 
-function rsvpmaker_debug_log($msg, $label = '') {
-global $rsvp_options;
-	if(empty($rsvp_options["debug"]))
-		return;
+function rsvpmaker_debug_log($msg, $label = '', $filename_base = '') {
+	global $rsvp_options;
+		if(empty($rsvp_options["debug"]))
+			return;
+		if(empty($filename_base))
+			$filename_base = 'rsvpmaker';
+			
+	if(!is_string($msg))
+		$msg = var_export($msg,true);
+	if(!empty($label))
+		$msg = $label.":\n".$msg;
+	$upload_dir   = wp_upload_dir();
+	 
+	if ( ! empty( $upload_dir['basedir'] ) ) {
+		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
+		file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
+	}
+}
 	
-if(!is_string($msg))
-	$msg = var_export($msg,true);
-if(!empty($label))
-	$msg = $label.":\n".$msg;
-$upload_dir   = wp_upload_dir();
- 
-if ( ! empty( $upload_dir['basedir'] ) ) {
-    $fname = $upload_dir['basedir'].'/rsvpmaker_log_'.date('Y-m-d').'.txt';
-	file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
-}
-}
 
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
     if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
@@ -4145,7 +4148,7 @@ global $wpdb;
 $sql = "SELECT DISTINCT $wpdb->posts.ID as post_id, $wpdb->posts.*, date_format(a1.meta_value,'%M %e, %Y') as date
 	 FROM ".$wpdb->posts."
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE a1.meta_value > NOW() ORDER BY a1.meta_value";
+	 WHERE a1.meta_value > '".get_sql_now()."' ORDER BY a1.meta_value";
 
 $results = $wpdb->get_results($sql);
 $options = '<optgroup label="'.__('Future Events','rsvpmaker').'">';
