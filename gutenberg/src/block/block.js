@@ -566,9 +566,6 @@ registerBlockType( 'rsvpmaker/stripecharge', {
 			options={ [
 				{ value: 'one-time', label: __( 'One time, fixed fee', 'rsvpmaker' ) },
 				{ value: 'schedule', label: __( 'Dues schedule', 'rsvpmaker' ) },
-				{ value: 'subscription:1 year', label: __( 'Subscription, yearly', 'rsvpmaker' ) },
-				{ value: 'subscription:6 months', label: __( 'Subscription, every 6 months', 'rsvpmaker' ) },
-				{ value: 'subscription:monthly', label: __( 'Subscription, monthly', 'rsvpmaker' ) },
 				{ value: 'donation', label: __( 'Donation', 'rsvpmaker' ) },
 			] }
 		/>

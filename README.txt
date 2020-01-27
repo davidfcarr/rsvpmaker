@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.3.2
-Stable tag: 6.5.7
+Stable tag: 7.0.2
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -24,7 +24,7 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 
 https://youtu.be/gt6fE07a8bc
 
-RSVPMaker is free and open source, with no upsell to a premium version. We occasionally create custom features on contract, but where possible those enhancements are folded back into the coe plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
+RSVPMaker is free and open source, with no upsell to a premium version. We occasionally create custom features on contract, but where possible those enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
 
 Creating and Managing Events
 
@@ -110,9 +110,41 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     See the GNU General Public License at <http://www.gnu.org/licenses/gpl-2.0.html>.
 	
 	RSVPMaker also includes code derived from the software development kits for PayPal, 
-    Stripe and MailChimp under the license of their creators.
+    Stripe and MailChimp under the license of their creators. Inlining of CSS code in
+    the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.0.1 =
+
+* Updated Stripe support to reflect API that supports newer European regulations for credit card processing (SCA and PSD2).
+* Dropped support, at least for now, for recurring payments (subscriptions) when Stripe is used as a standalone payment button.
+
+= 7.0.0 =
+
+* Fixed error in register_meta function. Updated POT file for translations.
+
+= 6.6.4 =
+
+* Added PHP version check before loading Emogrifier CSS inliner library, which relies on features of PHP 7.1
+
+= 6.6.2 =
+
+* Fix to the option to set relative "days before" times for deadline or registration start in the template and have them calculated and copied to individual event posts.
+* Yet more email template tweaks.
+
+= 6.6.1 =
+
+* More email template tweaks
+
+= 6.6.0 =
+
+* Tweaks to email message templating / styling.
+
+= 6.5.8 =
+
+* Improved Email Template editor. New default template for transactional messages.
+* Inlining of CSS code in HTML email documents, based on the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 = 6.5.6 =
 

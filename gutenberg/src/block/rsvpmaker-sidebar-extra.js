@@ -110,6 +110,15 @@ metaKey="_rsvp_count"/>
 <PanelRow><a href={rsvpmaker_ajax.confirmation_edit} target="_blank">{__('Edit Confirmation Message')}</a></PanelRow>
 {(rsvpmaker_ajax.confirmation_type != '') && <PanelRow><a href={rsvpmaker_ajax.confirmation_customize} target="_blank">{__('Customize Confirmation Message')}</a></PanelRow>}
 <PanelRow><a href={rsvpmaker_ajax.reminders} target="_blank">{__('Create / Edit Reminders')}</a></PanelRow>
+
+<PanelRow>
+<MetaSelectControl
+		label="Email Template for Confirmations"
+		metaKey="rsvp_tx_template"
+		options={ rsvpmaker_ajax.rsvp_tx_template_choices }
+	/>
+</PanelRow>
+
         </PanelBody>
         <PanelBody
             title="RSVP Form"

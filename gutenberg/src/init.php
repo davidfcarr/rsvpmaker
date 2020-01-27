@@ -40,7 +40,7 @@ function rsvpmaker_server_block_render(){
 
 add_action( 'init', function(){
 	global $post;
-	if($post->ID && empty(get_post_meta($post->ID,'_endfirsttime',true)) && ($first = get_post_meta($post->ID,'_firsttime',true)) )
+	if(isset($post->ID) && empty(get_post_meta($post->ID,'_endfirsttime',true)) && ($first = get_post_meta($post->ID,'_firsttime',true)) )
 		{
 			$et = strtotime($first.' +1 hour');
 			$end = date('H:i',$et);
@@ -63,6 +63,16 @@ add_action( 'init', function(){
 	register_meta( 'post', '_rsvp_show_attendees', $args );
 	register_meta( 'post', '_rsvp_instructions', $args );
 	register_meta( 'post', '_sked', $args );
+	$args = array(
+		'object_subtype' => 'rsvpmaker',
+ 		'type'		=> 'integer',
+		 'single'	=> true,
+		 'show_in_rest'	=> true,
+		 'auth_callback' => function() {
+			return current_user_can('edit_posts');
+		}
+	);
+	register_meta( 'post', 'rsvp_tx_template', $args );
 	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'boolean',
@@ -237,6 +247,11 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 		$form_type = __('Form is default from settings','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 	elseif($fpost->post_parent != $post->ID)
 		$form_type = __('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+	$email_templates_array = get_rsvpmaker_email_template();
+	foreach($email_templates_array as $index => $template) {
+		if($index > 0)
+		$confirmation_email_templates[] = array('label' => $template['slug'], 'value' => $index);
+	}
 
 	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
 	{
@@ -263,6 +278,7 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 			'reminders' => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
 			'confirmation_type' => $confirmation_type,
 			'confirm_edit_post' => $confirm_edit_post,
+			'rsvp_tx_template_choices' => $confirmation_email_templates,
 			'form_fields' => $form_fields,
 			'form_edit' => $form_edit,
 			'form_customize' => $form_customize,

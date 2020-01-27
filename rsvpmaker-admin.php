@@ -871,7 +871,8 @@ if(isset($options["custom_css"]) && $options["custom_css"])
 $dstyle = plugins_url('style.css',__FILE__);
 ?>
 
-    <br /><em><?php _e('Allows you to override the standard styles from','rsvpmaker'); ?> <br /><a href="<?php echo $dstyle;?>"><?php echo $dstyle;?></a></em>
+	<br /><em><?php _e('Allows you to override the standard styles from','rsvpmaker'); ?> <br /><a href="<?php echo $dstyle;?>"><?php echo $dstyle;?></a></em>
+	<br /><em><?php _e('Probably a better option: use the Customize utility built into WordPress to override the defaults','rsvpmaker'); ?></em>
 <h3><?php _e('Theme Template for Events'); ?></h3>
 <br /><select name="option[rsvp_template]"><?php
 $current_template = (empty($options["rsvp_template"])) ? 'page.php' : $options["rsvp_template"];
@@ -1080,10 +1081,6 @@ $config = $options["paypal_config"];
 
 if(isset($config) && file_exists($config) ) {
 	echo ' <span style="color: green;">'.__('OK','rsvpmaker').'</span>';
-	$pptest = paypal_check_balance();
-	echo '<pre>';
-	print_r($pptest);
-	echo '<pre>';
 }
 else
 	echo ' <span style="color: red;">'.__('error: file not found','rsvpmaker').'</span>';
@@ -2022,6 +2019,19 @@ $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
 
+$ver = phpversion();
+if (version_compare($ver, '7.1', '<') && (!isset($_GET['page']) || ($_GET['page'] != 'rsvpmaker_email_template') ) ){
+	$message = sprintf('<p>The Emogrifier CSS inliner library, which is included to improve formatting of HTML email, relies on PHP features introduced in version 7.1 -- and is disabled because your site is on %s</p>',$ver);
+	rsvpmaker_admin_notice_format($message, 'Emogrifier', $cleared, $type='warning');
+}
+
+if(isset($_GET['rsvpmaker_tx_template_update_notice']))
+	delete_option('rsvpmaker_tx_template_update_notice',1);
+elseif(current_user_can('manage_options') && get_option('rsvpmaker_tx_template_update_notice'))
+	{
+		echo '<div class="notice notice-info"><p>'.__('Your templates for email broadcasts and confirmations have been updated.','rsvpmaker').' <a href="'.admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template&rsvpmaker_tx_template_update_notice=1').'">'.__("Verify/approve changes",'rsvpmaker').'</a></p></div>';
+	}
+
 if(function_exists('do_blocks') && !is_numeric($rsvp_options['rsvp_form']))
 	echo '<div class="notice notice-info"><p>'.__('A new RSVP / registration form is available that is easier to customize','rsvpmaker').' <a href="'.admin_url('?upgrade_rsvpform=1').'">'.__("Upgrade?",'rsvpmaker').'</a><p></p>'.__('Note: if you previously customized the form, you will need to redo your custotomizations for the new format.').'.</p></div>';
 
@@ -2122,6 +2132,25 @@ elseif( (!isset($rsvp_options["eventpage"]) || empty($rsvp_options["eventpage"])
 		upgrade_rsvpform (true, $target);
 		echo '<div class="updated" ><p>'."<strong>".__('RSVP Form Updated (default and future events)','rsvpmaker').'</strong></p></div>';
 		}
+?>
+<script>
+jQuery(document).ready(function( $ ) {
+$( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
+	// Read the "data-notice" information to track which notice
+	// is being dismissed and send it via AJAX
+	var type = $( this ).closest( '.rsvpmaker-notice' ).data( 'notice' );
+	$.ajax( ajaxurl,
+	  {
+		type: 'POST',
+		data: {
+		  action: 'rsvpmaker_dismissed_notice_handler',
+		  type: type,
+		}
+	  } );
+  } );
+});
+</script>
+<?php
 }
 
 function set_rsvpmaker_order_in_admin( $wp_query ) {
@@ -2193,7 +2222,7 @@ function rsvpmaker_sort_message() {
 	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
 	if(empty($sort))
 		$sort = 'future';
-		$current_sort = $o = '';
+		$current_sort = $o = $opt = '';
 		$sortoptions = array('future' => 'Future Events','past' => 'Past Events','all' => 'All','templates' => 'Templates','special' => 'Special');
 		foreach($sortoptions as $key => $option)
 		{
@@ -2203,15 +2232,17 @@ function rsvpmaker_sort_message() {
 			}
 			if($key == $sort)
 			{
+				$opt .= sprintf('<option value="%s" selected="selected">%s</option>',$key,$option);
 				$current_sort = __('Showing','rsvpmaker').': '.$sortoptions[$key];
 			}
 			else
-			{
+			{	
+				$opt .= sprintf('<option value="%s">%s</option>',$key,$option);
 				$o .= '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort='.$key).'">'.$option.'</a> ';
 			}
 		}
-				
-		echo '<div style="padding: 10px; ">'.$current_sort.$o;
+		$opt = '</form><div class="alignleft actions" style="margin-top: -10px;"><form method="get" action="'.admin_url('edit.php').'"><input type="hidden" name="post_type" value="rsvpmaker"><select name="rsvpsort">'.$opt.'<select> <input type="submit" class="button" value="Filter Events" /></div>';
+		echo '<div style="padding: 10px; ">'.$opt;//.$current_sort.$o;
 		echo '</div>';
 	}
 }
@@ -2516,14 +2547,14 @@ function rsvpmaker_template_reminder_add($hours,$post_id) {
 }
 
 function rsvp_get_confirm($post_id, $return_post = false) {
-	global $rsvp_options, $post;
+	global $rsvp_options, $post, $wpdb, $wp_styles;
 	$content = get_post_meta($post_id,'_rsvp_confirm',true);
 	if(empty($content))
 		$content = $rsvp_options['rsvp_confirm'];
 	if(is_numeric($content))
 	{
 		$id = $content;
-		$conf_post= get_post($id);
+		$conf_post=get_post($id);
 		if(empty($conf_post))
 		{
 			//maybe got deleted or something?
@@ -2611,6 +2642,11 @@ $existing = $options = '';
 $templates = rsvpmaker_get_templates();
 fix_timezone();
 ?>
+<style>
+<?php 
+$styles = rsvpmaker_included_styles();
+echo $styles; ?>
+</style>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
 <h1><?php _e('Confirmation / Reminder Messages','rsvpmaker'); ?></h1> 
@@ -2660,24 +2696,10 @@ if($post_id)
 if(rsvpmaker_is_template($post_id))
 	printf('<p><em>%s</em></p>',__('This is an event template: The confirmation and reminder messages you set here will become the defaults for future events based on this template. The [datetime] placeholder in subject lines will be replaced with the specific event date.','rsvpmaker'));
 
-$confirm = rsvp_get_confirm($post_id, true);
-printf('<h2>Confirmation</h2>');
-echo $confirm->post_content;
-
-$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post_id);
-$customize = admin_url('?post_id='. $post_id. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
-
-if(current_user_can('edit_post',$confirm->ID))
-{
-	if($confirm->post_parent == 0)
-	printf('<div id="editconfirmation"><a href="%s">Edit</a> (default from Settings)</div><div><a href="%s">Customize</a></div>',$confedit,$customize);
-elseif($confirm->post_parent != $post_id)
-	printf('<div id="editconfirmation"><a href="%s">Edit</a> (inherited from Template)</div><div><a href="%s">Customize</a></div>',$confedit,$customize);	
-else
-	printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$confedit);
-}
-else
-	printf('<div id="editconfirmation"><div><a href="%s">Customize</a></div>',$customize);
+//$confirm = rsvp_get_confirm($post_id, true);
+printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post_id);
+echo get_confirmation_options($post_id);
+echo '<button>Save</button></form>';
 
 $sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
 
@@ -3157,8 +3179,6 @@ printf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notic
 </div>',$type,$slug,$message);
 }
 
-
-
 /**
  * AJAX handler to store the state of dismissible notices.
  */
@@ -3332,6 +3352,9 @@ global $wpdb, $current_user;
 $t = $_REQUEST['t'];
 $post = get_post($_REQUEST['t']);
 $template = $sked = get_post_meta($t,'_sked',true);
+$template['hour'] = (int) $template['hour'];
+if($template['hour'] < 10)
+	$template['hour'] = $sked['hour'] = '0'.$template['hour']; // make sure of zero padding
 $hour = $sked['hour'];
 $minutes = $sked['minutes'];
 $update_messages = '';
@@ -3519,13 +3542,11 @@ $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_met
 				if($meta_key == '_rsvp_reg_hours')
 					$reghours = $meta_info->meta_value;		
 			}
-		////rsvpmaker_debug_log($log,'copy metadata from template '.$source_id.' to '.$target_id);
 		}
 
-//deadline and registration start
 if(!empty($deadlinedays) || !empty($deadlinehours))
 	rsvpmaker_deadline_from_template($target_id,$deadlinedays,$deadlinehours);
-if(!empty($deadlinedays) || !empty($deadlinehours))
+if(!empty($regdays) || !empty($reghours))
 	rsvpmaker_reg_from_template($target_id,$regdays,$reghours);
 
 $terms = get_the_terms( $source_id, 'rsvpmaker-type' );						
@@ -4111,7 +4132,13 @@ function rsvpmaker_details() {
 	global $post;
 	global $custom_fields;
 	global $rsvp_options;
+	
 ?>
+<style>
+<?php 
+$styles = rsvpmaker_included_styles();
+echo $styles; ?>
+</style>
 <div class="wrap" style="margin-right: 200px;"> 
 	<div id="icon-edit" class="icon32"><br /></div>
 <h1><?php _e('RSVP / Event Options','rsvpmaker'); ?></h1>
@@ -4861,6 +4888,8 @@ function rsvpmaker_export_screen () {
 
 function rsvpmaker_override () {
 	global $post, $current_user;
+	if(isset($_POST['rsvp_tx_template']))
+		update_post_meta($_POST['rsvp_tx_post_id'],'rsvp_tx_template',$_POST['rsvp_tx_template']);
 	if(!empty($_GET['post']) && !empty($_GET['action']) && ($_GET['action'] == 'edit') )
 	{
 		$post_id = (int) $_GET['post'];

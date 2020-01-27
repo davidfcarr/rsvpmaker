@@ -182,20 +182,6 @@ $.post(
 });
   } );
 
-$( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
-	// Read the "data-notice" information to track which notice
-	// is being dismissed and send it via AJAX
-	var type = $( this ).closest( '.rsvpmaker-notice' ).data( 'notice' );
-	$.ajax( ajaxurl,
-	  {
-		type: 'POST',
-		data: {
-		  action: 'rsvpmaker_dismissed_notice_handler',
-		  type: type,
-		}
-	  } );
-  } );		
-
 $("#multireminder #checkall").click(function(){
     $('#multireminder input:checkbox').not(this).prop('checked', this.checked);
 });	

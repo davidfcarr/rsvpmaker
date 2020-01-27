@@ -1,4 +1,5 @@
 <?php
+
 function get_sql_now() {
 	fix_timezone();
 	return date('Y-m-d H:i:s');
@@ -529,5 +530,15 @@ function get_rsvpmaker_stripe_keys () {
 function get_rspmaker_paypal_rest_keys () {
     $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
     return $paypal_rest_keys;
+}
+
+if (version_compare(phpversion(), '7.1', '>='))
+	include WP_PLUGIN_DIR."/rsvpmaker/inliner/init.php";
+else
+{
+function rsvpmaker_inliner($content) {
+		return $content;
+}
+	
 }
 ?>

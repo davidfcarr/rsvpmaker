@@ -378,19 +378,21 @@ foreach ($wp_roles->roles as $role => $rolearray)
 }
 }
 
-function get_confirmation_options() {
+function get_confirmation_options($post_id = 0) {
 	global $post;
-	$confirm = rsvp_get_confirm($post->ID,true);
+	if(isset($post->ID))
+		$post_id = $post->ID;
+	$confirm = rsvp_get_confirm($post_id,true);
 	$output = sprintf('<h3 id="confirmation">%s</h3>',__('Confirmation Message','rsvpmaker'));
 	$output .= $confirm->post_content;	
-	$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID);
-	$customize = admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
-	$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID);
+	$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post_id);
+	$customize = admin_url('?post_id='. $post_id. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
+	$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id);
 	if(current_user_can('edit_post',$confirm->ID))
 	{
 		if($confirm->post_parent == 0)
 		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
-	elseif($confirm->post_parent != $post->ID)
+	elseif($confirm->post_parent != $post_id)
 		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
 	else
 		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
@@ -398,7 +400,21 @@ function get_confirmation_options() {
 	else
 	$output .= sprintf('<div id="editconfirmation"><div><a href="%s" target="_blank">Customize</a></div>',$customize);
 	
-	$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);	
+	$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);
+	$templates = get_rsvpmaker_email_template();
+	$chosen = (int) get_post_meta($post_id,'rsvp_tx_template',true);
+	if(!$chosen)
+		$chosen = (int) get_option('rsvpmaker_tx_template');
+	$choose_template = '';
+	foreach($templates as $index => $template)
+	{
+		if($index == 0)
+			continue;
+		$s = ($index == $chosen) ? ' selected="selected" ' : '';
+		$choose_template .= sprintf('<option value="%d" %s>%s</option>',$index,$s,$template['slug']);
+	}
+	$output .= sprintf('<p>%s: <select name="rsvp_tx_template">%s</select></p><input type="hidden" name="rsvp_tx_post_id" value="%d">',__('Confirmation Email Template'),$choose_template,$post_id);
+	$output = '<div style="max-width: 800px">'.$output.'</div>';
 	return $output;
 }
 
@@ -1406,14 +1422,6 @@ $rows = get_rsvp_dates($event);
 $row = $rows[0];
 $t = strtotime($row["datetime"]);
 $date = date('M j',$t);
-/*if(is_numeric($form))
-{
-	$formcontent = $wpdb->get_var("select post_content from $wpdb->posts WHERE ID=".$form);
-	die($formcontent);
-	preg_match_all('/\{.*\:\{.*\:.*\}\}/',$formcontent,$matches);
-	$cleanmessage .= var_export($matches,true).$formcontent;
-}
-*/
 foreach($rsvp as $name => $value)
 	{
 	$label = get_post_meta($post->ID,'rsvpform'.$name,true);
@@ -1431,6 +1439,7 @@ foreach ($_POST["guest"]["first"] as $index => $first)
 			{
 			$guest_sql[$index] = $wpdb->prepare(" SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s",$event, $yesno, $rsvp_id, $guestof, $first, $_POST["guest"]["last"][$index]);
 			$guest_text[$index] = sprintf("Guest: %s %s\n",$first,$_POST["guest"]["last"][$index]);
+			$guest_list[$index] = sprintf("%s %s",$first,$_POST["guest"]["last"][$index]);
 			$lastguest = $index;
 			}
 	}
@@ -1443,6 +1452,7 @@ if(!empty($padguests))
 		$tbd = $i + 1;
 		$guest_sql[$index] = $wpdb->prepare(" SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s",$event, $yesno, $rsvp_id, $guestof, 'Placeholder', 'Guest TBD '.$tbd);
 		$guest_text[$index] = sprintf("Guest: %s %s\n",'Placeholder', 'Guest TBD '.$tbd);
+		$guest_list[$index] = sprintf("%s %s",'Placeholder', 'Guest TBD '.$tbd);
 		$newrow[$index]['first'] = 'Placeholder';
 		$newrow[$index]['last'] = 'Guest TBD '.$tbd;
 	}
@@ -1458,7 +1468,10 @@ foreach($_POST["guest"] as $field => $column)
 					{
 					$newrow[$index][$field] = $value;
 					if(($field != 'first') && ($field != 'last') && ($field != 'id'))
-						$guest_text[$index] .= sprintf("%s: %s\n",$field,$value);
+						{
+							$guest_text[$index] .= sprintf("%s: %s\n",$field,$value);
+							$guest_list[$index] = sprintf("%s %s",$first,$_POST["guest"]["last"][$index]);
+						}
 					}
 			}
 	}
@@ -1473,6 +1486,7 @@ if(sizeof($guest_sql))
 					$gd = (int) $_POST["guestdelete"][$id];
 					$sql = "DELETE FROM ".$wpdb->prefix."rsvpmaker WHERE id=". $gd;
 					$guest_text[$index] = __('Deleted:','rsvpmaker')."\n".$guest_text[$index];
+					$guest_list[$index] = __('Deleted:','rsvpmaker')." ".$guest_list[$index];
 					$wpdb->query($sql);
 					}
 				elseif($id)
@@ -1486,6 +1500,7 @@ if(sizeof($guest_sql))
 					if($rsvp_max && ($count > $rsvp_max)) // if maximum set and we've reached it
 					{
 						$guest_text[$index] = '<div style="color:red;">'.__('Max RSVP count limit reached, entry not added for:','rsvpmaker')."\n".$guest_text[$index].'</div>';
+						$guest_list[$index] = '<div style="color:red;">'.__('Max RSVP count limit reached, entry not added for:','rsvpmaker')."\n".$guest_text[$index].'</div>';
 					}
 					else {
 					$sql = "INSERT INTO ".$wpdb->prefix."rsvpmaker ".$sql;
@@ -1495,8 +1510,8 @@ if(sizeof($guest_sql))
 			}
 	}
 
-if(!empty($guest_text))
-	$cleanmessage .= implode("\n",$guest_text);
+if(!empty($guest_list))
+	$cleanmessage .= __('Guests','rsvpmaker').": ".implode(", ",$guest_list);
 if(!empty($multiple_warning))
 	$cleanmessage .= $multiple_warning;
 	
@@ -2081,13 +2096,7 @@ function event_content($content, $formonly = false, $form ='') {
 
 if(is_admin())
 	return $content;
-global $wpdb;
-global $post;
-global $rsvp_options;
-global $profile;
-global $master_rsvp;
-global $showbutton;
-global $blanks_allowed;
+global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context;
 $rsvpconfirm = $rsvp_confirm = '';
 $display = array();
 $rsvp_id = 0;
@@ -2169,7 +2178,7 @@ if(isset($_GET["rsvp"]))
 '.$rsvp_confirm;
 	$rsvp_id = (int) $_GET["rsvp"];
 	}
-elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
+elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !$email_context)
 	{
 	$rsvp_confirm = rsvp_get_confirm($post->ID);
 	$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
@@ -2187,7 +2196,7 @@ elseif(isset($_COOKIE['rsvp_for_'.$post->ID]))
 	}
 	}
 
-if(($e && isset($_GET["rsvp"]) ) || is_user_logged_in() )
+if(($e && isset($_GET["rsvp"]) ) || (is_user_logged_in() && !$email_context) )
 	{
 	if(isset($_GET["rsvp"]))
 		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE ".$wpdb->prepare("event=%d AND email=%s AND id=%d",$post->ID,$e,$_GET["rsvp"]);	
@@ -2202,7 +2211,7 @@ if(($e && isset($_GET["rsvp"]) ) || is_user_logged_in() )
 		{
 		$master_rsvp = $rsvprow["id"];
 		$rsvpwithdraw = sprintf('<div><input type="checkbox" checked="checked" name="withdraw[]" value="%d"> %s %s</div>',$rsvprow["id"],$rsvprow["first"],$rsvprow["last"]);
-		$answer = ($rsvprow["yesno"]) ? __("Yes",'rsvpmaker') : __("No",'rsvpmaker');		
+		$answer = ($rsvprow["yesno"]) ? __("Yes",'rsvpmaker') : __("No",'rsvpmaker');
 		$rsvpconfirm .= "<div class=\"rsvpdetails\"><p>".__('Your RSVP','rsvpmaker').": $answer</p>\n";
 		$profile = $details = rsvp_row_to_profile($rsvprow);
 		if(isset($details["total"]) && $details["total"])
@@ -2273,17 +2282,19 @@ if(($e && isset($_GET["rsvp"]) ) || is_user_logged_in() )
 			}
 			
 			}
-		
-		$guestsql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=".$rsvprow["id"];
-		if($results = $wpdb->get_results($guestsql, ARRAY_A) )
-			{
-			$rsvpconfirm .=  "<p>". __('Guests','rsvpmaker').":</p>";
-			foreach($results as $row)
+		if(!isset($_GET['rsvp'])) //redundant on rsvp confirmation page		
+		{
+			$guestsql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=".$rsvprow["id"];
+			if($results = $wpdb->get_results($guestsql, ARRAY_A) )
 				{
-				$rsvpconfirm .= $row["first"]." ".$row["last"]."<br />";
-				$rsvpwithdraw .= sprintf('<div><input type="checkbox" checked="checked" name="withdraw[]" value="%d"> %s %s</div>',$row["id"],$row["first"],$row["last"]);
-				}
-			}
+				$rsvpconfirm .=  "<p>". __('Guests','rsvpmaker').":</p>";
+				foreach($results as $row)
+					{
+					$rsvpconfirm .= $row["first"]." ".$row["last"]."<br />";
+					$rsvpwithdraw .= sprintf('<div><input type="checkbox" checked="checked" name="withdraw[]" value="%d"> %s %s</div>',$row["id"],$row["first"],$row["last"]);
+					}
+				}	
+		}
 
 		$rsvpconfirm .= "</p></div>\n";
 		}

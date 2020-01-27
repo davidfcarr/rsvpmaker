@@ -115,7 +115,7 @@ margin-bottom: 5px;
 }
 #rsvpform {
     background: #FFF;
-    font: 12px Georgia, "Times New Roman", Times, serif;
+    /*font: 12px Georgia, "Times New Roman", Times, serif;*/
     color: #111;
     border:none;
 }
@@ -162,7 +162,27 @@ margin-top: 20px;
 	font-weight: bold;
 	font-size: large;
 }
-
+#stripe-checkout-form {
+	background-color: #FFFFFF;
+	padding: 10px;
+}
+#card-element {
+	margin-bottom: 10px;
+}
+.stripebutton {
+  background-color: #1275ff;;
+  border: none;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 12px;
+  text-transform: none;
+}
 
 /*! jQuery UI - v1.11.4 - 2016-05-11
 * http://jqueryui.com

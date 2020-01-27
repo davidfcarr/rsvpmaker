@@ -198,6 +198,60 @@ public function get_items($request) {
   }
 }
 
+class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
+  public function register_routes() {
+    $namespace = 'rsvpmaker/v1';
+    $path = 'stripesuccess/(?P<txkey>.+)';
+
+    register_rest_route( $namespace, '/' . $path, [
+      array(
+        'methods'             => 'POST',
+        'callback'            => array( $this, 'get_items' ),
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+            ),
+        ]);     
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+    global $wpdb;
+    $base = get_option($request['txkey']);
+    $key = 'conf:'.time();
+    foreach($_POST as $name => $value)
+      $vars[$name] = $value;
+    foreach($base as $name => $value) {
+      if(empty($vars[$name]))
+      $vars[$name] = $value;
+    }
+    //$vars['charge_id'] = $charge->id;
+    rsvpmaker_stripe_payment_log($vars,$key);
+
+    if(!empty($vars['rsvp_id']))
+    {
+      $rsvp_id = $vars['rsvp_id'];
+      $rsvp_post_id = $vars['rsvp_post_id'];
+      $paid = $vars['amount'];
+      $invoice_id = get_post_meta($rsvp_post_id,'_open_invoice_'.$rsvp_id, true);
+      //if($invoice_id)
+      //{
+      $charge = get_post_meta($rsvp_post_id,'_invoice_'.$rsvp_id, true);
+      $paid_amounts = get_post_meta($rsvp_post_id,'_paid_'.$rsvp_id);
+      if(!empty($paid_amounts))
+      foreach($paid_amounts as $payment)
+        $paid += $payment;
+      $wpdb->query("UPDATE ".$wpdb->prefix."rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id ");
+      add_post_meta($rsvp_post_id,'_paid_'.$rsvp_id,$vars['amount']);
+      delete_post_meta($rsvp_post_id,'_open_invoice_'.$rsvp_id);
+      delete_post_meta($rsvp_post_id,'_invoice_'.$rsvp_id);
+      //}	
+    }
+    delete_option($request['txkey']);
+    return new WP_REST_Response($vars, 200);
+  }
+}
 
 add_action('rest_api_init', function () {
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -212,6 +266,8 @@ add_action('rest_api_init', function () {
     $rsvpmaker_guestlist_controller->register_routes();
     $rsvpmaker_meta_controller = new RSVPMaker_ClearDateCache();
     $rsvpmaker_meta_controller->register_routes();
+    $stripesuccess = new RSVPMaker_StripeSuccess_Controller();
+    $stripesuccess->register_routes();
 } );
 
 ?>
