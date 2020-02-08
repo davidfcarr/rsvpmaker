@@ -122,13 +122,13 @@ class RSVPMaker_iCal {
 
 				// convert to gmt, all day
 				if ( em_is_all_day( $event->ID ) ) {
-					$event_start = date( 'Ymd', strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', strtotime( $start_date ) ) ) ) );
-					$event_end = date( 'Ymd', strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', strtotime( $end_date ) ) ) ) );
+					$event_start = date( 'Ymd', rsvpmaker_strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', rsvpmaker_strtotime( $start_date ) ) ) ) );
+					$event_end = date( 'Ymd', rsvpmaker_strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', rsvpmaker_strtotime( $end_date ) ) ) ) );
 				}
 				// convert to gmt, other
 				else {
-					$event_start = date( 'Ymd\THis\Z', strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', strtotime( $start_date ) ) ) ) );
-					$event_end = date( 'Ymd\THis\Z', strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', strtotime( $end_date ) ) ) ) );
+					$event_start = date( 'Ymd\THis\Z', rsvpmaker_strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', rsvpmaker_strtotime( $start_date ) ) ) ) );
+					$event_end = date( 'Ymd\THis\Z', rsvpmaker_strtotime( get_gmt_from_date( date( 'Y-m-d H:i:s', rsvpmaker_strtotime( $end_date ) ) ) ) );
 				}
 
 				// get categories, if available

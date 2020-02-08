@@ -222,6 +222,7 @@ public function get_items($request) {
     $key = 'conf:'.time();
     foreach($_POST as $name => $value)
       $vars[$name] = $value;
+    if(is_array($base))
     foreach($base as $name => $value) {
       if(empty($vars[$name]))
       $vars[$name] = $value;
@@ -239,7 +240,7 @@ public function get_items($request) {
       //{
       $charge = get_post_meta($rsvp_post_id,'_invoice_'.$rsvp_id, true);
       $paid_amounts = get_post_meta($rsvp_post_id,'_paid_'.$rsvp_id);
-      if(!empty($paid_amounts))
+      if(is_array($paid_amounts))
       foreach($paid_amounts as $payment)
         $paid += $payment;
       $wpdb->query("UPDATE ".$wpdb->prefix."rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id ");

@@ -232,7 +232,7 @@ global $guestprofile;
 $shared = '';
 $label = (isset($atts['label'])) ? $atts['label'] : __('Guest','rsvpmaker');
 
-if(!empty($guestfields))
+if(is_array($guestfields))
 	foreach($guestfields as $slug => $field)
 		$shared .= $field;
 $template = '<div class="guest_blank" id="first_blank"><p><strong>'.__('Guest','rsvpmaker').' ###</strong></p>'.$shared . $content.'</div>';//fields shared from master form, plus added fields
@@ -257,7 +257,7 @@ if($results = $wpdb->get_results($guestsql, ARRAY_A) )
 			$output .= sprintf('<div class="guest_blank"><p><strong>%s %d</strong></p>',$label,$count)."\n";
 			$guestprofile = rsvp_row_to_profile($row);
 			$shared = '';
-			if(!empty($guestfields))
+			if(is_array($guestfields))
 				foreach($guestfields as $slug => $field)
 				{
 					if(!empty($guestprofile[$slug]))

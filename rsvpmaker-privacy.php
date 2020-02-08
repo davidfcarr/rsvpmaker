@@ -28,7 +28,8 @@ $sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE email LIKE '$email_addres
 $results = $wpdb->get_results($sql, ARRAY_A);
 $group_id = 'rsvpmaker';
 $group_label = 'RSVPMaker';
-  foreach ( (array) $results as $index => $rsvprow ) {
+  if(is_array($results))
+  foreach ($results as $index => $rsvprow ) {
 	  if($index > $number)
 		  break;
 	  $data = array();
@@ -38,7 +39,7 @@ $group_label = 'RSVPMaker';
 	  	if(empty($title))
 			$title = 'Event deleted?';
 	  	else
-			$title .= ' ('.date('F j, Y',strtotime($date)).')';
+			$title .= ' ('.date('F j, Y',rsvpmaker_strtotime($date)).')';
 	    $data[] = array('name' => 'event_title', 'value'=> $title);
 			
 	  foreach($profile as $name => $value)

@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the RSVPMaker plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: RSVPMaker 6.6.9\n"
+"Project-Id-Version: RSVPMaker 7.0.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/rsvpmaker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2020-01-25T01:06:04+00:00\n"
+"POT-Creation-Date: 2020-01-27T22:29:36+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.2.0\n"
 "X-Domain: rsvpmaker\n"
@@ -35,33 +35,33 @@ msgid "http://www.carrcommunications.com"
 msgstr ""
 
 #: captcha/gutenberg/src/init.php:89
-#: gutenberg/src/init.php:180
+#: gutenberg/src/init.php:172
 #: rsvpmaker-plugabble.php:2083
 #: rsvpmaker-plugabble.php:4672
 msgid "Create/update events from template"
 msgstr ""
 
 #: captcha/gutenberg/src/init.php:96
-#: gutenberg/src/init.php:187
-#: rsvpmaker-admin.php:4792
+#: gutenberg/src/init.php:179
+#: rsvpmaker-admin.php:4793
 #: rsvpmaker-plugabble.php:4317
 #: rsvpmaker-plugabble.php:4911
 msgid "Edit Template"
 msgstr ""
 
-#: gutenberg/src/init.php:222
+#: gutenberg/src/init.php:214
 msgid "Message is default from settings"
 msgstr ""
 
-#: gutenberg/src/init.php:224
+#: gutenberg/src/init.php:216
 msgid "Message inherited from template"
 msgstr ""
 
-#: gutenberg/src/init.php:249
+#: gutenberg/src/init.php:241
 msgid "Form is default from settings"
 msgstr ""
 
-#: gutenberg/src/init.php:251
+#: gutenberg/src/init.php:243
 msgid "Form inherited from template"
 msgstr ""
 
@@ -74,8 +74,8 @@ msgid "Day:"
 msgstr ""
 
 #: rsvpmaker-admin.php:271
-#: rsvpmaker-admin.php:1362
-#: rsvpmaker-admin.php:1668
+#: rsvpmaker-admin.php:1363
+#: rsvpmaker-admin.php:1669
 #: rsvpmaker-plugabble.php:555
 #: rsvpmaker-plugabble.php:558
 #: rsvpmaker-plugabble.php:566
@@ -85,12 +85,12 @@ msgid "Year"
 msgstr ""
 
 #: rsvpmaker-admin.php:288
-#: rsvpmaker-admin.php:1680
+#: rsvpmaker-admin.php:1681
 msgid "Hour:"
 msgstr ""
 
 #: rsvpmaker-admin.php:308
-#: rsvpmaker-admin.php:1684
+#: rsvpmaker-admin.php:1685
 msgid "Minutes:"
 msgstr ""
 
@@ -139,15 +139,15 @@ msgid "Default Content for Events (such as standard meeting location)"
 msgstr ""
 
 #: rsvpmaker-admin.php:698
-#: rsvpmaker-admin.php:1368
-#: rsvpmaker-admin.php:1547
+#: rsvpmaker-admin.php:1369
+#: rsvpmaker-admin.php:1548
 #: rsvpmaker-plugabble.php:279
 msgid "Hour"
 msgstr ""
 
 #: rsvpmaker-admin.php:702
-#: rsvpmaker-admin.php:1395
-#: rsvpmaker-admin.php:1551
+#: rsvpmaker-admin.php:1396
+#: rsvpmaker-admin.php:1552
 #: rsvpmaker-plugabble.php:302
 msgid "Minutes"
 msgstr ""
@@ -157,9 +157,9 @@ msgid "See also"
 msgstr ""
 
 #: rsvpmaker-admin.php:706
-#: rsvpmaker-admin.php:927
-#: rsvpmaker-admin.php:1864
-#: rsvpmaker-admin.php:4189
+#: rsvpmaker-admin.php:928
+#: rsvpmaker-admin.php:1865
+#: rsvpmaker-admin.php:4190
 #: rsvpmaker-plugabble.php:3975
 msgid "Event Templates"
 msgstr ""
@@ -215,17 +215,17 @@ msgid "Show RSVP Yes/No Radio Buttons"
 msgstr ""
 
 #: rsvpmaker-admin.php:739
-#: rsvpmaker-admin.php:3599
+#: rsvpmaker-admin.php:3600
 msgid "Show Add to Google / Download to Outlook (iCal) icons"
 msgstr ""
 
 #: rsvpmaker-admin.php:742
-#: rsvpmaker-admin.php:3610
+#: rsvpmaker-admin.php:3611
 msgid "Show timezone conversion button next to calendar icons"
 msgstr ""
 
 #: rsvpmaker-admin.php:745
-#: rsvpmaker-admin.php:3606
+#: rsvpmaker-admin.php:3607
 msgid "Display timezone code as part of date/time"
 msgstr ""
 
@@ -315,7 +315,7 @@ msgid "Error: CSS not found"
 msgstr ""
 
 #: rsvpmaker-admin.php:867
-#: rsvpmaker-admin.php:1082
+#: rsvpmaker-admin.php:1083
 msgid "OK"
 msgstr ""
 
@@ -323,244 +323,248 @@ msgstr ""
 msgid "Allows you to override the standard styles from"
 msgstr ""
 
-#: rsvpmaker-admin.php:886
+#: rsvpmaker-admin.php:875
+msgid "Probably a better option: use the Customize utility built into WordPress to override the defaults"
+msgstr ""
+
+#: rsvpmaker-admin.php:887
 msgid "Template from your theme to be used in the absence of a single-rsvpmaker.php file."
 msgstr ""
 
-#: rsvpmaker-admin.php:889
+#: rsvpmaker-admin.php:890
 #: rsvpmaker-email.php:1679
 msgid "Dashboard"
 msgstr ""
 
-#: rsvpmaker-admin.php:891
+#: rsvpmaker-admin.php:892
 msgid "No Widget"
 msgstr ""
 
-#: rsvpmaker-admin.php:892
+#: rsvpmaker-admin.php:893
 msgid "Show Widget"
 msgstr ""
 
-#: rsvpmaker-admin.php:893
+#: rsvpmaker-admin.php:894
 msgid "Show Widget on Top"
 msgstr ""
 
-#: rsvpmaker-admin.php:895
+#: rsvpmaker-admin.php:896
 #: rsvpmaker.php:83
 msgid "Note"
 msgstr ""
 
-#: rsvpmaker-admin.php:899
+#: rsvpmaker-admin.php:900
 msgid "Troubleshooting and Logging"
 msgstr ""
 
-#: rsvpmaker-admin.php:900
+#: rsvpmaker-admin.php:901
 msgid "Tweak Permalinks"
 msgstr ""
 
-#: rsvpmaker-admin.php:900
+#: rsvpmaker-admin.php:901
 msgid "Check here if you are getting &quot;page not found&quot; errors for event content (should not be necessary for most users)."
 msgstr ""
 
-#: rsvpmaker-admin.php:902
+#: rsvpmaker-admin.php:903
 msgid "Debug and log. Log messages will be saved in the uploads directory with file names in the pattern rsvpmaker_log_2018-01-01.txt"
 msgstr ""
 
-#: rsvpmaker-admin.php:904
+#: rsvpmaker-admin.php:905
 msgid "Log email"
 msgstr ""
 
-#: rsvpmaker-admin.php:906
-#: rsvpmaker-admin.php:938
-#: rsvpmaker-admin.php:1100
-#: rsvpmaker-admin.php:1157
+#: rsvpmaker-admin.php:907
+#: rsvpmaker-admin.php:939
+#: rsvpmaker-admin.php:1101
+#: rsvpmaker-admin.php:1158
 #: rsvpmaker-email.php:638
 #: rsvpmaker-plugabble.php:873
 #: rsvpmaker-plugabble.php:4383
 msgid "Update"
 msgstr ""
 
-#: rsvpmaker-admin.php:909
+#: rsvpmaker-admin.php:910
 msgid "RSVP Reminders scheduled for"
 msgstr ""
 
-#: rsvpmaker-admin.php:910
+#: rsvpmaker-admin.php:911
 msgid "Set new time"
 msgstr ""
 
-#: rsvpmaker-admin.php:912
+#: rsvpmaker-admin.php:913
 msgid "Set"
 msgstr ""
 
-#: rsvpmaker-admin.php:924
+#: rsvpmaker-admin.php:925
 msgid "Menu Security"
 msgstr ""
 
-#: rsvpmaker-admin.php:926
-#: rsvpmaker-admin.php:1872
+#: rsvpmaker-admin.php:927
+#: rsvpmaker-admin.php:1873
 #: rsvpmaker-plugabble.php:2635
 msgid "RSVP Report"
 msgstr ""
 
-#: rsvpmaker-admin.php:928
-#: rsvpmaker-admin.php:1868
+#: rsvpmaker-admin.php:929
+#: rsvpmaker-admin.php:1869
 msgid "Recurring Event"
 msgstr ""
 
-#: rsvpmaker-admin.php:929
-#: rsvpmaker-admin.php:1290
-#: rsvpmaker-admin.php:1870
+#: rsvpmaker-admin.php:930
+#: rsvpmaker-admin.php:1291
+#: rsvpmaker-admin.php:1871
 msgid "Multiple Events"
 msgstr ""
 
-#: rsvpmaker-admin.php:930
+#: rsvpmaker-admin.php:931
 msgid "Documentation"
 msgstr ""
 
-#: rsvpmaker-admin.php:932
+#: rsvpmaker-admin.php:933
 msgid "Security level required to access custom menus (RSVP Report, Documentation)"
 msgstr ""
 
-#: rsvpmaker-admin.php:933
+#: rsvpmaker-admin.php:934
 msgid "Additional Editors / Co-Authors"
 msgstr ""
 
-#: rsvpmaker-admin.php:934
+#: rsvpmaker-admin.php:935
 #: rsvpmaker-plugabble.php:12
 msgid "Additional Editors"
 msgstr ""
 
-#: rsvpmaker-admin.php:934
+#: rsvpmaker-admin.php:935
 msgid "Allow users to share editing rights for event templates and related events."
 msgstr ""
 
-#: rsvpmaker-admin.php:960
+#: rsvpmaker-admin.php:961
 msgid "Track RSVP as &quot;invoice&quot; number"
 msgstr ""
 
-#: rsvpmaker-admin.php:965
+#: rsvpmaker-admin.php:966
 msgid "Send Payment Reminder"
 msgstr ""
 
-#: rsvpmaker-admin.php:971
+#: rsvpmaker-admin.php:972
 msgid "Payment Currency"
 msgstr ""
 
-#: rsvpmaker-admin.php:1065
+#: rsvpmaker-admin.php:1066
 msgid "WP Simple Pay Lite for Stripe plugin detected"
 msgstr ""
 
-#: rsvpmaker-admin.php:1073
+#: rsvpmaker-admin.php:1074
 msgid "PayPal Configuration File"
 msgstr ""
 
-#: rsvpmaker-admin.php:1075
+#: rsvpmaker-admin.php:1076
 msgid "PayPal Setup"
 msgstr ""
 
-#: rsvpmaker-admin.php:1085
+#: rsvpmaker-admin.php:1086
 msgid "error: file not found"
 msgstr ""
 
-#: rsvpmaker-admin.php:1088
+#: rsvpmaker-admin.php:1089
 msgid "The PayPal setup button will help you create a configuration file containing your API credentials. See documentation."
 msgstr ""
 
-#: rsvpmaker-admin.php:1091
+#: rsvpmaker-admin.php:1092
 msgid "User"
 msgstr ""
 
-#: rsvpmaker-admin.php:1092
+#: rsvpmaker-admin.php:1093
 msgid "Password"
 msgstr ""
 
-#: rsvpmaker-admin.php:1093
+#: rsvpmaker-admin.php:1094
 msgid "Signature"
 msgstr ""
 
-#: rsvpmaker-admin.php:1098
+#: rsvpmaker-admin.php:1099
 msgid "Developers also have the option of hooking into the \"rsvpmaker_cash_or_custom\" action hook (<a href=\"https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/\" target=\"_blank\">documentation</a>)"
 msgstr ""
 
-#: rsvpmaker-admin.php:1107
+#: rsvpmaker-admin.php:1108
 msgid "These settings are related to transactional emails, such as registration confirmation messages. If you are using another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults."
 msgstr ""
 
-#: rsvpmaker-admin.php:1110
+#: rsvpmaker-admin.php:1111
 msgid "From Email Address for All Notifications"
 msgstr ""
 
-#: rsvpmaker-admin.php:1113
+#: rsvpmaker-admin.php:1114
 msgid "SMTP for Notifications"
 msgstr ""
 
-#: rsvpmaker-admin.php:1114
+#: rsvpmaker-admin.php:1115
 msgid "For more reliable delivery of email notifications, enable delivery through the SMTP email protocol. Standard server parameters will be used for Gmail and the SendGrid service, or specify the server port number and security protocol"
 msgstr ""
 
-#: rsvpmaker-admin.php:1115
+#: rsvpmaker-admin.php:1116
 msgid "If you are using another plugin that improves the delivery of email notifications, such one of the <a href=\"https://wordpress.org/plugins/sendgrid-email-delivery-simplified/\">SendGrid plugin</a> (which uses the SendGrid API rather than SMTP), leave this set to \"None - use wp_mail().\""
 msgstr ""
 
-#: rsvpmaker-admin.php:1117
+#: rsvpmaker-admin.php:1118
 msgid "None - use wp_mail()"
 msgstr ""
 
-#: rsvpmaker-admin.php:1120
+#: rsvpmaker-admin.php:1121
 msgid "Other SMTP (specified below)"
 msgstr ""
 
-#: rsvpmaker-admin.php:1123
+#: rsvpmaker-admin.php:1124
 msgid "Email Account for Notifications"
 msgstr ""
 
-#: rsvpmaker-admin.php:1127
+#: rsvpmaker-admin.php:1128
 msgid "Email Username"
 msgstr ""
 
-#: rsvpmaker-admin.php:1131
+#: rsvpmaker-admin.php:1132
 msgid "Email Password"
 msgstr ""
 
-#: rsvpmaker-admin.php:1135
+#: rsvpmaker-admin.php:1136
 msgid "Server (parameters below not necessary if you specified Gmail or SendGrid)"
 msgstr ""
 
-#: rsvpmaker-admin.php:1138
+#: rsvpmaker-admin.php:1139
 msgid "SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)"
 msgstr ""
 
-#: rsvpmaker-admin.php:1142
+#: rsvpmaker-admin.php:1143
 msgid "SMTP Port"
 msgstr ""
 
-#: rsvpmaker-admin.php:1147
+#: rsvpmaker-admin.php:1148
 msgid "See <a href=\"http://www.wpsitecare.com/gmail-smtp-settings/\">this article</a> for additional guidance on using Gmail (requires a tweak to security settings in your Google account). If you have trouble getting Gmail or ssl or tls connections to work, an unencrypted port 25 connection to an email account on the same server that hosts your website should be reasonably secure since no data will be passed over the network."
 msgstr ""
 
-#: rsvpmaker-admin.php:1153
+#: rsvpmaker-admin.php:1154
 msgid "Send SMTP Test to RSVP To address"
 msgstr ""
 
-#: rsvpmaker-admin.php:1219
+#: rsvpmaker-admin.php:1220
 msgid "Events (click to edit)"
 msgstr ""
 
-#: rsvpmaker-admin.php:1219
+#: rsvpmaker-admin.php:1220
 msgid "Show All"
 msgstr ""
 
-#: rsvpmaker-admin.php:1292
+#: rsvpmaker-admin.php:1293
 msgid "Use this form to enter multiple events quickly with basic formatting"
 msgstr ""
 
-#: rsvpmaker-admin.php:1306
+#: rsvpmaker-admin.php:1307
 #: rsvpmaker-email.php:794
 #: rsvpmaker-plugabble.php:4093
 msgid "Title"
 msgstr ""
 
-#: rsvpmaker-admin.php:1311
-#: rsvpmaker-admin.php:1614
+#: rsvpmaker-admin.php:1312
+#: rsvpmaker-admin.php:1615
 #: rsvpmaker-plugabble.php:555
 #: rsvpmaker-plugabble.php:558
 #: rsvpmaker-plugabble.php:566
@@ -569,8 +573,8 @@ msgstr ""
 msgid "Month"
 msgstr ""
 
-#: rsvpmaker-admin.php:1327
-#: rsvpmaker-admin.php:1630
+#: rsvpmaker-admin.php:1328
+#: rsvpmaker-admin.php:1631
 #: rsvpmaker-plugabble.php:555
 #: rsvpmaker-plugabble.php:558
 #: rsvpmaker-plugabble.php:566
@@ -579,27 +583,27 @@ msgstr ""
 msgid "Day"
 msgstr ""
 
-#: rsvpmaker-admin.php:1407
+#: rsvpmaker-admin.php:1408
 #: rsvpmaker-display.php:1597
 #: rsvpmaker-plugabble.php:2557
 #: rsvpmaker-plugabble.php:4638
 msgid "Submit"
 msgstr ""
 
-#: rsvpmaker-admin.php:1515
+#: rsvpmaker-admin.php:1516
 msgid "Use this form to create multiple events with the same headline, description, and RSVP paramaters. You can have the program automatically calculate dates for a regular montly schedule."
 msgstr ""
 
-#: rsvpmaker-admin.php:1517
+#: rsvpmaker-admin.php:1518
 msgid "Optional: Calculate dates for a recurring schedule"
 msgstr ""
 
-#: rsvpmaker-admin.php:1521
+#: rsvpmaker-admin.php:1522
 msgid "Regular schedule"
 msgstr ""
 
-#: rsvpmaker-admin.php:1525
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1526
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -610,8 +614,8 @@ msgstr ""
 msgid "First"
 msgstr ""
 
-#: rsvpmaker-admin.php:1526
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1527
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -621,8 +625,8 @@ msgstr ""
 msgid "Second"
 msgstr ""
 
-#: rsvpmaker-admin.php:1527
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1528
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -632,8 +636,8 @@ msgstr ""
 msgid "Third"
 msgstr ""
 
-#: rsvpmaker-admin.php:1528
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1529
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -643,8 +647,8 @@ msgstr ""
 msgid "Fourth"
 msgstr ""
 
-#: rsvpmaker-admin.php:1529
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1530
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -655,8 +659,8 @@ msgstr ""
 msgid "Last"
 msgstr ""
 
-#: rsvpmaker-admin.php:1534
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1535
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:724
 #: rsvpmaker-display.php:734
 #: rsvpmaker-display.php:1706
@@ -669,8 +673,8 @@ msgstr ""
 msgid "Sunday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1535
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1536
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:718
 #: rsvpmaker-display.php:735
 #: rsvpmaker-display.php:1706
@@ -683,8 +687,8 @@ msgstr ""
 msgid "Monday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1536
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1537
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:719
 #: rsvpmaker-display.php:736
 #: rsvpmaker-display.php:1706
@@ -697,8 +701,8 @@ msgstr ""
 msgid "Tuesday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1537
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1538
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:720
 #: rsvpmaker-display.php:737
 #: rsvpmaker-display.php:1706
@@ -711,8 +715,8 @@ msgstr ""
 msgid "Wednesday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1538
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1539
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:721
 #: rsvpmaker-display.php:738
 #: rsvpmaker-display.php:1706
@@ -725,8 +729,8 @@ msgstr ""
 msgid "Thursday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1539
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1540
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:722
 #: rsvpmaker-display.php:739
 #: rsvpmaker-display.php:1706
@@ -739,8 +743,8 @@ msgstr ""
 msgid "Friday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1540
-#: rsvpmaker-admin.php:1927
+#: rsvpmaker-admin.php:1541
+#: rsvpmaker-admin.php:1928
 #: rsvpmaker-display.php:723
 #: rsvpmaker-display.php:740
 #: rsvpmaker-display.php:1706
@@ -753,132 +757,132 @@ msgstr ""
 msgid "Saturday"
 msgstr ""
 
-#: rsvpmaker-admin.php:1546
+#: rsvpmaker-admin.php:1547
 #: rsvpmaker-plugabble.php:278
 #: rsvpmaker-plugabble.php:1823
 #: rsvpmaker.php:770
 msgid "Time"
 msgstr ""
 
-#: rsvpmaker-admin.php:1555
+#: rsvpmaker-admin.php:1556
 msgid "For an event starting at 12:30 p.m., you would select 12 p.m. and 30 minutes."
 msgstr ""
 
-#: rsvpmaker-admin.php:1567
+#: rsvpmaker-admin.php:1568
 msgid "or enter dates individually."
 msgstr ""
 
-#: rsvpmaker-admin.php:1587
+#: rsvpmaker-admin.php:1588
 msgid "Loading recurring series of dates for"
 msgstr ""
 
-#: rsvpmaker-admin.php:1587
+#: rsvpmaker-admin.php:1588
 msgid "To omit a date in the series, change the day field to &quot;Not Set&quot;"
 msgstr ""
 
-#: rsvpmaker-admin.php:1592
+#: rsvpmaker-admin.php:1593
 msgid "Enter Recurring Events"
 msgstr ""
 
-#: rsvpmaker-admin.php:1688
+#: rsvpmaker-admin.php:1689
 msgid "Duration"
 msgstr ""
 
-#: rsvpmaker-admin.php:1689
+#: rsvpmaker-admin.php:1690
 #: rsvpmaker-util.php:53
 msgid "Not set (optional)"
 msgstr ""
 
-#: rsvpmaker-admin.php:1690
+#: rsvpmaker-admin.php:1691
 #: rsvpmaker-util.php:55
 msgid "All day/don't show time in headline"
 msgstr ""
 
-#: rsvpmaker-admin.php:1733
+#: rsvpmaker-admin.php:1734
 msgid "Contents for an events page."
 msgstr ""
 
-#: rsvpmaker-admin.php:1746
+#: rsvpmaker-admin.php:1747
 msgid "<h3>RSVP Form</h3><p>The RSVP from is also now formatted using shortcodes, which you can edit in the RSVP Form section of the Settings screen. You can also vary the form on a per-event basis, which can be handy for capturing an extra field. This is your current default form:</p>"
 msgstr ""
 
-#: rsvpmaker-admin.php:1750
+#: rsvpmaker-admin.php:1751
 msgid "<p>Explanation:</p><p>[rsvpfield textfield=&quot;myfield&quot;] outputs a text field coded to capture data for &quot;myfield&quot;</p><p>[rsvpfield textfield=&quot;myfield&quot; required=&quot;1&quot;] treats &quot;myfield&quot; as a required field.</p><p>[rsvpfield selectfield=&quot;phone_type&quot; options=&quot;Work Phone,Mobile Phone,Home Phone&quot;] HTML select field with specified options</p><p>[rsvpfield checkbox=&quot;checkboxtest&quot; value=&quot;1&quot;] Checkbox named checkboxtext with a value of 1 when checked.</p><p>[rsvpfield checkbox=&quot;checkboxtest&quot; value=&quot;1&quot; checked=&quot;1&quot;] Checkbox checked by default.</p><p>[rsvpfield radio=&quot;radiotest&quot; options=&quot;one,two,three,four&quot;] When checked, records one of the 4 values for the field &quot;radiotest&quot;</p><p>[rsvpfield radio=&quot;radiotest&quot; options=&quot;one,two,three,four&quot; checked=&quot;two&quot;] choice &quot;two&quot; is checked by default</p><p>[rsvpfield radio=&quot;radiotest&quot; options=&quot;one,two,three,four&quot; checked=&quot;two&quot; sep=&quot; &quot;] separate choices with a space (by default, each appears on a separate line)</p><p>[rsvpprofiletable show_if_empty=&quot;phone&quot;]CONDITIONAL CONTENT GOES HERE[/rsvpprofiletable] This section only shown if the required field is empty; otherwise displays a message that the info is &quot;on file&quot;. Because RSVPMaker is capable of looking up profile data based on an email address, you may want some data to be hidden for privacy reasons.</p><p>[rsvpguests] Outputs the guest blanks.</p>"
 msgstr ""
 
-#: rsvpmaker-admin.php:1752
+#: rsvpmaker-admin.php:1753
 msgid "If you're having trouble with the form fields not being formatted correctly"
 msgstr ""
 
-#: rsvpmaker-admin.php:1752
+#: rsvpmaker-admin.php:1753
 msgid "Reset default RSVP Form"
 msgstr ""
 
-#: rsvpmaker-admin.php:1828
+#: rsvpmaker-admin.php:1829
 msgid "Debug"
 msgstr ""
 
-#: rsvpmaker-admin.php:1829
+#: rsvpmaker-admin.php:1830
 msgid "Use this screen to verify that RSVPMaker is recording data correctly or to share debugging information with the plugin author. If you send debugging info, follow up with a note to <a href=\"mailto:david@carrcommunications.com\">david@carrcommunications.com</a> and explain what you need help with."
 msgstr ""
 
-#: rsvpmaker-admin.php:1835
+#: rsvpmaker-admin.php:1836
 msgid "RSVP Records"
 msgstr ""
 
-#: rsvpmaker-admin.php:1838
+#: rsvpmaker-admin.php:1839
 #: rsvpmaker-plugabble.php:2504
 #: rsvpmaker-plugabble.php:3193
 msgid "Options"
 msgstr ""
 
-#: rsvpmaker-admin.php:1841
+#: rsvpmaker-admin.php:1842
 msgid "Rewrite Rules"
 msgstr ""
 
-#: rsvpmaker-admin.php:1845
+#: rsvpmaker-admin.php:1846
 msgid "Globals"
 msgstr ""
 
-#: rsvpmaker-admin.php:1848
+#: rsvpmaker-admin.php:1849
 msgid "Send to Plugin Author"
 msgstr ""
 
-#: rsvpmaker-admin.php:1862
-#: rsvpmaker-admin.php:4694
+#: rsvpmaker-admin.php:1863
+#: rsvpmaker-admin.php:4695
 msgid "Event Setup"
 msgstr ""
 
-#: rsvpmaker-admin.php:1863
-#: rsvpmaker-email.php:2584
+#: rsvpmaker-admin.php:1864
+#: rsvpmaker-email.php:2583
 #: rsvpmaker-plugabble.php:10
 msgid "Event Options"
 msgstr ""
 
-#: rsvpmaker-admin.php:1866
+#: rsvpmaker-admin.php:1867
 msgid "Share Templates"
 msgstr ""
 
-#: rsvpmaker-admin.php:1871
+#: rsvpmaker-admin.php:1872
 msgid "Confirmation / Reminders"
 msgstr ""
 
-#: rsvpmaker-admin.php:1883
+#: rsvpmaker-admin.php:1884
 msgid "Event Dates"
 msgstr ""
 
-#: rsvpmaker-admin.php:1885
+#: rsvpmaker-admin.php:1886
 msgid "Scheduled"
 msgstr ""
 
-#: rsvpmaker-admin.php:1913
+#: rsvpmaker-admin.php:1914
 #: rsvpmaker-plugabble.php:4317
 #: rsvpmaker-plugabble.php:4703
 #: rsvpmaker-plugabble.php:4893
 msgid "Template"
 msgstr ""
 
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -888,7 +892,7 @@ msgstr ""
 msgid "Varies"
 msgstr ""
 
-#: rsvpmaker-admin.php:1926
+#: rsvpmaker-admin.php:1927
 #: rsvpmaker-display.php:1707
 #: rsvpmaker-plugabble.php:189
 #: rsvpmaker-plugabble.php:2060
@@ -898,260 +902,260 @@ msgstr ""
 msgid "Every"
 msgstr ""
 
-#: rsvpmaker-admin.php:1930
+#: rsvpmaker-admin.php:1931
 msgid "Schedule varies"
 msgstr ""
 
-#: rsvpmaker-admin.php:1948
+#: rsvpmaker-admin.php:1949
 msgid "Special Page"
 msgstr ""
 
-#: rsvpmaker-admin.php:1976
+#: rsvpmaker-admin.php:1977
 msgid "Follow up"
 msgstr ""
 
-#: rsvpmaker-admin.php:1976
+#: rsvpmaker-admin.php:1977
 msgid "hours after"
 msgstr ""
 
-#: rsvpmaker-admin.php:1978
+#: rsvpmaker-admin.php:1979
 msgid "Reminder"
 msgstr ""
 
-#: rsvpmaker-admin.php:1978
-#: rsvpmaker-admin.php:2478
+#: rsvpmaker-admin.php:1979
+#: rsvpmaker-admin.php:2479
 msgid "hours before"
 msgstr ""
 
-#: rsvpmaker-admin.php:2031
+#: rsvpmaker-admin.php:2032
 msgid "Your templates for email broadcasts and confirmations have been updated."
 msgstr ""
 
-#: rsvpmaker-admin.php:2031
+#: rsvpmaker-admin.php:2032
 msgid "Verify/approve changes"
 msgstr ""
 
-#: rsvpmaker-admin.php:2035
+#: rsvpmaker-admin.php:2036
 msgid "A new RSVP / registration form is available that is easier to customize"
 msgstr ""
 
-#: rsvpmaker-admin.php:2035
+#: rsvpmaker-admin.php:2036
 msgid "Upgrade?"
 msgstr ""
 
-#: rsvpmaker-admin.php:2044
+#: rsvpmaker-admin.php:2045
 msgid "Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox <a href=\""
 msgstr ""
 
-#: rsvpmaker-admin.php:2049
-#: rsvpmaker-admin.php:2058
+#: rsvpmaker-admin.php:2050
+#: rsvpmaker-admin.php:2059
 msgid "Edit the"
 msgstr ""
 
-#: rsvpmaker-admin.php:2049
+#: rsvpmaker-admin.php:2050
 msgid "webinar landing page"
-msgstr ""
-
-#: rsvpmaker-admin.php:2051
-#: rsvpmaker-admin.php:2060
-msgid "Related messages:"
 msgstr ""
 
 #: rsvpmaker-admin.php:2052
 #: rsvpmaker-admin.php:2061
+msgid "Related messages:"
+msgstr ""
+
+#: rsvpmaker-admin.php:2053
+#: rsvpmaker-admin.php:2062
 msgid "Confirmation"
 msgstr ""
 
-#: rsvpmaker-admin.php:2058
+#: rsvpmaker-admin.php:2059
 msgid "webinar event post"
 msgstr ""
 
-#: rsvpmaker-admin.php:2068
+#: rsvpmaker-admin.php:2069
 msgid "ChimpBlast has been replaced by the RSVP Mailer function of RSVPMaker and should be uninstalled"
 msgstr ""
 
-#: rsvpmaker-admin.php:2073
+#: rsvpmaker-admin.php:2074
 msgid "RSVPMaker needs you to"
 msgstr ""
 
-#: rsvpmaker-admin.php:2073
+#: rsvpmaker-admin.php:2074
 msgid "set the timezone for your website"
 msgstr ""
 
-#: rsvpmaker-admin.php:2073
+#: rsvpmaker-admin.php:2074
 msgid "Confirm if the choice below is correct or make another choice by region/city."
 msgstr ""
 
-#: rsvpmaker-admin.php:2086
+#: rsvpmaker-admin.php:2087
 msgid "Set Timezone"
 msgstr ""
 
-#: rsvpmaker-admin.php:2111
+#: rsvpmaker-admin.php:2112
 msgid "RSVPMaker can add a calendar or events listing page to your site automatically, which you can then add to your website menu."
 msgstr ""
 
-#: rsvpmaker-admin.php:2111
+#: rsvpmaker-admin.php:2112
 msgid "Create page"
 msgstr ""
 
-#: rsvpmaker-admin.php:2111
+#: rsvpmaker-admin.php:2112
 msgid "Calendar"
 msgstr ""
 
-#: rsvpmaker-admin.php:2111
+#: rsvpmaker-admin.php:2112
 msgid "Turn off this warning"
 msgstr ""
 
-#: rsvpmaker-admin.php:2122
+#: rsvpmaker-admin.php:2123
 msgid "Testing SMTP email notification"
 msgstr ""
 
-#: rsvpmaker-admin.php:2123
+#: rsvpmaker-admin.php:2124
 msgid "Test from RSVPMaker."
 msgstr ""
 
-#: rsvpmaker-admin.php:2125
+#: rsvpmaker-admin.php:2126
 msgid "Sending test email"
 msgstr ""
 
-#: rsvpmaker-admin.php:2132
+#: rsvpmaker-admin.php:2133
 msgid "RSVP Form Updated (default and future events)"
 msgstr ""
 
-#: rsvpmaker-admin.php:2230
-#: rsvpmaker-admin.php:2235
+#: rsvpmaker-admin.php:2231
+#: rsvpmaker-admin.php:2236
 msgid "Showing"
 msgstr ""
 
-#: rsvpmaker-admin.php:2230
+#: rsvpmaker-admin.php:2231
 msgid "Search Results"
 msgstr ""
 
-#: rsvpmaker-admin.php:2419
+#: rsvpmaker-admin.php:2420
 #: rsvpmaker-plugabble.php:3526
 msgid "This is an automated reminder that we have you on the RSVP list for the event shown below. If your plans have changed, you can update your response by clicking on the RSVP button again."
 msgstr ""
 
-#: rsvpmaker-admin.php:2437
+#: rsvpmaker-admin.php:2438
 #: rsvpmaker-plugabble.php:2900
 #: rsvpmaker-plugabble.php:3529
 msgid "guest of"
 msgstr ""
 
-#: rsvpmaker-admin.php:2480
+#: rsvpmaker-admin.php:2481
 msgid "hours after event starts"
 msgstr ""
 
-#: rsvpmaker-admin.php:2493
+#: rsvpmaker-admin.php:2494
 msgid "Live"
 msgstr ""
 
-#: rsvpmaker-admin.php:2494
+#: rsvpmaker-admin.php:2495
 msgid "The event starts"
 msgstr ""
 
-#: rsvpmaker-admin.php:2519
+#: rsvpmaker-admin.php:2520
 msgid "Thanks for registering for"
 msgstr ""
 
-#: rsvpmaker-admin.php:2519
+#: rsvpmaker-admin.php:2520
 msgid "The event will start at"
 msgstr ""
 
-#: rsvpmaker-admin.php:2519
+#: rsvpmaker-admin.php:2520
 msgid "Tune in here"
 msgstr ""
 
-#: rsvpmaker-admin.php:2528
+#: rsvpmaker-admin.php:2529
 msgid "Thanks for your interest in "
 msgstr ""
 
-#: rsvpmaker-admin.php:2528
+#: rsvpmaker-admin.php:2529
 msgid "If you missed all or part of the program, a replay is waiting for you here"
 msgstr ""
 
-#: rsvpmaker-admin.php:2534
-#: rsvpmaker-admin.php:2676
+#: rsvpmaker-admin.php:2535
+#: rsvpmaker-admin.php:2677
 #: rsvpmaker-email.php:634
 #: rsvpmaker-email.php:1679
-#: rsvpmaker-email.php:2592
+#: rsvpmaker-email.php:2591
 #: rsvpmaker-plugabble.php:3053
 #: rsvpmaker-plugabble.php:4375
 #: rsvpmaker-plugabble.php:4937
 msgid "Edit"
 msgstr ""
 
-#: rsvpmaker-admin.php:2651
+#: rsvpmaker-admin.php:2652
 msgid "Confirmation / Reminder Messages"
 msgstr ""
 
-#: rsvpmaker-admin.php:2676
+#: rsvpmaker-admin.php:2677
 msgid "Added reminder "
 msgstr ""
 
-#: rsvpmaker-admin.php:2676
+#: rsvpmaker-admin.php:2677
 msgid "hours"
 msgstr ""
 
-#: rsvpmaker-admin.php:2696
+#: rsvpmaker-admin.php:2697
 msgid "This is an event template: The confirmation and reminder messages you set here will become the defaults for future events based on this template. The [datetime] placeholder in subject lines will be replaced with the specific event date."
 msgstr ""
 
-#: rsvpmaker-admin.php:2715
+#: rsvpmaker-admin.php:2716
 msgid "This is the standard reminder from the event template"
 msgstr ""
 
-#: rsvpmaker-admin.php:2715
+#: rsvpmaker-admin.php:2716
 msgid "Customize for this event"
 msgstr ""
 
-#: rsvpmaker-admin.php:2720
+#: rsvpmaker-admin.php:2721
 msgid "Add Reminder"
 msgstr ""
 
-#: rsvpmaker-admin.php:2723
+#: rsvpmaker-admin.php:2724
 #: rsvpmaker-plugabble.php:514
 msgid "Webinar Setup"
 msgstr ""
 
-#: rsvpmaker-admin.php:2725
+#: rsvpmaker-admin.php:2726
 msgid "This utility sets up a landing page and suggested confirmation and reminder messages, linked to that page. RSVPMaker explicitly supports webinars based on YouTube Live, but you can also embed the coding required for another webinar of your choice."
 msgstr ""
 
-#: rsvpmaker-admin.php:2730
+#: rsvpmaker-admin.php:2731
 #: rsvpmaker-plugabble.php:514
 msgid "Require passcode to view"
 msgstr ""
 
-#: rsvpmaker-admin.php:2731
+#: rsvpmaker-admin.php:2732
 msgid "Create"
 msgstr ""
 
-#: rsvpmaker-admin.php:2754
+#: rsvpmaker-admin.php:2755
 msgid "A Note on More Reliable Scheduling"
 msgstr ""
 
-#: rsvpmaker-admin.php:2755
+#: rsvpmaker-admin.php:2756
 msgid "RSVPMaker takes advantage of WP Cron, a standard WordPress scheduling mechanism. Because it only checks for scheduled tasks to be run when someone visits your website, WP Cron can be imprecise -- which could be a problem if you want to make sure a reminder will go out an hour before your event, if that happens to be a low traffic site. Caching plugins can also get in the way of regular WP Cron execution. Consider following <a href=\"http://code.tutsplus.com/articles/insights-into-wp-cron-an-introduction-to-scheduling-tasks-in-wordpress--wp-23119\">these directions</a> to make sure your server checks for scheduled tasks to run on a more regular schedule, like once every 5 or 15 minutes."
 msgstr ""
 
-#: rsvpmaker-admin.php:2757
+#: rsvpmaker-admin.php:2758
 msgid "Using Unix cron, the command you would set to execute would be"
 msgstr ""
 
-#: rsvpmaker-admin.php:2761
+#: rsvpmaker-admin.php:2762
 msgid "If curl does not work, you can also try this variation (seems to work better on some systems)"
 msgstr ""
 
-#: rsvpmaker-admin.php:2782
-#: rsvpmaker-admin.php:3112
-#: rsvpmaker-admin.php:3446
+#: rsvpmaker-admin.php:2783
+#: rsvpmaker-admin.php:3113
+#: rsvpmaker-admin.php:3447
 #: rsvpmaker-plugabble.php:4093
 #: rsvpmaker-plugabble.php:4665
 msgid "Event"
 msgstr ""
 
-#: rsvpmaker-admin.php:2782
+#: rsvpmaker-admin.php:2783
 #: rsvpmaker-plugabble.php:2873
 #: rsvpmaker-plugabble.php:4978
 #: rsvpmaker-widgets.php:18
@@ -1160,281 +1164,281 @@ msgstr ""
 msgid "Events"
 msgstr ""
 
-#: rsvpmaker-admin.php:2783
+#: rsvpmaker-admin.php:2784
 msgid "double-click for popup editor"
 msgstr ""
 
-#: rsvpmaker-admin.php:3033
+#: rsvpmaker-admin.php:3034
 msgid "12 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3034
+#: rsvpmaker-admin.php:3035
 msgid "1 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3035
+#: rsvpmaker-admin.php:3036
 msgid "2 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3036
+#: rsvpmaker-admin.php:3037
 msgid "3 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3037
+#: rsvpmaker-admin.php:3038
 msgid "4 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3038
+#: rsvpmaker-admin.php:3039
 msgid "5 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3039
+#: rsvpmaker-admin.php:3040
 msgid "6 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3040
+#: rsvpmaker-admin.php:3041
 msgid "7 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3041
+#: rsvpmaker-admin.php:3042
 msgid "8 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3042
+#: rsvpmaker-admin.php:3043
 msgid "9 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3043
+#: rsvpmaker-admin.php:3044
 msgid "10 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3044
+#: rsvpmaker-admin.php:3045
 msgid "11 am"
 msgstr ""
 
-#: rsvpmaker-admin.php:3045
+#: rsvpmaker-admin.php:3046
 msgid "12 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3046
+#: rsvpmaker-admin.php:3047
 msgid "1 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3047
+#: rsvpmaker-admin.php:3048
 msgid "2 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3048
+#: rsvpmaker-admin.php:3049
 msgid "3 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3049
+#: rsvpmaker-admin.php:3050
 msgid "4 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3050
+#: rsvpmaker-admin.php:3051
 msgid "5 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3051
+#: rsvpmaker-admin.php:3052
 msgid "6 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3052
+#: rsvpmaker-admin.php:3053
 msgid "7 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3053
+#: rsvpmaker-admin.php:3054
 msgid "8 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3054
+#: rsvpmaker-admin.php:3055
 msgid "9 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3055
+#: rsvpmaker-admin.php:3056
 msgid "10 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3056
+#: rsvpmaker-admin.php:3057
 msgid "11 pm"
 msgstr ""
 
-#: rsvpmaker-admin.php:3057
+#: rsvpmaker-admin.php:3058
 msgid "midnight"
 msgstr ""
 
-#: rsvpmaker-admin.php:3365
+#: rsvpmaker-admin.php:3366
 msgid "event posts moved to trash"
 msgstr ""
 
-#: rsvpmaker-admin.php:3470
+#: rsvpmaker-admin.php:3471
 #: rsvpmaker-plugabble.php:4638
 msgid "No Meeting"
 msgstr ""
 
-#: rsvpmaker-admin.php:3615
+#: rsvpmaker-admin.php:3616
 msgid "Default"
 msgstr ""
 
-#: rsvpmaker-admin.php:4125
+#: rsvpmaker-admin.php:4126
 msgid "More Event Options"
 msgstr ""
 
-#: rsvpmaker-admin.php:4143
+#: rsvpmaker-admin.php:4144
 msgid "RSVP / Event Options"
 msgstr ""
 
-#: rsvpmaker-admin.php:4159
+#: rsvpmaker-admin.php:4160
 msgid "Create/update events"
 msgstr ""
 
-#: rsvpmaker-admin.php:4159
+#: rsvpmaker-admin.php:4160
 msgid "based on this template"
 msgstr ""
 
-#: rsvpmaker-admin.php:4160
+#: rsvpmaker-admin.php:4161
 msgid "Saving RSVP Options"
 msgstr ""
 
-#: rsvpmaker-admin.php:4180
+#: rsvpmaker-admin.php:4181
 #: rsvpmaker-util.php:335
 msgid "Future Events"
 msgstr ""
 
-#: rsvpmaker-admin.php:4212
+#: rsvpmaker-admin.php:4213
 msgid "Use this form for additional RSVPMaker settings."
 msgstr ""
 
-#: rsvpmaker-admin.php:4212
+#: rsvpmaker-admin.php:4213
 msgid "Return to editor"
 msgstr ""
 
-#: rsvpmaker-admin.php:4232
+#: rsvpmaker-admin.php:4233
 msgid "Publish"
 msgstr ""
 
-#: rsvpmaker-admin.php:4377
+#: rsvpmaker-admin.php:4378
 msgid "RSVPMaker Settings"
 msgstr ""
 
-#: rsvpmaker-admin.php:4389
+#: rsvpmaker-admin.php:4390
 msgid "Return to Event Editor"
 msgstr ""
 
-#: rsvpmaker-admin.php:4412
+#: rsvpmaker-admin.php:4413
 msgid "Edit Event"
 msgstr ""
 
-#: rsvpmaker-admin.php:4427
-#: rsvpmaker-admin.php:4452
+#: rsvpmaker-admin.php:4428
+#: rsvpmaker-admin.php:4453
 msgid "Edit Parent Event"
 msgstr ""
 
-#: rsvpmaker-admin.php:4436
-#: rsvpmaker-admin.php:4461
+#: rsvpmaker-admin.php:4437
+#: rsvpmaker-admin.php:4462
 msgid "View Parent Event"
 msgstr ""
 
-#: rsvpmaker-admin.php:4688
+#: rsvpmaker-admin.php:4689
 msgid "For recurring events"
 msgstr ""
 
-#: rsvpmaker-admin.php:4688
+#: rsvpmaker-admin.php:4689
 msgid "create a"
 msgstr ""
 
-#: rsvpmaker-admin.php:4688
+#: rsvpmaker-admin.php:4689
 #: rsvpmaker-plugabble.php:3976
 msgid "New Template"
 msgstr ""
 
-#: rsvpmaker-admin.php:4689
+#: rsvpmaker-admin.php:4690
 msgid "Or add"
 msgstr ""
 
-#: rsvpmaker-admin.php:4689
+#: rsvpmaker-admin.php:4690
 #: rsvpmaker-plugabble.php:4067
 msgid "One event"
 msgstr ""
 
-#: rsvpmaker-admin.php:4689
+#: rsvpmaker-admin.php:4690
 #: rsvpmaker-plugabble.php:4067
 msgid "Multiple events"
 msgstr ""
 
-#: rsvpmaker-admin.php:4689
+#: rsvpmaker-admin.php:4690
 #: rsvpmaker-plugabble.php:4067
 msgid "based on"
 msgstr ""
 
-#: rsvpmaker-admin.php:4720
+#: rsvpmaker-admin.php:4721
 msgid "Previously Scheduled"
 msgstr ""
 
-#: rsvpmaker-admin.php:4722
+#: rsvpmaker-admin.php:4723
 msgid "To create a new event based on this template, use the form below."
 msgstr ""
 
-#: rsvpmaker-admin.php:4726
+#: rsvpmaker-admin.php:4727
 msgid "Set Event Title and Schedule"
 msgstr ""
 
-#: rsvpmaker-admin.php:4733
+#: rsvpmaker-admin.php:4734
 msgid "Event will inherit defaults from template for RSVPs, date format options."
 msgstr ""
 
-#: rsvpmaker-admin.php:4739
+#: rsvpmaker-admin.php:4740
 #: rsvpmaker-plugabble.php:483
 msgid "Collect RSVPs"
 msgstr ""
 
-#: rsvpmaker-admin.php:4741
-#: rsvpmaker-email.php:2793
+#: rsvpmaker-admin.php:4742
+#: rsvpmaker-email.php:2792
 #: rsvpmaker-plugabble.php:485
 #: rsvpmaker-plugabble.php:867
 #: rsvpmaker-plugabble.php:1163
 msgid "YES"
 msgstr ""
 
-#: rsvpmaker-admin.php:4742
+#: rsvpmaker-admin.php:4743
 #: rsvpmaker-plugabble.php:486
 #: rsvpmaker-plugabble.php:867
 #: rsvpmaker-plugabble.php:1163
 msgid "NO"
 msgstr ""
 
-#: rsvpmaker-admin.php:4754
+#: rsvpmaker-admin.php:4755
 msgid "Your Event Posts"
 msgstr ""
 
-#: rsvpmaker-admin.php:4784
+#: rsvpmaker-admin.php:4785
 msgid "Your Templates"
 msgstr ""
 
-#: rsvpmaker-admin.php:4784
+#: rsvpmaker-admin.php:4785
 msgid "Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series."
 msgstr ""
 
-#: rsvpmaker-admin.php:4790
+#: rsvpmaker-admin.php:4791
 #: rsvpmaker-plugabble.php:4949
 msgid "Add Event"
 msgstr ""
 
-#: rsvpmaker-admin.php:4797
+#: rsvpmaker-admin.php:4798
 msgid "Create/Update"
 msgstr ""
 
-#: rsvpmaker-admin.php:4993
+#: rsvpmaker-admin.php:4994
 #: rsvpmaker-email.php:1962
 msgid "Save"
 msgstr ""
 
-#: rsvpmaker-admin.php:5015
+#: rsvpmaker-admin.php:5016
 msgid "Choose Template"
 msgstr ""
 
-#: rsvpmaker-admin.php:5021
+#: rsvpmaker-admin.php:5022
 msgid "Remove Editors"
 msgstr ""
 
@@ -1532,13 +1536,13 @@ msgid "Schedule Varies"
 msgstr ""
 
 #: rsvpmaker-display.php:1741
-#: rsvpmaker-email.php:2897
+#: rsvpmaker-email.php:2896
 msgid "signed up so far."
 msgstr ""
 
 #: rsvpmaker-display.php:1743
-#: rsvpmaker-email.php:2899
-#: gutenberg/src/block/block.js:809
+#: rsvpmaker-email.php:2898
+#: gutenberg/src/block/block.js:806
 msgid "Limit"
 msgstr ""
 
@@ -1827,13 +1831,13 @@ msgstr ""
 
 #: rsvpmaker-email.php:1450
 #: rsvpmaker-email.php:1486
-#: rsvpmaker-email.php:2392
+#: rsvpmaker-email.php:2391
 msgid "<div class=\"rsvpexplain\">This message was sent to you as a follow up to your registration for"
 msgstr ""
 
 #: rsvpmaker-email.php:1451
 #: rsvpmaker-email.php:1487
-#: rsvpmaker-email.php:2393
+#: rsvpmaker-email.php:2392
 msgid "This message was sent to you as a follow up to your registration for"
 msgstr ""
 
@@ -1994,7 +1998,7 @@ msgid "Email Template"
 msgstr ""
 
 #: rsvpmaker-email.php:2037
-#: rsvpmaker-email.php:2779
+#: rsvpmaker-email.php:2778
 msgid "Notification Templates"
 msgstr ""
 
@@ -2044,43 +2048,43 @@ msgstr ""
 msgid "Email Based on Post"
 msgstr ""
 
-#: rsvpmaker-email.php:2585
+#: rsvpmaker-email.php:2584
 msgid "Send RSVP Email"
 msgstr ""
 
-#: rsvpmaker-email.php:2657
+#: rsvpmaker-email.php:2656
 msgid "From the Blog"
 msgstr ""
 
-#: rsvpmaker-email.php:2728
+#: rsvpmaker-email.php:2727
 msgid "Unsubscribed from website email lists"
 msgstr ""
 
-#: rsvpmaker-email.php:2740
+#: rsvpmaker-email.php:2739
 msgid "Unsubscribed from MailChimp email list"
 msgstr ""
 
-#: rsvpmaker-email.php:2745
+#: rsvpmaker-email.php:2744
 msgid "Error attempting to unsubscribe from MailChimp email list"
 msgstr ""
 
-#: rsvpmaker-email.php:2750
+#: rsvpmaker-email.php:2749
 msgid "unsubscribed"
 msgstr ""
 
-#: rsvpmaker-email.php:2761
+#: rsvpmaker-email.php:2760
 msgid "Unsubscribe"
 msgstr ""
 
-#: rsvpmaker-email.php:2766
+#: rsvpmaker-email.php:2765
 msgid "Continue to"
 msgstr ""
 
-#: rsvpmaker-email.php:2793
+#: rsvpmaker-email.php:2792
 msgid "RSVP Update"
 msgstr ""
 
-#: rsvpmaker-email.php:2832
+#: rsvpmaker-email.php:2831
 msgid "RSVPMaker template placeholders:<br />[rsvpyesno] YES/NO<br />[rsvptitle] event post title<br />[rsvpdate] event date<br />[rsvpmessage] the message you supplied when you created/edited the event (default is Thank you!)<br />[rsvpdetails] information supplied by attendee<br />[rsvpupdate] button users can click on to update their RSVP<br />[rsvpcount] number of people registered<br />[event_title_link] a link to the event, with the event title and date/time"
 msgstr ""
 
@@ -2424,6 +2428,7 @@ msgstr ""
 
 #: rsvpmaker-plugabble.php:1773
 #: rsvpmaker-plugabble.php:2757
+#: rsvpmaker-stripe.php:85
 #: gutenberg/src/block/form-wrapper.js:85
 msgid "Amount"
 msgstr ""
@@ -2904,15 +2909,43 @@ msgstr ""
 msgid "When you register for an event managed with the RSVPMaker plugin, your name, email, and any other information you choose to supply to a database on the website and associated with that event. RSVPMaker does not collect other technical information such as IP address or location. It does attempt to add cookie files that make it easier for individuals to update their event registrations."
 msgstr ""
 
-#: rsvpmaker-stripe.php:66
-msgid "Stripe is in TEST mode. To simulate a transaction, use:<br />Credit card 4111 1111 1111 1111<br />Any future date<br />Any three digit code."
+#: rsvpmaker-stripe.php:27
+msgid "charge from"
 msgstr ""
 
-#: rsvpmaker-stripe.php:432
-msgid "Set Amount"
+#: rsvpmaker-stripe.php:102
+msgid "No pending payment found for"
 msgstr ""
 
-#: rsvpmaker-stripe.php:600
+#: rsvpmaker-stripe.php:134
+msgid "Pay"
+msgstr ""
+
+#: rsvpmaker-stripe.php:162
+msgid "Your Name Here"
+msgstr ""
+
+#: rsvpmaker-stripe.php:174
+msgid "Stripe is in TEST mode. To simulate a transaction, use:<br />Credit card 4111 1111 1111 1111<br />Any future date<br />Any three digit CVC code<br />Any 5-digit postal code"
+msgstr ""
+
+#: rsvpmaker-stripe.php:216
+msgid "Please wait"
+msgstr ""
+
+#: rsvpmaker-stripe.php:236
+msgid "Recording payment"
+msgstr ""
+
+#: rsvpmaker-stripe.php:248
+msgid "Payment processed, but may not have been recorded correctly"
+msgstr ""
+
+#: rsvpmaker-stripe.php:250
+msgid "Payment processed for"
+msgstr ""
+
+#: rsvpmaker-stripe.php:333
 msgid "RSVPMaker Stripe Report"
 msgstr ""
 
@@ -3136,82 +3169,70 @@ msgid "Dues schedule"
 msgstr ""
 
 #: gutenberg/src/block/block.js:569
-msgid "Subscription, yearly"
-msgstr ""
-
-#: gutenberg/src/block/block.js:570
-msgid "Subscription, every 6 months"
-msgstr ""
-
-#: gutenberg/src/block/block.js:571
-msgid "Subscription, monthly"
-msgstr ""
-
-#: gutenberg/src/block/block.js:572
 msgid "Donation"
 msgstr ""
 
-#: gutenberg/src/block/block.js:578
+#: gutenberg/src/block/block.js:575
 msgid "Fee"
 msgstr ""
 
-#: gutenberg/src/block/block.js:587
+#: gutenberg/src/block/block.js:584
 msgid "January"
 msgstr ""
 
-#: gutenberg/src/block/block.js:592
+#: gutenberg/src/block/block.js:589
 msgid "February"
 msgstr ""
 
-#: gutenberg/src/block/block.js:597
+#: gutenberg/src/block/block.js:594
 msgid "March"
 msgstr ""
 
-#: gutenberg/src/block/block.js:602
+#: gutenberg/src/block/block.js:599
 msgid "April"
 msgstr ""
 
-#: gutenberg/src/block/block.js:607
+#: gutenberg/src/block/block.js:604
 msgid "May"
 msgstr ""
 
-#: gutenberg/src/block/block.js:612
+#: gutenberg/src/block/block.js:609
 msgid "June"
 msgstr ""
 
-#: gutenberg/src/block/block.js:617
+#: gutenberg/src/block/block.js:614
 msgid "July"
 msgstr ""
 
-#: gutenberg/src/block/block.js:622
+#: gutenberg/src/block/block.js:619
 msgid "August"
 msgstr ""
 
-#: gutenberg/src/block/block.js:627
+#: gutenberg/src/block/block.js:624
 msgid "September"
 msgstr ""
 
-#: gutenberg/src/block/block.js:632
+#: gutenberg/src/block/block.js:629
 msgid "October"
 msgstr ""
 
-#: gutenberg/src/block/block.js:637
+#: gutenberg/src/block/block.js:634
 msgid "November"
 msgstr ""
 
-#: gutenberg/src/block/block.js:642
+#: gutenberg/src/block/block.js:639
 msgid "December"
 msgstr ""
 
-#: gutenberg/src/block/block.js:725
+#: gutenberg/src/block/block.js:722
 msgid "Text"
 msgstr ""
 
-#: gutenberg/src/block/block.js:804
+#: gutenberg/src/block/block.js:801
 msgid "JSON API url"
 msgstr ""
 
-#: gutenberg/src/block/block.js:815
+#: gutenberg/src/block/block.js:812
 msgid "Link URL for more results (optional)"
 msgstr ""
 

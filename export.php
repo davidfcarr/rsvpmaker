@@ -109,10 +109,10 @@ function rsvpmaker_export_wp( $args = array() ) {
 			$where .= $wpdb->prepare( " AND {$wpdb->posts}.post_author = %d", $args['author'] );
 
 		if ( $args['start_date'] )
-			$where .= $wpdb->prepare( " AND {$wpdb->posts}.post_date >= %s", date( 'Y-m-d', strtotime($args['start_date']) ) );
+			$where .= $wpdb->prepare( " AND {$wpdb->posts}.post_date >= %s", date( 'Y-m-d', rsvpmaker_strtotime($args['start_date']) ) );
 
 		if ( $args['end_date'] )
-			$where .= $wpdb->prepare( " AND {$wpdb->posts}.post_date < %s", date( 'Y-m-d', strtotime('+1 month', strtotime($args['end_date'])) ) );
+			$where .= $wpdb->prepare( " AND {$wpdb->posts}.post_date < %s", date( 'Y-m-d', rsvpmaker_strtotime('+1 month', rsvpmaker_strtotime($args['end_date'])) ) );
 	}
 
 	// Grab a snapshot of post IDs, just in case it changes during the export.
@@ -303,7 +303,7 @@ foreach($events as $event)
 		global $wpdb;
 
 		$termmeta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->termmeta WHERE term_id = %d", $term->term_id ) );
-
+		if(!empty($termmeta) && is_array($termmeta))
 		foreach ( $termmeta as $meta ) {
 			/**
 			 * Filters whether to selectively skip term meta used for WXR exports.
@@ -344,11 +344,12 @@ foreach($events as $event)
 
 		$authors = array();
 		$results = $wpdb->get_results( "SELECT DISTINCT post_author FROM $wpdb->posts WHERE post_status != 'auto-draft' $and" );
-		foreach ( (array) $results as $result )
+		if(!empty($results) && is_array($results))
+		foreach ( $results as $result )
 			$authors[] = get_userdata( $result->post_author );
 
 		$authors = array_filter( $authors );
-
+		if(!empty($authors) && is_array($authors))
 		foreach ( $authors as $author ) {
 			echo "\t<wp:author>";
 			echo '<wp:author_id>' . intval( $author->ID ) . '</wp:author_id>';
@@ -370,7 +371,7 @@ foreach($events as $event)
 		$nav_menus = wp_get_nav_menus();
 		if ( empty( $nav_menus ) || ! is_array( $nav_menus ) )
 			return;
-
+		if(!empty($nav_menus) && is_array($nav_menus))
 		foreach ( $nav_menus as $menu ) {
 			echo "\t<wp:term>";
 			echo '<wp:term_id>' . intval( $menu->term_id ) . '</wp:term_id>';
@@ -393,7 +394,7 @@ foreach($events as $event)
 		if ( empty( $taxonomies ) )
 			return;
 		$terms = wp_get_object_terms( $post->ID, $taxonomies );
-
+		if($terms)
 		foreach ( (array) $terms as $term ) {
 			echo "\t\t<category domain=\"{$term->taxonomy}\" nicename=\"{$term->slug}\">" . wxr_cdata( $term->name ) . "</category>\n";
 		}
@@ -459,7 +460,7 @@ if($filecount == 1)
 {
 	wxr_authors_list( $post_ids ); ?>
 
-<?php foreach ( $cats as $c ) : ?>
+<?php if($cats && is_array($cats)) foreach ( $cats as $c ) : ?>
 	<wp:category>
 		<wp:term_id><?php echo intval( $c->term_id ); ?></wp:term_id>
 		<wp:category_nicename><?php echo wxr_cdata( $c->slug ); ?></wp:category_nicename>
@@ -469,7 +470,7 @@ if($filecount == 1)
 		wxr_term_meta( $c ); ?>
 	</wp:category>
 <?php endforeach; ?>
-<?php foreach ( $tags as $t ) : ?>
+<?php if($tags && is_array($tags)) foreach ( $tags as $t ) : ?>
 	<wp:tag>
 		<wp:term_id><?php echo intval( $t->term_id ); ?></wp:term_id>
 		<wp:tag_slug><?php echo wxr_cdata( $t->slug ); ?></wp:tag_slug>
@@ -478,7 +479,7 @@ if($filecount == 1)
 		wxr_term_meta( $t ); ?>
 	</wp:tag>
 <?php endforeach; ?>
-<?php foreach ( $terms as $t ) : ?>
+<?php if($terms && is_array($terms)) foreach ( $terms as $t ) : ?>
 	<wp:term>
 		<wp:term_id><?php echo wxr_cdata( $t->term_id ); ?></wp:term_id>
 		<wp:term_taxonomy><?php echo wxr_cdata( $t->taxonomy ); ?></wp:term_taxonomy>
@@ -513,6 +514,7 @@ if($filecount == 1)
 	$posts = $wpdb->get_results( "SELECT * FROM {$wpdb->posts} $where" );
 
 	// Begin Loop.
+	if($posts && is_array($posts))
 	foreach ( $posts as $post ) {
 		setup_postdata( $post );
 		$is_sticky = is_sticky( $post->ID ) ? 1 : 0;
@@ -567,6 +569,7 @@ if($filecount == 1)
 <?php 	endif; ?>
 <?php 	wxr_post_taxonomy(); ?>
 <?php	$postmeta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE post_id = %d", $post->ID ) );
+		if($postmeta)
 		foreach ( $postmeta as $meta ) :
 			/**
 			 * Filters whether to selectively skip post meta used for WXR exports.
@@ -591,6 +594,7 @@ if($filecount == 1)
 
 		$_comments = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_approved <> 'spam'", $post->ID ) );
 		$comments = array_map( 'get_comment', $_comments );
+		if($comments)
 		foreach ( $comments as $c ) : ?>
 		<wp:comment>
 			<wp:comment_id><?php echo intval( $c->comment_ID ); ?></wp:comment_id>
@@ -606,6 +610,7 @@ if($filecount == 1)
 			<wp:comment_parent><?php echo intval( $c->comment_parent ); ?></wp:comment_parent>
 			<wp:comment_user_id><?php echo intval( $c->user_id ); ?></wp:comment_user_id>
 <?php		$c_meta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->commentmeta WHERE comment_id = %d", $c->comment_ID ) );
+			if($c_meta)
 			foreach ( $c_meta as $meta ) :
 				/**
 				 * Filters whether to selectively skip comment meta used for WXR exports.

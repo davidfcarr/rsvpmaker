@@ -72,6 +72,7 @@ if($_POST)
 	}
 
 $results = $wpdb->get_results("SHOW TABLES",ARRAY_N);
+if(!empty($results) && is_array($results))
 foreach($results as $row)
 	{
 	if(strpos($row[0],'_rsvp') )

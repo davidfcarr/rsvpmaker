@@ -93,6 +93,8 @@ add_action('wp_ajax_rsvpmaker_paypal_config','rsvpmaker_paypal_config_ajax');
 add_action('wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
 add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 
+add_action('wp_login','rsvpmaker_data_check');
+
 function rsvpmaker_init_router () {
 if(isset($_REQUEST['rsvp_email_lookup']))
 	ajax_rsvp_email_lookup();

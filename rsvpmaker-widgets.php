@@ -39,7 +39,7 @@ class CPEventsWidget extends WP_Widget {
 					{
 						if(!empty($datestr))
 							$datestr .= ', ';
-						$datestr .= date($dateformat,strtotime($date["datetime"]));
+						$datestr .= rsvpmaker_date($dateformat,rsvpmaker_strtotime($date["datetime"]));
 					}
 				printf('<li><a href="%s">%s</a> - %s</li>',$event['permalink'],$event['title'],$datestr);
 					
@@ -84,7 +84,7 @@ $tax_terms = get_terms('rsvpmaker-type');
 ?>
 <select class="widefat" id="<?php echo $this->get_field_id('event_type');?>" name="<?php echo $this->get_field_name('event_type');?>" ><option value=""><?php _e('All','rsvpmaker'); ?></option>
 <?php
-if(!empty($tax_terms))
+if(is_array($tax_terms))
 	{
 		foreach ($tax_terms as $tax_term) {
 		$s = ($tax_term->name == $event_type) ? ' selected="selected" ' : '';

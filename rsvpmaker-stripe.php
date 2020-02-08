@@ -1,6 +1,7 @@
 <?php
 
 function rsvpmaker_to_stripe ($rsvp) {
+rsvpmaker_debug_log('rsvpmaker_to_stripe');
 	global $post;
 	$vars['description'] = $post->post_title;
 	$vars['name'] = $rsvp['first'].' '.$rsvp['last'];
@@ -19,6 +20,7 @@ function rsvpmaker_to_stripe ($rsvp) {
 
 //called from Gutenberg init
 function rsvpmaker_stripecharge ($atts) {
+	rsvpmaker_debug_log('rsvpmaker_stripecharge');
 	if(is_admin())
 	return;
 
@@ -54,15 +56,23 @@ return rsvpmaker_stripe_form($vars, $show);
 //return rsvpmaker_stripe_form($vars,$show);
 }
 
+//global variable to prevent loops
+$rsvpmaker_stripe_form = '';
+
 function rsvpmaker_stripe_form($vars, $show = false) {
-global $post, $rsvp_options, $current_user, $button;
+rsvpmaker_debug_log('rsvpmaker_stripe_form');
+global $post, $rsvp_options, $current_user, $button, $rsvpmaker_stripe_form, $wpdb;
+//if(!empty($rsvpmaker_stripe_form))
+	//return $rsvpmaker_stripe_form;
 if(!$show)
 	$show =(!empty($vars['showdescription']) && ($vars['showdescription'] == 'yes')) ? true : false;
 $currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp_options['paypal_currency']);
 $vars['currency'] = $currency;
 
-$rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
-if(empty($rsvpmaker_stripe_checkout_page_id) || empty(get_post($rsvpmaker_stripe_checkout_page_id) ) || isset($_GET['reset_stripe_checkout_page'])) {
+//$rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
+$rsvpmaker_stripe_checkout_page_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' ");
+if(empty($rsvpmaker_stripe_checkout_page_id)) {// || isset($_GET['reset_stripe_checkout_page'])) {
+	rsvpmaker_debug_log($rsvpmaker_stripe_checkout_page_id,'attempting rsvpmaker_stripe_checkout_page_id');
 	$postvar['post_content'] = '<!-- wp:shortcode -->
 	[rsvpmaker_stripe_checkout]
 	<!-- /wp:shortcode -->
@@ -74,25 +84,29 @@ if(empty($rsvpmaker_stripe_checkout_page_id) || empty(get_post($rsvpmaker_stripe
 	$postvar['post_title'] = 'Payment';
 	$postvar['post_status'] = 'publish';
 	$postvar['post_author'] = 1;
-	$postvar['post_type'] = 'page';
+	$postvar['post_type'] = 'rsvpmaker';
 	$rsvpmaker_stripe_checkout_page_id = wp_insert_post($postvar);
-	update_option('rsvpmaker_stripe_checkout_page_id',$rsvpmaker_stripe_checkout_page_id);
+	update_post_meta($rsvpmaker_stripe_checkout_page_id,'_rsvpmaker_special','Payment checkout page for Stripe');
+	rsvpmaker_debug_log($rsvpmaker_stripe_checkout_page_id,'new checkout page');
+	//update_option('rsvpmaker_stripe_checkout_page_id',$rsvpmaker_stripe_checkout_page_id);
 }
 $idempotency_key = 'stripe_'.time().'_'.rand(0,100000000000);
 update_option($idempotency_key,$vars);
 $url = get_permalink($rsvpmaker_stripe_checkout_page_id);
-if($vars['paymentType'] == 'donation')
+if(isset($vars['paymentType']) && ( $vars['paymentType'] == 'donation'))
 	$output = sprintf('<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,__('Amount','rsvpmaker'),strtoupper($vars['currency']),$vars['amount'],$idempotency_key,__('Pay with Card'));
 else
 	$output = sprintf('<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,$idempotency_key,__('Pay with Card'));
 if($show)
 	$output .= sprintf('<p>%s%s %s<br />%s</p>',$prefix,$vars['amount'],$rsvp_options["paypal_currency"],$vars["description"]);
+$rsvpmaker_stripe_form = $output;
 return $output;
 }
 
 add_shortcode('rsvpmaker_stripe_checkout','rsvpmaker_stripe_checkout');
 
 function rsvpmaker_stripe_checkout() {
+rsvpmaker_debug_log('rsvpmaker_stripe_checkout');
 global $post, $rsvp_options, $current_user;
 ob_start();
 $idempotency_key = $_GET['txid'];
@@ -133,13 +147,17 @@ elseif($vars['currency'] == 'eur')
 
 $paylabel = __('Pay','rsvpmaker') .' '. $currency_symbol.$vars['amount'].' '.strtoupper($vars['currency']);
 
+rsvpmaker_debug_log('stripe set apikey');
 \Stripe\Stripe::setApiKey($secret);
 
+rsvpmaker_debug_log('stripe set apikey');
 \Stripe\Stripe::setAppInfo(
   "WordPress RSVPMaker events management plugin",
   get_rsvpversion(),
   "https://rsvpmaker.com"
 );
+
+rsvpmaker_debug_log('call to PaymentIntent');
 
 $intent = \Stripe\PaymentIntent::create([
 	'amount' => $vars['amount'] * 100,
@@ -247,7 +265,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 			if(!myJson.name)			
 				cardResult.innerHTML = '<?php _e('Payment processed, but may not have been recorded correctly','rsvpmaker');?>';
 			else
-				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' '+myJson.amount+myJson.currency;
+				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase();
 		});
       }
     }
@@ -259,17 +277,21 @@ return ob_get_clean();
 }
 
 function rsvpmaker_stripe_payment_log($vars,$confkey) {
+	rsvpmaker_debug_log('');
+
 global $post, $current_user, $wpdb;
 fix_timezone();
-$vars['timestamp'] = date('r');
+$vars['timestamp'] = rsvpmaker_date('r');
 if(!empty($vars['email']))
 	rsvpmaker_stripe_notify($vars);
 $rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
 add_post_meta($rsvpmaker_stripe_checkout_page_id,'rsvpmaker_stripe_payment',$vars);
 do_action('rsvpmaker_stripe_payment',$vars);
+restore_timezone();
 }
 
 function rsvpmaker_stripe_notify($vars) {
+	rsvpmaker_debug_log('');
 	$keys = get_rsvpmaker_stripe_keys ();
 	$public = $keys['pk'];
 	$secret = $keys['sk'];
@@ -289,6 +311,7 @@ function rsvpmaker_stripe_notify($vars) {
 }
 
 function rsvpmaker_stripe_report () {
+	rsvpmaker_debug_log('');
 	echo '<h1>Stripe Charges</h1>';
 	
 	if(isset($_GET['history'])) {
@@ -298,6 +321,7 @@ function rsvpmaker_stripe_report () {
 	global $wpdb;
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvpmaker_stripe_payment' ORDER BY meta_id DESC";
 	$results = $wpdb->get_results($sql);
+	if(is_array($results))
 	foreach($results as $row) {
 		echo '<p>';
 		$payment = unserialize($row->meta_value);
@@ -308,6 +332,7 @@ function rsvpmaker_stripe_report () {
 }
 
 function stripe_balance_history () {
+	rsvpmaker_debug_log('call to stripe_balance_history');
 	require_once('stripe-php/init.php');
 
 	$keys = get_rsvpmaker_stripe_keys ();

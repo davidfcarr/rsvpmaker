@@ -7,13 +7,15 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 7.0.2
+Version: 7.1.7
 */
 function get_rsvpversion(){
-return '7.0.2';
+return '7.1.7';
 }
 
 global $wp_version;
+global $default_tz;
+$default_tz = date_default_timezone_get();
 
 if (version_compare($wp_version,"3.0","<"))
 	exit( __("RSVPmaker plugin requires WordPress 3.0 or greater",'rsvpmaker') );
@@ -72,16 +74,6 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 "stripe" => 0,
 "show_screen_recurring" => 0,
 "show_screen_multiple" => 0,
-"rsvp_form" => '<p><label>'.__('Email','rsvpmaker').':</label> [rsvpfield textfield="email" required="1"]</p>
-<p><label>'.__('First Name','rsvpmaker').':</label> [rsvpfield textfield="first" required="1"]</p>
-<p><label>'.__('Last Name','rsvpmaker').':</label> [rsvpfield textfield="last" required="1"]</p>
-[rsvpprofiletable show_if_empty="phone"]
-<p><label>'.__('Phone','rsvpmaker').':</label> [rsvpfield textfield="phone" size="20"]</p>
-<p><label>'.__('Phone Type','rsvpmaker').':</label> [rsvpfield selectfield="phone_type" options="Work Phone,Mobile Phone,Home Phone"]</p>
-[/rsvpprofiletable]
-[rsvpguests]
-<p>'.__('Note','rsvpmaker').':<br />
-<textarea name="note" cols="60" rows="2" id="note">[rsvpnote]</textarea></p>',
 "dashboard_message" => ''
 );
 
@@ -107,11 +99,54 @@ if(isset($rsvp_options["rsvp_to_current"]) && $rsvp_options["rsvp_to_current"] &
 	$rsvp_options["rsvp_to"] = $current_user->user_email;
 	}
 
-if(isset($_GET["reset_form"]))
-	{
-	$rsvp_options["rsvp_form"] = $rsvp_defaults["rsvp_form"];
-	update_option('RSVPMAKER_Options',$rsvp_options);
+if(empty($rsvp_options['rsvp_form']) || isset($_GET["reset_form"])) {
+	if(function_exists('do_blocks') && !class_exists('Classic_Editor')) {
+		$form = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone"} /-->
+<!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} /-->
+<!-- wp:rsvpmaker/guests -->
+<div class="wp-block-rsvpmaker-guests"><!-- wp:paragraph -->
+<p></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:rsvpmaker/guests -->
+<!-- wp:rsvpmaker/formnote /-->';
 	}
+	else {
+		$form = '<p><label>'.__('Email','rsvpmaker').':</label> [rsvpfield textfield="email" required="1"]</p>
+		<p><label>'.__('First Name','rsvpmaker').':</label> [rsvpfield textfield="first" required="1"]</p>
+		<p><label>'.__('Last Name','rsvpmaker').':</label> [rsvpfield textfield="last" required="1"]</p>
+		[rsvpprofiletable show_if_empty="phone"]
+		<p><label>'.__('Phone','rsvpmaker').':</label> [rsvpfield textfield="phone" size="20"]</p>
+		<p><label>'.__('Phone Type','rsvpmaker').':</label> [rsvpfield selectfield="phone_type" options="Work Phone,Mobile Phone,Home Phone"]</p>
+		[/rsvpprofiletable]
+		[rsvpguests]
+		<p>'.__('Note','rsvpmaker').':<br />
+		<textarea name="note" cols="60" rows="2" id="note">[rsvpnote]</textarea></p>';
+	}
+	$data['post_title'] = 'Form:Default';
+	$data['post_content'] = $form;
+	$data['post_status'] = 'publish';
+	$data['post_author'] = 1;
+	$data['post_type'] = 'rsvpmaker';
+	$rsvp_options['rsvp_form'] = wp_insert_post($data);
+	update_post_meta($rsvp_options['rsvp_form'],'_rsvpmaker_special','RSVP Form');
+	update_option('RSVPMAKER_Options',$rsvp_options);
+}
+elseif(!is_numeric($rsvp_options['rsvp_form']))
+	{
+		$data['post_title'] = 'Form:Default';
+		$data['post_content'] = $rsvp_options['rsvp_form'];
+		$data['post_status'] = 'publish';
+		$data['post_type'] = 'rsvpmaker';
+		$data['post_author'] = 1;
+		$rsvp_options['rsvp_form'] = wp_insert_post($data);
+		update_option('RSVPMAKER_Options',$rsvp_options);	
+	}
+
+$rsvp_defaults['rsvp_form'] = $rsvp_options['rsvp_form'];
+
 if(strpos($rsvp_options['rsvplink'],'*|EMAIL|*')) {
 	$rsvp_options['rsvplink'] = str_replace('?e=*|EMAIL|*#rsvpnow','',$rsvp_options['rsvplink']);
 	update_option('RSVPMAKER_Options',$rsvp_options);	
@@ -373,12 +408,6 @@ if(! $wpdb->get_var($sql) )
 $sql = "UPDATE $wpdb->posts SET post_type='rsvpemail' WHERE post_type='rsvpmaker' AND post_parent != 0 ";
 $wpdb->query($sql);
 
-if(empty($rsvp_options["dbversion"]) && function_exists('do_blocks'))
-	{
-	//if this is a new install and gutenberg editor is available
-	upgrade_rsvpform(false);
-	}
-
 $rsvp_options["dbversion"] = 13;
 update_option('RSVPMAKER_Options',$rsvp_options);
 }
@@ -432,14 +461,15 @@ function rsvp_firsttime () {
 	$rsvp_options["dbversion"] = 13;
 	update_option('RSVPMAKER_Options',$rsvp_options);
 	$future = get_future_events();
+	if(is_array($future))
 	foreach($future as $event) {
 		$post_id = $event->ID;
 		$datetime = get_rsvp_date($post_id);
 		$end = get_post_meta($post_id, '_end'.$datetime,true);
 		if(empty($end))
 			{
-				$t = strtotime($datetime . ' +1 hour');
-				$end = date('H:i',$t);
+				$t = rsvpmaker_strtotime($datetime . ' +1 hour');
+				$end = rsvpmaker_date('H:i',$t);
 			}
 		$duration = get_post_meta($post_id, '_'.$datetime,true);
 		update_post_meta($post_id,'_firsttime',$duration);
@@ -492,7 +522,7 @@ add_filter( 'single_template', 'rsvpmaker_template_order',99 );
 
 function log_paypal($message) {
 global $post;
-$ts = date('r');
+$ts = rsvpmaker_date('r');
 $invoice = $_SESSION["invoice"];
 $message .= "\n<br /><br />Post ID: ".$post->ID;
 $message .= "\n<br /><br />Invoice: ".$invoice;
@@ -529,20 +559,6 @@ else
 	
 }
 } // end function exists
-
-function fix_timezone($timezone = '' ) {
-global $post;
-if(empty($timezone))
-	$timezone = get_option('timezone_string');
-if(isset($post->ID))
-{
-	$post_tz = get_post_meta($post->ID,'_rsvp_timezone_string',true);
-	if(!empty($post_tz) && $post_tz != $timezone)
-		$timezone = $post_tz;
-}
-if(!empty($timezone) )
-	date_default_timezone_set($timezone);
-}
 
 function format_cddate($year,$month,$day,$hours,$minutes )
 {
@@ -601,8 +617,8 @@ add_post_meta($postID,'_rsvp_dates',$cddate);
 add_post_meta($postID,'_'.$slug,$duration);
 if(empty($end_time))
 {
-	$et = strtotime($cddate.' +1 hour');
-	$end_time = date('H:i',$et);
+	$et = rsvpmaker_strtotime($cddate.' +1 hour');
+	$end_time = rsvpmaker_date('H:i',$et);
 }
 add_post_meta($postID,'_end'.$slug,$end_time);
 }
@@ -851,7 +867,8 @@ function rsvpautog($content) {
 function clean_confirmations () {
     global $wpdb;
     $sql = "SELECT * FROM $wpdb->postmeta JOIN $wpdb->posts ON post_id = post_parent WHERE `meta_key` LIKE '_rsvp_dates' AND meta_value < '".get_sql_curdate()."' AND post_title LIKE 'Confirmation%'";
-    $results = $wpdb->get_results($sql);
+	$results = $wpdb->get_results($sql);
+	if(is_array($results))
     foreach($results as $row) 
         $wpdb->query("DELETE FROM $wpdb->posts WHERE ID=".$row->ID);
 }

@@ -204,6 +204,7 @@ else
 	if($cron["cron_members"] && ($rsvpmaker_cron_context == 2))
 		{
 		$users = get_users();
+		if(is_array($users))
 		foreach($users as $user)
 			{
 			$mail["to"] = $user->user_email;

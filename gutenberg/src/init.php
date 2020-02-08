@@ -39,13 +39,6 @@ function rsvpmaker_server_block_render(){
 }
 
 add_action( 'init', function(){
-	global $post;
-	if(isset($post->ID) && empty(get_post_meta($post->ID,'_endfirsttime',true)) && ($first = get_post_meta($post->ID,'_firsttime',true)) )
-		{
-			$et = strtotime($first.' +1 hour');
-			$end = date('H:i',$et);
-			update_post_meta($post->ID,'_endfirsttime',$end);
-		}
 	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'string',
@@ -56,13 +49,15 @@ add_action( 'init', function(){
 		}
 	);
 	register_meta( 'post', '_rsvp_dates', $args );
-	register_meta( 'post', '_firsttime', $args );
-	register_meta( 'post', '_endfirsttime', $args );
 	register_meta( 'post', '_rsvp_to', $args );
 	register_meta( 'post', '_rsvp_max', $args );
 	register_meta( 'post', '_rsvp_show_attendees', $args );
 	register_meta( 'post', '_rsvp_instructions', $args );
-	register_meta( 'post', '_sked', $args );
+	register_meta( 'post', 'simple_price', $args );
+	register_meta( 'post', 'simple_price_label', $args );
+	$date_fields = array('_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes');
+	foreach($date_fields as $field)
+		register_meta( 'post', $field, $args );
 	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'integer',
@@ -164,6 +159,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$template_msg = '';
 		$top_message = '';
 		$bottom_message= '';
+		$complex_pricing = rsvp_complex_price($post->ID);
+		$complex_template = get_post_meta($post->ID,'complex_template',true);
 
 		$sked = get_post_meta($post->ID,'_sked',true);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
@@ -191,11 +188,11 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$datecount = sizeof(get_rsvp_dates($post_id));
 	$end = get_post_meta($post_id,'_end'.$date,true);
 	if(empty($end))
-		$end = date('H:i',strtotime($date." +1 hour"));
+		$end = rsvpmaker_date('H:i',rsvpmaker_strtotime($date." +1 hour"));
 	$duration = '';
 	if(empty($date))
 	{
-	$date = date("Y-m-d H:i:s",strtotime('7 pm'));
+	$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
 	$sked = get_post_meta($post_id,'_sked',true);
 	if(empty($sked))
 		$sked = array();
@@ -206,8 +203,8 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 		$duration = get_post_meta($post_id,'_'.$date,true);
 		if(!empty($duration))
 		{
-			$diff = strtotime($duration) - strtotime($date);
-			$duration = date('H:i',$diff);
+			$diff = rsvpmaker_strtotime($duration) - rsvpmaker_strtotime($date);
+			$duration = rsvpmaker_date('H:i',$diff);
 		}
 	}
 
@@ -226,16 +223,16 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 		$form_id = (int) $rsvp_options['rsvp_form'];
 	$fpost = get_post($form_id);
 	//rsvpmaker_debug_log($form_id);
-	$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$postID);
+	$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$post->ID);
 	$form_customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
 	$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
 	$note = (strpos($fpost->post_content,'name="note"') || strpos($fpost->post_content,'formnote')) ? 'Yes' : 'No';
 	preg_match_all('/\[([A-Za-z0_9_]+)/',$fpost->post_content,$matches);
-	if(!empty($matches))
+	if(!empty($matches[1]))
 	foreach($matches[1] as $match)
 		$fields[$match] = $match;
 	preg_match_all('/"slug":"([^"]+)/',$fpost->post_content,$matches);
-	if(!empty($matches))
+	if(!empty($matches[1]))
 	foreach($matches[1] as $match)
 		$fields[$match] = $match;	
 	$merged_fields = (empty($fields)) ? '' : implode(', ',$fields);
@@ -248,6 +245,7 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	elseif($fpost->post_parent != $post->ID)
 		$form_type = __('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 	$email_templates_array = get_rsvpmaker_email_template();
+	if($email_templates_array)
 	foreach($email_templates_array as $index => $template) {
 		if($index > 0)
 		$confirmation_email_templates[] = array('label' => $template['slug'], 'value' => $index);
@@ -273,7 +271,7 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 			'top_message' => $top_message,
 			'bottom_message' => $bottom_message,
 			'confirmation_excerpt' => $excerpt,
-			'confirmation_edit' => admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$postID),
+			'confirmation_edit' => admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post->ID),
 			'confirmation_customize' => admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation'),
 			'reminders' => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
 			'confirmation_type' => $confirmation_type,
@@ -284,6 +282,8 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 			'form_customize' => $form_customize,
 			'form_type' => $form_type,
 			'form_edit_post' => $form_edit_post,			
+			'complex_pricing' => $complex_pricing,		
+			'complex_template' => $complex_template,
 			)
 	);
 
@@ -339,16 +339,19 @@ function rsvpmaker_limited_time ($atts, $content) {
 	if(!empty($atts['start_on']) && !empty($atts['start']))
 	{
 	//test to see if we're before the start time
-	$start = strtotime($atts['start']);
+	$start = rsvpmaker_strtotime($atts['start']);
 	if(isset($_GET['debug']))
 		$debug .= sprintf('<p>Start time %s = %s, now = %s</p>',$atts['start'],$start,$now);
 	if($now < $start)
+		{
+		restore_timezone();
 		return $debug;
+		}
 	}
 	if(!empty($atts['end_on']) && !empty($atts['end']))
 	{
 	//test to see if we're past the end time
-	$end = strtotime($atts['end']);
+	$end = rsvpmaker_strtotime($atts['end']);
 	$pattern = '/<!-- wp:rsvpmaker\/limited.+"end":"'.$atts["end"].'".+(\/wp:rsvpmaker\/limited -->)/sU';
 	if(isset($_GET['debug']))
 	{
@@ -370,9 +373,11 @@ function rsvpmaker_limited_time ($atts, $content) {
 		else
 			$debug .= 'Preg replace came back empty';
 		}
+		restore_timezone();
 		return $debug;
 	}
 		
 	}
+restore_timezone();
 return $content.$debug;
 }

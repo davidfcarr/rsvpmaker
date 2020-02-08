@@ -25,7 +25,7 @@ return;
 	$options = '<option value="">Pick a Saved Location</option>';;
 	$sql = "SELECT ID,post_title from $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvpmaker_special' AND meta_value='Location' AND (post_status='publish' OR post_status='draft') ORDER BY post_title ";
 	$results = $wpdb->get_results($sql);
-	if($results) {
+	if(is_array($results)) {
 		foreach($results as $row)
 		{
 			$options .= sprintf('<option value="%s">%s</option>',$row->ID,$row->post_title);

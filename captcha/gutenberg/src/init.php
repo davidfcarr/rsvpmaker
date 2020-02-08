@@ -106,7 +106,7 @@ $post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$end_time = $duration = '';
 	if(empty($date))
 	{
-	$date = date("Y-m-d H:i:s",strtotime('7 pm'));
+	$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
 	$sked = get_post_meta($post_id,'_sked',true);
 	if(empty($sked))
 		$sked = array();

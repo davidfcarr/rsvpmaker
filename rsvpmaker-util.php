@@ -1,13 +1,71 @@
 <?php
 
+function fix_timezone($timezone = '' ) {
+	global $post;
+	if(empty($timezone))
+		$timezone = get_option('timezone_string');
+	if(isset($post->ID))
+	{
+		$post_tz = get_post_meta($post->ID,'_rsvp_timezone_string',true);
+		if(!empty($post_tz) && $post_tz != $timezone)
+			$timezone = $post_tz;
+	}
+	if(!empty($timezone) )
+		date_default_timezone_set($timezone);
+}
+	
+function restore_timezone() {
+	global $default_tz;
+	date_default_timezone_set($default_tz);
+}	
+
+function rsvpmaker_rsvpmaker_strtotime($string) {
+	fix_timezone();
+	$t = rsvpmaker_strtotime($string);
+	restore_timezone();
+	return $t;
+}
+
+function rsvpmaker_rsvpmaker_strftime($date_format = '', $t = NULL) {
+	fix_timezone();
+	global $rsvp_options;
+	if(empty($date_format))
+		$date_format = $rsvp_options['long_date'];
+	if(empty($t))
+		$t = time();
+	if(!is_int($t))
+		$t = rsvpmaker_strtotime($t);
+	$output = rsvpmaker_strftime($date_format, $t);
+	restore_timezone();
+	return $output;
+}
+
+function rsvpmaker_date($date_format = '', $t = NULL) {
+	fix_timezone();
+	global $rsvp_options;
+	if(empty($date_format))
+		$date_format = $rsvp_options['long_date'];
+	if(empty($t))
+		$t = time();
+	if(!is_int($t))
+		$t = rsvpmaker_strtotime($t);
+	$output = date($date_format, $t);
+	restore_timezone();
+	return $output;
+}
+
 function get_sql_now() {
 	fix_timezone();
-	return date('Y-m-d H:i:s');
+	$date = rsvpmaker_date('Y-m-d H:i:s');
+	restore_timezone(); 
+	return $date;
 }
 
 function get_sql_curdate() {
 	fix_timezone();
-	return date('Y-m-d H:i:s');
+	$date = rsvpmaker_date('Y-m-d 00:00:00');
+	restore_timezone(); 
+	return $date;
 }
 
 function get_rsvp_date($post_id)
@@ -58,17 +116,17 @@ echo '</select>';
 
 if(empty($end_time) && !empty($start_time))
 	{
-		$t = strtotime($start_time.' +1 hour');
-		$defaulthour = date('H',$t);
-		$defaultmin = date('i',$t);
+		$t = rsvpmaker_strtotime($start_time.' +1 hour');
+		$defaulthour = rsvpmaker_date('H',$t);
+		$defaultmin = rsvpmaker_date('i',$t);
 	}
 else {
 	if(empty($end_time))
 	{
 		$start_time = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
-		$t = strtotime($start_time.' +1 hour');
-		$defaulthour = date('H',$t);
-		$defaultmin = date('i',$t);
+		$t = rsvpmaker_strtotime($start_time.' +1 hour');
+		$defaulthour = rsvpmaker_date('H',$t);
+		$defaultmin = rsvpmaker_date('i',$t);
 	}
 	else {
 		$p = explode(':',$end_time);
@@ -143,8 +201,8 @@ foreach($results as $index => $row)
 	$drow["datetime"] = $datetime;
 	$rsvpdates[$post_id][] = $datetime;
 	$slug = ($index == 0) ? 'firsttime' : $datetime;
-	rsvpmaker_debug_log($index,'get_rsvp_dates db index');
-	rsvpmaker_debug_log($slug,'get_rsvp_dates db slug');
+	//rsvpmaker_debug_log($index,'get_rsvp_dates db index');
+	//rsvpmaker_debug_log($slug,'get_rsvp_dates db slug');
 	$drow["duration"] = get_post_meta($post_id,'_'.$slug, true);
 	$drow["end_time"] = get_post_meta($post_id,'_end'.$slug, true);
 if($obj)
@@ -302,7 +360,7 @@ $wpdb->show_errors();
 
 function count_recent_posts($blog_weeks_ago = 1) {
 global $wpdb;
-	$week_ago_stamp = strtotime('-'.$blog_weeks_ago.' week');
+	$week_ago_stamp = rsvpmaker_strtotime('-'.$blog_weeks_ago.' week');
 	$week_ago = date('Y-m-d H:i:s',$week_ago_stamp);
     $where = " AND post_date > '" . $week_ago . "'";
 $wpdb->show_errors();
@@ -334,19 +392,21 @@ $wpdb->show_errors();
 function get_events_dropdown () {
 $options = '<optgroup label="'.__('Future Events','rsvpmaker').'">'."\n";
 $future = get_future_events();
+if(is_array($future))
 foreach($future as $event)
 	{
 	if(get_post_meta($event->ID,'_rsvp_on',true))
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',strtotime($event->datetime)));
+	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 	}
 $options .= "<optiongroup>"."\n";
 
 $options .= '<optgroup label="'.__('Recent Events','rsvpmaker').'">'."\n";
 $past = get_past_events('',50);
+if(is_array($past))
 foreach($past as $event)
 	{
 	if(get_post_meta($event->ID,'_rsvp_on',true))
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',strtotime($event->datetime)));
+	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 	}
 $options .= "<optiongroup>"."\n";
 return $options;
@@ -401,54 +461,6 @@ foreach($results as $row) {
 	$rsvpdates[$row->post_id][] = $row->meta_value;
 }
 set_transient('rsvpmakerdates',$rsvpdates, HOUR_IN_SECONDS); 
-}
-
-function rsvpmaker_cleanup () {
-	global $wpdb;
-?>
-<h1>RSVPMaker Cleanup</h1>
-<?php
-if(isset($_POST['older_than']))
-{
-$older = (int) $_POST['older_than'];
-if(!isset($_POST['confirm']))
-{
-?>
-<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
-<input type="hidden" name="confirm" value="1" />
-<input type="hidden" name="older_than" value="<?php echo $older; ?>" /> 
-<?php submit_button('Confirm Delete') ?>
-</form>
-<div>Preview</div>
-<?php	
-}
-	$sql = "SELECT DISTINCT ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(a1.meta_value,'%M %e, %Y') as date
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-	 WHERE a1.meta_value < DATE_SUB('".get_sql_now()."',INTERVAL $older DAY) AND (post_status='publish' OR post_status='draft') ";
-	//echo $sql;
-	$results = $wpdb->get_results($sql);
-	foreach($results as $event)
-	{
-		$deleted = '';
-		if(isset($_POST['confirm']))
-		{
-			wp_delete_post($event->ID,true);
-			$deleted = '<span style="color:red">Deleted</span> ';
-		}
-		printf('<div>%s %s %s</div>',$deleted,$event->post_title,$event->date);
-	}
-}
-if(!isset($_POST['older_than']))
-{
-?>
-<p>Use this tool to clean up old events.</p>
-<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
-Delete events older than <input type="text" name="older_than" value="30" /> days 
-<?php submit_button('Delete') ?>
-</form>
-<?php
-}//end initial form
 }
 
 function get_rsvpmaker_payment_gateway () {
@@ -541,4 +553,511 @@ function rsvpmaker_inliner($content) {
 }
 	
 }
+
+function rsvpmaker_is_post_meta($post_id,$field) {
+	global $wpdb;
+	return $wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE meta_key ='".$field."' AND post_id=".$post_id);
+}
+
+// a data integrity check run on wp_login. prevents null values from being passed to Gutenberg
+function rsvpmaker_data_check() {
+	global $rsvp_options, $wpdb;
+	$last_data_check = (int) get_option('rsvpmaker_last_data_check2');
+	$last_data_check = 0;
+	if($last_data_check > time())
+		{
+			rsvpmaker_debug_log($last_data_check,'stopping rsvpmaker_data_check');
+			return;
+		}
+	rsvpmaker_debug_log($last_data_check,'running rsvpmaker_data_check');
+	update_option('rsvpmaker_last_data_check2',rsvpmaker_strtotime('+1 week'));
+	$wpdb->query("UPDATE $wpdb->postmeta SET meta_value=1 WHERE meta_key='_rsvp_rsvpmaker_send_confirmation_email' AND meta_value='on' ");
+	$wpdb->query("UPDATE $wpdb->posts SET post_type='rsvpmaker' WHERE post_title LIKE 'Form:%' AND post_type='post' ");
+	$missing = 0;
+	$found = 0;
+
+	$defaults = array( 
+		"calendar_icons" => "_calendar_icons",
+		"rsvp_to" => "_rsvp_to",
+		"rsvp_confirm" => "_rsvp_confirm", 
+		"rsvpmaker_send_confirmation_email" => "_rsvp_rsvpmaker_send_confirmation_email",
+		"confirmation_include_event" => "_rsvp_confirmation_include_event",
+		"rsvp_instructions" => "_rsvp_instructions",
+		"rsvp_count" => "_rsvp_count", 
+		"rsvp_count_party" => "_rsvp_count_party", 
+		"rsvp_yesno" => "_rsvp_yesno", 
+		"rsvp_max" => "_rsvp_max",
+		"login_required" => "_rsvp_login_required",
+		"rsvp_captcha" => "_rsvp_captcha",
+		"show_attendees" => "_rsvp_show_attendees",
+		'convert_timezone' => '_convert_timezone',
+		'add_timezone' => '_add_timezone',
+		"rsvp_form" => "_rsvp_form"
+		);
+		$future = get_future_events();
+		if(!empty($future) && is_array($future))
+		foreach ($future as $post)
+			$postlist[] = $post->ID;
+		if($templates)
+		$templates = rsvpmaker_get_templates();
+		if($templates)
+		foreach ($templates as $post)
+			$postlist[] = $post->ID;
+		$allones = false;
+		$missingfields = '';
+	if(isset($postlist))
+	foreach ($postlist as $post_id) {
+		foreach($defaults as $index => $field) {
+			$val = get_post_meta($post_id,$field,true);
+			if(!rsvpmaker_is_post_meta($post_id,$field))
+			{
+				update_post_meta($post_id,$field,$rsvp_options[$index]);
+				$missingfields .= $post_id.' missing: '.$field.', ';
+				$missing++;
+			}
+			if(($field == '_rsvp_to') && is_numeric($val))
+				$allones = true;
+			else
+				$found++;
+			if(($val != 1) && ($val != '1'))
+				$allones = false;
+		}
+		//delete_post_meta($post_id,'_sked'); // events should not have a templates schedule
+		$form = get_post_meta($post_id,'_rsvp_form',true);
+		if(!empty($form) && !is_numeric($form))
+		{
+			$data['post_title'] = 'Form:'.$post_id;
+			$data['post_content'] = $form;
+			$data['post_status'] = 'publish';
+			$data['post_type'] = 'rsvpmaker';
+			$data['post_author'] = $post->post_author;
+			$form_id = wp_insert_post($data);
+			update_post_meta($form_id,'_rsvpmaker_special','RSVP Form');
+			update_post_meta($post_id,'_rsvp_form',$form_id);
+			$missingfields .= ' fixed non numeric form';
+		}
+		if(!empty($missingfields))
+			rsvpmaker_debug_log($missingfields,$missing.' missing fields');
+	}
+	if($allones)
+		{
+			rsvpmaker_debug_log($allones,'allones = rsvpmaker_set_defaults_all');
+			rsvpmaker_set_defaults_all();
+		}
+}
+
+function rsvpmaker_set_defaults_all($display = false) {
+	global $rsvp_options, $wpdb;
+
+	$defaults = array( 
+		"calendar_icons" => "_calendar_icons",
+		"rsvp_to" => "_rsvp_to",
+		"rsvp_confirm" => "_rsvp_confirm", 
+		"rsvpmaker_send_confirmation_email" => "_rsvp_rsvpmaker_send_confirmation_email",
+		"confirmation_include_event" => "_rsvp_confirmation_include_event",
+		"rsvp_instructions" => "_rsvp_instructions",
+		"rsvp_count" => "_rsvp_count", 
+		"rsvp_count_party" => "_rsvp_count_party", 
+		"rsvp_yesno" => "_rsvp_yesno", 
+		"rsvp_max" => "_rsvp_max",
+		"login_required" => "_rsvp_login_required",
+		"rsvp_captcha" => "_rsvp_captcha",
+		"show_attendees" => "_rsvp_show_attendees",
+		'convert_timezone' => '_convert_timezone',
+		'add_timezone' => '_add_timezone',
+		"rsvp_form" => "_rsvp_form"
+		);
+		$postlist = array();
+		$future = get_future_events();
+		if($future)
+		foreach ($future as $post)
+			$postlist[] = $post->ID;
+		$templates = rsvpmaker_get_templates();
+		if($templates)
+		foreach ($templates as $post)
+			$postlist[] = $post->ID;
+	$output = '';
+	if($postlist)
+	foreach ($postlist as $post_index => $post_id) {
+		foreach($defaults as $index => $field) {
+			update_post_meta($post_id,$field,$rsvp_options[$index]);
+			if($display && ($post_index == 0))
+				$output .= '<div>'.$field.': '.$rsvp_options[$index].'</div>';
+		}
+	}
+	return $output;
+}
+
+function rsvpmaker_set_default_field($index, $display = false) {
+	global $rsvp_options, $wpdb;
+
+	$defaults = array( 
+		"calendar_icons" => "_calendar_icons",
+		"rsvp_to" => "_rsvp_to",
+		"rsvp_confirm" => "_rsvp_confirm", 
+		"rsvpmaker_send_confirmation_email" => "_rsvp_rsvpmaker_send_confirmation_email",
+		"confirmation_include_event" => "_rsvp_confirmation_include_event",
+		"rsvp_instructions" => "_rsvp_instructions",
+		"rsvp_count" => "_rsvp_count", 
+		"rsvp_count_party" => "_rsvp_count_party", 
+		"rsvp_yesno" => "_rsvp_yesno", 
+		"rsvp_max" => "_rsvp_max",
+		"login_required" => "_rsvp_login_required",
+		"rsvp_captcha" => "_rsvp_captcha",
+		"show_attendees" => "_rsvp_show_attendees",
+		'convert_timezone' => '_convert_timezone',
+		'add_timezone' => '_add_timezone',
+		"rsvp_form" => "_rsvp_form"
+		);
+		$postlist = array();
+		$future = get_future_events();
+		if($future)
+		foreach ($future as $post)
+			$postlist[] = $post->ID;
+		$templates = rsvpmaker_get_templates();
+		if($templates)
+		foreach ($templates as $post)
+			$postlist[] = $post->ID;
+	$output = '';
+	$field = $defaults[$index];
+	echo '<h3>Index/Field: '.$index.':'.$field.'</h3>';
+	if($postlist)
+	foreach ($postlist as $post_index => $post_id) {
+		update_post_meta($post_id,$field,$rsvp_options[$index]);
+		if($display && ($post_index == 0))
+			$output .= '<div>'.$field.': '.$rsvp_options[$index].'</div>';
+	}
+	return $output;
+}
+
+function rsvpmaker_cleanup () {
+	global $wpdb;
+	$defaults = array( 
+		"calendar_icons" => "_calendar_icons",
+		"rsvp_to" => "_rsvp_to",
+		"rsvp_confirm" => "_rsvp_confirm", 
+		"rsvpmaker_send_confirmation_email" => "_rsvp_rsvpmaker_send_confirmation_email",
+		"confirmation_include_event" => "_rsvp_confirmation_include_event",
+		"rsvp_instructions" => "_rsvp_instructions",
+		"rsvp_count" => "_rsvp_count", 
+		"rsvp_count_party" => "_rsvp_count_party", 
+		"rsvp_yesno" => "_rsvp_yesno", 
+		"rsvp_max" => "_rsvp_max",
+		"login_required" => "_rsvp_login_required",
+		"rsvp_captcha" => "_rsvp_captcha",
+		"show_attendees" => "_rsvp_show_attendees",
+		'convert_timezone' => '_convert_timezone',
+		'add_timezone' => '_add_timezone',
+		"rsvp_form" => "_rsvp_form"
+		);
+?>
+<h1>RSVPMaker Cleanup</h1>
+<?php
+
+if(isset($_POST['reset_defaults'])) {
+	$result = rsvpmaker_set_defaults_all(true);
+	echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events</p></div>';
+	echo $result;
+}
+if(isset($_POST['default_field'])) {
+	$result = '';
+	foreach($_POST['default_field'] as $field)
+		{
+			$result .= rsvpmaker_set_default_field($field,true);
+		}
+	echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events for fields shown below.</p></div>';
+	echo $result;
+}
+
+if(isset($_POST['older_than']))
+{
+$older = (int) $_POST['older_than'];
+if(!isset($_POST['confirm']))
+{
+?>
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+<input type="hidden" name="confirm" value="1" />
+<input type="hidden" name="older_than" value="<?php echo $older; ?>" /> 
+<?php submit_button('Confirm Delete') ?>
+</form>
+<div>Preview</div>
+<?php	
+}
+	$sql = "SELECT DISTINCT ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(a1.meta_value,'%M %e, %Y') as date
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 WHERE a1.meta_value < DATE_SUB('".get_sql_now()."',INTERVAL $older DAY) AND (post_status='publish' OR post_status='draft') ";
+	//echo $sql;
+	$results = $wpdb->get_results($sql);
+	if(is_array($results))
+	foreach($results as $event)
+	{
+		$deleted = '';
+		if(isset($_POST['confirm']))
+		{
+			wp_delete_post($event->ID,true);
+			$deleted = '<span style="color:red">Deleted</span> ';
+		}
+		printf('<div>%s %s %s</div>',$deleted,$event->post_title,$event->date);
+	}
+}
+if(!isset($_POST['older_than']))
+{
+?>
+<h2>Remove Past Events from Database</h2>
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+Delete events older than <input type="text" name="older_than" value="30" /> days 
+<?php submit_button('Delete') ?>
+</form>
+
+<h2>Apply Defaults</h2>
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+<p>Apply default values from the RSVPMaker Settings screen to all templates and future events</p>
+<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> All fields  </div>
+<?php 
+foreach($defaults as $index => $field)
+printf('<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>',$index,$field);
+?>
+<?php submit_button('Reset') ?>
+</form>
+<script>
+jQuery(document).ready(function( $ ) {
+$(document).on( 'click', '.default_field', function() {
+	$("#all").prop("checked", false);
+});
+
+});
+</script>
+
+
+<?php
+}//end initial form
+}
+
+function rsvp_simple_price($post_id) {
+	$per=get_post_meta($post_id,"_per",true);
+	$price = (empty($per['price'][0])) ? '' : $per['price'][0];
+	return $price;
+}
+	
+function rsvp_simple_price_label($post_id) {
+	$per = get_post_meta($post_id,'_per',true);
+	$label = (empty($per['unit'][0])) ? __('Tickets','rsvpmaker') : $per['unit'][0];
+	return $label;
+}
+
+function rsvp_complex_price($post_id) {
+	$per = get_post_meta($post_id,'_per',true);
+	if(empty($per))
+		return '';
+	$complexity = '';
+	$complex = false;
+	$labels = $prices = 0;
+	foreach($per as $index => $pricearray) {
+		//$complexity .= $index.': '.var_export($pricearray, true).', ';
+		if($index == 'unit')
+			$labels = sizeof($pricearray);
+		if($index == 'price')
+			{
+				$prices = sizeof($pricearray);
+				foreach($pricearray as $index => $price)
+					$complexity .= $per['unit'][$index].': '.$price.', ';
+			}
+	}
+	if(isset($per['price_deadline']))
+	{
+		$complex = true;
+		$complexity .= __('Pricing deadlines set in RSVP / Event Options','rsvpmaker').'. ';
+	}
+	if(isset($per['price_multiple']))
+	{
+		$complex = true;
+		$complexity .= __('Multiple admissions specified in RSVP / Event Options','rsvpmaker').'. ';
+	}
+
+	if($prices > 1)
+		$complex = true;
+	if(!$complex)
+		return '';
+	return $complexity;
+}
+
+function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
+	global $wpdb;
+	$content = '';
+	if($meta_key == 'simple_price')
+		$content = rsvp_simple_price($post_id);
+	if($meta_key == 'simple_price_label')
+		$content = rsvp_simple_price_label($post_id);
+	//fix for some older posts
+	$date_fields = array('_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
+	if(in_array($meta_key,$date_fields))
+		{
+			$datetime = get_rsvp_date($post_id);
+			$sked = get_post_meta($post_id,'_sked',true);
+			if($datetime) {
+				if($meta_key == '_firsttime')
+				{
+					$content = get_post_meta($post_id, '_'.$datetime,true);
+				}
+				elseif(is_admin() && ($meta_key == '_endfirsttime'))
+				{
+					$end = $wpdb->get_var("SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='_endfirsttime' and post_id=$post_id ");
+					if(empty($end))
+					{
+						//default value for editor
+						$content = rsvpmaker_date('H:i',rsvpmaker_strtotime($datetime .' +1 hour'));
+					}
+				}
+			} // end event with date
+			elseif ($sked) {
+				$week = (empty($sked["week"]) ) ? 0 : $sked["week"]; 
+				$dayofweek = (empty($sked["dayofweek"]) ) ? '': $sked["dayofweek"];
+				$hour = (empty($sked["hour"]) ) ? '00': $sked["hour"];
+				$minutes = (empty($sked["minutes"]) ) ? '00': $sked["minutes"];
+				$duration = (empty($sked["duration"]) ) ? '': $sked["duration"];
+				if($meta_key == '_firsttime')
+				{
+					$content = $duration;
+				}
+				elseif($meta_key == '_endfirsttime')
+				{
+					if(empty($sked['end']))
+					{
+						$t = rsvpmaker_strtotime($sked['hour'].':'.$sked['minutes'].' +1 hour');
+						$content = rsvpmaker_date('H:i',$t);
+					}
+					else {
+						$content = $sked["end"];
+					}
+				}				
+				elseif($meta_key == '_template_start_hour')
+				{
+					$content = $hour;
+				}
+				elseif($meta_key == '_template_start_minutes')
+				{
+					$content = $minutes;
+				}
+				elseif($meta_key == '_day_of_week')
+				{
+					$content = (empty($dayofweek[0])) ? 0 : $dayofweek[0];
+				}
+				elseif($meta_key == '_week_of_month')
+				{
+					$content = (empty($week[0])) ? '' : $week[0];
+				}
+				elseif($meta_key == 'complex_template')
+				{
+					$weekarray = Array(__("Varies",'rsvpmaker'),__("First",'rsvpmaker'),__("Second",'rsvpmaker'),__("Third",'rsvpmaker'),__("Fourth",'rsvpmaker'),__("Last",'rsvpmaker'),__("Every",'rsvpmaker'));
+					$dayarray = Array(__("Sunday",'rsvpmaker'),__("Monday",'rsvpmaker'),__("Tuesday",'rsvpmaker'),__("Wednesday",'rsvpmaker'),__("Thursday",'rsvpmaker'),__("Friday",'rsvpmaker'),__("Saturday",'rsvpmaker'));
+					if((empty($dayofweek)) || (empty($week)) || !is_array($dayofweek)  || !is_array($week) )
+						return $null;
+					if((sizeof($dayofweek) > 1) || (sizeof($week) > 1) )
+					{
+						foreach($week as $var)
+							$content .= $weekarray[$var].' ';
+						foreach($dayofweek as $var)
+							$content .= $dayarray[$var].' ';
+						$content .= $hour.':'.$minutes;
+					}
+				}
+			}
+		}
+	if($content)
+		return array($content);
+	
+	rsvpmaker_debug_log($meta_key,'returned unchanged');
+
+	return $null; // don't alter
+}
+
+add_filter('get_post_metadata','get_rsvp_post_metadata',10,4);
+
+function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
+	if(($meta_key == 'simple_price') || ($meta_key == 'simple_price_label')) {
+		$per = get_post_meta($post_id,'_per',true);
+		if(empty($per))
+			{
+				$per = array();
+				$per['unit'][0] = 'Tickets';
+				$per['price'][0] = '';
+			}
+		elseif(empty($per['price']))
+			$per['price'][0] = '';
+		if($meta_key == 'simple_price') {
+			$per['price'][0] = $meta_value;
+		}
+		if($meta_key == 'simple_price_label') {
+			$per['unit'][0] = $meta_value;
+		}
+		update_post_meta($post_id,'_per',$per);
+		return true; //no need to create a field for one of these values
+	}
+
+
+	$date_fields = array('_rsvp_dates','_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
+	if(in_array($meta_key,$date_fields) && ($sked = get_post_meta($post_id,'_sked',true)) && is_array($sked) )
+		{
+			$week = $sked["week"];
+			$dayofweek = $sked["dayofweek"];
+			$hour = $sked["hour"];
+			$minutes = $sked["minutes"];
+			$duration = $sked["duration"];
+			if($meta_key == '_firsttime')
+			{
+				rsvpmaker_debug_log($meta_value,$meta_key);
+				$sked["duration"] = $meta_value;
+			}
+			elseif($meta_key == '_endfirsttime')
+			{
+				rsvpmaker_debug_log($meta_value,$meta_key);
+				$sked['end'] = $meta_value;
+			}				
+			elseif($meta_key == '_template_start_hour')
+			{
+				$sked["hour"] = $meta_value;
+				rsvpmaker_debug_log($meta_value,$meta_key);
+			}
+			elseif($meta_key == '_template_start_minutes')
+			{
+				$sked["minutes"] = $meta_value;
+				rsvpmaker_debug_log($meta_value,$meta_key);
+			}
+			elseif($meta_key == '_day_of_week')
+			{
+				$sked["dayofweek"] = array($meta_value);
+				rsvpmaker_debug_log($meta_value,$meta_key);
+			}
+			elseif($meta_key == '_week_of_month')
+			{
+				rsvpmaker_debug_log($meta_value,$meta_key);
+				$sked["week"] = array($meta_value);
+			}
+		update_post_meta($post_id,'_sked',$sked);
+		rsvpmaker_debug_log($sked,'modified sked');
+		return true; //short circuit regular meta update
+		}
+	rsvpmaker_debug_log($meta_value,$meta_key.' - update_rsvp_post_metadata');
+	return $check;
+}
+
+add_filter('update_post_metadata','update_rsvp_post_metadata',10,4);
+
+//apply_filters( "update_{$meta_type}_metadata", null|bool $check, int $object_id, string $meta_key, mixed $meta_value, mixed $prev_value )
+/*
+gutenberg init.php
+	register_meta( 'post', 'simple_price', $args );
+	register_meta( 'post', 'simple_price_label', $args );
+*/
+function rsvpmaker_check_privacy_page() {
+	$privacy_page = get_option('wp_page_for_privacy_policy');
+	if($privacy_page) {
+		$privacy_post = get_post($privacy_page);
+		if(empty($privacy_post) || ($privacy_post->post_status != 'publish') )
+			$privacy_page = 0;
+	}
+	return $privacy_page;
+}
+
 ?>

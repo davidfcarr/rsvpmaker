@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.3.2
-Stable tag: 7.0.2
+Stable tag: 7.1.7
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,29 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.1.3 =
+
+* Better compatability with Classic Editor
+* Better guidance on Privacy Page setup.
+
+= 7.1.1 =
+
+* Correcting an error in data validation routine.
+
+= 7.1.0 =
+
+* Neater presentation of the essential options to be set including timezone and the creation of a calendar page.
+* Tweaks to Gutenberg code.
+
+= 7.0.6 =
+
+* Most template schedules can now be set from the Gutenberg editor sidebar. For example, First Monday at 7 pm or Every Wednesday at noon. Exception: More complex schedules (First and Third Monday) still require exiting to the RSVP / Event Options screen.  
+
+= 7.0.5 =
+
+* Single event prices can now be set from Gutenberg editor sidebar. Information about additional options that can be edited in RSVP / Event Options also displayed.
+* Improved display on some themes where RSVPMaker posts are displayed in the default index.php (Archive) template, including Twenty Twenty 
 
 = 7.0.1 =
 
