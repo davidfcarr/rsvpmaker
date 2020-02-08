@@ -80,7 +80,7 @@ else
 	$results = false;
 
 $start = 0;
-fix_timezone();
+
 if($results)
 {
 foreach($results as $index => $row)
@@ -448,7 +448,7 @@ $rsvp_captcha = $custom_fields["_rsvp_captcha"][0];
 $rsvp_count_party = $custom_fields["_rsvp_count_party"][0];
 $rsvp_yesno = $custom_fields["_rsvp_yesno"][0];
 
-fix_timezone();
+
 if(isset($custom_fields["_rsvp_reminder"][0]) && $custom_fields["_rsvp_reminder"][0])
 	{
 	$t = rsvpmaker_strtotime($custom_fields["_rsvp_reminder"][0]);
@@ -704,7 +704,7 @@ if(isset($custom_fields["_per"][0]))
 	$newfields = array_diff($matches[2],$defaultfields);
 
 echo '<div id="priceper">';
-//fix_timezone();
+//
 $start = 1;
 
 foreach($per["unit"] as $i => $value)
@@ -858,7 +858,7 @@ if(isset($_GET['showmeta']))
 
 </div>
 <?php
-restore_timezone();
+
 } } // end rsvp admin ui
 
 function ajax_rsvp_email_lookup () {
@@ -1313,7 +1313,7 @@ if(isset($_POST["payingfor"]) && is_array($_POST["payingfor"]) )
 
 if( isset($_POST["timeslot"]) && is_array($_POST["timeslot"]) )
 	{
-	fix_timezone();
+	
 	$participants = $rsvp["participants"] = (int) $_POST["participants"];
 	$rsvp["timeslots"] = ""; // ignore anything retrieved from prev rsvps
 	foreach($_POST["timeslot"] as $slot)
@@ -1322,7 +1322,7 @@ if( isset($_POST["timeslot"]) && is_array($_POST["timeslot"]) )
 			$rsvp["timeslots"] .=  ", ";
 		$rsvp["timeslots"] .= rsvpmaker_date('g:i A',$slot);
 		}
-	restore_timezone();
+	
 	}
 
 if(!isset($participants) && $yesno)
@@ -1984,7 +1984,7 @@ function rsvp_date_block($post_id, $custom_fields = array()) {
 global $rsvp_options;
 global $last_time;
 global $post;
-fix_timezone();
+
 if(empty($post_id))
 	$post_id = $post->ID;
 if(empty($custom_fields))
@@ -2085,7 +2085,7 @@ elseif(isset($custom_fields["_sked"][0]))
 			foreach($dows as $dow)
 				$s .= $dayarray[(int) $dow] . ' ';	
 			}
-		fix_timezone();
+		
 		$t = mktime($sked["hour"],$sked["minutes"]);
 		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
 	
@@ -2097,7 +2097,7 @@ elseif(isset($custom_fields["_sked"][0]))
 	{
 		return array('dateblock' => '','dur' => NULL, 'last_time' => NULL);			
 	}
-restore_timezone();
+
 return array('dateblock' => $dateblock,'dur' => $dur, 'last_time' => $last_time, 'firstrow' => $firstrow);
 }
 
@@ -2112,7 +2112,7 @@ if(is_admin()) // || !in_the_loop()
 	return $content;
 global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
 rsvpmaker_debug_log($_GET,'call to event_content');
-fix_timezone();
+
 
 //if(!empty($confirmed_content[$post->ID]))
 	//return $confirmed_content[$post->ID]; // avoid loops
@@ -2356,7 +2356,7 @@ if(isset($_GET['rsvp']))
 	$link = add_query_arg($args,$link);
 	$content .= sprintf('<p><a href="%s#rsvpnow">%s</a>',$link, __('Update RSVP?','rsvpmaker'));
 	$confirmed_content[$post->ID] = $content;
-	restore_timezone();
+	
 	return $content;
 }
 	
@@ -2384,7 +2384,7 @@ else
 if($rsvp_count) {
 	$content .= '<div class="signed_up_ajax" id="signed_up_'.$post->ID.'" post="'.$post->ID.'"></div>';
 }
-fix_timezone();
+
 $now = time();
 $rsvplink = get_rsvp_link($post->ID,true);
 
@@ -2613,7 +2613,7 @@ if($terms && is_string($terms))
 	$content .= '<p class="rsvpmeta">'.__('Event Types','rsvpmaker').': '.$terms.'</p>';
 
 $content = apply_filters('rsvpmaker_event_content_bottom',$content, $custom_fields);
-restore_timezone();
+
 return $content;
 } } // end event content
 
@@ -3122,7 +3122,7 @@ echo '<p>'; ?><input name="yesno" type="radio" value="1" <?php echo ($profile["y
 $results = get_rsvp_dates($event);
 if($results)
 {
-fix_timezone();
+
 $start = 2;
 $firstrow = NULL;
 $dateblock = '';
@@ -3168,7 +3168,7 @@ if($dur && ( $slotlength = $custom_fields["_rsvp_timeslots"][0] ))
 
 <div><?php echo __('Choose timeslots','rsvpmaker');?></div>
 <?php
-fix_timezone();
+
 $t = rsvpmaker_strtotime($firstrow["datetime"]);
 $dur = $firstrow["duration"];
 if(strpos($dur,':'))
@@ -3248,7 +3248,7 @@ printf('<input type="hidden" name="rsvp_id" id="rsvp_id" value="%s" /><input typ
 echo '<p>'.__('Tip: If you do not have an email address for someone you registered offline, you can use the format firstnamelastname@example.com (example.com is an Internet domain reserved for examples and testing). You will get an error message if you try to leave it blank').'</p>';
 
 echo rsvp_form_jquery();
-restore_timezone();
+
 }
 
 if(!function_exists('rsvp_print') ) {
@@ -4168,7 +4168,7 @@ foreach ( $results as $post )
 				if($dow > -1)
 				$s .= $dayarray[(int) $dow] . ' ';				
 			}
-			fix_timezone();
+			
 			if(empty($sked["hour"]) || empty($sked["minutes"]))
 				$time = '';
 			else
@@ -4235,7 +4235,7 @@ ORDER BY meta_value LIMIT 0,100";
 		echo '</form>';
 
 	}
-restore_timezone();
+
 }
 
 		$event_options = '';
@@ -4373,7 +4373,7 @@ $cm = rsvpmaker_date("m");
 $cd = rsvpmaker_date("j");	
 	
 	global $current_user;
-	fix_timezone();
+	
 	$sched_result = get_events_by_template($t);
 	$add_date_checkbox = $updatelist = $editlist = $nomeeting = '';	
 	if($sched_result)
@@ -4686,7 +4686,7 @@ jQuery(function () {
 });
 </script>
 ";
-restore_timezone();
+
 }
 } // end function_exists
 

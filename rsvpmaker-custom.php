@@ -132,7 +132,7 @@ $wpdb->show_errors();
 $wpdb->query("DELETE from wp_posts where post_author=3 AND (post_status='pending' OR post_status='draft') ");
 $wpdb->query("DELETE `wp_rsvp_dates`.* FROM `wp_rsvp_dates` LEFT JOIN wp_posts ON `wp_rsvp_dates`.postID=wp_posts.ID WHERE wp_posts.ID IS NULL");
 
-fix_timezone();
+
 if(date('w') == '0')
 	{
 global $post;
@@ -172,7 +172,7 @@ endwhile;
 }
 $wp_query = $backup;
 wp_reset_postdata();
-restore_timezone();
+
 	}
 }
 

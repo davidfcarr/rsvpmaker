@@ -185,7 +185,7 @@ global $rsvp_options;
 $events = rsvpmaker_upcoming_data($atts);
 $date_format = (isset($atts["date_format"])) ? $atts["date_format"] : $rsvp_options["long_date"];
 
-fix_timezone();
+
 if(is_array($events))
 foreach($events as $event)
 	{
@@ -209,7 +209,7 @@ foreach($events as $event)
 
 	if(isset($_GET['debug']))
 		$listings .= '<pre>'.var_export($events, true).'</pre>';
-	restore_timezone();
+	
 	return $listings;
 }
 
@@ -631,7 +631,7 @@ while ( have_posts() ) : the_post();
 	if(empty($post->post_title))
 		$post->post_title = __('Title left blank','rsvpmaker');
 
-	fix_timezone();
+	
 	$t = rsvpmaker_strtotime($post->datetime);
 	$duration_type = get_post_meta($post->ID,'_'.$post->datetime, true);
 	$end = get_post_meta($post->ID,'_end'.$post->datetime, true);
@@ -840,7 +840,7 @@ jQuery(document).ready(function($) {
 ';
 	}
 $post = $post_backup;
-restore_timezone();
+
 return $content;
 }
 
@@ -1076,7 +1076,7 @@ function rsvp_ical_split($preamble, $value) {
 }
 
 function rsvpmaker_to_ical () {
-fix_timezone();
+
 global $post;
 global $rsvp_options;
 global $wpdb;
@@ -1119,7 +1119,7 @@ ORGANIZER;CN=%s:MAILTO:%s
 END:VEVENT
 END:VCALENDAR
 ',$ical_end,$start.'-'.$post->ID.'@'.$_SERVER['SERVER_NAME'],date('Ymd\THis\Z'), $desc, $url, $post->post_title, $start, get_bloginfo('name'), $rsvp_options["rsvp_to"]);
-restore_timezone();
+
 exit;
 }
 
@@ -1196,7 +1196,7 @@ global $post;
 global $rsvp_options;
 if(!isset($post->post_type) || ($post->post_type != 'rsvpmaker'))
 	return; // don't mess with other post types
-fix_timezone();
+
 $tstring = get_rsvp_date($post->ID);
 if(empty($tstring)) // might be a replay landing page or other non-calendar item
 	return;
@@ -1209,13 +1209,13 @@ $date = rsvpmaker_strftime($rsvp_options["short_date"].' '.$rsvp_options["time_f
 $title = get_the_title($post->ID);
 $titlestr = $title . ' - '. $date. ' - '.get_bloginfo('name');
 printf('<meta property="og:title" content="%s" /><meta property="twitter:title" content="%s" />',$titlestr,$titlestr);
-restore_timezone();
+
 }
 
 
 function ylchat ($atts) {
 global $post;
-fix_timezone();
+
 
 preg_match('/(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^\s]+)/',$post->post_content,$matches);
 
@@ -1235,7 +1235,7 @@ $width = (isset($atts["width"])) ? $atts["width"] : '100%';
 $height = (isset($atts["height"])) ? $atts["height"] : '200';
 if(isset($_GET["height"]))
 	$height = (int) $_GET["height"];
-restore_timezone();
+
 return $note . sprintf('<iframe src="%s" width="%s" height="%s"></iframe>',$url,$width,$height) . sprintf('<p>%s <a href="%s" target="_blank">%s</a>. %s</p>',__('If the chat prompt does not appear below,','rsvpmaker'), $login_url, __('please login to your YouTube/Google account','rsvpmaker'), __('Then refresh this window.','rsvpmaker'));
 }
 
@@ -1472,7 +1472,7 @@ if(!strpos($time_format,'%Z'))
 	}
 
 ob_start();
-fix_timezone();
+
 echo '<div class="rsvpmaker_compact">';
 
 if ( have_posts() ) {
@@ -1505,13 +1505,13 @@ if(is_rsvpmaker_future($post_id))
 	else
 		_e('Event date is past','rsvpmaker');
 endwhile;
-restore_timezone();
+
 }
 echo '</div></div><!-- end rsvpmaker_upcoming -->';
 
 $wp_query = $backup_query;
 wp_reset_postdata();
-restore_timezone();
+
 return ob_get_clean();
 }
 
@@ -1704,7 +1704,7 @@ function clear_rsvp_cookies () {
 
 function sked_to_text ($sked) {
 	global $rsvp_options;
-	fix_timezone();
+	
 	$s = '';
 		$weeks = (empty($sked["week"])) ? array(0) : $sked["week"];
 		$dows = (empty($sked["dayofweek"])) ? array() : $sked["dayofweek"];
@@ -1729,7 +1729,7 @@ function sked_to_text ($sked) {
 			}
 		$t = mktime($sked["hour"],$sked["minutes"]);
 		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
-	restore_timezone();
+	
 	return $dateblock;
 }
 

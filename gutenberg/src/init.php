@@ -334,7 +334,7 @@ function rsvpmaker_limited_time ($atts, $content) {
 		$debug .= ' attributes: '. var_export($atts, true);
 	if(empty($atts['start_on']) && empty($atts['end_on']))
 		return $content.$debug; // no parameters set
-	fix_timezone();
+	
 	$now = time();
 	if(!empty($atts['start_on']) && !empty($atts['start']))
 	{
@@ -344,7 +344,7 @@ function rsvpmaker_limited_time ($atts, $content) {
 		$debug .= sprintf('<p>Start time %s = %s, now = %s</p>',$atts['start'],$start,$now);
 	if($now < $start)
 		{
-		restore_timezone();
+		
 		return $debug;
 		}
 	}
@@ -373,11 +373,11 @@ function rsvpmaker_limited_time ($atts, $content) {
 		else
 			$debug .= 'Preg replace came back empty';
 		}
-		restore_timezone();
+		
 		return $debug;
 	}
 		
 	}
-restore_timezone();
+
 return $content.$debug;
 }

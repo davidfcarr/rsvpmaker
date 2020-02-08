@@ -182,7 +182,7 @@ function rsvpmaker_date_option($datevar = NULL, $index = NULL, $jquery_date = NU
 
 global $rsvp_options;
 $prefix = "event_";
-fix_timezone();
+
 if(is_int($datevar))
 	{
 	$t = $datevar;
@@ -328,12 +328,12 @@ rsvpmaker_duration_select ($prefix.'duration['.$index.']', $datevar, $datestring
 </table>
 </div>
 <?php
-restore_timezone();
+
 }
 
 function save_rsvp_meta($postID, $new = false)
 {
-fix_timezone();
+
 $setrsvp = $_POST["setrsvp"];
 if($new)
 {
@@ -390,9 +390,9 @@ if(isset($_POST["unit"]))
 			$per["price_multiple"][$index] = $_POST["price_multiple"][$index];
 		if(!empty($_POST["price_deadline"][$index]))
 			{
-			fix_timezone();
+			
 			$per["price_deadline"][$index] = rsvpmaker_strtotime($_POST["price_deadline"][$index]);
-			restore_timezone();
+			
 			}
 		if(isset($_POST['showhide'][$index]))
 			{
@@ -430,7 +430,7 @@ if(isset($_POST["unit"]))
 		unset($_POST);
 		rsvpmaker_youtube_live($postID, $ylive);
 		}
-restore_timezone();
+
 }
 
 function rsvpmaker_menu_security($label, $slug,$options) {
@@ -2485,9 +2485,9 @@ $wpdb->show_errors();
 	$rsvpto = get_post_meta($post_id,'_rsvp_to',true);
 
 	$date = get_rsvp_date($post_id);
-	fix_timezone();
+	
 	$prettydate = rsvpmaker_date('l F jS g:i A T',rsvpmaker_strtotime($date));
-	restore_timezone();
+	
 	$subject = str_replace('[datetime]',$prettydate,$subject);
 	if(!empty($confirm))
 	{
@@ -2565,7 +2565,7 @@ foreach($ho as $h)
 function rsvpmaker_youtube_live($post_id, $ylive, $show = false) {
 global $rsvp_options;
 global $current_user;
-		fix_timezone();
+		
 		$event = get_post($post_id);
 		$start_time = $date = get_rsvp_date($post_id);
 		$date = utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"].' %l:%M %p %Z',rsvpmaker_strtotime($date)));
@@ -2612,7 +2612,7 @@ global $current_user;
 
 	if($show)
 		printf('<p>%s <a href="%s">%s</a> (<a href="%s">%s</a>)</p>',__('YouTube Live landing page created at'),$landing_permalink,$landing_permalink, admin_url('post.php?action=edit&post='.$landing_id), __('Edit','rsvpmaker'));
-	restore_timezone();
+	
 }
 
 function no_mce_plugins( $p ) { return array(); }
@@ -2721,7 +2721,7 @@ global $rsvp_options;
 global $current_user;
 $existing = $options = '';
 $templates = rsvpmaker_get_templates();
-fix_timezone();
+
 ?>
 <style>
 <?php 
@@ -2848,7 +2848,7 @@ wget -qO- <?php echo site_url('/wp-cron.php?doing_wp_cron=1');?>  &> /dev/null
 </code>
 </div>
 <?php
-restore_timezone();
+
 }
 
 function rsvpmaker_placeholder_image () {
@@ -3400,7 +3400,7 @@ global $rsvp_options;
 	}
 	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpmaker_template_reminder' ";
 	//echo $sql;
-	fix_timezone();
+	
 	$results = $wpdb->get_results($sql);
 	//rsvpmaker_debug_log($results,'templates with reminders');
 	if(is_array($results))
@@ -3429,7 +3429,7 @@ global $rsvp_options;
 			rsvpmaker_reminder_cron($hours, $start_time, $next->ID);
 		}
 	}
-	restore_timezone();
+	
 }
 
 add_shortcode('rsvpautorenew_test','rsvpautorenew_test');

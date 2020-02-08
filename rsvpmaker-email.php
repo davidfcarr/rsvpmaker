@@ -724,7 +724,7 @@ function rsvpmaker_next_scheduled( $post_id, $returnint = false ) {
 	global $rsvpnext_time;
 	if($returnint && !empty($rsvpnext_time[$post_id]))
 		return $rsvpnext_time[$post_id];
-	//fix_timezone();
+	//
     $crons = _get_cron_array();
     if ( empty($crons) )
         return false;
@@ -786,7 +786,7 @@ foreach($results as $row)
 <?php
 	}
 
-	fix_timezone();
+	
     $crons = _get_cron_array();
     if ( empty($crons) )
         _e('None','rsvpmaker');
@@ -831,7 +831,7 @@ $args = array($post->ID);
 $cron = get_post_meta($post->ID,'rsvpmaker_cron_email',true);
 $notekey = get_rsvp_notekey();
 $chimp_options = get_option('chimp');
-fix_timezone();
+
 $ts = rsvpmaker_next_scheduled($post->ID);
 if(empty($ts))
 	{
@@ -999,7 +999,7 @@ if($chosen)
 <textarea cols="100" rows="5" name="notebody"></textarea></p>
 
 <?php
-restore_timezone();
+
 }
 
 function RSVPMaker_draw_blastoptions() {
@@ -1068,7 +1068,7 @@ function save_rsvpemail_data() {
 if(empty($_POST) || empty($_REQUEST['post_id']) || empty($_REQUEST['page']) || ($_REQUEST['page'] != 'rsvpmaker_scheduled_email_list'))
 	return;
 $postID = $_REQUEST['post_id'];
-fix_timezone();
+
 
 if(isset($_POST['scheduled_email']))
 {
@@ -1149,7 +1149,7 @@ if(!empty($_POST["email"]["from_name"]))
 	elseif(($cron["cron_active"] == 'rsvpmaker_strtotime') && !empty($_POST["cron_rsvpmaker_strtotime"])) {
 		$t = rsvpmaker_strtotime($_POST["cron_rsvpmaker_strtotime"]);
 	}
-	restore_timezone();
+	
 	
 	if(!empty($t))
 		{
@@ -1207,11 +1207,11 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				$title = get_the_title($id);
 				$date = get_rsvp_date($id);		
 				if($date) {
-				fix_timezone();
+				
 				$t = rsvpmaker_strtotime($date);
 				global $rsvp_options;
 				$title .= ' - '.rsvpmaker_strftime($rsvp_options["short_date"],$t);
-				restore_timezone();
+				
 				}
 			}
 		elseif($id == 'upcoming') {
@@ -2604,7 +2604,7 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 //based on Austin Matzko's code from wp-hackers email list
 function filter_where_recent($where = '') {
 global $blog_weeks_ago;
-fix_timezone();
+
 if(0 == (int) $blog_weeks_ago)
 	$blog_weeks_ago = 1;
 	$week_ago_stamp = rsvpmaker_strtotime('-'.$blog_weeks_ago.' week');
@@ -2617,7 +2617,7 @@ add_shortcode('rsvpmaker_recent_blog_posts','rsvpmaker_recent_blog_posts');
 
 function get_rsvp_notekey() {
 	global $post, $rsvpmaker_cron_context;
-	fix_timezone();
+	
 	if(!empty($rsvpmaker_cron_context) && $rsvpmaker_cron_context == 2)
 	{
 		$notekey = 'editnote'.date('YmdH',time()); // live not preview broadcast or editing

@@ -12,21 +12,21 @@ function fix_timezone($timezone = '' ) {
 	}
 	if(!empty($timezone) )
 		date_default_timezone_set($timezone);
-}
+	}
 	
 function restore_timezone() {
 	global $default_tz;
 	date_default_timezone_set($default_tz);
 }	
 
-function rsvpmaker_rsvpmaker_strtotime($string) {
+function rsvpmaker_strtotime($string) {
 	fix_timezone();
-	$t = rsvpmaker_strtotime($string);
+	$t = strtotime($string);
 	restore_timezone();
 	return $t;
 }
 
-function rsvpmaker_rsvpmaker_strftime($date_format = '', $t = NULL) {
+function rsvpmaker_strftime($date_format = '', $t = NULL) {
 	fix_timezone();
 	global $rsvp_options;
 	if(empty($date_format))
@@ -34,8 +34,8 @@ function rsvpmaker_rsvpmaker_strftime($date_format = '', $t = NULL) {
 	if(empty($t))
 		$t = time();
 	if(!is_int($t))
-		$t = rsvpmaker_strtotime($t);
-	$output = rsvpmaker_strftime($date_format, $t);
+		$t = strtotime($t);
+	$output = strftime($date_format, $t);
 	restore_timezone();
 	return $output;
 }
@@ -48,23 +48,23 @@ function rsvpmaker_date($date_format = '', $t = NULL) {
 	if(empty($t))
 		$t = time();
 	if(!is_int($t))
-		$t = rsvpmaker_strtotime($t);
+		$t = strtotime($t);
 	$output = date($date_format, $t);
 	restore_timezone();
 	return $output;
 }
 
 function get_sql_now() {
-	fix_timezone();
+	
 	$date = rsvpmaker_date('Y-m-d H:i:s');
-	restore_timezone(); 
+	 
 	return $date;
 }
 
 function get_sql_curdate() {
-	fix_timezone();
+	
 	$date = rsvpmaker_date('Y-m-d 00:00:00');
-	restore_timezone(); 
+	 
 	return $date;
 }
 

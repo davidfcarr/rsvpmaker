@@ -11,7 +11,7 @@ if(($post->post_type != 'rsvpmaker') )
 $sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE meta_key='_rsvp_dates' AND post_id=".$post->ID.' ORDER BY meta_value';
 $datetime = $wpdb->get_var($sql);
 $duration = get_post_meta($post_id,'_'.$datetime, true);
-fix_timezone();
+
 $start_ts = rsvpmaker_strtotime($datetime);
 $duration_ts = (empty($duration)) ? rsvpmaker_strtotime($datetime . ' +1 hour') : rsvpmaker_strtotime($duration);
 $hangout = get_post_meta($post->ID, '_hangout',true);
