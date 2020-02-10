@@ -2472,38 +2472,41 @@ if (is_array($retval)){
 return $options;
 }
 
-function event_to_embed($post_id, $embed = NULL) {
+function event_to_embed($post_id, $event_post = NULL, $context = '') {
 		global $email_context;
 		global $rsvp_options;
 		global $post;
 		$backup = $post;
 		$email_context = true;
-		if(empty($embed))
-			$post = get_post($post_id);
-		$event_embed["subject"] = $post->post_title;
+		if(empty($event_post))
+			$event_post = get_post($post_id);
+		$event_embed["subject"] = $event_post->post_title;
 		$event_embed["content"] = sprintf('<!-- wp:heading -->
 <h2 class="email_event"><a href="%s">%s</a></h2>
-<!-- /wp:heading -->'."\n",get_permalink($post->ID),apply_filters('the_title',$post->post_title));
-		if($post->post_type == 'rsvpmaker')
+<!-- /wp:heading -->'."\n",get_permalink($post_id),apply_filters('the_title',$event_post->post_title));
+		if($event_post->post_type == 'rsvpmaker')
 		{
 		$date_array = rsvp_date_block($post_id);
 		$dateblock = trim(strip_tags($date_array["dateblock"]));
 		$dur = $date_array["dur"];
 		$last_time = $date_array["last_time"];
-		$tmlogin = (strpos($post->post_content,'[toastmaster')) ? sprintf('<!-- wp:paragraph -->
+		$tmlogin = (strpos($event_post->post_content,'[toastmaster')) ? sprintf('<!-- wp:paragraph -->
 <p><a href="%s">Login</a> to sign up for roles</p>
 <!-- /wp:paragraph -->',wp_login_url( get_post_permalink( $post_id ) ) ) : '';
 		$event_embed["content"] .= sprintf('<!-- wp:paragraph -->
 <p><strong>%s</strong></p>
 <!-- /wp:paragraph -->',$dateblock).$tmlogin;			
 		}
-		$event_embed["content"] .= do_blocks(do_shortcode($post->post_content));
+		$event_embed["content"] .= do_blocks(do_shortcode($event_post->post_content));
 		if(get_post_meta($post_id,'_rsvp_on',true))
 		{
 		if(get_post_meta($post_id,'_rsvp_count',true))
 			$event_embed["content"] .= rsvpcount($post_id);
-		$rsvplink = get_rsvp_link($post_id);
-		$event_embed["content"] .= "<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
+		if($context != 'confirmation')
+			{ // add the rsvp button / link except in confirmation messages that include Update RSVP version
+				$rsvplink = get_rsvp_link($post_id);
+				$event_embed["content"] .= "<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";		
+			}
 		}
 		$post = $backup;
 		if(function_exists('do_blocks')){

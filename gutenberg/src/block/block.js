@@ -117,6 +117,7 @@ registerBlockType( 'rsvpmaker/event', {
 	{label: 'Event with Form', value:''},
 	{label: 'Event with Button', value:'button'},
 	{label: 'Button Only', value:'button_only'},
+	{label: 'Form Only', value:'form'},
 	{label: 'Compact (Headline/Date/Button)', value:'compact'},
 	{label: 'Dates Only', value:'embed_dateblock'}] }
         onChange={ ( one_format ) => { setAttributes( { one_format: one_format } ) } }
@@ -172,6 +173,61 @@ registerBlockType( 'rsvpmaker/event', {
 
 	save: function() {
 		// server render
+		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/embedform', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Embed Form' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays the form associated with a single RSVPMaker event post'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            post_id: {
+            type: 'string',
+            default: '',
+            },
+        },
+	edit: function( props ) {
+	const { attributes: { post_id, type, one_hideauthor, one_format, hide_past }, setAttributes, isSelected } = props;
+	if(post_id == '')
+		setAttributes( { post_id: 'next' } );
+
+	function showFormPrompt () {
+		return <p><strong>Click here to set options.</strong></p>
+	}
+
+	function showForm() {
+
+			return (
+				<form>
+<SelectControl
+        label={__("Select Post",'rsvpmaker')}
+        value={ post_id }
+        options={ rsvpupcoming }
+        onChange={ ( post_id ) => { setAttributes( { post_id: post_id } ) } }
+    />
+	</form>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Embed just the form for a single event.
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	save: function() {
 		return null;
 	},
 } );

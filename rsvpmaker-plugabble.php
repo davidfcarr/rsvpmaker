@@ -1536,7 +1536,7 @@ update_post_meta($post->ID,'_rsvp_'.$rsvp["email"],$cleanmessage);
 $include_event = get_post_meta($post->ID, '_rsvp_confirmation_include_event', true);
 if($include_event)
 	{
-	$embed = event_to_embed($post->ID);
+	$embed = event_to_embed($post->ID,$post,'confirmation');
 	$cleanmessage .= "\n\n".$embed["content"];
 	}
 $rsvpdata["rsvpdetails"] = $cleanmessage;
@@ -2113,7 +2113,6 @@ if(is_admin()) // || !in_the_loop()
 global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
 rsvpmaker_debug_log($_GET,'call to event_content');
 
-
 //if(!empty($confirmed_content[$post->ID]))
 	//return $confirmed_content[$post->ID]; // avoid loops
 
@@ -2417,9 +2416,9 @@ elseif(($rsvp_on && is_admin() && isset($_GET["page"]) && ( $_GET["page"] != 'rs
 	$content .= sprintf($rsvp_options["rsvplink"],$rsvplink );
 elseif($rsvp_on && $login_required && !is_user_logged_in()) // show button, coded to require login
 	$content .= sprintf($rsvp_options["rsvplink"],$rsvplink );
-elseif($rsvp_on && !is_admin() && (!is_single() || $showbutton ) ) // show button
+elseif($rsvp_on && !is_admin() && !$formonly && (!is_single() || $showbutton ) ) // show button
 	$content .= sprintf($rsvp_options["rsvplink"],$rsvplink );
-elseif($rsvp_on && (is_single() || is_admin() ) ) // 
+elseif($rsvp_on && (is_single() || is_admin() || $formonly) ) // 
 	{
 	ob_start();
 	echo '<div id="rsvpsection">';

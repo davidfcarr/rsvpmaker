@@ -36,6 +36,7 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/eventlisting', ['render_callback' => 'event_listing']);
 	register_block_type('rsvpmaker/rsvpdateblock', ['render_callback' => 'rsvpdateblock']);
 	register_block_type('rsvpmaker/upcoming-by-json', ['render_callback' => 'rsvpjsonlisting']);
+	register_block_type('rsvpmaker/embedform', ['render_callback' => 'rsvpmaker_form']);	
 }
 
 add_action( 'init', function(){

@@ -4586,7 +4586,16 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 	);
 	$wp_admin_bar->add_node( $args );		
 	}
-		
+
+	$args = array(
+		'parent'    => 'rsvpmaker_parent',
+		'id' => 'rsvp_report',
+		'title' => 'RSVP Report',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	$wp_admin_bar->add_node( $args );		
+
 	return;
 	}
 	$args = array(
@@ -4638,6 +4647,15 @@ if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_
 	);
 	$wp_admin_bar->add_node( $args );
 	}
+
+	$args = array(
+		'parent'    => (is_admin()) ? 'rsvpmaker_options' : 'edit',
+		'id' => 'rsvp_report',
+		'title' => 'RSVP Report',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$post->ID),
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	$wp_admin_bar->add_node( $args );		
 	
 	if(rsvpmaker_is_template())
 	{

@@ -1286,15 +1286,21 @@ if(empty($atts['type'])) {
 		else
 			$event = get_next_rsvpmaker();
 		if(empty($event))
-			return;
+		{
+		return;
+		}
 		$atts['post_id']=$event->ID;
 	}
 
 	if(isset($atts['one_format'])) {
 		if($atts['one_format'] == 'button_only')
-			return get_rsvp_link($event->ID);
+			{
+			return get_rsvp_link($atts['post_id']);
+			}
 		if($atts['one_format'] == 'form')
-			return rsvpmaker_form($atts['post_id']);
+		{
+			return rsvpmaker_form($atts);
+		}
 	}
 }
 
@@ -1510,46 +1516,13 @@ endwhile;
 echo '</div></div><!-- end rsvpmaker_upcoming -->';
 
 $wp_query = $backup_query;
+$post = $backup_post;
 wp_reset_postdata();
 
 return ob_get_clean();
 }
 
-
-
 add_shortcode("rsvpmaker_one","rsvpmaker_one");
-
-function rsvpmaker_form( $atts = array(), $form_content='' ) {
-if(isset($atts["post_id"]))
-	$post_id = (int) $atts["post_id"];
-elseif(isset($atts["one"]))
-	$post_id = (int) $atts["one"];
-else
-	return;
-	
-if(!is_rsvpmaker_future($post_id)) 
-	return __('Event date is past','rsvpmaker');
-	
-global $post;
-global $wp_query;
-global $rsvp_options;
-$backup_post = $post;
-$backup_query = $wp_query;
-$post = get_post($post_id);
-if(empty($post))
-	{
-	$post = $backup_post;
-	$wp_query = $backup_query;
-	return;
-	}
-$wp_query->is_single = true;
-$output = event_content('', true, $form_content); // no content, $formonly true supresses date display
-$post = $backup_post;
-$wp_query = $backup_query;
-return $output;
-}
-
-add_shortcode('rsvpmaker_form','rsvpmaker_form');
 
 function rsvpmaker_replay_form($event_id) {
 	
@@ -1821,4 +1794,21 @@ function rsvpmaker_get_the_archive_title($title) {
 }
 
 add_filter( 'get_the_archive_title', 'rsvpmaker_get_the_archive_title',20 );
+
+add_shortcode('rsvpmaker_embed_form','rsvpmaker_form');
+add_shortcode('rsvpmaker_form','rsvpmaker_form');
+
+function rsvpmaker_form( $atts = array(), $form_content='' ) {
+	global $post, $showbutton;
+	$showbutton = false;
+	$output = '';
+	$backup = $post;
+	if(!empty($atts['post_id'])) {
+		$post = get_post($atts['post_id']);
+		$output = event_content($form_content,true).rsvp_form_jquery();
+	}
+	$post = $backup;
+	return $output;
+}
+
 ?>
