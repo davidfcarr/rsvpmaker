@@ -398,9 +398,9 @@ function get_confirmation_options($post_id = 0) {
 	$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id);
 	if(current_user_can('edit_post',$confirm->ID))
 	{
-		if($confirm->post_parent == 0)
+	if(isset($confirm->post_parent) && ($confirm->post_parent == 0))
 		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
-	elseif($confirm->post_parent != $post_id)
+	elseif(isset($confirm->post_parent) && ($confirm->post_parent != $post_id))
 		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
 	else
 		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
@@ -1931,7 +1931,7 @@ global $post;
 global $rsvp_options;
 	wp_enqueue_script('jquery');
 	wp_enqueue_script('jquery-ui-tooltip');
-	$myStyleUrl = (isset($rsvp_options["custom_css"]) && $rsvp_options["custom_css"]) ? $rsvp_options["custom_css"] : WP_PLUGIN_URL . '/rsvpmaker/style.css';
+	$myStyleUrl = (isset($rsvp_options["custom_css"]) && $rsvp_options["custom_css"]) ? $rsvp_options["custom_css"] : plugins_url('/rsvpmaker/style.css');
 	wp_register_style('rsvp_style', $myStyleUrl, array(), get_rsvpversion());
 	wp_enqueue_style( 'rsvp_style');
 	wp_localize_script( 'rsvpmaker_ajaxurl', 'ajaxurl', admin_url('admin-ajax.php') );
@@ -2086,7 +2086,7 @@ elseif(isset($custom_fields["_sked"][0]))
 				$s .= $dayarray[(int) $dow] . ' ';	
 			}
 		
-		$t = mktime($sked["hour"],$sked["minutes"]);
+		$t = rsvpmaker_mktime($sked["hour"],$sked["minutes"],0,date('n'),date('j'),date('Y'));
 		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
 	
 		$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'"></div>';
@@ -2473,7 +2473,7 @@ $slotlength = explode(":",$slotlength);
 $min_add = $slotlength[0]*60;
 $min_add = (empty($slotlength[1])) ? $min_add : ($min_add + $slotlength[1]);
 
-for($i=0; ($slot = mktime($hour ,$minutes + ($i * $min_add),0,$month,$day,$year)) < $dur; $i++)
+for($i=0; ($slot = rsvpmaker_mktime($hour ,$minutes + ($i * $min_add),0,$month,$day,$year)) < $dur; $i++)
 	{
 	$sql = "SELECT SUM(participants) FROM ".$wpdb->prefix."rsvp_volunteer_time WHERE time=$slot AND event = $post->ID";
 	$signups = ($signups = $wpdb->get_var($sql)) ? $signups : 0;
@@ -3181,7 +3181,7 @@ $slotlength = explode(":",$slotlength);
 $min_add = $slotlength[0]*60;
 $min_add = $min_add + $slotlength[1];
 
-for($i=0; ($slot = mktime($hour ,$minutes + ($i * $min_add),0,$month,$day,$year)) < $dur; $i++)
+for($i=0; ($slot = rsvpmaker_mktime($hour ,$minutes + ($i * $min_add),0,$month,$day,$year)) < $dur; $i++)
 	{
 	$sql = "SELECT SUM(participants) FROM ".$wpdb->prefix."rsvp_volunteer_time WHERE time=$slot AND event = $post->ID";
 	$signups = ($signups = $wpdb->get_var($sql)) ? $signups : 0;
@@ -3494,7 +3494,7 @@ function rsvp_reminder_activation() {
 	
 	if ( !wp_next_scheduled( 'rsvp_daily_reminder_event' ) ) {
 		$hour = 12 - get_option('gmt_offset');
-		$t = mktime($hour,0,0);
+		$t = rsvpmaker_mktime($hour,0,0,date('n'),date('j'),date('Y'));
 		wp_schedule_event(current_time('timestamp'), 'daily', 'rsvp_daily_reminder_event');
 	}
 }
@@ -3502,7 +3502,7 @@ function rsvp_reminder_activation() {
 function rsvp_reminder_reset($basehour) {
 	wp_clear_scheduled_hook('rsvp_daily_reminder_event'); //
 	$hour = $basehour - get_option('gmt_offset');
-	$t = mktime($hour,0,0);
+	$t = rsvpmaker_mktime($hour,0,0,date('n'),date('j'),date('Y'));
 	wp_schedule_event($t, 'daily', 'rsvp_daily_reminder_event');
 }
 
@@ -3605,7 +3605,7 @@ if( $reminders = $wpdb->get_results($sql) )
 if(!function_exists('rsvpguests') )
 {
 function rsvpguests($atts) {
-if(is_admin())
+if(is_admin() || wp_is_json_request())
 	return;
 $label = (isset($atts['label'])) ? $atts['label'] : __('Guest','rsvpmaker');
 $addmore = (isset($atts['addmore'])) ? $atts['addmore'] : __('Add more guests','rsvpmaker');

@@ -7,26 +7,33 @@ const { __ } = wp.i18n;
 const { registerBlockType } = wp.blocks;
 const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
-const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;
 const { InspectorControls } = wp.editor;
 const { PanelBody, DateTimePicker, SelectControl } = wp.components;
+import apiFetch from '@wordpress/api-fetch';
+const rsvptypes = [{value: '', label: 'None selected (optional)'}];
+apiFetch( {path: rsvpmaker_json_url+'types'} ).then( types => {
+	if(Array.isArray(types))
+			types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
+		else {
+			var typesarray = Object.values(types);
+			typesarray.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
+		}
+}).catch(err => {
+	console.log(err);
+});	
 
-registerBlockType( 'rsvpmaker/limited', {
-	title: ( 'Limited Time Content (RSVPMaker)' ), // Block title.
-	icon: 'admin-comments', 
+registerBlockType( 'rsvpmaker/schedule', {
+	title: ( 'RSVPMaker Schedule' ), // Block title.
+    icon: 'admin-comments',
+    description: __('Daily schedule of events'),
 	category: 'layout',
 	keywords: [
-		( 'Expiration' ),
-		( 'Start Time' ),
-		( 'Wrapper' ),
+		( 'RSVPMaker' ),
+		( 'Event' ),
+		( 'Schedule' ),
 	],
 attributes: {
-        content: {
-            type: 'array',
-            source: 'children',
-            selector: 'p',
-        },
 	start: {
 		type: 'string',
 		default: '',
@@ -43,7 +50,7 @@ attributes: {
 		type: 'string',
 		default: '0',
 	},
-	delete_expired: {
+	type: {
 		type: 'string',
 		default: '0',
 	},
@@ -54,18 +61,14 @@ attributes: {
 	const { attributes, className, setAttributes, isSelected } = props;
 
 	return (
-		<Fragment>
-		<TimeInspector { ...props } />
-<div className={className} >
-<div class="limited_border">{__('START Limited time content (click to set start and end times)')}</div>
-	<InnerBlocks />
-<div class="limited_border">{__('END Limited time content)')}</div>
-</div>
-		</Fragment>
+        <Fragment>
+        <TimeInspector { ...props } />
+		<div className="schedule-placeholder">{__('Daily schedule of events')}</div>
+        </Fragment>
 		);
     },
-    save: function( { attributes, className } ) {
-		return <div className={className}><InnerBlocks.Content /></div>;
+    save: function() {
+		return null;
     }
 });
 
@@ -113,16 +116,14 @@ class TimeInspector extends Component {
 		    />
 			</div>
 			 )}
-			 <SelectControl
-				label={ __( 'Delete or Hide Expired Content', 'rsvpmaker' ) }
-				value={ attributes.delete_expired }
-				onChange={ ( delete_expired ) => setAttributes( { delete_expired } ) }
-				options={ [
-					{ value: 0, label: __( 'Hide', 'rsvpmaker' ) },
-					{ value: 1, label: __( 'Delete', 'rsvpmaker' ) },
-				] }
-				/>
-				</PanelBody>
+
+     <SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ attributes.type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />		
+    </PanelBody>
 			</InspectorControls>
 		);
 	}

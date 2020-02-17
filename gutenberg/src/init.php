@@ -22,6 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 function rsvpmaker_server_block_render(){
+	if(wp_is_json_request())
+		return;
 	register_block_type('rsvpmaker/event', ['render_callback' => 'rsvpmaker_one']);	
 	register_block_type('rsvpmaker/upcoming', ['render_callback' => 'rsvpmaker_upcoming']);	
 	register_block_type('rsvpmaker/stripecharge', ['render_callback' => 'rsvpmaker_stripecharge']);	
@@ -37,6 +39,7 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/rsvpdateblock', ['render_callback' => 'rsvpdateblock']);
 	register_block_type('rsvpmaker/upcoming-by-json', ['render_callback' => 'rsvpjsonlisting']);
 	register_block_type('rsvpmaker/embedform', ['render_callback' => 'rsvpmaker_form']);	
+	register_block_type('rsvpmaker/schedule', ['render_callback' => 'rsvpmaker_daily_schedule']);
 }
 
 add_action( 'init', function(){
@@ -148,6 +151,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 	);
 
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_type', $post->post_type);
+	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
 	
 	global $post, $rsvp_options;
 	$template_id = 0;

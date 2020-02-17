@@ -8,7 +8,7 @@ var el = wp.element.createElement;
 const { __ } = wp.i18n; // Import __() from wp.i18n
 
 function related_link() {
-	if(rsvpmaker_ajax.special)
+	if(rsvpmaker_ajax && rsvpmaker_ajax.special)
 		{
 		return <div class="rsvp_related_links"></div>;
 		}

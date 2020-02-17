@@ -183,6 +183,19 @@ margin-top: 20px;
   border-radius: 12px;
   text-transform: none;
 }
+form#payee-form {
+    background-color: #eee;
+    padding: 3px;
+}
+form#payee-form input {
+    background-color: #ffffff;
+    border: none;
+}
+div.rsvpmaker-schedule-item {
+    clear: both;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
 
 /*! jQuery UI - v1.11.4 - 2016-05-11
 * http://jqueryui.com

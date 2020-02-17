@@ -26,6 +26,13 @@ function rsvpmaker_strtotime($string) {
 	return $t;
 }
 
+function rsvpmaker_mktime($hour=NULL, $minute = NULL, $second = NULL,$month = NULL, $day = NULL, $year = NULL) {
+	fix_timezone();
+	$t = mktime($hour, $minute, $second,$month, $day,$year);
+	restore_timezone();
+	return $t;
+}
+
 function rsvpmaker_strftime($date_format = '', $t = NULL) {
 	fix_timezone();
 	global $rsvp_options;
@@ -598,7 +605,6 @@ function rsvpmaker_data_check() {
 		if(!empty($future) && is_array($future))
 		foreach ($future as $post)
 			$postlist[] = $post->ID;
-		if($templates)
 		$templates = rsvpmaker_get_templates();
 		if($templates)
 		foreach ($templates as $post)

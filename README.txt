@@ -7,7 +7,7 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.0
 Tested up to: 5.3.2
-Stable tag: 7.2.0
+Stable tag: 7.3.1
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -114,6 +114,22 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.2.6 =
+
+* RSVPMaker Schedule block (also rsvpmaker_daily_schedule shortcode) for displaying an hour by hour schedule of events (for example, for a conference)
+
+= 7.2.5 =
+
+* Make sure Stripe submissions include name and email
+
+= 7.2.2 =
+
+* Fix to calendar display
+
+= 7.2.1 =
+
+* Stripe integration fix, better styling of form.
 
 = 7.1.9 =
 

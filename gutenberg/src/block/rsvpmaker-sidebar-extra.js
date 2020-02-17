@@ -22,7 +22,7 @@ function recordChange(metaKey, metaValue) {
 
 //<!-- RSVPTemplate / -->
 function related_link() {
-	if(rsvpmaker_ajax.special)
+	if(rsvpmaker_ajax && rsvpmaker_ajax.special)
 		{
 		return <div class="rsvp_related_links"></div>;
 		}

@@ -3,6 +3,7 @@ const { __ } = wp.i18n; // Import __() from wp.i18n
 const el = wp.element.createElement;
 const { DateTimePicker, RadioControl, SelectControl, TextControl, TextareaControl,FormToggle } = wp.components;
 const { withSelect, withDispatch } = wp.data;
+import apiFetch from '@wordpress/api-fetch';
 
 var MetaTextControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
@@ -379,7 +380,7 @@ var MetaDateControl = wp.compose.compose(
 		return {
 			setMetaValue: function( metaValue ) {
 				metaValue = metaValue.replace('T',' ');
-				fetch('/wp-json/rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id);
+				apiFetch({path: rsvpmaker_json_url+'clearcache/'+rsvpmaker_ajax.event_id});
 				dispatch( 'core/editor' ).editPost(
 					{ meta: { [ props.metaKey ]: metaValue } }
 				);

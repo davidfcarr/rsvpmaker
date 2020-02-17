@@ -11,6 +11,7 @@ import './rsvpmaker-sidebar.js';
 import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
+import './schedule.js';		
 import './form.js';		
 import './form-wrapper.js';
 import apiFetch from '@wordpress/api-fetch';
@@ -20,7 +21,7 @@ const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.b
 const { SelectControl, TextControl } = wp.components;
 
 const rsvpupcoming = [{label: 'Next event',value: 'next'},{label: 'Next event - RSVP on',value: 'nextrsvp'}];
-apiFetch( {path: '/wp-json/rsvpmaker/v1/future'} ).then( events => {
+apiFetch( {path: rsvpmaker_json_url+'future'} ).then( events => {
 	if(Array.isArray(events)) {
 		 events.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
 	}
@@ -33,7 +34,7 @@ apiFetch( {path: '/wp-json/rsvpmaker/v1/future'} ).then( events => {
 });
 
 const rsvptypes = [{value: '', label: 'None selected (optional)'}];
-apiFetch( {path: '/wp-json/rsvpmaker/v1/types'} ).then( types => {
+apiFetch( {path: rsvpmaker_json_url+'types'} ).then( types => {
 	if(Array.isArray(types))
 			types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
 		else {
@@ -263,7 +264,11 @@ registerBlockType( 'rsvpmaker/upcoming', {
             type: {
                 type: 'string',
                 default: '',
-            },
+			},
+            exclude_type: {
+                type: 'string',
+                default: '',
+            },			
             no_events: {
                 type: 'string',
                 default: 'No events listed',
@@ -283,7 +288,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	 */
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
-	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type }, setAttributes, isSelected } = props;
+	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type }, setAttributes, isSelected } = props;
 
 	function showFormPrompt () {
 		return <p><strong>Click here to set options.</strong></p>
@@ -331,6 +336,12 @@ registerBlockType( 'rsvpmaker/upcoming', {
         value={ type }
         options={ rsvptypes }
         onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+					<SelectControl
+        label={__("Exclude Event Type",'rsvpmaker')}
+        value={ exclude_type }
+        options={ rsvptypes }
+        onChange={ ( exclude_type ) => { setAttributes( { exclude_type: exclude_type } ) } }
     />
 					<SelectControl
         label={__("Calendar Navigation",'rsvpmaker')}
@@ -848,7 +859,7 @@ registerBlockType( 'rsvpmaker/upcoming-by-json', {
 
 function showTypes (data, index) {
 	if(index > 0)
-		typelist = typelist.concat(window.location.protocol+'//'+window.location.hostname + '/wp-json/rsvpmaker/v1/type/'+data.value + '\n'); 
+		typelist = typelist.concat(rsvpmaker_json_url+'type/'+data.value + '\n'); 
 }
 
 function showForm() {

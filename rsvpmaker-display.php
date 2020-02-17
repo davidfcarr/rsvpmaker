@@ -467,8 +467,20 @@ echo '<div class="rsvpmaker_upcoming">';
 if ( have_posts() ) {
 global $events_displayed;
 while ( have_posts() ) : the_post();
-$events_displayed[] = $post->ID;
+if(!empty($atts['exclude_type']))
+{
+	$termscheck = array();
+	$terms = get_the_terms($post->ID,'rsvpmaker-type');
 
+	if($terms)
+	foreach($terms as $term)
+	{
+		$termscheck[] = $term->slug;
+	}
+	if(in_array($atts['exclude_type'],$termscheck))
+		continue;
+}
+$events_displayed[] = $post->ID;
 ?>
 
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
@@ -572,8 +584,8 @@ return $class;
 add_shortcode("rsvpmaker_calendar","rsvpmaker_calendar");
 function rsvpmaker_calendar($atts = array()) 
 {
-if(is_admin())
-	return 'output reserved for front end';
+if(is_admin() || wp_is_json_request())
+	return;
 global $post;
 $post_backup = $post;
 global $wp_query;
@@ -627,6 +639,20 @@ $eventarray = array();
 if ( have_posts() ) {
 while ( have_posts() ) : the_post();
 
+if(!empty($atts['exclude_type']))
+{
+	$termscheck = array();
+	$terms = get_the_terms($post->ID,'rsvpmaker-type');
+
+	if($terms)
+	foreach($terms as $term)
+	{
+		$termscheck[] = $term->slug;
+	}
+	if(in_array($atts['exclude_type'],$termscheck))
+		continue;
+}
+
 //calendar entry
 	if(empty($post->post_title))
 		$post->post_title = __('Title left blank','rsvpmaker');
@@ -657,47 +683,47 @@ wp_reset_postdata();
 // calendar display routine
 $nav = isset($atts["nav"]) ? $atts["nav"] : 'bottom';
 
+$months = array('','January','February','March','April','May','June','July','August','September','October','November','December');
+
 if (!isset($_REQUEST["cm"]) || $_REQUEST["cm"] == 0)
 	{
-	$cy = $cm = 0;
+	$cm = (int) rsvpmaker_date("m");
+	$cy = (int) rsvpmaker_date("Y");
+	$monthname = $months[$cm];
 	$nowdate = rsvpmaker_date("Y-m-d");
+	$date = $bom = rsvpmaker_strtotime('first day of this month');
+	$eom = rsvpmaker_strtotime('last day of this month');
 	}
 else
 	{
 	$cm = (int) $_REQUEST["cm"];
 	$cy = (int) $_REQUEST["cy"];
-	$nowdate = rsvpmaker_date("Y-m-d", mktime(0, 0, 1, $cm, 1, $cy) );
+	$monthname = $months[$cm];
+	$date = $bom = rsvpmaker_strtotime('first day of '.$monthname.' '.$cy);
+	$eom = rsvpmaker_strtotime('last day of '.$monthname.' '.$cy);
+	$nowdate = rsvpmaker_date("Y-m-d", $bom );
 	}
 
+$monthafter = $eom + (DAY_IN_SECONDS * 32);
+
+$eonext = rsvpmaker_date("Y-m-d",'month after '.$monthname.' '.$cy);
+
 // Check if month and year is valid
+/*
 if ($cm && $cy && !checkdate($cm,1,$cy)) {
    $errors[] = "The specified year and month (".htmlentities("$cy, $cm").") are not valid.";
    unset($cm); unset($cy);
 }
+*/
 
-// Give defaults for the month and day values if they were invalid
-if (!isset($cm) || $cm == 0) { $cm = date("m"); }
-if (!isset($cy) || $cy == 0) { $cy = date("Y"); }
-
-// Start of the month date
-$date = mktime(0, 0, 1, $cm, 1, $cy);
-
-// Beginning and end of this month
-$bom = mktime(0, 0, 1, $cm,  1, $cy);
-$eom = mktime(0, 0, 1, $cm+1, 0, $cy);
-$eonext = rsvpmaker_date("Y-m-d",mktime(0, 0, 1, $cm+2, 0, $cy) );
 
 // Link to previous month (but do not link to too early dates)
-$lm = mktime(0, 0, 1, $cm, 0, $cy);
-   $prev_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $lm);
+   $prev_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $bom - 90000);
 
 // Link to next month (but do not link to too early dates)
-$nm = mktime(0, 0, 1, $cm+1, 1, $cy);
-   $next_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $nm);
+   $next_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $eom + 90000);
 
-$current_link = ' &nbsp;&lt;&nbsp; <a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y', mktime(0, 0, 1, $cm, 1, $cy)).'</a> &nbsp;&gt;&nbsp; ';
-
-$monthafter = mktime(0, 0, 1, $cm+2, 1, $cy);
+$current_link = ' &nbsp;&lt;&nbsp; <a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y',$bom).'</a> &nbsp;&gt;&nbsp; ';
 
 	$page_id = (isset($_GET["page_id"])) ? '<input type="hidden" name="page_id" value="'. (int) $_GET["page_id"].'" />' : '';
 
@@ -759,7 +785,7 @@ if(isset($_GET['debugpast']))
 else
 $todaydate = rsvpmaker_date('Y-m-d');
 // Print out all the days in this month
-for ($i = 1; $i <= date("t",$bom); $i++) {
+for ($i = 1; $i <= rsvpmaker_date("t",$bom); $i++) {
   
    // Print out day number and all events for the day
 	$thisdate = date("Y-m-",$bom).sprintf("%02d",$i);
@@ -804,7 +830,7 @@ $content .= '<div class="rsvpmaker_nav"><span class="navprev">'. $prev_link. '</
      '' . $next_link . "</span></div>";
 
 //jump form
-$content .= sprintf('<form id="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="text" name="cm" value="%s" size="4" class="jump" />/<input type="text" name="cy" value="%s" size="4" class="jump" /><button>%s</button>%s</form>', $self,__('Month/Year','rsvpmaker'),date('m',$monthafter),date('Y',$monthafter),__('Go','rsvpmaker'),$page_id);
+$content .= sprintf('<form id="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="text" name="cm" value="%s" size="4" class="jump" />/<input type="text" name="cy" value="%s" size="4" class="jump" /><button>%s</button>%s</form>', $self,__('Month/Year','rsvpmaker'),rsvpmaker_date('m',$monthafter),rsvpmaker_date('Y',$monthafter),__('Go','rsvpmaker'),$page_id);
 
 $calj = "
 
@@ -1153,7 +1179,7 @@ return $sql;
 }
 
 function rsvpmaker_archive_pages ($query) {
-	if(is_admin())
+	if(is_admin() || wp_is_json_request())
 		return;
 	if(is_archive() && isset($query->query["post_type"]) && ($query->query["post_type"] == 'rsvpmaker'))
 	{
@@ -1700,12 +1726,11 @@ function sked_to_text ($sked) {
 			foreach($dows as $dow)
 				$s .= $dayarray[(int) $dow] . ' ';	
 			}
-		$t = mktime($sked["hour"],$sked["minutes"]);
+		$t = rsvpmaker_mktime($sked["hour"],$sked["minutes"],0,date('n'),date('j'),date('Y'));
 		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
 	
 	return $dateblock;
 }
-
 
 function signed_up_ajax () {
 if(empty($_REQUEST['action']) || $_REQUEST['action'] != 'signed_up')
@@ -1808,6 +1833,85 @@ function rsvpmaker_form( $atts = array(), $form_content='' ) {
 		$output = event_content($form_content,true).rsvp_form_jquery();
 	}
 	$post = $backup;
+	return $output;
+}
+
+add_shortcode('rsvpmaker_daily_schedule','rsvpmaker_daily_schedule');
+function rsvpmaker_daily_schedule($atts) {
+	global $rsvp_options;
+	$output = '';
+	$last = '';
+	$start_limit = $end_limit = 0;
+	if(isset($atts['start']))
+		$start_limit = rsvpmaker_strtotime($atts['start']);
+	if(isset($atts['end']))
+		$end_limit = rsvpmaker_strtotime($atts['end']);
+
+	$future = get_future_events();
+	foreach($future as $event) {
+		$t = rsvpmaker_strtotime($event->datetime);
+		if($start_limit && ($t < $start_limit))
+			continue;
+		if($end_limit && ($t > $end_limit))
+			continue;
+		$terms = get_the_terms($event->ID,'rsvpmaker-type');
+		$wrapclass = '';
+		$termslugs = array();
+		if($terms)
+		foreach($terms as $term)
+		{
+			$wrapclass .= ' '.$term->slug;
+			$termslugs[] = $term->slug;
+		}
+		if(isset($atts['type']) && !in_array($atts['type'],$termslugs))
+			continue;
+		$index = rsvpmaker_strftime($rsvp_options['long_date'],$event->datetime);
+		$end = '';
+		if(get_post_meta($event->ID,'_firsttime', true) == 'set')
+			{
+			$endtime = get_post_meta($event->ID,'_endfirsttime', true);
+			$end = ' - '.rsvpmaker_strftime($rsvp_options['time_format'],$endtime);
+			}
+		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time">'.rsvpmaker_strftime($rsvp_options['time_format'],$t).$end.'</span>';
+		$eventcontent .= ' <span class="rsvpmaker-schedule-title">'.$event->post_title.'</h3>';
+		$parts = explode('<!--more-->',$event->post_content);
+		$content = $parts[0];
+		if(!empty($parts[1]))
+		{
+			$content .= '<p ><button id="rsvpmaker-schedule-button'.$event->ID.'" class="rsvpmaker-schedule-button">'.__('Read more').'</button></p>
+			<div id="rsvpmaker-schedule-detail'.$event->ID.'" class="rsvpmaker-schedule-detail" >';
+			$content .= $parts[1]."\n</div>";
+			$content = str_replace('<!-- wp:more -->','',$content);
+			$content = str_replace('<!-- /wp:more -->','',$content);
+		}
+		$eventcontent .= apply_filters('the_content',$content);
+		//$eventcontent .= get_the_content(__('Read more','rsvpmaker'),false,$event);
+		$eventcontent = '<div class="rsvpmaker-schedule-item'.$wrapclass.'">'."\n".$eventcontent."\n".'</div>';
+
+		if(empty($schedule[$index]))
+			$schedule[$index] = $eventcontent;
+		else
+			$schedule[$index] .= $eventcontent;
+	}
+	if(!empty($schedule))
+	foreach($schedule as $day => $eventcontent) {
+		if($day != $last)
+			$output .= sprintf('<h2>%s</h2>',$day);
+		$output .= $eventcontent;
+		$last = $day;
+	}
+	$output = '<div class="rsvpmaker-schedule">'."\n".$output."\n</div>";
+	$output .= "\n<script>
+	jQuery(document).ready(function($) {
+	$('.rsvpmaker-schedule-detail').hide();
+	$( '.rsvpmaker-schedule-button' ).click(function( event ) {
+		var button_id = $(this).attr('id');
+		var more_id = button_id.replace('button','detail');
+		$('#'+button_id).hide();
+		$('#'+more_id).show();
+	  });
+	});
+	</script>";
 	return $output;
 }
 

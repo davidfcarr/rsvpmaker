@@ -21,7 +21,7 @@ rsvpmaker_debug_log('rsvpmaker_to_stripe');
 //called from Gutenberg init
 function rsvpmaker_stripecharge ($atts) {
 	rsvpmaker_debug_log('rsvpmaker_stripecharge');
-	if(is_admin())
+if(is_admin() || wp_is_json_request())
 	return;
 
 global $current_user;
@@ -69,6 +69,7 @@ if(!$show)
 $currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp_options['paypal_currency']);
 $vars['currency'] = $currency;
 
+
 //$rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
 $rsvpmaker_stripe_checkout_page_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' ");
 if(empty($rsvpmaker_stripe_checkout_page_id)) {// || isset($_GET['reset_stripe_checkout_page'])) {
@@ -90,6 +91,14 @@ if(empty($rsvpmaker_stripe_checkout_page_id)) {// || isset($_GET['reset_stripe_c
 	rsvpmaker_debug_log($rsvpmaker_stripe_checkout_page_id,'new checkout page');
 	//update_option('rsvpmaker_stripe_checkout_page_id',$rsvpmaker_stripe_checkout_page_id);
 }
+$currency_symbol = '';
+if(isset($vars['currency']))
+{
+	if($vars['currency'] == 'usd')
+		$currency_symbol = '$';
+	elseif($vars['currency'] == 'eur')
+		$currency_symbol = '€';
+}
 $idempotency_key = 'stripe_'.time().'_'.rand(0,100000000000);
 update_option($idempotency_key,$vars);
 $url = get_permalink($rsvpmaker_stripe_checkout_page_id);
@@ -98,7 +107,7 @@ if(isset($vars['paymentType']) && ( $vars['paymentType'] == 'donation'))
 else
 	$output = sprintf('<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,$idempotency_key,__('Pay with Card'));
 if($show)
-	$output .= sprintf('<p>%s%s %s<br />%s</p>',$prefix,$vars['amount'],$rsvp_options["paypal_currency"],$vars["description"]);
+	$output .= sprintf('<p>%s%s %s<br />%s</p>',$currency_symbol,$vars['amount'],$rsvp_options["paypal_currency"],$vars["description"]);
 $rsvpmaker_stripe_form = $output;
 return $output;
 }
@@ -109,7 +118,7 @@ function rsvpmaker_stripe_checkout() {
 rsvpmaker_debug_log('rsvpmaker_stripe_checkout');
 global $post, $rsvp_options, $current_user;
 ob_start();
-$idempotency_key = $_GET['txid'];
+$varkey = $idempotency_key = $_GET['txid'];
 //echo 'lookup key '.$idempotency_key;
 $vars = get_option($idempotency_key);
 if(empty($vars))
@@ -199,13 +208,21 @@ var style = {
   base: {
 	iconColor: '#111111',
     color: "#111111",
-	backgroundColor: "#ffffff",
 	fontWeight: 400,
 	fontSize: '16px',
 	'::placeholder': {
 	color: '#333333',
 	},
-  }
+	'::-ms-clear': {
+	backgroundColor: '#fff',
+	},
+  	},
+	empty: {
+	backgroundColor: '#fff',
+  	},
+	completed: {
+	backgroundColor: '#eee',
+  	},
 };
 
 var card = elements.create("card", { style: style });
@@ -224,13 +241,15 @@ var cardFields = document.getElementById('stripe-checkout-form');
 var submitButton = document.getElementById('card-button');
 var cardResult = document.getElementById('card-result');
 var clientSecret = document.getElementById('card-button').getAttribute('data-secret');
-var name = document.getElementById('stripe-checkout-name').value;
-var email = document.getElementById('stripe-checkout-email').value;
 
 submitButton.addEventListener('click', function(ev) {
 ev.preventDefault();
-submitButton.style = 'display: none';
-cardFields.style = 'display: none';
+var name = document.getElementById('stripe-checkout-name').value;
+var email = document.getElementById('stripe-checkout-email').value;
+if((name == '') || (email == '')){
+	cardResult.innerHTML = 'Name and email are both required';
+	return;
+}
 cardResult.innerHTML = '<?php _e('Please wait','rsvpmaker');?>Please wait ...';
 cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
   stripe.confirmCardPayment(clientSecret, {
@@ -249,6 +268,8 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 	  console.log(result);
     } else {
       // The payment has been processed!
+	submitButton.style = 'display: none';
+	cardFields.style = 'display: none';
       if (result.paymentIntent.status === 'succeeded') {
 		  console.log(result);
 		cardResult.innerHTML = '<?php _e('Recording payment','rsvpmaker');?> ...';

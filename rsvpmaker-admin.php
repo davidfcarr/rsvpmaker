@@ -91,7 +91,7 @@ if(isset($_POST["event_month"]) )
 				{
 				$hour = $_POST["event_hour"][$index] + $dpart[0];
 				$minutes = (isset($dpart[1]) ) ? $_POST["event_minutes"][$index] + $dpart[1] : $_POST["event_minutes"][$index];
-				$t = mktime( $hour, $minutes,0,$_POST["event_month"][$index],$_POST["event_day"][$index],$year);
+				$t = rsvpmaker_mktime( $hour, $minutes,0,$_POST["event_month"][$index],$_POST["event_day"][$index],$year);
 				$duration = rsvpmaker_date('Y-m-d H:i:s',$t);
 				}
 			else
@@ -118,14 +118,14 @@ if(isset($_POST["edit_month"]))
 					$hour = $_POST["edit_hour"][$index] + $dpart[0];
 					$minutes = (isset($dpart[1]) ) ? $_POST["edit_minutes"][$index] + $dpart[1] : $_POST["edit_minutes"][$index];
 					//dchange
-					$duration = rsvpmaker_date('Y-m-d H:i:s',mktime( $hour, $minutes,0,$_POST["edit_month"][$index],$_POST["edit_day"][$index],$year));
+					$duration = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_mktime( $hour, $minutes,0,$_POST["edit_month"][$index],$_POST["edit_day"][$index],$year));
 					}
 				}
 			elseif( is_numeric($_POST["edit_duration"][$index]) )
 				{					
 				$minutes = $_POST["edit_minutes"][$index] + (60*$_POST["edit_duration"][$index]);
 				//dchange - can this be removed?
-				$duration = rsvpmaker_date('Y-m-d H:i:s',mktime( $_POST["edit_hour"][$index], $minutes,0,$_POST["edit_month"][$index],$_POST["edit_day"][$index],$year));
+				$duration = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_mktime( $_POST["edit_hour"][$index], $minutes,0,$_POST["edit_month"][$index],$_POST["edit_day"][$index],$year));
 				}
 			else
 				$duration = $_POST["edit_duration"][$index]; // empty or all day			
@@ -1567,7 +1567,7 @@ if(!isset($_GET["week"]))
 <?php
 $futuremonths = 12;
 for($i =0; $i < $futuremonths; $i++)
-	$projected[$i] = mktime(0,0,0,$cm+$i,1); // first day of month
+	$projected[$i] = rsvpmaker_mktime(0,0,0,$cm+$i,1,$y); // first day of month
 }
 else
 {
@@ -1576,7 +1576,7 @@ else
 	$futuremonths = 12;
 	for($i =0; $i < $futuremonths; $i++)
 		{
-		$thisdate = mktime(0,0,0,$cm+$i,1); // first day of month
+		$thisdate = rsvpmaker_mktime(0,0,0,$cm+$i,1,$y); // first day of month
 		$datetext =  "$week $dow ".date("F Y",$thisdate);
 		$projected[$i] = rsvpmaker_strtotime($datetext);
 		$datetexts[$i] = $datetext;
@@ -2373,7 +2373,7 @@ if($week == 6)
 	}
 else {
 	//monthly
-	$ts = mktime(0,0,0,$cm,1,$cy); // first day of month
+	$ts = rsvpmaker_mktime(0,0,0,$cm,1,$cy); // first day of month
 	if(isset($_GET["start"]))
 		$ts = rsvpmaker_strtotime($_GET["start"]);
 	$i = 0;
@@ -2383,7 +2383,7 @@ else {
 		{
 		$firstdays[$ts] = $ts;
 		$i++;
-		$ts = mktime(0,0,0,$cm+$i,1,$cy); // first day of month
+		$ts = rsvpmaker_mktime(0,0,0,$cm+$i,1,$cy); // first day of month
 		if($week == 0)
 			$projected[$ts] = $ts;
 		}
@@ -2641,6 +2641,14 @@ function rsvp_get_confirm($post_id, $return_post = false) {
 			if(is_numeric($rsvp_options['rsvp_confirm']))
 				$conf_post= get_post($rsvp_options['rsvp_confirm']);
 		}
+		if(empty($conf_post->post_content)) {
+			//if the default confirmation post is missing, recreate it
+			$conf_array = array('post_title'=>'Confirmation:Default', 'post_content'=>'Thank you!','post_type' => 'rsvpemail','post_status' => 'publish');
+			$conf_array['ID'] = $id = wp_insert_post($conf_array);
+			$rsvp_options['rsvp_confirm'] = $id;
+			update_option('RSVPMAKER_Options',$rsvp_options);
+			$conf_post = (object) $conf_array;
+		}			
 		if(!strpos($conf_post->post_content,'!-- /wp'))//if it's not Gutenberg content
 			$conf_post->post_content = wpautop($conf_post->post_content);
 		if(function_exists('do_blocks'))
