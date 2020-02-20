@@ -2174,7 +2174,6 @@ wp_reset_query();
 
 	return $content;
 }
-add_shortcode('RSVPMaker_chimpshort', 'RSVPMaker_chimpshort');
 
 function email_get_content () {
 global $wpdb;
@@ -2209,6 +2208,11 @@ foreach ($results as $row)
 $posts = '<optgroup label="'.__('Recent Posts','rsvpmaker').'">'.$posts."</optgroup>\n";
 }
 
+$po = '';
+$pages = get_pages();
+foreach($pages as $page)
+	$po .= sprintf("<option value=\"%d\">%s</option>\n",$page->ID,substr($page->post_title,0,80));
+
 ?>
 <form action="<?php echo admin_url(); ?>" method="get">
 <p><?php _e('Email Based on Event','rsvpmaker');?>: <select name="rsvpevent_to_email"><?php echo $event_options; ?></select>
@@ -2222,6 +2226,13 @@ $posts = '<optgroup label="'.__('Recent Posts','rsvpmaker').'">'.$posts."</optgr
 </p>
 <button><?php _e('Load Content','rsvpmaker');?></button>
 </form>	
+<form action="<?php echo admin_url(); ?>" method="get">
+<p><?php _e('Email Based on Page','rsvpmaker');?>: <select name="post_to_email"><?php echo $po; ?></select>
+</select>
+</p>
+<button><?php _e('Load Content','rsvpmaker');?></button>
+</form>	
+
 
 <?php
 } // end chimp get content
@@ -2348,8 +2359,6 @@ function add_style_to_email_html($html) {
 		$html = str_replace('</head>',"<style>\n".$styles."\n</style></head>",$html);
 	return $html;
 }
-
-add_shortcode('rsvpmaker_email_content', 'rsvpmaker_email_content');
 
 function rsvpmaker_tx_email($event_post, $mail) {
 
@@ -2545,7 +2554,6 @@ function rsvpmaker_upcoming_email($atts) {
 	return $output;
 }
 
-add_shortcode('rsvpmaker_upcoming_email','rsvpmaker_upcoming_email');
 
 function is_email_context () {
 		global $email_context;
@@ -2615,8 +2623,6 @@ if(0 == (int) $blog_weeks_ago)
     $where .= " AND post_date > '" . $week_ago . "'";
     return $where;
 }
-
-add_shortcode('rsvpmaker_recent_blog_posts','rsvpmaker_recent_blog_posts');
 
 function get_rsvp_notekey() {
 	global $post, $rsvpmaker_cron_context;
@@ -2884,7 +2890,6 @@ else {
 return $templates;
 }
 
-add_shortcode('rsvpcount','rsvpcount');
 function rsvpcount ($atts) {
 global $wpdb;
 global $post;
@@ -3161,5 +3166,4 @@ function event_title_link () {
 	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink,$post->post_title,$display_date);
 }
 
-add_shortcode('event_title_link', 'event_title_link');
 ?>

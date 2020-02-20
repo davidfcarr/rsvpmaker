@@ -1973,134 +1973,6 @@ else
 }
 }
 
-function embed_dateblock ($atts) {
-	$d = rsvp_date_block($atts["post_id"],get_post_custom($atts["post_id"]));
-	return $d["dateblock"];
-}
-
-add_shortcode('embed_dateblock','embed_dateblock');
-
-function rsvp_date_block($post_id, $custom_fields = array()) {
-global $rsvp_options;
-global $last_time;
-global $post;
-
-if(empty($post_id))
-	$post_id = $post->ID;
-if(empty($custom_fields))
-	$custom_fields = get_post_custom($post_id);
-
-if(empty($custom_fields["_rsvp_dates"][0]) && empty($custom_fields["_sked"][0]))
-	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
-$time_format = $rsvp_options["time_format"];
-$dur = $tzbutton = '';
-$firstrow = array();
-
-if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
-	{
-	$time_format .= ' %Z';
-	}
-$permalink = get_permalink($post_id);
-$results = get_rsvp_dates($post_id);
-if($results)
-{
-$start = 2;
-$dateblock = '';
-global $last_time;
-foreach($results as $index => $row)
-	{
-	if(empty($firstrow))
-		$firstrow = $row;
-	$last_time = $t = rsvpmaker_strtotime($row["datetime"]);
-	$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'">';
-	$dateblock .= utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$t));
-	$dur = $row["duration"];
-	if($dur == 'set') {
-		$end_time = $row['end_time'];
-		$dur = rsvpmaker_strtotime($end_time);
-		$tzcode = strpos($time_format,'%Z');
-		if($tzcode) 
-			$time_format = str_replace('%Z','',$time_format);
-		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t);
-		$dateblock .= ' <span class="end_time">'.__('to','rsvpmaker')." ".rsvpmaker_strftime($time_format,$dur).'</span>';
-		if($tzcode)
-			$dateblock .= ' '.rsvpmaker_strftime('%Z',$t);
-		$dateblock .= '</span>';
-	}
-	elseif($dur != 'allday')
-		{
-		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';
-		}
-	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
-	if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0] && !is_email_context())
-	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
-	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
-	}
-//gcal link
-if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calendar_icons"][0])) || !empty($custom_fields["_calendar_icons"][0]) ) && !is_email_context ())
-	{
-	if(!empty($firstrow['end_time']))
-	{
-		$p = explode(' ',$firstrow['datetime']);
-		$end_time = $p[0].' '.$firstrow['end_time'];
-	}
-	else 
-		$end_time = $firstrow["datetime"] . ' +1 hour';
-	$j = (strpos($permalink,'?')) ? '&' : '?';
-	$dateblock .= sprintf('<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>',rsvpmaker_to_gcal($post,$firstrow["datetime"],$end_time), __('Add to Google Calendar','rsvpmaker'), plugins_url('rsvpmaker/button_gc.gif'),$permalink.$j.'ical=1', __('Add to Outlook/iCal','rsvpmaker'), plugins_url('rsvpmaker/button_ical.gif'), $tzbutton );
-	}
-}
-elseif(isset($custom_fields["_sked"][0]))
-	{
-		$sked = unserialize($custom_fields["_sked"][0]);
-
-		//backward compatability
-		if(is_array($sked["week"]))
-			{
-				$weeks = $sked["week"];
-				$dows = $sked["dayofweek"];
-			}
-		else
-			{
-				$weeks = array();
-				$dows = array();
-				$weeks[0] = $sked["week"];
-				$dows[0] = (empty($sked["dayofweek"])) ? 0 : $sked["dayofweek"];
-			}
-
-		$dayarray = Array(__("Sunday",'rsvpmaker'),__("Monday",'rsvpmaker'),__("Tuesday",'rsvpmaker'),__("Wednesday",'rsvpmaker'),__("Thursday",'rsvpmaker'),__("Friday",'rsvpmaker'),__("Saturday",'rsvpmaker'));
-		$weekarray = Array(__("Varies",'rsvpmaker'),__("First",'rsvpmaker'),__("Second",'rsvpmaker'),__("Third",'rsvpmaker'),__("Fourth",'rsvpmaker'),__("Last",'rsvpmaker'),__("Every",'rsvpmaker'));
-		if((int)$weeks[0] == 0)
-			$s = __('Schedule Varies','rsvpmaker');
-		else
-			{
-			foreach($weeks as $week)
-				{
-				if(empty($s))
-					$s = '';
-				else
-					$s .= '/ ';
-				$s .= $weekarray[(int) $week].' ';
-				}
-			foreach($dows as $dow)
-				$s .= $dayarray[(int) $dow] . ' ';	
-			}
-		
-		$t = rsvpmaker_mktime($sked["hour"],$sked["minutes"],0,date('n'),date('j'),date('Y'));
-		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
-	
-		$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'"></div>';
-		if(current_user_can('edit_rsvpmakers'))
-			$dateblock .= sprintf('<br /><a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id),__('Create/update events from template','rsvpmaker'));
-	}
-	else // no dates, no sked, maybe this is an agenda or a landing page
-	{
-		return array('dateblock' => '','dur' => NULL, 'last_time' => NULL);			
-	}
-
-return array('dateblock' => $dateblock,'dur' => $dur, 'last_time' => $last_time, 'firstrow' => $firstrow);
-}
-
 //global variable for content
 $confirmed_content = '';
 
@@ -2615,8 +2487,6 @@ $content = apply_filters('rsvpmaker_event_content_bottom',$content, $custom_fiel
 
 return $content;
 } } // end event content
-
-add_shortcode('rsvp_report_shortcode','rsvp_report_shortcode');
 
 function rsvp_report_shortcode ($atts) {
 if(!isset($atts["public"]) || ($atts["public"] == '0'))
@@ -3671,7 +3541,6 @@ return $output;
 }
 }
 
-add_shortcode('rsvpguests','rsvpguests');
 
 if(!function_exists('rsvpprofiletable') )
 {
@@ -3690,7 +3559,6 @@ return '
 
 }
 }
-add_shortcode('rsvpprofiletable','rsvpprofiletable');
 
 if(!function_exists('rsvpfield') )
 {
@@ -3967,11 +3835,6 @@ if(!function_exists('rsvpnote')) {
 	return (isset($rsvp_row->note)) ? $rsvp_row->note : '';
 	}
 }
-
-add_shortcode('rsvpnote','rsvpnote');
-
-add_shortcode('rsvpfield','rsvpfield');
-
 
 if(!function_exists('date_title') )
 {

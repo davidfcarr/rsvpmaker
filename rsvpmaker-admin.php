@@ -3440,7 +3440,6 @@ global $rsvp_options;
 	
 }
 
-add_shortcode('rsvpautorenew_test','rsvpautorenew_test');
 
 function rsvpmaker_template_checkbox_post () {
 
@@ -4516,8 +4515,8 @@ if(isset($post->post_title) && ( ($post->post_title == 'Confirmation:Default') |
 	}
 	
 	//blog post to email
-if(isset($post->post_type) && ($post->post_type == 'post') && current_user_can('edit_post',$post->ID) )
-	$wp_admin_bar->add_menu(array('title' => __('Send RSVP Email'), 'id' => 'post-to-email', 'href' => admin_url('?post_to_email=').$post->ID, 'meta' => array('class' => 'post-to-email')));
+if(isset($post->post_type) && (($post->post_type == 'post') || ($post->post_type == 'page')) && current_user_can('edit_post',$post->ID) )
+	$wp_admin_bar->add_menu(array('parent' => 'edit', 'title' => __('Send RSVP Email'), 'id' => 'post-to-email', 'href' => admin_url('?post_to_email=').$post->ID, 'meta' => array('class' => 'post-to-email')));
 
 if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpemail')) && current_user_can('edit_post',$post->ID) )
 	{

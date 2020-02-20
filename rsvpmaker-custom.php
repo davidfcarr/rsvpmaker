@@ -438,6 +438,7 @@ if($ssl_replace)
 
 add_action('admin_init','ssl_fix');
 
+if(!wp_is_json_request())
 add_shortcode('rsvpmaker_shortcode_demo','rsvpmaker_shortcode_demo');
 
 function rsvpmaker_shortcode_demo ($atts) {

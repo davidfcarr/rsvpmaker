@@ -112,8 +112,6 @@ $rsvpmaker_stripe_form = $output;
 return $output;
 }
 
-add_shortcode('rsvpmaker_stripe_checkout','rsvpmaker_stripe_checkout');
-
 function rsvpmaker_stripe_checkout() {
 rsvpmaker_debug_log('rsvpmaker_stripe_checkout');
 global $post, $rsvp_options, $current_user;

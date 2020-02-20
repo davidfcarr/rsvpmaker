@@ -1,7 +1,35 @@
 <?php
 
-//event_content defined in rsvpmaker-pluggable.php to allow for variations
+if(!wp_is_json_request()){
+	add_shortcode('rsvpautorenew_test','rsvpautorenew_test');
+	add_shortcode('rsvpmaker_embed_form','rsvpmaker_form');
+	add_shortcode('rsvpmaker_form','rsvpmaker_form');
+	add_shortcode('event_listing', 'event_listing');
+	add_shortcode("rsvpmaker_upcoming","rsvpmaker_upcoming");
+	add_shortcode("rsvpmaker_calendar","rsvpmaker_calendar");
+	add_shortcode('rsvpmaker_timed','rsvpmaker_timed');
+	add_shortcode('rsvpmaker_looking_ahead','rsvpmaker_looking_ahead');
+	add_shortcode('ylchat','ylchat');
+	add_shortcode("rsvpmaker_next","rsvpmaker_next");
+	add_shortcode("rsvpmaker_one","rsvpmaker_one");
+	add_shortcode('rsvpdateblock','rsvpdateblock');
+	add_shortcode('rsvpmaker_daily_schedule','rsvpmaker_daily_schedule');
+	add_shortcode('rsvpmaker_email_content', 'rsvpmaker_email_content');
+	add_shortcode('rsvpmaker_upcoming_email','rsvpmaker_upcoming_email');
+	add_shortcode('rsvpmaker_recent_blog_posts','rsvpmaker_recent_blog_posts');
+	add_shortcode('rsvpcount','rsvpcount');
+	add_shortcode('event_title_link', 'event_title_link');
+	add_shortcode('embed_dateblock','embed_dateblock');
+	add_shortcode('rsvp_report_shortcode','rsvp_report_shortcode');
+	add_shortcode('rsvpguests','rsvpguests');
+	add_shortcode('rsvpprofiletable','rsvpprofiletable');
+	add_shortcode('rsvpnote','rsvpnote');
+	add_shortcode('rsvpfield','rsvpfield');
+	add_shortcode('rsvpmaker_stripe_checkout','rsvpmaker_stripe_checkout');
+	add_shortcode('RSVPMaker_chimpshort', 'RSVPMaker_chimpshort');
+}
 
+//event_content defined in rsvpmaker-pluggable.php to allow for variations
 add_filter('the_content','event_content_anchor',50);
 
 function event_content_anchor ($content) {
@@ -158,8 +186,6 @@ return ob_get_clean();
 }
 
 add_filter('the_content','event_js',15);
-
-add_shortcode('event_listing', 'event_listing');
 
 function rsvp_url_date_query ($direction = '') {
 	$date = '';
@@ -536,8 +562,6 @@ if(is_email_context())
 return $listings;
 }
 
-add_shortcode("rsvpmaker_upcoming","rsvpmaker_upcoming");
-
 //get all of the dates for the month
 function rsvpmaker_calendar_where($where) {
 
@@ -581,7 +605,6 @@ if(is_array($tax_terms))
 return $class;
 }
 
-add_shortcode("rsvpmaker_calendar","rsvpmaker_calendar");
 function rsvpmaker_calendar($atts = array()) 
 {
 if(is_admin() || wp_is_json_request())
@@ -971,10 +994,6 @@ return $content;
 
 }
 
-add_shortcode('rsvpmaker_timed','rsvpmaker_timed');
-
-add_shortcode('rsvpmaker_looking_ahead','rsvpmaker_looking_ahead');
-
 function rsvpmaker_looking_ahead($atts) {
 global $last_time;
 global $events_displayed;
@@ -1265,7 +1284,6 @@ if(isset($_GET["height"]))
 return $note . sprintf('<iframe src="%s" width="%s" height="%s"></iframe>',$url,$width,$height) . sprintf('<p>%s <a href="%s" target="_blank">%s</a>. %s</p>',__('If the chat prompt does not appear below,','rsvpmaker'), $login_url, __('please login to your YouTube/Google account','rsvpmaker'), __('Then refresh this window.','rsvpmaker'));
 }
 
-add_shortcode('ylchat','ylchat');
 
 function rsvpmaker_next ($atts = array())
 {
@@ -1275,8 +1293,6 @@ else
 	$atts["post_id"] = 'next';
 return rsvpmaker_one($atts);
 }
-
-add_shortcode("rsvpmaker_next","rsvpmaker_next");
 
 function rsvpmaker_one ($atts = array())
 {
@@ -1548,8 +1564,6 @@ wp_reset_postdata();
 return ob_get_clean();
 }
 
-add_shortcode("rsvpmaker_one","rsvpmaker_one");
-
 function rsvpmaker_replay_form($event_id) {
 	
 if(is_rsvpmaker_future($event_id, 1)) 
@@ -1795,7 +1809,6 @@ function rsvpdateblock ($atts) {
 	$dateblock = $date_array["dateblock"];
 	return '<div class="dateblock">'.$dateblock."\n</div>\n";
 }
-add_shortcode('rsvpdateblock','rsvpdateblock');
 
 function rsvpmaker_hide_time_posted($time) {
 	global $post;
@@ -1820,9 +1833,6 @@ function rsvpmaker_get_the_archive_title($title) {
 
 add_filter( 'get_the_archive_title', 'rsvpmaker_get_the_archive_title',20 );
 
-add_shortcode('rsvpmaker_embed_form','rsvpmaker_form');
-add_shortcode('rsvpmaker_form','rsvpmaker_form');
-
 function rsvpmaker_form( $atts = array(), $form_content='' ) {
 	global $post, $showbutton;
 	$showbutton = false;
@@ -1836,7 +1846,6 @@ function rsvpmaker_form( $atts = array(), $form_content='' ) {
 	return $output;
 }
 
-add_shortcode('rsvpmaker_daily_schedule','rsvpmaker_daily_schedule');
 function rsvpmaker_daily_schedule($atts) {
 	global $rsvp_options;
 	$output = '';
@@ -1913,6 +1922,133 @@ function rsvpmaker_daily_schedule($atts) {
 	});
 	</script>";
 	return $output;
+}
+
+
+function embed_dateblock ($atts) {
+	$d = rsvp_date_block($atts["post_id"],get_post_custom($atts["post_id"]));
+	return $d["dateblock"];
+}
+
+function rsvp_date_block($post_id, $custom_fields = array()) {
+global $rsvp_options;
+global $last_time;
+global $post;
+
+if(empty($post_id))
+	$post_id = $post->ID;
+if(empty($custom_fields))
+	$custom_fields = get_post_custom($post_id);
+
+if(empty($custom_fields["_rsvp_dates"][0]) && empty($custom_fields["_sked"][0]))
+	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
+$time_format = $rsvp_options["time_format"];
+$dur = $tzbutton = '';
+$firstrow = array();
+
+if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
+	{
+	$time_format .= ' %Z';
+	}
+$permalink = get_permalink($post_id);
+$results = get_rsvp_dates($post_id);
+if($results)
+{
+$start = 2;
+$dateblock = '';
+global $last_time;
+foreach($results as $index => $row)
+	{
+	if(empty($firstrow))
+		$firstrow = $row;
+	$last_time = $t = rsvpmaker_strtotime($row["datetime"]);
+	$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'">';
+	$dateblock .= utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$t));
+	$dur = $row["duration"];
+	if($dur == 'set') {
+		$end_time = $row['end_time'];
+		$dur = rsvpmaker_strtotime($end_time);
+		$tzcode = strpos($time_format,'%Z');
+		if($tzcode) 
+			$time_format = str_replace('%Z','',$time_format);
+		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t);
+		$dateblock .= ' <span class="end_time">'.__('to','rsvpmaker')." ".rsvpmaker_strftime($time_format,$dur).'</span>';
+		if($tzcode)
+			$dateblock .= ' '.rsvpmaker_strftime('%Z',$t);
+		$dateblock .= '</span>';
+	}
+	elseif($dur != 'allday')
+		{
+		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';
+		}
+	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
+	if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0] && !is_email_context())
+	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
+	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
+	}
+//gcal link
+if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calendar_icons"][0])) || !empty($custom_fields["_calendar_icons"][0]) ) && !is_email_context ())
+	{
+	if(!empty($firstrow['end_time']))
+	{
+		$p = explode(' ',$firstrow['datetime']);
+		$end_time = $p[0].' '.$firstrow['end_time'];
+	}
+	else 
+		$end_time = $firstrow["datetime"] . ' +1 hour';
+	$j = (strpos($permalink,'?')) ? '&' : '?';
+	$dateblock .= sprintf('<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>',rsvpmaker_to_gcal($post,$firstrow["datetime"],$end_time), __('Add to Google Calendar','rsvpmaker'), plugins_url('rsvpmaker/button_gc.gif'),$permalink.$j.'ical=1', __('Add to Outlook/iCal','rsvpmaker'), plugins_url('rsvpmaker/button_ical.gif'), $tzbutton );
+	}
+}
+elseif(isset($custom_fields["_sked"][0]))
+	{
+		$sked = unserialize($custom_fields["_sked"][0]);
+
+		//backward compatability
+		if(is_array($sked["week"]))
+			{
+				$weeks = $sked["week"];
+				$dows = $sked["dayofweek"];
+			}
+		else
+			{
+				$weeks = array();
+				$dows = array();
+				$weeks[0] = $sked["week"];
+				$dows[0] = (empty($sked["dayofweek"])) ? 0 : $sked["dayofweek"];
+			}
+
+		$dayarray = Array(__("Sunday",'rsvpmaker'),__("Monday",'rsvpmaker'),__("Tuesday",'rsvpmaker'),__("Wednesday",'rsvpmaker'),__("Thursday",'rsvpmaker'),__("Friday",'rsvpmaker'),__("Saturday",'rsvpmaker'));
+		$weekarray = Array(__("Varies",'rsvpmaker'),__("First",'rsvpmaker'),__("Second",'rsvpmaker'),__("Third",'rsvpmaker'),__("Fourth",'rsvpmaker'),__("Last",'rsvpmaker'),__("Every",'rsvpmaker'));
+		if((int)$weeks[0] == 0)
+			$s = __('Schedule Varies','rsvpmaker');
+		else
+			{
+			foreach($weeks as $week)
+				{
+				if(empty($s))
+					$s = '';
+				else
+					$s .= '/ ';
+				$s .= $weekarray[(int) $week].' ';
+				}
+			foreach($dows as $dow)
+				$s .= $dayarray[(int) $dow] . ' ';	
+			}
+		
+		$t = rsvpmaker_mktime($sked["hour"],$sked["minutes"],0,date('n'),date('j'),date('Y'));
+		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
+	
+		$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'"></div>';
+		if(current_user_can('edit_rsvpmakers'))
+			$dateblock .= sprintf('<br /><a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id),__('Create/update events from template','rsvpmaker'));
+	}
+	else // no dates, no sked, maybe this is an agenda or a landing page
+	{
+		return array('dateblock' => '','dur' => NULL, 'last_time' => NULL);			
+	}
+
+return array('dateblock' => $dateblock,'dur' => $dur, 'last_time' => $last_time, 'firstrow' => $firstrow);
 }
 
 ?>
