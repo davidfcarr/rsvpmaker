@@ -248,7 +248,7 @@ if((name == '') || (email == '')){
 	cardResult.innerHTML = 'Name and email are both required';
 	return;
 }
-cardResult.innerHTML = '<?php _e('Please wait','rsvpmaker');?>Please wait ...';
+cardResult.innerHTML = '<?php _e('Please wait','rsvpmaker');?>';
 cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
   stripe.confirmCardPayment(clientSecret, {
     payment_method: {
@@ -272,7 +272,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 		  console.log(result);
 		cardResult.innerHTML = '<?php _e('Recording payment','rsvpmaker');?> ...';
 		const form = new FormData(document.getElementById('payee-form'));
-		fetch('/wp-json/rsvpmaker/v1/stripesuccess/<?php echo $idempotency_key; ?>', {
+		fetch(rsvpmaker_json_url+'stripesuccess/<?php echo $idempotency_key; ?>', {
   method: 'POST', // or 'PUT'
   body: form,
 })

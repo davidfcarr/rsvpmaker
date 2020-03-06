@@ -1496,7 +1496,35 @@ foreach($results as $row)
 	
 if(!empty($_POST["members"]))
 {
-$users = get_users();
+$users = get_users('blog='.get_current_blog_id());
+printf('<p>Sending to %s website members</p>',sizeof($users));
+$unsub = get_option('rsvpmail_unsubscribed');
+if(empty($unsub)) $unsub = array();
+foreach($users as $user)
+	{
+	if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
+		{
+			$unsubscribed[] = $user->user_email;
+			continue;
+		}
+	$mail["to"] = $user->user_email;
+	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
+	$mail["fromname"] =  stripslashes($_POST["from_name"]);
+	$mail["subject"] =  stripslashes($_POST["subject"]);
+	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('<div class="rsvpexplain">This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME'].'</div>');
+	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
+	$result = rsvpmailer($mail);
+	if(strpos($result,'ailed'))
+		{
+			echo $result;
+			break;
+		}
+	}
+}
+
+if(!empty($_POST["network_members"]) && current_user_can('manage_network'))
+{
+$users = get_users('blog='.get_current_blog_id());
 printf('<p>Sending to %s website members</p>',sizeof($users));
 $unsub = get_option('rsvpmail_unsubscribed');
 if(empty($unsub)) $unsub = array();
@@ -1647,6 +1675,13 @@ Email Template: <select name="template"><?php echo $o; ?></select>
 <p style="clear:both;"><?php _e('Send','rsvpmaker');?></p>
 <div><input type="checkbox" name="preview" value="1"> <?php _e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $chimp_options["email-from"]; ?>" /><br />
 <input type="checkbox" name="members" value="1"> <?php _e('Website members','rsvpmaker');?><br />
+<?php if(is_multisite() && current_user_can('manage_network')) {
+?>
+<div style="border: thin dotted red;"><strong>Network Administrator Only:</strong><br /> 
+<input type="checkbox" name="network_members" value="1"> <?php _e('All users','rsvpmaker');?>
+</div>
+<?php
+} ?>
 <?php
 if(!empty($chimp_options["chimp-key"]))
 {

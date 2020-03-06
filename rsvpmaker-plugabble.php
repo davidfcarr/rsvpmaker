@@ -1936,6 +1936,7 @@ global $rsvp_options;
 	wp_enqueue_style( 'rsvp_style');
 	wp_localize_script( 'rsvpmaker_ajaxurl', 'ajaxurl', admin_url('admin-ajax.php') );
 	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker/rsvpmaker.js'), array(), get_rsvpversion());
+	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
 } } // end event scripts
 
 function rsvpmaker_localdate() {

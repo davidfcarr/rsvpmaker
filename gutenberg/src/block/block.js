@@ -11,7 +11,7 @@ import './rsvpmaker-sidebar.js';
 import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
-import './schedule.js';		
+import './schedule.js';
 import './form.js';		
 import './form-wrapper.js';
 import apiFetch from '@wordpress/api-fetch';

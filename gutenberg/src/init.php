@@ -188,7 +188,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$template_url = admin_url('post.php?action=edit&post='.$template_id);
 		}
 		
-$post_id = (empty($post->ID)) ? 0 : $post->ID;
+	$post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$date = get_rsvp_date($post_id);
 	$datecount = sizeof(get_rsvp_dates($post_id));
 	$end = get_post_meta($post_id,'_end'.$date,true);

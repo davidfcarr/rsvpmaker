@@ -46,7 +46,8 @@ if(guest.note)
 }
 
 function display_guestlist (post_id) {
-    fetch('/wp-json/rsvpmaker/v1/guestlist/'+post_id)
+    var url = rsvpmaker_json_url+'guestlist/'+post_id;
+    fetch(url)
     .then(response => {
       return response.json()
     })
@@ -57,21 +58,18 @@ function display_guestlist (post_id) {
             if(guestlist == '')
                 guestlist = '<div>?</div>';
             $('#attendees-'+post_id).html(guestlist);
-            //alert('guestlist '+guestlist);
         }
-
     })
     .catch(err => {
-      this.el.innerHTML = 'Error fetching events from '+this.url;
-      console.log(err);
+        console.log(err);
+        $('#attendees-'+post_id).html('Error fetching guestlist from '+url);
   });
   
 }
 
 $( ".rsvpmaker_show_attendees" ).click(function( event ) {
     var post_id = $(this).attr('post_id');
-    //var nonce = $(this).attr('nonce');
-    //alert('post ' + post_id);
+    guestlist = '';
     display_guestlist(post_id);//,nonce);
   });
 

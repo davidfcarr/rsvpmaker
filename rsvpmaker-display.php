@@ -708,24 +708,12 @@ $nav = isset($atts["nav"]) ? $atts["nav"] : 'bottom';
 
 $months = array('','January','February','March','April','May','June','July','August','September','October','November','December');
 
-if (!isset($_REQUEST["cm"]) || $_REQUEST["cm"] == 0)
-	{
-	$cm = (int) rsvpmaker_date("m");
-	$cy = (int) rsvpmaker_date("Y");
-	$monthname = $months[$cm];
-	$nowdate = rsvpmaker_date("Y-m-d");
-	$date = $bom = rsvpmaker_strtotime('first day of this month');
-	$eom = rsvpmaker_strtotime('last day of this month');
-	}
-else
-	{
-	$cm = (int) $_REQUEST["cm"];
-	$cy = (int) $_REQUEST["cy"];
-	$monthname = $months[$cm];
-	$date = $bom = rsvpmaker_strtotime('first day of '.$monthname.' '.$cy);
-	$eom = rsvpmaker_strtotime('last day of '.$monthname.' '.$cy);
-	$nowdate = rsvpmaker_date("Y-m-d", $bom );
-	}
+$cm = (isset($_REQUEST["cm"])) ? (int) $_REQUEST["cm"] : (int) rsvpmaker_date("m");
+$cy = (isset($_REQUEST["cy"])) ? (int) $_REQUEST["cy"] : (int) rsvpmaker_date("Y");
+$monthname = $months[$cm];
+$date = $bom = rsvpmaker_strtotime('first day of '.$monthname.' '.$cy);
+$eom = rsvpmaker_strtotime('last day of '.$monthname.' '.$cy);
+$nowdate = rsvpmaker_date("Y-m-d", $bom );
 
 $monthafter = $eom + (DAY_IN_SECONDS * 32);
 
@@ -1856,7 +1844,8 @@ function rsvpmaker_daily_schedule($atts) {
 	if(isset($atts['end']))
 		$end_limit = rsvpmaker_strtotime($atts['end']);
 
-	$future = get_future_events();
+	$where = ($start_limit) ? "datetime > '".date('Y-m-d H:i:s',$start_limit)."'" : '';
+	$future = get_future_events($where,50);
 	foreach($future as $event) {
 		$t = rsvpmaker_strtotime($event->datetime);
 		if($start_limit && ($t < $start_limit))

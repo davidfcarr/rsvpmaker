@@ -313,5 +313,6 @@ metaKey="_rsvp_count"/>
 		</Fragment>
     )
 }
+
 if ((typeof rsvpmaker_ajax !== 'undefined') && !rsvpmaker_ajax.special) 
 	registerPlugin( 'plugin-rsvpmaker', { render: PluginRSVPMaker } );

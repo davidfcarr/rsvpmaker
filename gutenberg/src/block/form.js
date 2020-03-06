@@ -11,7 +11,7 @@ const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;
 const { InspectorControls } = wp.editor;
 const { PanelBody, SelectControl, TextControl, ToggleControl, RadioControl } = wp.components;
-
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formfield', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Text' ), // Block title.
@@ -71,6 +71,7 @@ registerBlockType( 'rsvpmaker/formfield', {
 },
 } );
 
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formtextarea', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Text Area' ), // Block title.
@@ -126,6 +127,7 @@ registerBlockType( 'rsvpmaker/formtextarea', {
 	},
 } );
 
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formnote', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Note' ), // Block title.
@@ -259,7 +261,8 @@ class TextAreaInspector extends Component {
 				</InspectorControls>
 		);	} }
 		
-registerBlockType( 'rsvpmaker/formselect', {
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
+	registerBlockType( 'rsvpmaker/formselect', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Select' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
@@ -309,6 +312,7 @@ registerBlockType( 'rsvpmaker/formselect', {
 	},
 } );
 
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formradio', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Radio Buttons' ), // Block title.
@@ -398,7 +402,8 @@ class ChoiceInspector extends Component {
 				</InspectorControls>
 		);	} }
 
-registerBlockType( 'rsvpmaker/guests', {
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
+	registerBlockType( 'rsvpmaker/guests', {
 	title: ( 'RSVPField Guests' ), // Block title.
 	icon: 'products', 
 	category: 'common',
@@ -449,6 +454,7 @@ registerBlockType( 'rsvpmaker/guests', {
     }
 });
 
+if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formchimp', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Mailchimp Checkbox' ), // Block title.
