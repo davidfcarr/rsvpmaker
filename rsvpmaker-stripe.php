@@ -295,6 +295,37 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 return ob_get_clean();
 }
 
+function stripe_log_by_email ($email, $months = 0) {
+	global $wpdb;
+	if(empty($email))
+		return '';
+	$log = '';
+	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvpmaker_stripe_payment' AND meta_value LIKE '%".$email."%' ORDER BY meta_id DESC";
+	$results = $wpdb->get_results($sql);
+	if(empty($results))
+		return '';
+	if($months)
+		$start = strtotime('-'.$months.' months');
+	foreach($results as $row) {
+		$vars = unserialize($row->meta_value);
+		$timestamp = strtotime($vars['timestamp']);
+		if($months && ($timestamp < $start))
+			{
+			//$log .= 'stamp: '.date('Y-m-d',$timestamp)." is less than ";
+			//$log .= 'start: '.date('Y-m-d',$start)."\n";
+			break;
+			}
+			//$log .= 'stamp: '.date('Y-m-d',$timestamp)." is greater than ";
+			//$log .= 'start: '.date('Y-m-d',$start)." \n";
+		foreach($vars as $name => $value)
+			{
+				$log .= $name.': '.$value."\n";
+			}
+			$log .= "\n";
+	}
+	return wpautop($log);
+}
+	
 function rsvpmaker_stripe_payment_log($vars,$confkey) {
 	rsvpmaker_debug_log('');
 

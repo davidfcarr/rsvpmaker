@@ -679,7 +679,6 @@ if(!empty($atts['exclude_type']))
 //calendar entry
 	if(empty($post->post_title))
 		$post->post_title = __('Title left blank','rsvpmaker');
-
 	
 	$t = rsvpmaker_strtotime($post->datetime);
 	$duration_type = get_post_meta($post->ID,'_'.$post->datetime, true);
@@ -695,8 +694,6 @@ if(!empty($atts['exclude_type']))
 		}	
 	$key = rsvpmaker_date('Y-m-d',$t);
 	$eventarray[$key] = (isset($eventarray[$key])) ? $eventarray[$key] . '<div><a class="calendar_item '.rsvpmaker_item_class($post->ID,$post->post_title).'" href="'.get_post_permalink($post->ID).'" title="'.htmlentities($post->post_title).'">'.$post->post_title.$time."</a></div>\n" : '<div><a class="calendar_item '.rsvpmaker_item_class($post->ID,$post->post_title).'" href="'.get_post_permalink($post->ID).'" title="'.htmlentities($post->post_title).'">'.$post->post_title.$time."</a></div>\n";
-	if(!isset($atts["noexpand"]))
-		$caldetail[$key] = (isset($caldetail[$key])) ? $caldetail[$key].'<div>'.rsvpmaker_date($date_format,$t).': <a href="'.get_post_permalink($post->ID).'">'.$post->post_title."</a></div>\n" : '<div>'.rsvpmaker_date($date_format,$t).': <a href="'.get_post_permalink($post->ID).'">'.$post->post_title."</a></div>\n";
 endwhile;
 }
 
@@ -714,6 +711,7 @@ $monthname = $months[$cm];
 $date = $bom = rsvpmaker_strtotime('first day of '.$monthname.' '.$cy);
 $eom = rsvpmaker_strtotime('last day of '.$monthname.' '.$cy);
 $nowdate = rsvpmaker_date("Y-m-d", $bom );
+$yearmonth = rsvpmaker_date("Y-m-", $bom );
 
 $monthafter = $eom + (DAY_IN_SECONDS * 32);
 
@@ -799,18 +797,26 @@ $todaydate = rsvpmaker_date('Y-m-d');
 for ($i = 1; $i <= rsvpmaker_date("t",$bom); $i++) {
   
    // Print out day number and all events for the day
-	$thisdate = date("Y-m-",$bom).sprintf("%02d",$i);
+	$thisdate = $yearmonth.sprintf("%02d",$i);
 	$class = ($thisdate == $todaydate ) ? 'today day' : 'day';
 	if($thisdate < $todaydate)
 		$class .= ' past';
 	if($thisdate > $todaydate)
 		$class .= ' future';
-   $content .= '<td valign="top" class="'.$class.'">';
+	if(isset($_GET['debug']))
+	{
+		rsvpmaker_debug_log($thisdate,'calendar thisdate ');
+	}
+	$content .= '<td valign="top" class="'.$class.'">';
    if(!empty($eventarray[$thisdate]) )
    {
    $content .= $i;
    $content .= $eventarray[$thisdate];
-   $t = rsvpmaker_strtotime($thisdate);
+   if(isset($_GET['debug']))
+   {
+	   rsvpmaker_debug_log($eventarray[$thisdate],'calendar eventarray '.$thisdate);
+   }
+  $t = rsvpmaker_strtotime($thisdate);
    }
    else
    	$content .= '<div class="'.$class.'">' . $i . "</div><p>&nbsp;</p>";
