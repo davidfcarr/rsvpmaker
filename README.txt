@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.4
-Stable tag: 7.3.7
+Stable tag: 7.3.8
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -96,7 +96,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 == Credits ==
 
     RSVPMaker
-    Copyright (C) 2010-2019 David F. Carr
+    Copyright (C) 2010-2020 David F. Carr
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -115,6 +115,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.3.8 =
+
+* Fix for Stripe payment confirmation message
 
 = 7.3.7 =
 

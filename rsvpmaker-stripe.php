@@ -244,6 +244,7 @@ submitButton.addEventListener('click', function(ev) {
 ev.preventDefault();
 var name = document.getElementById('stripe-checkout-name').value;
 var email = document.getElementById('stripe-checkout-email').value;
+var successurl = '<?php echo site_url('/wp-json/rsvpmaker/v1/stripesuccess/'.$idempotency_key) ?>';//rsvpmaker_json_url+'stripesuccess/< ?php echo $idempotency_key; ? >';
 if((name == '') || (email == '')){
 	cardResult.innerHTML = 'Name and email are both required';
 	return;
@@ -272,7 +273,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 		  console.log(result);
 		cardResult.innerHTML = '<?php _e('Recording payment','rsvpmaker');?> ...';
 		const form = new FormData(document.getElementById('payee-form'));
-		fetch(rsvpmaker_json_url+'stripesuccess/<?php echo $idempotency_key; ?>', {
+		fetch(successurl, {
   method: 'POST', // or 'PUT'
   body: form,
 })

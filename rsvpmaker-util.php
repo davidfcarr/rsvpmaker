@@ -973,7 +973,7 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 	if($content)
 		return array($content);
 	
-	rsvpmaker_debug_log($meta_key,'returned unchanged');
+	//rsvpmaker_debug_log($meta_key,'returned unchanged');
 
 	return $null; // don't alter
 }
