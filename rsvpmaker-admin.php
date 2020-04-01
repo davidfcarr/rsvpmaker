@@ -3616,12 +3616,17 @@ $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_met
 				if(in_array($meta_key,$meta_keys))
 					continue;
 				$meta_keys[] = $meta_key;
-				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew');
+				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');
 				if(in_array($meta_key, $meta_protect) )
 				{
 					$log .= 'Skip '.$meta_key.'<br />';
 					continue;					
 				}
+				elseif(strpos($meta_key,'_note') || preg_match('/^_[A-Z]/',$meta_key) ) //agenda note or any other note
+					{
+						$log .= 'Skip '.$meta_key.'<br />';
+						continue;	
+					}
 				else
 				{
 					$log .= 'Copy '.$meta_key.': '.$meta_info->meta_value.'<br />';			
