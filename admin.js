@@ -9,6 +9,15 @@ jQuery(document).ready(function( $ ) {
 		return false;
 	});
 
+	var activetab = $('#activetab').val();
+	if(activetab) {
+		$('section.rsvpmaker').hide();
+		$('section#'+activetab).show();
+		$('.rsvpmaker-nav-tab').removeClass('nav-tab-active');
+		$('section#'+activetab).addClass('nav-tab-active');
+		$('#activetab').val('');
+	}
+
   $(function() {
     var dialog;
  

@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.4
-Stable tag: 7.3.9
+Stable tag: 7.4.2
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -115,6 +115,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.4.2 =
+
+* Limited support for attachments in Group Email discussion lists.
+
+= 7.4 =
+
+* Email distribution lists for member-oriented sites. Any member with a user can send a message from the email address on their profile (or another whietlisted address) for distribution to other list members. See the Group Email tab under settings.
 
 = 7.3.9 =
 

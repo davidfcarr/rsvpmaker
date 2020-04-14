@@ -604,8 +604,8 @@ echo $label;
               }
               
               // URL for form submit, equals our current page
-              $action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
-
+$action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
+global $wpdb;
 $defaulthour = (isset($options["defaulthour"])) ? ( (int) $options["defaulthour"]) : 19;
 $defaultmin = (isset($options["defaultmin"])) ? ( (int) $options["defaultmin"]) : 0;
 $houropt = $minopt ="";
@@ -656,6 +656,7 @@ if(isset($_POST['timezone_string']))
       <a class="rsvpmaker-nav-tab nav-tab" href="#payments">Payments</a>
       <a class="rsvpmaker-nav-tab nav-tab" href="#notification_email">Email Server</a>
       <a class="rsvpmaker-nav-tab nav-tab" href="#email">Mailing List</a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#groupemail">Group Email</a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
@@ -932,8 +933,17 @@ rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$optio
   <input type="checkbox" name="security_option[additional_editors]" value="1" <?php if(isset($options["additional_editors"]) && $options["additional_editors"]) echo ' checked="checked" ';?> /> <strong><?php _e('Additional Editors','rsvpmaker'); ?></strong> <em><?php _e('Allow users to share editing rights for event templates and related events.','rsvpmaker'); ?></em>
 	<p><strong>How this works: </strong> When this function is enabled, event authors have the option of allowing other users to be additional editors or co-authors for an event or a series of events based  on a template. This is useful for community websites where multiple organizations post their events. The organization can appoint multiple officers or representatives to have equal rights to update the events template for their meetings and all the individual events based on that template.</p>
 	<p>Note that to unlock events for editing, RSVPMaker changes the author ID for a post to the ID of the authorized user editing the post.</p>				
+<?php
+if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
+{
+?>
+<input type="hidden" id="activetab" value="security" />
+<?php	
+}
+?>
+<input type="hidden" name="tab" value="security">
 				 				 				
-					<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
+<div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 	</form>
 </section>
 <section id="payments" class="rsvpmaker">
@@ -1095,6 +1105,16 @@ else
 ?>
 <p><?php _e('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
 
+<?php
+if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')
+{
+?>
+<input type="hidden" id="activetab" value="payments" />
+<?php	
+}
+?>
+<input type="hidden" name="tab" value="payments">
+
 <div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 </form>
 
@@ -1152,6 +1172,16 @@ if(!empty($options["smtp"]))
 <?php
 	}
 ?>
+<?php
+if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'notification_email')
+{
+?>
+<input type="hidden" id="activetab" value="notification_email" />
+<?php	
+}
+?>
+<input type="hidden" name="tab" value="notification_email">
+
 <div class="submit"><input type="submit" name="Submit" value="<?php _e('Update','rsvpmaker'); ?>" /></div>
 </form>
 </section>
@@ -1163,6 +1193,93 @@ $RSVPMaker_Email_Options->handle_options();
 ?>
 
     </section>
+<section id="groupemail" class="rsvpmaker">
+<form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
+<h2>Group Email</h2>
+<?php
+echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Designed to work with POP3 email accounts. Members can unsubscribe.','rsvpmaker').'</p>';
+
+if(isset($_POST['rsvpmaker_discussion_server']))
+	update_option('rsvpmaker_discussion_server',$_POST['rsvpmaker_discussion_server']);
+if(isset($_POST['rsvpmaker_discussion_member']))
+	update_option('rsvpmaker_discussion_member',$_POST['rsvpmaker_discussion_member']);
+if(isset($_POST['rsvpmaker_discussion_officer']))
+	update_option('rsvpmaker_discussion_officer',$_POST['rsvpmaker_discussion_officer']);
+if(isset($_POST['rsvpmaker_discussion_extra']))
+	update_option('rsvpmaker_discussion_extra',$_POST['rsvpmaker_discussion_extra']);
+if(isset($_POST['rsvpmaker_discussion_active'])) {
+	update_option('rsvpmaker_discussion_active',$_POST['rsvpmaker_discussion_active']);
+	if($_POST['rsvpmaker_discussion_active'])
+		deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
+}
+
+$active = (int) get_option('rsvpmaker_discussion_active');
+
+$server = get_option('rsvpmaker_discussion_server');
+if(empty($server))
+	{
+	$server = '{localhost:995/pop3/ssl/novalidate-cert}';
+	update_option('rsvpmaker_discussion_server',$server);
+	}
+$member = get_option('rsvpmaker_discussion_member');
+$officer = get_option('rsvpmaker_discussion_officer');
+
+if(is_plugin_active( 'wp-mailster/wp-mailster.php' ) )
+	{
+	echo '<div style="border: thin dotted red; padding: 10px; margin: 5px;">';
+		$sql = "SELECT * FROM ".$wpdb->prefix."mailster_lists WHERE name LIKE 'Member%' ";
+		$row = $wpdb->get_row($sql);
+		if(!empty($row->list_mail) && empty($member) ){
+			$member = array('user' => $row->list_mail,'password' => $row->mail_in_pw, 'subject_prefix' => 'Members:'.get_option('blogname'), 'whitelist' => '','additional_recipients' => '', 'blocked' => '');
+			update_option('rsvpmaker_discussion_member',$member);
+			echo '<p>'.__('Importing Member List settings from WP Mailster','rsvpmaker').'</p>';
+		}
+		$sql = "SELECT * FROM ".$wpdb->prefix."mailster_lists WHERE name LIKE 'Officer%' ";
+		$row = $wpdb->get_row($sql);
+		if(!empty($row->list_mail) && empty($officer) ){
+			$officer = array('user' => $row->list_mail,'password' => $row->mail_in_pw, 'subject_prefix' => 'Officers:'.get_option('blogname'), 'whitelist' => '','additional_recipients' => '', 'blocked' => '');
+			update_option('rsvpmaker_discussion_officer',$officer);
+			echo '<p>'.__('Importing Officer List settings from WP Mailster','rsvpmaker').'</p>';
+		}
+	echo '<p>'.__('If you activate this feature, WP Mailster will be deactivated','rsvpmaker').'</p>';
+	echo '</div>';
+	}
+
+printf('<p><label>Activate</label> <input type="radio" name="rsvpmaker_discussion_active" value="1" %s /> Yes <input type="radio" name="rsvpmaker_discussion_active" value="0" %s /> No</p>',($active) ? ' checked="checked" ' : '',(!$active) ? ' checked="checked" ' : '');
+
+printf('<p><label>Server</label> <input type="text" name="rsvpmaker_discussion_server" value="%s" /></p>',$server);
+
+$member = get_option('rsvpmaker_discussion_member');
+if(empty($member))
+	$member = array('user' => '','password' => '','subject_prefix' => 'Members:'.get_option('blogname'), 'whitelist' => '', 'blocked' => '','additional_recipients' => '');
+print_group_list_options('member', $member);
+
+if(is_plugin_active( 'rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php' ))
+{
+	//officers section
+	$officer = get_option('rsvpmaker_discussion_officer');
+	if(empty($officer))
+		$officer = array('user' => '','password' => '', 'subject_prefix' => 'Officer:'.get_option('blogname'),  'whitelist' => '', 'blocked' => '','additional_recipients' => '');
+	print_group_list_options('officer', $officer);
+}
+
+$extra = get_option('rsvpmaker_discussion_extra');
+if(empty($extra))
+	$extra = array('user' => '','password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '','additional_recipients' => '');
+print_group_list_options('extra', $extra);
+echo '<p><em>'.__('Use for small custom distribution lists. Or use to forward an email you want to share to WordPress, then edit further with RSVP Mailer before sending.','rsvpmaker').'</em></p>';
+
+if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
+{
+?>
+<input type="hidden" id="activetab" value="groupemail" />
+<?php	
+}
+?>
+<input type="hidden" name="tab" value="groupemail">
+<button>Submit</button>
+</form>
+</section>
 </sections>
 
 </div>
@@ -1184,6 +1301,35 @@ $RSVPMaker_Email_Options->handle_options();
       // register the activation function by passing the reference to our instance
       register_activation_hook(__FILE__, array(&$RSVPMAKER_Options, 'install'));
   }
+
+/*
+add_action('admin_init','register_rsvpmaker_settings');
+
+//not part of original implementation
+function register_rsvpmaker_settings() {
+register_setting('rsvpmaker_discussion','rsvpmaker_discussion_server');
+register_setting('rsvpmaker_discussion','rsvpmaker_discussion_member',array('type' => 'array'));
+register_setting('rsvpmaker_discussion','rsvpmaker_discussion_officer',array('type' => 'array'));
+//register_setting('rsvpmaker_discussion','rsvpmaker_discussion_extra');
+}
+*/
+
+function print_group_list_options($list_type, $vars) {
+	printf('<h3>%s List</h3>',ucfirst($list_type));
+	$fields = array('user','password','subject_prefix','whitelist','blocked','additional_recipients');
+	foreach($fields as $field)
+		{
+			if(empty($vars[$field]))
+				$vars[$field] = '';
+		}
+	//print_r($vars);
+	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[user]" value="%s" /> </p>',__('Email/User','rsvpmaker'),$vars["user"]);	
+	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[password]" value="%s" /> </p>',__('Password','rsvpmaker'),$vars["password"]);	
+	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[subject_prefix]" value="%s" /> </p>',__('Subject Prefix','rsvpmaker'),$vars["subject_prefix"]);
+	printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[whitelist]">%s</textarea> </p>',__('Whitelist - additional allowed sender emails','rsvpmaker'),$vars["whitelist"]);	
+	printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[blocked]">%s</textarea> </p>',__('Blocked - not allowed to send to list','rsvpmaker'),$vars["blocked"]);	
+	printf('<p><label>%s</label> <br /><textarea  rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[additional_recipients]">%s</textarea> </p>',__('Additional Recipients','rsvpmaker'),$vars["additional_recipients"]);
+}
 
 function admin_event_listing() {
 global $wpdb;

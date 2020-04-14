@@ -1,5 +1,10 @@
 <?php
 function rsvpmailer($mail) {
+	if(isset($_GET['debug'])){
+		echo 'rsvpmailer ';
+		print_r($mail);
+	}
+
 	if(isset($mail['html']))
 	{
 		$mail['html'] = rsvpmaker_inliner($mail['html']);
@@ -34,7 +39,8 @@ function rsvpmailer($mail) {
 
 	if(!empty($rsvp_options['from_always']) && ($rsvp_options['from_always'] != $mail['from']))
 	{
-		$mail['replyto'] = $mail['from'];
+		if(empty($mail['replyto']))
+			$mail['replyto'] = $mail['from'];
 		$mail['from'] = $rsvp_options['from_always'];
 	}
 
@@ -84,7 +90,12 @@ function rsvpmailer($mail) {
 		$headers[] = 'From: '.$mail["fromname"]. ' <'.$mail["from"].'>'."\r\n";
 		if(!empty($mail["replyto"]))
 			$headers[] = 'Reply-To: '.$mail["replyto"] ."\r\n";
-		$attachments = NULL;
+		if($mail['attachments']) {
+			$attachments = $mail['attachments'];
+			printf('<p>Attachments: %s</p>',var_export($attachments,true));
+		}
+		else
+			$attachments = NULL;
 		if(isset($mail["ical"]))
 			{
 			$temp = tmpfile();
@@ -136,6 +147,19 @@ function rsvpmailer($mail) {
  $rsvpmail->AddAddress($mail["to"]);
  if(isset($mail["cc"]) )
 	 $rsvpmail->AddCC($mail["cc"]);
+if(isset($_GET['debug']))
+{
+	if(isset($mail['attachments']))
+		echo '<p>Attachments set</p>';
+	else
+		echo '<p>Attachments NOT set</p>';
+}
+if(isset($mail['attachments']) && is_array($mail['attachments']))
+	foreach($mail['attachments'] as $path) {
+		$rsvpmail->AddAttachment($path);
+		if(isset($_GET['debug']))
+			printf('<p>Trying to add %s</p>',$path);
+	}
 $site_url = get_site_url();
 $p = explode('//',$site_url);
 $via = "(via ". $p[1].')';
@@ -589,6 +613,15 @@ class MailChimpRSVP
 	 
 		<div class="dbx-content">
 		 	<form name="EmailOptions" action="<?php echo $action_url ; ?>" method="post">
+<?php
+if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'email')
+{
+?>
+<input type="hidden" id="activetab" value="email" />
+<?php	
+}
+?>
+<input type="hidden" name="tab" value="email">
 					<input type="hidden" name="emailsubmitted" value="1" /> 
 					
 					<?php wp_nonce_field('email-nonce'); ?>
