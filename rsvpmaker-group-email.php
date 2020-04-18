@@ -30,7 +30,7 @@ function rsvpmaker_relay_menu_pages(){
 add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
 
 function rsvpmaker_relay_manual_test() {
-echo '<h1>Manually Trigger Check of Email</h1>';
+echo '<h1>Manually Trigger Check of Email Lists</h1>';
 $html = rsvpmaker_relay_init(true);
 if($html)
     echo $html;
@@ -38,11 +38,14 @@ else
     echo '<p>No messages</p>';
 }
 
+add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
 function rsvpmaker_relay_init ($show = false) {
     $active = get_option('rsvpmaker_discussion_active');
+    $result = $qresult = '';
     if(!$active && !$show)
         return;
     $qresult = rsvpmaker_relay_queue();
+    //$qresult = false;//disable
     if(empty($qresult))
     {
         $result = rsvpmaker_relay_get_pop('member');
@@ -51,15 +54,13 @@ function rsvpmaker_relay_init ($show = false) {
         if(!strpos($result,'Mail:'))
         $result .= rsvpmaker_relay_get_pop('extra');    
     }
+    if($show)
+        return $qresult.$result;
     if(!empty($qresult) || strpos($result,'Mail:'))
     {
-        if($show)
-            return $result;
-        rsvpmaker_debug_log($result,'rsvpmaker_relay_result');
+        rsvpmaker_debug_log($qresult.$result,'rsvpmaker_relay_result');
     }
 }
-
-add_action('init','rsvpmaker_relay_init');
 
 function rsvpmaker_relay_queue() {
     global $wpdb;
@@ -72,21 +73,18 @@ function rsvpmaker_relay_queue() {
     if(!empty($results))
     {
         foreach($results as $row) {
-            if(!isset($_GET['debug']))
+            if(!isset($_GET['nodelete']))
             {
                 $sql = "DELETE FROM $wpdb->postmeta WHERE meta_id=".$row->meta_id;
                 $wpdb->query($sql);    
             }
             if(empty($row->post_title) || empty($row->post_content))
                 continue;
-            $html .= '<br />';
-            $html .= var_export($row, true);
+            //$html .= '<br />';
+            //$html .= var_export($row, true);
             $mail['from'] = 'noreply@'.str_replace('www.','',$_SERVER['SERVER_NAME']);
             $mail['replyto'] = get_post_meta($row->ID,'rsvprelay_from',true);
             $mail['fromname'] = get_post_meta($row->ID,'rsvprelay_fromname',true);
-            $attachments = get_post_meta($row->ID,'rsvprelay_attpath',true);
-            if(isset($_GET['debug']))
-                printf('<p>Attachments - mail queue %s</p>',var_export($attachments,true));
             if(!empty($attachments))
                 $mail['attachments'] = $attachments;
             $mail['subject'] = $row->post_title;
@@ -142,7 +140,9 @@ function get_part($stream, $msg_number, $mime_type, $structure = false,$part_num
         }
     
          if($structure->type == 1) /* multipart */ {
-            while(list($index, $sub_structure) = each($structure->parts)) {
+            //while(list($index, $sub_structure) = each($structure->parts)) {
+            foreach($structure->parts as $index => $sub_structure) {
+                $prefix = '';
                 if($part_number) {
                     $prefix = $part_number . '.';
                 }
@@ -165,7 +165,7 @@ $recipients = array();
 $vars = get_option('rsvpmaker_discussion_'.$list_type);
 
 if(empty($vars) || empty($vars['password']))
-    return;
+    return '<div>no password set for '.$list_type.'</div>';
 
 $unsubscribed = get_option('rsvpmail_unsubscribed');
 if(empty($unsubscribed)) $unsubscribed = array();
@@ -184,10 +184,10 @@ if(isset($_GET['test']))
 $html .= sprintf('<p>%s, %s, %s</p>',$server,$user,$password);
 $mail = imap_open($server,$user,$password);
 if(empty($mail))
-    return 'no mail connection found';
+    return '<div>no mail connection found for '.$list_type.'</div>';
 $headers = imap_headers($mail);
 if(empty($headers))
-    return 'no messages found for '.$list_type.' ';
+    return '<div>no messages found for '.$list_type.'</div>';
 
 $html .= '<pre>'."Mail:\n".var_export($mail,true).'</pre>';
 $html .= '<pre>'."Headers:\n".var_export($headers,true).'</pre>';
@@ -222,11 +222,6 @@ foreach($additional_recipients as $email)
         $recipients[] = $email;
     }
 
-if(empty($recipients)) {
-    $html .= 'No recipients identified';
-    return $html;
-}
-
 # loop through each email
 
 //$html .= var_export($headers,true);
@@ -235,7 +230,8 @@ for ($n=1; $n<=count($headers); $n++) {
     $html .=  "<h3>".$headers[$n-1]."</h3><br />";
 $realdata = '';
 $headerinfo = imap_headerinfo($mail,$n);
-$html .= '<pre>'."Header Info:\n".htmlentities(var_export($headerinfo,true)).'</pre>';
+if(isset($_GET['debug']))
+    $html .= '<pre>'."Header Info:\n".htmlentities(var_export($headerinfo,true)).'</pre>';
 
 $subject = '';
 if(!empty($headerinfo->subject))
@@ -256,7 +252,6 @@ else
 $html .= var_export($headerinfo->from,true);
 
 $html .= '<h3>'.$subject.'<br />'.$fromname.' '.$from.'</h3>';
-
 $mailqtext = get_part($mail,$n,"TEXT/PLAIN");
 $mailq = get_part($mail,$n,"TEXT/HTML");
 $member_user = get_user_by('email',$from);
@@ -265,9 +260,10 @@ $qpost = array('post_title' => $subject,'post_type' => 'rsvpemail', 'post_status
 if($mailq)
     {
         $html .= '<p>Capturing HTML email content</p>';
-        $mailq = preg_replace('/<img.+cid:[^>]+>/','IMAGE OMMITTED (see attachments, below)',$mailq);
+        $embedded_images = rsvpmailer_embedded_images($mailq);
+        $html .= sprintf('<p>Embedded images: %s</p>',var_export($embedded_images,true));
         $html .= $mailq;
-        $qpost['post_content'] = $mailq;
+        $qpost['post_content'] = preg_replace("|<style\b[^>]*>(.*?)</style>|s", "", $mailq);
     }
 else {
     $html .= '<p>Capturing TEXT email content</p>';
@@ -277,22 +273,102 @@ else {
 }
 
 $struct = imap_fetchstructure($mail,$n);
+if(isset($_GET['debug']))
+    $html .= sprintf('<h1>Structure</h1><pre>%s</pre>',var_export($struct,true));
+
 $contentParts = count($struct->parts);
 $upload_dir = wp_upload_dir();
-$path = $upload_dir['path'];
-$urlpath = $upload_dir['url'];
+$t = time();
+$path = $upload_dir['path'].'/';
+$urlpath = $upload_dir['url'].'/';
 $atturls = array();
+$image_types = array('jpg','jpeg','png','gif');
+$imagecount = 0;
 
 if ($contentParts >= 2) {
     for ($i=2;$i<=$contentParts;$i++) {
-    $attachment = imap_bodystruct($mail,$n,$i);
-    if(strpos($attachment->parameters[0]->value,'.')) { //if it's a filename
-    $atturls[] = rsvpmaker_relay_save_attachment($attachment,$i,$n,$mail,$path,$urlpath);
-    if(isset($_GET['debug']))
-        $html .= sprintf('<pre>%s</pre>',var_export($attachment,true));
-    }
+        $att[$i-2] = imap_bodystruct($mail,$n,$i);
+        }  
+    for ($k=0;$k<sizeof($att);$k++) {
+        $attachment = $att[$k];
+        $strFileType = '';
+        if ($att[$k]->parameters[0]->value == "us-ascii" || $att[$k]->parameters[0]->value    == "US-ASCII") {
+            if ($att[$k]->parameters[1]->value != "") {
+                $strFileName = $att[$k]->parameters[1]->value;
+            }
+        } elseif ($att[$k]->parameters[0]->value != "iso-8859-1" &&    $att[$k]->parameters[0]->value != "ISO-8859-1") {
+            $strFileName = $att[$k]->parameters[0]->value;
+        }
+        if(strpos($strFileName,'.')) { //if it's a filename
+            $p = explode('.',$strFileName);
+            $strFileType = strtolower(array_pop($p));
+            if(isset($_GET['debug']))
+                $html .= sprintf('<p>File: %s File type: %s</p>',$strFileName,$strFileType);
+            if(in_array($strFileType,$image_types) && !empty($embedded_images))
+            {
+                $html .= '<p>Is an image</p>';
+                //$key = key($embedded_images);
+                //printf('<p>key: %s</p>',$key);
+                $html .= sprintf('<p>Checking embedded image %s</p>',$imagecount);
+                if(!empty($embedded_images[$imagecount])) {
+                    $cid = $embedded_images[$imagecount];
+                    $html .= 'cid key: '.$imagecount;
+                    $imagecount++;    
+                }
+                else {
+                    $html .= sprintf('<p>No CID found for %s or %s</p>',$imagecount,$strFileName);
+                    $cid = '';    
+                }
+/*            if(is_numeric($key))
+                    {
+                        $html .= sprintf('<p>Checking embedded image %s</p>',$imagecount);
+                        if(!empty($embedded_images[$imagecount])) {
+                            $cid = $embedded_images[$imagecount];
+                            $html .= 'cid key: '.$imagecount;
+                            $imagecount++;    
+                        }
+                    }
+                elseif(!empty($embedded_images[$strFileName]))
+                    {
+                        $cid = $embedded_images[$strFileName];
+                        $html .= 'cid key: '.$strFileName;
+                    }
+*/
+                $addtopath = $t.$k;
+            }//if it's an image
+                else
+                    {
+                        if(isset($_GET['debug']))
+                            $html .= '<p>Not an image</p>';
+                        $addtopath = '';
+                        $cid = '';
+                    }
+            if(isset($_GET['debug']))
+                $html .= sprintf('<p>Handling attachment %s %s %s %s %s %s</p>',var_export($attachment,true),$i,$n,var_export($mail,true),$path.$addtopath,$urlpath.$addtopath);
+             $atturl = rsvpmaker_relay_save_attachment($attachment,$k+2,$n,$mail,$path.$addtopath,$urlpath.$addtopath,$strFileName,$strFileType);
+             $link = sprintf('<a href="%s" target="_blank">%s</a>',$atturl,$strFileName);
+             $atturls[] = $link;
+            if(!empty($cid)) {
+                $qpost['post_content'] = str_replace($cid,$atturl,$qpost['post_content']);
+                $html .= printf('<p>replace %s with %s</p>',$cid,$atturl);
+            }
+             if(isset($_GET['debug']))
+                $html .= sprintf('<div>Attachment:</div><pre>%s</pre>',var_export($attachment,true));
+            }// is filename
+    }//loop attachments
 
-    }
+}// loop content parts
+
+//if we weren't able to substitue url for embedded images coding
+$qpost['post_content'] = preg_replace('/<img.+cid:[^>]+>/','IMAGE OMMITTED',$qpost['post_content']);
+$qpost['post_content'] .= "\n<p>*****</p>".sprintf('<p>Relayed from the <a href="mailto:%s" target="_blank">%s</a> email list</p><p>Replies will go to SENDER. <a target="_blank" href="mailto:%s?subject=Re:%s">Reply to list instead</a></p>',$user,$user,$user,$subject);
+if (sizeof($atturls) > 0) {
+    $qpost['post_content'] .= '<p>Attachments: <br />'.implode("<br />", $atturls)."</p>";
+}
+
+if(isset($_GET['nosave'])) {
+    echo '<h1>Version to send (not saved)</h2>'.$qpost['post_content'];
+    return;
 }
 
 if(in_array($from,$blocked))
@@ -307,21 +383,18 @@ if(in_array($from,$blocked))
 }
 elseif(in_array($from,$recipients) || in_array($from,$whitelist))
 {
-    $qpost['post_content'] .= "\n<p>*****</p>".sprintf('<p>Relayed from the <a href="mailto:%s" target="_blank">%s</a> email list</p><p>Replies will go to SENDER. <a target="_blank" href="mailto:%s?subject=Re:%s">Reply to list instead</a></p>',$user,$user,$user,$subject);
-    if (sizeof($atturls) > 0) {
-        $qpost['post_content'] .= '<p>Attachments: <br />'.implode("<br />", $atturls)."</p>";
-    }
-
     $post_id = 0;
     if(!empty($qpost['post_content']) && !empty($from))
         $post_id = wp_insert_post($qpost);
     $html .= var_export($qpost,true);
     if($post_id) {
         add_post_meta($post_id,'rsvprelay_from',$from);
+        //for debugging
+        add_post_meta($post_id,'imap_body',imap_body($mail,$n));
         if(empty($fromname))
             $fromname = $from;
         add_post_meta($post_id,'rsvprelay_fromname',$fromname);
-        add_post_meta($post_id,'rsvprelay_attpath',$attpath);
+        //add_post_meta($post_id,'rsvprelay_attpath',$attpath);
         if(!empty($recipients))
         foreach($recipients as $to) {
             if(!in_array($to,$unsubscribed))
@@ -338,24 +411,45 @@ else {
     update_option('rsvpmaker_relay_latest_bounce',var_export($rmail,true));
     rsvpmailer($rmail);
 }
-
+if(isset($_GET['nodelete']))
+{
+    $html .= '<p>Not deleting</p>';
+}
+else {
+    $html .= sprintf('<p>Delete %s</p>',$n);
+    imap_delete($mail,$n);    
+}
 }
 
-$limit = count($headers)+1;
-for ($n=0; $n<=$limit; $n++) {
-$html .= sprintf('<p>Delete %s</p>',$n);
-imap_delete($mail,$n);
-}
 imap_expunge($mail);
 $html .= '<p>Expunge deleted messages</p>';
 return $html;
 //end function rsvpmaker_relay_get_pop() {  
 }
 
-function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath) {
-        $strFileName = $att->parameters[0]->value;
-        $p = explode('.',$strFileName);
-        $strFileType = strtolower(array_pop($p));
+function rsvpmailer_embedded_images($mailq) {
+    //preg_match_all('/<img.+(cid:[^"\']+)[^>]+/',$mailq, $matches);
+    preg_match_all('/cid:[^"\']+/',$mailq, $matches);
+    //printf('<p>All matches</p><pre>%s</pre>',htmlentities(var_export($matches,true)));
+    return $matches[0];
+    foreach($matches[1] as $index => $cid)
+        {
+            $img[] = $cid;
+/*            $tag = $matches[0][$index];
+            preg_match('/"([a-zA-Z0-9]+\.[a-zA-Z]{3,4})"/', $tag,$filename);
+            if(empty($filename))
+                $img[] = $cid;
+            else
+                $img[ $filename[1] ] = $cid;
+        */
+        }
+    if(empty($img))
+        return;
+    return $img;    
+    }
+    
+function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath,$strFileName,$strFileType) {
+        printf('<p>Check %s %s part number %s</p>',$strFileName,$strFileType,$file);
         $allowed = array('doc','docx','xls','xlsx','ppt','pptx','pdf','jpg','jpeg','gif','png','svg','ics','ifb','txt');
         if(!in_array($strFileType,$allowed))
             return $strFileName.' (file type not supported: '.$strFileType.')';
@@ -369,9 +463,9 @@ function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath
             $ContentType = "text/calendar";
     
     if(isset($_GET['debug']))
-    printf('<p>type: %s %s %s</p>',$ContentType,$strFileName,$fileSize);
-    $writepath = $path .'/'. $strFileName;
-    $url = $urlpath.'/'.$strFileName;
+        printf('<p>File characteristics: %s %s %s</p>',$ContentType,$strFileName,$fileSize);
+    $writepath = $path.$strFileName;
+    $url = $urlpath.$strFileName;
     if (substr($ContentType,0,4) == "text") {
      $content = imap_qprint($fileContent);
      } else {
@@ -380,6 +474,13 @@ function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath
      file_put_contents($writepath, $content);
      if(isset($_GET['debug']))
      printf('<p>Writing to %s <a href="%s" target="_blank">%s</a></p>',$writepath,$url,$url);
-     $link = sprintf('<a href="%s" target="_blank">%s</a>',$url,$strFileName);
-     return $link;
+     return $url;
+}
+
+add_filter( 'cron_schedules', 'rsvpmaker_relay_interval' );
+function rsvpmaker_relay_interval( $schedules ) { 
+    $schedules['minute'] = array(
+        'interval' => 120,
+        'display'  => esc_html__( 'Every Minute' ), );
+    return $schedules;
 }

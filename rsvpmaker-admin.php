@@ -1209,9 +1209,11 @@ if(isset($_POST['rsvpmaker_discussion_extra']))
 	update_option('rsvpmaker_discussion_extra',$_POST['rsvpmaker_discussion_extra']);
 if(isset($_POST['rsvpmaker_discussion_active'])) {
 	update_option('rsvpmaker_discussion_active',$_POST['rsvpmaker_discussion_active']);
-	if($_POST['rsvpmaker_discussion_active'])
-		deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
+	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
+	wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
 }
+else
+	wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
 
 $active = (int) get_option('rsvpmaker_discussion_active');
 

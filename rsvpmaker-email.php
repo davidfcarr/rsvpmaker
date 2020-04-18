@@ -90,7 +90,7 @@ function rsvpmailer($mail) {
 		$headers[] = 'From: '.$mail["fromname"]. ' <'.$mail["from"].'>'."\r\n";
 		if(!empty($mail["replyto"]))
 			$headers[] = 'Reply-To: '.$mail["replyto"] ."\r\n";
-		if($mail['attachments']) {
+		if(!empty($mail['attachments'])) {
 			$attachments = $mail['attachments'];
 			printf('<p>Attachments: %s</p>',var_export($attachments,true));
 		}
