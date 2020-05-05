@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 5.4
-Stable tag: 7.4.3
+Tested up to: 5.4.1
+Stable tag: 7.4.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -115,6 +115,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.4.5 =
+
+* Limit debug log (if activated) to current day and previous days (delete older files)
+* Clean up WP Cron jobs on plugin deactivate
 
 = 7.4.3 =
 

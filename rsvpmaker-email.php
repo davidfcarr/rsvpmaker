@@ -1430,6 +1430,18 @@ if(!current_user_can('publish_rsvpemails') )
 
 $chimp_options = get_option('chimp');
 
+if(!empty($_POST["subject"]))
+	{
+		$subject = stripslashes($_POST["subject"]);
+		if($post->post_title != $subject)
+		{
+			$post->post_title = $subject;
+			$postarr["ID"] = $post->ID;
+			$postarr["post_title"] = $subject;
+			wp_update_post($postarr);
+		}
+	}
+
 if(!empty($_POST["preview"]))
 	{
 	$previewto = trim($_POST["previewto"]);
@@ -1438,8 +1450,8 @@ if(!empty($_POST["preview"]))
 		echo '<p>Sending preview to '.$previewto.'</p>';
 		$mail["to"] = $previewto;
 		$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
-		$mail["fromname"] =  stripslashes($_POST["from_name"]);
-		$mail["subject"] =  stripslashes($_POST["subject"]);
+		$mail["fromname"] = stripslashes($_POST["from_name"]);
+		$mail["subject"] = stripslashes($_POST["subject"]);
 		$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		echo $result = rsvpmailer($mail);
@@ -1529,8 +1541,14 @@ foreach($results as $row)
 	
 if(!empty($_POST["members"]))
 {
+if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
+	wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
 $users = get_users('blog='.get_current_blog_id());
 printf('<p>Sending to %s website members</p>',sizeof($users));
+update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
+$from = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
+update_post_meta($post->ID,'rsvprelay_from',$from);
+update_post_meta($post->ID,'rsvprelay_fromname',stripslashes($_POST["from_name"]));
 $unsub = get_option('rsvpmail_unsubscribed');
 if(empty($unsub)) $unsub = array();
 foreach($users as $user)
@@ -1540,23 +1558,18 @@ foreach($users as $user)
 			$unsubscribed[] = $user->user_email;
 			continue;
 		}
-	$mail["to"] = $user->user_email;
-	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
-	$mail["fromname"] =  stripslashes($_POST["from_name"]);
-	$mail["subject"] =  stripslashes($_POST["subject"]);
-	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('<div class="rsvpexplain">This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME'].'</div>');
-	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
-	$result = rsvpmailer($mail);
-	if(strpos($result,'ailed'))
-		{
-			echo $result;
-			break;
-		}
+	add_post_meta($post->ID,'rsvprelay_to',$user->user_email);
 	}
 }
 
 if(!empty($_POST["network_members"]) && current_user_can('manage_network'))
 {
+if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
+	wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
+update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
+$from = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
+update_post_meta($post->ID,'rsvprelay_from',$from);
+update_post_meta($post->ID,'rsvprelay_fromname',stripslashes($_POST["from_name"]));
 $users = get_users('blog='.get_current_blog_id());
 printf('<p>Sending to %s website members</p>',sizeof($users));
 $unsub = get_option('rsvpmail_unsubscribed');
@@ -1568,18 +1581,7 @@ foreach($users as $user)
 			$unsubscribed[] = $user->user_email;
 			continue;
 		}
-	$mail["to"] = $user->user_email;
-	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
-	$mail["fromname"] =  stripslashes($_POST["from_name"]);
-	$mail["subject"] =  stripslashes($_POST["subject"]);
-	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('<div class="rsvpexplain">This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME'].'</div>');
-	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
-	$result = rsvpmailer($mail);
-	if(strpos($result,'ailed'))
-		{
-			echo $result;
-			break;
-		}
+	update_post_meta($post->ID,'rsvprelay_to',$user->user_email);
 	}
 }
 
@@ -1708,7 +1710,7 @@ Email Template: <select name="template"><?php echo $o; ?></select>
 <p style="clear:both;"><?php _e('Send','rsvpmaker');?></p>
 <div><input type="checkbox" name="preview" value="1"> <?php _e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $chimp_options["email-from"]; ?>" /><br />
 <input type="checkbox" name="members" value="1"> <?php _e('Website members','rsvpmaker');?><br />
-<?php if(is_multisite() && current_user_can('manage_network')) {
+<?php if(is_multisite() && current_user_can('manage_network') && (get_current_blog_id() == 1)) {
 ?>
 <div style="border: thin dotted red;"><strong>Network Administrator Only:</strong><br /> 
 <input type="checkbox" name="network_members" value="1"> <?php _e('All users','rsvpmaker');?>
@@ -2515,7 +2517,7 @@ global $rsvp_options;
 <h1 class="entry-title"><?php the_title(); ?></h1>
 <?php } ; ?>
 <div class="entry-content">
-<?php the_content(); ?>
+<?php echo $post->post_content; ?>
 </div><!-- .entry-content -->
 </div><!-- #post-## -->
 <div class="footer"><!-- footer --></div>

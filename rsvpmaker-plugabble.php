@@ -3357,8 +3357,6 @@ echo '</div>';
 exit();
 } }
 
-
-
 function rsvp_reminder_activation() {
 	if(isset($_GET['autorenew']))
 		rsvpautorenew_test();
@@ -3368,6 +3366,10 @@ function rsvp_reminder_activation() {
 		$t = rsvpmaker_mktime($hour,0,0,date('n'),date('j'),date('Y'));
 		wp_schedule_event(current_time('timestamp'), 'daily', 'rsvp_daily_reminder_event');
 	}
+	$active = get_option('rsvpmaker_discussion_active');
+	//if stalled, restart email queue process
+	if($active && !wp_get_schedule('rsvpmaker_relay_init_hook'))
+		wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
 }
 
 function rsvp_reminder_reset($basehour) {

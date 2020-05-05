@@ -1210,7 +1210,8 @@ if(isset($_POST['rsvpmaker_discussion_extra']))
 if(isset($_POST['rsvpmaker_discussion_active'])) {
 	update_option('rsvpmaker_discussion_active',$_POST['rsvpmaker_discussion_active']);
 	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
-	wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
+	if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
+		wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
 }
 else
 	wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
@@ -3449,6 +3450,11 @@ function rsvpmaker_debug_log($msg, $label = '', $filename_base = '') {
 	if ( ! empty( $upload_dir['basedir'] ) ) {
 		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
 		file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
+		//clean old logs
+		$oldlog = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d',time() - 172800).'.txt';
+		if (file_exists($oldlog)) {
+			unlink($oldlog);
+		}
 	}
 }
 	

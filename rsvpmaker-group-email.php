@@ -36,15 +36,17 @@ if($html)
     echo $html;
 else
     echo '<p>No messages</p>';
+//$templates = get_rsvpmaker_email_template();
+//printf('<pre>%s</pre>',htmlentities(var_export($templates,true)));
 }
 
 add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
 function rsvpmaker_relay_init ($show = false) {
     $active = get_option('rsvpmaker_discussion_active');
     $result = $qresult = '';
+    $qresult = rsvpmaker_relay_queue();
     if(!$active && !$show)
         return;
-    $qresult = rsvpmaker_relay_queue();
     //$qresult = false;//disable
     if(empty($qresult))
     {
@@ -63,7 +65,7 @@ function rsvpmaker_relay_init ($show = false) {
 }
 
 function rsvpmaker_relay_queue() {
-    global $wpdb;
+    global $wpdb, $post, $page, $pages;
     $sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft') LIMIT 0,40 ";
     $results = $wpdb->get_results($sql);
     if(empty($results))
@@ -80,8 +82,6 @@ function rsvpmaker_relay_queue() {
             }
             if(empty($row->post_title) || empty($row->post_content))
                 continue;
-            //$html .= '<br />';
-            //$html .= var_export($row, true);
             $mail['from'] = 'noreply@'.str_replace('www.','',$_SERVER['SERVER_NAME']);
             $mail['replyto'] = get_post_meta($row->ID,'rsvprelay_from',true);
             $mail['fromname'] = get_post_meta($row->ID,'rsvprelay_fromname',true);
@@ -91,9 +91,24 @@ function rsvpmaker_relay_queue() {
             $mail['html'] = $row->post_content;
             $mail['to'] = $row->meta_value;
             $html .= sprintf('<p>%s to %s</p>',$row->post_title,$row->meta_value);
+            
+            $t_index = get_post_meta($row->ID,'_email_template',true);
+            $t_index = '0';
+            if($t_index != '') {
+                $post = get_post($row->ID);
+                $templates = get_rsvpmaker_email_template();
+                $template = $templates[$t_index]["html"];
+                $message_description = get_post_meta($row->ID,'message_description',true);
+                $mail['html'] = do_blocks(do_shortcode($template));
+                $mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail["to"],'<div class="rsvpexplain">'.$message_description.'</div>');    
+                if(isset($_GET['debug']))
+                {
+                    printf('<pre>%s</pre>',htmlentities($template));
+                    printf('<pre>%s</pre>',htmlentities($mail['html']));
+                }
+            }
+            
             rsvpmailer($mail);
-            //print_r($mail);
-            //printf('<p>%s</p>',$sql);
         }
         return $html;
     }    
@@ -291,14 +306,18 @@ if ($contentParts >= 2) {
         }  
     for ($k=0;$k<sizeof($att);$k++) {
         $attachment = $att[$k];
-        $strFileType = '';
-        if ($att[$k]->parameters[0]->value == "us-ascii" || $att[$k]->parameters[0]->value    == "US-ASCII") {
-            if ($att[$k]->parameters[1]->value != "") {
-                $strFileName = $att[$k]->parameters[1]->value;
+        $strFileName = $strFileType = '';
+        if(!empty($att[$k]->parameters) && is_array($att[$k]->parameters) && !empty($att[$k]->parameters[0]->value))
+        {
+            if( ($att[$k]->parameters[0]->value == "us-ascii") || ($att[$k]->parameters[0]->value    == "US-ASCII") ) {
+                if ($att[$k]->parameters[1]->value != "") {
+                    $strFileName = $att[$k]->parameters[1]->value;
+                }
+            } elseif ($att[$k]->parameters[0]->value != "iso-8859-1" &&    $att[$k]->parameters[0]->value != "ISO-8859-1") {
+                $strFileName = $att[$k]->parameters[0]->value;
             }
-        } elseif ($att[$k]->parameters[0]->value != "iso-8859-1" &&    $att[$k]->parameters[0]->value != "ISO-8859-1") {
-            $strFileName = $att[$k]->parameters[0]->value;
-        }
+        }//end is array
+
         if(strpos($strFileName,'.')) { //if it's a filename
             $p = explode('.',$strFileName);
             $strFileType = strtolower(array_pop($p));
