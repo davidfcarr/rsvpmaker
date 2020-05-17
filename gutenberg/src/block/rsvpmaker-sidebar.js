@@ -2,6 +2,7 @@
 //const { withState } = wp.compose;
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
+const { Panel, PanelBody, PanelRow } = wp.components;
 import {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle} from './metadata_components.js';
 
 var el = wp.element.createElement;
@@ -67,38 +68,55 @@ if(rsvpmaker_ajax.special)
 	<MetaEndDateControl /></div>
 )}
 {(rsvpmaker_ajax._rsvp_count > '1') && <p><a href={rsvpmaker_ajax.rsvpmaker_details} >{__('Edit Multiple Dates')}</a></p>}
-{(rsvpmaker_ajax.projected_url && (rsvpmaker_ajax.complex_template == '') &&
-<div>
-<MetaSelectControl
-		label="Week"
-		metaKey="_week_of_month"
-		options={ [
-			{ label: 'Varies', value: '0' },
-			{ label: 'First', value: '1' },
-			{ label: 'Second', value: '2' },
-			{ label: 'Third', value: '3' },
-			{ label: 'Fourth', value: '4' },
-			{ label: 'Last', value: '5' },
-			{ label: 'Every', value: '6' },
-		] }
-	/>
-<MetaSelectControl
-		label="Day of Week"
-		metaKey="_day_of_week"
-		options={ [
-			{ label: 'Not Set', value: '' },
-			{ label: 'Sunday', value: '0' },
-			{ label: 'Monday', value: '1' },
-			{ label: 'Tuesday', value: '2' },
-			{ label: 'Wednesday', value: '3' },
-			{ label: 'Thursday', value: '4' },
-			{ label: 'Friday', value: '5' },
-			{ label: 'Saturday', value: '6' },
-		] }
-	/>
+{(rsvpmaker_ajax.projected_url && <div>
+<div class="sked_frequency">
+<p><MetaFormToggle
+label="Varies" 
+metaKey="_sked_Varies"/></p>
+<p><MetaFormToggle
+label="First" 
+metaKey="_sked_First"/></p>
+<p><MetaFormToggle
+label="Second" 
+metaKey="_sked_Second"/></p>
+<p><MetaFormToggle
+label="Third" 
+metaKey="_sked_Third"/></p>
+<p><MetaFormToggle
+label="Fourth" 
+metaKey="_sked_Fourth"/></p>
+<p><MetaFormToggle
+label="Last" 
+metaKey="_sked_Last"/></p>
+<p><MetaFormToggle
+label="Every" 
+metaKey="_sked_Every"/></p>
+</div>
+<p><MetaFormToggle
+label="Sunday" 
+metaKey="_sked_Sunday"/></p>
+<p><MetaFormToggle
+label="Monday" 
+metaKey="_sked_Monday"/></p>
+<p><MetaFormToggle
+label="Tuesday" 
+metaKey="_sked_Tuesday"/></p>
+<p><MetaFormToggle
+label="Wednesday" 
+metaKey="_sked_Wednesday"/></p>
+<p><MetaFormToggle
+label="Thursday" 
+metaKey="_sked_Thursday"/></p>
+<p><MetaFormToggle
+label="Friday" 
+metaKey="_sked_Friday"/></p>
+<p><MetaFormToggle
+label="Saturday" 
+metaKey="_sked_Saturday"/></p>
+
 <MetaSelectControl
 		label="Start Time (hour)"
-		metaKey="_template_start_hour"
+		metaKey="_sked_hour"
 		options={ [
 			{ label: '12 midnight', value: '00' },
 			{ label: '1 am / 01:', value: '01' },
@@ -128,7 +146,7 @@ if(rsvpmaker_ajax.special)
 	/>
 <MetaSelectControl
 		label="Start Time (minutes)"
-		metaKey="_template_start_minutes"
+		metaKey="_sked_minutes"
 		options={ [
 			{ label: '00', value: '00' },
 			{ label: '01', value: '01' },
@@ -193,15 +211,6 @@ if(rsvpmaker_ajax.special)
 		] }
 	/>
 <MetaEndDateControl />
-</div>
-)}
-{(rsvpmaker_ajax.projected_url && rsvpmaker_ajax.complex_template &&
-<PanelRow>{rsvpmaker_ajax.complex_template}</PanelRow>
-)}
-{(rsvpmaker_ajax.projected_url && <div><p>
-<a href={rsvpmaker_ajax.rsvpmaker_details} >{__('Edit Template Schedule')}</a></p>
-<p><a href={rsvpmaker_ajax.projected_url} >{__('Create/Update Events from Template')}</a><br />
-</p>
 </div>
 )}
 <MetaFormToggle

@@ -430,7 +430,6 @@ if(isset($_POST["unit"]))
 		unset($_POST);
 		rsvpmaker_youtube_live($postID, $ylive);
 		}
-
 }
 
 function rsvpmaker_menu_security($label, $slug,$options) {
@@ -2038,7 +2037,8 @@ function rsvpmaker_custom_column($column_name, $post_id) {
     if( $column_name == 'event_dates' ) {
 
 $results = get_rsvp_dates($post_id);
-$template = get_post_meta($post_id,'_sked',true);
+//$template = get_post_meta($post_id,'_sked',true);
+$template = get_template_sked($post_id);
 $rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
 $s = $dateline = '';
@@ -2476,6 +2476,8 @@ function rsvpmaker_sort_message() {
 
 function rsvpmaker_get_projected($template) {
 
+//printf('<p>Get projected based on %s</p>',var_export($template,true));
+
 if(!isset($template["week"]))
 	return;
 
@@ -2491,6 +2493,11 @@ else
 		$dows[0] = isset($template["dayofweek"]) ? $template["dayofweek"] : 0;
 	}
 
+if(empty($template['hour']))
+	$template['hour'] = '00';
+if(empty($template['minutes']))
+	$template['minutes'] = '00';
+
 $cy = date("Y");
 $cm = date("m");
 
@@ -2503,7 +2510,7 @@ if(empty($dows))
 	$dows = array(0 => 0);
 foreach($weeks as $week)
 foreach($dows as $dow) {
-
+//printf('<p>week %s day %s</p>',$week,$dow);
 if($week == 6)
 	{
 	if(empty($stopdate))
@@ -2546,6 +2553,7 @@ else {
 				{
 				$datetext =  "$wtext ".rsvpmaker_day($dow,'rsvpmaker_strtotime')." ".date("F Y",$firstday).' '.$template['hour'].':'.$template['minutes'].':00';
 				$ts = rsvpmaker_strtotime($datetext);
+				//printf('<p>datetext %s = %s</p>',$datetext, $ts);
 				if(isset($stopdate) && $ts > $stopdate)
 					break;
 				$projected[$ts] = $ts;
@@ -3319,7 +3327,9 @@ global $current_user;
 
 $t = (int) $_POST["template"];
 $post = get_post($t);
-$template = get_post_meta($t,'_sked',true);
+//$template = get_post_meta($t,'_sked',true);
+$template = get_template_sked($t);
+
 $hour = (isset($template["hour"]) ) ? (int) $template["hour"] : 17;
 $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 
@@ -3492,7 +3502,9 @@ if(!empty($sofar))
 	$farthest = array_pop($sofar);
 	$fts = rsvpmaker_strtotime($farthest->datetime);
 }
-$sked = get_post_meta($template_id,'_sked',true);
+//$sked = get_post_meta($template_id,'_sked',true);
+$sked = get_template_sked($template_id);
+
 if(!isset($sked["week"]))
 	return;
 $projected = rsvpmaker_get_projected($sked);
@@ -3602,7 +3614,8 @@ if(empty($_POST) || empty($_REQUEST['t']) || empty($_REQUEST['page']) || ($_REQU
 global $wpdb, $current_user;
 $t = $_REQUEST['t'];
 $post = get_post($_REQUEST['t']);
-$template = $sked = get_post_meta($t,'_sked',true);
+$template = $sked = get_template_sked($t);
+//$template = $sked = get_post_meta($t,'_sked',true);
 $template['hour'] = (int) $template['hour'];
 if($template['hour'] < 10)
 	$template['hour'] = $sked['hour'] = '0'.$template['hour']; // make sure of zero padding
@@ -3852,6 +3865,8 @@ else {
 	$convert_timezone = get_post_meta($post_id,"_convert_timezone",true);
 	$rsvp_timezone = get_post_meta($post_id,"_rsvp_timezone_string",true);	
 }
+if(isset($_GET['page']) && ( ($_GET['page'] == 'rsvpmaker_details') ) )
+{
 ?>
 <input type="checkbox" name="calendar_icons" value="1" <?php if($icons) echo ' checked="checked" ';?> /> <?php _e('Show Add to Google / Download to Outlook (iCal) icons','rsvpmaker'); ?> 
 <br />
@@ -3866,8 +3881,6 @@ if(!strpos($rsvp_options["time_format"],'T') )
 ?>
 <input type="checkbox" name="convert_timezone" value="1" <?php if($convert_timezone) echo ' checked="checked" '; ?> /><?php _e('Show timezone conversion button next to calendar icons','rsvpmaker'); ?>
 </p>
-<?php if(isset($_GET['page']) && ( ($_GET['page'] == 'rsvpmaker_details') || ($_GET['page'] == 'rsvpmaker_setup') ) ) {
-?>
 <p>Timezone <select id="timezone_string" name="setrsvp[timezone_string]">
 	<option value="<?php echo $rsvp_timezone?>"><?php echo (empty($rsvp_timezone)) ? __('Default','rsvpmaker') : $rsvp_timezone?></option>
 <optgroup label="U.S. Mainland">
@@ -4371,15 +4384,11 @@ if(!strpos($rsvp_options["time_format"],'T') )
 <option value="UTC+13.75">UTC+13:45</option>
 <option value="UTC+14">UTC+14</option>
 </optgroup></select>
-	</p>
 <?php
-}
+	printf('<a href="%s" >%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),__('More Event Options','rsvpmaker')); 
+}//end content not displayed on initial setup page	
 ?>
-	
-<p>
-	<?php
-	if(!isset($_GET['page']))
-	printf('<a href="%s" >%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),__('More Event Options','rsvpmaker')); ?>
+
 </p>
 <?php
 }
@@ -4958,22 +4967,9 @@ select {
 }
 </style>
 <div class="wrap">
-<?php
-if(!isset($_GET['new_template']) && !isset($_GET['t'])){
-	echo '<div style="float: right; background-color: #fff; padding: 10px; border: thin dotted #555; width: 250px;">';
-	printf('%s %s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('create a' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
-	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><br />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select><br /><br />%s %s<br >%s</form>',admin_url('edit.php'),__('Or add','rsvpmaker'),__('One event','rsvpmaker'),__('Multiple events','rsvpmaker'),__('based on','rsvpmaker'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
-	do_action('rsvpmaker_setup_template_prompt');
-	echo '</div>';
-?>
 	<div id="icon-edit" class="icon32"><br /></div> 
 <h2><?php _e('Event Setup','rsvpmaker'); ?></h2> 
 <?php
-	//printf('<br /><br />%s<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" />%s<br ><button>Submit</button></form>',__('Add multiple events based on a template:','rsvpmaker'),admin_url('edit.php'),rsvpmaker_templates_dropdown('t'));
-	
-	//if(!empty($list))
-		//printf('<h3>%s</h3><ul>%s</ul>',__('Templates You Can Edit','rsvpmaker'),$list);
-}
 $title = '';
 $template = 0;
 if(isset($_GET['t']))
@@ -5023,7 +5019,15 @@ echo '</form></div>';
 	
 	if(isset($_GET['t']))
 		return;
-	
+
+if(!isset($_GET['new_template']) && !isset($_GET['t'])){
+	echo '<div style="background-color: #fff; padding: 10px; border: thin dotted #555; width: 90%;">';
+	printf('%s %s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('create a' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
+	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><br />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select> %s %s<br >%s</form>',admin_url('edit.php'),__('Or add','rsvpmaker'),__('One event','rsvpmaker'),__('Multiple events','rsvpmaker'),__('based on','rsvpmaker'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
+	do_action('rsvpmaker_setup_template_prompt');
+	echo '</div>';
+}				
+
 	$myevents = get_events_by_author($current_user->ID);
 	if($myevents)
 	{
@@ -5060,11 +5064,6 @@ echo '</form></div>';
 	{
 		printf('<h3>%s</h3><p>%s</p>',__('Your Templates','rsvpmaker'),__('Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series.','rsvpmaker'));
 		echo $list;
-
-		printf('<form action="%s" method="get">
-		<input type="hidden" name="post_type" value="rsvpmaker">
-		<input type="hidden" name="page" value="rsvpmaker_setup">
-		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Add Event','rsvpmaker')));
 
 		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>',admin_url('post.php'),$tedit,get_submit_button(__('Edit Template','rsvpmaker')));
 
@@ -5301,6 +5300,5 @@ else
 }
 	
 }
-
 
 ?>

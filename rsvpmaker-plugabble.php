@@ -26,7 +26,8 @@ if((isset($custom_fields["_sked"][0])) && isset($custom_fields["_rsvp_dates"][0]
 	//(isset($custom_fields["_sked"][0]) && 
 	unset($custom_fields["_sked"][0]);
 	//cannot be both an individual event and a template
-	delete_post_meta($post->ID,'_sked');	
+	//delete_post_meta($post->ID,'_sked');
+	$wpdb->query("DELETE from $wpdb->postmeta WHERE meta_key LIKE '_ske%' ");
 }
 if(isset($_GET["clone"]))
 	{
@@ -57,7 +58,8 @@ elseif(isset($custom_fields["_sked"][0]) || isset($_GET["new_template"]) )
 ?>
 <p><em><strong><?php _e('Event Template','rsvpmaker'); ?>:</strong> <?php _e('This form is for entering generic / boilerplate information, not specific details for an event on a specific date. Groups that meet on a monthly basis can post their standard meeting schedule, location, and contact details to make entering the individual events easier. You can also post multiple future meetings using the generic template and update those event listings as needed when the event date grows closer.','rsvpmaker'); ?></em></p>
 <?php
-		$template = get_post_meta($post_id,'_sked',true);
+		//$template = get_post_meta($post_id,'_sked',true);
+		$template = get_template_sked($post_id);
 		template_schedule($template);
 	 rsvp_time_options($post->ID);
 		return;
@@ -109,7 +111,8 @@ else
 if(isset($_GET['t']))
 {
 	$t = (int) $_GET['t'];
-	$sked = get_post_meta($t,'_sked',true);
+	
+	$sked = get_template_sked($t);//get_post_meta($t,'_sked',true);
 	$times = rsvpmaker_get_projected($sked);
 	foreach($times as $ts)
 	{
@@ -351,7 +354,8 @@ if(!isset($_POST["sked"]))
 	if($sked['duration'] == 'set')
 		$sked['end'] = $_POST["hoursked"]['duration'].':'.$_POST["minsked"]['duration'];
 
-	update_post_meta($postID, '_sked', $sked);
+	new_template_schedule($postID,$sked);
+	//update_post_meta($postID, '_sked', $sked);
 	if(isset($_POST["rsvpautorenew"]))
 		update_post_meta($postID, 'rsvpautorenew', 1);
 	else
@@ -532,26 +536,26 @@ $deadlinedaysbefore = '';
 //$deadlinedaysbefore .= '<option>Meta:'.var_export($custom_fields['rsvp_deadline_daysbefore'][0],true).'</option>';
 for($i = 0; $i < 31; $i++)
 	{
-	$s = ($custom_fields['_rsvp_deadline_daysbefore'][0] == $i) ? ' selected="selected" ' : '';
+	$s = (isset($custom_fields['_rsvp_deadline_daysbefore']) && ($custom_fields['_rsvp_deadline_daysbefore'][0] == $i)) ? ' selected="selected" ' : '';
 	$deadlinedaysbefore .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
 	}
 
 $regdays = '';
 	for($i = 0; $i < 181; $i++)
 		{
-		$s = ($custom_fields['_rsvp_reg_daysbefore'][0] == $i) ? ' selected="selected" ' : '';
+		$s = (isset($custom_fields['_rsvp_reg_daysbefore']) && ($custom_fields['_rsvp_reg_daysbefore'][0] == $i)) ? ' selected="selected" ' : '';
 		$regdays .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
 		}
 $deadlinehours = '';
 		for($i = 0; $i < 24; $i++)
 			{
-			$s = ($custom_fields['_rsvp_deadline_hours'][0] == $i) ? ' selected="selected" ' : '';
+			$s = (isset($custom_fields['_rsvp_deadline_hours']) && ($custom_fields['_rsvp_deadline_hours'][0] == $i)) ? ' selected="selected" ' : '';
 			$deadlinehours .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
 			}
 $reghours = '';
 		for($i = 0; $i < 24; $i++)
 			{
-			$s = ($custom_fields['_rsvp_reg_hours'][0] == $i) ? ' selected="selected" ' : '';
+			$s = (isset($custom_fields['_rsvp_reg_hours']) && ($custom_fields['_rsvp_reg_hours'][0] == $i)) ? ' selected="selected" ' : '';
 			$reghours .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
 			}
 			
@@ -3881,7 +3885,7 @@ if(!empty($_POST["override"]))
 	$overridden = (int) $_POST["overridden"];
 	$opost = get_post($override);
 	$target = get_post($overridden);
-	$sk = get_post_meta($overridden,'_sked',true);
+	$sk = get_template_sked($overriden);//get_post_meta($overridden,'_sked',true);
 	if($sk)
 		wp_update_post(array('ID' => $override,'post_title' => $opost->post_title. ' (backup)'));
 	$newpost = array('ID' => $overridden, 'post_title' => $opost->post_title, 'post_content' => $opost->post_content, 'post_name' => $target->post_name);
@@ -3944,7 +3948,9 @@ if(isset($_POST['event_to_template'])) {
 	$event = get_post($e);
 	$newpost = array('post_title' => $event->post_title, 'post_content' => $event->post_content,'post_type' => 'rsvpmaker', 'post_author'=> $current_user->ID, 'post_status'=>'publish');
 	$t = wp_insert_post($newpost);
-	update_post_meta($t,'_sked',array('week' => array(0),'dayofweek'=>array(0),'hour'=>$tsexplode[1],'minutes'=>$tsexplode[2]));
+	array('week' => array(0),'dayofweek'=>array(0),'hour'=>$tsexplode[1],'minutes'=>$tsexplode[2]);
+	//update_post_meta($t,'_sked',$template);
+	new_template_schedule($t,$template);
 	//Array ( [week] => Array ( [0] => 0 ) [stop] => [hour] => 19 [minutes] => 00 [duration] => [dayofweek] => Array ( [0] => 0 ) )
 	printf('<h1>Template updated based on contents of event for %s</h1>',rsvpmaker_strftime($rsvp_options['long_date'],rsvpmaker_strtotime($ts)));
 	$sql = "select * from $wpdb->postmeta WHERE post_id=".$e;//." AND meta_key LIKE '_rsvp%' ";
@@ -3997,7 +4003,7 @@ foreach ( $results as $post )
 		if(isset($_GET['apply_current']) && ( $post->ID == $_GET['apply_current'] ) )
 			$current_template = '<option value="'.$post->ID.'">Current Template: '.$post->post_title.'</option>';
 		
-		$sked = unserialize($post->sked);
+		$sked = get_template_sked($post->ID);
 
 		//backward compatability
 		if(is_array($sked["week"]))
@@ -4164,8 +4170,8 @@ global $wpdb;
 global $current_user,$rsvp_options;
 $nomeeting = $editlist = $add_one = $add_date_checkbox = $event_options = $updatelist = '';
 
-$template = get_post_meta($t,'_sked',true);
-
+//$template = get_post_meta($t,'_sked',true);
+$template = get_template_sked($t);
 $post = get_post($t);
 $template_editor = false;
 if(current_user_can('edit_others_rsvpmakers'))
@@ -4177,7 +4183,11 @@ else
 	$template_editor = in_array($current_user->ID,$eds);		
 	}
 
-$template = get_post_meta($t,'_sked',true);
+//$template = get_post_meta($t,'_sked',true);
+$template = get_template_sked($t);
+//print_r($template);
+$weeks = $template['week'];
+$dows = $template['dayofweek'];
 $hour = (isset($template["hour"]) ) ? (int) $template["hour"] : 17;
 $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 
@@ -4194,17 +4204,6 @@ $cy = date("Y");
 $cm = rsvpmaker_date("m");
 $cd = rsvpmaker_date("j");
 
-//backward compatability
-if(is_array($template["week"]))
-	{
-		$weeks = $template["week"];
-		$dows = (empty($template["dayofweek"])) ? 0 : $template["dayofweek"];
-	}
-else
-	{
-		$weeks[0] = $template["week"];
-		$dows[0] = (isset($template["dayofweek"])) ? $template["dayofweek"] : 0;
-	}
 $schedule = '';
 if($weeks[0] == 0)
 	$schedule = __('Schedule Varies','rsvpmaker');
@@ -4219,7 +4218,8 @@ foreach($dows as $dow)
 
 printf('<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><a href="%s">%s</a></blockquote>',__('Template','rsvpmaker'),$post->post_title,$schedule,admin_url('post.php?action=edit&post='.$t),__('Edit Template','rsvpmaker'));
 
-$template = get_post_meta($t,'_sked',true);
+//$template = get_post_meta($t,'_sked',true);
+//$template = get_template_sked($t);
 $hour = (int) $template["hour"];
 $minutes = $template["minutes"];
 $his = ($hour < 10) ? '0'.$hour : $hour;
@@ -4569,7 +4569,8 @@ if($post->post_type != 'rsvpmaker') return; // only for RSVPMaker
 $singular = __('Event','rsvpmaker');
 $link = sprintf(' <a href="%s">%s %s</a>',esc_url( get_post_permalink($post_ID)),__('View','rsvpmaker'), $singular );
 
-$sked = get_post_meta($post_ID,'_sked',true);
+//$sked = get_post_meta($post_ID,'_sked',true);
+$sked = get_template_sked($post_ID);
 if(!empty($sked) )
 	{
 		$singular = __('Event Template','rsvpmaker');
@@ -4602,7 +4603,7 @@ global $post;
 global $post_new_file;
 if(!isset($post) || ($post->post_type != 'rsvpmaker'))
 	return;
-if(!empty($_GET["new_template"]) || get_post_meta($post->ID,'_sked',true))
+if(!empty($_GET["new_template"]) || get_template_sked($post->ID))
 	{
 	$title .= ' '.__('Template','rsvpmaker');
 	if(isset($post_new_file))

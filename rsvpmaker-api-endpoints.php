@@ -193,7 +193,8 @@ class RSVPMaker_Sked_Controller extends WP_REST_Controller {
   }
 
 public function get_items($request) {
-    $sked = get_post_meta($request['post_id'],'_sked',true);
+    $sked = get_template_sked($request['post_id']);
+    //$sked = get_post_meta($request['post_id'],'_sked',true);
     return new WP_REST_Response($sked, 200);
   }
 }

@@ -28,7 +28,7 @@ function rsvpmaker_strtotime($string) {
 
 function rsvpmaker_mktime($hour=NULL, $minute = NULL, $second = NULL,$month = NULL, $day = NULL, $year = NULL) {
 	fix_timezone();
-	$t = mktime($hour, $minute, $second,$month, $day,$year);
+	$t = mktime((int) $hour, (int) $minute, (int) $second, (int) $month, (int) $day,(int)$year);
 	restore_timezone();
 	return $t;
 }
@@ -438,7 +438,7 @@ function rsvpmaker_is_template ($post_id = 0) {
 		else
 			return false;
 	}
-	return get_post_meta($post_id,'_sked',true);
+	return get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 }
 
 function has_template ($post_id = 0) {
@@ -900,7 +900,7 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 	if(in_array($meta_key,$date_fields))
 		{
 			$datetime = get_rsvp_date($post_id);
-			$sked = get_post_meta($post_id,'_sked',true);
+			$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 			if($datetime) {
 				if($meta_key == '_firsttime')
 				{
@@ -1003,7 +1003,7 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 
 
 	$date_fields = array('_rsvp_dates','_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
-	if(in_array($meta_key,$date_fields) && ($sked = get_post_meta($post_id,'_sked',true)) && is_array($sked) )
+	if(in_array($meta_key,$date_fields) && ($sked = get_template_sked($post_id) ) && is_array($sked) )
 		{
 			$week = $sked["week"];
 			$dayofweek = $sked["dayofweek"];
@@ -1040,7 +1040,8 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 				rsvpmaker_debug_log($meta_value,$meta_key);
 				$sked["week"] = array($meta_value);
 			}
-		update_post_meta($post_id,'_sked',$sked);
+		new_template_schedule($post_id,$sked);
+		//update_post_meta($post_id,'_sked',$sked);
 		rsvpmaker_debug_log($sked,'modified sked');
 		return true; //short circuit regular meta update
 		}
@@ -1066,4 +1067,110 @@ function rsvpmaker_check_privacy_page() {
 	return $privacy_page;
 }
 
+function get_day_array() {
+	return Array("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday");
+}
+function get_week_array() {
+return Array("Varies","First","Second","Third","Fourth","Last","Every");
+}
+	
+function get_template_sked($post_id) {
+	global $wpdb;
+	$week_array = get_week_array();
+	$day_array = get_day_array();
+	$singles = array('hour','minutes','duration','stop');
+	$newsked = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_sked_%' ");
+	if($newsked) {
+		//retrieved new format
+		$dayofweek = array();
+		$week = array();
+		foreach($newsked as $row) {
+			$key = str_replace('_sked_','',$row->meta_key);
+			if(in_array($key,$day_array) && $row->meta_value)
+				$dayofweek[] = array_search($key,$day_array);
+			elseif(in_array($key,$week_array) && $row->meta_value)
+				$week[] = array_search($key,$week_array);
+			$sked[$key] = $row->meta_value;
+		}
+		sort($week);
+		sort($dayofweek);
+		$sked['dayofweek'] = $dayofweek;
+		//if every is checked, ignore other checks
+		$sked['week'] = $week;
+		if(sizeof($week) > 1)
+		{
+			//if every week, other weeks don't count
+			if(in_array(6,$week))
+				{
+				$sked['week'] = array(6);
+				foreach($week_array as $index => $value)
+					{
+						if($index != 6)
+							update_post_meta($post_id,'_sked_'.$value,false);
+					}
+				}
+			if(in_array(0,$week)) //if any other value is set, Varies doesn't make sense
+				update_post_meta($post_id,'_sked_Varies',false);
+		} 
+		return $sked;
+	}
+	else {
+		$sked = get_post_meta($post_id,'_sked',true);
+		if($sked) {
+			//upgrade it
+			$sked = new_template_schedule($post_id,$sked);
+			return $sked;
+		}
+		else
+			return false;//not a template
+	}
+}
+
+function new_template_schedule($post_id,$template) {
+	if(is_array($template["week"]))
+	{
+		$weeks = $template["week"];
+		$dows = $template["dayofweek"];
+	}
+	else
+	{
+		$weeks[0] = $template["week"];
+		$dows[0] = (isset($template["dayofweek"])) ? $template["dayofweek"] : 0;
+	}
+	$hour = (isset($template['hour'])) ? $template['hour'] : '';	
+	$minutes = (isset($template['minutes'])) ? $template['minutes'] : '';	
+	$duration = (isset($template['duration'])) ? $template['duration'] : '';	
+	$stop = (isset($template['stop'])) ? $template['stop'] : '';	
+	$new_template_schedule = build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$stop);
+	foreach($new_template_schedule as $label => $value) {
+		$label = '_sked_'.$label;
+		$value = $value;
+		update_post_meta($post_id,$label,$value);
+	}
+	$new_template_schedule['week'] = $weeks;
+	$new_template_schedule['dayofweek'] = $dows;
+	update_post_meta($post_id,'_sked',$new_template_schedule);
+	return $new_template_schedule;
+}
+
+function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$stop) {
+		$weekarray = get_week_array();
+		foreach($weekarray as $index => $label)
+		{
+			//printf('<p>check %s %s</p>',$index,$label);
+			$atomic_sked[$label] = in_array($index,$weeks);
+		}
+		$dayarray = get_day_array();
+		foreach($dayarray as $index => $label)
+		{
+			//printf('<p>check %s %s</p>',$index,$label);
+			$atomic_sked[$label] = in_array($index,$dows);
+		}
+	$atomic_sked['hour'] = $hour;
+	$atomic_sked['minutes'] = $minutes;
+	$atomic_sked['stop'] = $stop;
+	$atomic_sked['duration'] = $duration;
+	return $atomic_sked;
+}
+	
 ?>

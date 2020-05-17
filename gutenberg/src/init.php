@@ -59,7 +59,8 @@ add_action( 'init', function(){
 	register_meta( 'post', '_rsvp_instructions', $args );
 	register_meta( 'post', 'simple_price', $args );
 	register_meta( 'post', 'simple_price_label', $args );
-	$date_fields = array('_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes');
+	$date_fields = array('_firsttime','_endfirsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration');
+	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
 	foreach($date_fields as $field)
 		register_meta( 'post', $field, $args );
 	$args = array(
@@ -81,6 +82,8 @@ add_action( 'init', function(){
 			return current_user_can('edit_posts');
 		}
 	);
+	foreach($template_fields as $field)
+		register_meta( 'post', $field, $args );
 	register_meta( 'post', '_rsvp_on', $args );
 	register_meta( 'post', '_add_timezone', $args );
 	register_meta( 'post', '_convert_timezone', $args ); 
@@ -166,8 +169,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$bottom_message= '';
 		$complex_pricing = rsvp_complex_price($post->ID);
 		$complex_template = get_post_meta($post->ID,'complex_template',true);
-
-		$sked = get_post_meta($post->ID,'_sked',true);
+		$sked = get_template_sked($post->ID);// get_post_meta($post->ID,'_sked',true);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
 			$top_message = $rsvpmaker_special;
@@ -198,7 +200,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 	if(empty($date))
 	{
 	$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
-	$sked = get_post_meta($post_id,'_sked',true);
+	$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 	if(empty($sked))
 		$sked = array();
 	}
