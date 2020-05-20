@@ -825,7 +825,7 @@ foreach($results as $row)
         _e('None','rsvpmaker');
 	else
 	{
-	printf('<h3>Scheduled</h3>
+	printf('<h3>'.__('Scheduled','rsvpmaker').'?></h3>
 	<table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th></tr></thead><tbody>',__('Title','rsvpmaker'),__('Schedule','rsvpmaker'));
     foreach ( $crons as $timestamp => $cron ) {
 		foreach($cron as $hook => $properties)
@@ -1606,28 +1606,6 @@ foreach($results as $row)
 	$rsvped[] = array('field' => 'EMAIL','condition_type' => 'EmailAddress','op' => 'not','value' => $row->email);
 if(!empty($rsvped))
 	$segment_opts = array('match' => 'all','conditions' => $rsvped );
-/*	
-$segment_id = get_post_meta($event, 'mailchimp_rsvp_segment', true);
-if(empty($segment_id))
-{
-$segment_result = $MailChimp->post("lists/".$listID.'/segments', array('name' => $slug,'static_segment' => $rsvped));
-echo '<pre>';
-print_r($segment_result);
-echo '</pre>';
-if($segment_result->id)
-	{
-		$segment_id = $segment_result->id;
-		update_post_meta($event,'mailchimp_rsvp_segment',$segment_id);
-	}
-}
-else
-	{
-	$bulk = $MailChimp->post("lists/".$listID.'/segments/'.$segment_id, array('members_to_add' => $rsvped));
-echo '<pre>';
-print_r($bulk);
-echo '</pre>';
-	}
-*/
 }
 
 $input = array(
@@ -1694,8 +1672,8 @@ foreach($templates as $index => $template)
 	}
 ?>
 <form method="get"  action="<?php echo get_permalink($post->ID); ?>">
-Email Template: <select name="template"><?php echo $o; ?></select>
-<button>Switch Template</button>
+<?php _e('Email Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
+<button><?php _e('Switch Template','rsvpmaker'); ?></button>
 </form>
 <hr />
 <form method="post" action="<?php echo $permalink; ?>">

@@ -189,7 +189,7 @@ class RSVPMakerByJSON extends WP_Widget {
               <?php echo $before_widget;?>
                   <?php if ( $title )
                         echo $before_title . $title . $after_title;?>
-<div id="rsvpjsonwidget-<?php echo $slug; ?>">Loading ...</div>
+<div id="rsvpjsonwidget-<?php echo $slug; ?>"><?php _e('Loading','rsvpmaker'); ?> ...</div>
 <script>
 var jsonwidget<?php echo $slug; ?> = new RSVPJsonWidget('rsvpjsonwidget-<?php echo $slug; ?>','<?php echo $url; ?>',<?php echo $limit; ?>,'<?php echo $morelink; ?>');
 </script>

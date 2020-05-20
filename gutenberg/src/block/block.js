@@ -291,7 +291,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type }, setAttributes, isSelected } = props;
 
 	function showFormPrompt () {
-		return <p><strong>Click here to set options.</strong></p>
+		return <p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
 	}
 		
 	function showForm() {
@@ -433,7 +433,7 @@ registerBlockType( 'rsvpmaker/eventlisting', {
 	const { attributes: { days, posts_per_page, type, date_format }, setAttributes, isSelected } = props;
 
 	function showFormPrompt () {
-		return <p><strong>Click here to set options.</strong></p>
+		return <p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
 	}
 		
 	function showForm() {

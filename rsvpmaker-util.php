@@ -101,8 +101,6 @@ else
 	$duration_type = '';
 $end_time = '';
 
-//printf('<pre>%s</pre>duration %s',var_export($datevar),$duration_type);
-
 if(!empty($datevar['end_time']))
 	{
 		$end_time = (is_array($datevar['end_time'])) ? $datevar['end_time'][$index] : $datevar['end_time'];
@@ -180,11 +178,8 @@ if(!empty($rsvpdates[$post_id]))
 	{
 	$drow['datetime'] = $datetime;
 	$slug = ($index == 0) ? 'firsttime' : $datetime;
-	//rsvpmaker_debug_log($index,'get_rsvp_dates cache index');
-	//rsvpmaker_debug_log($slug,'get_rsvp_dates cache slug');
 	$drow["duration"] = get_post_meta($post_id,'_'.$slug, true);
 	$drow["end_time"] = get_post_meta($post_id,'_end'.$slug, true);
-	//rsvpmaker_debug_log($drow,'get_rsvp_dates cache row');
 	if($obj)
 		$drow = (object) $drow;
 	$dates[] = $drow;		
@@ -208,8 +203,6 @@ foreach($results as $index => $row)
 	$drow["datetime"] = $datetime;
 	$rsvpdates[$post_id][] = $datetime;
 	$slug = ($index == 0) ? 'firsttime' : $datetime;
-	//rsvpmaker_debug_log($index,'get_rsvp_dates db index');
-	//rsvpmaker_debug_log($slug,'get_rsvp_dates db slug');
 	$drow["duration"] = get_post_meta($post_id,'_'.$slug, true);
 	$drow["end_time"] = get_post_meta($post_id,'_end'.$slug, true);
 if($obj)
@@ -351,7 +344,6 @@ $startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offse
 		$sql .= ' LIMIT 0,'.$limit.' ';
 	if(!empty($_GET["debug_sql"]))
 		echo $sql;
-	//rsvpmaker_debug_log($sql,'get future events');
 	return $wpdb->get_results($sql, $output);
 }
 
@@ -628,7 +620,6 @@ function rsvpmaker_data_check() {
 			if(($val != 1) && ($val != '1'))
 				$allones = false;
 		}
-		//delete_post_meta($post_id,'_sked'); // events should not have a templates schedule
 		$form = get_post_meta($post_id,'_rsvp_form',true);
 		if(!empty($form) && !is_numeric($form))
 		{
@@ -810,16 +801,16 @@ if(!isset($_POST['confirm']))
 if(!isset($_POST['older_than']))
 {
 ?>
-<h2>Remove Past Events from Database</h2>
+<h2><?php _e('Remove Past Events from Database','rsvpmaker'); ?></h2>
 <form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
-Delete events older than <input type="text" name="older_than" value="30" /> days 
+<?php _e('Delete events older than','rsvpmaker'); ?> <input type="text" name="older_than" value="30" /> <?php _e('days','rsvpmaker'); ?> 
 <?php submit_button('Delete') ?>
 </form>
 
-<h2>Apply Defaults</h2>
+<h2><?php _e('Apply Defaults','rsvpmaker'); ?></h2>
 <form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
-<p>Apply default values from the RSVPMaker Settings screen to all templates and future events</p>
-<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> All fields  </div>
+<p><?php _e('Apply default values from the RSVPMaker Settings screen to all templates and future events','rsvpmaker'); ?></p>
+<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php _e('All fields','rsvpmaker'); ?></div>
 <?php 
 foreach($defaults as $index => $field)
 printf('<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>',$index,$field);
@@ -973,8 +964,6 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 	if($content)
 		return array($content);
 	
-	//rsvpmaker_debug_log($meta_key,'returned unchanged');
-
 	return $null; // don't alter
 }
 
@@ -1051,12 +1040,6 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 
 add_filter('update_post_metadata','update_rsvp_post_metadata',10,4);
 
-//apply_filters( "update_{$meta_type}_metadata", null|bool $check, int $object_id, string $meta_key, mixed $meta_value, mixed $prev_value )
-/*
-gutenberg init.php
-	register_meta( 'post', 'simple_price', $args );
-	register_meta( 'post', 'simple_price_label', $args );
-*/
 function rsvpmaker_check_privacy_page() {
 	$privacy_page = get_option('wp_page_for_privacy_policy');
 	if($privacy_page) {

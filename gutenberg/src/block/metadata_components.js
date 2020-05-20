@@ -440,6 +440,7 @@ var MetaFormToggle = wp.compose.compose(
 					dispatch( 'core/editor' ).editPost(
 					{ meta: { [ props.metaKey ]: metaValue } }
 				);
+				//todo trigger change in week components for template
 			}
 		}
 	} ),

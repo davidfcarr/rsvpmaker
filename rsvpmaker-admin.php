@@ -258,7 +258,7 @@ echo "<option ";
 <select  id="day<?php echo $index;?>"  name="<?php echo $prefix; ?>day[<?php echo $index;?>]"> 
 <?php
 if($day == 0)
-	echo '<option value="0">Not Set</option>';
+	echo '<option value="0">'.__('Not Set','rsvpmaker').'</option>';
 for($i = 1; $i <= 31; $i++)
 {
 echo "<option ";
@@ -650,12 +650,12 @@ if(isset($_POST['timezone_string']))
 <div class="wrap" style="max-width:950px !important;">
 
     <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
-      <a class="rsvpmaker-nav-tab nav-tab rsvpmaker-nav-tab-active nav-tab-active" href="#calendar">Calendar Settings</a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#security">Security</a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#payments">Payments</a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#notification_email">Email Server</a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#email">Mailing List</a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#groupemail">Group Email</a>
+      <a class="rsvpmaker-nav-tab nav-tab rsvpmaker-nav-tab-active nav-tab-active" href="#calendar"><?php _e('Calendar Settings','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#security"><?php _e('Security','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#payments"><?php _e('Payments','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#notification_email"><?php _e('Email Server','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#email"><?php _e('Mailing List','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#groupemail"><?php _e('Group Email','rsvpmaker');?></a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
@@ -754,7 +754,7 @@ ReCaptcha (v2) Secret: <input type="text" name="option[rsvp_recaptcha_secret]" v
 $confirm = get_post($options['rsvp_confirm']);
 echo (strpos($confirm->post_content,'</p>')) ? $confirm->post_content : wpautop($confirm->post_content);
 $confedit = admin_url('post.php?action=edit&post='.$confirm->ID);
-printf('<div id="editconfirmation"><a target="_blank" href="%s">Edit</a></div>',$confedit);				
+printf('<div id="editconfirmation"><a target="_blank" href="%s">'.__('Edit','rsvpmaker').'</a></div>',$confedit);				
 ?>
 <br />
  <input type="checkbox" name="option[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" <?php if( isset($options["rsvpmaker_send_confirmation_email"]) && $options["rsvpmaker_send_confirmation_email"] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?> <input type="checkbox" name="option[confirmation_include_event]" id="rsvp_confirmation_include_event" <?php if( isset($options["confirmation_include_event"]) && $options["confirmation_include_event"] ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
@@ -769,16 +769,16 @@ if(empty($fpost))
 	$options["rsvp_form"] = upgrade_rsvpform();
 	$fpost = get_post($options["rsvp_form"]);
 	}
-$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
-$note = (strpos($fpost->post_content,'name="note"')) ? 'Yes' : 'No';
+$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? __('Yes','rsvpmaker') : __('No','rsvpmaker');
+$note = (strpos($fpost->post_content,'name="note"')) ?  __('Yes','rsvpmaker') : __('No','rsvpmaker');
 preg_match_all('/"slug":"([^"]+)/',$fpost->post_content,$matches);
 if(!empty($matches[1]))
 foreach($matches[1] as $match)
 	$fields[$match] = $match;
-printf('<div>Fields: %s<br />Guests: %s<br />Note field: %s</div>',implode(',',$fields),$guest,$note);
+printf('<div>'.__('Fields','rsvpmaker').': %s<br />'.__('Guests','rsvpmaker').': %s<br />'.__('Note field','rsvpmaker').': %s</div>',implode(',',$fields),$guest,$note);
 $edit = admin_url('post.php?action=edit&post='.$options["rsvp_form"]);
-printf('<div id="editconfirmation"><a href="%s">Edit</a></div>',$edit);
-printf('<a style="display: block; margin-top: 15px; color: red;" href="%s">Reset Form to Default</a>',admin_url('options-general.php?page=rsvpmaker-admin.php&rsvp_form_reset='.$options['rsvp_form']));	
+printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','rsvpmaker'));
+printf('<a style="display: block; margin-top: 15px; color: red;" href="%s">%s</a>',admin_url('options-general.php?page=rsvpmaker-admin.php&rsvp_form_reset='.$options['rsvp_form']),__('Reset Form to Default','rsvpmaker'));
 }
 else
 {
@@ -815,7 +815,7 @@ rsvp_form_setup_form($options["rsvp_form"]);
 				  $privacy_url = get_permalink($privacy_page);
 ?>
 				?>
-				<p><input type="radio" name="option[privacy_confirmation]" value="1" <?php if(!empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> Yes <input type="radio" name="option[privacy_confirmation]" value="0" <?php if(empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> No - Add checkbox?</p>
+				<p><input type="radio" name="option[privacy_confirmation]" value="1" <?php if(!empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> Yes <input type="radio" name="option[privacy_confirmation]" value="0" <?php if(empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> <?php _e('No - Add checkbox?','rsvpmaker');?></p>
 				<p><textarea name="option[privacy_confirmation_message]" style="width: 95%"><?php if(empty($options['privacy_confirmation_message'])) printf('I consent to the <a target="_blank" href="%s">privacy policy</a> site of this site for purposes of follow up to this registration.',$privacy_url); else echo $options['privacy_confirmation_message'] ?></textarea></p>
 <?php				  
 			  }
@@ -961,19 +961,19 @@ foreach($gateways as $gateway)
 		$o .= sprintf('<option %s value="%s">%s</option>',$s,$gateway,$gateway);
 	}
 ?>
-<h3>Preferred Payment Gateway</h3>
+<h3><?php _e('Preferred Payment Gateway','rsvpmaker');?></h3>
 <p><select name="payment_option[payment_gateway]"><?php echo $o; ?></select></p>
-<p><em>If you have set up more than one, specify the one to be used by default.</em></p>
+<p><em><?php _e('If you have set up more than one, specify the one to be used by default.','rsvpmaker');?></em></p>
 <h3><?php _e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
 <div>
 <input type="radio" name="payment_option[paypal_invoiceno]" value ="1" <?php if($options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> Yes
 	<input type="radio" name="payment_option[paypal_invoiceno]" value ="0" <?php if(!$options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> No</div>
-	<div><em>Must be enabled for RSVPMaker to track payments</em></div>
+	<div><em><?php _e('Must be enabled for RSVPMaker to track payments','rsvpmaker'); ?></em></div>
 <h3><?php _e('Send Payment Reminder','rsvpmaker'); ?>:</h3>
 <div>
 <input type="radio" name="payment_option[send_payment_reminders]" value ="1" <?php if($options["send_payment_reminders"]) echo ' checked="checked" ' ?> /> Yes
 	<input type="radio" name="payment_option[send_payment_reminders]" value ="0" <?php if(!$options["send_payment_reminders"]) echo ' checked="checked" ' ?> /> No</div>
-	<div><em>If someone RSVPs but does not pay, send an email reminder that their registration is not complete without payment.</em></div>
+	<div><em><?php _e('If someone RSVPs but does not pay, send an email reminder that their registration is not complete without payment.','rsvpmaker'); ?></em></div>
 
 <h3><?php _e('Payment Currency','rsvpmaker'); ?>:</h3>
 <div><input type="text" name="payment_option[paypal_currency]" value="<?php if(isset($options["paypal_currency"])) echo $options["paypal_currency"];?>" size="5" /> <a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_currency_codes">(list of codes)</a>
@@ -987,7 +987,7 @@ foreach($gateways as $gateway)
 </div>
 
 <h3>PayPal (REST API)</h3>
-<p>Keys may be obtained from <a target="_blank" href="https://developer.paypal.com/developer/applications/create">developer.paypal.com/developer/applications/create</a></p>
+<p><?php _e('Keys may be obtained from','rsvpmaker'); ?>Keys may be obtained from <a target="_blank" href="https://developer.paypal.com/developer/applications/create">developer.paypal.com/developer/applications/create</a></p>
 <?php
 $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
 if(empty($paypal_rest_keys))
@@ -996,7 +996,7 @@ $checkboxes = (empty($paypal_rest_keys['sandbox'])) ? '<input type="radio" name=
 if(!empty($paypal_rest_keys['client_id']) && !empty($paypal_rest_keys['client_secret']))
 {
 ?>
-<div id="paypal_production">Production keys set <p><button id="reset_paypal_production">Reset</button></p></div>
+<div id="paypal_production"><?php _e('Production keys set','rsvpmaker'); ?> <p><button id="reset_paypal_production"><?php _e('Reset','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
@@ -1011,7 +1011,7 @@ else
 if(!empty($paypal_rest_keys['sandbox_client_id']) && !empty($paypal_rest_keys['sandbox_client_secret']))
 {
 ?>
-<div id="paypal_sandbox">Sandbox keys set <p><button id="reset_paypal_sandbox">Reset</button></p></div>
+<div id="paypal_sandbox"><?php _e('Sandbox keys set','rsvpmaker'); ?> <p><button id="reset_paypal_sandbox"><?php _e('Reset','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else {
@@ -1035,7 +1035,7 @@ $checkboxes = ($stripe_keys['mode'] == 'production') ? '<input type="radio" name
 if(!empty($stripe_keys['pk']) && !empty($stripe_keys['sk']))
 {
 ?>
-<div id="stripe_production">Production keys set <p><button id="reset_stripe_production">Reset</button></p></div>
+<div id="stripe_production"><?php _e('Production keys set','rsvpmaker'); ?> <p><button id="reset_stripe_production"><?php _e('Reset','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
@@ -1050,7 +1050,7 @@ else
 if(!empty($stripe_keys['sandbox_pk']) && !empty($stripe_keys['sandbox_sk']))
 {
 ?>
-<div id="stripe_sandbox">Sandbox keys set <p><button id="reset_stripe_sandbox">Reset</button></p></div>
+<div id="stripe_sandbox"><?php _e('Sandbox keys set','rsvpmaker'); ?> <p><button id="reset_stripe_sandbox"><?php _e('Reset','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
@@ -1194,7 +1194,7 @@ $RSVPMaker_Email_Options->handle_options();
     </section>
 <section id="groupemail" class="rsvpmaker">
 <form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
-<h2>Group Email</h2>
+<h2><?php _e('Group Email','rsvpmaker'); ?></h2>
 <?php
 echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Designed to work with POP3 email accounts. Members can unsubscribe.','rsvpmaker').'</p>';
 
@@ -1620,7 +1620,7 @@ global $rsvp_options;
 ;?>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div> 
-<h2>Recurring Event</h2> 
+<h2><?php _e('Recurring Event','rsvpmaker'); ?></h2> 
 
 <?php
 

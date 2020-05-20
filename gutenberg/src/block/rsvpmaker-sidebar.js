@@ -13,7 +13,7 @@ function related_link() {
 		{
 		return <div class="rsvp_related_links"></div>;
 		}
-	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details} >RSVP / Event Options</a></p></div>;	
+	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details} >RSVP / {__('Event Options',rsvpmaker)}</a></p></div>;	
 	}
 
 /*
@@ -44,7 +44,7 @@ if(rsvpmaker_ajax.special)
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div>
-<h3>RSVPMaker Special Document</h3>
+<h3>RSVPMaker {__('Special Document','rsvpmaker')}</h3>
 {rsvpmaker_ajax.top_message}
 																																	<div class="rsvpmaker_related">
 {related_link()}
@@ -61,7 +61,7 @@ if(rsvpmaker_ajax.special)
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div>
-<h3>RSVPMaker Event Date</h3>
+<h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
 {rsvpmaker_ajax.top_message}
 {(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && 
 <div><MetaDateControl metaKey='_rsvp_dates' />
@@ -70,25 +70,25 @@ if(rsvpmaker_ajax.special)
 {(rsvpmaker_ajax._rsvp_count > '1') && <p><a href={rsvpmaker_ajax.rsvpmaker_details} >{__('Edit Multiple Dates')}</a></p>}
 {(rsvpmaker_ajax.projected_url && <div>
 <div class="sked_frequency">
-<p><MetaFormToggle
+<p class="varies"><MetaFormToggle
 label="Varies" 
 metaKey="_sked_Varies"/></p>
-<p><MetaFormToggle
+<p class="weeknumber"><MetaFormToggle
 label="First" 
 metaKey="_sked_First"/></p>
-<p><MetaFormToggle
+<p class="weeknumber"><MetaFormToggle
 label="Second" 
 metaKey="_sked_Second"/></p>
-<p><MetaFormToggle
+<p class="weeknumber"><MetaFormToggle
 label="Third" 
 metaKey="_sked_Third"/></p>
-<p><MetaFormToggle
+<p class="weeknumber"><MetaFormToggle
 label="Fourth" 
 metaKey="_sked_Fourth"/></p>
-<p><MetaFormToggle
+<p class="weeknumber"><MetaFormToggle
 label="Last" 
 metaKey="_sked_Last"/></p>
-<p><MetaFormToggle
+<p class="every"><MetaFormToggle
 label="Every" 
 metaKey="_sked_Every"/></p>
 </div>
@@ -115,7 +115,7 @@ label="Saturday"
 metaKey="_sked_Saturday"/></p>
 
 <MetaSelectControl
-		label="Start Time (hour)"
+		label={__('Start Time (hour)','rsvpmaker')}
 		metaKey="_sked_hour"
 		options={ [
 			{ label: '12 midnight', value: '00' },
@@ -145,7 +145,7 @@ metaKey="_sked_Saturday"/></p>
 		] }
 	/>
 <MetaSelectControl
-		label="Start Time (minutes)"
+		label={__('Start Time (minutes)','rsvpmaker')}
 		metaKey="_sked_minutes"
 		options={ [
 			{ label: '00', value: '00' },
@@ -214,7 +214,7 @@ metaKey="_sked_Saturday"/></p>
 </div>
 )}
 <MetaFormToggle
-label="Collect RSVPs" 
+label={__('Collect RSVPs','rsvpmaker')} 
 metaKey="_rsvp_on"/>
 
 <div class="rsvpmaker_related">

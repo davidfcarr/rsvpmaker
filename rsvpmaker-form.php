@@ -1,12 +1,4 @@
 <?php
-/*
-	register_block_type('rsvpmaker/formfield', ['render_callback' => 'rsvp_form_text']);	
-	register_block_type('rsvpmaker/formtextarea', ['render_callback' => 'rsvp_form_textarea']);	
-	register_block_type('rsvpmaker/formselect', ['render_callback' => 'rsvp_form_select']);	
-	register_block_type('rsvpmaker/formradio', ['render_callback' => 'rsvp_form_radio']);	
-	register_block_type('rsvpmaker/guests', ['render_callback' => 'rsvp_form_guests']);	
-*/
-
 function upgrade_rsvpform ($future = true, $rsvp_form_post=0) {
 global $rsvp_options;
 $newform = true;

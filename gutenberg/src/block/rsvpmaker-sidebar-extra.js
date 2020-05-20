@@ -38,10 +38,10 @@ const PluginRSVPMaker = () => {
             title='RSVPMaker'
             icon="calendar-alt"
         >
-<p>For additional options, events spanning multiple dates, and event pricing see: {related_link()}</p>
-<Panel header="RSVPMaker Event Options">
+<p>{__('For additional options, events spanning multiple dates, and event pricing see','rsvpmaker')}: {related_link()}</p>
+<Panel header={__('"RSVPMaker Event Options"','rsvpmaker')}>
 <PanelBody
-            title="Set Basic Options"
+            title={__("Set Basic Options",'rsvpmaker')}
             icon="calendar-alt"
             initialOpen={ true }
         >
@@ -92,7 +92,7 @@ label="Saturday"
 metaKey="_sked_Saturday"/></p>
 
 <MetaSelectControl
-		label="Start Time (hour)"
+		label={__("Start Time (hour)",'rsvpmaker')}
 		metaKey="_sked_hour"
 		options={ [
 			{ label: '12 midnight', value: '00' },
@@ -122,7 +122,7 @@ metaKey="_sked_Saturday"/></p>
 		] }
 	/>
 <MetaSelectControl
-		label="Start Time (minutes)"
+		label={__("Start Time (minutes)",'rsvpmaker')}
 		metaKey="_sked_minutes"
 		options={ [
 			{ label: '00', value: '00' },
@@ -201,23 +201,23 @@ metaKey="_rsvp_on"/></p>
             initialOpen={ false }
         >
 <MetaFormToggle
-label="Show Add to Google/Outlook Calendar Icons" 
+label={__('"Show Add to Google/Outlook Calendar Icons" ','rsvpmaker')}
 metaKey="_calendar_icons"/>
 
 <MetaFormToggle
-		label="Add Timezone to Date"
+		label={__("Add Timezone to Date",'rsvpmaker')}
 		metaKey="_add_timezone"
 	/>
 <MetaFormToggle
-label="Show Timezone Conversion Button" 
+label={__("Show Timezone Conversion Button",'rsvpmaker')}
 metaKey="_convert_timezone"/>
 
 <MetaFormToggle
-label="Show RSVP Count" 
+label={__("Show RSVP Count",'rsvpmaker')} 
 metaKey="_rsvp_count"/>
 
 <MetaSelectControl
-		label="Display attendee names / RSVP note field"
+		label={__("Display attendee names / RSVP note field",'rsvpmaker')}
 		metaKey="_rsvp_show_attendees"
 		options={ [
 			{ label: 'No', value: '0' },
@@ -228,20 +228,20 @@ metaKey="_rsvp_count"/>
 
 </PanelBody>
         <PanelBody
-            title="Notifications / Reminders"
+            title={__("Notifications / Reminders",'rsvpmaker')}
             icon="email"
             initialOpen={ false }
         >
-			<MetaTextControl title="Send notifications to:" metaKey="_rsvp_to" />
+			<MetaTextControl title={__("Send notifications to:",'rsvpmaker')} metaKey="_rsvp_to" />
 		<MetaFormToggle
-		label="Send Confirmation Email"
+		label={__("Send Confirmation Email",'rsvpmaker')}
 		metaKey="_rsvp_rsvpmaker_send_confirmation_email"
 	/>
 <MetaFormToggle
-		label="Include Event Content with Confirmation"
+		label={__('"Include Event Content with Confirmation"','rsvpmaker')}
 		metaKey="_rsvp_confirmation_include_event"
 	/>
-            <PanelRow>Confirmation Message (exerpt): {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
+            <PanelRow>{__('Confirmation Message (exerpt)','rsvpmaker')}: {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
 			<PanelRow><em>{rsvpmaker_ajax.confirmation_type}</em></PanelRow>
 <PanelRow><a href={rsvpmaker_ajax.confirmation_edit}>{__('Edit Confirmation Message')}</a></PanelRow>
 {(rsvpmaker_ajax.confirmation_type != '') && <PanelRow><a href={rsvpmaker_ajax.confirmation_customize} >{__('Customize Confirmation Message')}</a></PanelRow>}
@@ -249,7 +249,7 @@ metaKey="_rsvp_count"/>
 
 <PanelRow>
 <MetaSelectControl
-		label="Email Template for Confirmations"
+		label={__("Email Template for Confirmations",'rsvpmaker')}
 		metaKey="rsvp_tx_template"
 		options={ rsvpmaker_ajax.rsvp_tx_template_choices }
 	/>
@@ -257,7 +257,7 @@ metaKey="_rsvp_count"/>
 
         </PanelBody>
         <PanelBody
-            title="RSVP Form"
+            title={__("RSVP Form",'rsvpmaker')}
             icon="yes-alt"
             initialOpen={ false }
         >
@@ -266,31 +266,31 @@ metaKey="_rsvp_count"/>
 		<PanelRow><a href={rsvpmaker_ajax.form_edit} >{__('Edit Form')}</a></PanelRow>
 		{((rsvpmaker_ajax.form_type != '') || !rsvpmaker_ajax.form_edit_post) && <PanelRow><a href={rsvpmaker_ajax.form_customize} >{__('Customize Form')}</a></PanelRow>}
 		<MetaFormToggle
-		label="Login required to RSVP"
+		label={__("Login required to RSVP",'rsvpmaker')}
 		metaKey="_rsvp_login_required"
 	/>
 
 <MetaFormToggle
-		label="Captcha security challenge"
+		label={__("Captcha security challenge",'rsvpmaker')}
 		metaKey="_rsvp_captcha"
 	/>
 
 <MetaFormToggle
-		label="Show Yes/No Options on Registration Form"
+		label={__("Show Yes/No Options on Registration Form",'rsvpmaker')}
 		metaKey="_rsvp_yesno"
 	/>
 
 <MetaTextControl
-		label="Maximum number of participants (0 for no limit)"
+		label={__('Maximum number of participants (0 for no limit)','rsvpmaker')}
 		metaKey="_rsvp_max"
 	/>
 <MetaTextareaControl
-		label="Form Instructions for User"
+		label={__('Form Instructions for User','rsvpmaker')}
 		metaKey="_rsvp_instructions"
 />
 		</PanelBody>
 <PanelBody
-	title="Pricing"
+	title={__("Pricing",'rsvpmaker')}
 	icon="smiley"
 	initialOpen={ false }
 >

@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.4.1
-Stable tag: 7.5
+Stable tag: 7.5.1
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -50,7 +50,7 @@ Extensions:
 
 [RSVPMaker Excel](http://wordpress.org/plugins/rsvpmaker-excel) lets you download RSVP reports in Excel for nicer formatting than you get with the CSV output. Uses functions from the [PHPExcel](http://www.phpexcel.net/) library.
 
-Translations (German is the most up-to-date):
+Translations (some may be out of date):
 
 German: Markus König, Björn Wilkens
 
@@ -63,6 +63,8 @@ Polish: Jarosław Żeliński
 Norwegian: Thomas Nybø
 
 Thank you!
+
+POT source file for translators updated May 2020
 
 == Installation ==
 
@@ -115,6 +117,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.5.1 =
+
+* Updating POT source file for translators.
 
 = 7.4.9 =
 

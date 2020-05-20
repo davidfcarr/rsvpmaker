@@ -30,14 +30,12 @@ function rsvpmaker_relay_menu_pages(){
 add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
 
 function rsvpmaker_relay_manual_test() {
-echo '<h1>Manually Trigger Check of Email Lists</h1>';
+echo '<h1>'.__('Manually Trigger Check of Email Lists','rsvpmaker').'</h1>';
 $html = rsvpmaker_relay_init(true);
 if($html)
     echo $html;
 else
-    echo '<p>No messages</p>';
-//$templates = get_rsvpmaker_email_template();
-//printf('<pre>%s</pre>',htmlentities(var_export($templates,true)));
+    echo '<p>'.__('No messages','rsvpmaker').'</p>';
 }
 
 add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
@@ -190,8 +188,6 @@ $password = $vars['password'];
 
 $html = "";
 
-//echo '<p>Full recipeints list '.implode(', ',$recipients).'</p>';
-
 if(isset($_GET['test']))
     mail('relay@toastmost.org','Subject',"This is a test\n\nmultiple lines of text");
 
@@ -238,8 +234,6 @@ foreach($additional_recipients as $email)
     }
 
 # loop through each email
-
-//$html .= var_export($headers,true);
 
 for ($n=1; $n<=count($headers); $n++) {
     $html .=  "<h3>".$headers[$n-1]."</h3><br />";
@@ -338,21 +332,6 @@ if ($contentParts >= 2) {
                     $html .= sprintf('<p>No CID found for %s or %s</p>',$imagecount,$strFileName);
                     $cid = '';    
                 }
-/*            if(is_numeric($key))
-                    {
-                        $html .= sprintf('<p>Checking embedded image %s</p>',$imagecount);
-                        if(!empty($embedded_images[$imagecount])) {
-                            $cid = $embedded_images[$imagecount];
-                            $html .= 'cid key: '.$imagecount;
-                            $imagecount++;    
-                        }
-                    }
-                elseif(!empty($embedded_images[$strFileName]))
-                    {
-                        $cid = $embedded_images[$strFileName];
-                        $html .= 'cid key: '.$strFileName;
-                    }
-*/
                 $addtopath = $t.$k;
             }//if it's an image
                 else
@@ -449,18 +428,10 @@ return $html;
 function rsvpmailer_embedded_images($mailq) {
     //preg_match_all('/<img.+(cid:[^"\']+)[^>]+/',$mailq, $matches);
     preg_match_all('/cid:[^"\']+/',$mailq, $matches);
-    //printf('<p>All matches</p><pre>%s</pre>',htmlentities(var_export($matches,true)));
     return $matches[0];
     foreach($matches[1] as $index => $cid)
         {
             $img[] = $cid;
-/*            $tag = $matches[0][$index];
-            preg_match('/"([a-zA-Z0-9]+\.[a-zA-Z]{3,4})"/', $tag,$filename);
-            if(empty($filename))
-                $img[] = $cid;
-            else
-                $img[ $filename[1] ] = $cid;
-        */
         }
     if(empty($img))
         return;
