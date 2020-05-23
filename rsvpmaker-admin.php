@@ -3784,7 +3784,7 @@ $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_met
 					continue;
 				$meta_keys[] = $meta_key;
 				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');
-				if(in_array($meta_key, $meta_protect) )
+				if(in_array($meta_key, $meta_protect) || strpos($meta_key,'sked') )
 				{
 					$log .= 'Skip '.$meta_key.'<br />';
 					continue;					

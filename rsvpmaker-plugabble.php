@@ -26,7 +26,7 @@ if((isset($custom_fields["_sked"][0])) && isset($custom_fields["_rsvp_dates"][0]
 	//(isset($custom_fields["_sked"][0]) && 
 	unset($custom_fields["_sked"][0]);
 	//cannot be both an individual event and a template
-	$wpdb->query("DELETE from $wpdb->postmeta WHERE meta_key LIKE '_ske%' ");
+	$wpdb->query("DELETE from $wpdb->postmeta WHERE meta_key LIKE '_ske%' AND post_id=".$post_id);
 }
 if(isset($_GET["clone"]))
 	{
@@ -3967,6 +3967,20 @@ global $current_user;
 global $rsvp_options;
 $current_template = $event_options = $template_options = '';
 $template_override = '';
+
+if(isset($_GET['restore']))
+{
+	$r = (int) $_GET['restore'];
+	$sked['week'] = array(0);
+	$sked['dayofweek'] = array();
+	$sked['hour'] = $rsvp_options['defaulthour'];
+	$sked['minutes'] = $rsvp_options['defaultmin'];
+	$sked['duration'] = '';
+	$sked['stop'] = '';
+	update_post_meta($r,'_sked',$sked);
+	update_post_meta($r,'_sked_Varies',1);
+	echo '<div class="notice notice-info"><p>Restoring template. Edit to fix schedule parameters.</p></div>';
+}
 									 
 $sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND meta_key='_sked' AND (post_status='publish' OR post_status='draft') GROUP BY $wpdb->posts.ID ORDER BY post_title";
 
@@ -4035,7 +4049,8 @@ foreach ( $results as $post )
 			$template_options .= sprintf('<option value="%d">%s</option>',$post->ID,$post->post_title);
 			$template_override .= sprintf('<option value="%d">APPLY TO TEMPLATE: %s</option>',$post->ID,$post->post_title);
 			$template_recur_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post->ID);
-			printf('<tr><td>%s</td><td>%s</td><td><a href="%s">'.__('Projected Dates','rsvpmaker').'</a></td><td>%s</td></tr>'."\n",$title,$s,$template_recur_url,next_or_recent($post->ID));
+			$schedoptions = sprintf(' (<a href="%s">Options</a>)',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID);
+			printf('<tr><td>%s</td><td>%s</td><td><a href="%s">'.__('Projected Dates','rsvpmaker').'</a></td><td>%s</td></tr>'."\n",$title.$schedoptions,$s,$template_recur_url,next_or_recent($post->ID));
 			}
 		else
 			{
@@ -4104,6 +4119,23 @@ ORDER BY meta_value LIMIT 0,100";
 		</p>',$action,__("Copy",'rsvpmaker'), $event_options);
 		submit_button(__("Copy Event",'rsvpmaker'));
 		echo '</form>';
+
+		$restore = '';
+		$sql = "select count(*) as copies, meta_value as t FROM $wpdb->postmeta WHERE `meta_key` = '_meet_recur' group by meta_value";
+		$results = $wpdb->get_results($sql);
+		foreach($results as $index => $row) {
+			if(!rsvpmaker_is_template($row->t))
+			{
+				$corrupted = get_post($row->t);
+				if($corrupted) {
+					$future = future_rsvpmakers_by_template($row->t);
+					$futurecount = ($future) ? sizeof($future) : 0;
+					$restore .= sprintf('<p><a href="%s">Restore</a> - This template appears to have been corrupted: <strong>%s</strong> (%d) last modified: %s, used for %d future events.</p>', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&restore='.$corrupted->ID), $corrupted->post_title, $corrupted->ID, $corrupted->post_modified, $futurecount );
+				}
+			}
+		}
+		if(!empty($restore))
+			echo '<h3>Restore Templates</h3>'.$restore;
 ?>
 
 </div>
@@ -4207,8 +4239,9 @@ $cd = rsvpmaker_date("j");
 	if($sched_result)
 	foreach($sched_result as $index => $sched)
 		{
-		$a = ($index % 2) ? "" : "alternate";
 		$thistime = rsvpmaker_strtotime($sched->datetime);
+		$fulldate = rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$thistime);
+		$a = ($index % 2) ? "" : "alternate";
 		$tparts = preg_split('/\s+/',$sched->datetime);
 		if($his != $tparts[1])
 			{
@@ -4238,14 +4271,15 @@ $cd = rsvpmaker_date("j");
 			$d = '-';
 		$ifdraft = ($sched->post_status == 'draft') ? ' (draft) ' : ''; 
 		$edit = (($sched->post_author == $current_user->ID) || $template_editor) ? sprintf('<a href="%s?post=%d&action=edit">'.__('Edit','rsvpmaker').'</a>',admin_url("post.php"),$sched->postID) : '-';
-		$editlist .= sprintf('<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s</td><td>%s</td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>',$a,$sched->postID,$timechange,$edit, $d,date('F d, Y',$thistime),get_post_permalink($sched->postID),$sched->post_title.$ifdraft);
+		$schedoptions = sprintf(' (<a href="%s">Options</a>)',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$sched->ID);
+		$editlist .= sprintf('<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s</td><td>%s</td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>',$a,$sched->postID,$timechange,$edit, $d,date('F d, Y',$thistime),get_post_permalink($sched->postID),$sched->post_title.$ifdraft.$schedoptions);
 
 		$template_update = get_post_meta($sched->postID,"_updated_from_template",true);
 		if(!empty($template_update) && ($template_update != $sched->post_modified))
 			$mod = ' <span style="color:red;">* '.__('Modified independently of template. Update could overwrite customizations.','rsvpmaker').'</span>';
 		else
 			$mod = '';
-		$updatelist .= sprintf('<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s %s %s %s</p>',$a,$sched->postID,__('Update','rsvpmaker'),$sched->post_title.$ifdraft,date('F d, Y',$thistime), $mod, $timechange );
+		$updatelist .= sprintf('<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s</p>',$a,$sched->postID,__('Update','rsvpmaker'),$sched->post_title.$ifdraft,$fulldate, $mod, $timechange );
 		
 		}
 

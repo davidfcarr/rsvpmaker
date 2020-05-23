@@ -13,14 +13,8 @@ function related_link() {
 		{
 		return <div class="rsvp_related_links"></div>;
 		}
-	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details} >RSVP / {__('Event Options',rsvpmaker)}</a></p></div>;	
+	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details} >RSVP and {__('Event Options','rsvpmaker')}</a></p></div>;	
 	}
-
-/*
-function linktarget () {
-	return (wp.data.select('core/editor').hasChangedContent()) ? '_blank' : '_self';
-}
-*/
 
 const RSVPMakerSidebarPlugin = function() {
 if(typeof rsvpmaker_ajax === 'undefined')

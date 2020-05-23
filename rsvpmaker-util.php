@@ -12,7 +12,7 @@ function fix_timezone($timezone = '' ) {
 	}
 	if(!empty($timezone) )
 		date_default_timezone_set($timezone);
-	}
+}
 	
 function restore_timezone() {
 	global $default_tz;
@@ -20,6 +20,7 @@ function restore_timezone() {
 }	
 
 function rsvpmaker_strtotime($string) {
+	$string = str_replace('::',':',$string);
 	fix_timezone();
 	$t = strtotime($string);
 	restore_timezone();
@@ -422,13 +423,18 @@ return (!empty($date));
 }
 
 function rsvpmaker_is_template ($post_id = 0) {
-	global $post;
+	global $post, $wpdb;
 	if(!$post_id)
 	{
 		if(isset($post->ID))
 			$post_id = $post->ID;
 		else
 			return false;
+	}
+	$dates = get_post_meta($post_id,'_rsvp_dates',true);
+	if($dates) { // if there are dates, it's not a template
+		$wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_key LIKE '_ske%' AND post_id=".$post_id);
+		return false;
 	}
 	return get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 }
@@ -1073,6 +1079,12 @@ function get_template_sked($post_id) {
 				$dayofweek[] = array_search($key,$day_array);
 			elseif(in_array($key,$week_array) && $row->meta_value)
 				$week[] = array_search($key,$week_array);
+			elseif(($row->meta_key == '_sked_minutes') && ($row->meta_value == ''))
+				{	//fix for corrupted record
+					$sked = get_post_meta($post_id,'_sked',true);
+					$row->meta_value = (empty($sked['minutes'])) ? '00' : $sked['minutes'];
+					update_post_meta($post_id,'_sked_minutes',$row->meta_value);
+				}
 			$sked[$key] = $row->meta_value;
 		}
 		sort($week);
@@ -1120,8 +1132,8 @@ function new_template_schedule($post_id,$template) {
 		$weeks[0] = $template["week"];
 		$dows[0] = (isset($template["dayofweek"])) ? $template["dayofweek"] : 0;
 	}
-	$hour = (isset($template['hour'])) ? $template['hour'] : '';	
-	$minutes = (isset($template['minutes'])) ? $template['minutes'] : '';	
+	$hour = (isset($template['hour'])) ? $template['hour'] : '00';	
+	$minutes = (isset($template['minutes'])) ? $template['minutes'] : '00';	
 	$duration = (isset($template['duration'])) ? $template['duration'] : '';	
 	$stop = (isset($template['stop'])) ? $template['stop'] : '';	
 	$new_template_schedule = build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$stop);
@@ -1149,8 +1161,8 @@ function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,
 			//printf('<p>check %s %s</p>',$index,$label);
 			$atomic_sked[$label] = in_array($index,$dows);
 		}
-	$atomic_sked['hour'] = $hour;
-	$atomic_sked['minutes'] = $minutes;
+	$atomic_sked['hour'] = (empty($hour)) ? '00' : $hour;
+	$atomic_sked['minutes'] = (empty($minutes)) ? '00' : $minutes;
 	$atomic_sked['stop'] = $stop;
 	$atomic_sked['duration'] = $duration;
 	return $atomic_sked;

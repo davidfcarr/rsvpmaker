@@ -894,7 +894,7 @@ function showFormPrompt () {
 
 		return (
 			<div className={ props.className }>
-				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker</strong>: Add an Events Listing that dynamically loads via JSON API endpoint
+				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker </strong>: Add an Events Listing that dynamically loads via JSON API endpoint
 				</p>
 			{ isSelected && ( showForm() ) }
 			{ !isSelected && ( showFormPrompt() ) }

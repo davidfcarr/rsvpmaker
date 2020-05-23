@@ -185,6 +185,8 @@ if(empty($unsubscribed)) $unsubscribed = array();
 
 $user = $vars['user'];
 $password = $vars['password'];
+$p = explode('@',$user);
+$actionslug = $p[0];
 
 $html = "";
 
@@ -363,6 +365,10 @@ $qpost['post_content'] .= "\n<p>*****</p>".sprintf('<p>Relayed from the <a href=
 if (sizeof($atturls) > 0) {
     $qpost['post_content'] .= '<p>Attachments: <br />'.implode("<br />", $atturls)."</p>";
 }
+
+printf("Action call: 'rsvpmaker_autoreply'");
+
+do_action('rsvpmaker_autoreply', $qpost, $user, $from);
 
 if(isset($_GET['nosave'])) {
     echo '<h1>Version to send (not saved)</h2>'.$qpost['post_content'];
