@@ -366,16 +366,16 @@ if (sizeof($atturls) > 0) {
     $qpost['post_content'] .= '<p>Attachments: <br />'.implode("<br />", $atturls)."</p>";
 }
 
-printf("Action call: 'rsvpmaker_autoreply'");
-
-do_action('rsvpmaker_autoreply', $qpost, $user, $from);
-
 if(isset($_GET['nosave'])) {
     echo '<h1>Version to send (not saved)</h2>'.$qpost['post_content'];
     return;
 }
 
-if(in_array($from,$blocked))
+if(($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients)) {
+    echo "Action call: 'rsvpmaker_autoreply'";
+    do_action('rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress);
+}
+elseif(in_array($from,$blocked))
 {
     $rmail['subject'] = 'BLOCKED '.$qpost['post_title'];
     $rmail['to'] = $from;

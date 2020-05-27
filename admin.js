@@ -1,6 +1,16 @@
 // JavaScript Document
 jQuery(document).ready(function( $ ) {
 
+	$('select.rsvpsort').change(function() {
+		var sort = $( this ).val();
+		var parts = window.location.href.split('&');
+		var url = parts[0]+'&rsvpsort='+sort;
+		var top = $('#bulk-action-selector-top').val();
+		var bottom = $('#bulk-action-selector-bottom').val();
+		if((top == '-1') && (bottom == '-1'))
+			window.location.replace(url);
+	});
+
 	$(document).on( 'click', '.rsvpmaker-nav-tab-wrapper a', function() {
 		$('.rsvpmaker-nav-tab').removeClass('nav-tab-active');
 		$(this).addClass('nav-tab-active');

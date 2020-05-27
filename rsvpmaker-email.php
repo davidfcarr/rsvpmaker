@@ -2657,7 +2657,7 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 			$actions['edit_override'] = sprintf('<a href="%s">%s</a>',admin_url('post.php?action=edit&post=').$post->ID,__('Edit','rsvpmaker'));
 	}
 	}
-    return $actions;
+return $actions;
 }
 
 //based on Austin Matzko's code from wp-hackers email list

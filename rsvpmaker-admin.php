@@ -2383,13 +2383,14 @@ $( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
 function set_rsvpmaker_order_in_admin( $wp_query ) {
 if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker') ) // don't mess with front end or other post types
 	return $wp_query;
+
 global $current_user;
-		
+
 if(isset($_GET["rsvpsort"])) {
 	$sort = $_GET["rsvpsort"];
 update_user_meta($current_user->ID,'rsvpsort',$sort);
 }
-if(empty($sort))
+else
 	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
 if(empty($sort))
 	$sort = 'future';
@@ -2433,6 +2434,12 @@ add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
 }
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
 
+function rsvpmaker_admin_months_dropdown($bool, $post_type) {
+return ($post_type == 'rsvpmaker');
+}
+//apply_filters( 'disable_months_dropdown', false, $post_type )
+add_filter( 'disable_months_dropdown', 'rsvpmaker_admin_months_dropdown',10,2 );
+
 function rsvpmaker_join_template($join) {
   global $wpdb;
     return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_sked'";
@@ -2450,7 +2457,7 @@ function rsvpmaker_sort_message() {
 	if(empty($sort))
 		$sort = 'future';
 		$current_sort = $o = $opt = '';
-		$sortoptions = array('future' => 'Future Events','past' => 'Past Events','all' => 'All','templates' => 'Templates','special' => 'Special');
+		$sortoptions = array('future' => __('Future Events','rsvpmaker'),'past' => __('Past Events','rsvpmaker'),'all' => __('All RSVPMaker Posts','rsvpamker'),'templates' => __('Event Templates','rsvpmaker'),'special' => __('Special','rsvpmaker'));
 		foreach($sortoptions as $key => $option)
 		{
 			if(isset($_GET['s']))
@@ -2468,7 +2475,7 @@ function rsvpmaker_sort_message() {
 				$o .= '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort='.$key).'">'.$option.'</a> ';
 			}
 		}
-		$opt = '</form><div class="alignleft actions" style="margin-top: -10px;"><form method="get" action="'.admin_url('edit.php').'"><input type="hidden" name="post_type" value="rsvpmaker"><select name="rsvpsort">'.$opt.'<select> <input type="submit" class="button" value="Filter Events" /></div>';
+		$opt = '<div class="alignleft actions" style="margin-top: -10px;"><select name="rsvpsort" class="rsvpsort">'.$opt.'<select> </div>';
 		echo '<div style="padding: 10px; ">'.$opt;//.$current_sort.$o;
 		echo '</div>';
 	}
@@ -4539,13 +4546,13 @@ window.onbeforeunload = unloadPage;
 
 function rsvpmaker_admin_enqueue($hook) {
 global $post;
-	if((!function_exists('do_blocks') && isset($_GET['action'])) || ((isset($_GET['page']) && 
+	if((!function_exists('do_blocks') && isset($_GET['action'])) || (isset($_GET['post_type']) && ($_GET['post_type'] == 'rsvpmaker') ) || ((isset($_GET['page']) && 
 	((strpos($_GET['page'],'rsvp') !== false ) || (strpos($_GET['page'],'toast') !== false ) )  ) ) )
 	{
 	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 	wp_enqueue_script('jquery-ui-dialog');
 	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
-	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array(), get_rsvpversion() );
+	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array('jquery'), get_rsvpversion() );
 	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),get_rsvpversion());
 	//add localize_script to show template sked in rest
 	}
