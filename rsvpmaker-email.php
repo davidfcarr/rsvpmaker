@@ -1,4 +1,7 @@
 <?php
+
+$rsvpmaker_message_type = '';
+
 function rsvpmailer($mail) {
 	if(isset($_GET['debug'])){
 		echo 'rsvpmailer ';
@@ -9,7 +12,10 @@ function rsvpmailer($mail) {
 	{
 		$mail['html'] = rsvpmaker_inliner($mail['html']);
 	}
-	global $post, $rsvp_options, $unsubscribed;
+	global $post, $rsvp_options, $unsubscribed, $message_type;
+	if(isset($mail['message_type']))
+		$rsvpmaker_message_type = $mail['message_type'];
+
 	if(defined('RSVPMAILOFF'))
 	{
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
@@ -21,8 +27,16 @@ function rsvpmailer($mail) {
 	if(empty($unsubscribed))
 	$unsubscribed = get_option('rsvpmail_unsubscribed');
 	if(empty($unsubscribed)) $unsubscribed = array();
+
+	$rsvpmailer_rule = apply_filters('rsvpmailer_rule','',$mail['to'], $rsvpmaker_message_type);
 	//rsvpmaker_debug_log($unsubscribed,'testing unsub list vs '.$mail['to']);
-	if(in_array(strtolower($mail['to']),$unsubscribed)) {
+	if($rsvpmailer_rule == 'deny') {
+		$mail['html'] = '[content omitted]';
+		$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
+		rsvpmaker_debug_log($mail,$message);
+		return $message;
+	}
+	if(in_array(strtolower($mail['to']),$unsubscribed) && ($rsvpmailer_rule != 'permit') ) {
 		$mail['html'] = '[content omitted]';
 		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
 		return $mail['to'].' sending blocked - unsubscribed list';
@@ -1542,7 +1556,7 @@ foreach($results as $row)
 if(!empty($_POST["members"]))
 {
 if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
-	wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
+	wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 $users = get_users('blog='.get_current_blog_id());
 printf('<p>Sending to %s website members</p>',sizeof($users));
 update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
@@ -1565,7 +1579,7 @@ foreach($users as $user)
 if(!empty($_POST["network_members"]) && current_user_can('manage_network'))
 {
 if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
-	wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
+	wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
 $from = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
 update_post_meta($post->ID,'rsvprelay_from',$from);

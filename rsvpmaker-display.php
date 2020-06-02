@@ -1797,7 +1797,7 @@ function get_rsvp_link($post_id, $justlink = false) {
 	return sprintf($rsvp_options["rsvplink"],$rsvplink);
 }
 
-function rsvpdateblock ($atts) {
+function rsvpdateblock ($atts = array()) {
 	global $post;
 	$custom_fields = get_rsvpmaker_custom($post->ID);
 	$date_array = rsvp_date_block($post->ID, $custom_fields);
@@ -1926,7 +1926,7 @@ function embed_dateblock ($atts) {
 	return $d["dateblock"];
 }
 
-function rsvp_date_block($post_id, $custom_fields = array()) {
+function rsvp_date_block($post_id, $custom_fields = array(), $top = true) {
 global $rsvp_options;
 global $last_time;
 global $post;
@@ -1978,7 +1978,7 @@ foreach($results as $index => $row)
 		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';
 		}
 	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
-	if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0] && !is_email_context())
+	if($top && isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0] && !is_email_context())
 	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
 	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
 	}
@@ -2047,4 +2047,27 @@ elseif(isset($custom_fields["_sked"][0]))
 return array('dateblock' => $dateblock,'dur' => $dur, 'last_time' => $last_time, 'firstrow' => $firstrow);
 }
 
+function future_rsvp_links ($atts = array()) {
+global $rsvp_options;
+$output = '<ul>';
+$limit = (empty($atts['limit'])) ? 5 : (int) $atts['limit'];
+$events = get_events_rsvp_on($limit);
+if(empty($events))
+	return;
+foreach($events as $index => $event)
+	{
+		if(($index == 0) && !empty($atts['skipfirst']))
+			continue;
+		$url = get_permalink($event->ID).'#rsvpnow';
+		$t = rsvpmaker_strtotime($event->datetime);
+		$datetime = rsvpmaker_strftime('',$t).' '.rsvpmaker_strftime($rsvp_options['time_format'],$t);
+		$output .= sprintf('<li><a href="%s">%s</a></li>',$url,$event->post_title.' '.$datetime);
+		$event->post_content = '';
+		//$output .= '<li>'.var_export($event,true).'</li>';
+	}
+	$output .= '</ul>';
+return $output;
+}
+
+add_shortcode('future_rsvp_links','future_rsvp_links');
 ?>

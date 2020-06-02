@@ -40,6 +40,7 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/upcoming-by-json', ['render_callback' => 'rsvpjsonlisting']);
 	register_block_type('rsvpmaker/embedform', ['render_callback' => 'rsvpmaker_form']);	
 	register_block_type('rsvpmaker/schedule', ['render_callback' => 'rsvpmaker_daily_schedule']);
+	register_block_type('rsvpmaker/future-rsvp-links', ['render_callback' => 'future_rsvp_links']);
 }
 
 add_action( 'init', function(){
@@ -73,6 +74,7 @@ add_action( 'init', function(){
 		}
 	);
 	register_meta( 'post', 'rsvp_tx_template', $args );
+		
 	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'boolean',
@@ -156,7 +158,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_type', $post->post_type);
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
 	
-	global $post, $rsvp_options;
+	global $post, $rsvp_options, $current_user;
 	$template_id = 0;
 	if(is_admin() && ($post->post_type == 'rsvpmaker') && isset($_GET['action']) && $_GET['action'] == 'edit')
 		{
@@ -169,6 +171,22 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$bottom_message= '';
 		$complex_pricing = rsvp_complex_price($post->ID);
 		$complex_template = get_post_meta($post->ID,'complex_template',true);
+		$id = get_post_meta($post->ID,'payment_confirmation_message',true);
+		$chosen_gateway = get_rsvpmaker_payment_gateway ();
+		if($id)
+			$edit_payment_confirmation = admin_url('post.php?post='.$id.'&action=edit&back='.$post->ID);
+		elseif(empty($chosen_gateway) || ($chosen_gateway == 'Cash or Custom') ) {
+			$edit_payment_confirmation = '';
+		}
+		else {
+			$data['post_title'] = 'Payment Confirmation:'.$post->ID;
+			$data['post_type'] = 'rsvpemail';
+			$data['post_status'] = 'draft';
+			$data['post_author'] = $current_user->ID;
+			$id = wp_insert_post($data);
+			update_post_meta($post->ID,'payment_confirmation_message',$id);
+			$edit_payment_confirmation = admin_url('post.php?post='.$id.'&action=edit&back='.$post->ID);
+		}
 		$sked = get_template_sked($post->ID);// get_post_meta($post->ID,'_sked',true);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
@@ -291,6 +309,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'form_edit_post' => $form_edit_post,			
 			'complex_pricing' => $complex_pricing,		
 			'complex_template' => $complex_template,
+			'edit_payment_confirmation' => $edit_payment_confirmation
 			)
 	);
 

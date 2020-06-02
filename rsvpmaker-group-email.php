@@ -64,6 +64,7 @@ function rsvpmaker_relay_init ($show = false) {
 
 function rsvpmaker_relay_queue() {
     global $wpdb, $post, $page, $pages;
+    $rsvpmaker_message_type = 'email_rule_group_email';
     $sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft') LIMIT 0,40 ";
     $results = $wpdb->get_results($sql);
     if(empty($results))
@@ -78,6 +79,7 @@ function rsvpmaker_relay_queue() {
                 $sql = "DELETE FROM $wpdb->postmeta WHERE meta_id=".$row->meta_id;
                 $wpdb->query($sql);    
             }
+            $mail['message_type'] = 'email_rule_group_email';
             if(empty($row->post_title) || empty($row->post_content))
                 continue;
             $mail['from'] = 'noreply@'.str_replace('www.','',$_SERVER['SERVER_NAME']);
@@ -90,20 +92,17 @@ function rsvpmaker_relay_queue() {
             $mail['to'] = $row->meta_value;
             $html .= sprintf('<p>%s to %s</p>',$row->post_title,$row->meta_value);
             
-            $t_index = get_post_meta($row->ID,'_email_template',true);
-            $t_index = '0';
-            if($t_index != '') {
-                $post = get_post($row->ID);
-                $templates = get_rsvpmaker_email_template();
-                $template = $templates[$t_index]["html"];
-                $message_description = get_post_meta($row->ID,'message_description',true);
-                $mail['html'] = do_blocks(do_shortcode($template));
-                $mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail["to"],'<div class="rsvpexplain">'.$message_description.'</div>');    
-                if(isset($_GET['debug']))
-                {
-                    printf('<pre>%s</pre>',htmlentities($template));
-                    printf('<pre>%s</pre>',htmlentities($mail['html']));
-                }
+            $post = get_post($row->ID);
+            $templates = get_rsvpmaker_email_template();
+            //$template = $templates['transactional']["html"];
+            $template = $templates[1]["html"];
+            $message_description = get_post_meta($row->ID,'message_description',true);
+            $mail['html'] = do_blocks(do_shortcode($template));
+            $mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail["to"],'<div class="rsvpexplain">'.$message_description.'</div>');    
+            if(isset($_GET['debug']))
+            {
+                printf('<pre>%s</pre>',htmlentities($template));
+                printf('<pre>%s</pre>',htmlentities($mail['html']));
             }
             
             rsvpmailer($mail);
@@ -401,7 +400,13 @@ elseif(in_array($from,$recipients) || in_array($from,$whitelist))
         //add_post_meta($post_id,'rsvprelay_attpath',$attpath);
         if(!empty($recipients))
         foreach($recipients as $to) {
-            if(!in_array($to,$unsubscribed))
+            $rsvpmailer_rule = apply_filters('rsvpmailer_rule','',$to, 'email_rule_group_email');
+            if ($rsvpmailer_rule == 'permit')
+                add_post_meta($post_id,'rsvprelay_to',$to);        
+            elseif($rsvpmailer_rule=='deny') {
+                rsvpmaker_debug_log($to,'group email blocked');            
+            }
+            elseif(!in_array($to,$unsubscribed) )
                 add_post_meta($post_id,'rsvprelay_to',$to);        
         }
     }    
@@ -473,10 +478,13 @@ function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath
      return $url;
 }
 
-add_filter( 'cron_schedules', 'rsvpmaker_relay_interval' );
+add_filter( 'cron_schedules', 'rsvpmaker_relay_interval', 999 );
 function rsvpmaker_relay_interval( $schedules ) { 
     $schedules['minute'] = array(
-        'interval' => 120,
+        'interval' => 60,
         'display'  => esc_html__( 'Every Minute' ), );
-    return $schedules;
+    $schedules['doubleminute'] = array(
+        'interval' => 120,
+        'display'  => esc_html__( 'Every Two Minutes' ), );
+return $schedules;
 }

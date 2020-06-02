@@ -285,7 +285,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 			if(!myJson.name)			
 				cardResult.innerHTML = '<?php _e('Payment processed, but may not have been recorded correctly','rsvpmaker');?>';
 			else
-				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase();
+				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase()+myJson.payment_confirmation_message;
 		});
       }
     }

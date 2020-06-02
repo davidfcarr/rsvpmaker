@@ -61,15 +61,33 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       return response.json();
     })
     .then(function(myJson) {
-      console.log(JSON.stringify(myJson));
+      console.log(myJson.result);
       if(myJson.statusCode == 200)
           {
-              result = 'Successful payment, #'+myJson.result.id+' '+myJson.result.purchase_units[0].amount.currency_code +' '+ myJson.result.purchase_units[0].amount.value+' recorded';
+              result = '<p>Successful payment, #'+myJson.result.id+' '+myJson.result.purchase_units[0].amount.currency_code +' '+ myJson.result.purchase_units[0].amount.value+' recorded</p>';
           }
           else {
               result = 'Transaction error';
           }
           document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><h2>PayPal</h2><p>'+result+'</p></div>';
+          //document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><h2>PayPal</h2>'+myJSon.result.payment_confirmation_message+'</div>';
+          if(myJson.statusCode == 200) {
+            console.log('Now, check for confirmation message');
+            fetch(rsvpmaker_json_url+'paypalsuccess/<?php echo $post->ID; ?>/<?php echo $rsvp_id; ?>')
+            .then((response) => {
+              return response.json();
+            })
+            .then((myJson) => {
+              console.log(myJson);
+              if(myJson.payment_confirmation_message) {
+                console.log('preparing confirmation message');
+                var withconfirmation = document.getElementById("paypal-button-container").innerHTML + myJson.payment_confirmation_message;
+                document.getElementById("paypal-button-container").innerHTML = withconfirmation;
+              }
+              else 
+                console.log('confirmation message not found');
+            });
+          }//end check for confirmation
     });
         });
       },
@@ -78,6 +96,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     // Show an error page here, when an error occurs
       }
     }).render('#paypal-button-container');
+
   </script>
   <div id="paypal-error-container" style="color: red; font-weight: bold;"></div>
   <div id="paypal-button-container"></div>

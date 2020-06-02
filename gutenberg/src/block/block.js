@@ -18,7 +18,7 @@ import apiFetch from '@wordpress/api-fetch';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
-const { SelectControl, TextControl } = wp.components;
+const { SelectControl, TextControl, ToggleControl } = wp.components;
 
 const rsvpupcoming = [{label: 'Next event',value: 'next'},{label: 'Next event - RSVP on',value: 'nextrsvp'}];
 apiFetch( {path: rsvpmaker_json_url+'future'} ).then( events => {
@@ -898,6 +898,73 @@ function showFormPrompt () {
 				</p>
 			{ isSelected && ( showForm() ) }
 			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	save: function( props ) {
+		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/future-rsvp-links', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'Future RSVP Links' ), // Block title.
+	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a list of links to the RSVP Form for upcoming events with RSVPs turned on'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Events' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            limit: {
+                type: 'int',
+				default: 5,
+            },
+            skipfirst: {
+                type: 'boolean',
+                default: false,
+            },
+        },
+	/**
+	 * The edit function describes the structure of your block in the context of the editor.
+	 * This represents what the editor will render when the block is used.
+	 *
+	 * The "edit" property must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 */
+	edit: function( props ) {
+	const { attributes: { limit, skipfirst }, setAttributes, isSelected } = props;
+
+		return (
+			<div className={ props.className }>
+				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker </strong>: Display a list of links to the RSVP Form for upcoming events
+				</p>
+<div>
+<SelectControl
+        label={__("Limit",'rsvpmaker')}
+        value={ limit }
+        options={ [{label:'3',value: '3'},{label:'5',value: '5'},{label:'7',value: '7'},{label:'10',value: '10'}] }
+        onChange={ ( limit ) => { setAttributes( { limit } ) } }
+    />
+<ToggleControl
+        label={__("Skip First Date",'rsvpmaker')}
+        checked={ skipfirst }
+		help={__('For example, to pick up after an embedded date block that features the first event in the series.')}
+        onChange={ ( skipfirst ) => { setAttributes( { skipfirst } ) } }
+    />
+</div>		
 			</div>
 		);
 	},

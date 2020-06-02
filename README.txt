@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.4.1
-Stable tag: 7.5.7
+Stable tag: 7.6
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,23 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.6 =
+
+* Refinements to payment setup screens
+* Created separate payment confirmation message document for details that should only be disclosed after payment, such as the link to a webinar you're charging for.
+
+= 7.5.9 =
+
+* Better detection of duplicate entries
+* Group email uses transactional template
+* Date and time displayed in RSVP form.
+* Future RSVP Links block
+
+= 7.5.8 =
+
+* Tweaks to javascript for changing views on the RSVP Events post listing
+* When other plugins, including my Toastmasters extension, send email, the filter 'rsvpmailer_rule' is called with email address and type of message as arguments. Return 'permit' or 'deny' to determine whether the message will be sent. Supersedes the unsubscribed list. Meant to be a user perference for membership applications.
 
 = 7.5.7 =
 

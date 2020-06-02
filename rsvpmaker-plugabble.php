@@ -1265,6 +1265,14 @@ if(isset($rsvp["email"]))
 		}
 	}
 
+if(empty($rsvp_id)) {
+	$duplicate_check = $wpdb->get_var("SELECT id FROM ".$wpdb->prefix."rsvpmaker WHERE email='".$rsvp["email"]."' AND first='".$rsvp["first"]."' AND last='".$rsvp["last"]."' ");
+	if($duplicate_check) {
+		rsvpmaker_debug_log($rsvp,'duplicate check');
+		$rsvp_id = $duplicate_check;
+	}	
+}
+
 if($rsvp_id)
 	{
 	$sql = "SELECT details FROM ".$wpdb->prefix."rsvpmaker WHERE email !='' AND id=".$rsvp_id;
@@ -1978,10 +1986,6 @@ function event_content($content, $formonly = false, $form ='') {
 if(is_admin()) // || !in_the_loop()
 	return $content;
 global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
-rsvpmaker_debug_log($_GET,'call to event_content');
-
-//if(!empty($confirmed_content[$post->ID]))
-	//return $confirmed_content[$post->ID]; // avoid loops
 
 $rsvpconfirm = $rsvp_confirm = '';
 $display = array();
@@ -2293,19 +2297,17 @@ elseif($rsvp_on && (is_single() || is_admin() || $formonly) ) //
 <form id="rsvpform" action="<?php echo $permalink;?>" method="post">
 
 <h3 id="rsvpnow"><?php echo $rsvp_options["rsvp_form_title"];?></h3> 
-
-  <?php if($rsvp_instructions) echo '<p>'.nl2br($rsvp_instructions).'</p>';?>
-
-  <?php if($rsvp_show_attendees) {
-	  echo '<p class="rsvp_status">'.__('Names of attendees will be displayed publicly, along with the contents of the notes field.','rsvpmaker').'</p>';
-  if($rsvp_show_attendees == 2)
- 	echo ' ('.__('only for logged in users','rsvpmaker').')';	
-  echo '</p>';
-  }
-  ?>
-   
-<?php if ($rsvp_yesno) { echo '<p>'.__('Your Answer','rsvpmaker');?>: <input name="yesno" type="radio" value="1" <?php if(!isset($rsvprow) || $rsvprow["yesno"]) echo 'checked="checked"';?> /> <?php echo __('Yes','rsvpmaker');?> <input name="yesno" type="radio" value="0" <?php if(isset($rsvprow["yesno"]) && ($rsvprow["yesno"] == 0)) echo 'checked="checked"';?> /> <?php echo __('No','rsvpmaker').'</p>'; } else echo '<input name="yesno" type="hidden" value="1" />'; ?> 
 <?php
+$date_array = rsvp_date_block($post->ID,array(),false);
+	echo $date_array["dateblock"];
+if($rsvp_instructions) echo '<p>'.nl2br($rsvp_instructions).'</p>';
+if($rsvp_show_attendees) {
+	  echo '<p class="rsvp_status">'.__('Names of attendees will be displayed publicly, along with the contents of the notes field.','rsvpmaker').'</p>';
+if($rsvp_show_attendees == 2)
+ 	echo ' ('.__('only for logged in users','rsvpmaker').')';	
+echo '</p>';
+  }
+if ($rsvp_yesno) { echo '<p>'.__('Your Answer','rsvpmaker');?>: <input name="yesno" type="radio" value="1" <?php if(!isset($rsvprow) || $rsvprow["yesno"]) echo 'checked="checked"';?> /> <?php echo __('Yes','rsvpmaker');?> <input name="yesno" type="radio" value="0" <?php if(isset($rsvprow["yesno"]) && ($rsvprow["yesno"] == 0)) echo 'checked="checked"';?> /> <?php echo __('No','rsvpmaker').'</p>'; } else echo '<input name="yesno" type="hidden" value="1" />'; 
 
 if($dur && ( $slotlength = !empty($custom_fields["_rsvp_timeslots"][0]) ))
 {
@@ -3352,7 +3354,7 @@ function rsvp_reminder_activation() {
 	$active = get_option('rsvpmaker_discussion_active');
 	//if stalled, restart email queue process
 	if($active && !wp_get_schedule('rsvpmaker_relay_init_hook'))
-		wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
+		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 }
 
 function rsvp_reminder_reset($basehour) {
@@ -3970,16 +3972,25 @@ $template_override = '';
 
 if(isset($_GET['restore']))
 {
+	echo '<div class="notice notice-info">';
 	$r = (int) $_GET['restore'];
-	$sked['week'] = array(0);
+	$sked['week'] = array(6);
 	$sked['dayofweek'] = array();
 	$sked['hour'] = $rsvp_options['defaulthour'];
 	$sked['minutes'] = $rsvp_options['defaultmin'];
+	if($_GET['specimen']) {
+		$date = get_rsvp_date($_GET['specimen']);
+		if($date) {
+			$t = strtotime($date);
+			$sked['dayofweek'] = array(date('w',$t));
+			$sked['hour'] = date('h',$t);
+			$sked['minutes'] = date('i',$t);
+		}
+	}
 	$sked['duration'] = '';
 	$sked['stop'] = '';
-	update_post_meta($r,'_sked',$sked);
-	update_post_meta($r,'_sked_Varies',1);
-	echo '<div class="notice notice-info"><p>Restoring template. Edit to fix schedule parameters.</p></div>';
+	new_template_schedule($r,$sked);
+	echo '<p>Restoring template. Edit to fix schedule parameters.</p></div>';
 }
 									 
 $sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND meta_key='_sked' AND (post_status='publish' OR post_status='draft') GROUP BY $wpdb->posts.ID ORDER BY post_title";
@@ -4011,7 +4022,7 @@ foreach ( $results as $post )
 
 		$dayarray = Array(__("Sunday",'rsvpmaker'),__("Monday",'rsvpmaker'),__("Tuesday",'rsvpmaker'),__("Wednesday",'rsvpmaker'),__("Thursday",'rsvpmaker'),__("Friday",'rsvpmaker'),__("Saturday",'rsvpmaker'));
 		$weekarray = Array(__("Varies",'rsvpmaker'),__("First",'rsvpmaker'),__("Second",'rsvpmaker'),__("Third",'rsvpmaker'),__("Fourth",'rsvpmaker'),__("Last",'rsvpmaker'),__("Every",'rsvpmaker'));
-		if((int)$sked["week"][0] == 0)
+		if(empty($sked["week"]) || ((int)$sked["week"][0] == 0))
 			$s = __('Schedule Varies','rsvpmaker');
 		else
 			{
@@ -4130,7 +4141,9 @@ ORDER BY meta_value LIMIT 0,100";
 				if($corrupted) {
 					$future = future_rsvpmakers_by_template($row->t);
 					$futurecount = ($future) ? sizeof($future) : 0;
-					$restore .= sprintf('<p><a href="%s">Restore</a> - This template appears to have been corrupted: <strong>%s</strong> (%d) last modified: %s, used for %d future events.</p>', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&restore='.$corrupted->ID), $corrupted->post_title, $corrupted->ID, $corrupted->post_modified, $futurecount );
+					$specimen = ($futurecount) ? $future[0] : 0; 
+					$restore .= sprintf('<p><a href="%s">Restore</a> - This template appears to have been corrupted: <strong>%s</strong> (%d) last modified: %s, used for %d future events.</p>', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&restore='.$corrupted->ID.'&specimen='.$specimen), $corrupted->post_title, $corrupted->ID, $corrupted->post_modified, $futurecount );
+					//$restore .= var_export($future,true);
 				}
 			}
 		}

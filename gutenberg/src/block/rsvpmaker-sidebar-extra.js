@@ -307,7 +307,15 @@ metaKey="_rsvp_count"/>
 		label={__("Price")}
 		metaKey="simple_price"
 />
+
+
 </div>
+}
+{
+	(rsvpmaker_ajax.edit_payment_confirmation != '') && <p><a href={rsvpmaker_ajax.edit_payment_confirmation} target="_blank">{__('Edit Payment Confirmation Message')}</a></p> 
+}
+{
+	(rsvpmaker_ajax.edit_payment_confirmation == '') && <p>{__('Neither PayPal nor Stripe is active','rsvpmaker')}</p> 
 }
 </PanelBody>
 </Panel>

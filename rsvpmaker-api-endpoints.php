@@ -229,8 +229,6 @@ public function get_items($request) {
       $vars[$name] = $value;
     }
     //$vars['charge_id'] = $charge->id;
-    rsvpmaker_stripe_payment_log($vars,$key);
-
     if(!empty($vars['rsvp_id']))
     {
       $rsvp_id = $vars['rsvp_id'];
@@ -246,11 +244,59 @@ public function get_items($request) {
         $paid += $payment;
       $wpdb->query("UPDATE ".$wpdb->prefix."rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id ");
       add_post_meta($rsvp_post_id,'_paid_'.$rsvp_id,$vars['amount']);
+      $vars['payment_confirmation_message'] = '';
+      $message_id = get_post_meta($rsvp_post_id,'payment_confirmation_message',true);
+      if($message_id)
+      {
+        $message_post = get_post($message_id);
+        $vars['payment_confirmation_message'] = do_blocks($message_post->post_content);
+      }
       delete_post_meta($rsvp_post_id,'_open_invoice_'.$rsvp_id);
       delete_post_meta($rsvp_post_id,'_invoice_'.$rsvp_id);
       //}	
     }
+    rsvpmaker_stripe_payment_log($vars,$key);
     delete_option($request['txkey']);
+    return new WP_REST_Response($vars, 200);
+  }
+}
+
+class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
+  public function register_routes() {
+    $namespace = 'rsvpmaker/v1';
+    $path = 'paypalsuccess/(?P<post_id>.+)/(?P<rsvp_id>.+)';
+
+    register_rest_route( $namespace, '/' . $path, [
+      array(
+        'methods'             => 'GET',
+        'callback'            => array( $this, 'get_items' ),
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+            ),
+        ]);     
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+  global $wpdb, $rsvp_options;
+      $message_id = get_post_meta($request['post_id'],'payment_confirmation_message',true);
+      if($message_id)
+      {
+        $message_post = get_post($message_id);
+        $vars['payment_confirmation_message'] = do_blocks($message_post->post_content);
+        $row = $wpdb->get_row("SELECT email, event FROM ".$wpdb->prefix.'rsvpmaker WHERE id='.$request['rsvp_id']);
+        if($row)
+        {
+        $mail['subject'] = __('PayPal payment confirmation for','rsvpmaker').' '.get_the_title($row->event);
+        $mail['to'] = $row->email;
+        $mail['from'] = $rsvp_options['rsvp_to'];
+        $mail['fromname'] = get_option('blogname');
+        $mail['html'] = '<p>'.__('Thank you for your payment. Here are some additional details.','rsvpmaker')."<p>\n".$vars['payment_confirmation_message'];
+        rsvpmailer($mail);
+        }
+      }
     return new WP_REST_Response($vars, 200);
   }
 }
@@ -270,6 +316,8 @@ add_action('rest_api_init', function () {
     $rsvpmaker_meta_controller->register_routes();
     $stripesuccess = new RSVPMaker_StripeSuccess_Controller();
     $stripesuccess->register_routes();
+    $ppsuccess = new RSVPMaker_PaypalSuccess_Controller();
+    $ppsuccess->register_routes();
 } );
 
 ?>

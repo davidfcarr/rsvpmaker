@@ -488,16 +488,11 @@ function get_rsvpmaker_payment_gateway () {
 
 function get_rsvpmaker_payment_options () {
 global $rsvp_options;
-$active_options = array();
-if(get_rsvpmaker_stripe_keys ())
-	$active_options[] = 'Stripe';
-if(get_option('rsvpmaker_paypal_rest_keys'))
-	$active_options[] = 'PayPal REST API';
+$active_options = array('Cash or Custom','PayPal REST API','Stripe');
 if(!empty($rsvp_options['paypal_config']))
 	$active_options[] = 'PayPal (legacy)';
 if(class_exists('Stripe_Checkout_Functions') && !empty($rsvp_options['stripe']))
 	$active_options[] = 'Stripe via WP Simple Pay';
-$active_options[] = 'Cash or Custom';
 return $active_options;
 }
 
@@ -886,7 +881,7 @@ function rsvp_complex_price($post_id) {
 }
 
 function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
-	global $wpdb;
+	global $wpdb, $current_user;
 	$content = '';
 	if($meta_key == 'simple_price')
 		$content = rsvp_simple_price($post_id);
@@ -1166,6 +1161,46 @@ function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,
 	$atomic_sked['stop'] = $stop;
 	$atomic_sked['duration'] = $duration;
 	return $atomic_sked;
+}
+
+function default_gateway_check($chosen_gateway) {
+
+	if(empty($chosen_gateway) || ($chosen_gateway == 'Cash or Custom')) {
+		$paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
+		$stripe_keys = get_rsvpmaker_stripe_keys_all ();
+		$gateway_set = '';
+		if(!empty($paypal_rest_keys))
+			{
+			foreach($paypal_rest_keys as $index => $value) {
+				if($index == 'sandbox')
+					continue;
+				if(!empty($value)) {
+					$gateway_set = 'PayPal';
+					break;
+				}
+			}
+			}
+		if(!empty($stripe_keys))
+		{
+			foreach($stripe_keys as $index => $value) {
+				if($index == 'mode')
+					continue;
+				if(!empty($value)) {
+					if($gateway_set == 'PayPal')
+						{	
+							$gateway_set = 'PayPal or Stripe';
+							break;
+						}
+					else {
+						$gateway_set = 'Stripe';
+						break;
+					}
+				}
+			}
+		}
+	}
+	if(!empty($gateway_set))
+	return sprintf('<p style="color: red; font-weight: bold;">%s %s?</p>',__('Do you want to set the Preferred Payment Gateway to','rsvpmaker'),$gateway_set);
 }
 	
 ?>

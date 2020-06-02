@@ -72,6 +72,7 @@ attributes: {
 class TimeInspector extends Component {
 
 	render() {
+		
 		const { attributes, setAttributes, className } = this.props;
 		return (
 			<InspectorControls key="inspector">

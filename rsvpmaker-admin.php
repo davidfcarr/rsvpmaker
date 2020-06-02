@@ -544,7 +544,7 @@ echo $label;
 				  $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
 
 
-                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').'</p></div>';				  
+                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').'</p>'.default_gateway_check( get_rsvpmaker_payment_gateway () ).'</div>';				  
 			  }	
 
 			  if(isset($_POST["enotify_option"])) {
@@ -953,7 +953,6 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 <?php
 $gateways = get_rsvpmaker_payment_options ();
 $chosen_gateway = get_rsvpmaker_payment_gateway ();
-if(sizeof($gateways) > 1) // if more than cash or custom default is active
 $o = '';
 foreach($gateways as $gateway)
 	{
@@ -963,6 +962,9 @@ foreach($gateways as $gateway)
 ?>
 <h3><?php _e('Preferred Payment Gateway','rsvpmaker');?></h3>
 <p><select name="payment_option[payment_gateway]"><?php echo $o; ?></select></p>
+<?php
+echo default_gateway_check($chosen_gateway);
+?>
 <p><em><?php _e('If you have set up more than one, specify the one to be used by default.','rsvpmaker');?></em></p>
 <h3><?php _e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
 <div>
@@ -1198,6 +1200,19 @@ $RSVPMaker_Email_Options->handle_options();
 <?php
 echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Designed to work with POP3 email accounts. Members can unsubscribe.','rsvpmaker').'</p>';
 
+if(isset($_GET['debug'])) {
+	$cron = _get_cron_array();
+	$schedules = wp_get_schedules();
+	echo '<pre>';
+	print_r($schedules);
+	echo "\n\n";
+	print_r($cron);
+	echo '</pre>';
+
+}
+
+$hooksays = wp_get_schedule('rsvpmaker_relay_init_hook');
+
 if(isset($_POST['rsvpmaker_discussion_server']))
 	update_option('rsvpmaker_discussion_server',$_POST['rsvpmaker_discussion_server']);
 if(isset($_POST['rsvpmaker_discussion_member']))
@@ -1206,11 +1221,13 @@ if(isset($_POST['rsvpmaker_discussion_officer']))
 	update_option('rsvpmaker_discussion_officer',$_POST['rsvpmaker_discussion_officer']);
 if(isset($_POST['rsvpmaker_discussion_extra']))
 	update_option('rsvpmaker_discussion_extra',$_POST['rsvpmaker_discussion_extra']);
-if(isset($_POST['rsvpmaker_discussion_active'])) {
+if(!empty($_POST['rsvpmaker_discussion_active'])) {
 	update_option('rsvpmaker_discussion_active',$_POST['rsvpmaker_discussion_active']);
 	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
-	if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
-		wp_schedule_event( time(), 'minute', 'rsvpmaker_relay_init_hook' );
+	if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
+		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
+	}
 }
 else
 	wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
