@@ -2213,6 +2213,51 @@ function rsvpmaker_essentials () {
 	echo '<div class="notice notice-success is-dismissible">'.$message.'</div>';
 }
 
+function rsvpmaker_corrupted_dates_check() {
+global $wpdb;
+$fixed = $corrupt = '';
+
+if(isset($_POST['fixrsvpyear']))
+{
+foreach($_POST['fixrsvpyear'] as $post_id => $year)
+{
+	$month = (int) $_POST['fixrsvpmonth'][$post_id];
+	$day = (int) $_POST['fixrsvpday'][$post_id];
+	$hour = (int) $_POST['fixrsvphour'][$post_id];
+	$minutes = (int) $_POST['fixrsvpminutes'][$post_id];
+	if($month < 10)
+		$month = '0'.$month;
+	if($day < 10)
+		$day = '0'.$day;
+	if($hour < 10)
+		$hour = '0'.$hour;
+	if($minutes < 10)
+		$minutes = '0'.$minutes;
+	$datestring = $year.'-'.$month.'-'.$day.' '.$hour.':'.$minutes.':00';
+	$fixed .= '<div>Fixed date: '.$datestring.' for '.get_the_title($post_id).'</div>';
+	update_post_meta($post_id,'_rsvp_dates',$datestring);
+}
+
+echo '<div class="notice notice-info">'.$fixed.'</div>';
+
+}
+$sql = "SELECT ID, post_title, meta_value
+FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id
+where meta_key='_rsvp_dates' AND post_status='publish' AND meta_value NOT REGEXP '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' 
+AND meta_value > CURDATE()
+ORDER BY post_title, meta_value";
+$results = $wpdb->get_results($sql);
+if($results)
+{
+	foreach($results as $row) {
+	$dateparts = preg_split('/[-: ]/',$row->meta_value);
+	$corrupt .= sprintf('<div><label style="display: inline-block; width: 200px;">%s</label> <input type="text" name="fixrsvpyear[%d]" value="%s" size="4" >-<input type="text" name="fixrsvpmonth[%d]" value="%s" size="2" >-<input type="text" name="fixrsvpday[%d]" value="%s" size="2" > <input type="text" name="fixrsvphour[%d]" value="%s"  size="2" >:<input type="text" name="fixrsvpminutes[%d]" value="%s" size="2" >:00</div>',$row->post_title, $row->ID, $dateparts[0], $row->ID,  (empty($dateparts[1])) ? '' : $dateparts[1], $row->ID,  (empty($dateparts[2])) ? '' : $dateparts[2], $row->ID,  (empty($dateparts[3])) ? '' : $dateparts[3], $row->ID, (empty($dateparts[4])) ? '' : $dateparts[4]);
+	}
+printf('<div class="notice notice-error"><h3>%s</h3><p>%s</p><form method="post" action="%s">%s<p><button>Repair</button></p></form></div>',__('Date Variables Corrupted','rsvpmaker'),__('A correct date would be in the format YEAR-MONTH-DAY HOUR:MINUTES:SECONDS or 2030-01-01 19:30:00 for January 1, 2030 at 7:30 pm','rsvpmaker'),admin_url(),$corrupt );
+}
+
+}
+
 function rsvpmaker_admin_notice() {
 if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
 	return; //don't clutter edit page with admin notices. Gutenberg hides them anyway.
@@ -2229,6 +2274,8 @@ $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
 $basic_options = '';
+
+rsvpmaker_corrupted_dates_check();
 
 if( empty($rsvp_options["eventpage"]) && !get_option('noeventpageok') && !is_plugin_active('rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php') )
 	{
