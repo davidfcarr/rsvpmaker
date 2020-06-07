@@ -803,6 +803,9 @@ rsvp_form_setup_form($options["rsvp_form"]);
   <textarea name="option[rsvplink]"  rows="5" cols="80" id="rsvplink"><?php if(isset($options["rsvplink"]) ) echo $options["rsvplink"];?></textarea>
 	<br />Example:
 <?php if(isset($options["rsvplink"]) ) echo $options["rsvplink"];?>
+<h3><?php _e('Label for Updates','rsvpmaker'); ?>:</h3>
+  <input type="text" name="option[update_rsvp]"  rows="5" cols="80" id="update_rsvp" value="<?php if(isset($options["update_rsvp"]) ) echo $options["update_rsvp"];?>" />
+	<br />
 					<h3><?php _e('RSVP Form Title','rsvpmaker'); ?>:</h3>
   <input type="text" name="option[rsvp_form_title]"  rows="5" cols="80" id="rsvp_form_title" value="<?php if(isset($options["rsvp_form_title"]) ) echo $options["rsvp_form_title"];?>" />
 	<br />

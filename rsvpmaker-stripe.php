@@ -328,21 +328,22 @@ function stripe_log_by_email ($email, $months = 0) {
 }
 	
 function rsvpmaker_stripe_payment_log($vars,$confkey) {
-	rsvpmaker_debug_log('');
-
 global $post, $current_user, $wpdb;
-
 $vars['timestamp'] = rsvpmaker_date('r');
 if(!empty($vars['email']))
 	rsvpmaker_stripe_notify($vars);
 $rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
 add_post_meta($rsvpmaker_stripe_checkout_page_id,'rsvpmaker_stripe_payment',$vars);
 do_action('rsvpmaker_stripe_payment',$vars);
-
 }
 
 function rsvpmaker_stripe_notify($vars) {
-	rsvpmaker_debug_log('');
+	if(!empty($vars['rsvp_id']))
+	{
+		//if connected to rsvp, send payment confirmation
+		rsvp_confirmation_after_payment($vars['rsvp_id']);
+		return;
+	}
 	$keys = get_rsvpmaker_stripe_keys ();
 	$public = $keys['pk'];
 	$secret = $keys['sk'];

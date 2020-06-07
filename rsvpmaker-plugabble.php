@@ -1266,7 +1266,7 @@ if(isset($rsvp["email"]))
 	}
 
 if(empty($rsvp_id)) {
-	$duplicate_check = $wpdb->get_var("SELECT id FROM ".$wpdb->prefix."rsvpmaker WHERE email='".$rsvp["email"]."' AND first='".$rsvp["first"]."' AND last='".$rsvp["last"]."' ");
+	$duplicate_check = $wpdb->get_var("SELECT id FROM ".$wpdb->prefix."rsvpmaker WHERE email='".$rsvp["email"]."' AND first='".$rsvp["first"]."' AND last='".$rsvp["last"]."' AND event=$post->ID ");
 	if($duplicate_check) {
 		rsvpmaker_debug_log($rsvp,'duplicate check');
 		$rsvp_id = $duplicate_check;
@@ -1547,7 +1547,7 @@ $rsvpdata["rsvptitle"] = $post->post_title;
 $rsvpdata["rsvpyesno"] = $answer;
 $rsvpdata["rsvpdate"] = $date;
 $rsvp_options["rsvplink"] = get_rsvp_link($post->ID);
-$rsvpdata["rsvpupdate"] = preg_replace('/#rsvpnow">[^<]+/','#rsvpnow">'.__('Update RSVP','rsvptoast'),str_replace('*|EMAIL|*',$rsvp["email"].'&update='.$rsvp_id, $rsvp_options["rsvplink"]));
+$rsvpdata["rsvpupdate"] = preg_replace('/#rsvpnow">[^<]+/','#rsvpnow">'.$rsvp_options['update_rsvp'],str_replace('*|EMAIL|*',$rsvp["email"].'&update='.$rsvp_id, $rsvp_options["rsvplink"]));
 
 rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata);
 //rsvp_notifications ($rsvp,$rsvp_to,$subject,$cleanmessage,$rsvp_confirm);
@@ -1989,7 +1989,6 @@ global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks
 
 $rsvpconfirm = $rsvp_confirm = '';
 $display = array();
-$rsvp_id = 0;
 
 //On return from paypal payment process, show confirmation
 if(isset($_GET["PayerID"]))
@@ -2044,20 +2043,23 @@ $rsvp_instructions = (isset($custom_fields["_rsvp_instructions"][0])) ? $custom_
 $rsvp_yesno = (isset($custom_fields["_rsvp_yesno"][0])) ? $custom_fields["_rsvp_yesno"][0] : 1;
 $replay = (isset($custom_fields["_replay"][0])) ? $custom_fields["_replay"][0] : NULL;
 
-$e = (isset($_GET["e"]) ) ? $_GET["e"] : NULL;
 $first = (isset($_GET["first"]) ) ? $_GET["first"] : NULL;
 $last = (isset($_GET["last"]) ) ? $_GET["last"] : NULL;
-if ( $e && !filter_var($e, FILTER_VALIDATE_EMAIL) )
-	$e = '';
-//returns null if email ($e) is empty
 $rsvprow = NULL;
+$e = get_rsvp_email();
+$rsvp_id = get_rsvp_id($e);
 $profile = rsvpmaker_profile_lookup($e);
+
+if($rsvp_id && $e)
+{
+	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id and email='$e'";
+	$rsvprow = $wpdb->get_row($sql,ARRAY_A);
+}
+
 if($profile)
 	{
 	$first = $profile["first"];
 	$last = $profile["last"];
-	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$profile["email"].'" AND event='.$post->ID.' ORDER BY id DESC';
-	$rsvp_id = $wpdb->get_var($sql);
 	}
 
 if(isset($_GET["rsvp"]))
@@ -2066,36 +2068,22 @@ if(isset($_GET["rsvp"]))
 	$rsvp_confirm .= "\n\n".wpautop(get_post_meta($post->ID, '_rsvp_'.$e, true));
 	$rsvpconfirm = '<h3>'.__('RSVP Recorded','rsvpmaker').'</h3>	
 '.$rsvp_confirm;
-	$rsvp_id = (int) $_GET["rsvp"];
 	}
 elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !$email_context)
 	{
 	$rsvp_confirm = rsvp_get_confirm($post->ID);
-	$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
-	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post->ID AND id=".$rsvp_id;
-	$rsvprow = $wpdb->get_row($sql, ARRAY_A);
-	
 	if($rsvprow)
 	{
 	$permalink .= (strpos($permalink,'?')) ? '&' : '?';
 	$rsvpconfirm = '
-<h4>'.__('Update RSVP?','rsvpmaker').'</h4>	
-<p><a href="'.$permalink.'update='.$rsvp_id.'&e='.$rsvprow["email"].'#rsvpnow">'.__('Yes','rsvpmaker').'</a>, '.__('I want to update a previous RSVP for ','rsvpmaker').$rsvprow["first"].' '.$rsvprow["last"].'</p>
+<h4>'.$rsvp_options['update_rsvp'].'?</h4>	
+<p><a href="'.$permalink.'update='.$rsvp_id.'&e='.$rsvprow["email"].'#rsvpnow">'.__('Yes','rsvpmaker').'</a>, '.__('I want to update this record for ','rsvpmaker').$rsvprow["first"].' '.$rsvprow["last"].'</p>
 ';
 	}
 	}
 
 if((($e && isset($_GET["rsvp"]) ) || (is_user_logged_in() && !$email_context) ) )// && in_the_loop() )
 	{
-	if(isset($_GET["rsvp"]))
-		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE ".$wpdb->prepare("event=%d AND email=%s AND id=%d",$post->ID,$e,$_GET["rsvp"]);	
-	elseif(is_user_logged_in())
-		{
-		global $current_user;
-		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE ".$wpdb->prepare("event=%d AND email=%s",$post->ID,$current_user->user_email);
-		}
-	$rsvprow = $wpdb->get_row($sql, ARRAY_A);
-	$e = (isset($rsvprow["email"])) ? $rsvprow["email"] : '';
 	if($rsvprow && is_single() ) // don't display in an events listing
 		{
 		$master_rsvp = $rsvprow["id"];
@@ -2106,8 +2094,6 @@ if((($e && isset($_GET["rsvp"]) ) || (is_user_logged_in() && !$email_context) ) 
 		if(isset($details["total"]) && $details["total"])
 			{
 			$nonce= wp_create_nonce('pp-nonce');
-			if(($rsvp_id == 0) && isset($_GET['update']) )
-				$rsvp_id = (int) $_GET['update'];
 			
 			$invoice_id = (int) get_post_meta($post->ID,'_open_invoice_'.$rsvp_id,true);
 			$paid = 0;
@@ -2222,9 +2208,8 @@ if(isset($_GET['rsvp']))
 	$link = get_permalink();
 	$args = array('e' => $_GET['e'],'update' => $_GET['rsvp']);
 	$link = add_query_arg($args,$link);
-	$content .= sprintf('<p><a href="%s#rsvpnow">%s</a>',$link, __('Update RSVP?','rsvpmaker'));
-	$confirmed_content[$post->ID] = $content;
-	
+	$content .= sprintf('<p><a href="%s#rsvpnow">%s</a>',$link, $rsvp_options['update_rsvp']);
+	$confirmed_content[$post->ID] = $content;	
 	return $content;
 }
 	
@@ -2298,8 +2283,11 @@ elseif($rsvp_on && (is_single() || is_admin() || $formonly) ) //
 
 <h3 id="rsvpnow"><?php echo $rsvp_options["rsvp_form_title"];?></h3> 
 <?php
-$date_array = rsvp_date_block($post->ID,array(),false);
+if(get_post_meta($post->ID,'_rsvp_form_show_date',true))
+{
+	$date_array = rsvp_date_block($post->ID,array(),false);
 	echo $date_array["dateblock"];
+}
 if($rsvp_instructions) echo '<p>'.nl2br($rsvp_instructions).'</p>';
 if($rsvp_show_attendees) {
 	  echo '<p class="rsvp_status">'.__('Names of attendees will be displayed publicly, along with the contents of the notes field.','rsvpmaker').'</p>';

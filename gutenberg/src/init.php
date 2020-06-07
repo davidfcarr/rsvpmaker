@@ -60,6 +60,7 @@ add_action( 'init', function(){
 	register_meta( 'post', '_rsvp_instructions', $args );
 	register_meta( 'post', 'simple_price', $args );
 	register_meta( 'post', 'simple_price_label', $args );
+	register_meta( 'post', 'venue', $args );
 	$date_fields = array('_firsttime','_endfirsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration');
 	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
 	foreach($date_fields as $field)
@@ -92,14 +93,14 @@ add_action( 'init', function(){
 	register_meta( 'post', '_calendar_icons', $args );
     register_meta( 'post', '_rsvp_end_display', $args );
 	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
+	register_meta( 'post', '_rsvp_confirmation_after_payment', $args );
+	register_meta( 'post', '_rsvp_confirmation_include_event', $args );
 	register_meta( 'post', '_rsvp_count', $args );
 	register_meta( 'post', '_rsvp_yesno', $args );
 	register_meta( 'post', '_rsvp_captcha', $args );
 	register_meta( 'post', '_rsvp_timezone_string', $args );
-	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
 	register_meta( 'post', '_rsvp_login_required', $args );
-	register_meta( 'post', '_rsvp_confirmation_include_event', $args );
-
+	register_meta( 'post', '_rsvp_form_show_date', $args );
 });
 
 function rsvpjsonlisting ($atts) {

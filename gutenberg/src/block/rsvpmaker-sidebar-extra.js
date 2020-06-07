@@ -237,6 +237,10 @@ metaKey="_rsvp_count"/>
 		label={__("Send Confirmation Email",'rsvpmaker')}
 		metaKey="_rsvp_rsvpmaker_send_confirmation_email"
 	/>
+	<MetaFormToggle
+		label={__("Confirm AFTER Payment",'rsvpmaker')}
+		metaKey="_rsvp_confirmation_after_payment"
+	/>
 <MetaFormToggle
 		label={__('"Include Event Content with Confirmation"','rsvpmaker')}
 		metaKey="_rsvp_confirmation_include_event"
@@ -254,8 +258,10 @@ metaKey="_rsvp_count"/>
 		options={ rsvpmaker_ajax.rsvp_tx_template_choices }
 	/>
 </PanelRow>
-
-        </PanelBody>
+<div>Venue:<br />
+<MetaTextControl title={__("Venue",'rsvpmaker')} metaKey="venue" />
+<br /><em>{__('A street address or web address to include on the calendar invite attachment included with confirmations. If not specifed, RSVPMaker includes a link to the event post.','rsvpmaker')}</em></div>
+</PanelBody>
         <PanelBody
             title={__("RSVP Form",'rsvpmaker')}
             icon="yes-alt"
@@ -279,7 +285,10 @@ metaKey="_rsvp_count"/>
 		label={__("Show Yes/No Options on Registration Form",'rsvpmaker')}
 		metaKey="_rsvp_yesno"
 	/>
-
+<MetaFormToggle
+		label={__("Show Date and Time on Form",'rsvpmaker')}
+		metaKey='_rsvp_form_show_date'
+	/>
 <MetaTextControl
 		label={__('Maximum number of participants (0 for no limit)','rsvpmaker')}
 		metaKey="_rsvp_max"

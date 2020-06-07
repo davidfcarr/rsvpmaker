@@ -20,8 +20,9 @@ if(!empty($hangout))
 	$description .= "Google Hangout: ".$hangout."\n";
 $description .= "Event info: " . get_permalink($post->ID);
 $summary = $post->post_title;
-$venue = 'See: '. get_permalink($post->ID);
-
+$venue_meta = get_post_meta($post->ID,'venue',true);
+$venue = (empty($venue_meta)) ? 'See: '. get_permalink($post->ID) : $venue_meta;
+$dtstamp = gmdate("Ymd")."T".gmdate("His")."Z";
 $start = gmdate('Ymd',$start_ts);
 $start_time = gmdate('His',$start_ts);
 $end = gmdate('Ymd',$duration_ts);
@@ -29,29 +30,38 @@ $end_time = gmdate('His',$duration_ts);
 $event_id = $post->ID;
 $sequence = 0;
 $status = 'CONFIRMED';
-$ical = "BEGIN:VCALENDAR\r\n";
-$ical .= "VERSION:2.0\r\n";
-$ical .= "PRODID:-//WordPress//RSVPMaker//EN\r\n";
-$ical .= "METHOD:REQUEST\r\n";
-$ical .= "BEGIN:VEVENT\r\n";
-$ical .= "ORGANIZER;SENT-BY=\"MAILTO:".$from_email."\":MAILTO:".$from_email."\r\n";
-$ical .= "ATTENDEE;CN=".$rsvp_email.";ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:".$from_email."\r\n";
-$ical .= "UID:".strtoupper(md5($event_id))."-rsvpmaker.com\r\n";
-$ical .= "SEQUENCE:".$sequence."\r\n";
-$ical .= "STATUS:".$status."\r\n";
-$ical .= "DTSTART:".$start."T".$start_time."Z\r\n";
-$ical .= "DTEND:".$end."T".$end_time."Z\r\n";
-$ical .= "LOCATION:".$venue."\r\n";
-$ical .= "SUMMARY:".$summary."\r\n";
-$ical .= "DESCRIPTION:".$description."\r\n";
-$ical .= "BEGIN:VALARM\r\n";
-$ical .= "TRIGGER:-PT15M\r\n";
-$ical .= "ACTION:DISPLAY\r\n";
-$ical .= "DESCRIPTION:Reminder\r\n";
-$ical .= "END:VALARM\r\n";
-$ical .= "END:VEVENT\r\n";
-$ical .= "END:VCALENDAR\r\n";
-
-return $ical;
+$ical[] = "BEGIN:VCALENDAR";
+$ical[] ="VERSION:2.0";
+$ical[] ="PRODID:-//WordPress//RSVPMaker//EN";
+$ical[] ="METHOD:REQUEST";
+$ical[] ="BEGIN:VEVENT";
+$ical[] ="DTSTAMP:".$dtstamp;
+$ical[] ="ORGANIZER;SENT-BY=\"MAILTO:".$from_email."\":MAILTO:".$from_email;
+$ical[] ="ATTENDEE;CN=".$rsvp_email.";ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;"."RSVP=TRUE:mailto:".$from_email;
+$ical[] ="UID:".strtoupper(md5($event_id))."-rsvpmaker.com";
+$ical[] ="SEQUENCE:".$sequence;
+$ical[] ="STATUS:".$status;
+$ical[] ="DTSTART:".$start."T".$start_time."Z";
+$ical[] ="DTEND:".$end."T".$end_time."Z";
+$ical[] ="LOCATION:".$venue;
+$ical[] ="SUMMARY:".$summary;
+$ical[] ="DESCRIPTION:".$description;
+$ical[] ="BEGIN:VALARM";
+$ical[] ="TRIGGER:-PT15M";
+$ical[] ="ACTION:DISPLAY";
+$ical[] ="DESCRIPTION:Reminder";
+$ical[] ="END:VALARM";
+$ical[] ="END:VEVENT";
+$ical[] ="END:VCALENDAR";
+$icalstring = '';
+foreach($ical as $line)
+	{
+		if(strlen($line) >= 70)
+		{
+			$line = trim(chunk_split($line,70,"\r\n "));
+		}
+		$icalstring .= $line."\r\n";
+	}
+return trim($icalstring);
 }
 ?>

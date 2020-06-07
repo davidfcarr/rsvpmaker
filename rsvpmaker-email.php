@@ -2920,6 +2920,7 @@ $templates = get_option('rsvpmaker_notification_templates');
 //$template_forms represents the defaults
 $template_forms['notification'] = array('subject' => 'RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "Just signed up:\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>");
 $template_forms['confirmation'] = array('subject' => 'Confirming RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
+$template_forms['confirmation_after_payment'] = array('subject' => 'Confirming payment for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
 $template_forms['payment_reminder'] = array('subject' => 'Payment Required: [rsvptitle] on [rsvpdate]','body' => "We received your registration, but it is not complete without a payment. Please follow the link below to complete your registration and payment.
 
 [rsvpupdate]
@@ -3006,7 +3007,9 @@ foreach($rsvpdata as $field => $value)
 	}
 
 $send_confirmation = get_post_meta($post->ID,'_rsvp_rsvpmaker_send_confirmation_email',true);
-if($send_confirmation ||!is_numeric($send_confirmation))//if it hasn't been set to 0, send it
+$confirm_on_payment = get_post_meta($post->ID,'_rsvp_confirmation_after_payment',true);
+
+if(($send_confirmation ||!is_numeric($send_confirmation)) && empty($confirm_on_payment) )//if it hasn't been set to 0, send it
 {
 $confirmation_subject = $templates['confirmation']['subject']; 
 foreach($rsvpdata as $field => $value)
@@ -3074,7 +3077,78 @@ $mail["fromname"] = get_bloginfo('name');
 $mail["subject"] = $notification_subject;
 $mail["html"] = wpautop($notification_body);
 rsvpmaker_tx_email($post, $mail);
+}
 
+function rsvp_confirmation_after_payment ($rsvp_id) {
+	include 'rsvpmaker-ical.php';
+	rsvpmaker_debug_log($rsvp_id,'rsvp_confirmation_after_payment');
+	global $post;
+	global $rsvp_options;
+	global $wpdb;
+	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
+	$rsvp = (array) $wpdb->get_row($sql);
+	$post = get_post($rsvp['event']);
+	$rsvpdata = unserialize($rsvp['details']);
+
+	$guests = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=$rsvp_id");
+	if($guests) {
+		foreach($guests as $guestrow) {
+			$guestarr[] = $guestrow->first.' '.$guestrow->last;
+		}
+		$rsvpdata['guests'] = implode(', ',$guestarr);
+	}
+
+	rsvpmaker_debug_log($rsvpdata,'rsvp_confirmation_after_payment');
+	//also included in $rsvpdata?
+	//$rsvp['amountpaid'];
+		
+	$details = '';
+	foreach($rsvpdata as $label => $value)
+		$details .= sprintf('%s: %s'."\n",$label,$value);;
+	$rsvpdata['rsvptitle'] = $post->post_title;
+	$ts = rsvpmaker_strtotime(get_rsvp_date($rsvp['event']));
+	$rsvpdata['rsvpdate'] = rsvpmaker_strftime($rsvp_options['long_date'],$ts);
+	
+	$templates = get_rsvpmaker_notification_templates();
+	$rsvp_to = get_post_meta($post->ID,'_rsvp_to',true);
+	$rsvp_to_array = explode(",", $rsvp_to);
+	$rsvpdata['rsvpmessage'] = '';
+	$message_id = get_post_meta($post->ID,'_rsvp_confirm',true);
+	if($message_id)
+	{
+	  $message_post = get_post($message_id);
+	  $rsvpdata['rsvpmessage'] .= do_blocks($message_post->post_content)."\n\n";
+	}
+	$message_id = get_post_meta($post->ID,'payment_confirmation_message',true);
+	if($message_id)
+	{
+	  $message_post = get_post($message_id);
+	  $rsvpdata['rsvpmessage'] .= do_blocks($message_post->post_content);
+	}
+
+	$notification_subject = $templates['confirmation_after_payment']['subject'];
+	foreach($rsvpdata as $field => $value)
+		$notification_subject = str_replace('['.$field.']',$value,$notification_subject);
+	
+	$notification_body = $templates['confirmation_after_payment']['body']; 
+	foreach($rsvpdata as $field => $value)
+		$notification_body = str_replace('['.$field.']',$value,$notification_body);
+	$notification_body = str_replace('[rsvpdetails]',$details,$notification_body);
+	
+	$url = get_permalink($rsvp['event']);
+	$url = add_query_arg('rsvp',$rsvp['id'],$url);
+	$url = add_query_arg('e',$rsvp['email'],$url);
+	
+	$notification_body = str_replace('[rsvpupdate]',sprintf('<a href="%s">Complete Registration</a>',$url),$notification_body);	
+	$notification_body = do_blocks(do_shortcode($notification_body));
+
+	$mail["to"] = $rsvp['email'];
+	$mail["from"] = $rsvp_to_array[0];
+	$mail["fromname"] = get_bloginfo('name');
+	$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"]);
+	$mail["subject"] = $notification_subject;
+	$mail["html"] = $payment_confirmation_message . wpautop($notification_body);
+	rsvpmaker_tx_email($post, $mail);	
 }
 
 add_action('init','rsvp_payment_reminder_test');
@@ -3197,7 +3271,7 @@ function rsvpmailer_template_preview() {
 			Email: david@carrcommunications.com<br>
 			Guests: Beth Anne Carr, Theresa Carr</div>
 			<p><em>If you wish to change your registration, you can do so using the button below. </em></p>
-			<p><a class="rsvplink" href="https://dev.local/rsvpmaker/gallery-talk-edouard-manet/?e=*EMAIL*#rsvpnow" style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;">Update RSVP</a></p>';
+			<p><a class="rsvplink" href="https://dev.local/rsvpmaker/gallery-talk-edouard-manet/?e=*EMAIL*#rsvpnow" style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;">'.$rsvp_options['update_rsvp'].'</a></p>';
 			if( isset($_GET['reset']) )
 			{
 				$postarray["ID"] = $id;

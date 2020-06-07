@@ -1202,5 +1202,43 @@ function default_gateway_check($chosen_gateway) {
 	if(!empty($gateway_set))
 	return sprintf('<p style="color: red; font-weight: bold;">%s %s?</p>',__('Do you want to set the Preferred Payment Gateway to','rsvpmaker'),$gateway_set);
 }
-	
+
+function get_rsvp_id ($email = '') {
+global $post, $wpdb;
+$rsvp_id = 0;
+if(isset($_GET['rsvp']))
+	$rsvp_id = (int) $_GET['rsvp'];
+elseif(isset($_GET['update']))
+	$rsvp_id = (int) $_GET['update'];
+elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !$email_context)
+	$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
+elseif(is_user_logged_in() && !empty($email)) {
+	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$email.'" AND event='.$post->ID.' ORDER BY id DESC';
+	$rsvp_id = (int) $wpdb->get_var($sql);	
+	}
+return $rsvp_id;
+}
+
+function get_rsvp_email() {
+	global $post, $wpdb;
+	$email = '';
+	global $current_user;
+	if($_GET['e'])
+		{
+			$email = $_GET['e'];
+		}
+	elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !$email_context)
+		{
+			$rsvp_id = (int) $_COOKIE['rsvp_for_'.$post->ID];
+			$sql = 'SELECT email FROM '.$wpdb->prefix.'rsvpmaker WHERE id='.$rsvp_id;
+			$email = $wpdb->get_var($sql);	
+		}
+	elseif(is_user_logged_in()) {
+		$email = $current_user->user_email;
+	}
+	if ( $email && !filter_var($email, FILTER_VALIDATE_EMAIL) )
+		$email = '';
+	return $email;		
+}
+
 ?>
