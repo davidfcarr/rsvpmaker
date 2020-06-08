@@ -1862,12 +1862,16 @@ function rsvpmaker_daily_schedule($atts) {
 		$terms = get_the_terms($event->ID,'rsvpmaker-type');
 		$wrapclass = '';
 		$termslugs = array();
+		$term_links = array();
 		if($terms)
 		foreach($terms as $term)
 		{
 			$wrapclass .= ' '.$term->slug;
 			$termslugs[] = $term->slug;
+			if(empty($atts['type']) || ($atts['type'] != $term->slug))
+				$term_links[] = '<a href="' . esc_attr( get_term_link( $term->slug, 'rsvpmaker-type' ) ) . '">' . __( $term->name ) . '</a>';
 		}
+		$termline = '<p class="daily-schedule-event-types">'.implode(', ',$term_links).'</p>';
 		if(isset($atts['type']) && !in_array($atts['type'],$termslugs))
 			continue;
 		$index = rsvpmaker_strftime($rsvp_options['long_date'],$event->datetime);
@@ -1891,7 +1895,7 @@ function rsvpmaker_daily_schedule($atts) {
 		}
 		$eventcontent .= apply_filters('the_content',$content);
 		//$eventcontent .= get_the_content(__('Read more','rsvpmaker'),false,$event);
-		$eventcontent = '<div class="rsvpmaker-schedule-item'.$wrapclass.'">'."\n".$eventcontent."\n".'</div>';
+		$eventcontent = '<div class="rsvpmaker-schedule-item'.$wrapclass.'">'."\n".$eventcontent.$termline."\n".'</div>';
 
 		if(empty($schedule[$index]))
 			$schedule[$index] = $eventcontent;

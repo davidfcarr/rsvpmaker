@@ -1059,7 +1059,7 @@ return Array("Varies","First","Second","Third","Fourth","Last","Every");
 }
 	
 function get_template_sked($post_id) {
-	global $wpdb;
+	global $wpdb, $rsvp_options;
 	$week_array = get_week_array();
 	$day_array = get_day_array();
 	$singles = array('hour','minutes','duration','stop');
@@ -1101,7 +1101,11 @@ function get_template_sked($post_id) {
 				}
 			if(in_array(0,$week)) //if any other value is set, Varies doesn't make sense
 				update_post_meta($post_id,'_sked_Varies',false);
-		} 
+		}
+		if(empty($sked['hour']))
+			$sked['hour'] = $rsvp_options['defaulthour'];
+		if(empty($sked['minutes']))
+			$sked['minutes'] = $rsvp_options['defaultmin'];		
 		return $sked;
 	}
 	else {
@@ -1109,6 +1113,10 @@ function get_template_sked($post_id) {
 		if($sked) {
 			//upgrade it
 			$sked = new_template_schedule($post_id,$sked);
+			if(empty($sked['hour']))
+				$sked['hour'] = $rsvp_options['defaulthour'];
+			if(empty($sked['minutes']))
+				$sked['minutes'] = $rsvp_options['defaultmin'];
 			return $sked;
 		}
 		else

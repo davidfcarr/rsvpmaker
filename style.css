@@ -197,6 +197,10 @@ div.rsvpmaker-schedule-item {
     padding-bottom: 15px;
 }
 
+p.daily-schedule-event-types {
+    clear: both;
+}
+
 /*! jQuery UI - v1.11.4 - 2016-05-11
 * http://jqueryui.com
 * Includes: core.css, tooltip.css, theme.css

@@ -280,22 +280,15 @@ class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
   }
 
 public function get_items($request) {
-  global $wpdb, $rsvp_options;
-      $message_id = get_post_meta($request['post_id'],'payment_confirmation_message',true);
+  $vars = array();
+  $message_id = get_post_meta($request['post_id'],'payment_confirmation_message',true);
       if($message_id)
       {
         $message_post = get_post($message_id);
+        if(empty($message_post->post_content))
+          $message_post->post_content = '<p>'.__('Thank you for your payment','rsvpmaker').'</p>';
         $vars['payment_confirmation_message'] = do_blocks($message_post->post_content);
-        $row = $wpdb->get_row("SELECT email, event FROM ".$wpdb->prefix.'rsvpmaker WHERE id='.$request['rsvp_id']);
-        if($row)
-        {
-        $mail['subject'] = __('PayPal payment confirmation for','rsvpmaker').' '.get_the_title($row->event);
-        $mail['to'] = $row->email;
-        $mail['from'] = $rsvp_options['rsvp_to'];
-        $mail['fromname'] = get_option('blogname');
-        $mail['html'] = '<p>'.__('Thank you for your payment. Here are some additional details.','rsvpmaker')."<p>\n".$vars['payment_confirmation_message'];
-        rsvpmailer($mail);
-        }
+        rsvp_confirmation_after_payment ($request['rsvp_id']);
       }
     return new WP_REST_Response($vars, 200);
   }
