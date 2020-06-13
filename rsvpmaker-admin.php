@@ -2946,7 +2946,7 @@ global $rsvp_options;
 global $current_user;
 $existing = $options = '';
 $templates = rsvpmaker_get_templates();
-
+$documents = get_related_documents();
 ?>
 <style>
 <?php 
@@ -3013,7 +3013,7 @@ if(rsvpmaker_is_template($post_id))
 
 //$confirm = rsvp_get_confirm($post_id, true);
 printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post_id);
-echo get_confirmation_options($post_id);
+echo get_confirmation_options($post_id, $documents);
 echo '<button>Save</button></form>';
 
 $reminder_copy = sprintf('<option value="%d">%s</option>',get_post_meta($post_id,'_rsvp_confirm',true),__('Confirmation Message'));
@@ -3025,7 +3025,12 @@ if($payment_confirmation)
 	$pconf = get_post($payment_confirmation);
 	echo (empty($pconf->post_content)) ? '<p>[not set]</p>' : $pconf->post_content;
 }
-printf('<p><a href="%s">%s</a></p>', admin_url("?payment_confirmation=1&post_id=".$post_id),__('Edit','rsvpmaker'));
+
+foreach($documents as $d) {
+	$id = $d['id'];
+	if(($id == 'edit_payment_confirmation') || ($id == 'edit_payment_confirmation_custom'))
+	printf('<p><a href="%s">Edit: %s</a></p>',$d['href'],$d['title']);
+}
 
 if(!empty($pconf->post_content))
 	$reminder_copy .= sprintf('<option value="%d">%s</option>',$pconf->ID,__('Payment Confirmation','rsvpmaker'));
@@ -3044,7 +3049,12 @@ foreach($results as $row)
 	$parent = $reminder->post_parent;//get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
 	if($parent != $post_id)
 		printf('<p>%s<br /><a href="%s">%s</a></p>',__('This is the standard reminder from the event template','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id.'&hours='.$hours.'&was='. $reminder->ID),__('Customize for this event','rsvpmaker'));
-	printf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a></p>',admin_url('post.php?action=edit').'&post='.$reminder->ID,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete=').$hours.'&post_id='.$post_id);
+	foreach($documents as $d) {
+		$id = $d['id'];
+		if(($id == 'reminder'.$hours) || ($id == 'reminder'.$hours.'custom'))
+		printf('<p><a href="%s">Edit: %s</a></p>',$d['href'],$d['title']);
+	}
+	//printf('<p><a href="%s">Edit</a> | <a href="%s">Delete</a></p>',admin_url('post.php?action=edit').'&post='.$reminder->ID,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&delete=').$hours.'&post_id='.$post_id);
 	//reset this, just in case
 	$paid_only = get_post_meta($reminder->ID,'paid_only_confirmation',true);
 	if($paid_only)

@@ -386,28 +386,19 @@ foreach ($wp_roles->roles as $role => $rolearray)
 }
 }
 
-function get_confirmation_options($post_id = 0) {
+function get_confirmation_options($post_id = 0, $documents = array()) {
 	global $post;
 	if(isset($post->ID))
 		$post_id = $post->ID;
+	$output = '';
 	$confirm = rsvp_get_confirm($post_id,true);
 	$output = sprintf('<h3 id="confirmation">%s</h3>',__('Confirmation Message','rsvpmaker'));
 	$output .= $confirm->post_content;	
-	$confedit = admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post_id);
-	$customize = admin_url('?post_id='. $post_id. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation');
-	$reminders = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id);
-	if(current_user_can('edit_post',$confirm->ID))
-	{
-	if(isset($confirm->post_parent) && ($confirm->post_parent == 0))
-		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
-	elseif(isset($confirm->post_parent) && ($confirm->post_parent != $post_id))
-		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>',$confedit,$customize);
-	else
-		$output .= sprintf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>',$confedit);
+	foreach($documents as $d) {
+		$id = $d['id'];
+		if(($id == 'edit_confirm') || ($id == 'customize_confirmation'))
+		$output .= sprintf('<p><a href="%s">Edit: %s</a></p>',$d['href'],$d['title']);
 	}
-	else
-	$output .= sprintf('<div id="editconfirmation"><div><a href="%s" target="_blank">Customize</a></div>',$customize);
-
 	if(empty($_GET['page']) || $_GET['page'] != 'rsvp_reminders')
 		$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);
 	$templates = get_rsvpmaker_email_template();

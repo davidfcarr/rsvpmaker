@@ -1337,11 +1337,19 @@ global $rsvp_options, $wpdb;
 $label = '';
 $confirm_id = get_post_meta($post_id,'_rsvp_confirm',true);
 if($confirm_id) {
-	$parent_id = rsvpmaker_parent ($confirm_id);
-	if(empty($parent_id))
-		$label = ' (Default)';
-	elseif($parent_id == $t)
-		$label = ' (From Template)';
+	$cpost = get_post($confirm_id);
+	if(empty($cpost))
+	{
+		$confirm_id = $rsvp_options['rsvp_confirm'];
+		$label = ' (Default)';	
+	}
+	else {
+		$parent_id = $cpost->post_parent;
+		if($parent_id == $t)
+			$label = ' (From Template)';
+		elseif($parent_id != $post_id)
+			$label = ' (Inherited)';
+	}
 }
 else {
 	$confirm_id = $rsvp_options['rsvp_confirm'];

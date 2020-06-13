@@ -981,3 +981,11 @@ registerBlockType( 'rsvpmaker/future-rsvp-links', {
 		return null;
 	},
 } );
+
+if((rsvpmaker_type == 'rsvpemail') || (rsvpmaker_type == 'rsvpmaker'))
+{
+	const isFullscreenMode = wp.data.select( 'core/edit-post' ).isFeatureActive( 'fullscreenMode' ); 
+	if ( isFullscreenMode ) { 
+		wp.data.dispatch( 'core/edit-post' ).toggleFeature( 'fullscreenMode' ); 
+	}
+}
