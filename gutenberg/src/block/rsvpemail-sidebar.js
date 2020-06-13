@@ -9,6 +9,7 @@ let type = wp.data.select( 'core/editor' ).getCurrentPostType();
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div><h3>{__('Email Editor','rsvpmaker')}</h3><p>{__('Use the WordPress editor to compose the body of your message, with the post title as your subject line. View post will display your content in an email template, with a user interface for addressing options.','rsvpmaker')}</p>
+{related_documents.map( function (x) {return <li><a href={x.href}>{x.title}</a></li>} )}
 </div>
 );
 }

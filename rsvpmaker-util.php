@@ -325,6 +325,48 @@ $wpdb->show_errors();
 	return $wpdb->get_results($sql);
 }
 
+function rsvpmaker_week_of_events () {
+	global $wpdb;
+	$wpdb->show_errors();
+	$startfrom = '"'.get_sql_now().'"';
+	$enddate = ' DATE_ADD(NOW(),INTERVAL 1 WEEK) ';
+		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
+		 FROM ".$wpdb->posts."
+		 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+		 WHERE a1.meta_value > ".$startfrom." AND a1.meta_value < $enddate AND post_status='publish' ";
+		$sql .= ' ORDER BY a1.meta_value ';
+		return $wpdb->get_results($sql);
+}
+
+function rsvpmaker_week_reminders () {
+	global $wpdb;
+	$wpdb->show_errors();
+	$startfrom = '"'.get_sql_now().'"';
+	$enddate = ' DATE_ADD(NOW(),INTERVAL 1 WEEK) ';
+		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, a1.meta_value as datetime,
+		a2.meta_key as slug, a2.meta_value as reminder_post_id
+		 FROM ".$wpdb->posts."
+		 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+		 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key LIKE '_rsvp_reminder_msg_%'
+		 WHERE a1.meta_value > ".$startfrom." AND a1.meta_value < $enddate AND post_status='publish' ";
+		$sql .= ' ORDER BY a1.meta_value ';
+		return $wpdb->get_results($sql);
+}
+
+function rsvpmaker_reminders_nudge () {
+	$posts_with_reminders = rsvpmaker_week_reminders();
+	if($posts_with_reminders)
+	{
+		foreach($posts_with_reminders as $post_with_reminder) {
+			$parts = explode('_',$post_with_reminder->slug);
+			$hours = $parts[4];
+			if(isset($_GET['debug']))
+				printf('<div>%s - %s - %s</div>',$hours, $post_with_reminder->datetime, $post_with_reminder->ID);
+			rsvpmaker_reminder_cron($hours, $post_with_reminder->datetime, $post_with_reminder->ID, $hours, $post_with_reminder->datetime);
+			}
+	}
+}
+
 function get_future_events ($where = '', $limit='', $output = OBJECT, $offset_hours = 0) {
 global $wpdb;
 $wpdb->show_errors();
@@ -1231,7 +1273,7 @@ function get_rsvp_email() {
 	global $post, $wpdb;
 	$email = '';
 	global $current_user;
-	if($_GET['e'])
+	if(isset($_GET['e']))
 		{
 			$email = $_GET['e'];
 		}
@@ -1248,5 +1290,604 @@ function get_rsvp_email() {
 		$email = '';
 	return $email;		
 }
+
+function rsvpmaker_parent ($post_id) {
+global $wpdb;
+return $wpdb->get_var("SELECT post_parent FROM $wpdb->posts WHERE ID=$post_id");
+}
+
+function get_form_links($post_id, $t, $parent_tag) {
+	global $rsvp_options;
+	$label = '';
+	$form_id = get_post_meta($post_id,'_rsvp_form',true);
+	if($form_id) {
+		$parent_id = rsvpmaker_parent ($form_id);
+		if(empty($parent_id))
+			$label = ' (Default)';
+		elseif($parent_id == $t)
+			$label = ' (From Template)';
+	}
+	else {
+		$form_id = $rsvp_options['rsvp_form'];
+		$label = ' (Default)';
+	}
+	$args[] = array(
+		'parent'    => $parent_tag,
+		'id' => 'edit_form',
+		'title' => 'RSVP Form'.$label,
+		'href'  => admin_url('post.php?action=edit&post='.$form_id.'&back='.$post_id),
+		'meta'  => array( 'class' => 'edit_form')
+	);
+	if(!empty($label)) {
+		//if inherited, provide option to customize
+		$formurl = rsvp_customize_form_url($post_id);
+		$args[] = array(
+			'parent'    => 'edit_form',
+			'id' => 'customize_form',
+			'title' => 'RSVP Form -> Customize',
+			'href'  => $formurl,
+			'meta'  => array( 'class' => 'customize_form')
+		);
+	}
+return $args;
+}
+
+function get_conf_links ($post_id, $t, $parent_tag) {
+global $rsvp_options, $wpdb;
+$label = '';
+$confirm_id = get_post_meta($post_id,'_rsvp_confirm',true);
+if($confirm_id) {
+	$parent_id = rsvpmaker_parent ($confirm_id);
+	if(empty($parent_id))
+		$label = ' (Default)';
+	elseif($parent_id == $t)
+		$label = ' (From Template)';
+}
+else {
+	$confirm_id = $rsvp_options['rsvp_confirm'];
+	$label = ' (Default)';
+}
+$args[] = array(
+	'parent'    => $parent_tag,
+	'id' => 'edit_confirm',
+	'title' => 'Confirmation Message'.$label,
+	'href'  => admin_url('post.php?action=edit&post='.$confirm_id.'&back='.$post_id),
+	'meta'  => array( 'class' => 'edit_form')
+);
+if(!empty($label)) {
+	//if inherited, provide option to customize
+	$confurl = rsvp_confirm_url($post_id);
+	$args[] = array(
+		'parent' => 'edit_confirm', //$parent_tag,
+		'id' => 'customize_confirmation',
+		'title' => 'Confirmation -> Customize',
+		'href'  => $confurl,
+		'meta'  => array( 'class' => 'customize_confirmation')
+	);
+}
+
+$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
+
+$results = $wpdb->get_results($sql);
+if($results)
+foreach($results as $row)
+{
+	$hours = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
+	$type = ($hours > 0) ? 'FOLLOW UP' : 'REMINDER';
+	$reminder = rsvp_get_reminder($post_id,$hours);
+	$parent = $reminder->post_parent;//get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
+	$label = ($parent != $post_id) ? ' (from Template)' : '';
+	$identifier = 'reminder'.$hours;
+	$args[] = array(
+		'parent'    => $parent_tag,
+		'id' => $identifier,
+		'title' => $type.' '.$hours.' hours'.$label,
+		'href'  => admin_url('post.php?action=edit&post='.$reminder->ID),
+		'meta'  => array( 'class' => 'reminder'.$hours),
+	);
+	if(!empty($label))
+	{
+		$args[] = array(
+			'parent'    => $identifier,
+			'id' => $identifier.'custom',
+			'title' => $type.' '.$hours.' hours'.$label,
+			'href'  => admin_url('post.php?action=edit&post='.$reminder->ID),
+			'meta'  => array( 'class' => 'rsvpmessage rsvpmessage-custom'),
+		);			
+	}
+}
+
+return $args;
+}
+
+function get_more_related($post, $post_id, $t, $parent_tag) {
+global $wpdb, $rsvp_options;
+
+$args[] = array(
+	'parent'    => $parent_tag,
+	'id' => 'confirmation_reminders',
+	'title' => 'Confirmations + Reminders',
+	'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id),
+	'meta'  => array( 'class' => 'confirmation_reminders')
+);
+
+$confs = get_conf_links($post_id, $t, $parent_tag);
+foreach($confs as $arg)
+	$args[] = $arg;
+
+		$payconf = get_post_meta($post_id,'payment_confirmation_message',true);
+		if(empty($payconf) || (rsvpmaker_parent($payconf) != $t) )
+		{
+			$args[] = array(
+				'parent' => $parent_tag,
+				'id' => 'edit_payment_confirmation',
+				'title' => 'Payment Confirmation',
+				'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id),
+				'meta'  => array( 'class' => 'edit_form')
+			);	
+		}
+		else {
+			$args[] = array(
+				'parent' => $parent_tag,
+				'id' => 'edit_payment_confirmation',
+				'title' => 'Payment Confirmation (from Template)',
+				'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id),
+				'meta'  => array( 'class' => 'edit_form')
+			);	
+			$args[] = array(
+				'parent' => $parent_tag,
+				'id' => 'edit_payment_confirmation',
+				'title' => 'Payment Confirmation -> Customize',
+				'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id.'&source='.$t),
+				'meta'  => array( 'class' => 'edit_form')
+			);
+		}
+
+		$forms = get_form_links($post_id, $t, $parent_tag);
+		foreach($forms as $arg)
+			$args[] = $arg;
+
+		$args[] = array(
+			'parent'    => $parent_tag,
+			'id' => 'rsvp_report',
+			'title' => 'RSVP Report',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$post_id),
+			'meta'  => array( 'class' => 'edit_form')
+		);
+
+		if($t)
+		{
+		$args [] = array('parent' => $parent_tag, 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'title' => __('Edit Template','rsvpmaker'), 'meta' => array('class' => 'rsvpmaker-edit-template'));
+	
+		$args[] = array(
+			'parent' => $parent_tag,
+			'id' => 'template-options',
+			'title' => 'Template Options',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t),
+			'meta'  => array( 'class' => 'template-options')
+		);
+		$args[] = array('parent' => $parent_tag, 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template'));
+		}
+
+		if(rsvpmaker_is_template($post_id))
+		{
+		$args[] = array(
+			'id'    => 'rsvpmaker_create_update',
+			'parent'    => $parent_tag,
+			'title' => 'Create / Update',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id),
+			'meta'  => array( 'class' => 'rsvpmaker-create-update')
+		);
+		}
+
+
+		//rsvpmaker_debug_log($args,'more menu array');
+	
+		return $args;
+}
+
+function get_related_documents ( $post_id = 0, $query = '') {
+	global $post;
+	$backup = $post;
+	if(isset($_GET['page']) && isset($_GET['post_id']))
+		$post_id = (int) $_GET['post_id'];
+	if($post_id)
+		$post = get_post($post_id);
+	elseif(isset($post->ID))
+		$post_id = $post->ID;
+	else
+		return;
+	if(strpos($_SERVER['REQUEST_URI'],'edit.php') && empty($_GET['page']))
+		return;
+	if(($post->post_type != 'rsvpmaker') && ($post->post_type != 'rsvpemail'))
+		return;
+	$t = has_template($post->ID);
+	$parent_tag = 'edit'; // front end
+	if(isset($_GET['page']) || isset($_GET['action']))
+		$parent_tag = 'rsvpmaker_options';
+
+	$rsvp_id = rsvpmaker_parent($post_id);
+	if(($query == 'rsvpemail') && !$rsvp_id && !(strpos($post->post_title,'Default')))
+		return array();
+
+	//$parent_tag = (is_admin() && !isset($_GET['page'])) ? 'rsvpmaker_options' : 'edit';
+	if(isset($post->post_title) && (strpos($post->post_title,'Default')) )
+	{
+		$args[] = array(
+			'id'    => 'rsvpmaker_settings',
+			'title' => __('RSVPMaker Settings','rsvpmaker'),
+			'href'  => admin_url('options-general.php?page=rsvpmaker-admin.php'),
+			'meta'  => array( 'class' => 'edit-rsvpmaker-options'));
+
+			if(!empty($_GET['back']))
+			{
+			$rsvp_parent = (int) $_GET['back'];//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+				
+			$args[] = array(
+				'id'    => 'rsvpmaker_parent',
+				'title' => __('Edit Event','rsvpmaker'),
+				'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
+				'meta'  => array( 'class' => 'edit-rsvpmaker')
+			);
+			$args[] = array(
+				'id'    => 'view-event',
+				'title' => __('View Event','rsvpmaker'),
+				'href'  => get_permalink($rsvp_parent),
+				'meta'  => array( 'class' => 'view')
+			);		
+			$args[] = array(
+				'parent'    => 'rsvpmaker_parent',
+				'id'    => 'rsvpmaker_options',
+				'title' => 'RSVP / Event Options',
+				'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
+				'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+			);
+			$parent_tag = 'rsvpmaker_parent';
+			$more = get_more_related(get_post($rsvp_parent), $rsvp_parent, has_template($rsvp_parent), $parent_tag);	
+			foreach($more as $add)
+				$args[] = $add;
+			}// default used in a post identified by "back"
+	return $args;		
+	} // end this is a default message
+
+	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+	if($rsvp_parent)
+	{
+	$args[] = array(
+		'id'    => 'rsvpmaker_parent',
+		'title' => __('Edit Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
+		'meta'  => array( 'class' => 'edit-rsvpmaker')
+	);
+	$parent_tag = 'rsvpmaker_parent';
+	$args[] = array(
+		'id'    => 'view-event',
+		'title' => __('View Event ','rsvpmaker'),
+		'href'  => get_permalink($rsvp_parent),
+		'meta'  => array( 'class' => 'view-event')
+	);
+	$args[] = array(
+	'parent' => $parent_tag,
+	'id'    => 'rsvpmaker_options',
+	'title' => 'RSVP / Event Options',
+	'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
+	'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+	$more = get_more_related(get_post($post->post_parent), $post->post_parent, has_template($post->post_parent), $parent_tag);
+	foreach($more as $add)
+		$args[] = $add;
+	return $args;
+	}
+
+	if($post->post_type != 'rsvpmaker')
+		return array();//no rsvpemail documents unless they have a post parent
+
+	if(is_admin() && isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_details')) {
+	$args[] = array(
+		'id'    => 'rsvpmaker_options',
+		'title' => __('Edit Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$post_id),
+		'meta'  => array( 'class' => 'edit-rsvpmaker')
+	);
+	$args[] = array(
+		'id'    => 'view-event',
+		'title' => __('View Event','rsvpmaker'),
+		'href'  => get_permalink($post_id),
+		'meta'  => array( 'class' => 'view')
+	);
+}
+	elseif(is_admin() && isset($_GET['page'])) {
+	//a different page
+	$args[] = array(
+		'id'    => 'rsvpmaker_options',
+		'title' => __('Edit Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$post_id),
+		'meta'  => array( 'class' => 'edit-rsvpmaker')
+	);
+	$args[] = array(
+		'id'    => 'view-event',
+		'title' => __('View Event','rsvpmaker'),
+		'href'  => get_permalink($post_id),
+		'meta'  => array( 'class' => 'view')
+	);
+	$args[] = array(
+		'parent' => $parent_tag,
+		'id'    => 'rsvpmaker_options_screen',
+		'title' => 'RSVP / Event Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+		);
+	}
+	elseif(is_admin()) {
+	//edit or other admin page
+	$args[] = array(
+		'id'    => 'rsvpmaker_options',
+		'title' => 'RSVP / Event Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+		);
+	}
+	else //front end
+	$args[] = array(
+		'parent' => $parent_tag,
+		'id'    => 'rsvpmaker_options',
+		'title' => 'RSVP / Event Options',
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
+		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	);
+
+	//options page
+	$more = get_more_related($post, $post_id, $t, $parent_tag);
+	foreach($more as $add)
+		$args[] = $add;
+	//rsvpmaker_debug_log($args,'menu array');
+
+return $args;
+}
+
+/*		
+		
+		return $args;
+	}
+}
+		}
+		
+	if(isset($_GET['page']) && isset($_GET['post_id']))
+	{
+		$args[] = array(
+		'id'    => 'edit',
+		'title' => __('Edit Event','rsvpmaker'),
+		'href'  => admin_url('post.php?action=edit&post='.$post->ID),
+		'meta'  => array( 'class' => 'edit'));
+		$args[] = array(
+			'id'    => 'view',
+			'title' => __('View Event','rsvpmaker'),
+			'href'  => get_permalink($post->ID),
+			'meta'  => array( 'class' => 'edit'));
+	}
+		
+	if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpemail')) && current_user_can('edit_post',$post->ID) )
+		{
+		$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+			$args[] = array(
+			'id'    => 'rsvpmaker_parent',
+			'title' => __('Edit Parent Event','rsvpmaker'),
+			'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
+			'meta'  => array( 'class' => 'edit-rsvpmaker')
+		);
+		$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+			$args[] = array(
+			'id'    => 'view_parent',
+			'parent'    => 'rsvpmaker_parent',
+			'title' => __('View Parent Event','rsvpmaker'),
+			'href'  => get_permalink($rsvp_parent),
+			'meta'  => array( 'class' => 'view-rsvpmaker')
+		);
+		$args += get_more_related(get_post($post->post_parent), $post->post_parent, has_template($post->post_parent), 'rsvpmaker_parent');
+
+		if($post->post_type == 'rsvpemail')
+			return $args; // next 2 do not apply
+		}
+	
+	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
+		{
+		$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+		if($rsvp_parent)
+		{
+		$args[] = array(
+			'parent'    => 'rsvpmaker_parent',
+			'id'    => 'rsvpmaker_options',
+			'title' => 'RSVP / Event Options',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
+			'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+		);
+			
+		$args[] = array(
+			'parent'    => 'rsvpmaker_parent',
+			'id' => 'confirmation_reminders',
+			'title' => 'Reminder Messages',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$rsvp_parent),
+			'meta'  => array( 'class' => 'confirmation_reminders')
+		);
+			
+		$formurl = rsvp_form_url($rsvp_parent);
+		if(!empty($formurl) && !strpos($post->post_title,'Form:'))
+		{
+		$args[] = array(
+			'parent'    => 'rsvpmaker_parent',
+			'id' => 'edit_form',
+			'title' => 'RSVP Form',
+			'href'  => $formurl,
+			'meta'  => array( 'class' => 'edit_form')
+		);
+		}
+	
+		$args[] = array(
+			'parent'    => 'rsvpmaker_parent',
+			'id' => 'rsvp_report',
+			'title' => 'RSVP Report',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$rsvp_parent),
+			'meta'  => array( 'class' => 'edit_form')
+		);
+	
+		return $args;
+		}
+
+		$options_link = array(
+			'id'    => 'rsvpmaker_options',
+			'title' => 'RSVP / Event Options',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID),
+			'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+		);
+		if(!is_admin() || isset($_GET['page']))
+			$options_link['parent'] = 'edit';
+		$args[] = $options_link;
+
+		$formurl = rsvp_form_url($post_id);
+			
+		$args[] = array(
+			'parent'    => $parent_tag,
+			'id' => 'edit_form',
+			'title' => 'RSVP Form',
+			'href'  => $formurl,
+			'meta'  => array( 'class' => 'edit_form')
+		);
+
+		$confurl = rsvp_confirm_url($post->ID);
+		if(!empty($confurl))
+		{	
+		$args[] = array(
+			'parent' => $parent_tag,
+			'id' => 'edit_confirmation',
+			'title' => 'Confirmation Message',
+			'href'  => $confurl,
+			'meta'  => array( 'class' => 'edit_form')
+		);
+		}
+
+		$args[] = array(
+			'parent' => $parent_tag,
+			'id' => 'edit_payment_confirmation',
+			'title' => 'Payment Confirmation Message',
+			'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id),
+			'meta'  => array( 'class' => 'edit_form')
+		);
+			
+		$args[] = array(
+			'parent' => $parent_tag,
+			'id' => 'confirmation_reminders',
+			'title' => 'Reminder Messages',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
+			'meta'  => array( 'class' => 'confirmation_reminders')
+		);
+	
+		if($t)
+		{
+		$args [] = array('parent' => $parent_tag, 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'title' => __('Edit Template','rsvpmaker'), 'meta' => array('class' => 'rsvpmaker-edit-template'));
+	
+		$args[] = array(
+			'parent' => $parent_tag,
+			'id' => 'template-options',
+			'title' => 'Template Options',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t),
+			'meta'  => array( 'class' => 'template-options')
+		);
+		$args[] = array('parent' => $parent_tag, 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template'));
+		}
+		
+		$args[] = array(
+			'parent'    => $parent_tag,
+			'id' => 'rsvp_report',
+			'title' => 'RSVP Report',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$post->ID),
+			'meta'  => array( 'class' => 'edit_form')
+		);
+		
+		if(rsvpmaker_is_template())
+		{
+		$args[] = array(
+			'id'    => 'rsvpmaker_create_update',
+			'parent'    => $parent_tag,
+			'title' => 'Create / Update',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post->ID),
+			'meta'  => array( 'class' => 'rsvpmaker-create-update')
+		);
+		}
+		
+		}
+	
+	// template Create / Update screen
+	if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_template_list') && isset($_GET['t']) )
+		{
+		$post_id = (int) $_GET['t'];
+		$args[] = array(
+			'id'    => 'edit',
+			'title' => 'Edit Event Template',
+			'href'  => admin_url('post.php?action=edit&post='.$post_id),
+			'meta'  => array( 'class' => 'edit')
+		);
+	
+		$args[] = array(
+			'parent'    => 'edit',
+			'id' => 'template-options',
+			'title' => 'Template Options',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
+			'meta'  => array( 'class' => 'template-options')
+		);
+	
+		$args[] = array(
+			'parent'    => 'edit',
+			'id' => 'confirmation_reminders',
+			'title' => 'Confirmation / Reminder Messages',
+			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id),
+			'meta'  => array( 'class' => 'confirmation_reminders')
+		);
+		
+		$formurl = rsvp_form_url($post_id);
+			
+		$args[] = array(
+			'parent'    => 'edit',
+			'id' => 'edit_form',
+			'title' => 'Edit / Customize RSVP Form',
+			'href'  => $formurl,
+			'meta'  => array( 'class' => 'edit_form')
+		);
+		
+		}
+	
+	if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_scheduled_email_list') && isset($_GET['post_id']) )
+		{
+		$args[] = array(
+			'id'    => 'edit-email',
+			'title' => 'Edit Email',
+			'href'  => admin_url('post.php?action=edit&post='.$_GET['post_id']),
+			'meta'  => array( 'class' => 'edit-email')
+		);
+		$args[] = array(
+			'id'    => 'view-email',
+			'title' => 'View Email',
+			'href'  => get_permalink($post_id),
+			'meta'  => array( 'class' => 'view-email')
+		);
+		}
+	if(isset($post->post_type) && ($post->post_type == 'rsvpemail') && (is_admin()  || current_user_can('edit_post',$post->ID)) && empty($post->post_parent) && !strpos($post->post_title,':Default') )
+		{
+		$args[] = array(
+			'id'    => 'rsvpemail_schedule',
+			'title' => 'Scheduled Email',
+			'href'  => admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post->ID),
+			'meta'  => array( 'class' => 'edit-rsvpemail_schedule')
+		);
+		}
+	return $args;
+}
+*/
+
+function test_get_related_documents() {
+	$args = get_related_documents();
+	return sprintf('<pre>%s</pre>',var_export($args,true));
+}
+
+add_shortcode('test_get_related_documents','test_get_related_documents');
 
 ?>

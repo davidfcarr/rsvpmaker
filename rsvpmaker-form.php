@@ -48,17 +48,44 @@ global $current_user, $wpdb;
 if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
 	$id = upgrade_rsvpform();
 }	
-	
-if(isset($_GET['customize_rsvpconfirm'])) {
-	$source = (int) $_GET['customize_rsvpconfirm'];
+
+if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
+	$meta_tag = $_GET['rsvpcz'];
 	$parent = (int) $_GET['post_id'];
+	$title = $_GET['title'].':'$parent;
+	$content = '';
+	if(isset($_GET['source'])) {
+		$source = (int) $_GET['source'];
+		if($source) {
+			$old = get_post($source);
+			$content = $old->post_content;
+		}
+	}
+	$new["post_title"] = $title;
+	$new["post_parent"] = $parent;
+	$new["post_status"] = 'publish';
+	$new["post_type"] = 'rsvpemail';
+	$new["post_author"] = $current_user->ID;
+	$new["post_content"] = $content;
+	$id = wp_insert_post($new);
+	if($id)
+		update_post_meta($parent,$meta_tag,$id);	
+		update_post_meta($id,'_rsvpmaker_special',$title);
+	}
+}
+
+if(isset($_GET['customize_rsvpconfirm'])) {
+	$parent = (int) $_GET['post_id'];
+	$source = (int) get_post_meta($parent,'_rsvp_confirm',true);
 	$old = get_post($source);
-	if($old)
+	if($old->post_parent) //false for default message
+		$id = $old->ID; //if link called after custom post already created
+	elseif($old)
 	{
 	$new["post_title"] = "Confirmation:".$parent;
 	$new["post_parent"] = $parent;
 	$new["post_status"] = 'publish';
-	$new["post_type"] = 'rsvpmaker';
+	$new["post_type"] = 'rsvpemail';
 	$new["post_author"] = $current_user->ID;
 	$new["post_content"] = $old->post_content;
 	$id = wp_insert_post($new);
@@ -67,11 +94,83 @@ if(isset($_GET['customize_rsvpconfirm'])) {
 		update_post_meta($id,'_rsvpmaker_special','Confirmation Message');
 	}
 }
-if(isset($_GET['customize_form'])) {
-	$source = (int) $_GET['customize_form'];
-	$old = get_post($source);
+
+if(isset($_POST['create_reminder_for'])) {
+	$parent = $post_id = (int) $_POST['create_reminder_for'];
+	$hours = (int) $_REQUEST["hours"];
+	$key = '_rsvp_reminder_msg_'.$hours;
+	$copy_from = (int) $_POST['copy_from'];
+	$content = '';
+	if($copy_from)
+	{
+		$copy = get_post($copy_from);
+		$content = $copy->post_content;
+	}
+	$id = get_post_meta($parent,$key,true);
+	if(!$id) {
+		$label = ($hours > 0) ? __('Follow Up','rsvpmaker') : __('Reminder','rsvpmaker');
+		$title = $label.': '.get_the_title($post_id).' [datetime]';
+		$new["post_title"] = $title;
+		$new["post_parent"] = $post_id;
+		$new["post_status"] = 'publish';
+		$new["post_type"] = 'rsvpemail';
+		$new["post_author"] = $current_user->ID;
+		$new["post_content"] = $content;
+		$id = wp_insert_post($new);	
+	}
+	if($id) {
+		update_post_meta($parent,$key,$id);
+		update_post_meta($id,'_rsvpmaker_special','Reminder ('.$hours.' hours) '.$subject);
+		if(isset($_POST['paid_only']))
+			update_post_meta($id,'paid_only_confirmation',1);
+		rsvpmaker_debug_log($_POST);
+	if(rsvpmaker_is_template($post_id))
+	{
+		rsvpmaker_template_reminder_add($hours,$post_id);
+		rsvpautorenew_test (); // will add to the next scheduled event associated with template
+		//header('Location: '.admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&template_reminder=1&post_id=').$post_id);
+		//exit();
+	}
+	else
+	{
+		$start_time = rsvpmaker_strtotime( get_rsvp_date($post_id) );
+		rsvpmaker_reminder_cron($hours, $start_time, $post_id);
+	}
+
+	}
+}
+
+if(isset($_GET['payment_confirmation'])) {
 	$parent = (int) $_GET['post_id'];
-	if($old)
+	$id = get_post_meta($parent,'payment_confirmation_message',true);
+	$source = (isset($_GET['source'])) ? (int) $_GET['source'] : 0;
+	if(empty($id) || $source)
+	{
+	$new["post_title"] = "Payment Confirmation:".$parent;
+	$new["post_parent"] = $parent;
+	$new["post_status"] = 'draft';
+	$new["post_type"] = 'rsvpemail';
+	$new["post_author"] = $current_user->ID;
+	if($source) {
+		$source_post = get_post($source);
+		$new["post_content"] = $source_post->post_content;
+	}
+	else
+		$new["post_content"] = '';
+	$id = wp_insert_post($new);
+	if($id)
+		update_post_meta($parent,'payment_confirmation_message',$id);		
+		update_post_meta($id,'_rsvpmaker_special','Payment Confirmation Message');
+	}
+}
+
+if(isset($_GET['customize_form'])) {
+	$parent = (int) $_GET['post_id'];
+	$source = (int) get_post_meta($parent,'_rsvp_form',true);
+	$old = get_post($source);
+	if($old->post_parent) //false for default form
+		$id = $old->ID; //if link called after custom post already created
+	elseif($old)
 	{
 	$new["post_title"] = "RSVP Form:".$parent;
 	$new["post_parent"] = $parent;

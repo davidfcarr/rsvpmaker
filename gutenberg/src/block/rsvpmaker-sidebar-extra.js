@@ -196,6 +196,17 @@ label="Collect RSVPs"
 metaKey="_rsvp_on"/></p>
 </PanelBody>
 <PanelBody
+            title="Related"
+            icon="admin-links"
+            initialOpen={ false }
+        >
+<ul>
+<li><a href={wp.data.select('core/editor').getPermalink()}>{__('View Event','rsvpmaker')}</a></li>
+{rsvpmaker_ajax.related_document_links.map( function (x) {return <li><a href={x.href}>{x.title}</a></li>} )}
+</ul>
+</PanelBody>
+
+<PanelBody
             title="Display"
             icon="admin-settings"
             initialOpen={ false }
@@ -246,9 +257,7 @@ metaKey="_rsvp_count"/>
 		metaKey="_rsvp_confirmation_include_event"
 	/>
             <PanelRow>{__('Confirmation Message (exerpt)','rsvpmaker')}: {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
-			<PanelRow><em>{rsvpmaker_ajax.confirmation_type}</em></PanelRow>
-<PanelRow><a href={rsvpmaker_ajax.confirmation_edit}>{__('Edit Confirmation Message')}</a></PanelRow>
-{(rsvpmaker_ajax.confirmation_type != '') && <PanelRow><a href={rsvpmaker_ajax.confirmation_customize} >{__('Customize Confirmation Message')}</a></PanelRow>}
+{rsvpmaker_ajax.confirmation_links.map( function(x) {return <PanelRow><a href={x.href}>{x.title}</a></PanelRow>} )}
 <PanelRow><a href={rsvpmaker_ajax.reminders} >{__('Create / Edit Reminders')}</a></PanelRow>
 
 <PanelRow>
@@ -269,8 +278,7 @@ metaKey="_rsvp_count"/>
         >
 		<PanelRow>{rsvpmaker_ajax.form_fields}</PanelRow>
 		<PanelRow><em>{rsvpmaker_ajax.form_type}</em></PanelRow>
-		<PanelRow><a href={rsvpmaker_ajax.form_edit} >{__('Edit Form')}</a></PanelRow>
-		{((rsvpmaker_ajax.form_type != '') || !rsvpmaker_ajax.form_edit_post) && <PanelRow><a href={rsvpmaker_ajax.form_customize} >{__('Customize Form')}</a></PanelRow>}
+		{rsvpmaker_ajax.form_links.map( function(x) {return <PanelRow><a href={x.href}>{x.title}</a></PanelRow>} )}
 		<MetaFormToggle
 		label={__("Login required to RSVP",'rsvpmaker')}
 		metaKey="_rsvp_login_required"

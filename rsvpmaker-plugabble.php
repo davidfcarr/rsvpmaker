@@ -407,8 +407,9 @@ function get_confirmation_options($post_id = 0) {
 	}
 	else
 	$output .= sprintf('<div id="editconfirmation"><div><a href="%s" target="_blank">Customize</a></div>',$customize);
-	
-	$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);
+
+	if(empty($_GET['page']) || $_GET['page'] != 'rsvp_reminders')
+		$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);
 	$templates = get_rsvpmaker_email_template();
 	$chosen = (int) get_post_meta($post_id,'rsvp_tx_template',true);
 	if(!$chosen)
@@ -447,7 +448,6 @@ $rsvp_show_attendees = $custom_fields["_rsvp_show_attendees"][0];
 $rsvp_captcha = $custom_fields["_rsvp_captcha"][0];
 $rsvp_count_party = $custom_fields["_rsvp_count_party"][0];
 $rsvp_yesno = $custom_fields["_rsvp_yesno"][0];
-
 
 if(isset($custom_fields["_rsvp_reminder"][0]) && $custom_fields["_rsvp_reminder"][0])
 	{
@@ -2491,9 +2491,24 @@ if(!function_exists('rsvp_report') )
 {
 function rsvp_report() {
 
-global $wpdb;
-global $rsvp_options;
+global $wpdb, $post, $rsvp_options;
 $wpdb->show_errors();
+if(isset($_GET['event']))
+	$post = get_post((int) $_GET['event']);
+
+if(isset($_POST['move_rsvp']) && isset($_POST['move_to'])) {
+	if(empty($_POST['move_rsvp']))
+		printf('<div class="notice notice-error"><p>%s</p></option>',__('No RSVP entry selected','rsvpmaker'));
+	else {
+		$move_rsvp = (int) $_POST['move_rsvp'];
+		$move_to =  (int) $_POST['move_to'];
+		$sql = "UPDATE ".$wpdb->prefix."rsvpmaker SET event=$move_to WHERE id=$move_rsvp " ;
+		$wpdb->query($sql);
+		//move guests
+		$sql = "UPDATE ".$wpdb->prefix."rsvpmaker SET event=$move_to WHERE master_id=$move_rsvp " ;
+		$wpdb->query($sql);
+	}
+}
 
 $sql = "SELECT post_title, event, meta_value FROM `".$wpdb->prefix."rsvpmaker` join $wpdb->posts ON ".$wpdb->prefix."rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
 $results = $wpdb->get_results($sql);
@@ -2603,7 +2618,9 @@ if(isset($_GET["rsvp"]))
 	if($rsvprow)
 		{
 		$master_rsvp = $rsvprow["id"];
-		$answer = ($rsvprow["yesno"]) ? __("Yes",'rsvpmaker') : __("No",'rsvpmaker');		
+		$answer = ($rsvprow["yesno"]) ? __("Yes",'rsvpmaker') : __("No",'rsvpmaker');
+		if(empty($rsvpconfirm))
+			$rsvpconfirm = '';
 		$rsvpconfirm .= "<div style=\"border: medium solid #555; padding: 10px;\"><p>".$rsvprow["first"].' '.$rsvprow["last"].": $answer</p>\n";
 		$profile = $details = rsvp_row_to_profile($rsvprow);
 		if(isset($details["total"]) && $details["total"])
@@ -2633,7 +2650,7 @@ if(isset($_GET["rsvp"]))
 			if($charge > 0)
 			{
 			$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="'.admin_url('edit.php?page=rsvp&post_type=rsvpmaker&event='.$eventid).'">
-<p>'. __('Amount','rsvpmaker').': '.$charge.'<input name="paymentAmount" type="hidden" id="paymentAmount" size="10" value="'.$charge.'"> '.$rsvp_options["paypal_currency"].'</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="'.$rsvp_id.'" ><input type="submit" name="Submit" value="'. __('Mark Paid','rsvpmaker').'"></p>
+<p>'. __('Amount','rsvpmaker').': '.$charge.'<input name="markpaid[]" type="hidden" id="markpaid_'.$rsvp_id.'"  value="'.$rsvp_id.":".$charge.'"> '.$rsvp_options["paypal_currency"].'</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="'.$rsvp_id.'" ><input type="submit" name="Submit" value="'. __('Mark Paid','rsvpmaker').'"></p>
 </form>';
 			}
 			
@@ -2849,7 +2866,7 @@ function format_rsvp_details($results, $editor_options = true) {
 		{
 			echo "<hr /><h3>".__('Members Who Have Not Responded','rsvpmaker')."</h3>".$missing;
 		}
-
+	if(!empty($emails))
 	$emails = apply_filters('rsvp_yes_emails',$emails);
 	if(isset($emails) && is_array($emails))
 		{
@@ -2863,6 +2880,7 @@ function format_rsvp_details($results, $editor_options = true) {
 		printf('<p>Responses from %d members with user accounts and %d nonmembers.</p>',$members, $nonmembers);
 	
 global $phpexcel_enabled; // set if excel extension is active
+if(isset($fields))
 if($fields && !isset($_GET["rsvp_print"]) && !isset($_GET["limit"]))
 	{
 	$fields[]='note';
@@ -2913,7 +2931,6 @@ else
 $options = $name = '';
 if(is_admin() && !isset($_GET["rsvp_print"]))
 {
-$options .= sprintf('<option value="%d">%s</option>',0,__('Add New','rsvpmaker') );
 if(!empty($master_row) )
 foreach($master_row as $id => $name)
 	{
@@ -2924,12 +2941,30 @@ foreach($master_row as $id => $name)
 ?>
 <h3><?php _e('Edit Entries','rsvpmaker');?></h3>
 <form action="edit.php" method="get">
-<select name="edit_rsvp"><?php echo $options; ?></select>
+<select name="edit_rsvp"><option value="0">Add New</option><?php echo $options; ?></select>
 <input type="hidden" name="page" value="rsvp">
 <input type="hidden" name="post_type" value="rsvpmaker">
 <input type="hidden" name="event" value="<?php echo $_GET["event"]; ?>">
 <button><?php _e('Edit','rsvpmaker');?></button>
 </form>
+
+<h3><?php _e('Move Between Events','rsvpmaker');?></h3>
+<p><?php _e('Transfers the individual who registered and any guests registered as part of the same party to another event. Payment status is also transferred.'); ?></p>
+<form action="<?php admin_url('edit.php?page=rsvp&post_type=rsvpmaker&event='.$_GET['event']) ?>" method="post">
+<p><select name="move_rsvp"><option value=""><?php _e('Pick Entry','rsvpmaker'); ?></option><?php echo $options; ?></select>
+to <select name="move_to">
+<?php 
+$future = get_future_events('',50);
+if($future)
+foreach($future as $event) {
+	if($event->ID != $_GET['event'])
+	printf('<option value="%d">%s - %s</option>',$event->ID,$event->post_title,$event->date);
+}
+?>
+</select> </p>
+<button><?php _e('Move','rsvpmaker');?></button>
+</form>
+
 <?php
 
 if(!empty($owed_list) )
@@ -2943,7 +2978,7 @@ echo $owed_list;
 } // end is admin
 
 }
-
+if(!empty($emails))
 return $emails;
 } } // end format_rsvp_details
 
@@ -3054,7 +3089,7 @@ if(isset($custom_fields["_rsvp_count_party"][0]) && $custom_fields["_rsvp_count_
 			break;
 		$display[] = $value.' @ '.(($rsvp_options["paypal_currency"] == 'USD') ? '$' : $rsvp_options["paypal_currency"]).' '.number_format($price,2,$rsvp_options["currency_decimal"],$rsvp_options["currency_thousands"]);
 		}
-	$number_prices = sizeof($display);
+	$number_prices = (empty($display)) ? 0 : sizeof($display);
 	if($number_prices)
 		{
 			if($number_prices == 1)
@@ -3345,20 +3380,11 @@ function rsvp_reminder_activation() {
 		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 }
 
-function rsvp_reminder_reset($basehour) {
-	wp_clear_scheduled_hook('rsvp_daily_reminder_event'); //
-	$hour = $basehour - get_option('gmt_offset');
-	$t = rsvpmaker_mktime($hour,0,0,date('n'),date('j'),date('Y'));
-	wp_schedule_event($t, 'daily', 'rsvp_daily_reminder_event');
-}
-
-
-
 if(!function_exists('rsvp_daily_reminder') )
 {
 function rsvp_daily_reminder() {
 rsvpautorenew_test(); //also check for templates that autorenew
-
+rsvpmaker_reminders_nudge(); //make sure events with reminders set are in cron
 global $wpdb;
 global $rsvp_options;
 

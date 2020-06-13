@@ -158,7 +158,9 @@ function rsvpmaker_block_cgb_editor_assets() {
 
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_type', $post->post_type);
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
-	
+	if($post->post_type == 'rsvpemail')
+	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'related_documents', get_related_documents ($post->ID,'rsvpemail'));
+
 	global $post, $rsvp_options, $current_user;
 	$template_id = 0;
 	if(is_admin() && ($post->post_type == 'rsvpmaker') && isset($_GET['action']) && $_GET['action'] == 'edit')
@@ -172,22 +174,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$bottom_message= '';
 		$complex_pricing = rsvp_complex_price($post->ID);
 		$complex_template = get_post_meta($post->ID,'complex_template',true);
-		$id = get_post_meta($post->ID,'payment_confirmation_message',true);
 		$chosen_gateway = get_rsvpmaker_payment_gateway ();
-		if($id)
-			$edit_payment_confirmation = admin_url('post.php?post='.$id.'&action=edit&back='.$post->ID);
-		elseif(empty($chosen_gateway) || ($chosen_gateway == 'Cash or Custom') ) {
-			$edit_payment_confirmation = '';
-		}
-		else {
-			$data['post_title'] = 'Payment Confirmation:'.$post->ID;
-			$data['post_type'] = 'rsvpemail';
-			$data['post_status'] = 'draft';
-			$data['post_author'] = $current_user->ID;
-			$id = wp_insert_post($data);
-			update_post_meta($post->ID,'payment_confirmation_message',$id);
-			$edit_payment_confirmation = admin_url('post.php?post='.$id.'&action=edit&back='.$post->ID);
-		}
+		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.$post->ID);
 		$sked = get_template_sked($post->ID);// get_post_meta($post->ID,'_sked',true);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
@@ -310,7 +298,10 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'form_edit_post' => $form_edit_post,			
 			'complex_pricing' => $complex_pricing,		
 			'complex_template' => $complex_template,
-			'edit_payment_confirmation' => $edit_payment_confirmation
+			'edit_payment_confirmation' => $edit_payment_confirmation,
+			'related_document_links' => get_related_documents (),
+			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
+			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'),
 			)
 	);
 
