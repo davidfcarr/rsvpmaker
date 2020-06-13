@@ -267,6 +267,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 
 	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
 	{
+		$related_documents = get_related_documents ();
+		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');
 		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',
         array(
 			'projected_label' => $projected_label,'projected_url' => $projected_url,
@@ -299,7 +301,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'complex_pricing' => $complex_pricing,		
 			'complex_template' => $complex_template,
 			'edit_payment_confirmation' => $edit_payment_confirmation,
-			'related_document_links' => get_related_documents (),
+			'related_document_links' => $related_documents,
 			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
 			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'),
 			)

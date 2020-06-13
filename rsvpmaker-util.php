@@ -1316,7 +1316,7 @@ function get_form_links($post_id, $t, $parent_tag) {
 		'id' => 'edit_form',
 		'title' => 'RSVP Form'.$label,
 		'href'  => admin_url('post.php?action=edit&post='.$form_id.'&back='.$post_id),
-		'meta'  => array( 'class' => 'edit_form')
+		'meta'  => array( 'class' => 'rsvpmenu')
 	);
 	if(!empty($label)) {
 		//if inherited, provide option to customize
@@ -1325,8 +1325,8 @@ function get_form_links($post_id, $t, $parent_tag) {
 			'parent'    => 'edit_form',
 			'id' => 'customize_form',
 			'title' => 'RSVP Form -> Customize',
-			'href'  => $formurl,
-			'meta'  => array( 'class' => 'customize_form')
+			'href'  => admin_url("edit.php?title=Form&rsvpcz=_rsvp_form&post_id=$post_id&source=".$form_id),//$formurl,
+			'meta'  => array( 'class' => 'rsvpmenu-custom')
 		);
 	}
 return $args;
@@ -1352,7 +1352,7 @@ $args[] = array(
 	'id' => 'edit_confirm',
 	'title' => 'Confirmation Message'.$label,
 	'href'  => admin_url('post.php?action=edit&post='.$confirm_id.'&back='.$post_id),
-	'meta'  => array( 'class' => 'edit_form')
+	'meta'  => array( 'class' => 'rsvpmenu')
 );
 if(!empty($label)) {
 	//if inherited, provide option to customize
@@ -1361,8 +1361,8 @@ if(!empty($label)) {
 		'parent' => 'edit_confirm', //$parent_tag,
 		'id' => 'customize_confirmation',
 		'title' => 'Confirmation -> Customize',
-		'href'  => $confurl,
-		'meta'  => array( 'class' => 'customize_confirmation')
+		'href'  => admin_url("edit.php?title=Confirmation&rsvpcz=_rsvp_confirm&post_id=$post_id&source=".$confirm_id),
+		'meta'  => array( 'class' => 'rsvpmenu-custom')
 	);
 }
 
@@ -1373,6 +1373,7 @@ if($results)
 foreach($results as $row)
 {
 	$hours = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
+	$meta_key = $row->meta_key;
 	$type = ($hours > 0) ? 'FOLLOW UP' : 'REMINDER';
 	$reminder = rsvp_get_reminder($post_id,$hours);
 	$parent = $reminder->post_parent;//get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
@@ -1383,18 +1384,50 @@ foreach($results as $row)
 		'id' => $identifier,
 		'title' => $type.' '.$hours.' hours'.$label,
 		'href'  => admin_url('post.php?action=edit&post='.$reminder->ID),
-		'meta'  => array( 'class' => 'reminder'.$hours),
+		'meta'  => array( 'class' => 'rsvpmenu'),
 	);
 	if(!empty($label))
 	{
 		$args[] = array(
 			'parent'    => $identifier,
 			'id' => $identifier.'custom',
-			'title' => $type.' '.$hours.' hours'.$label,
-			'href'  => admin_url('post.php?action=edit&post='.$reminder->ID),
-			'meta'  => array( 'class' => 'rsvpmessage rsvpmessage-custom'),
-		);			
+			'title' => $type.' '.$hours.' hours -> Customize',
+			'href'  => admin_url("edit.php?title=Reminder $hours&rsvpcz=$meta_key&post_id=$post_id&source=".$reminder->ID),
+			'meta'  => array( 'class' => 'rsvpmenu-custom'),
+		);
 	}
+}
+
+$payconf = get_post_meta($post_id,'payment_confirmation_message',true);
+$meta_key = 'payment_confirmation_message';
+if(empty($payconf) )
+{
+	$args[] = array(
+		'parent' => $parent_tag,
+		'id' => 'edit_payment_confirmation',
+		'title' => 'Payment Confirmation (New)',
+		'href'  => admin_url("edit.php?title=Payment Confirmation&rsvpcz=$meta_key&post_id=$post_id"),
+		'meta'  => array( 'class' => 'rsvpmenu')
+	);	
+}
+else {
+	$payparent = rsvpmaker_parent($payconf);
+	$label = ($payparent == $t) ? ' (from Template)' : '';
+	$args[] = array(
+		'parent' => $parent_tag,
+		'id' => 'edit_payment_confirmation',
+		'title' => 'Payment Confirmation'.$label,
+		'href'  => admin_url('post.php?action=edit&post='.$payconf),
+		'meta'  => array( 'class' => 'rsvpmenu')
+	);
+	if(!empty($label))	
+	$args[] = array(
+		'parent' => 'edit_payment_confirmation',
+		'id' => 'edit_payment_confirmation_custom',
+		'title' => 'Payment Confirmation -> Customize',
+		'href'  => admin_url("edit.php?title=Payment Confirmation&rsvpcz=$meta_key&post_id=$post_id&source=$payconf"),
+		'meta'  => array( 'class' => 'rsvpmenu-custom')
+	);
 }
 
 return $args;
@@ -1415,33 +1448,6 @@ $confs = get_conf_links($post_id, $t, $parent_tag);
 foreach($confs as $arg)
 	$args[] = $arg;
 
-		$payconf = get_post_meta($post_id,'payment_confirmation_message',true);
-		if(empty($payconf) || (rsvpmaker_parent($payconf) != $t) )
-		{
-			$args[] = array(
-				'parent' => $parent_tag,
-				'id' => 'edit_payment_confirmation',
-				'title' => 'Payment Confirmation',
-				'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id),
-				'meta'  => array( 'class' => 'edit_form')
-			);	
-		}
-		else {
-			$args[] = array(
-				'parent' => $parent_tag,
-				'id' => 'edit_payment_confirmation',
-				'title' => 'Payment Confirmation (from Template)',
-				'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id),
-				'meta'  => array( 'class' => 'edit_form')
-			);	
-			$args[] = array(
-				'parent' => $parent_tag,
-				'id' => 'edit_payment_confirmation',
-				'title' => 'Payment Confirmation -> Customize',
-				'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id.'&source='.$t),
-				'meta'  => array( 'class' => 'edit_form')
-			);
-		}
 
 		$forms = get_form_links($post_id, $t, $parent_tag);
 		foreach($forms as $arg)
@@ -1551,6 +1557,8 @@ function get_related_documents ( $post_id = 0, $query = '') {
 	} // end this is a default message
 
 	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
+	if(!empty($_GET['back']))
+		$rsvp_parent = (int) $_GET['back'];
 	if($rsvp_parent)
 	{
 	$args[] = array(
@@ -1571,9 +1579,9 @@ function get_related_documents ( $post_id = 0, $query = '') {
 	'id'    => 'rsvpmaker_options',
 	'title' => 'RSVP / Event Options',
 	'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
-	'meta'  => array( 'class' => 'edit-rsvpmaker-options')
+	'meta'  => array( 'class' => 'rsvpmenu')
 	);
-	$more = get_more_related(get_post($post->post_parent), $post->post_parent, has_template($post->post_parent), $parent_tag);
+	$more = get_more_related(get_post($rsvp_parent), $rsvp_parent, has_template($rsvp_parent), $parent_tag);
 	foreach($more as $add)
 		$args[] = $add;
 	return $args;

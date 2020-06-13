@@ -50,9 +50,9 @@ if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
 }	
 
 if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
-	$meta_tag = $_GET['rsvpcz'];
+	$meta_key = $_GET['rsvpcz'];
 	$parent = (int) $_GET['post_id'];
-	$title = $_GET['title'].':'$parent;
+	$title = $_GET['title'].':'.$parent;
 	$content = '';
 	if(isset($_GET['source'])) {
 		$source = (int) $_GET['source'];
@@ -64,15 +64,21 @@ if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
 	$new["post_title"] = $title;
 	$new["post_parent"] = $parent;
 	$new["post_status"] = 'publish';
-	$new["post_type"] = 'rsvpemail';
+	$new["post_type"] = ($meta_key == '_rsvp_form') ? 'rsvpmaker' : 'rsvpemail';
 	$new["post_author"] = $current_user->ID;
 	$new["post_content"] = $content;
 	$id = wp_insert_post($new);
-	if($id)
-		update_post_meta($parent,$meta_tag,$id);	
+	if(!$id)
+		return;
+	if($source)
+		rsvpmaker_copy_metadata($source, $id);
+	update_post_meta($parent,$meta_key,$id);
+	if($meta_key == '_rsvp_form')
+		update_post_meta($id,'_rsvpmaker_special','RSVP Form');//important to make form blocks available
+	else
 		update_post_meta($id,'_rsvpmaker_special',$title);
-	}
 }
+
 
 if(isset($_GET['customize_rsvpconfirm'])) {
 	$parent = (int) $_GET['post_id'];
@@ -191,7 +197,10 @@ if(isset($_GET['customize_form'])) {
 }
 
 if(!empty($id)) {
-	header('Location: '.admin_url('post.php?action=edit&post=').$id);
+	$destination = admin_url('post.php?action=edit&post=').$id;
+	if(!empty($post_id))
+		$destination .= '&back='.$post_id;
+	header('Location: '.$destination);
 	exit();
 }
 	

@@ -202,7 +202,7 @@ metaKey="_rsvp_on"/></p>
         >
 <ul>
 <li><a href={wp.data.select('core/editor').getPermalink()}>{__('View Event','rsvpmaker')}</a></li>
-{rsvpmaker_ajax.related_document_links.map( function (x) {return <li><a href={x.href}>{x.title}</a></li>} )}
+{rsvpmaker_ajax.related_document_links.map( function (x) {return <li class={x.class}><a href={x.href}>{x.title}</a></li>} )}
 </ul>
 </PanelBody>
 
@@ -329,7 +329,7 @@ metaKey="_rsvp_count"/>
 </div>
 }
 {
-	(rsvpmaker_ajax.edit_payment_confirmation != '') && <p><a href={rsvpmaker_ajax.edit_payment_confirmation} target="_blank">{__('Edit Payment Confirmation Message')}</a></p> 
+	(rsvpmaker_ajax.edit_payment_confirmation != '') && <p>See <strong>Confirmation/Notifications</strong> for paymment confirmation message.</p> 
 }
 {
 	(rsvpmaker_ajax.edit_payment_confirmation == '') && <p>{__('Neither PayPal nor Stripe is active','rsvpmaker')}</p> 
