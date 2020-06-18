@@ -61,7 +61,7 @@ add_action( 'init', function(){
 	register_meta( 'post', 'simple_price', $args );
 	register_meta( 'post', 'simple_price_label', $args );
 	register_meta( 'post', 'venue', $args );
-	$date_fields = array('_firsttime','_endfirsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration');
+	$date_fields = array('_firsttime','_endfirsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration','_sked_duration','_sked_end');
 	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
 	foreach($date_fields as $field)
 		register_meta( 'post', $field, $args );

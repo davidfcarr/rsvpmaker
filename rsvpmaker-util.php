@@ -155,8 +155,11 @@ for($i=0; $i < 24; $i++)
 		$twelvehour = ($i - 12) ." p.m.";
 	else		
 		$twelvehour = $i." a.m.";
-
-	$houropt .= sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
+	if(strpos($rsvp_options['time_format'],'%p'))
+		$houropt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$twelvehour);
+	else
+		$houropt .= sprintf('<option  value="%s" %s>%s:</option>',$padded,$selected,$padded);
+	//sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
 	}
 
 for($i=0; $i < 60; $i++)
@@ -929,27 +932,34 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 		$content = rsvp_simple_price($post_id);
 	if($meta_key == 'simple_price_label')
 		$content = rsvp_simple_price_label($post_id);
-	//fix for some older posts
+	//fix for some older posts 
 	$date_fields = array('_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
 	if(in_array($meta_key,$date_fields))
 		{
 			$datetime = get_rsvp_date($post_id);
-			$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
+			$sked = get_template_sked($post_id);
 			if($datetime) {
 				if($meta_key == '_firsttime')
 				{
-					$content = get_post_meta($post_id, '_'.$datetime,true);
+					if(rsvpmaker_is_template($post_id))
+						$content = get_post_meta($post_id, '_sked_duration',true);
+					else
+						$content = get_post_meta($post_id, '_'.$datetime,true);
 				}
 				elseif(is_admin() && ($meta_key == '_endfirsttime'))
 				{
-					$end = $wpdb->get_var("SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='_endfirsttime' and post_id=$post_id ");
-					if(empty($end))
-					{
-						//default value for editor
-						$content = rsvpmaker_date('H:i',rsvpmaker_strtotime($datetime .' +1 hour'));
+					if(rsvpmaker_is_template())
+						$content = get_post_meta($post_id,'_sked_end');
+					else {
+						$end = $wpdb->get_var("SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='_endfirsttime' and post_id=$post_id ");
+						if(empty($end))
+						{
+							//default value for editor
+							$content = rsvpmaker_date('H:i',rsvpmaker_strtotime($datetime .' +1 hour'));
+						}	
 					}
 				}
-			} // end event with date
+			} 
 			elseif ($sked) {
 				$week = (empty($sked["week"]) ) ? 0 : $sked["week"]; 
 				$dayofweek = (empty($sked["dayofweek"]) ) ? '': $sked["dayofweek"];
@@ -960,7 +970,7 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 				{
 					$content = $duration;
 				}
-				elseif($meta_key == '_endfirsttime')
+				elseif(($meta_key == '_endfirsttime'))
 				{
 					if(empty($sked['end']))
 					{
@@ -970,7 +980,7 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 					else {
 						$content = $sked["end"];
 					}
-				}				
+				}	
 				elseif($meta_key == '_template_start_hour')
 				{
 					$content = $hour;
@@ -1004,11 +1014,23 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 				}
 			}
 		}
-	if($content)
+	if($content) {
+		update_post_meta_unfiltered($post_id,$meta_key,$content);
 		return array($content);
+	}
 	
 	return $null; // don't alter
 }
+
+function update_post_meta_unfiltered($post_id,$meta_key,$meta_value) {
+	global $wpdb;
+	$meta_id = $wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE post_id=$post_id and meta_key='$meta_key' ");
+	if($meta_id)
+		$wpdb->query("UPDATE $wpdb->postmeta SET meta_value='$meta_value' WHERE meta_id=$meta_id ");
+	else
+		$wpdb->query("INSERT INTO $wpdb->postmeta SET meta_value='$meta_value', post_id=$post_id, meta_key='$meta_key' ");
+}
+
 
 add_filter('get_post_metadata','get_rsvp_post_metadata',10,4);
 
@@ -1032,9 +1054,7 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 		update_post_meta($post_id,'_per',$per);
 		return true; //no need to create a field for one of these values
 	}
-
-
-	$date_fields = array('_rsvp_dates','_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
+	$date_fields = array('_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
 	if(in_array($meta_key,$date_fields) && ($sked = get_template_sked($post_id) ) && is_array($sked) )
 		{
 			$week = $sked["week"];
@@ -1044,15 +1064,15 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 			$duration = $sked["duration"];
 			if($meta_key == '_firsttime')
 			{
-				rsvpmaker_debug_log($meta_value,$meta_key);
+				rsvpmaker_debug_log('firsttime_test'.$meta_value,$meta_key);
 				$sked["duration"] = $meta_value;
 			}
-			elseif($meta_key == '_endfirsttime')
+			elseif(($meta_key == '_endfirsttime') || ($meta_key == '_endfirsttime'))
 			{
 				rsvpmaker_debug_log($meta_value,$meta_key);
 				$sked['end'] = $meta_value;
-			}				
-			elseif($meta_key == '_template_start_hour')
+			}
+			if($meta_key == '_template_start_hour')
 			{
 				$sked["hour"] = $meta_value;
 				rsvpmaker_debug_log($meta_value,$meta_key);
@@ -1072,9 +1092,9 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 				rsvpmaker_debug_log($meta_value,$meta_key);
 				$sked["week"] = array($meta_value);
 			}
-		new_template_schedule($post_id,$sked);
+		new_template_schedule($post_id,$sked,'update_rsvp_post_metadata');
 		//update_post_meta($post_id,'_sked',$sked);
-		rsvpmaker_debug_log($sked,'modified sked');
+		//rsvpmaker_debug_log($sked,'modified sked');
 		return true; //short circuit regular meta update
 		}
 	rsvpmaker_debug_log($meta_value,$meta_key.' - update_rsvp_post_metadata');
@@ -1104,10 +1124,11 @@ function get_template_sked($post_id) {
 	global $wpdb, $rsvp_options;
 	$week_array = get_week_array();
 	$day_array = get_day_array();
-	$singles = array('hour','minutes','duration','stop');
+	$singles = array('hour','minutes','duration','end','stop');
 	$newsked = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_sked_%' ");
 	if($newsked) {
 		//retrieved new format
+		rsvpmaker_debug_log($newsked,'newsked');
 		$dayofweek = array();
 		$week = array();
 		foreach($newsked as $row) {
@@ -1124,6 +1145,7 @@ function get_template_sked($post_id) {
 				}
 			$sked[$key] = $row->meta_value;
 		}
+		rsvpmaker_debug_log($sked,'sked from newsked newsked');
 		sort($week);
 		sort($dayofweek);
 		$sked['dayofweek'] = $dayofweek;
@@ -1166,7 +1188,10 @@ function get_template_sked($post_id) {
 	}
 }
 
-function new_template_schedule($post_id,$template) {
+function new_template_schedule($post_id,$template,$source = '') {
+	rsvpmaker_debug_log($template,'submitted to new template schedule');
+	if(!empty($source))
+		rsvpmaker_debug_log($source,'new template source');
 	if(is_array($template["week"]))
 	{
 		$weeks = $template["week"];
@@ -1179,13 +1204,19 @@ function new_template_schedule($post_id,$template) {
 	}
 	$hour = (isset($template['hour'])) ? $template['hour'] : '00';	
 	$minutes = (isset($template['minutes'])) ? $template['minutes'] : '00';	
-	$duration = (isset($template['duration'])) ? $template['duration'] : '';	
+	$duration = (isset($template['duration'])) ? $template['duration'] : '';
+	$end = (isset($template['end'])) ? $template['end'] : '';
 	$stop = (isset($template['stop'])) ? $template['stop'] : '';	
-	$new_template_schedule = build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$stop);
+	$new_template_schedule = build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$end,$stop);
+	rsvpmaker_debug_log($new_template_schedule,'new_template_schedule');
 	foreach($new_template_schedule as $label => $value) {
+/*		if($label == 'duration')
+			update_post_meta_unfiltered($post_id,'_firsttime',$value);
+		elseif($label == 'end')
+			update_post_meta_unfiltered($post_id,'_endfirsttime',$value);
+*/
 		$label = '_sked_'.$label;
-		$value = $value;
-		update_post_meta($post_id,$label,$value);
+		update_post_meta_unfiltered($post_id,$label,$value);
 	}
 	$new_template_schedule['week'] = $weeks;
 	$new_template_schedule['dayofweek'] = $dows;
@@ -1193,7 +1224,7 @@ function new_template_schedule($post_id,$template) {
 	return $new_template_schedule;
 }
 
-function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$stop) {
+function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$end,$stop) {
 		$weekarray = get_week_array();
 		foreach($weekarray as $index => $label)
 		{
@@ -1210,6 +1241,10 @@ function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,
 	$atomic_sked['minutes'] = (empty($minutes)) ? '00' : $minutes;
 	$atomic_sked['stop'] = $stop;
 	$atomic_sked['duration'] = $duration;
+	$atomic_sked['end'] = $end;
+	//rsvpmaker_debug_log($atomic_sked,'build template schedule');
+	//$atomic_sked['firsttime'] = $duration;
+	//$atomic_sked['endfirsttime'] = $end;
 	return $atomic_sked;
 }
 
@@ -1336,11 +1371,13 @@ function get_conf_links ($post_id, $t, $parent_tag) {
 global $rsvp_options, $wpdb;
 $label = '';
 $confirm_id = get_post_meta($post_id,'_rsvp_confirm',true);
-if($confirm_id) {
+if($confirm_id == $rsvp_options['rsvp_confirm'])
+	$label = ' (Default)';
+elseif($confirm_id) {
 	$cpost = get_post($confirm_id);
 	if(empty($cpost))
 	{
-		$confirm_id = $rsvp_options['rsvp_confirm'];
+		$confirm_id == $rsvp_options['rsvp_confirm'];
 		$label = ' (Default)';	
 	}
 	else {
@@ -1355,6 +1392,7 @@ else {
 	$confirm_id = $rsvp_options['rsvp_confirm'];
 	$label = ' (Default)';
 }
+
 $args[] = array(
 	'parent'    => $parent_tag,
 	'id' => 'edit_confirm',
@@ -1652,252 +1690,12 @@ function get_related_documents ( $post_id = 0, $query = '') {
 		'meta'  => array( 'class' => 'edit-rsvpmaker-options')
 	);
 
-	//options page
 	$more = get_more_related($post, $post_id, $t, $parent_tag);
 	foreach($more as $add)
 		$args[] = $add;
-	//rsvpmaker_debug_log($args,'menu array');
 
 return $args;
 }
-
-/*		
-		
-		return $args;
-	}
-}
-		}
-		
-	if(isset($_GET['page']) && isset($_GET['post_id']))
-	{
-		$args[] = array(
-		'id'    => 'edit',
-		'title' => __('Edit Event','rsvpmaker'),
-		'href'  => admin_url('post.php?action=edit&post='.$post->ID),
-		'meta'  => array( 'class' => 'edit'));
-		$args[] = array(
-			'id'    => 'view',
-			'title' => __('View Event','rsvpmaker'),
-			'href'  => get_permalink($post->ID),
-			'meta'  => array( 'class' => 'edit'));
-	}
-		
-	if(isset($post->post_type) && !empty($post->post_parent) && (($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpemail')) && current_user_can('edit_post',$post->ID) )
-		{
-		$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
-			$args[] = array(
-			'id'    => 'rsvpmaker_parent',
-			'title' => __('Edit Parent Event','rsvpmaker'),
-			'href'  => admin_url('post.php?action=edit&post='.$rsvp_parent),
-			'meta'  => array( 'class' => 'edit-rsvpmaker')
-		);
-		$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
-			$args[] = array(
-			'id'    => 'view_parent',
-			'parent'    => 'rsvpmaker_parent',
-			'title' => __('View Parent Event','rsvpmaker'),
-			'href'  => get_permalink($rsvp_parent),
-			'meta'  => array( 'class' => 'view-rsvpmaker')
-		);
-		$args += get_more_related(get_post($post->post_parent), $post->post_parent, has_template($post->post_parent), 'rsvpmaker_parent');
-
-		if($post->post_type == 'rsvpemail')
-			return $args; // next 2 do not apply
-		}
-	
-	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') && current_user_can('edit_post',$post->ID) )
-		{
-		$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
-		if($rsvp_parent)
-		{
-		$args[] = array(
-			'parent'    => 'rsvpmaker_parent',
-			'id'    => 'rsvpmaker_options',
-			'title' => 'RSVP / Event Options',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$rsvp_parent),
-			'meta'  => array( 'class' => 'edit-rsvpmaker-options')
-		);
-			
-		$args[] = array(
-			'parent'    => 'rsvpmaker_parent',
-			'id' => 'confirmation_reminders',
-			'title' => 'Reminder Messages',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$rsvp_parent),
-			'meta'  => array( 'class' => 'confirmation_reminders')
-		);
-			
-		$formurl = rsvp_form_url($rsvp_parent);
-		if(!empty($formurl) && !strpos($post->post_title,'Form:'))
-		{
-		$args[] = array(
-			'parent'    => 'rsvpmaker_parent',
-			'id' => 'edit_form',
-			'title' => 'RSVP Form',
-			'href'  => $formurl,
-			'meta'  => array( 'class' => 'edit_form')
-		);
-		}
-	
-		$args[] = array(
-			'parent'    => 'rsvpmaker_parent',
-			'id' => 'rsvp_report',
-			'title' => 'RSVP Report',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$rsvp_parent),
-			'meta'  => array( 'class' => 'edit_form')
-		);
-	
-		return $args;
-		}
-
-		$options_link = array(
-			'id'    => 'rsvpmaker_options',
-			'title' => 'RSVP / Event Options',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID),
-			'meta'  => array( 'class' => 'edit-rsvpmaker-options')
-		);
-		if(!is_admin() || isset($_GET['page']))
-			$options_link['parent'] = 'edit';
-		$args[] = $options_link;
-
-		$formurl = rsvp_form_url($post_id);
-			
-		$args[] = array(
-			'parent'    => $parent_tag,
-			'id' => 'edit_form',
-			'title' => 'RSVP Form',
-			'href'  => $formurl,
-			'meta'  => array( 'class' => 'edit_form')
-		);
-
-		$confurl = rsvp_confirm_url($post->ID);
-		if(!empty($confurl))
-		{	
-		$args[] = array(
-			'parent' => $parent_tag,
-			'id' => 'edit_confirmation',
-			'title' => 'Confirmation Message',
-			'href'  => $confurl,
-			'meta'  => array( 'class' => 'edit_form')
-		);
-		}
-
-		$args[] = array(
-			'parent' => $parent_tag,
-			'id' => 'edit_payment_confirmation',
-			'title' => 'Payment Confirmation Message',
-			'href'  => admin_url("?payment_confirmation=1&post_id=".$post_id),
-			'meta'  => array( 'class' => 'edit_form')
-		);
-			
-		$args[] = array(
-			'parent' => $parent_tag,
-			'id' => 'confirmation_reminders',
-			'title' => 'Reminder Messages',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
-			'meta'  => array( 'class' => 'confirmation_reminders')
-		);
-	
-		if($t)
-		{
-		$args [] = array('parent' => $parent_tag, 'id' => 'rsvpmaker-edit-template', 'href' => admin_url('post.php?action=edit&post=').$t, 'title' => __('Edit Template','rsvpmaker'), 'meta' => array('class' => 'rsvpmaker-edit-template'));
-	
-		$args[] = array(
-			'parent' => $parent_tag,
-			'id' => 'template-options',
-			'title' => 'Template Options',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t),
-			'meta'  => array( 'class' => 'template-options')
-		);
-		$args[] = array('parent' => $parent_tag, 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template'));
-		}
-		
-		$args[] = array(
-			'parent'    => $parent_tag,
-			'id' => 'rsvp_report',
-			'title' => 'RSVP Report',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp&event='.$post->ID),
-			'meta'  => array( 'class' => 'edit_form')
-		);
-		
-		if(rsvpmaker_is_template())
-		{
-		$args[] = array(
-			'id'    => 'rsvpmaker_create_update',
-			'parent'    => $parent_tag,
-			'title' => 'Create / Update',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post->ID),
-			'meta'  => array( 'class' => 'rsvpmaker-create-update')
-		);
-		}
-		
-		}
-	
-	// template Create / Update screen
-	if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_template_list') && isset($_GET['t']) )
-		{
-		$post_id = (int) $_GET['t'];
-		$args[] = array(
-			'id'    => 'edit',
-			'title' => 'Edit Event Template',
-			'href'  => admin_url('post.php?action=edit&post='.$post_id),
-			'meta'  => array( 'class' => 'edit')
-		);
-	
-		$args[] = array(
-			'parent'    => 'edit',
-			'id' => 'template-options',
-			'title' => 'Template Options',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),
-			'meta'  => array( 'class' => 'template-options')
-		);
-	
-		$args[] = array(
-			'parent'    => 'edit',
-			'id' => 'confirmation_reminders',
-			'title' => 'Confirmation / Reminder Messages',
-			'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id),
-			'meta'  => array( 'class' => 'confirmation_reminders')
-		);
-		
-		$formurl = rsvp_form_url($post_id);
-			
-		$args[] = array(
-			'parent'    => 'edit',
-			'id' => 'edit_form',
-			'title' => 'Edit / Customize RSVP Form',
-			'href'  => $formurl,
-			'meta'  => array( 'class' => 'edit_form')
-		);
-		
-		}
-	
-	if(isset($_GET['page']) && ($_GET['page'] == 'rsvpmaker_scheduled_email_list') && isset($_GET['post_id']) )
-		{
-		$args[] = array(
-			'id'    => 'edit-email',
-			'title' => 'Edit Email',
-			'href'  => admin_url('post.php?action=edit&post='.$_GET['post_id']),
-			'meta'  => array( 'class' => 'edit-email')
-		);
-		$args[] = array(
-			'id'    => 'view-email',
-			'title' => 'View Email',
-			'href'  => get_permalink($post_id),
-			'meta'  => array( 'class' => 'view-email')
-		);
-		}
-	if(isset($post->post_type) && ($post->post_type == 'rsvpemail') && (is_admin()  || current_user_can('edit_post',$post->ID)) && empty($post->post_parent) && !strpos($post->post_title,':Default') )
-		{
-		$args[] = array(
-			'id'    => 'rsvpemail_schedule',
-			'title' => 'Scheduled Email',
-			'href'  => admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post->ID),
-			'meta'  => array( 'class' => 'edit-rsvpemail_schedule')
-		);
-		}
-	return $args;
-}
-*/
 
 function test_get_related_documents() {
 	$args = get_related_documents();

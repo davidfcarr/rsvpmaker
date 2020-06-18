@@ -982,6 +982,7 @@ registerBlockType( 'rsvpmaker/future-rsvp-links', {
 	},
 } );
 
+//default to full screen off for RSVPMaker and related documents
 if((rsvpmaker_type == 'rsvpemail') || (rsvpmaker_type == 'rsvpmaker'))
 {
 	const isFullscreenMode = wp.data.select( 'core/edit-post' ).isFeatureActive( 'fullscreenMode' ); 

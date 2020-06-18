@@ -682,8 +682,12 @@ if(!empty($atts['exclude_type']))
 		$post->post_title = __('Title left blank','rsvpmaker');
 	
 	$t = rsvpmaker_strtotime($post->datetime);
-	$duration_type = get_post_meta($post->ID,'_'.$post->datetime, true);
-	$end = get_post_meta($post->ID,'_end'.$post->datetime, true);
+	$duration_type = get_post_meta($post->ID,'_firsttime', true);
+	if(empty($duration_type))
+		$duration_type = get_post_meta($post->ID,'_'.$post->datetime, true);
+	$end = get_post_meta($post->ID,'_endfirsttime', true);
+	if(empty($end))
+		$end = get_post_meta($post->ID,'_end'.$post->datetime, true);
 	$time = ($duration_type == 'allday') ? '' : '<br />&nbsp;'.rsvpmaker_strftime($rsvp_options["time_format"],$t);
 	if(($duration_type == 'set') && !empty($end) )
 		{

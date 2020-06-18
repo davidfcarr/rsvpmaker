@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.4.2
-Stable tag: 7.6.8
+Stable tag: 7.7.1
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -118,10 +118,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 7.6.9 =
+
+* Fix for event end times in templates.
+
 = 7.6.8 =
 
 * Tweaks to admin menu options
 * Full screen editing off by default for RSVPMaker and related documents.
+* Option to reset confirmation and reminder messages to default
 
 = 7.6.7 =
 

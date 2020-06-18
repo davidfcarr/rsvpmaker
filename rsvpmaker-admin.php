@@ -299,8 +299,10 @@ for($i=0; $i < 24; $i++)
 		$twelvehour = ($i - 12) ." p.m.";
 	else		
 		$twelvehour = $i." a.m.";
-
-	printf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
+	if(strpos($rsvp_options['time_format'],'%p'))
+		printf('<option  value="%s" %s>%s</option>',$padded,$selected,$twelvehour);
+	else
+		printf('<option  value="%s" %s>%s:</option>',$padded,$selected,$padded);
 	}
 ?>
 </select> 
@@ -2946,6 +2948,25 @@ global $rsvp_options;
 global $current_user;
 $existing = $options = '';
 $templates = rsvpmaker_get_templates();
+$post_id = (isset($_REQUEST["post_id"])) ? (int) $_REQUEST["post_id"] : false;
+
+if($_POST['defaults'])
+{
+	foreach($_POST['defaults'] as $index => $value) {
+		if($index == 'confirmation') {
+			delete_post_meta($post_id,'_rsvp_confirm');
+		}
+		if($index == 'payment_confirmation') {
+			delete_post_meta($post_id,'payment_confirmation_message');
+		}
+		if($index == 'reminders')
+		{
+			$sql = "DELETE FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%'";
+			$wpdb->query($sql);
+		}
+	}
+}
+
 $documents = get_related_documents();
 ?>
 <style>
@@ -2958,7 +2979,6 @@ echo $styles; ?>
 <h1><?php _e('Confirmation / Reminder Messages','rsvpmaker'); ?></h1> 
 <?php
 
-$post_id = (isset($_REQUEST["post_id"])) ? (int) $_REQUEST["post_id"] : false;
 if($post_id)
 	$start_time = get_rsvp_date($post_id);
 
@@ -3081,7 +3101,14 @@ printf('<h3>Add Reminders and Follow Up Messages</h3>
 %s
 <select name="copy_from">%s</select></p>
 <p><input type="checkbox" name="paid_only" value="1"> Send for PAID registrations only</p>
-<p><button>Get</button></p></form>',admin_url('edit.php'),$post_id,$hour_options,__('Based on','rsvpmaker'),$reminder_copy);
+<p><button>Submit</button></p></form>',admin_url('edit.php'),$post_id,$hour_options,__('Based on','rsvpmaker'),$reminder_copy);
+
+printf('<h3>Reset to Defaults</h3>
+<form method="post" action="%s">
+<p><input type="checkbox" name="defaults[confirmation]" value="1" /> Confirmation</p>
+<p><input type="checkbox" name="defaults[payment_confirmation]" value="1"> Payment Confirmation</p>
+<p><input type="checkbox" name="defaults[reminders]" value="1"> Remove Reminders</p>
+<p><button>Submit</button></p></form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id));
 
 ?>
 <h3><?php _e('Webinar Setup','rsvpmaker'); ?></h3>
@@ -3900,7 +3927,7 @@ $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_met
 				if(in_array($meta_key,$meta_keys))
 					continue;
 				$meta_keys[] = $meta_key;
-				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');
+				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur','_rsvp_dates');
 				if(in_array($meta_key, $meta_protect) || strpos($meta_key,'sked') )
 				{
 					$log .= 'Skip '.$meta_key.'<br />';
@@ -4760,7 +4787,26 @@ return sprintf('<select name="%s">%s</select>',$select,$o);
 
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
-$wp_admin_bar->remove_node( 'new-rsvpmaker' );
+$args = array(
+	'parent'    => 'new-rsvpmaker',
+	'id' => 'rsvpmaker_setup_template',
+	'title' => 'New Event Template',
+	'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),
+	'meta'  => array( 'class' => 'rsvpmaker_setup')
+);
+$wp_admin_bar->add_node( $args );
+$templates = rsvpmaker_get_templates();
+foreach($templates as $template) {
+	$args = array(
+		'parent'    => 'new-rsvpmaker',
+		'id' => 'template'.$template->ID,
+		'title' => 'Create/Update: '.$template->post_title,
+		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$template->ID),
+		'meta'  => array( 'class' => 'new_from_template')
+	);
+	$wp_admin_bar->add_node( $args );
+}
+
 $noview = true;
 $argarg = get_related_documents ();
 if(empty($argarg))
