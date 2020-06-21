@@ -399,7 +399,7 @@ function get_confirmation_options($post_id = 0, $documents = array()) {
 		if(($id == 'edit_confirm') || ($id == 'customize_confirmation'))
 		$output .= sprintf('<p><a href="%s">Edit: %s</a></p>',$d['href'],$d['title']);
 	}
-	if(empty($_GET['page']) || $_GET['page'] != 'rsvp_reminders')
+	if((empty($_GET['page']) || $_GET['page'] != 'rsvp_reminders') && !empty($reminders))
 		$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);
 	$templates = get_rsvpmaker_email_template();
 	$chosen = (int) get_post_meta($post_id,'rsvp_tx_template',true);

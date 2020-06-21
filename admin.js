@@ -7,9 +7,10 @@ jQuery(document).ready(function( $ ) {
 		var url = parts[0]+'&rsvpsort='+sort;
 		var top = $('#bulk-action-selector-top').val();
 		var bottom = $('#bulk-action-selector-bottom').val();
-		//console.log(url+' | '+top+' | '+bottom);
 		if((top == '-1') && (bottom == '-1'))
 			window.location.replace(url);
+		console.log($('.rsvpsortwrap').html());
+		$('.rsvpsortwrap').html('<a style="font-size: large;" href="'+url+'">View: '+sort+'</a>');
 	});
 
 	$(document).on( 'click', '.rsvpmaker-nav-tab-wrapper a', function() {

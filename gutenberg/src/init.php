@@ -41,6 +41,7 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/embedform', ['render_callback' => 'rsvpmaker_form']);	
 	register_block_type('rsvpmaker/schedule', ['render_callback' => 'rsvpmaker_daily_schedule']);
 	register_block_type('rsvpmaker/future-rsvp-links', ['render_callback' => 'future_rsvp_links']);
+	register_block_type('rsvpmaker/submission', ['render_callback' => 'rsvpmaker_submission']);
 }
 
 add_action( 'init', function(){

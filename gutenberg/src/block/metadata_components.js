@@ -245,9 +245,6 @@ var MetaEndDateControl = wp.compose.compose(
 				else {
 					hour = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_sked_hour'];
 					minutes = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_sked_minutes'];
-					console.log('template hour / minutes');
-					console.log(hour);
-					console.log(minutes);
 					var h = parseInt(hour)+1;
 					if(h < 10)
 					hour = '0'+h.toString();

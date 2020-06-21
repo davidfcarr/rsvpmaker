@@ -896,6 +896,12 @@ foreach($templates as $tname => $tfile)
 <br />
 <textarea name="option[dashboard_message]" style="width:90%;"><?php echo $options["dashboard_message"]; ?></textarea>
 
+<h3><?php _e('Event Submissions','rsvpmaker'); ?></h3>
+<p>Notify <input style="width: 90%" type="text" name="option[submissions_to]" id="rsvp_to" value="<?php if(isset($options["submissions_to"])) echo $options["submissions_to"]; elseif(isset($options["rsvp_to"])) echo $options["rsvp_to"];?>" />
+<br />Attribute to <?php $submission_author = (isset($options['submission_author'])) ? $options['submission_author'] : 1; wp_dropdown_users(array('name' => 'option[submission_author]','selected' => $submission_author)); ?>
+</p>
+<p>To accept event submissions on the front end of your website, include the RSVPMaker Event Submission block or [rsvpmaker_submission] shortcode. Submissions are saved as drafts for an editor's approval.</p>
+
 <h3><?php _e('Troubleshooting and Logging','rsvpmaker'); ?></h3>
   <input type="checkbox" name="option[flush]" value="1" <?php if(isset($options["flush"]) && $options["flush"]) echo ' checked="checked" ';?> /> <strong><?php _e('Tweak Permalinks','rsvpmaker'); ?></strong> <?php _e('Check here if you are getting &quot;page not found&quot; errors for event content (should not be necessary for most users).','rsvpmaker'); ?> 
 	<br />
@@ -2019,7 +2025,7 @@ if(isset($_GET["author"]))
 function rsvpmaker_admin_menu() {
 global $rsvp_options;
 do_action('rsvpmaker_admin_menu_top');
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup", "rsvpmaker_setup" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&new_template=1", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Templates",'rsvpmaker'), __("Event Templates",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
 if(!empty($rsvp_options['additional_editors']))
@@ -2536,7 +2542,7 @@ function rsvpmaker_sort_message() {
 				$o .= '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort='.$key).'">'.$option.'</a> ';
 			}
 		}
-		$opt = '<div class="alignleft actions" style="margin-top: -10px;"><select name="rsvpsort" class="rsvpsort">'.$opt.'<select> </div>';
+		$opt = '<div class="alignleft actions rsvpsortwrap" style="margin-top: -10px;" ><select name="rsvpsort" class="rsvpsort">'.$opt.'</select> </div>';
 		echo '<div style="padding: 10px; ">'.$opt;//.$current_sort.$o;
 		echo '</div>';
 	}
@@ -5160,5 +5166,323 @@ else
 }
 	
 }
+
+function rsvpmaker_submission ($atts) {
+global $rsvp_options;
+$defaultto = isset($rsvp_options['submissions_to']) ? $rsvp_options['submissions_to'] : $rsvp_options['rsvp_to'];
+$to = (isset($atts['to'])) ? $atts['to'] : $defaultto;
+ob_start();
+?>
+<style>#rsvpmaker_submission label {
+	display: inline-block;
+	width: 100px;
+}
+</style>
+<script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+<script>
+tinymce.init({
+selector:"textarea",plugins: "link",
+block_formats: 'Paragraph=p',
+menu: {
+format: { title: 'Format', items: 'bold italic | removeformat' },
+style_formats: [
+{ title: 'Inline', items: [
+	{ title: 'Bold', format: 'bold' },
+	{ title: 'Italic', format: 'italic' },
+]},]},
+toolbar: 'bold italic link',
+});	
+</script>
+<?php
+printf('<form method="post" action="%s" id="rsvpmaker_submission">',get_permalink());
+if(isset($_GET['success']))
+{
+echo '<h2>Event Submitted for Review</h2>';
+$post_id = (int) $_GET['success'];
+$post = get_post($post_id);
+$expired = rsvpmaker_strtotime('-5 minutes');
+$submitted_at = rsvpmaker_strtotime($post->post_modified);
+if($submitted_at < $expired)
+{
+	echo '<p>Preview expired</p>';
+}
+else {
+	echo '<p>Preview</p><div style="border: thin dotted #111; padding: 10px; margin: 10px;">';
+	$date = get_rsvp_date($post_id);
+	$t = rsvpmaker_strtotime($date);
+	$date = rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);
+	printf('<h3>%s</h3><h3>%s</h3>%s',$post->post_title,$date,$post->post_content);	
+	echo '</div>';
+}
+}
+	$month = (int) date('m');
+	$year = (int) date('Y');
+	$day = (int) date('j');
+	$hour = 12;
+	$endhour = 13;
+	$minutes = 0;
+	$months = array('January','February','March','April','May','June','July','August','September','October','November','December');
+?>	
+<h2>Event Title: <input name="event_title"></h2>
+	<div id="date">
+<label> <?php echo __('Month','rsvpmaker');?></label>
+	<select id="month" name="month"> 
+	<?php
+	for($i = 1; $i <= 12; $i++)
+	{
+	$monthtext = $months[$i -1];
+	echo "<option ";
+		if($i == $month)
+			echo ' selected="selected" ';
+		echo 'value="'.$i.'">'.$monthtext."</option>\n";
+	}
+	?>
+	</select> 
+	<?php echo __('Day','rsvpmaker');?> 
+	<select  id="day"  name="day"> 
+	<?php
+	if($day == 0)
+		echo '<option value="0">'.__('Day','rsvpmaker').'</option>';
+	for($i = 1; $i <= 31; $i++)
+	{
+	echo "<option ";
+		if($i == $day)
+			echo ' selected="selected" ';
+		echo 'value="'.$i.'">'.$i."</option>\n";
+	}
+	?>
+	</select> 
+	<?php echo __('Year','rsvpmaker');?>
+	<select  id="year" name="year"> 
+	<?php
+	for($i = $year; $i < ($year+2); $i++)
+	{
+	echo "<option ";
+		if($i == $year)
+			echo ' selected="selected" ';
+		echo 'value="'.$i.'">'.$i."</option>\n";
+	}
+	?>
+	</select> 
+	</div> 
+	<div><label><?php echo __('Time','rsvpmaker');?></label> <select class="rsvphour" id="hour" name="hour"> 
+	<?php
+	for($i=0; $i < 24; $i++)
+		{
+		$selected = ($i == $hour) ? ' selected="selected" ' : '';
+		$padded = ($i < 10) ? '0'.$i : $i;
+		if($i == 0)
+			$twelvehour = "12 a.m.";
+		elseif($i == 12)
+			$twelvehour = "12 p.m.";
+		elseif($i > 12)
+			$twelvehour = ($i - 12) ." p.m.";
+		else		
+			$twelvehour = $i." a.m.";
+		if(strpos($rsvp_options['time_format'],'%p'))
+			printf('<option  value="%s" %s>%s</option>',$padded,$selected,$twelvehour);
+		else
+			printf('<option  value="%s" %s>%s:</option>',$padded,$selected,$padded);
+		}
+	?>
+	</select> 
+	 
+	<select  class="rsvpminutes" id="minutes" name="minutes"> 
+	<?php
+	for($i=0; $i < 60; $i ++)
+		{
+		$selected = ($i == $minutes) ? ' selected="selected" ' : '';
+		$padded = ($i < 10) ? '0'.$i : $i;
+		printf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
+		}
+	?>
+	</select></div>
+	
+	<?php
+$houropt = $minopt = '';
+
+for($i=0; $i < 24; $i++)
+{
+$selected = ($i == $endhour) ? ' selected="selected" ' : '';
+$padded = ($i < 10) ? '0'.$i : $i;
+if($i == 0)
+	$twelvehour = "12 a.m.";
+elseif($i == 12)
+	$twelvehour = "12 p.m.";
+elseif($i > 12)
+	$twelvehour = ($i - 12) ." p.m.";
+else		
+	$twelvehour = $i." a.m.";
+if(strpos($rsvp_options['time_format'],'%p'))
+	$houropt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$twelvehour);
+else
+	$houropt .= sprintf('<option  value="%s" %s>%s:</option>',$padded,$selected,$padded);
+//sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
+}
+
+for($i=0; $i < 60; $i++)
+{
+$selected = ($i == 0) ? ' selected="selected" ' : '';
+$padded = ($i < 10) ? '0'.$i : $i;
+$minopt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
+}
+printf('<div><label>%s</label> <span class="end_time"> <select id="endhour" name="endhour" >%s</select> <select id="endminutes" name="endminutes" >%s</select> </span></div>',__('End Time','rsvpmaker'),$houropt,$minopt);
+if(!empty($atts['timezone']))
+{
+?>
+<div><label>Timezone</label> 
+<select id="timezone_string" name="timezone_string">
+<script type="text/javascript" src="<?php echo plugins_url('rsvpmaker/jstz.min.js'); ?>"></script>
+<script>
+var tz = jstz.determine();
+var tzstring = tz.name();
+document.write('<option selected="selected" value="' + tzstring + '">' + tzstring + '</option>');
+</script>
+<optgroup label="U.S. (Common Choices)">
+<option value="America/New_York">New York</option>
+<option value="America/Chicago">Chicago</option>
+<option value="America/Denver">Denver</option>
+<option value="America/Los_Angeles">Los Angeles</option>
+</optgroup>
+<?php $choices = wp_timezone_choice('');
+echo str_replace('<option selected="selected" value="">Select a city</option>','',$choices);
+?>
+</select> <br /><em>Choose a city in the same timezone as you.</em>
+</div>
+<?php
+}//end display timezone
+?>
+<div><label>Your Name</label><input name="rsvpmaker_submission_contact" id="rsvpmaker_submission_contact" /></div>
+<div><label>Email</label><input name="rsvpmaker_submission_email" id="rsvpmaker_submission_email" /></div>
+<div><em>If you want your contact information to be published as part of the event listing, also include it in the description below.</em></div>
+<p>Event Details<br /><textarea id="rsvpmaker_submission_description" name="rsvpmaker_submission_description" rows="5" cols="100"></textarea></p>
+<input type="hidden" name="to" value="<?php echo $to; ?>" /> 
+<input type="hidden" name="rsvpmaker_submission_post" value="<?php echo get_permalink(); ?>" />
+	<p><button>Submit</button></p></form>
+<script>
+jQuery(document).ready(function( $ ) {
+
+var addhour = 1;
+
+$('#hour').change(function() {
+	var hour = $( this ).val();
+	var endhour = parseInt(hour) + addhour;
+	var endhourstring = '';
+	if(endhour == 24)
+		endhourstring = '00';
+	else if(endhour < 10)
+		endhourstring = '0'+endhour.toString();
+	else
+		endhourstring = endhour.toString();
+	$('#endhour').val(endhourstring);
+});
+
+$('#minutes').change(function() {
+	var minutes = $( this ).val();
+	$('#endminutes').val(minutes);
+});
+
+$('#endhour').change(function() {
+	var endhour = $( this ).val();
+	var hour = $('#hour').val();
+	addhour = parseInt(endhour) - parseInt(hour);
+});
+
+});
+</script>
+	<?php
+	return ob_get_clean();
+}
+
+function rsvpmaker_submission_post() {
+	global $rsvp_options;
+	if(isset($_POST['rsvpmaker_submission_post']))
+	{
+		$permalink = $_POST['rsvpmaker_submission_post'];
+		$author = isset($rsvp_options['submission_author']) ? $rsvp_options['submission_author'] : 1;
+		$title = $_POST['event_title'];
+		$day = (int) $_POST['day'];
+		$year = (int) $_POST['year'];
+		$month = (int) $_POST['month'];
+		$hour = (int) $_POST['hour'];
+		$minutes = (int) $_POST['minutes'];
+		$endhour = (int) $_POST['endhour'];
+		$endminutes = (int) $_POST['endminutes'];
+		$contact = stripslashes($_POST['rsvpmaker_submission_contact']);
+		$email = $_POST['rsvpmaker_submission_email'];
+		$description = stripslashes($_POST['rsvpmaker_submission_description']);
+		$description = strip_tags($description,'<strong><em><a><b><i>');
+		$description = rsvpautog($description);
+		$nowmonth = (int) date('m');
+		$nowyear = (int) date('Y');
+		$nowday = (int) date('j');
+		if(($month == $nowmonth) && ($day == $nowday) && ($year == $nowyear) )
+			die('<h1>Error</h1><p>You must pick a future date. Click the Back button.</p>');
+	
+		$to = $_POST['to'];
+		if(!is_email($to))
+			$to = $rsvp_options['rsvp_to'];
+		$cddate = $year.'-';
+		if($month < 10)
+			$cddate .= '0';
+		$cddate .= $month.'-';
+		if($day < 10)
+			$cddate .= '0';
+		$cddate .= $day.' ';
+		if($hour < 10)
+			$cddate .= '0';
+		$cddate .= $hour.':';
+		if($minutes < 10)
+			$cddate .= '0';
+		$cddate .= $minutes.':00';
+		//die($cddate);
+		if(empty($title))
+			$missing[] = 'event title';
+		if(empty($day))
+			$missing[] = 'day of event';
+		if(empty($description))
+			$missing[] = 'description';
+		if(empty($contact))
+			$missing[] = 'contact name';
+		if(empty($email))
+			$missing[] = 'contact email';
+		if(!empty($missing))
+			die(sprintf('<h1>Error: Missing Data</h1><pre>%s</pre><p>Click your browser back button to try again</p>',implode("\n",$missing)));
+		if(!is_email($email))
+			die("<h1>Error</h1><p>Invalid email address</p><p>Click your browser back button to try again</p>");
+		
+		$data['post_title'] = $title;
+		$data['post_content'] = $description.'<!-- wp:rsvpmaker/placeholder {"text":"Submitted by '.$contact.' '.$email.'"} /-->';
+		$data['post_author'] = $author;
+		$data['post_status'] = 'draft';
+		$data['post_type'] = 'rsvpmaker';
+		$postID = wp_insert_post($data);
+
+		$end_time = $endhour.':'.$endminutes;
+
+		add_rsvpmaker_date($postID,$cddate,'set',$end_time);
+		if(!empty($_POST['timezone_string']))
+		{
+			add_post_meta($postID,"_add_timezone",true);
+			add_post_meta($postID,"_convert_timezone",true);
+			add_post_meta($postID,"_rsvp_timezone_string",$_POST['timezone_string']);		
+		}
+	
+		$mail['subject'] = "Event submission: ".$title.' '.$cddate;
+		$mail['html'] = $description.sprintf('<hr />
+		<p><a href="%s">Edit / Approve</a></p>
+		<p>Submitted by %s %s</p>',admin_url('post.php?action=edit&post='.$postID),$contact,$email);
+		$mail['fromname'] = $contact;
+		$mail['from'] = $email;
+		$mail['to'] = $to;
+		rsvpmailer($mail);
+		$r = add_query_arg('success',$postID,$permalink);
+		wp_redirect($r);
+		exit();
+	}
+}
+
+add_action('init','rsvpmaker_submission_post');
+add_shortcode('rsvpmaker_submission','rsvpmaker_submission');
 
 ?>

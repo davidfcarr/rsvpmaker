@@ -233,6 +233,66 @@ registerBlockType( 'rsvpmaker/embedform', {
 	},
 } );
 
+registerBlockType( 'rsvpmaker/submission', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Event Submission' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a Form for Submitting an Event for Approvoal'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Submission' ),
+	],
+       attributes: {
+            to: {
+            type: 'string',
+            default: '',
+            },
+            timezone: {
+				type: 'boolean',
+				default: false,
+			},
+		},
+	edit: function( props ) {
+	const { attributes: { to, timezone }, setAttributes, isSelected } = props;
+	function showFormPrompt () {
+		return <p><strong>Click here to set options.</strong></p>
+	}
+
+	function showForm() {
+
+			return (
+		<div>
+	<ToggleControl
+        label={__("Prompt for Timezone",'rsvpmaker')}
+        checked={ timezone }
+        onChange={ ( timezone ) => { setAttributes( { timezone } ) } }
+    />
+	<TextControl 
+		label={__("Notification Emails: To override default from Settings, enter one or more emails, separated by commas",'rsvpmaker')}
+		value={to}
+		onChange={ ( to ) => { setAttributes( { to } ) } }
+	/>
+	</div>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: {__('Allow non-authenticated users to submit events for approval by an editor.')}
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	save: function() {
+		return null;
+	},
+} );
+
 registerBlockType( 'rsvpmaker/upcoming', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Upcoming Events' ), // Block title.
