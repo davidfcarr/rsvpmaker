@@ -974,7 +974,7 @@ if(!is_admin() && isset($custom_fields["_rsvp_captcha"][0]) && $custom_fields["_
 
 if(!is_admin() && !empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
 	{
-	if(!rsvpmaker_recaptcha_check ($rsvp_options["rsvp_recaptcha_site_key"],$rsvp_options["rsvp_recaptcha_secret"]))	{
+	if(!rsvpmaker_recaptcha_check ($rsvp_options["rsvp_recaptcha_site_key"],$rsvp_options["rsvp_recaptcha_secret"])) {
 		header('Location: '.$req_uri.'&err='.urlencode('failed recaptcha test'));
 		exit();
 		}	

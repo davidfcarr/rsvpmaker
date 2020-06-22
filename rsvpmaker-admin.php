@@ -5195,9 +5195,16 @@ toolbar: 'bold italic link',
 </script>
 <?php
 printf('<form method="post" action="%s" id="rsvpmaker_submission">',get_permalink());
+
+if(isset($_GET['submission_error']))
+{
+	echo '<h2 id="results">Error</h2>';
+	printf('<p>%s</p>',sanitize_text_field($_GET['submission_error']));
+}
+
 if(isset($_GET['success']))
 {
-echo '<h2>Event Submitted for Review</h2>';
+echo '<h2 id="results">Event Submitted for Review</h2>';
 $post_id = (int) $_GET['success'];
 $post = get_post($post_id);
 $expired = rsvpmaker_strtotime('-5 minutes');
@@ -5358,6 +5365,7 @@ echo str_replace('<option selected="selected" value="">Select a city</option>','
 <p>Event Details<br /><textarea id="rsvpmaker_submission_description" name="rsvpmaker_submission_description" rows="5" cols="100"></textarea></p>
 <input type="hidden" name="to" value="<?php echo $to; ?>" /> 
 <input type="hidden" name="rsvpmaker_submission_post" value="<?php echo get_permalink(); ?>" />
+<?php rsvpmaker_recaptcha_output(); ?>
 	<p><button>Submit</button></p></form>
 <script>
 jQuery(document).ready(function( $ ) {
@@ -5416,9 +5424,21 @@ function rsvpmaker_submission_post() {
 		$nowmonth = (int) date('m');
 		$nowyear = (int) date('Y');
 		$nowday = (int) date('j');
-		if(($month == $nowmonth) && ($day == $nowday) && ($year == $nowyear) )
-			die('<h1>Error</h1><p>You must pick a future date. Click the Back button.</p>');
-	
+		if(($month == $nowmonth) && ($day == $nowday) && ($year == $nowyear) ) {
+			$r = add_query_arg('submission_error','You must pick a future date',$permalink).'#results';
+			wp_redirect($r);
+			exit();
+		}
+
+		if(!is_admin() && !empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
+		{
+		if(!rsvpmaker_recaptcha_check ($rsvp_options["rsvp_recaptcha_site_key"],$rsvp_options["rsvp_recaptcha_secret"]))	{
+			$r = add_query_arg('submission_error','Failed security check',$permalink).'#results';
+			wp_redirect($r);
+			exit();
+			}	
+		}
+
 		$to = $_POST['to'];
 		if(!is_email($to))
 			$to = $rsvp_options['rsvp_to'];
@@ -5447,9 +5467,17 @@ function rsvpmaker_submission_post() {
 		if(empty($email))
 			$missing[] = 'contact email';
 		if(!empty($missing))
-			die(sprintf('<h1>Error: Missing Data</h1><pre>%s</pre><p>Click your browser back button to try again</p>',implode("\n",$missing)));
+		{
+			$r = add_query_arg('submission_error',sprintf('missing data %s',implode("\n",$missing)),$permalink).'#results';
+			wp_redirect($r);
+			exit();
+		}
 		if(!is_email($email))
-			die("<h1>Error</h1><p>Invalid email address</p><p>Click your browser back button to try again</p>");
+		{
+			$r = add_query_arg('submission_error','invalid email address',$permalink).'#results';
+			wp_redirect($r);
+			exit();
+		}
 		
 		$data['post_title'] = $title;
 		$data['post_content'] = $description.'<!-- wp:rsvpmaker/placeholder {"text":"Submitted by '.$contact.' '.$email.'"} /-->';
@@ -5476,7 +5504,7 @@ function rsvpmaker_submission_post() {
 		$mail['from'] = $email;
 		$mail['to'] = $to;
 		rsvpmailer($mail);
-		$r = add_query_arg('success',$postID,$permalink);
+		$r = add_query_arg('success',$postID,$permalink).'#results';
 		wp_redirect($r);
 		exit();
 	}
