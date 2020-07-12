@@ -1,5 +1,10 @@
 // JavaScript Document
 jQuery(document).ready(function( $ ) {
+    $.ajaxSetup({
+        headers: {
+            'X-WP-Nonce': rsvpmaker_rest.nonce,
+        }
+    });
 
 	$('select.rsvpsort').change(function() {
 		var sort = $( this ).val();

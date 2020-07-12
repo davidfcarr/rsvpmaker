@@ -54,137 +54,6 @@ if($post->post_type != 'rsvpmaker')
 return $content . rsvp_form_jquery();
 }
 
-function rsvp_form_jquery() {
-global $rsvp_required_field;
-global $post;
-ob_start();
-?>
-<script type="text/javascript">
-jQuery(document).ready(function($) {
-
-<?php
-$hide = get_post_meta($post->ID,'_hiddenrsvpfields',true);
-if(!empty($hide))
-	{
-	printf('var hide = %s;',json_encode($hide));
-	echo "\n";
-?>
-
-$('#guest_count_pricing select').change(function() {
-  //reset hidden fields
-  $('#rsvpform input').prop( "disabled", false );
-  $('#rsvpform select').prop( "disabled", false );
-  $('#rsvpform div').show();
-  $('#rsvpform p').show();
-  var pricechoice = $(this).val();
-  //alert( "Price choice" + hide[pricechoice] );
-  var hideit = hide[pricechoice];
-  $.each(hideit, function( index, value ) {
-  //alert( index + ": " + value );
-  $('div.'+value).hide();
-  $('p.'+value).hide();
-  $('.'+value).prop( "disabled", true );
-});
-  
-});
-
-<?php
-	}
-?>
-var max_guests = $('#max_guests').val();
-var blank = $('#first_blank').html();
-if(blank)
-	{
-	$('#first_blank').html(blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount) );
-guestcount++;
-	}
-$('#add_guests').click(function(event){
-	event.preventDefault();
-if(guestcount >= max_guests)
-	{
-	$('#first_blank').append('<p><em><?php _e('Guest limit reached','rsvpmaker'); ?></em></p>');
-	return;
-	}
-var guestline = '<' + 'div class="guest_blank">' +
-	blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount) +
-	'<' + '/div>';
-guestcount++;
-$('#first_blank').append(guestline);
-
-if(hide)
-{
-  var pricechoice = $("#guest_count_pricing select").val();
-  var hideit = hide[pricechoice];
-  $.each(hideit, function( index, value ) {
-  //alert( index + ": " + value );
-  $('div.'+value).hide();
-  $('p.'+value).hide();
-  $('.'+value).prop( "disabled", true );
-});
-}
-
-});
-
-    jQuery("#rsvpform").submit(function() {
-	var leftblank = '';
-	var required = jQuery("#required").val();
-	var required_fields = required.split(',');
-	$.each(required_fields, function( index, value ) {
-		if(value == 'privacy_consent')
-			{
-			if(!jQuery('#privacy_consent:checked').val())
-			leftblank = leftblank + '<' + 'div class="rsvp_missing">privacy policy consent checkbox<' +'/div>';				
-			}
-		else if(jQuery("#"+value).val() === '') leftblank = leftblank + '<' + 'div class="rsvp_missing">'+value+'<' +'/div>';
-	});
-	if(leftblank != '')
-		{
-		jQuery("#jqerror").html('<' +'div class="rsvp_validation_error">' + "Required fields left blank:\n" + leftblank + ''+'<' +'/div>');
-		return false;
-		}
-	else
-		return true;
-});
-
-//search for previous rsvps
-var searchRequest = null;
-
-$(function () {
-    var minlength = 3;
-
-    $("#email").keyup(function () {
-        var that = this,
-        value = $(this).val();
-		var post_id = $('#event').val();
-        if (value.length >= minlength ) {
-            if (searchRequest != null) 
-                searchRequest.abort();
-            searchRequest = $.ajax({
-                type: "POST",
-                url: '<?php echo site_url('?rsvp_email_lookup=1'); ?>',
-                data: {
-                    'action' : 'rsvp_email_lookup',
-					'post_id' : post_id,
-                    'email_search' : value
-                },
-                success: function(msg){
-                    //we need to check if the value is the same
-					if (value==$(that).val()) {
-						$('#rsvp_email_lookup').html(msg);
-                    //Receiving the result of search here
-                    }
-                }
-            });
-        }
-    });
-});	
-
-});
-</script>
-<?php
-return ob_get_clean();
-}
-
 add_filter('the_content','event_js',15);
 
 function rsvp_url_date_query ($direction = '') {
@@ -1260,7 +1129,6 @@ printf('<meta property="og:title" content="%s" /><meta property="twitter:title" 
 function ylchat ($atts) {
 global $post;
 
-
 preg_match('/(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^\s]+)/',$post->post_content,$matches);
 
 if(!isset($matches[2]))
@@ -1986,12 +1854,19 @@ foreach($results as $index => $row)
 		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';
 		}
 	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
-	if($top && isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0] && !is_email_context())
-	$tzbutton = '<button class="timezone_on">Show in my timezone</button>';
+	if($top && isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0]) {
+		if(is_email_context()) {
+			$tzbutton = sprintf('<a href="%s">%s</a>',add_query_arg('tz',1,get_permalink($post_id)),__('Show in my timezone','rsvpmaker'));
+		}
+		else {
+			$tzbutton = '<button class="timezone_on">'.__('Show in my timezone','rsvpmaker').'</button>';
+		}
+	}
 	$dateblock .= '</span><span id="timezone_converted'.$post->ID.'"></span></div>';
+
 	}
 //gcal link
-if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calendar_icons"][0])) || !empty($custom_fields["_calendar_icons"][0]) ) && !is_email_context ())
+if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calendar_icons"][0])) || !empty($custom_fields["_calendar_icons"][0]) ))// && !is_email_context ())
 	{
 	if(!empty($firstrow['end_time']))
 	{
@@ -2001,6 +1876,9 @@ if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calend
 	else 
 		$end_time = $firstrow["datetime"] . ' +1 hour';
 	$j = (strpos($permalink,'?')) ? '&' : '?';
+	if(is_email_context())
+	$dateblock .= sprintf('<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>',rsvpmaker_to_gcal($post,$firstrow["datetime"],$end_time),$permalink.$j.'ical=1',$tzbutton );
+	else
 	$dateblock .= sprintf('<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>',rsvpmaker_to_gcal($post,$firstrow["datetime"],$end_time), __('Add to Google Calendar','rsvpmaker'), plugins_url('rsvpmaker/button_gc.gif'),$permalink.$j.'ical=1', __('Add to Outlook/iCal','rsvpmaker'), plugins_url('rsvpmaker/button_ical.gif'), $tzbutton );
 	}
 }
@@ -2078,4 +1956,7 @@ return $output;
 }
 
 add_shortcode('future_rsvp_links','future_rsvp_links');
+
+add_action('wp_footer','rsvpmaker_timezone_footer');
+
 ?>

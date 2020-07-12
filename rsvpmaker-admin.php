@@ -2025,8 +2025,8 @@ if(isset($_GET["author"]))
 function rsvpmaker_admin_menu() {
 global $rsvp_options;
 do_action('rsvpmaker_admin_menu_top');
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&new_template=1", "rsvpmaker_setup" );
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup", "rsvpmaker_setup" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("New Template",'rsvpmaker'), __("New Template",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&new_template=1", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Templates",'rsvpmaker'), __("Event Templates",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
 if(!empty($rsvp_options['additional_editors']))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Share Templates",'rsvpmaker'), __("Share Templates",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_share", "rsvpmaker_share" );
@@ -2034,12 +2034,13 @@ if($rsvp_options["show_screen_recurring"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Recurring Event",'rsvpmaker'), __("Recurring Event",'rsvpmaker'), $rsvp_options["recurring_event"], "add_dates", "add_dates" );
 if(!empty($rsvp_options["show_screen_multiple"]))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events","rsvpmaker"), __("Multiple Events",'rsvpmaker'), $rsvp_options["multiple_events"], "multiple", "multiple" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'edit_rsvpmakers', "rsvp_reminders", "rsvp_reminders" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
 if(isset($rsvp_options["debug"]) && $rsvp_options["debug"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', "Debug", "Debug", 'manage_options', "rsvpmaker_debug", "rsvpmaker_debug");
 do_action('rsvpmaker_admin_menu_bottom');
-add_submenu_page('tools.php',__('Export RSVPMaker'),__('Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
+add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
 }
 
@@ -4687,20 +4688,6 @@ window.onbeforeunload = unloadPage;
 <?php
 }
 
-function rsvpmaker_admin_enqueue($hook) {
-global $post;
-	if((!function_exists('do_blocks') && isset($_GET['action'])) || (isset($_GET['post_type']) && ($_GET['post_type'] == 'rsvpmaker') ) || ((isset($_GET['page']) && 
-	((strpos($_GET['page'],'rsvp') !== false ) || (strpos($_GET['page'],'toast') !== false ) )  ) ) )
-	{
-	wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
-	wp_enqueue_script('jquery-ui-dialog');
-	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
-	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array('jquery'), get_rsvpversion() );
-	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),get_rsvpversion());
-	//add localize_script to show template sked in rest
-	}
-}
-
 function ajax_rsvpmaker_date_handler() {
 	$post_id = (int) $_REQUEST['post_id'];
 	if(!$post_id)
@@ -4809,6 +4796,28 @@ foreach($templates as $template) {
 		'title' => 'Create/Update: '.$template->post_title,
 		'href'  => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$template->ID),
 		'meta'  => array( 'class' => 'new_from_template')
+	);
+	$wp_admin_bar->add_node( $args );
+}
+
+if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
+{
+	if($post->post_type == 'rsvpmaker') {
+		$args = array(
+			'parent'    => 'new-rsvpemail',
+			'id' => 'embed_to_email',
+			'title' => __('Embed Event in Email','rsvpmaker'),
+			'href'  => admin_url('?rsvpevent_to_email='.$post->ID),
+			'meta'  => array( 'class' => 'rsvpmaker_embed')
+		);	
+		$wp_admin_bar->add_node( $args );
+	}
+	$args = array(
+		'parent'    => 'new-rsvpemail',
+		'id' => 'post_to_email',
+		'title' => __('Copy to Email','rsvpmaker'),
+		'href'  => admin_url('?post_to_email='.$post->ID),
+		'meta'  => array( 'class' => 'rsvpmaker')
 	);
 	$wp_admin_bar->add_node( $args );
 }
@@ -4990,42 +4999,46 @@ function rsvpmaker_import_cleanup () {
 	}
 }
 
-
 function rsvpmaker_export_screen () {
+	global $wpdb, $rsvp_options;
 ?>
-	<h1>Export RSVPMaker Events</h1>
+	<h1>Import/Export RSVPMaker Events</h1>
 	<?php
-	if(isset($_GET['select']))
-	{
-		include plugin_dir_path(__FILE__).'export.php';
-		echo '<p>Generating Export Files</p>';
-		rsvpmaker_export_wp();
-	}
 	?>
 	<p>RSVPMaker posts are excluded from the standard WordPress export function because event posts require special handling, particularly those that have the same title but different dates (which by default WordPress rejects as duplicate posts).</p>
-	<p>Use the form below to export your RSVPMaker event posts. You will then be able to use the standard WordPress import routine to load them into another website that also has RSVPMaker installed and activated.</p>
-	<p>Optionally, you can also include other WordPress content (posts and pages).</p>
-	<p>You can set the export file size to be less than the limit set by the web host you will be importing content into (2 MB is a common default).</p>
-	<form method="get" action="<?php echo admin_url('tools.php'); ?>"><input type="hidden" name="page" value="rsvpmaker_export_screen">
-		<p><input type="radio" name="select" value="default" checked="checked"> Future events, plus templates and special documents</p>
-		<p><input type="radio" name="select" value="all" > All RSVPMaker event posts</p>
-		<p><input type="checkbox" name="standard" value="1" /> Also include pages, posts, and other standard WordPress content.</p>
-		<p>File Size Limit <select name="limit">
-		<option value="1">1 MB</option>
-		<option value="2" selected="selected">2 MB</option>
-		<option value="3">3 MB</option>
-		<option value="4">4 MB</option>
-		<option value="5">5 MB</option>
-		<option value="6">6 MB</option>
-		<option value="7">7 MB</option>
-		<option value="8">8 MB</option>
-		<option value="9">9 MB</option>
-		<option value="10">10 MB</option>
-		</select></p>
-<?php	echo submit_button('Generate Export Files'); ?>
-	</form>
+	<h3>Export Events</h3>
 <?php
-									 
+if(isset($_GET['resetrsvpcode'])) {
+	$jt = strtotime('+ 24 hour');
+	$export_code = rand().':'.$jt;
+	update_option('rsvptm_export_lock',$export_code);
+}
+else {
+	$export_code = get_option('rsvptm_export_lock');
+	$parts = explode(':',$export_code);
+	$jt = (empty($parts[1])) ? 0 : (int) $parts[1]; 	
+}
+if(empty($export_code) || ($jt < time())) {
+	printf('<p>Coded url is expired or has not been set. To enable importing of event records from this site into another site, (<a href="%s">set code</a>)</p>',admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1'));
+}
+else {
+	$url = rest_url('/rsvpmaker/v1/import/'.$export_code);
+	printf('<p>To move your club\'s event records to another website that also uses this software, copy this web address:</p>
+	<pre>%s</pre>
+	<p>This link will expire at %s. (<a href="%s">reset</a>)</p>',$url,rsvpmaker_strftime($rsvp_options['short_date'].' '.$rsvp_options['time_format'].' %Z',$jt),admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1'));	
+}
+?>
+<h3>Import Events</h3>
+<p>Copy the link from the site you are <em>exporting from</em> and enter it here on the site you are <em>importing events into</em>.</p>
+<form method="post" id="importform" action="<?php echo admin_url('tools.php?page=rsvpmaker_export_screen'); ?>">
+<div><input type="text" name="importrsvp" id="importrsvp" value="<?php if(isset($_POST['importurl'])) echo $_POST['importrsvp']; ?>" /></div>
+<input type="hidden" id="importnowurl" value="<?php echo rest_url('/rsvpmaker/v1/importnow'); ?>" />
+<div><button id="import-button">Import</button></div>
+</form>
+<div id="import-result"></div>
+<p><em>Note: This function does not automatically import images or correct links that may point to the old website.</em></p>
+<?php
+rsvpmaker_jquery_inline('import');									 
 }
 
 function rsvpmaker_override () {

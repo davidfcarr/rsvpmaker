@@ -294,23 +294,136 @@ public function get_items($request) {
   }
 }
 
+class RSVP_Export extends WP_REST_Controller {
+	public function register_routes() {
+	  $namespace = 'rsvpmaker/v1';
+	  $path = 'import/(?P<code>.+)/(?P<start>.+)';
+  
+	  register_rest_route( $namespace, '/' . $path, [
+		array(
+		  'methods'             => 'GET',
+		  'callback'            => array( $this, 'handle' ),
+		  'permission_callback' => array( $this, 'get_items_permissions_check' )
+		),
+		  ]);     
+	  }
+  
+	public function get_items_permissions_check($request) {
+    $code = get_option('rsvptm_export_lock');
+    if(empty($code))
+      return $false;
+		$parts = explode(':',$code);
+		$t = (int) $parts[1];
+		if($t < time())
+			return false;
+		return ($code == $request["code"]);
+	}
+  
+  public function handle($request) {
+	  global $wpdb;
+	  $start = $request['start'];
+	  $sql = "SELECT * FROM $wpdb->posts WHERE ID > $start AND post_type='rsvpmaker' AND post_status='publish' ORDER BY ID LIMIT 0,50";
+	  $future = $wpdb->get_results($sql);
+	  foreach($future as $index => $row) {
+		  $sql = "select * from $wpdb->postmeta WHERE post_id=".$row->ID;
+		  $metaresults = $wpdb->get_results($sql);
+		  foreach($metaresults as $metarow) {
+			$future[$index]->meta[] = $metarow;
+		  }
+	  }
+	  return new WP_REST_Response($future,200);
+	}
+}
+
+class RSVP_RunImport extends WP_REST_Controller {
+	public function register_routes() {
+	  $namespace = 'rsvpmaker/v1';
+	  $path = 'importnow';
+  
+	  register_rest_route( $namespace, '/' . $path, [
+		array(
+		  'methods'             => 'POST',
+		  'callback'            => array( $this, 'handle' ),
+		  'permission_callback' => array( $this, 'get_items_permissions_check' )
+		),
+		  ]);     
+	  }
+  
+	public function get_items_permissions_check($request) {
+    //nonce check here
+    return current_user_can('manage_options');//
+	}
+  
+  public function handle($request) {
+	  global $wpdb;
+    $error = '';
+    $imported = 0;
+    $top = 0;
+    if(isset($_POST['importrsvp'])) {
+      $url = $_POST['importrsvp'];
+      $url .= '/'.$_POST['start'];
+      $siteurl = get_option( 'siteurl' );
+      $parts = explode(':',$siteurl);
+      if(strpos($url,$parts[1]))
+        $error = 'You cannot import into the same site you are exporting from';
+      else {
+        $remote = wp_remote_get($url);
+        if(is_wp_error($remote))
+          $error = $remote->get_error_message();
+        else {
+          $remote_events = $remote['body'];
+          if(strpos($remote_events,'rest_forbidden'))
+            $error = 'forbidden';  
+        }
+      }
+      if (empty($error)) {
+          //echo $remote_events;
+          $events = json_decode($remote_events);
+          if(!empty($events))
+          foreach($events as $event) {
+            $top = $event->ID;
+            $newpost['post_title'] = $event->post_title;
+            $newpost['post_content'] = $event->post_content;
+            $newpost['post_status'] = 'publish';
+            $newpost['post_type'] = 'rsvpmaker';
+            $post_id = wp_insert_post($newpost);
+            if($post_id) {
+              $imported++;
+              if(!empty($event->meta)) {
+                foreach($event->meta as $metarow) {
+                  $sql = $wpdb->prepare("INSERT INTO $wpdb->postmeta SET post_id=%s, meta_key=%s, meta_value=%s",$post_id,$metarow->meta_key,$metarow->meta_value);
+                  $wpdb->query($sql);
+                }
+              }//meta array	
+            }//post_id
+          }//end for event loop
+	} //end empty error
+}//end post value
+return new WP_REST_Response(array('error' => $error, 'imported' => $imported, 'top' => $top),200);
+}//end handle
+}//end class
+
 add_action('rest_api_init', function () {
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
   $rsvpmaker_sked_controller->register_routes();
-   $rsvpmaker_by_type_controller = new RSVPMaker_By_Type_Controller();
-    $rsvpmaker_by_type_controller->register_routes();
-     $rsvpmaker_listing_controller = new RSVPMaker_Listing_Controller();
-    $rsvpmaker_listing_controller->register_routes();
-     $rsvpmaker_types_controller = new RSVPMaker_Types_Controller();
-    $rsvpmaker_types_controller->register_routes();
-    $rsvpmaker_guestlist_controller = new RSVPMaker_GuestList_Controller();
-    $rsvpmaker_guestlist_controller->register_routes();
-    $rsvpmaker_meta_controller = new RSVPMaker_ClearDateCache();
-    $rsvpmaker_meta_controller->register_routes();
-    $stripesuccess = new RSVPMaker_StripeSuccess_Controller();
-    $stripesuccess->register_routes();
-    $ppsuccess = new RSVPMaker_PaypalSuccess_Controller();
-    $ppsuccess->register_routes();
-} );
+  $rsvpmaker_by_type_controller = new RSVPMaker_By_Type_Controller();
+  $rsvpmaker_by_type_controller->register_routes();
+  $rsvpmaker_listing_controller = new RSVPMaker_Listing_Controller();
+  $rsvpmaker_listing_controller->register_routes();
+  $rsvpmaker_types_controller = new RSVPMaker_Types_Controller();
+  $rsvpmaker_types_controller->register_routes();
+  $rsvpmaker_guestlist_controller = new RSVPMaker_GuestList_Controller();
+  $rsvpmaker_guestlist_controller->register_routes();
+  $rsvpmaker_meta_controller = new RSVPMaker_ClearDateCache();
+  $rsvpmaker_meta_controller->register_routes();
+  $stripesuccess = new RSVPMaker_StripeSuccess_Controller();
+  $stripesuccess->register_routes();
+  $ppsuccess = new RSVPMaker_PaypalSuccess_Controller();
+  $ppsuccess->register_routes();
+  $rsvpexp = new RSVP_Export();
+  $rsvpexp->register_routes();
+  $rsvpimp = new RSVP_RunImport();
+  $rsvpimp->register_routes();
+});
 
 ?>

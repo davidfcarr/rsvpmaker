@@ -4,6 +4,8 @@
  *
  */
 
+$email_context = true;
+
 email_content_minfilters();
 
 if ( have_posts() ) : the_post();

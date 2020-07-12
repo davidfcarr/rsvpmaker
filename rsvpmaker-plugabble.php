@@ -1917,21 +1917,6 @@ do_action('log_paypal',$message);
 return $message;
 } } // end paypal error
 
-if(!function_exists('rsvpmaker_event_scripts'))
-{
-function rsvpmaker_event_scripts() {
-global $post;
-global $rsvp_options;
-	wp_enqueue_script('jquery');
-	wp_enqueue_script('jquery-ui-tooltip');
-	$myStyleUrl = (isset($rsvp_options["custom_css"]) && $rsvp_options["custom_css"]) ? $rsvp_options["custom_css"] : plugins_url('/rsvpmaker/style.css');
-	wp_register_style('rsvp_style', $myStyleUrl, array(), get_rsvpversion());
-	wp_enqueue_style( 'rsvp_style');
-	wp_localize_script( 'rsvpmaker_ajaxurl', 'ajaxurl', admin_url('admin-ajax.php') );
-	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker/rsvpmaker.js'), array(), get_rsvpversion());
-	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
-} } // end event scripts
-
 function rsvpmaker_localdate() {
 	if(empty($_REQUEST['action']) || $_REQUEST['action'] != 'rsvpmaker_localstring')
 		return;
@@ -2483,6 +2468,7 @@ if(!function_exists('rsvp_report') )
 function rsvp_report() {
 
 global $wpdb, $post, $rsvp_options;
+
 $wpdb->show_errors();
 if(isset($_GET['event']))
 	$post = get_post((int) $_GET['event']);

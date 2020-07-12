@@ -1,4 +1,11 @@
 jQuery(document).ready(function($) {
+
+    $.ajaxSetup({
+        headers: {
+            'X-WP-Nonce': rsvpmaker_rest.nonce,
+        }
+    });
+    
 	$('.timezone_on').click( function () {
 
 		$('.timezone_hint').each( function () {

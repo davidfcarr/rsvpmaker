@@ -12,7 +12,7 @@ function rsvpmailer($mail) {
 	{
 		$mail['html'] = rsvpmaker_inliner($mail['html']);
 	}
-	global $post, $rsvp_options, $unsubscribed, $message_type;
+	global $post, $rsvp_options, $unsubscribed, $rsvpmaker_message_type;
 	if(isset($mail['message_type']))
 		$rsvpmaker_message_type = $mail['message_type'];
 
@@ -126,10 +126,19 @@ function rsvpmailer($mail) {
 			remove_filter('wp_mail_content_type', 'set_html_content_type');
 		return;
 		}
-	
-	require_once ABSPATH . WPINC . '/class-phpmailer.php';
-	require_once ABSPATH . WPINC . '/class-smtp.php';
-	$rsvpmail = new PHPMailer();
+	global $wp_version;//once 5.5 is out of beta, delete 2nd test
+	if(is_wp_version_compatible('5.5') || strpos($wp_version,'.5-beta')) {
+	require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
+	require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
+	require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';
+	$rsvpmail = new PHPMailer\PHPMailer\PHPMailer();	
+	}
+	else
+	{
+		require_once ABSPATH . WPINC . '/class-phpmailer.php';
+		require_once ABSPATH . WPINC . '/class-smtp.php';
+		$rsvpmail = new PHPMailer();	
+	}
 	
 	if(!empty($rsvp_options["smtp"]))
 	{
@@ -1233,7 +1242,8 @@ if(!empty($_POST["email"]["from_name"]))
 }
 
 function rsvpevent_to_email () {
-global $current_user;
+global $current_user, $rsvp_options, $email_context;
+$email_context = true;
 
 if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 	{
@@ -1241,7 +1251,23 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 			{
 				$id = $_GET["post_to_email"];
 				$post = get_post($id);
-				$content = $post->post_content;
+				$content = '';
+				if($post->post_type == 'rsvpmaker')
+				{
+					$content .= sprintf("<!-- wp:heading -->\n<h2>%s</h2>\n<!-- /wp:heading -->\n",$post->post_title);
+					$block = rsvp_date_block($id);
+					$blockgraph = str_replace('</div><div class="rsvpcalendar_buttons">','<br />',$block['dateblock']);
+					$blockgraph = "<!-- wp:paragraph -->\n<p><strong>".strip_tags($blockgraph,'<br><a>').'</strong></p>'."\n<!-- /wp:paragraph -->";
+					$content .= $blockgraph;
+					//$content .= "<!-- wp:paragraph -->\n<strong>".$block['dateblock']."</strong>\n<!-- /wp:paragraph -->";
+				}
+				$content .= $post->post_content;
+				if(($post->post_type == 'rsvpmaker') && get_post_meta($post->ID,'_rsvp_on',true))
+				{
+					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
+					$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
+				}
+
 				$title = $post->post_title;
 			}
 		else
@@ -2653,15 +2679,16 @@ function rsvpmaker_cron_email_preview_now() {
 add_filter( 'post_row_actions', 'rsvpmaker_row_actions', 10, 2 );
 function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 	global $current_user;
-	$allowed = array('rsvpmaker','post');
-    if ( !in_array($post->post_type,$allowed)) {
+    if ($post->post_type == 'rsvpemail') {
         return $actions;
     }
 	if(current_user_can('edit_post',$post->ID))
 	{
-	if($post->post_type == 'rsvpmaker')
-	$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID,__('Event Options','rsvpmaker'));
-    $actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Send RSVP Email','rsvpmaker'));		
+		if($post->post_type == 'rsvpmaker') {
+			$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID,__('Event Options','rsvpmaker'));
+			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
+			}
+		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));
 	}
 	else {
 	if($post->post_type == 'rsvpmaker')
