@@ -303,6 +303,8 @@ else
 
 $querystring = "post_type=rsvpmaker&post_status=publish&paged=$paged";
 
+if(!empty($atts["author"]))
+	$querystring .= "&author=".$atts["author"];
 if(isset($atts["one"]) && !empty($atts["one"]))
 	{
 	$querystring .= "&posts_per_page=1";
@@ -325,7 +327,6 @@ if(isset($atts["add_to_query"]))
 $wpdb->show_errors();
 
 $wp_query = new WP_Query($querystring);
-
 // clean up so this doesn't interfere with other operations
 remove_filter('posts_join', 'rsvpmaker_join' );
 remove_filter('posts_groupby', 'rsvpmaker_groupby' );

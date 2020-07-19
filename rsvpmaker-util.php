@@ -1704,4 +1704,16 @@ function test_get_related_documents() {
 
 add_shortcode('test_get_related_documents','test_get_related_documents');
 
+function get_rsvpmaker_authors() {
+$entire_user_list = get_users('orderby=display_name');
+$rsvp_users= array();
+    
+    foreach($entire_user_list as $user){
+    
+        if($user->has_cap('edit_rsvpmakers')){
+            $rsvp_users[] = array('ID' => $user->ID, 'name' => $user->display_name);
+        }
+    }
+return $rsvp_users;
+}
 ?>

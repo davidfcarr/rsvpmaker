@@ -45,6 +45,18 @@ apiFetch( {path: rsvpmaker_json_url+'types'} ).then( types => {
 	console.log(err);
 });	
 
+const rsvpauthors = [{value: '', label: 'Any'}];
+apiFetch( {path: rsvpmaker_json_url+'authors'} ).then( authors => {
+	if(Array.isArray(authors))
+			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
+		else {
+			authors = Object.values(authors);
+			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
+		}
+}).catch(err => {
+	console.log(err);
+});	
+
 /**
  * Register: a Gutenberg Block.
  *
@@ -333,6 +345,10 @@ registerBlockType( 'rsvpmaker/upcoming', {
                 type: 'string',
                 default: 'No events listed',
             },
+            author: {
+                type: 'string',
+                default: '',
+			},
             hideauthor: {
                 type: 'boolean',
                 default: false,
@@ -348,7 +364,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	 */
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
-	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type }, setAttributes, isSelected } = props;
+	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author }, setAttributes, isSelected } = props;
 
 	function showFormPrompt () {
 		return <p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
@@ -396,6 +412,12 @@ registerBlockType( 'rsvpmaker/upcoming', {
         value={ type }
         options={ rsvptypes }
         onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+					<SelectControl
+        label={__("Author",'rsvpmaker')}
+        value={ author }
+        options={ rsvpauthors }
+        onChange={ ( author ) => { setAttributes( { author: author } ) } }
     />
 					<SelectControl
         label={__("Exclude Event Type",'rsvpmaker')}

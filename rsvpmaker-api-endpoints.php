@@ -68,6 +68,33 @@ public function get_items($request) {
 
 }
 
+class RSVPMaker_Authors_Controller extends WP_REST_Controller {
+  public function register_routes() {
+    $namespace = 'rsvpmaker/v1';
+    $path = 'authors';
+
+    register_rest_route( $namespace, '/' . $path, [
+      array(
+        'methods'             => 'GET',
+        'callback'            => array( $this, 'get_items' ),
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+            ),
+
+        ]);     
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+
+    $authors = get_rsvpmaker_authors();
+    return new WP_REST_Response($authors, 200);
+  }
+
+}
+
 class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
   public function register_routes() {
     $namespace = 'rsvpmaker/v1';
@@ -412,6 +439,8 @@ add_action('rest_api_init', function () {
   $rsvpmaker_listing_controller->register_routes();
   $rsvpmaker_types_controller = new RSVPMaker_Types_Controller();
   $rsvpmaker_types_controller->register_routes();
+  $rsvpmaker_authors_controller = new RSVPMaker_Authors_Controller();
+  $rsvpmaker_authors_controller->register_routes();
   $rsvpmaker_guestlist_controller = new RSVPMaker_GuestList_Controller();
   $rsvpmaker_guestlist_controller->register_routes();
   $rsvpmaker_meta_controller = new RSVPMaker_ClearDateCache();
