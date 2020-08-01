@@ -1531,13 +1531,7 @@ foreach($results as $row)
 			$unsubscribed[] = $row->email;
 			continue;
 		}
-	$mail["to"] = $row->email;
-	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
-	$mail["fromname"] =  stripslashes($_POST["from_name"]);
-	$mail["subject"] =  stripslashes($_POST["subject"]);
-	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>');
-	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title);
-	rsvpmailer($mail);
+	add_post_meta($post->ID,'rsvprelay_to',$row->email);
 	}
 }
 
@@ -1567,13 +1561,7 @@ foreach($results as $row)
 			$unsubscribed[] = $row->email;
 			continue;
 		}
-	$mail["to"] = $row->email;
-	$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
-	$mail["fromname"] =  stripslashes($_POST["from_name"]);
-	$mail["subject"] =  stripslashes($_POST["subject"]);
-	$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>');
-	$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title);
-	rsvpmailer($mail);
+	add_post_meta($post->ID,'rsvprelay_to',$row->email);
 	}
 }
 

@@ -441,7 +441,7 @@ if(is_array($future))
 foreach($future as $event)
 	{
 	if(get_post_meta($event->ID,'_rsvp_on',true))
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',rsvpmaker_strtotime($event->datetime)));
+	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,rsvpmaker_date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 	}
 $options .= "<optiongroup>"."\n";
 
@@ -451,7 +451,7 @@ if(is_array($past))
 foreach($past as $event)
 	{
 	if(get_post_meta($event->ID,'_rsvp_on',true))
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',rsvpmaker_strtotime($event->datetime)));
+	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,rsvpmaker_date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 	}
 $options .= "<optiongroup>"."\n";
 return $options;

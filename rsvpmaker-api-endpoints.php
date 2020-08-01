@@ -33,9 +33,6 @@ public function get_items($request) {
     return new WP_REST_Response($events, 200);
   }
 
-	//other functions to override
-	//create_item(), update_item(), delete_item() and get_item()
-
 }
 
 class RSVPMaker_Types_Controller extends WP_REST_Controller {
@@ -103,8 +100,9 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
     register_rest_route( $namespace, '/' . $path, [
       array(
         'methods'             => 'GET',
-        'callback'            => array( $this, 'get_items' )
-            ),
+        'callback'            => array( $this, 'get_items' ),
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+          ),
         ]);     
     }
 
@@ -113,7 +111,6 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
   }
 
 public function get_items($request) {
-//$posts = rsvpmaker_upcoming_data($atts);
 
 add_filter('posts_join', 'rsvpmaker_join' );
 add_filter('posts_groupby', 'rsvpmaker_groupby' );

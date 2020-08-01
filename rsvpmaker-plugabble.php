@@ -2669,7 +2669,8 @@ if(!isset($_GET["rsvp_print"]))
 		{
 			printf('<h1>%s %s</h1>',$f->post_title,$f->date);
 			$emails = format_rsvp_details($rsvps);
-			$all_emails = $all_emails + $emails;
+			if(!empty($emails))
+			$all_emails = array_merge($all_emails,$emails);
 		}	
 	}
 if(!empty($all_emails))
@@ -2689,8 +2690,9 @@ $sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker_event ";
 
 if(!isset($_GET["show"]))
 	{
+	$sql2 = $sql . ' WHERE date < CURDATE( ) ORDER BY date DESC LIMIT 0,10';
 	$sql .= " WHERE date > CURDATE( ) ORDER BY date";
-	$eventlist .= '<p>'.__('Showing future events only','rsvpmaker').' (<a href="'.$_SERVER['REQUEST_URI'].'&show=all">show all</a>)<p>';
+	$eventlist .= '<p>'.__('Showing future and recent events','rsvpmaker').' (<a href="'.$_SERVER['REQUEST_URI'].'&show=all">show all</a>)<p>';
 ?>
 <form action="edit.php" method="get">
 <?php _e('Show details for','rsvpmaker');?>
@@ -2729,6 +2731,20 @@ foreach($results as $row)
 	$t = rsvpmaker_strtotime($row->date);
 	$events[$row->event] .= " ".rsvpmaker_strftime($rsvp_options['long_date'],$t);
 	}
+}
+
+if(!empty($sql2)){
+	$results = $wpdb->get_results($sql2);
+	if($results)
+	{
+	foreach($results as $row)
+		{
+		if(empty($events[$row->event]))
+			$events[$row->event] = $row->post_title;
+		$t = rsvpmaker_strtotime($row->date);
+		$events[$row->event] .= " ".rsvpmaker_strftime($rsvp_options['long_date'],$t);
+		}
+	}	
 }
 
 if(!empty($events))
@@ -2855,7 +2871,10 @@ function format_rsvp_details($results, $editor_options = true) {
 
 	if($members && $nonmembers)
 		printf('<p>Responses from %d members with user accounts and %d nonmembers.</p>',$members, $nonmembers);
-	
+
+if(empty($_GET['event']))
+	return;
+
 global $phpexcel_enabled; // set if excel extension is active
 if(isset($fields))
 if($fields && !isset($_GET["rsvp_print"]) && !isset($_GET["limit"]))
@@ -2944,7 +2963,7 @@ foreach($future as $event) {
 
 <?php
 
-if(!empty($owed_list) )
+if(!empty($owed_list))
 {
 printf('<h3>Record Payments</h3><form action="%s" method="post">',admin_url('edit.php?page=rsvp&post_type=rsvpmaker&event='.$_GET["event"]));
 echo $owed_list;

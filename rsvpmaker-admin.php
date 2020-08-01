@@ -599,10 +599,26 @@ echo $label;
 				  $options[$name] = $value;
 				  
                   update_option($this->db_option, $options);
-				  
                   
-                  echo '<div class="updated fade"><p>Plugin settings saved.</p></div>';
-              }
+				  echo '<div class="updated fade"><p>Plugin settings saved.</p></div>';
+				  if($_POST['defaultoverride']) {
+					$future = get_future_events();
+					$fcount = sizeof($future);
+					$templates = rsvpmaker_get_templates();
+					$tcount = sizeof($templates);
+					$future = array_merge($future,$templates);
+					foreach($future as $event) {
+						foreach($_POST['defaultoverride'] as $slug) {
+							$dbslug = '_'.$slug;
+							update_post_meta($event->ID, $dbslug, $options[$slug]);
+							//printf('<p>updating %s %s %s</p>',$event->ID, $dbslug, $options[$slug]);
+						}						  
+					}
+				printf('<p>Updating %s for %s events and %s templates',implode(', ',$_POST['defaultoverride']), $fcount, $tcount );  
+				}
+			  }
+			  
+
               
               // URL for form submit, equals our current page
 $action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
@@ -901,6 +917,10 @@ foreach($templates as $tname => $tfile)
 <br />Attribute to <?php $submission_author = (isset($options['submission_author'])) ? $options['submission_author'] : 1; wp_dropdown_users(array('name' => 'option[submission_author]','selected' => $submission_author)); ?>
 </p>
 <p>To accept event submissions on the front end of your website, include the RSVPMaker Event Submission block or [rsvpmaker_submission] shortcode. Submissions are saved as drafts for an editor's approval.</p>
+
+<h3><?php _e('Apply to Existing Events','rsvpmaker'); ?></h3>
+<p>Check here if you want any of the following variables to be applied to existing events and event templates (will override any customizations).</p>
+<p><input  type="checkbox"  name="defaultoverride[]" value="rsvp_on" /> Collect RSVPs <input type="checkbox" name="defaultoverride[]" value="rsvp_form" /> Form <input type="checkbox" name="defaultoverride[]" value="rsvp_confirm" /> Confirmation Message </p>
 
 <h3><?php _e('Troubleshooting and Logging','rsvpmaker'); ?></h3>
   <input type="checkbox" name="option[flush]" value="1" <?php if(isset($options["flush"]) && $options["flush"]) echo ' checked="checked" ';?> /> <strong><?php _e('Tweak Permalinks','rsvpmaker'); ?></strong> <?php _e('Check here if you are getting &quot;page not found&quot; errors for event content (should not be necessary for most users).','rsvpmaker'); ?> 
@@ -4725,7 +4745,8 @@ function rsvpmaker_rest_api_date () {
 function rest_api_init_rsvpmaker () {
 	register_rest_route( 'rsvpmaker/v1', '/restdate/', array(
                 'methods' => 'POST',
-                'callback' => 'rsvpmaker_rest_api_date'
+				'callback' => 'rsvpmaker_rest_api_date',
+				'permission_callback' => '__return true'
         ) );
 }
 
