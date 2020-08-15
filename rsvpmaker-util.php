@@ -1289,7 +1289,7 @@ function default_gateway_check($chosen_gateway) {
 }
 
 function get_rsvp_id ($email = '') {
-global $post, $wpdb;
+global $post, $wpdb, $email_context;
 $rsvp_id = 0;
 if(isset($_GET['rsvp']))
 	$rsvp_id = (int) $_GET['rsvp'];
@@ -1305,7 +1305,7 @@ return $rsvp_id;
 }
 
 function get_rsvp_email() {
-	global $post, $wpdb;
+	global $post, $wpdb, $email_context;
 	$email = '';
 	global $current_user;
 	if(isset($_GET['e']))

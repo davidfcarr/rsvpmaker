@@ -1566,11 +1566,9 @@ foreach($results as $row)
 }
 
 }	
-	
+
 if(!empty($_POST["members"]))
 {
-if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
-	wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 $users = get_users('blog='.get_current_blog_id());
 printf('<p>Sending to %s website members</p>',sizeof($users));
 update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
@@ -1592,8 +1590,6 @@ foreach($users as $user)
 
 if(!empty($_POST["network_members"]) && current_user_can('manage_network'))
 {
-if(!wp_get_schedule('rsvpmaker_relay_init_hook'))
-	wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.$_SERVER['SERVER_NAME']);
 $from = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
 update_post_meta($post->ID,'rsvprelay_from',$from);
@@ -1686,6 +1682,10 @@ if(!empty($_POST))
 // $unsubscribed is global, can be modified by action above
 if(!empty($unsubscribed))
 	printf('<p>%s: %s',__('Skipped unsubscribed emails','rsvpmaker'),implode(', ',$unsubscribed) );
+
+//if any messages queued, make sure group email schedule is set
+if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook'))
+	wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 
 $permalink = get_permalink($post->ID);
 $edit_link = get_edit_post_link($post->ID);

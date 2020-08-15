@@ -115,9 +115,10 @@ return $output;
 function rsvpmaker_stripe_checkout() {
 rsvpmaker_debug_log('rsvpmaker_stripe_checkout');
 global $post, $rsvp_options, $current_user;
+if(empty($_GET['txid']))
+	return;
 ob_start();
 $varkey = $idempotency_key = $_GET['txid'];
-//echo 'lookup key '.$idempotency_key;
 $vars = get_option($idempotency_key);
 if(empty($vars))
 	return '<p>'.__('No pending payment found for','rsvpmaker').' '.$idempotency_key.'</p>';
@@ -127,7 +128,6 @@ if($vars['paymentType'] == 'donation')
 		return '<p>No amount given</p>';
 	$vars['amount'] = $_GET['amount'];
 	} 
-//print_r($vars);
 require_once('stripe-php/init.php');
 $keys = get_rsvpmaker_stripe_keys ();
 if(!empty($vars['email']))

@@ -851,31 +851,31 @@ if(isset($_GET['showmeta']))
 
 } } // end rsvp admin ui
 
-function ajax_rsvp_email_lookup () {
-$email = $_REQUEST['email_search'];
-$event = $_REQUEST['post_id'];
+function ajax_rsvp_email_lookup ($email, $event) {
 $p = get_permalink($event);
+if(!is_email($email))
+	return;
 global $wpdb;
 $wpdb->show_errors();
-$sql = $wpdb->prepare("SELECT * FROM ".$wpdb->prefix.'rsvpmaker WHERE email LIKE %s AND event=%d',$email.'%',$event);
+$sql = $wpdb->prepare("SELECT * FROM ".$wpdb->prefix.'rsvpmaker WHERE email LIKE %s AND event=%d',$email,$event);
 $results = $wpdb->get_results($sql);
 if($results)
 {	
-	echo '<div class="previous_rsvp_prompt">'.__('Did you RSVP previously?','rsvpmaker').'</div>';
+	$out = '<div class="previous_rsvp_prompt">'.__('Did you RSVP previously?','rsvpmaker').'</div>';
 	foreach($results as $row)
 	{
-	$out = 'RSVP ';
+	$out .= 'RSVP ';
 	$out .= ($row->yesno) ? __('YES','rsvpmaker') : __('NO','rsvpmaker');
 	$out .= ' '.$row->first.' '.$row->last;
 	$sql = $wpdb->prepare("SELECT count(*) FROM ".$wpdb->prefix.'rsvpmaker WHERE master_rsvp=%d',$row->id);
 	$guests = $wpdb->get_var($sql);
 	if($guests)
 		$out .= ' + '.$guests.' '.__('guests','rsvpmaker');
-	printf('<div><a href="%s">%s</a> %s</div>',add_query_arg(array('e' => $row->email,'update' => $row->id),$p),__('Update','rsvpmaker'),$out);
+	return sprintf('<div><a href="%s">%s</a> %s</div>',add_query_arg(array('e' => $row->email,'update' => $row->id),$p),__('Update','rsvpmaker'),$out);
 	}
 }
-	else echo '';
-die();
+	else 
+		return;
 }
 
 function rsvp_form_setup_form($rsvp_form) {

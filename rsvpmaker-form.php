@@ -233,6 +233,8 @@ function rsvp_form_text($atts, $content) {
 		$required = 'required';
 	}
 	$content = sprintf('<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>',$required,$label,$required,$slug,$slug,$slug);
+	if($slug == 'email')
+		$content .= '<div id="rsvp_email_lookup"></div>';
 	return rsvp_form_field($atts,$content);
 }
 

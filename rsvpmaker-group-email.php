@@ -194,7 +194,7 @@ if(isset($_GET['test']))
 
 # Connect to the mail server and grab headers from the mailbox
 $html .= sprintf('<p>%s, %s, %s</p>',$server,$user,$password);
-$mail = imap_open($server,$user,$password);
+$mail = @imap_open($server,$user,$password);
 if(empty($mail))
     return '<div>no mail connection found for '.$list_type.'</div>';
 $headers = imap_headers($mail);

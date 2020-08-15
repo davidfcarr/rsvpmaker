@@ -2265,31 +2265,61 @@ foreach($_POST['fixrsvpyear'] as $post_id => $year)
 echo '<div class="notice notice-info">'.$fixed.'</div>';
 
 }
-$sql = "SELECT ID, post_title, meta_value
-FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id
-where meta_key='_rsvp_dates' AND post_status='publish' AND meta_value NOT REGEXP '[0-9]{4}-[0-9]{2}-[0-9]{2} {1,2}[0-9]{2}:[0-9]{2}:[0-9]{2}' 
-AND meta_value > CURDATE()
-ORDER BY post_title, meta_value";
-$results = $wpdb->get_results($sql);
-if($results)
-{
-	foreach($results as $row) {
-	$dateparts = preg_split('/[-: ]/',$row->meta_value);
-	$corrupt .= sprintf('<div><label style="display: inline-block; width: 200px;">%s</label> <input type="text" name="fixrsvpyear[%d]" value="%s" size="4" >-<input type="text" name="fixrsvpmonth[%d]" value="%s" size="2" >-<input type="text" name="fixrsvpday[%d]" value="%s" size="2" > <input type="text" name="fixrsvphour[%d]" value="%s"  size="2" >:<input type="text" name="fixrsvpminutes[%d]" value="%s" size="2" >:00 %s</div>',$row->post_title, $row->ID, $dateparts[0], $row->ID,  (empty($dateparts[1])) ? '' : $dateparts[1], $row->ID,  (empty($dateparts[2])) ? '' : $dateparts[2], $row->ID,  (empty($dateparts[3])) ? '' : $dateparts[3], $row->ID, (empty($dateparts[4])) ? '' : $dateparts[4], $row->meta_value);
-	}
-printf('<div class="notice notice-error"><h3>%s</h3><p>%s</p><form method="post" action="%s">%s<p><button>Repair</button></p></form></div>',__('Date Variables Corrupted','rsvpmaker'),__('A correct date would be in the format YEAR-MONTH-DAY HOUR:MINUTES:SECONDS or 2030-01-01 19:30:00 for January 1, 2030 at 7:30 pm','rsvpmaker'),admin_url(),$corrupt );
+
+//first try to clean up errors automatically 
+	$manualcheck = false;
+	$sql = "SELECT ID, post_title, meta_value
+	FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id
+	where meta_key='_rsvp_dates' AND post_status='publish' AND meta_value NOT REGEXP '[0-9]{4}-[0-9]{2}-[0-9]{2} {1,2}[0-9]{2}:[0-9]{2}:[0-9]{2}'
+	AND meta_value > CURDATE()
+	ORDER BY post_title, meta_value";
+	$results1 = $wpdb->get_results($sql);
+	if($results1)
+	{
+		foreach($results1 as $row) {
+		$dateparts = preg_split('/[-: ]/',$row->meta_value);
+		if(empty($dateparts[3]) || empty($dateparts[4]))
+			{
+				//if not a complete date
+				$manualcheck = true;
+				continue;
+			}
+		$year = $dateparts[0];
+		$month = str_pad($dateparts[1],2,'0',STR_PAD_LEFT);
+		$day = str_pad($dateparts[2],2,'0',STR_PAD_LEFT);
+		$hour = str_pad($dateparts[3],2,'0',STR_PAD_LEFT);
+		$minutes = empty($dateparts[4]) ? '00' : str_pad($dateparts[4],2,'0',STR_PAD_LEFT);
+		$newdate = sprintf('%s-%s-%s %s:%s:00',$year,$month,$day,$hour,$minutes);
+		update_post_meta($row->ID,'_rsvp_dates',$newdate);
+		}
+	}	
+if($manualcheck) {
+	$sql = "SELECT ID, post_title, meta_value
+	FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id
+	where meta_key='_rsvp_dates' AND post_status='publish' AND meta_value NOT REGEXP '[0-9]{4}-[0-9]{2}-[0-9]{2} {1,2}[0-9]{2}:[0-9]{2}:[0-9]{2}' 
+	AND meta_value > CURDATE()
+	ORDER BY post_title, meta_value";
+	$results = $wpdb->get_results($sql);
+	if($results)
+	{
+		foreach($results as $row) {
+		$dateparts = preg_split('/[-: ]/',$row->meta_value);
+		$corrupt .= sprintf('<div><label style="display: inline-block; width: 200px;">%s</label> <input type="text" name="fixrsvpyear[%d]" value="%s" size="4" >-<input type="text" name="fixrsvpmonth[%d]" value="%s" size="2" >-<input type="text" name="fixrsvpday[%d]" value="%s" size="2" > <input type="text" name="fixrsvphour[%d]" value="%s"  size="2" >:<input type="text" name="fixrsvpminutes[%d]" value="%s" size="2" >:00 %s</div>',$row->post_title, $row->ID, $dateparts[0], $row->ID,  (empty($dateparts[1])) ? '' : $dateparts[1], $row->ID,  (empty($dateparts[2])) ? '' : $dateparts[2], $row->ID,  (empty($dateparts[3])) ? '' : $dateparts[3], $row->ID, (empty($dateparts[4])) ? '' : $dateparts[4], $row->meta_value);
+		}
+	printf('<div class="notice notice-error"><h3>%s</h3><p>%s</p><form method="post" action="%s">%s<p><button>Repair</button></p></form></div>',__('Date Variables Corrupted','rsvpmaker'),__('A correct date would be in the format YEAR-MONTH-DAY HOUR:MINUTES:SECONDS or 2030-01-01 19:30:00 for January 1, 2030 at 7:30 pm','rsvpmaker'),admin_url(),$corrupt );
+	}	
 }
 
 }
 
 function rsvpmaker_admin_notice() {
+
 if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
 	return; //don't clutter edit page with admin notices. Gutenberg hides them anyway.
 if(isset($_GET['post_type']) && ($_GET['post_type'] == 'rsvpmaker') && !isset($_GET['page']))
 	return; //don't clutter post listing page with admin notices
 if(isset($_POST["rsvpmaker_essentials"]))
 	rsvpmaker_essentials();
-
 global $wpdb;
 global $rsvp_options;
 global $current_user;
@@ -3679,6 +3709,9 @@ if(!empty($sofar))
 }
 //$sked = get_post_meta($template_id,'_sked',true);
 $sked = get_template_sked($template_id);
+$hour = str_pad($sked['hour'],2,'0',STR_PAD_LEFT);
+$minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
+	
 //printf('<pre>%s</pre>',var_export($sked,true));
 if(!isset($sked["week"]))
 	return;
@@ -3690,7 +3723,7 @@ if(($ts < current_time('timestamp')))
 	continue; // omit dates past
 if(isset($fts) && $ts <= $fts)
 	continue;
-$date = date('Y-m-d',$ts).' '.$sked["hour"].':'.$sked["minutes"].':00';
+$date = date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
 //printf('<div>Add %s</div>',$date);
 add_rsvpmaker_from_template($template_id, $sked, $date);
 } // end for loop

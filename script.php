@@ -1,5 +1,5 @@
 <?php
-$scriptversion = '2020';
+$scriptversion = '202008151';
 
 function rsvpmaker_rest_array () {
     global $post;
@@ -199,27 +199,18 @@ function rsvp_form_jquery() {
         var minlength = 3;
     
         $("#email").keyup(function () {
-            var that = this,
+            var that = this;
             value = $(this).val();
+            var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
             var post_id = $('#event').val();
-            if (value.length >= minlength ) {
+            if ((value.length >= minlength ) && (value.match(mailformat)) ) {
                 if (searchRequest != null) 
                     searchRequest.abort();
-                searchRequest = $.ajax({
-                    type: "POST",
-                    url: '<?php echo site_url('?rsvp_email_lookup=1'); ?>',
-                    data: {
-                        'action' : 'rsvp_email_lookup',
-                        'post_id' : post_id,
-                        'email_search' : value
-                    },
-                    success: function(msg){
-                        //we need to check if the value is the same
-                        if (value==$(that).val()) {
-                            $('#rsvp_email_lookup').html(msg);
-                        //Receiving the result of search here
-                        }
-                    }
+                var data = {
+                    'email_search': value,
+                };
+                jQuery.get('<?php echo rest_url('rsvpmaker/v1/email_lookup/'.wp_create_nonce('rsvp_email_lookup')); ?>/'+post_id, data, function(response) {
+                $('#rsvp_email_lookup').html(response);
                 });
             }
         });

@@ -994,7 +994,7 @@ function rsvpmaker_to_ical () {
 global $post;
 global $rsvp_options;
 global $wpdb;
-if(($post->post_type != 'rsvpmaker') )
+if(!isset($post->post_type) || ($post->post_type != 'rsvpmaker') )
 	return;
 header('Content-type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename=' . $post->post_name.'.ics');
@@ -1614,11 +1614,8 @@ function sked_to_text ($sked) {
 	return $dateblock;
 }
 
-function signed_up_ajax () {
-if(empty($_REQUEST['action']) || $_REQUEST['action'] != 'signed_up')
-	return;	
+function signed_up_ajax ($post_id) {
 global $wpdb;
-$post_id = $_GET['event_count'];
 $sql = "SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post_id AND yesno=1 ORDER BY id DESC";
 $total = (int) $wpdb->get_var($sql);
 $rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
@@ -1627,9 +1624,8 @@ if($total)
 $output = $total.' '.__('signed up so far.','rsvpmaker');
 if($rsvp_max)
 	$output .= ' '.__('Limit','rsvpmaker').': '.$rsvp_max;
-echo '<p class="signed_up">'.$output.'</p>';
+return '<p class="signed_up">'.$output.'</p>';
 }
-die();
 }
 
 

@@ -427,6 +427,59 @@ return new WP_REST_Response(array('error' => $error, 'imported' => $imported, 't
 }//end handle
 }//end class
 
+class RSVPMaker_Email_Lookup extends WP_REST_Controller {
+  public function register_routes() {
+    $namespace = 'rsvpmaker/v1';
+    $path = 'email_lookup/(?P<nonce>.+)/(?P<event>[0-9]+)';///(?P<nonce>.+)
+
+    register_rest_route( $namespace, '/' . $path, [
+      array(
+        'methods'             => 'GET',
+        'callback'            => array( $this, 'get_items' ),
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+            ),
+        ]);     
+    }
+
+  public function get_items_permissions_check($request) {
+    return wp_verify_nonce($request["nonce"],'rsvp_email_lookup');
+  }
+
+public function get_items($request) {
+    global $wpdb;
+    $event = $request['event'];
+    $email = $_GET['email_search'];
+    $output = ajax_rsvp_email_lookup ($email, $event);
+    return new WP_REST_Response($output, 200);
+  }
+}
+
+class RSVPMaker_Signed_Up extends WP_REST_Controller {
+  public function register_routes() {
+    $namespace = 'rsvpmaker/v1';
+    $path = 'signed_up';
+
+    register_rest_route( $namespace, '/' . $path, [
+      array(
+        'methods'             => 'GET',
+        'callback'            => array( $this, 'get_items' ),
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+            ),
+        ]);     
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+    global $wpdb;
+    $event = (int) $_GET['event'];
+    $output = signed_up_ajax ($event);
+    return new WP_REST_Response($output, 200);
+  }
+}
+
 add_action('rest_api_init', function () {
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
   $rsvpmaker_sked_controller->register_routes();
@@ -450,6 +503,10 @@ add_action('rest_api_init', function () {
   $rsvpexp->register_routes();
   $rsvpimp = new RSVP_RunImport();
   $rsvpimp->register_routes();
+  $signed_up = new RSVPMaker_Signed_Up();
+  $signed_up->register_routes();
+  $email_lookup = new RSVPMaker_Email_Lookup();
+  $email_lookup->register_routes();
 });
 
 ?>

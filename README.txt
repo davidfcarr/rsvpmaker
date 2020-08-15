@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5
-Stable tag: 7.8
+Stable tag: 7.8.2
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,16 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.8.2 =
+
+* Fixed issue with email queue initialization
+* Addressed potential SQL injection vulnerability flagged by GitHub
+
+= 7.8.1 =
+
+* Fixed issue with auto-renew from templates formatting dates incorrectly
+* Improved routine for detecting and fixing garbled dates
 
 = 7.8 =
 

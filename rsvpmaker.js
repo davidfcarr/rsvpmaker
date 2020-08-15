@@ -30,10 +30,9 @@ $('.signed_up_ajax').each( function () {
 
 var post = $(this).attr('post');
 var data = {
-	'action': 'signed_up',
-	'event_count': post,
+	'event': post,
 };
-jQuery.get(window.location.href, data, function(response) {
+jQuery.get(rsvpmaker_rest.rest_url+'rsvpmaker/v1/signed_up', data, function(response) {
 $('#signed_up_'+post).html(response);
 });
 
