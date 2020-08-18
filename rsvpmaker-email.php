@@ -1,4 +1,5 @@
 <?php
+use DrewM\MailChimp\MailChimp as MailChimpRSVP;
 
 $rsvpmaker_message_type = '';
 
@@ -233,295 +234,6 @@ if($mail["html"])
 	return $rsvpmail->ErrorInfo;
 }
 
-/*
-mailchimp api version3 wrapper by Drew McLellan
-https://github.com/drewm/mailchimp-api
-*/
-
-/**
- * Super-simple, minimum abstraction MailChimp API v3 wrapper
- * MailChimp API v3: http://developer.mailchimp.com
- * This wrapper: https://github.com/drewm/mailchimp-api
- *
- * @author Drew McLellan <drew.mclellan@gmail.com>
- * @version 2.2
- */
-class MailChimpRSVP
-{
-    private $api_key;
-    private $api_endpoint = 'https://<dc>.api.mailchimp.com/3.0';
-    private $data_center;
-	/*  SSL Verification
-        Read before disabling:
-        http://snippets.webaware.com.au/howto/stop-turning-off-curlopt_ssl_verifypeer-and-fix-your-php-config/
-    */
-    public $verify_ssl = true;
-    private $request_successful = false;
-    private $last_error         = '';
-    private $last_response      = array();
-    private $last_request       = array();
-    /**
-     * Create a new instance
-     * @param string $api_key Your MailChimp API key
-     * @throws \Exception
-     */
-    public function __construct($api_key)
-    {
-        $this->api_key = $api_key;
-        if (strpos($this->api_key, '-') === false) {
-            throw new \Exception('Invalid MailChimp API key supplied.');
-        }
-        list(, $data_center) = explode('-', $this->api_key);
-        $this->api_endpoint  = str_replace('<dc>', $data_center, $this->api_endpoint);
-        $this->last_response = array('headers' => null, 'body' => null);
-		$this->data_center = $data_center;
-    }
-	/* when saved as draft, direct user to url for draft */
-	public function draft_link() {
-	return 'https://'.$this->data_center.'.admin.mailchimp.com/campaigns/';
-	}
-
-    /**
-     * Create a new instance of a Batch request. Optionally with the ID of an existing batch.
-     * @param string $batch_id Optional ID of an existing batch, if you need to check its status for example.
-     * @return Batch            New Batch object.
-     */
-	public function new_batch($batch_id = null)
-    {
-        return new Batch($this, $batch_id);
-    }
-    /**
-     * Convert an email address into a 'subscriber hash' for identifying the subscriber in a method URL
-     * @param   string $email The subscriber's email address
-     * @return  string          Hashed version of the input
-     */
-    public function subscriberHash($email)
-    {
-        return md5(strtolower($email));
-    }
-    /**
-     * Was the last request successful?
-     * @return bool  True for success, false for failure
-     */
-    public function success()
-    {
-        return $this->request_successful;
-    }
-    /**
-     * Get the last error returned by either the network transport, or by the API.
-     * If something didn't work, this should contain the string describing the problem.
-     * @return  array|false  describing the error
-     */
-    public function getLastError()
-    {
-        return $this->last_error;
-    }
-    /**
-     * Get an array containing the HTTP headers and the body of the API response.
-     * @return array  Assoc array with keys 'headers' and 'body'
-     */
-    public function getLastResponse()
-    {
-        return $this->last_response;
-    }
-    /**
-     * Get an array containing the HTTP headers and the body of the API request.
-     * @return array  Assoc array
-     */
-    public function getLastRequest()
-    {
-        return $this->last_request;
-    }
-    /**
-     * Make an HTTP DELETE request - for deleting data
-     * @param   string $method URL of the API request method
-     * @param   array $args Assoc array of arguments (if any)
-     * @param   int $timeout Timeout limit for request in seconds
-     * @return  array|false   Assoc array of API response, decoded from JSON
-     */
-    public function delete($method, $args = array(), $timeout = 10)
-    {
-        return $this->makeRequest('delete', $method, $args, $timeout);
-    }
-    /**
-     * Make an HTTP GET request - for retrieving data
-     * @param   string $method URL of the API request method
-     * @param   array $args Assoc array of arguments (usually your data)
-     * @param   int $timeout Timeout limit for request in seconds
-     * @return  array|false   Assoc array of API response, decoded from JSON
-     */
-    public function get($method, $args = array(), $timeout = 10)
-    {
-        return $this->makeRequest('get', $method, $args, $timeout);
-    }
-    /**
-     * Make an HTTP PATCH request - for performing partial updates
-     * @param   string $method URL of the API request method
-     * @param   array $args Assoc array of arguments (usually your data)
-     * @param   int $timeout Timeout limit for request in seconds
-     * @return  array|false   Assoc array of API response, decoded from JSON
-     */
-    public function patch($method, $args = array(), $timeout = 10)
-    {
-        return $this->makeRequest('patch', $method, $args, $timeout);
-    }
-    /**
-     * Make an HTTP POST request - for creating and updating items
-     * @param   string $method URL of the API request method
-     * @param   array $args Assoc array of arguments (usually your data)
-     * @param   int $timeout Timeout limit for request in seconds
-     * @return  array|false   Assoc array of API response, decoded from JSON
-     */
-    public function post($method, $args = array(), $timeout = 10)
-    {
-        return $this->makeRequest('post', $method, $args, $timeout);
-    }
-    /**
-     * Make an HTTP PUT request - for creating new items
-     * @param   string $method URL of the API request method
-     * @param   array $args Assoc array of arguments (usually your data)
-     * @param   int $timeout Timeout limit for request in seconds
-     * @return  array|false   Assoc array of API response, decoded from JSON
-     */
-    public function put($method, $args = array(), $timeout = 10)
-    {
-        return $this->makeRequest('put', $method, $args, $timeout);
-    }
-    /**
-     * Performs the underlying HTTP request. Not very exciting.
-     * @param  string $http_verb The HTTP verb to use: get, post, put, patch, delete
-     * @param  string $method The API method to be called
-     * @param  array $args Assoc array of parameters to be passed
-     * @param int $timeout
-     * @return array|false Assoc array of decoded result
-     * @throws \Exception
-     */
-    private function makeRequest($http_verb, $method, $args = array(), $timeout = 10)
-    {
-        if (!function_exists('curl_init') || !function_exists('curl_setopt')) {
-            throw new \Exception("cURL support is required, but can't be found.");
-        }
-        $url = $this->api_endpoint . '/' . $method;
-        $this->last_error         = '';
-        $this->request_successful = false;
-        $response                 = array('headers' => null, 'body' => null);
-        $this->last_response      = $response;
-        $this->last_request = array(
-            'method'  => $http_verb,
-            'path'    => $method,
-            'url'     => $url,
-            'body'    => '',
-            'timeout' => $timeout,
-        );
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Accept: application/vnd.api+json',
-            'Content-Type: application/vnd.api+json',
-            'Authorization: apikey ' . $this->api_key
-        ));
-        curl_setopt($ch, CURLOPT_USERAGENT, 'DrewM/MailChimp-API/3.0 (github.com/drewm/mailchimp-api)');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verify_ssl);
-        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-        curl_setopt($ch, CURLOPT_ENCODING, '');
-        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-        switch ($http_verb) {
-            case 'post':
-                curl_setopt($ch, CURLOPT_POST, true);
-                $this->attachRequestPayload($ch, $args);
-                break;
-            case 'get':
-                $query = http_build_query($args);
-                curl_setopt($ch, CURLOPT_URL, $url . '?' . $query);
-                break;
-            case 'delete':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-                break;
-            case 'patch':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-                $this->attachRequestPayload($ch, $args);
-                break;
-            case 'put':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-                $this->attachRequestPayload($ch, $args);
-                break;
-        }
-        $response['body']    = curl_exec($ch);
-        $response['headers'] = curl_getinfo($ch);
-        if (isset($response['headers']['request_header'])) {
-            $this->last_request['headers'] = $response['headers']['request_header'];
-        }
-        if ($response['body'] === false) {
-            $this->last_error = curl_error($ch);
-        }
-        curl_close($ch);
-        $formattedResponse = $this->formatResponse($response);
-        $this->determineSuccess($response, $formattedResponse);
-        return $formattedResponse;
-    }
-    /**
-     * Encode the data and attach it to the request
-     * @param   resource $ch cURL session handle, used by reference
-     * @param   array $data Assoc array of data to attach
-     */
-    private function attachRequestPayload(&$ch, $data)
-    {
-        $encoded = json_encode($data);
-        $this->last_request['body'] = $encoded;
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $encoded);
-    }
-    /**
-     * Decode the response and format any error messages for debugging
-     * @param array $response The response from the curl request
-     * @return array|false    The JSON decoded into an array
-     */
-    private function formatResponse($response)
-    {
-        $this->last_response = $response;
-        if (!empty($response['body'])) {
-            return json_decode($response['body'], true);
-        }
-        return false;
-    }
-    /**
-     * Check if the response was successful or a failure. If it failed, store the error.
-     * @param array $response The response from the curl request
-     * @param array|false $formattedResponse The response body payload from the curl request
-     * @return bool     If the request was successful
-     */
-    private function determineSuccess($response, $formattedResponse)
-    {
-        $status = $this->findHTTPStatus($response, $formattedResponse);
-        if ($status >= 200 && $status <= 299) {
-            $this->request_successful = true;
-            return true;
-        }
-        if (isset($formattedResponse['detail'])) {
-            $this->last_error = sprintf('%d: %s', $formattedResponse['status'], $formattedResponse['detail']);
-            return false;
-        }
-        $this->last_error = 'Unknown error, call getLastResponse() to find out what happened.';
-        return false;
-    }
-    /**
-     * Find the HTTP status code from the headers or API response body
-     * @param array $response The response from the curl request
-     * @param array|false $formattedResponse The response body payload from the curl request
-     * @return int  HTTP status code
-     */
-    private function findHTTPStatus($response, $formattedResponse)
-    {
-        if (!empty($response['headers']) && isset($response['headers']['http_code'])) {
-            return (int) $response['headers']['http_code'];
-        }
-        if (!empty($response['body']) && isset($formattedResponse['status'])) {
-            return (int) $formattedResponse['status'];
-        }
-        return 418;
-    }
-}
 
   // Avoid name collisions.
   if (!class_exists('RSVPMaker_Email_Options'))
@@ -596,7 +308,7 @@ class MailChimpRSVP
                   foreach ($options as $name => $value)
 				  	{
 					if(isset($_POST[$name]))
-					$options[$name] = $_POST[$name];
+					$options[$name] = sanitize_text_field($_POST[$name]);
 				  	}
 				  if(empty($_POST['chimp_add_new_users']))
 					 $options['chimp_add_new_users'] = false;
@@ -728,7 +440,7 @@ $apikey = $chimp_options["chimp-key"];
 $listId = $chimp_options["chimp-list"]; 
 
 try {
-    $MailChimp = new MailChimpRSVP($apikey);
+	$MailChimp = new MailChimpRSVP($apikey);
 } catch (Exception $e) {
 		wp_mail($chimp_options["add_notify"],"RSVPMaker_Chimp_Add error for $email ",$e->getMessage() .' email'.$email.' '.var_export($merge_vars,true));
     return;
@@ -1123,12 +835,12 @@ function save_rsvpemail_data() {
 
 if(empty($_POST) || empty($_REQUEST['post_id']) || empty($_REQUEST['page']) || ($_REQUEST['page'] != 'rsvpmaker_scheduled_email_list'))
 	return;
-$postID = $_REQUEST['post_id'];
+$postID = (int) $_REQUEST['post_id'];
 
 
 if(isset($_POST['scheduled_email']))
 {
-	update_post_meta($postID,'scheduled_email',$_POST['scheduled_email']);
+	update_post_meta($postID,'scheduled_email',sanitize_text_field($_POST['scheduled_email']));
 }
 
 if(!empty($_POST["email"]["from_name"]))
@@ -1141,6 +853,7 @@ if(!empty($_POST["email"]["from_name"]))
 			$ev["headline"] = 0;
 		foreach($ev as $name => $value)
 			{
+			$value = sanitize_text_field($value);
 			$field = '_email_'.$name;
 			$single = true;
 			$current = get_post_meta($postID, $field, $single);
@@ -1166,8 +879,8 @@ if(!empty($_POST["email"]["from_name"]))
 	if(!empty($_POST['notesubject']) || !empty($_POST['notebody']))
 	{
 		global $current_user;
-		$newpost['post_title'] = stripslashes($_POST['notesubject']);
-		$newpost['post_content'] = rsvpautog(stripslashes($_POST['notebody']));
+		$newpost['post_title'] = sanitize_title(stripslashes($_POST['notesubject']));
+		$newpost['post_content'] = wp_kses_post(rsvpautog(stripslashes($_POST['notebody'])));
 		$newpost['post_type'] = 'post';
 		$newpost['post_status'] = $_POST['status'];
 		$newpost['post_author'] = $current_user->ID;
@@ -1175,9 +888,7 @@ if(!empty($_POST["email"]["from_name"]))
 	}
 	
 	if(!empty($_POST['notekey']))	
-		update_post_meta($postID,$_POST['notekey'],$chosen);
-	//rsvpmaker_debug_log($_POST,'schedule email message');
-	//rsvpmaker_debug_log($chosen,'chosen schedule email message');
+		update_post_meta($postID,sanitize_text_field($_POST['notekey']),$chosen);
 	$args = array('post_id' => $postID);
 	$cron_checkboxes = array("cron_active", "cron_mailchimp", "cron_members", "cron_preview");
 	foreach($cron_checkboxes as $check)
@@ -1203,7 +914,7 @@ if(!empty($_POST["email"]["from_name"]))
 	elseif(($cron["cron_active"] == 'relative') && !empty($_POST["cron_relative"]))
 		$t = (int) $_POST["cron_relative"];
 	elseif(($cron["cron_active"] == 'rsvpmaker_strtotime') && !empty($_POST["cron_rsvpmaker_strtotime"])) {
-		$t = rsvpmaker_strtotime($_POST["cron_rsvpmaker_strtotime"]);
+		$t = rsvpmaker_strtotime(sanitize_text_field($_POST["cron_rsvpmaker_strtotime"]));
 	}
 	
 	
@@ -1309,8 +1020,6 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 			}
 	}
 }
-
-
 
 function create_rsvpemail_post_type() {
 global $rsvp_options;
@@ -1472,7 +1181,7 @@ $chimp_options = get_option('chimp');
 
 if(!empty($_POST["subject"]))
 	{
-		$subject = stripslashes($_POST["subject"]);
+		$subject = sanitize_title(stripslashes($_POST["subject"]));
 		if($post->post_title != $subject)
 		{
 			$post->post_title = $subject;
@@ -1489,9 +1198,9 @@ if(!empty($_POST["preview"]))
 		{
 		echo '<p>Sending preview to '.$previewto.'</p>';
 		$mail["to"] = $previewto;
-		$mail["from"] = (isset($_POST["user_email"])) ? $current_user->user_email : $_POST["from_email"];
-		$mail["fromname"] = stripslashes($_POST["from_name"]);
-		$mail["subject"] = stripslashes($_POST["subject"]);
+		$mail["from"] = (isset($_POST["user_email"]) && is_email($_POST["user_email"]) ) ? $current_user->user_email : sanitize_text_field($_POST["from_email"]);
+		$mail["fromname"] = sanitize_text_field(stripslashes($_POST["from_name"]));
+		$mail["subject"] = sanitize_title(stripslashes($_POST["subject"]));
 		$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		echo $result = rsvpmailer($mail);
@@ -1541,8 +1250,8 @@ if(!empty($_POST["rsvps_since"]) && !empty($_POST["since"]))
 {
 $unsub = get_option('rsvpmail_unsubscribed');
 if(empty($unsub)) $unsub = array();
-
-$t = rsvpmaker_strtotime('-'.$_POST["since"].' days');
+$since = (int) $_POST["since"];
+$t = rsvpmaker_strtotime('-'.$since.' days');
 
 $date = date('Y-m-d',$t);
 
@@ -1636,7 +1345,7 @@ $input = array(
                 'type' => 'regular',
                 'recipients'        => array('list_id' => $listID),
                 'segment_opts'        => $segment_opts,
-				'settings' => array('subject_line' => stripslashes($_POST["subject"]),'from_email' => $_POST["from_email"], 'from_name' => $_POST["from_name"], 'reply_to' => $_POST["from_email"])
+				'settings' => array('subject_line' => sanitize_title(stripslashes($_POST["subject"])),'from_email' => sanitize_text_field($_POST["from_email"]), 'from_name' => sanitize_text_field($_POST["from_name"]), 'reply_to' => sanitize_text_field($_POST["from_email"]))
 );
 
 rsvpmaker_debug_log(json_encode($input),'mailchimp request');
@@ -1661,8 +1370,7 @@ if(!$MailChimp->success())
 	}
 if(empty($_POST["chimp_send_now"]))
 	{
-	$link = $MailChimp->draft_link();
-	echo '<div><a target="_blank" href="'.$link.'">'.__('View draft','rsvpmaker').'</a> '. __('on mailchimp.com','rsvpmaker').'</div>';
+	echo '<div>'.__('View draft on mailchimp.com','rsvpmaker').'</div>';
 	}
 else // send now
 	{
@@ -1953,7 +1661,7 @@ if (version_compare($ver, '7.1', '<'))
 <div id="icon-options-general" class="icon32"><br /></div>
 <?php
 	if(isset($_POST['extra_email_styles']))
-		update_option('extra_email_styles',$_POST['extra_email_styles']);
+		update_option('extra_email_styles',sanitize_textarea_field($_POST['extra_email_styles']));
 	if(isset($_POST['rsvpmaker_tx_template']))
 		update_option('rsvpmaker_tx_template', (int) $_POST['rsvpmaker_tx_template']);
 		
@@ -1962,7 +1670,7 @@ if (version_compare($ver, '7.1', '<'))
 	$templates = $_POST['rsvpmaker_email_template'];
 	foreach($templates as $index => $template)
 		{
-		$template['html'] = stripslashes($template['html']);
+		$template['html'] = wp_kses_post(stripslashes($template['html']));
 		$templates[$index] = $template;
 		}
 	update_option('rsvpmaker_email_template',$templates);
@@ -2201,8 +1909,6 @@ if(isset($_POST['remove']))
 printf('<h2>Add an Email to Unsubscribed List</h2><form method="get" action="%s" target"_blank"><input name="rsvpmail_unsubscribe" /><button>Add</button></form>',site_url());
 
 }
-
-
 
 function RSVPMaker_chimpshort($atts, $content = NULL ) {
 
@@ -2544,8 +2250,8 @@ try {
     return '<option value="">none '.$e->getMessage().'</option>';
 }
 
-
 $retval = $MailChimp->get('lists');
+rsvpmaker_debug_log($retval,'mailchimp lists');
 
 $options = '';
 if (is_array($retval)){
@@ -2876,8 +2582,8 @@ if(isset($_POST['ntemp']))
 	$ntemp = $_POST['ntemp'];
 	if(!empty($_POST["newtemplate"]["subject"]) && !empty($_POST["newtemplate_label"]))
 		{
-		$ntemp[$_POST["newtemplate_label"]]["subject"] = $_POST["newtemplate"]["subject"];
-		$ntemp[$_POST["newtemplate_label"]]["body"] = $_POST["newtemplate"]["body"];
+		$ntemp[$_POST["newtemplate_label"]]["subject"] = sanitize_title($_POST["newtemplate"]["subject"]);
+		$ntemp[$_POST["newtemplate_label"]]["body"] = wp_kses_post($_POST["newtemplate"]["body"]);
 		}
 	update_option('rsvpmaker_notification_templates',stripslashes_deep($ntemp));
 	}
@@ -3255,10 +2961,6 @@ function rsvpmailer_template_preview() {
 			<!-- wp:paragraph -->
 			<p><a href="https://www.carrcommunications.com/tell-us-your-story/">Tell us your story</a>, the way you tell it today, or the story you want to take to the market. We will help you tell it better, or suggest a different story that would be more effective.</p>
 			<!-- /wp:paragraph -->
-			
-			<!-- wp:image {"align":"center","id":994226,"sizeSlug":"large","linkDestination":"custom"} -->
-			<div class="wp-block-image"><figure class="aligncenter size-large"><a href="https://carrcommunications.com"><img src="https://www.carrcommunications.com/wp-content/uploads/2019/12/Cables.png" alt="" class="wp-image-994226"/></a></figure></div>
-			<!-- /wp:image -->
 			
 			<!-- wp:paragraph -->
 			<p>Learn how <a href="https://carrcommunications.com">Carr Communications</a> can help you tell a clear, convincing story.</p>

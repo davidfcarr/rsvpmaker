@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5
-Stable tag: 7.8.2
+Stable tag: 7.8.3
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,12 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 7.8.3 =
+
+* Additional security fixes required by wordpress.org plugin team
+* MailChimp API functions more clearly bundled as an external library https://github.com/drewm/mailchimp-api
+* Stripe report screen now allows you to fetch records of past transactions, including fees and refunds
 
 = 7.8.2 =
 

@@ -1,5 +1,4 @@
 <?php
-
 function rsvpmaker_to_stripe ($rsvp) {
 rsvpmaker_debug_log('rsvpmaker_to_stripe');
 	global $post;
@@ -179,6 +178,7 @@ $intent = \Stripe\PaymentIntent::create([
 update_post_meta($post->ID,$varkey,$vars);
 $price = $vars['amount'] * 100;
 ?>
+<!-- Stripe library must be loaded stripe.com per https://stripe.com/docs/js/including -->
 <script src="https://js.stripe.com/v3/"></script>
 <!-- We'll put the success / error messages in this element -->
 <div id="card-result" role="alert"></div>
@@ -285,7 +285,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 			if(!myJson.name)			
 				cardResult.innerHTML = '<?php _e('Payment processed, but may not have been recorded correctly','rsvpmaker');?>';
 			else
-				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase()+myJson.payment_confirmation_message;
+				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase();//+myJson.payment_confirmation_message;
 		});
       }
     }
@@ -363,14 +363,26 @@ function rsvpmaker_stripe_notify($vars) {
 }
 
 function rsvpmaker_stripe_report () {
-	rsvpmaker_debug_log('');
+	global $wpdb;
 	echo '<h1>Stripe Charges</h1>';
 	
 	if(isset($_GET['history'])) {
-		stripe_balance_history();
+		stripe_balance_history((int) $_GET['history']);
 	}
 
-	global $wpdb;
+	printf('<div style="padding: 5px; border: thin dotted #000;"><h3>Retrieve Transactions from Stripe Service</h3>
+	<p>Includes fees, refunds, and payouts</p>
+	<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_stripe_report" />
+	Up to <select name="history">
+	<option value="10">10</option>
+	<option value="20" selected="selected">20</option>
+	<option value="50">50</option> 
+	<option value="100">50</option> 
+	</select>transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
+	<button>Get</button></form></div>',admin_url('edit.php'));
+
+	echo '<p>The log below shows transactions as recorded on the website.</p>';
+
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvpmaker_stripe_payment' ORDER BY meta_id DESC";
 	$results = $wpdb->get_results($sql);
 	if(is_array($results))
@@ -383,14 +395,21 @@ function rsvpmaker_stripe_report () {
 	}
 }
 
-function stripe_balance_history () {
+add_action('admin_menu','rsvpmaker_stripe_report_menu',99);
+function rsvpmaker_stripe_report_menu () {
+if(empty(get_option('rsvpmaker_stripe_keys')))
+	return;
+add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVPMaker Stripe Report",'rsvpmaker'), __("RSVPMaker Stripe Report",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_stripe_report", "rsvpmaker_stripe_report" );
+}
+
+function stripe_balance_history ($limit = 20) {
 	rsvpmaker_debug_log('call to stripe_balance_history');
 	require_once('stripe-php/init.php');
 
 	$keys = get_rsvpmaker_stripe_keys ();
 	$public = $keys['pk'];
 	$secret = $keys['sk'];
-		\Stripe\Stripe::setApiKey($secret);
+	\Stripe\Stripe::setApiKey($secret);
 	
 	\Stripe\Stripe::setAppInfo(
 		"WordPress RSVPMaker events management plugin",
@@ -398,15 +417,64 @@ function stripe_balance_history () {
 		"https://rsvpmaker.com"
 	);
 //use https://stripe.com/docs/api/balance/balance_history
+$stripe = new \Stripe\StripeClient($secret);
+$history = $stripe->balanceTransactions->all(['limit' => $limit]);
 
-$history = \Stripe\BalanceTransaction::history (array('limit' => 50));
-print_r($history);
+$charges = $stripe->charges->all(['limit' => $limit * 5]);
+foreach($charges->data as $charge) {
+	$names[$charge->balance_transaction] = $charge->billing_details->name.' '.$charge->billing_details->email;
+	if(isset($_GET['charge_detail']))
+		printf('<pre>%s</pre><br />',var_export($charge,true));
 }
 
-add_action('admin_menu','rsvpmaker_stripe_report_menu',99);
-function rsvpmaker_stripe_report_menu () {
-if(empty(get_option('rsvpmaker_stripe_keys')))
-	return;
-add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVPMaker Stripe Report",'rsvpmaker'), __("RSVPMaker Stripe Report",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_stripe_report", "rsvpmaker_stripe_report" );
+if(isset($_GET['date']))
+	$startdate = strtotime($_GET['date']);
+
+$table = '';
+foreach($history->data as $index => $data) {
+	if(($data->reporting_category == 'payout') && empty($_GET['payouts']))
+		continue;
+	if(isset($startdate) && ($data->created < $startdate))
+		continue;
+	$amount = number_format(($data->amount / 100),2);
+	$fee = number_format(($data->fee / 100),2);
+	$yield = $amount - $fee;
+	$date = date('Y-m-d',$data->created);
+	$name = (empty($names[$data->id])) ? '' : $names[$data->id];
+	$table .= "$name,$amount,$fee,$yield\n";
+    if($data->fee)
+        $fees[$data->id] = $fee;
+    if($data->reporting_category == 'refund')
+        $refunds[$data->id] = array('amount' => $amount, 'date' => $date);
+    printf('<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>',$name, $date, number_format(($data->amount / 100),2),number_format(($data->fee / 100),2),$data->reporting_category, $data->id);
 }
+
+if(!empty($table))
+	echo  '<h3>Export Format</h3><pre>Name,Amount,Fee,Yield'."\n".$table.'</pre>';
+
+if(!empty($fees))
+{
+    echo '<h2>Fees</h2>';
+    $feetotal = 0;
+    foreach($fees as $index => $fee)
+    {
+        $feetotal += $fee;
+        printf('<p>%s %s</p>',$index,$fee);
+    }
+    printf('<p>Total Fees: %s</p>',$feetotal);
+}
+if(!empty($refunds))
+{
+    echo '<h2>Refunds</h2>';
+    $rtotal = 0;
+    foreach($refunds as $index => $refund)
+    {
+        $rtotal += $refund['amount'];
+        printf('<p>%s %s %s</p>',$index,$refund["amount"],$refund['date']);
+    }
+    printf('<p>Total Refunds: %s</p>',$rtotal);
+}
+
+}
+
 ?>

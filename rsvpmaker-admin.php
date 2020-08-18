@@ -1,6 +1,6 @@
 <?php
 
-function date_slug($data) {
+function rsvpmaker_date_slug($data) {
 	
 	if(!empty($_POST["override"]))
 		return $data; // don't do this for template override
@@ -44,9 +44,9 @@ function date_slug($data) {
 	return $data;
 }
 
-add_filter('wp_insert_post_data', 'date_slug', 10);
+add_filter('wp_insert_post_data', 'rsvpmaker_date_slug', 10);
 
-function unique_date_slug($slug, $post_ID = 0, $post_status = '', $post_type = '', $post_parent = 0, $original_slug='' )
+function rsvpmaker_unique_date_slug($slug, $post_ID = 0, $post_status = '', $post_type = '', $post_parent = 0, $original_slug='' )
 	{
 	global $wpdb;
 	if($post_type != 'rsvpmaker')
@@ -63,9 +63,9 @@ function unique_date_slug($slug, $post_ID = 0, $post_status = '', $post_type = '
 	return $newslug;
 	}
 
-add_filter('wp_unique_post_slug','unique_date_slug',10);
+add_filter('wp_unique_post_slug','rsvpmaker_unique_date_slug',10);
 
-function save_calendar_data($postID) {
+function rsvpmaker_save_calendar_data($postID) {
 
 global $wpdb;
 $end_array = array();
@@ -77,7 +77,7 @@ if($parent_id = wp_is_post_revision($postID))
 
 if(isset($_POST["_require_webinar_passcode"]))
 	{
-	update_post_meta($postID,'_require_webinar_passcode',$_POST["_require_webinar_passcode"]);
+	update_post_meta($postID,'_require_webinar_passcode',sanitize_text_field($_POST["_require_webinar_passcode"]));
 	}
 if(isset($_POST["event_month"]) )
 	{
@@ -85,19 +85,19 @@ if(isset($_POST["event_month"]) )
 		{
 		if(isset($_POST["event_day"][$index]) && $_POST["event_day"][$index])
 			{
-			$cddate = format_cddate($year,$_POST["event_month"][$index], $_POST["event_day"][$index],$_POST["event_hour"][$index],$_POST["event_minutes"][$index]);
-			$dpart = explode(':',$_POST["event_duration"][$index]);
+			$cddate = format_cddate($year,$_POST["event_month"][$index], $_POST["event_day"][$index], $_POST["event_hour"][$index], $_POST["event_minutes"][$index]);
+			$dpart = explode(':',sanitize_text_field($_POST["event_duration"][$index]));
 			if( is_numeric($dpart[0]) )
 				{
-				$hour = $_POST["event_hour"][$index] + $dpart[0];
-				$minutes = (isset($dpart[1]) ) ? $_POST["event_minutes"][$index] + $dpart[1] : $_POST["event_minutes"][$index];
-				$t = rsvpmaker_mktime( $hour, $minutes,0,$_POST["event_month"][$index],$_POST["event_day"][$index],$year);
+				$hour = sanitize_text_field($_POST["event_hour"][$index]) + $dpart[0];
+				$minutes = (isset($dpart[1]) ) ? sanitize_text_field($_POST["event_minutes"][$index]) + $dpart[1] : sanitize_text_field($_POST["event_minutes"][$index]);
+				$t = rsvpmaker_mktime( $hour, $minutes,0,sanitize_text_field($_POST["event_month"][$index]),sanitize_text_field($_POST["event_day"][$index]),$year);
 				$duration = rsvpmaker_date('Y-m-d H:i:s',$t);
 				}
 			else
-				$duration = $_POST["event_duration"][$index]; // empty or all day
+				$duration = sanitize_text_field($_POST["event_duration"][$index]); // empty or all day
 			if($duration == 'set')
-				$end_array[] = $_POST["hourevent_duration"][$index].':'.$_POST["minevent_duration"][$index];
+				$end_array[] = sanitize_text_field($_POST["hourevent_duration"][$index]).':'.sanitize_text_field($_POST["minevent_duration"][$index]);
 			$dates_array[] = $cddate;
 			$durations_array[] = $duration;
 			}
@@ -109,28 +109,30 @@ if(isset($_POST["edit_month"]))
 	delete_transient('rsvpmakerdates');//invalidate cached values
 	foreach($_POST["edit_year"] as $index => $year)
 		{
-			$cddate = format_cddate($year,$_POST["edit_month"][$index],  $_POST["edit_day"][$index], $_POST["edit_hour"][$index], $_POST["edit_minutes"][$index]);
+			$cddate = format_cddate(sanitize_text_field($year),sanitize_text_field($_POST["edit_month"][$index]),  sanitize_text_field($_POST["edit_day"][$index]), sanitize_text_field($_POST["edit_hour"][$index]), sanitize_text_field($_POST["edit_minutes"][$index]));
 			if(strpos( $_POST["edit_duration"][$index],':' ))
 				{
-				$dpart = explode(':',$_POST["edit_duration"][$index]);
+				$dpart = explode(':',sanitize_text_field($_POST["edit_duration"][$index]));
 				if( is_numeric($dpart[0]) )
 					{
-					$hour = $_POST["edit_hour"][$index] + $dpart[0];
-					$minutes = (isset($dpart[1]) ) ? $_POST["edit_minutes"][$index] + $dpart[1] : $_POST["edit_minutes"][$index];
+					$hour = sanitize_text_field($_POST["edit_hour"][$index]) + $dpart[0];
+					$minutes = (isset($dpart[1]) ) ? sanitize_text_field($_POST["edit_minutes"][$index]) + $dpart[1] : sanitize_text_field($_POST["edit_minutes"][$index]);
 					//dchange
 					$duration = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_mktime( $hour, $minutes,0,$_POST["edit_month"][$index],$_POST["edit_day"][$index],$year));
 					}
 				}
 			elseif( is_numeric($_POST["edit_duration"][$index]) )
-				{					
-				$minutes = $_POST["edit_minutes"][$index] + (60*$_POST["edit_duration"][$index]);
+				{
+				$d_duration = (int) $_POST["edit_duration"][$index];
+				$minutes = (int) $_POST["edit_minutes"][$index];				
+				$minutes = $minutes + (60*$d_duration);
 				//dchange - can this be removed?
-				$duration = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_mktime( $_POST["edit_hour"][$index], $minutes,0,$_POST["edit_month"][$index],$_POST["edit_day"][$index],$year));
+				$duration = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_mktime( sanitize_text_field($_POST["edit_hour"][$index]), $minutes,0,sanitize_text_field($_POST["edit_month"][$index]),sanitize_text_field($_POST["edit_day"][$index]),$year));
 				}
 			else
-				$duration = $_POST["edit_duration"][$index]; // empty or all day			
+				$duration = sanitize_text_field($_POST["edit_duration"][$index]); // empty or all day			
 			if($duration == 'set')
-				$end_array[] = $_POST["houredit_duration"][$index].':'.$_POST["minedit_duration"][$index];
+				$end_array[] = sanitize_text_field($_POST["houredit_duration"][$index]).':'.sanitize_text_field($_POST["minedit_duration"][$index]);
 			$dates_array[] = $cddate;
 			$durations_array[] = $duration;
 			}
@@ -150,11 +152,11 @@ if(isset($_POST["edit_month"]))
 	if(isset($_POST["setrsvp"]) )
 	{ // if rsvp parameters were set, was RSVP box checked?
 	if(isset($_POST["setrsvp"]["on"]))
-		update_post_meta($postID, '_rsvp_on', $_POST["setrsvp"]["on"]);
+		update_post_meta($postID, '_rsvp_on', (int) $_POST["setrsvp"]["on"]);
 	}
 	
 	if(isset($_POST['payment_gateway']))
-		update_post_meta($postID, 'payment_gateway', $_POST["payment_gateway"]);
+		update_post_meta($postID, 'payment_gateway', sanitize_text_field($_POST["payment_gateway"]));
 
 	if(isset($_POST["sked"]["week"]))
 		{
@@ -321,6 +323,8 @@ for($i=0; $i < 60; $i ++)
 <?php
 if(!empty($sked['duration']))
 	$datevar['duration'] = $sked['duration'];
+if(empty($datestring))
+	$datestring ='';
 rsvpmaker_duration_select ($prefix.'duration['.$index.']', $datevar, $datestring, $index );
 
 ?>
@@ -356,7 +360,7 @@ if(isset($_POST["deadyear"]) && isset($_POST["deadmonth"]) && isset($_POST["dead
 	if(empty($_POST["deadday"]))
 		$setrsvp["deadline"] = '';
 	else
-		$setrsvp["deadline"] = rsvpmaker_strtotime($_POST["deadyear"].'-'.$_POST["deadmonth"].'-'.$_POST["deadday"].' '.$_POST["deadtime"]);
+		$setrsvp["deadline"] = rsvpmaker_strtotime(sanitize_text_field($_POST["deadyear"]).'-'.sanitize_text_field($_POST["deadmonth"]).'-'.sanitize_text_field($_POST["deadday"]).' '.sanitize_text_field($_POST["deadtime"]));
 	}
 
 if(isset($_POST["startyear"]) && isset($_POST["startmonth"]) && isset($_POST["startday"]))
@@ -364,17 +368,17 @@ if(isset($_POST["startyear"]) && isset($_POST["startmonth"]) && isset($_POST["st
 	if(empty($_POST["startday"]))
 		$setrsvp["start"] = '';
 	else
-		$setrsvp["start"] = rsvpmaker_strtotime($_POST["startyear"].'-'.$_POST["startmonth"].'-'.$_POST["startday"].' '.$_POST["starttime"]);
+		$setrsvp["start"] = rsvpmaker_strtotime(sanitize_text_field($_POST["startyear"].'-'.$_POST["startmonth"].'-'.$_POST["startday"].' '.$_POST["starttime"]));
 	}
 //legacy
 if(isset($_POST["remindyear"]) && isset($_POST["remindmonth"]) && isset($_POST["remindday"]))
-	$setrsvp["reminder"] = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_strtotime($_POST["remindyear"].'-'.$_POST["remindmonth"].'-'.$_POST["remindday"].' '.$_POST["remindtime"]));
+	$setrsvp["reminder"] = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_strtotime(sanitize_text_field($_POST["remindyear"].'-'.$_POST["remindmonth"].'-'.$_POST["remindday"].' '.$_POST["remindtime"])));
 
 foreach($setrsvp as $name => $value)
 	{
 	$field = '_rsvp_'.$name;
 	$single = true;
-	update_post_meta($postID, $field, $value);
+	update_post_meta($postID, $field, sanitize_text_field($value));
 	}
 
 if(isset($_POST["unit"]))
@@ -382,14 +386,15 @@ if(isset($_POST["unit"]))
 				
 	foreach($_POST["unit"] as $index => $value)
 		{
+		$value = sanitize_text_field($value);
 		if(empty($value))
 			continue;
 		if( empty($_POST["price"][$index]) && ($_POST["price"][$index] != 0) )
 			continue;
 		$per["unit"][$index] = $value;
-		$per["price"][$index] = $_POST["price"][$index];
+		$per["price"][$index] = sanitize_text_field($_POST["price"][$index]);
 		if(isset($_POST["price_multiple"][$index]) && ($_POST["price_multiple"][$index] > 1))
-			$per["price_multiple"][$index] = $_POST["price_multiple"][$index];
+			$per["price_multiple"][$index] = sanitize_text_field($_POST["price_multiple"][$index]);
 		if(!empty($_POST["price_deadline"][$index]))
 			{
 			
@@ -411,7 +416,7 @@ if(isset($_POST["unit"]))
 			update_post_meta($postID, '_hiddenrsvpfields', $pricehide);
 		}
 	
-	$value = $per;
+	$value = sanitize_text_field($per);
 	$field = "_per";
 	
 	$current = get_post_meta($postID, $field, $single); 
@@ -428,7 +433,7 @@ if(isset($_POST["unit"]))
 	}
 	if(!empty($_POST["youtube_live"]) || !empty($_POST["webinar_other"]))
 		{
-		$ylive = $_POST["youtube_live"];
+		$ylive = sanitize_text_field($_POST["youtube_live"]);
 		unset($_POST);
 		rsvpmaker_youtube_live($postID, $ylive);
 		}
@@ -494,13 +499,14 @@ echo $label;
               $options = $this->get_options();
 			  if(isset($_POST["payment_option"])) {
               $newoptions = stripslashes_deep($_POST["payment_option"]);
-				$newoptions["stripe"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'stripe')) ? 1 : 0;	$newoptions["cash_or_custom"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'cash_or_custom')) ? 1 : 0;
+				$newoptions["stripe"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'stripe')) ? 1 : 0;
+				$newoptions["cash_or_custom"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'cash_or_custom')) ? 1 : 0;
 				$nfparts = explode('|',$_POST["currency_format"]);
 				$newoptions["currency_decimal"] = $nfparts[0];
 				$newoptions["currency_thousands"] = $nfparts[1];
 
 				foreach($newoptions as $name => $value)
-				  $options[$name] = $value;
+				  $options[$name] = sanitize_text_field($value);
 				  
                   update_option($this->db_option, $options);
 				  if(isset($_POST['rsvpmaker_stripe_keys']))
@@ -552,7 +558,7 @@ echo $label;
 			  if(isset($_POST["enotify_option"])) {
               $newoptions = stripslashes_deep($_POST["enotify_option"]);
 				foreach($newoptions as $name => $value)
-				  $options[$name] = $value;
+				  $options[$name] = sanitize_text_field($value);
                   update_option($this->db_option, $options);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - email server.','rsvpmaker').'</p></div>';
 			  }	
@@ -561,7 +567,7 @@ echo $label;
               $newoptions = stripslashes_deep($_POST["security_option"]);
 				  $newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
 				foreach($newoptions as $name => $value)
-				  $options[$name] = $value;
+				  $options[$name] = sanitize_text_field($value);
                   update_option($this->db_option, $options);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - security.','rsvpmaker').'</p></div>';
 
@@ -592,11 +598,11 @@ echo $label;
 				  
 				  $newoptions["dbversion"] = $options["dbversion"]; // gets set by db upgrade routine
 				  
-				$newoptions["eventpage"] = $_POST["option"]["eventpage"];
+				$newoptions["eventpage"] = sanitize_text_field($_POST["option"]["eventpage"]);
                   $newoptions["log_email"] = (isset($_POST["option"]["log_email"]) && $_POST["option"]["log_email"]) ? 1 : 0;
 
 				foreach($newoptions as $name => $value)
-				  $options[$name] = $value;
+				  $options[$name] = sanitize_text_field($value);
 				  
                   update_option($this->db_option, $options);
                   
@@ -609,16 +615,14 @@ echo $label;
 					$future = array_merge($future,$templates);
 					foreach($future as $event) {
 						foreach($_POST['defaultoverride'] as $slug) {
-							$dbslug = '_'.$slug;
+							$dbslug = '_'.sanitize_text_field($slug);
 							update_post_meta($event->ID, $dbslug, $options[$slug]);
 							//printf('<p>updating %s %s %s</p>',$event->ID, $dbslug, $options[$slug]);
 						}						  
 					}
-				printf('<p>Updating %s for %s events and %s templates',implode(', ',$_POST['defaultoverride']), $fcount, $tcount );  
+				printf('<p>Updating %s for %s events and %s templates',esc_html(implode(', ',$_POST['defaultoverride']), $fcount, $tcount ));  
 				}
 			  }
-			  
-
               
               // URL for form submit, equals our current page
 $action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
@@ -655,7 +659,7 @@ if(isset($_GET["test"]))
 
 if(isset($_POST['timezone_string']))
 {
-	$tz = $_POST['timezone_string'];
+	$tz = sanitize_text_field($_POST['timezone_string']);
 	update_option('timezone_string',$tz);
 	echo '<div class="notice notice-info"><p>'. __('Timezone set to','rsvpmaker').' '.$tz.'</p></div>';
 }
@@ -1237,15 +1241,23 @@ if(isset($_GET['debug'])) {
 $hooksays = wp_get_schedule('rsvpmaker_relay_init_hook');
 
 if(isset($_POST['rsvpmaker_discussion_server']))
-	update_option('rsvpmaker_discussion_server',$_POST['rsvpmaker_discussion_server']);
+	update_option('rsvpmaker_discussion_server',sanitize_text_field($_POST['rsvpmaker_discussion_server']));
 if(isset($_POST['rsvpmaker_discussion_member']))
-	update_option('rsvpmaker_discussion_member',$_POST['rsvpmaker_discussion_member']);
-if(isset($_POST['rsvpmaker_discussion_officer']))
-	update_option('rsvpmaker_discussion_officer',$_POST['rsvpmaker_discussion_officer']);
-if(isset($_POST['rsvpmaker_discussion_extra']))
-	update_option('rsvpmaker_discussion_extra',$_POST['rsvpmaker_discussion_extra']);
+	update_option('rsvpmaker_discussion_member',sanitize_text_field($_POST['rsvpmaker_discussion_member']));
+if(isset($_POST['rsvpmaker_discussion_officer'])) {
+	$newarray = array();
+	foreach($_POST['rsvpmaker_discussion_officer'] as $index => $value)
+		$newarray[$index] = sanitize_textarea_field($value);
+	update_option('rsvpmaker_discussion_officer',$newarray);
+}
+if(isset($_POST['rsvpmaker_discussion_extra'])) {
+	$newarray = array();
+	foreach($_POST['rsvpmaker_discussion_extra'] as $index => $value)
+		$newarray[$index] = sanitize_textarea_field($value);
+	update_option('rsvpmaker_discussion_extra',$newarray);
+}
 if(!empty($_POST['rsvpmaker_discussion_active'])) {
-	update_option('rsvpmaker_discussion_active',$_POST['rsvpmaker_discussion_active']);
+	update_option('rsvpmaker_discussion_active',(int) $_POST['rsvpmaker_discussion_active']);
 	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
 	if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
 		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
@@ -1456,9 +1468,9 @@ if(isset($_POST))
 		{
 		if($_POST["recur_day"][$index] )
 			{
-			$my_post['post_title'] = $_POST["title"][$index];
-			$my_post['post_content'] = $_POST["body"][$index];
-			$cddate = format_cddate($year, $_POST["recur_month"][$index], $_POST["recur_day"][$index], $_POST["recur_hour"][$index], $_POST["recur_minutes"][$index]);// Insert the post into the database
+			$my_post['post_title'] = sanitize_title($_POST["title"][$index]);
+			$my_post['post_content'] = wp_kses_post($_POST["body"][$index]);
+			$cddate = format_cddate($year, sanitize_text_field($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), sanitize_text_field($_POST["recur_hour"][$index]), sanitize_text_field($_POST["recur_minutes"][$index]));// Insert the post into the database
   			if($postID = wp_insert_post( $my_post ) )
 				{
 				add_post_meta($postID,'_rsvp_dates',$cddate);
@@ -1611,20 +1623,20 @@ if(empty($_POST['add_recur']) || !wp_verify_nonce($_POST['add_recur'],'recur'))
 
 if(!empty($_POST["recur-title"]))
 	{
-	$my_post['post_title'] = $_POST["recur-title"];
-	$my_post['post_content'] = $_POST["recur-body"];
+	$my_post['post_title'] = sanitize_title($_POST["recur-title"]);
+	$my_post['post_content'] = wp_kses_post($_POST["recur-body"]);
 	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
 	$my_post['post_author'] = $current_user->ID;
 	$my_post['post_type'] = 'rsvpmaker';
 
 	foreach($_POST["recur_checked"] as $index => $on)
 		{
-		$year = $_POST["recur_year"][$index];
+		$year = sanitize_text_field($_POST["recur_year"][$index]);
 		if(!empty($_POST["recur_day"][$index]) )
 			{
-			$cddate = format_cddate($year,$_POST["recur_month"][$index], $_POST["recur_day"][$index], $_POST["event_hour"], $_POST["event_minutes"]);
+			$cddate = format_cddate(sanitize_text_field($year,$_POST["recur_month"][$index], $_POST["recur_day"][$index], $_POST["event_hour"], $_POST["event_minutes"]));
 
-			$dpart = explode(':',$_POST["event_duration"]);			
+			$dpart = explode(':',sanitize_text_field($_POST["event_duration"]));			
 			
 			if( is_numeric($dpart[0]) )
 				{
@@ -1636,10 +1648,10 @@ if(!empty($_POST["recur-title"]))
 				//printf('<p>%s %s</p>',$dtext,$duration);
 				}
 			else
-				$duration = $_POST["event_duration"]; // empty or all day
+				$duration = sanitize_text_field($_POST["event_duration"]); // empty or all day
 
 			if($duration == 'set')
-				$end_time = $_POST["hourevent_duration"][$index].':'.$_POST["minevent_duration"][$index];
+				$end_time = sanitize_text_field($_POST["hourevent_duration"][$index].':'.$_POST["minevent_duration"][$index]);
 
 // Insert the post into the database
   			if($postID = wp_insert_post( $my_post ) )
@@ -1778,8 +1790,8 @@ echo "<p>".__('Loading recurring series of dates for','rsvpmaker'). " $week $dow
 <h3><?php _e('Enter Recurring Events','rsvpmaker'); ?></h3>
 
 <form id="form1" name="form1" method="post" action="<?php echo admin_url("edit.php?post_type=rsvpmaker&page=add_dates");?>">
-<p>Headline: <input type="text" name="recur-title" size="60" value="<?php if(isset($_POST["recur-title"])) echo stripslashes($_POST["recur-title"]);?>" /></p>
-<p><textarea name="recur-body" rows="5" cols="80"><?php echo (isset($_POST["recur-body"]) && $_POST["recur-body"]) ? stripslashes($_POST["recur-body"]) : $rsvp_options["default_content"];?></textarea></p>
+<p>Headline: <input type="text" name="recur-title" size="60" value="<?php if(isset($_POST["recur-title"])) echo sanitize_title(stripslashes($_POST["recur-title"]));?>" /></p>
+<p><textarea name="recur-body" rows="5" cols="80"><?php echo (isset($_POST["recur-body"]) && wp_kses_post($_POST["recur-body"])) ? stripslashes(wp_kses_post($_POST["recur-body"])) : $rsvp_options["default_content"];?></textarea></p>
 <?php
 wp_nonce_field('recur','add_recur');
 
@@ -2217,8 +2229,9 @@ function rsvpmaker_essentials () {
 		$message .= '<p>Calendar notice cleared.</p>';		
 	}
 	if(isset($_POST["timezone_string"])) {
-		update_option('timezone_string',$_POST["timezone_string"]);
-		$message .= '<p>Timezone set: '.$_POST["timezone_string"].'.</p>';		
+		$tz = sanitize_text_field($_POST["timezone_string"]);
+		update_option('timezone_string',$tz);
+		$message .= '<p>Timezone set: '.$tz.'.</p>';		
 	}
 	if(isset($_POST["privacy_confirmation"])) {
 		$rsvp_options["privacy_confirmation"] = (int) $_POST["privacy_confirmation"];
@@ -2367,7 +2380,6 @@ $message = sprintf('<p>%s %s. %s</p>',__('RSVPMaker needs you to','rsvpmaker'),_
 $basic_options .= sprintf('<p>%s</p>
 <p>
 <select id="timezone_string" name="timezone_string">
-<script type="text/javascript" src="%s"></script>
 <script>'."
 var tz = jstz.determine();
 var tzstring = tz.name();
@@ -2375,7 +2387,7 @@ document.write('<option selected=\"selected\" value=\"' + tzstring + '\">' + tzs
 </script>
 %s
 </select>
-",$message,plugins_url('rsvpmaker/jstz.min.js'),$choices);
+",$message,$choices);
 }
 
 if(!isset($rsvp_options["privacy_confirmation"]))
@@ -3010,6 +3022,7 @@ $post_id = (isset($_REQUEST["post_id"])) ? (int) $_REQUEST["post_id"] : false;
 if($_POST['defaults'])
 {
 	foreach($_POST['defaults'] as $index => $value) {
+		$value = sanitize_text_field($value);
 		if($index == 'confirmation') {
 			delete_post_meta($post_id,'_rsvp_confirm');
 		}
@@ -3441,7 +3454,7 @@ $wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_key='_export_rsvp_volunteer
 }
 
 function rsvpmaker_paypal_config_ajax () {
-$filename = rsvpmaker_paypal_config_write($_POST["user"],$_POST["password"],$_POST["signature"]);
+$filename = rsvpmaker_paypal_config_write(sanitize_text_field($_POST["user"]),sanitize_text_field($_POST["password"]),sanitize_text_field($_POST["signature"]));
 die($filename);
 }
 
@@ -3546,9 +3559,9 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 	foreach($_POST["recur_check"] as $index => $on)
 		{
 			if(!empty($_POST["recur_title"][$index]))
-				$my_post['post_title'] = $_POST["recur_title"][$index];
-			$year = $_POST["recur_year"][$index];
-			$cddate = format_cddate($year, $_POST["recur_month"][$index], $_POST["recur_day"][$index], $hour, $minutes);
+				$my_post['post_title'] = sanitize_title($_POST["recur_title"][$index]);
+			$year = sanitize_text_field($_POST["recur_year"][$index]);
+			$cddate = format_cddate($year, sanitize_text_field($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), $hour, $minutes);
 			$dpart = explode(':',$template["duration"]);
 			
 			if( is_numeric($dpart[0]) )
@@ -3829,7 +3842,7 @@ $update_messages = '';
 	
 if(!empty($_POST['trash_template'])) {
 	foreach($_POST['trash_template'] as $id)
-		wp_trash_post($id);
+		wp_trash_post((int) $id);
 	$count = sizeof($_POST['trash_template']);
 	$update_messages = '<div class="updated">'.$count.' '.__('event posts moved to trash','rsvpmaker').'</div>';
 }
@@ -3837,7 +3850,7 @@ if(!empty($_POST['trash_template'])) {
 if(isset($_POST["timechange"]))
 	{
 		foreach($_POST["timechange"] as $id => $time)
-			update_post_meta($id,'_rsvp_dates',$time);
+			update_post_meta($id,'_rsvp_dates',sanitize_text_field($time));
 		delete_transient('rsvpmakerdates');
 	}
 
@@ -3850,7 +3863,7 @@ if(isset($_POST["update_from_template"]))
 						$update_messages .= '<div class="updated">Error</div>';
 						break;
 					}
-				$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$post->post_title,$post->post_content,$target_id);
+				$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$post->post_title,$post->post_content, (int) $target_id);
 				$wpdb->query($sql);
 				rsvpmaker_copy_metadata($t, $target_id);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
@@ -3884,7 +3897,7 @@ if(isset($_POST["recur_check"]) )
 	foreach($_POST["recur_check"] as $index => $on)
 		{
 			$year = $_POST["recur_year"][$index];
-			$cddate = format_cddate($year, $_POST["recur_month"][$index], $_POST["recur_day"][$index], $hour, $minutes);
+			$cddate = format_cddate($year, sanitize_field_text($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), $hour, $minutes);
 			$y = (int) $_POST["recur_year"][$index];
 			$m = (int) $_POST["recur_month"][$index];
 			$d = (int) $_POST["recur_day"][$index];
@@ -3909,9 +3922,9 @@ if(isset($_POST["recur_check"]) )
 			}
 			
 			if(!empty($_POST["recur_title"][$index]))
-				$my_post['post_title'] = $_POST["recur_title"][$index];
+				$my_post['post_title'] = sanitize_title($_POST["recur_title"][$index]);
 
-			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$date );
+			$my_post['post_name'] = $my_post['post_title'] . '-' .$date;
 			$singular = __('Event','rsvpmaker');
 // Insert the post into the database
   			if($postID = wp_insert_post( $my_post ) )
@@ -3955,8 +3968,8 @@ if(isset($_POST["nomeeting"]) )
 		}
 	else
 		{
-			$cddate = $_POST["nomeeting"];
-			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$cddate );
+			$cddate = sanitize_title($_POST["nomeeting"]);
+			$my_post['post_name'] = $my_post['post_title'] . '-' .$cddate;
 
 // Insert the post into the database
   			if($postID = wp_insert_post( $my_post ) )
@@ -4629,13 +4642,13 @@ if(isset($post->post_status) && ($post->post_status != 'publish') )
 	printf('<h2>Post not published, status = <span style="color:red">%s</span></h2>',$post->post_status);
 if(isset($_POST["_require_webinar_passcode"]))
 	{
-	update_post_meta($post->ID,'_require_webinar_passcode',$_POST["_require_webinar_passcode"]);
+	update_post_meta($post->ID,'_require_webinar_passcode',sanitize_text_field($_POST["_require_webinar_passcode"]));
 	}
 if(isset($_POST['post_id']))
 {
 	$template_prompt = (isset($_POST['sked'])) ? sprintf(' - <a href="%s">%s</a> %s',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=') . $post->ID, __('Create/update events','rsvpmaker'),__('based on this template','rsvpmaker') ) : '';
 	printf('<div class="notice notice-info"><p>%s%s</p></div>',__('Saving RSVP Options','rsvpmaker'),$template_prompt);
-	save_calendar_data($post->ID);
+	rsvpmaker_save_calendar_data($post->ID);
 	cache_rsvp_dates(50);
 	if(isset($_POST['setrsvp']))
 	{
@@ -4765,7 +4778,7 @@ function ajax_rsvpmaker_meta_handler () {
 		if($_POST['key'] = '_rsvp_on')
 			$value = ($_POST['value'] == 'Yes') ? 1 : 0;
 		else
-			$value = $_POST['value'];
+			$value = sanitize_text_field($_POST['value']);
 		update_post_meta($post_id,$_POST['key'],$value);
 	}
 	wp_die();
@@ -5023,8 +5036,10 @@ if(!empty($_POST["rsvpmaker_new_post"]))
 			add_post_meta($post_id,'_meet_recur',$t);
 			rsvpmaker_copy_metadata($t, $post_id);
 		}
-		else
+		else {
 			save_rsvp_meta($post_id, true);
+		}
+		rsvpmaker_save_calendar_data($post_id);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
 		wp_redirect($editurl);
 		die();			
@@ -5085,7 +5100,7 @@ else {
 <h3>Import Events</h3>
 <p>Copy the link from the site you are <em>exporting from</em> and enter it here on the site you are <em>importing events into</em>.</p>
 <form method="post" id="importform" action="<?php echo admin_url('tools.php?page=rsvpmaker_export_screen'); ?>">
-<div><input type="text" name="importrsvp" id="importrsvp" value="<?php if(isset($_POST['importurl'])) echo $_POST['importrsvp']; ?>" /></div>
+<div><input type="text" name="importrsvp" id="importrsvp" value="<?php if(isset($_POST['importurl'])) echo sanitize_text_field($_POST['importrsvp']); ?>" /></div>
 <input type="hidden" id="importnowurl" value="<?php echo rest_url('/rsvpmaker/v1/importnow'); ?>" />
 <div><button id="import-button">Import</button></div>
 </form>
@@ -5098,7 +5113,7 @@ rsvpmaker_jquery_inline('import');
 function rsvpmaker_override () {
 	global $post, $current_user;
 	if(isset($_POST['rsvp_tx_template']))
-		update_post_meta($_POST['rsvp_tx_post_id'],'rsvp_tx_template',$_POST['rsvp_tx_template']);
+		update_post_meta($_POST['rsvp_tx_post_id'],'rsvp_tx_template',sanitize_text_field($_POST['rsvp_tx_template']));
 	if(!empty($_GET['post']) && !empty($_GET['action']) && ($_GET['action'] == 'edit') )
 	{
 		$post_id = (int) $_GET['post'];
@@ -5171,7 +5186,7 @@ function rsvpmaker_share() {
 	
 	if(isset($_POST['remove_editor']) && is_array($_POST['remove_editor']))
 	foreach($_POST['remove_editor'] as $ed)
-		delete_post_meta($t,'_additional_editors',$ed);
+		delete_post_meta($t,'_additional_editors',(int) $ed);
 	
 	if(!empty($t))
 	{
@@ -5245,7 +5260,6 @@ ob_start();
 	width: 100px;
 }
 </style>
-<script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
 <script>
 tinymce.init({
 selector:"textarea",plugins: "link",
@@ -5406,7 +5420,6 @@ if(!empty($atts['timezone']))
 ?>
 <div><label>Timezone</label> 
 <select id="timezone_string" name="timezone_string">
-<script type="text/javascript" src="<?php echo plugins_url('rsvpmaker/jstz.min.js'); ?>"></script>
 <script>
 var tz = jstz.determine();
 var tzstring = tz.name();
@@ -5475,7 +5488,7 @@ function rsvpmaker_submission_post() {
 	{
 		$permalink = $_POST['rsvpmaker_submission_post'];
 		$author = isset($rsvp_options['submission_author']) ? $rsvp_options['submission_author'] : 1;
-		$title = $_POST['event_title'];
+		$title = sanitize_title($_POST['event_title']);
 		$day = (int) $_POST['day'];
 		$year = (int) $_POST['year'];
 		$month = (int) $_POST['month'];
@@ -5487,7 +5500,7 @@ function rsvpmaker_submission_post() {
 		$email = $_POST['rsvpmaker_submission_email'];
 		$description = stripslashes($_POST['rsvpmaker_submission_description']);
 		$description = strip_tags($description,'<strong><em><a><b><i>');
-		$description = rsvpautog($description);
+		$description = wp_kses_post(rsvpautog($description));
 		$nowmonth = (int) date('m');
 		$nowyear = (int) date('Y');
 		$nowday = (int) date('j');
@@ -5560,7 +5573,7 @@ function rsvpmaker_submission_post() {
 		{
 			add_post_meta($postID,"_add_timezone",true);
 			add_post_meta($postID,"_convert_timezone",true);
-			add_post_meta($postID,"_rsvp_timezone_string",$_POST['timezone_string']);		
+			add_post_meta($postID,"_rsvp_timezone_string",sanitize_text_field($_POST['timezone_string']));		
 		}
 	
 		$mail['subject'] = "Event submission: ".$title.' '.$cddate;

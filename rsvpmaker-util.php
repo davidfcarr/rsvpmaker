@@ -806,6 +806,7 @@ if(isset($_POST['default_field'])) {
 	$result = '';
 	foreach($_POST['default_field'] as $field)
 		{
+			$field = sanitize_text($field);
 			$result .= rsvpmaker_set_default_field($field,true);
 		}
 	echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events for fields shown below.</p></div>';

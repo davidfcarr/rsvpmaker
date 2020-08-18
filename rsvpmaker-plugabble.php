@@ -348,7 +348,7 @@ if(!isset($_POST["sked"]))
 	if(empty($sked["dayofweek"]))
 		$sked["dayofweek"][0] = 0;
 	if($sked['duration'] == 'set')
-		$sked['end'] = $_POST["hoursked"]['duration'].':'.$_POST["minsked"]['duration'];
+		$sked['end'] = sanitize_text_field($_POST["hoursked"]['duration'].':'.$_POST["minsked"]['duration']);
 
 	new_template_schedule($postID,$sked);
 	//update_post_meta($postID, '_sked', $sked);
@@ -766,7 +766,8 @@ echo '</div>';
 	delete_post_meta($post->ID,'_rsvp_coupon_method');
 	foreach($_POST['coupon_code'] as $index => $value)
 	{
-		$discount = $_POST['coupon_discount'][$index];
+		$value = sanitize_text_field($value);
+		$discount = sanitize_text_field($_POST['coupon_discount'][$index]);
 		if(!empty($value) && is_numeric($discount))
 		{
 			$method = $_POST['coupon_method'][$index];
@@ -941,9 +942,9 @@ $req_uri = trim($_POST["replay_rsvp"]);
 $req_uri .= (strpos($req_uri,'?')) ? '&' : '?';
 //sanitize input
 foreach($_POST["profile"] as $name => $value)
-	$rsvp[$name] = esc_attr($value);
+	$rsvp[$name] = sanitize_text_field($value);
 if(isset($_POST["note"]))
-	$note = esc_attr($_POST["note"]);
+	$note = sanitize_text_field($_POST["note"]);
 else
 	$note = "";
 
@@ -1053,7 +1054,7 @@ $rsvp_sql = $wpdb->prepare(" SET first=%s, last=%s, email=%s, yesno=%d, event=%d
 
 capture_email($rsvp);
 
-$rsvp_id = (isset($_POST["rsvp_id"])) ? $_POST["rsvp_id"] : 0;
+$rsvp_id = (isset($_POST["rsvp_id"])) ? (int) $_POST["rsvp_id"] : 0;
 
 if($rsvp_id)
 	{
@@ -1091,7 +1092,7 @@ foreach($rsvp as $name => $value) {
 
 $subject = __('You registered for ','rsvpmaker')." ".$post->post_title;
 if(!empty($_POST["note"]))
-	$cleanmessage .= 'Note: '.stripslashes($_POST["note"]);
+	$cleanmessage .= 'Note: '.sanitize_textarea_field(stripslashes($_POST["note"]));
 	rsvp_notifications ($rsvp,$rsvp_to,$subject,$cleanmessage,$rsvp_confirm);
 }
 else
@@ -1131,7 +1132,7 @@ global $rsvp_options;
 global $post;
 global $rsvp_id;
 global $rsvpdata;
-$rsvp_id = (isset($_POST["rsvp_id"])) ? $_POST["rsvp_id"] : 0;
+$rsvp_id = (isset($_POST["rsvp_id"])) ? (int) $_POST["rsvp_id"] : 0;
 $cleanmessage = '';
 
 rsvpmaker_debug_log($_POST,'save RSVP POST');
@@ -1153,9 +1154,9 @@ $_POST = stripslashes_deep ($_POST);
 
 //sanitize input
 foreach($_POST["profile"] as $name => $value)
-	$rsvp[$name] = esc_attr($value);
+	$rsvp[$name] = sanitize_text_field($value);
 if(isset($_POST["note"]))
-	$note = esc_attr($_POST["note"]);
+	$note = sanitize_text_field($_POST["note"]);
 else
 	$note = "";
 

@@ -52,7 +52,7 @@ add_action('rsvpmaker_send_reminder_email','rsvpmaker_send_reminder_email',10,2)
 
 
 add_action( 'save_post', 'rsvplanding_save_meta_box' );
-add_action('save_post','save_calendar_data');
+add_action('save_post','');
 //stripe
 add_action('sc_after_charge','rsvpmaker_sc_after_charge');
 
@@ -96,8 +96,6 @@ add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 add_action('wp_login','rsvpmaker_data_check');
 
 function rsvpmaker_init_router () {
-if(isset($_REQUEST['rsvp_email_lookup']))
-	ajax_rsvp_email_lookup();
 add_rsvpmaker_roles();
 create_rsvpemail_post_type();
 if(isset($_REQUEST['paymentAmount']))
@@ -113,11 +111,8 @@ if(isset($_POST["replay_rsvp"]))
 	save_replay_rsvp();
 if(isset($_POST["yesno"]) || isset($_POST["withdraw"]))
 	save_rsvp();
-if(isset($_GET['event_count']))
-	signed_up_ajax();
 if(isset($_GET['show_rsvpmaker_included_styles']))
 	show_rsvpmaker_included_styles();
-//add_action('rest_api_init', 'rsvpmaker_register_meta'); // defined in gutenberg init.php
 }
 
 ?>

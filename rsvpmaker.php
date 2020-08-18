@@ -242,6 +242,7 @@ include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-admin.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-api-endpoints.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-display.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-plugabble.php";
+include WP_PLUGIN_DIR."/rsvpmaker/mailchimp-api-master/src/MailChimp.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-email.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-privacy.php";
 include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-util.php";

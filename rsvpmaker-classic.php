@@ -161,13 +161,13 @@ add_action('admin_footer','rsvpmaker_location_form');
 
 add_action('wp_ajax_save_rsvpmaker_location','save_rsvpmaker_location');
 function save_rsvpmaker_location () {
-	$post["post_title"] = $_POST['post_title'];
-	$post["post_content"] = $_POST['post_content'];
+	$post["post_title"] = sanitize_title($_POST['post_title']);
+	$post["post_content"] = wp_kses_post($_POST['post_content']);
 	$post["post_type"] = 'rsvpmaker';
 	$post["post_status"] = 'draft';
 	$id = wp_insert_post($post);
 	add_post_meta($id,'_rsvpmaker_special','Location');
-	$state = $_POST['state'];
+	$state = sanitize_text_field($_POST['state']);
 	if(!empty($state) && (strlen($state) == 2))
 		update_option('location_default_state',$state);
 	die('added as post #'.$id);

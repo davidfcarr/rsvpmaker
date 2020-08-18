@@ -129,7 +129,6 @@ if(isset($_POST['create_reminder_for'])) {
 		update_post_meta($id,'_rsvpmaker_special','Reminder ('.$hours.' hours) '.$subject);
 		if(isset($_POST['paid_only']))
 			update_post_meta($id,'paid_only_confirmation',1);
-		rsvpmaker_debug_log($_POST);
 	if(rsvpmaker_is_template($post_id))
 	{
 		rsvpmaker_template_reminder_add($hours,$post_id);
@@ -413,11 +412,13 @@ function stripe_form_wrapper($atts,$content) {
 		if(!empty($_POST['profile']))
 		foreach($_POST['profile'] as $slug => $value)
 			{
+				$value = sanitize_text_field($value);
 				$output .= sprintf('<p>%s: %s</p>'."\n",$slug,$value);
 				$vars[$slug] = $value;
 			}
 		foreach($_POST as $slug => $value)
 		{
+			$value = sanitize_text_field($value);
 			if($slug != 'profile')
 			{
 			$output .= sprintf('<p>%s: %s</p>'."\n",$slug,$value);
