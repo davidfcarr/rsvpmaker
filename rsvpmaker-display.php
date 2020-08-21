@@ -80,7 +80,6 @@ global $rsvp_options;
 $events = rsvpmaker_upcoming_data($atts);
 $date_format = (isset($atts["date_format"])) ? $atts["date_format"] : $rsvp_options["long_date"];
 
-
 if(is_array($events))
 foreach($events as $event)
 	{
@@ -91,14 +90,14 @@ foreach($events as $event)
 		$t = rsvpmaker_strtotime($date['datetime']);
 		$dateline .= rsvpmaker_strftime($date_format, $t).' ';
 		}
-	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",$event['permalink'],$event["title"],$dateline);
+	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",esc_url_raw($event['permalink']),esc_html($event["title"]),$dateline);
 	}	
 
 	if(!empty($atts["limit"]) && !empty($rsvp_options["eventpage"]))
-		$listings .= '<li><a href="'.$rsvp_options["eventpage"].'">'.__("Go to Events Page",'rsvpmaker')."</a></li>";
+		$listings .= '<li><a href="'.esc_url($rsvp_options["eventpage"]).'">'.__("Go to Events Page",'rsvpmaker')."</a></li>";
 
 	if(!empty($atts["title"]))
-		$listings = "<p><strong>".$atts["title"]."</strong></p>\n<ul id=\"eventheadlines\">\n$listings</ul>\n";
+		$listings = "<p><strong>".esc_html($atts["title"])."</strong></p>\n<ul id=\"eventheadlines\">\n$listings</ul>\n";
 	else
 		$listings = "<ul id=\"eventheadlines\">\n$listings</ul>\n";
 
@@ -107,8 +106,6 @@ foreach($events as $event)
 	
 	return $listings;
 }
-
-
 
 function get_next_events_link( $label = '', $no_events = '' ) {
 global $last_time;
@@ -147,7 +144,6 @@ function rsvpmaker_join($join) {
 function rsvpmaker_groupby($groupby) {
   global $wpdb;
   return " $wpdb->posts.ID ";
-
 }
 
 function rsvpmaker_distinct($distinct){
@@ -592,15 +588,6 @@ $monthafter = $eom + (DAY_IN_SECONDS * 32);
 
 $eonext = rsvpmaker_date("Y-m-d",'month after '.$monthname.' '.$cy);
 
-// Check if month and year is valid
-/*
-if ($cm && $cy && !checkdate($cm,1,$cy)) {
-   $errors[] = "The specified year and month (".htmlentities("$cy, $cm").") are not valid.";
-   unset($cm); unset($cy);
-}
-*/
-
-
 // Link to previous month (but do not link to too early dates)
    $prev_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $bom - 90000);
 
@@ -810,7 +797,7 @@ if(!empty($atts['start']))
 				if(isset($_GET["debug"]))
 					return sprintf('<p>start %s / now %s</p>',date('r',$start), date('r',$now));
 				elseif(isset($atts["too_early"]))
-					return '<p>'.$atts["too_early"].'</p>';
+					return '<p>'.esc_html($atts["too_early"]).'</p>';
 				else
 					return '';
 			}
@@ -824,7 +811,7 @@ if(!empty($atts['end']))
 				if(isset($_GET["debug"]))
 					return sprintf('<p>end %s / now %s</p>',date('r',$end), date('r',$now));
 				elseif(isset($atts["too_late"]))
-					return '<p>'.$atts["too_late"].'</p>';
+					return '<p>'.esc_html($atts["too_late"]).'</p>';
 				else
 					return '';
 			}
@@ -902,14 +889,14 @@ foreach($eventlist as $event)
 		$permalink = site_url() ."?p=".$event["postID"];
 	else
 		$permalink = get_post_permalink($event["postID"]);
-	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",$permalink,$event["post_title"],$dateline[$event["postID"]]);
+	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",esc_url_raw($permalink),esc_html($event["post_title"]),esc_html($dateline[$event["postID"]]));
 	}
 
 	if(!empty($rsvp_options["eventpage"]))
-		$listings .= '<li><a href="'.$rsvp_options["eventpage"].'">'.__("Go to Events Page",'rsvpmaker')."</a></li>";
+		$listings .= '<li><a href="'.esc_url($rsvp_options["eventpage"]).'">'.__("Go to Events Page",'rsvpmaker')."</a></li>";
 
 	if(isset($atts["title"]))
-		$listings = "<p><strong>".$atts["title"]."</strong></p>\n<ul id=\"eventheadlines\">\n$listings</ul>\n";
+		$listings = "<p><strong>".esc_html($atts["title"])."</strong></p>\n<ul id=\"eventheadlines\">\n$listings</ul>\n";
 	else
 		$listings = "<ul id=\"eventheadlines\">\n$listings</ul>\n";
 }//end if $eventlist
@@ -1123,9 +1110,7 @@ $date = rsvpmaker_strftime($rsvp_options["short_date"].' '.$rsvp_options["time_f
 $title = get_the_title($post->ID);
 $titlestr = $title . ' - '. $date. ' - '.get_bloginfo('name');
 printf('<meta property="og:title" content="%s" /><meta property="twitter:title" content="%s" />',$titlestr,$titlestr);
-
 }
-
 
 function ylchat ($atts) {
 global $post;
@@ -1143,15 +1128,14 @@ $test = file_get_contents($url);
 if(strpos($test,'live-chat-unavailable'))
 	return;
 
-$note = (isset($atts["note"])) ? '<p>'.$atts["note"].'</p>' : '';
-$width = (isset($atts["width"])) ? $atts["width"] : '100%';
-$height = (isset($atts["height"])) ? $atts["height"] : '200';
+$note = (isset($atts["note"])) ? '<p>'.esc_html($atts["note"]).'</p>' : '';
+$width = (isset($atts["width"])) ? esc_attr($atts["width"]) : '100%';
+$height = (isset($atts["height"])) ? esc_attr($atts["height"]) : '200';
 if(isset($_GET["height"]))
 	$height = (int) $_GET["height"];
 
-return $note . sprintf('<iframe src="%s" width="%s" height="%s"></iframe>',$url,$width,$height) . sprintf('<p>%s <a href="%s" target="_blank">%s</a>. %s</p>',__('If the chat prompt does not appear below,','rsvpmaker'), $login_url, __('please login to your YouTube/Google account','rsvpmaker'), __('Then refresh this window.','rsvpmaker'));
+return $note . sprintf('<iframe src="%s" width="%s" height="%s"></iframe>',esc_url_raw($url),esc_attr($width),esc_attr($height)) . sprintf('<p>%s <a href="%s" target="_blank">%s</a>. %s</p>',__('If the chat prompt does not appear below,','rsvpmaker'), $login_url, __('please login to your YouTube/Google account','rsvpmaker'), __('Then refresh this window.','rsvpmaker'));
 }
-
 
 function rsvpmaker_next ($atts = array())
 {
@@ -1479,7 +1463,7 @@ global $rsvp_required_field;
 $rsvp_required_field['email'] = 'email';//at a minimum
 echo '<div id="jqerror"></div><input type="hidden" name="required" id="required" value="'.implode(",",$rsvp_required_field).'" />';
 ?>
-        <p
+        <p>
           <input type="submit" id="rsvpsubmit" name="Submit" value="<?php  _e('Submit','rsvpmaker');?>" /> 
         </p> 
 <input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo $event_id;?>" /><input type="hidden" name="landing_id" value="<?php echo $post->ID;?>" /><?php wp_nonce_field('rsvp_replay','rsvp_replay_nonce'); ?>
@@ -1503,8 +1487,6 @@ if(is_archive() && ($wp_query->query["post_type"] == 'rsvpmaker'))
 <?php
 	}
 }
-
-
 
 //keep jetpack from messing up
 function rsvpmaker_no_related_posts( $options ) {
@@ -1581,7 +1563,6 @@ function clear_rsvp_cookies () {
 			}
 	}
 }
-
 
 function sked_to_text ($sked) {
 	global $rsvp_options;
@@ -1793,7 +1774,6 @@ function rsvpmaker_daily_schedule($atts) {
 	return $output;
 }
 
-
 function embed_dateblock ($atts) {
 	$d = rsvp_date_block($atts["post_id"],get_post_custom($atts["post_id"]));
 	return $d["dateblock"];
@@ -1853,7 +1833,7 @@ foreach($results as $index => $row)
 	$dateblock .= '<span class="timezone_hint" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'">'."\n";
 	if($top && isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0]) {
 		if(is_email_context()) {
-			$tzbutton = sprintf('<a href="%s">%s</a>',add_query_arg('tz',1,get_permalink($post_id)),__('Show in my timezone','rsvpmaker'));
+			$tzbutton = sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',1,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
 		}
 		else {
 			$tzbutton = '<button class="timezone_on">'.__('Show in my timezone','rsvpmaker').'</button>';
@@ -1944,7 +1924,7 @@ foreach($events as $index => $event)
 		$url = get_permalink($event->ID).'#rsvpnow';
 		$t = rsvpmaker_strtotime($event->datetime);
 		$datetime = rsvpmaker_strftime('',$t).' '.rsvpmaker_strftime($rsvp_options['time_format'],$t);
-		$output .= sprintf('<li><a href="%s">%s</a></li>',$url,$event->post_title.' '.$datetime);
+		$output .= sprintf('<li><a href="%s">%s</a></li>',esc_url_raw($url),esc_html($event->post_title.' '.$datetime));
 		$event->post_content = '';
 		//$output .= '<li>'.var_export($event,true).'</li>';
 	}

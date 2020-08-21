@@ -307,7 +307,7 @@ function rsvp_form_field($atts, $content = '') {
 }
 
 function rsvp_form_note ($atts = array()) {
-	$label = (empty($atts['label'])) ? 'Note' : $atts['label'];
+	$label = (empty($atts['label'])) ? 'Note' : esc_html($atts['label']);
 	return sprintf('<p>%s:<br><textarea name="note"></textarea></p>',$label);
 }
 
@@ -385,11 +385,11 @@ if($max_party)
 
 // now the blank field
 if($blanks_allowed < 1)
-	return $output.'<p><em>'.__('No room for additional guests','rsvpmaker').'</em><p>'; // if event is full, no additional guests
+	return $output.'<p><em>'.esc_html(__('No room for additional guests','rsvpmaker')).'</em><p>'; // if event is full, no additional guests
 elseif($count > $max_guests)
-	return $output.'<p><em>'.__('No room for additional guests','rsvpmaker').'</em><p>'; // limit by # of guests per person
+	return $output.'<p><em>'.esc_html(__('No room for additional guests','rsvpmaker')).'</em><p>'; // limit by # of guests per person
 elseif($max_guests && ($count >= $max_guests))
-	return $output.'<p><em>'.__('No room for additional guests (max per party)','rsvpmaker').'</em><p>'; // limit by # of guests per person
+	return $output.'<p><em>'.esc_html(__('No room for additional guests (max per party)','rsvpmaker')).'</em><p>'; // limit by # of guests per person
 
 $output = '<div id="guest_section" tabindex="-1">'."\n".$output.'</div>'."<!-- end of guest section-->";
 if($max_guests > ($count + 1))
@@ -413,7 +413,7 @@ function stripe_form_wrapper($atts,$content) {
 		foreach($_POST['profile'] as $slug => $value)
 			{
 				$value = sanitize_text_field($value);
-				$output .= sprintf('<p>%s: %s</p>'."\n",$slug,$value);
+				$output .= sprintf('<p>%s: %s</p>'."\n",esc_html($slug),esc_html($value));
 				$vars[$slug] = $value;
 			}
 		foreach($_POST as $slug => $value)
@@ -421,7 +421,7 @@ function stripe_form_wrapper($atts,$content) {
 			$value = sanitize_text_field($value);
 			if($slug != 'profile')
 			{
-			$output .= sprintf('<p>%s: %s</p>'."\n",$slug,$value);
+			$output .= sprintf('<p>%s: %s</p>'."\n",esc_html($slug),esc_html($value));
 			$vars[$slug] = $value;
 			}
 		}
@@ -435,7 +435,7 @@ function stripe_form_wrapper($atts,$content) {
 					$paragraphs .= $paragraph."\n";
 			}
 			}
-		$content .= $paragraphs;
+		$content .= wp_kses_post($paragraphs);
 		if(!empty($vars['paymentType'])) {
 			$content .= sprintf('<p>Payment type: %s</p>',$vars['paymentType']);
 		}

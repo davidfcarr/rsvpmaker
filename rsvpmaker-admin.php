@@ -59,7 +59,7 @@ function rsvpmaker_unique_date_slug($slug, $post_ID = 0, $post_status = '', $pos
 	$post = get_post($post_ID);
 	if(empty($post->post_type)) return $slug;
 	$date = str_replace(' ', '_',str_replace(':00','',get_rsvp_date($post_ID)));
-	$newslug = sanitize_title($post->post_title.'-' .$date);
+	$newslug = sanitize_text_field($post->post_title.'-' .$date);
 	return $newslug;
 	}
 
@@ -1356,18 +1356,6 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
       register_activation_hook(__FILE__, array(&$RSVPMAKER_Options, 'install'));
   }
 
-/*
-add_action('admin_init','register_rsvpmaker_settings');
-
-//not part of original implementation
-function register_rsvpmaker_settings() {
-register_setting('rsvpmaker_discussion','rsvpmaker_discussion_server');
-register_setting('rsvpmaker_discussion','rsvpmaker_discussion_member',array('type' => 'array'));
-register_setting('rsvpmaker_discussion','rsvpmaker_discussion_officer',array('type' => 'array'));
-//register_setting('rsvpmaker_discussion','rsvpmaker_discussion_extra');
-}
-*/
-
 function print_group_list_options($list_type, $vars) {
 	printf('<h3>%s List</h3>',ucfirst($list_type));
 	$fields = array('user','password','subject_prefix','whitelist','blocked','additional_recipients');
@@ -1468,7 +1456,7 @@ if(isset($_POST))
 		{
 		if($_POST["recur_day"][$index] )
 			{
-			$my_post['post_title'] = sanitize_title($_POST["title"][$index]);
+			$my_post['post_title'] = sanitize_text_field($_POST["title"][$index]);
 			$my_post['post_content'] = wp_kses_post($_POST["body"][$index]);
 			$cddate = format_cddate($year, sanitize_text_field($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), sanitize_text_field($_POST["recur_hour"][$index]), sanitize_text_field($_POST["recur_minutes"][$index]));// Insert the post into the database
   			if($postID = wp_insert_post( $my_post ) )
@@ -1623,7 +1611,7 @@ if(empty($_POST['add_recur']) || !wp_verify_nonce($_POST['add_recur'],'recur'))
 
 if(!empty($_POST["recur-title"]))
 	{
-	$my_post['post_title'] = sanitize_title($_POST["recur-title"]);
+	$my_post['post_title'] = sanitize_text_field($_POST["recur-title"]);
 	$my_post['post_content'] = wp_kses_post($_POST["recur-body"]);
 	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
 	$my_post['post_author'] = $current_user->ID;
@@ -1645,7 +1633,6 @@ if(!empty($_POST["recur-title"]))
 					$dtext .= ' +'.$dpart[1].' minutes';
 				$dt = rsvpmaker_strtotime($dtext);
 				$duration = rsvpmaker_date('Y-m-d H:i:s',$dt);
-				//printf('<p>%s %s</p>',$dtext,$duration);
 				}
 			else
 				$duration = sanitize_text_field($_POST["event_duration"]); // empty or all day
@@ -1790,7 +1777,7 @@ echo "<p>".__('Loading recurring series of dates for','rsvpmaker'). " $week $dow
 <h3><?php _e('Enter Recurring Events','rsvpmaker'); ?></h3>
 
 <form id="form1" name="form1" method="post" action="<?php echo admin_url("edit.php?post_type=rsvpmaker&page=add_dates");?>">
-<p>Headline: <input type="text" name="recur-title" size="60" value="<?php if(isset($_POST["recur-title"])) echo sanitize_title(stripslashes($_POST["recur-title"]));?>" /></p>
+<p>Headline: <input type="text" name="recur-title" size="60" value="<?php if(isset($_POST["recur-title"])) echo (stripslashes($_POST["recur-title"]));?>" /></p>
 <p><textarea name="recur-body" rows="5" cols="80"><?php echo (isset($_POST["recur-body"]) && wp_kses_post($_POST["recur-body"])) ? stripslashes(wp_kses_post($_POST["recur-body"])) : $rsvp_options["default_content"];?></textarea></p>
 <?php
 wp_nonce_field('recur','add_recur');
@@ -2612,8 +2599,6 @@ function rsvpmaker_sort_message() {
 }
 
 function rsvpmaker_get_projected($template) {
-
-//printf('<p>Get projected based on %s</p>',var_export($template,true));
 
 if(!isset($template["week"]))
 	return;
@@ -3559,7 +3544,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 	foreach($_POST["recur_check"] as $index => $on)
 		{
 			if(!empty($_POST["recur_title"][$index]))
-				$my_post['post_title'] = sanitize_title($_POST["recur_title"][$index]);
+				$my_post['post_title'] = sanitize_text_field($_POST["recur_title"][$index]);
 			$year = sanitize_text_field($_POST["recur_year"][$index]);
 			$cddate = format_cddate($year, sanitize_text_field($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), $hour, $minutes);
 			$dpart = explode(':',$template["duration"]);
@@ -3581,7 +3566,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 			if($d < 10) $d = '0'.$d;
 			$date = $y.'-'.$m.'-'.$d;
 
-			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$date );
+			$my_post['post_name'] = sanitize_text_field($my_post['post_title'] . '-' .$date );
 			$singular = __('Event','rsvpmaker');
 // Insert the post into the database
   			if($postID = wp_insert_post( $my_post ) )
@@ -3922,7 +3907,7 @@ if(isset($_POST["recur_check"]) )
 			}
 			
 			if(!empty($_POST["recur_title"][$index]))
-				$my_post['post_title'] = sanitize_title($_POST["recur_title"][$index]);
+				$my_post['post_title'] = sanitize_text_field($_POST["recur_title"][$index]);
 
 			$my_post['post_name'] = $my_post['post_title'] . '-' .$date;
 			$singular = __('Event','rsvpmaker');
@@ -3968,7 +3953,7 @@ if(isset($_POST["nomeeting"]) )
 		}
 	else
 		{
-			$cddate = sanitize_title($_POST["nomeeting"]);
+			$cddate = sanitize_text_field($_POST["nomeeting"]);
 			$my_post['post_name'] = $my_post['post_title'] . '-' .$cddate;
 
 // Insert the post into the database
@@ -5488,7 +5473,7 @@ function rsvpmaker_submission_post() {
 	{
 		$permalink = $_POST['rsvpmaker_submission_post'];
 		$author = isset($rsvp_options['submission_author']) ? $rsvp_options['submission_author'] : 1;
-		$title = sanitize_title($_POST['event_title']);
+		$title = sanitize_text_field($_POST['event_title']);
 		$day = (int) $_POST['day'];
 		$year = (int) $_POST['year'];
 		$month = (int) $_POST['month'];

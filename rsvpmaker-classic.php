@@ -4,7 +4,7 @@ add_action('rsvpmaker_special_metabox','rsvpmaker_location');
 function rsvpmaker_location_button() {
 	global $post;
 	if(isset($post->post_type) && $post->post_type == 'rsvpmaker')
-    echo '<button type="button" id="rsvpmaker-add-location" class="button"><img src="'.plugins_url('rsvpmaker/images/if_map-marker_173052.png').'" width="25" height="25" style="margin-left: -12px;"> Location</button>';
+    echo '<button type="button" id="rsvpmaker-add-location" class="button"><img src="'.plugins_url('images/if_map-marker_173052.png',__FILE__).'" width="25" height="25" style="margin-left: -12px;"> Location</button>';
 }
 
 add_action('media_buttons', 'rsvpmaker_location_button', 30);
@@ -161,7 +161,7 @@ add_action('admin_footer','rsvpmaker_location_form');
 
 add_action('wp_ajax_save_rsvpmaker_location','save_rsvpmaker_location');
 function save_rsvpmaker_location () {
-	$post["post_title"] = sanitize_title($_POST['post_title']);
+	$post["post_title"] = sanitize_text_field($_POST['post_title']);
 	$post["post_content"] = wp_kses_post($_POST['post_content']);
 	$post["post_type"] = 'rsvpmaker';
 	$post["post_status"] = 'draft';

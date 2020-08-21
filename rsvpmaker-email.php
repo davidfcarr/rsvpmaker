@@ -879,7 +879,7 @@ if(!empty($_POST["email"]["from_name"]))
 	if(!empty($_POST['notesubject']) || !empty($_POST['notebody']))
 	{
 		global $current_user;
-		$newpost['post_title'] = sanitize_title(stripslashes($_POST['notesubject']));
+		$newpost['post_title'] = sanitize_text_field(stripslashes($_POST['notesubject']));
 		$newpost['post_content'] = wp_kses_post(rsvpautog(stripslashes($_POST['notebody'])));
 		$newpost['post_type'] = 'post';
 		$newpost['post_status'] = $_POST['status'];
@@ -1181,7 +1181,7 @@ $chimp_options = get_option('chimp');
 
 if(!empty($_POST["subject"]))
 	{
-		$subject = sanitize_title(stripslashes($_POST["subject"]));
+		$subject = sanitize_text_field(stripslashes($_POST["subject"]));
 		if($post->post_title != $subject)
 		{
 			$post->post_title = $subject;
@@ -1200,7 +1200,7 @@ if(!empty($_POST["preview"]))
 		$mail["to"] = $previewto;
 		$mail["from"] = (isset($_POST["user_email"]) && is_email($_POST["user_email"]) ) ? $current_user->user_email : sanitize_text_field($_POST["from_email"]);
 		$mail["fromname"] = sanitize_text_field(stripslashes($_POST["from_name"]));
-		$mail["subject"] = sanitize_title(stripslashes($_POST["subject"]));
+		$mail["subject"] = sanitize_text_field(stripslashes($_POST["subject"]));
 		$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		echo $result = rsvpmailer($mail);
@@ -1345,7 +1345,7 @@ $input = array(
                 'type' => 'regular',
                 'recipients'        => array('list_id' => $listID),
                 'segment_opts'        => $segment_opts,
-				'settings' => array('subject_line' => sanitize_title(stripslashes($_POST["subject"])),'from_email' => sanitize_text_field($_POST["from_email"]), 'from_name' => sanitize_text_field($_POST["from_name"]), 'reply_to' => sanitize_text_field($_POST["from_email"]))
+				'settings' => array('subject_line' => sanitize_text_field(stripslashes($_POST["subject"])),'from_email' => sanitize_text_field($_POST["from_email"]), 'from_name' => sanitize_text_field($_POST["from_name"]), 'reply_to' => sanitize_text_field($_POST["from_email"]))
 );
 
 rsvpmaker_debug_log(json_encode($input),'mailchimp request');
@@ -2582,7 +2582,7 @@ if(isset($_POST['ntemp']))
 	$ntemp = $_POST['ntemp'];
 	if(!empty($_POST["newtemplate"]["subject"]) && !empty($_POST["newtemplate_label"]))
 		{
-		$ntemp[$_POST["newtemplate_label"]]["subject"] = sanitize_title($_POST["newtemplate"]["subject"]);
+		$ntemp[$_POST["newtemplate_label"]]["subject"] = sanitize_text_field($_POST["newtemplate"]["subject"]);
 		$ntemp[$_POST["newtemplate_label"]]["body"] = wp_kses_post($_POST["newtemplate"]["body"]);
 		}
 	update_option('rsvpmaker_notification_templates',stripslashes_deep($ntemp));
