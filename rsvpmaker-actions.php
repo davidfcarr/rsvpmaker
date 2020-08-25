@@ -1,7 +1,10 @@
 <?php
+add_action('init','rsvpevent_to_email');	
 add_action('init','rsvpmaker_init_router');
+
 add_action('init','rsvp_options_defaults',1);
 add_action( 'add_meta_boxes', 'rsvplanding_register_meta_boxes' );
+
 add_action( 'admin_bar_menu', 'toolbar_rsvpmaker', 99 );
 
 add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
@@ -18,8 +21,7 @@ add_action( 'admin_init', 'add_rsvpemail_caps');
 add_action('admin_init','rsvp_csv');
 add_action('admin_init','additional_editors_setup');
 add_action('admin_init','rsvpmaker_setup_post');
-add_action('admin_init','rsvpevent_to_email');	
-add_action( 'admin_init', 'add_rsvpemail_caps');
+add_action('admin_init', 'add_rsvpemail_caps');
 add_action('admin_init','customize_rsvp_form');
 
 add_action('admin_menu', 'my_events_menu');
@@ -28,12 +30,11 @@ add_action('admin_menu', 'my_rsvpemail_menu');
 add_action('admin_menu', 'rsvpmaker_admin_menu');
 
 add_action('admin_notices', 'rsvpmaker_admin_notice');
+
 add_action('current_screen','rsvp_print',999);
 add_action('export_wp','export_rsvpmaker');
 add_action('import_end','import_rsvpmaker');
 add_action('log_paypal','log_paypal');
-
-
 add_action('loop_end','rsvpmaker_archive_loop_end');
 add_action('manage_posts_extra_tablenav','rsvpmaker_sort_message');
 add_action('manage_posts_custom_column', 'rsvpmaker_custom_column', 10, 2);
@@ -50,9 +51,8 @@ add_action('rsvpmaker_email_list_okay','rsvpmaker_email_list_okay',10,1);
 add_action('rsvpmaker_replay_email','rsvpmaker_replay_email',10,3);
 add_action('rsvpmaker_send_reminder_email','rsvpmaker_send_reminder_email',10,2);
 
-
 add_action( 'save_post', 'rsvplanding_save_meta_box' );
-add_action('save_post','');
+add_action('save_post','rsvpmaker_save_calendar_data');
 //stripe
 add_action('sc_after_charge','rsvpmaker_sc_after_charge');
 
@@ -97,13 +97,13 @@ add_action('wp_login','rsvpmaker_data_check');
 
 function rsvpmaker_init_router () {
 add_rsvpmaker_roles();
+rsvpmaker_create_post_type();
 create_rsvpemail_post_type();
 if(isset($_REQUEST['paymentAmount']))
 	paypal_start();
 if(isset($_GET['rsvpmaker_cron_email_preview']))
 previewtest();//email preview
 rsvp_options_defaults();
-rsvpmaker_create_post_type();
 rsvpmaker_localdate();
 if(isset($_GET["rsvpmaker_placeholder"]))
 	rsvpmaker_placeholder_image();
@@ -113,6 +113,18 @@ if(isset($_POST["yesno"]) || isset($_POST["withdraw"]))
 	save_rsvp();
 if(isset($_GET['show_rsvpmaker_included_styles']))
 	show_rsvpmaker_included_styles();
+}
+
+add_action('admin_init','rsvpmaker_filter_debug');
+
+function rsvpmaker_filter_debug() {
+	if(!isset($_GET['filter_debug']))
+		return;
+	global $wp_filter;
+	echo '<pre>';
+	print_r($wp_filter);
+	echo '</pre>';
+	exit;
 }
 
 ?>

@@ -954,10 +954,13 @@ if(!empty($_POST["email"]["from_name"]))
 
 function rsvpevent_to_email () {
 global $current_user, $rsvp_options, $email_context;
-$email_context = true;
+
+if(!current_user_can('edit_posts'))
+	return;
 
 if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 	{
+		$email_context = true;
 		if(!empty($_GET["post_to_email"]))
 			{
 				$id = $_GET["post_to_email"];
@@ -1016,7 +1019,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				add_post_meta($postID,'event_timestamp',$t);
 			$loc = admin_url("post.php?action=edit&post=".$postID);
 			wp_redirect($loc);
-			die();
+			exit;
 			}
 	}
 }
@@ -1996,19 +1999,19 @@ foreach($pages as $page)
 	$po .= sprintf("<option value=\"%d\">%s</option>\n",$page->ID,substr($page->post_title,0,80));
 
 ?>
-<form action="<?php echo admin_url(); ?>" method="get">
+<form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
 <p><?php _e('Email Based on Event','rsvpmaker');?>: <select name="rsvpevent_to_email"><?php echo $event_options; ?></select>
 </select>
 </p>
 <button><?php _e('Load Content','rsvpmaker');?></button>
 </form>	
-<form action="<?php echo admin_url(); ?>" method="get">
+<form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
 <p><?php _e('Email Based on Post','rsvpmaker');?>: <select name="post_to_email"><?php echo $posts; ?></select>
 </select>
 </p>
 <button><?php _e('Load Content','rsvpmaker');?></button>
 </form>	
-<form action="<?php echo admin_url(); ?>" method="get">
+<form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
 <p><?php _e('Email Based on Page','rsvpmaker');?>: <select name="post_to_email"><?php echo $po; ?></select>
 </select>
 </p>
@@ -2380,9 +2383,9 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 	{
 		if($post->post_type == 'rsvpmaker') {
 			$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID,__('Event Options','rsvpmaker'));
-			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
+			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
 			}
-		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('?post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));
+		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));
 	}
 	else {
 	if($post->post_type == 'rsvpmaker')
@@ -2570,7 +2573,8 @@ printf('<p>%s <a href="%s">%s</a></p>',__('Continue to','rsvpmaker'),site_url(),
 <?php
 exit();
 }
-add_filter('init','rsvpmail_unsubscribe');
+
+add_action('init','rsvpmail_unsubscribe');
 
 function rsvpmaker_notification_templates () {
 
@@ -3017,6 +3021,14 @@ function event_title_link () {
 	$display_date = utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"].' '.$time_format,$t));
 	$permalink = get_permalink($post->ID);
 	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink,$post->post_title,$display_date);
+}
+
+function rsvpmaker_mailchimp_init() {
+$chimp_options = get_option('chimp');
+if(empty($chimp_options["chimp-key"]))
+	return;
+$apikey = $chimp_options["chimp-key"];
+return new MailChimpRSVP($apikey);
 }
 
 ?>

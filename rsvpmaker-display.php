@@ -1528,7 +1528,7 @@ function rsvpmaker_hide_menu ($menu)
 		return '';
 	return $menu;
 }
-if(!is_admin())
+//if(!is_admin())
 add_filter('wp_nav_menu','rsvpmaker_hide_menu');
 
 function rsvplanding_register_meta_boxes() {
@@ -1783,7 +1783,8 @@ function rsvp_date_block($post_id, $custom_fields = array(), $top = true) {
 global $rsvp_options;
 global $last_time;
 global $post;
-
+if(is_admin())
+	return;
 if(empty($post_id))
 	$post_id = $post->ID;
 if(empty($custom_fields))

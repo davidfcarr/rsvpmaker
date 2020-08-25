@@ -1439,7 +1439,6 @@ return $title;
 add_filter('the_editor_content','default_event_content');
 add_filter('default_title','title_from_template');
 
-
 function multiple() {
 
 global $wpdb;
@@ -2555,6 +2554,7 @@ function rsvpmaker_admin_months_dropdown($bool, $post_type) {
 return ($post_type == 'rsvpmaker');
 }
 //apply_filters( 'disable_months_dropdown', false, $post_type )
+
 add_filter( 'disable_months_dropdown', 'rsvpmaker_admin_months_dropdown',10,2 );
 
 function rsvpmaker_join_template($join) {
@@ -3379,7 +3379,6 @@ if($results)
 
 }
 
-
 function import_rsvpmaker() {
 global $wpdb;
 // import routine (transfer from another site)
@@ -3589,6 +3588,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 				//copy rsvp options
 				$editurl = admin_url('post.php?action=edit&post='.$postID);
 				wp_redirect($editurl);
+				exit;
 				}		
 		break;
 		}
@@ -3882,7 +3882,7 @@ if(isset($_POST["recur_check"]) )
 	foreach($_POST["recur_check"] as $index => $on)
 		{
 			$year = $_POST["recur_year"][$index];
-			$cddate = format_cddate($year, sanitize_field_text($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), $hour, $minutes);
+			$cddate = format_cddate($year, sanitize_text_field($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), $hour, $minutes);
 			$y = (int) $_POST["recur_year"][$index];
 			$m = (int) $_POST["recur_month"][$index];
 			$d = (int) $_POST["recur_day"][$index];
@@ -4859,7 +4859,7 @@ if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 			'parent'    => 'new-rsvpemail',
 			'id' => 'embed_to_email',
 			'title' => __('Embed Event in Email','rsvpmaker'),
-			'href'  => admin_url('?rsvpevent_to_email='.$post->ID),
+			'href'  => admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email='.$post->ID),
 			'meta'  => array( 'class' => 'rsvpmaker_embed')
 		);	
 		$wp_admin_bar->add_node( $args );
@@ -4868,7 +4868,7 @@ if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 		'parent'    => 'new-rsvpemail',
 		'id' => 'post_to_email',
 		'title' => __('Copy to Email','rsvpmaker'),
-		'href'  => admin_url('?post_to_email='.$post->ID),
+		'href'  => admin_url('edit.php?post_type=rsvpemail&post_to_email='.$post->ID),
 		'meta'  => array( 'class' => 'rsvpmaker')
 	);
 	$wp_admin_bar->add_node( $args );

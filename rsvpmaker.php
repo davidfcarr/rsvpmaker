@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 7.8.5
+Version: 7.8.9
 */
 
 function get_rsvpversion(){
-return '7.8.5';
+return '7.8.9';
 }
 
 global $wp_version;
@@ -271,7 +271,6 @@ if(function_exists('register_block_type') && !isset($carr_gut_test))
 if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
     include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-recaptcha.php";
 }
-
 
 function rsvpmaker_create_post_type() {
 global $rsvp_options;
@@ -679,6 +678,7 @@ if(isset($atts["days"]))
 		$datelimit = $atts["days"].' DAY';
 else
 		$datelimit = '365 DAY';
+
 add_filter('posts_select', 'rsvpmaker_select' );
 add_filter('posts_join', 'rsvpmaker_join' );
 add_filter('posts_groupby', 'rsvpmaker_groupby' );
@@ -686,6 +686,7 @@ add_filter('posts_distinct', 'rsvpmaker_distinct' );
 add_filter('posts_fields', 'rsvpmaker_select' );
 add_filter('posts_where', 'rsvpmaker_where' );
 add_filter('posts_orderby', 'rsvpmaker_orderby' );
+
 $querystring = "post_type=rsvpmaker&post_status=publish";
 if(isset($atts["type"]))
 	$querystring .= "&rsvpmaker-type=".$atts["type"];
