@@ -963,7 +963,8 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 		$email_context = true;
 		if(!empty($_GET["post_to_email"]))
 			{
-				$id = $_GET["post_to_email"];
+				$id = (int) $_GET["post_to_email"];
+				$permalink = get_permalink($id);
 				$post = get_post($id);
 				$content = '';
 				if($post->post_type == 'rsvpmaker')
@@ -975,7 +976,20 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 					$content .= $blockgraph;
 					//$content .= "<!-- wp:paragraph -->\n<strong>".$block['dateblock']."</strong>\n<!-- /wp:paragraph -->";
 				}
-				$content .= $post->post_content;
+				if(!empty($_GET['excerpt'])) {
+					$content .= sprintf("<!-- wp:heading -->\n".'<h2><a href="%s" class="article">%s</a></h2>'."\n<!-- /wp:heading -->\n",$permalink,$post->post_title);
+					$graphs = explode("<!-- /wp:paragraph -->",$post->post_content);
+					for($i = 0; $i < 5; $i++)
+					{
+						if(!empty($graphs[$i]))
+						$content .= $graphs[$i]."<!-- /wp:paragraph -->";
+					}
+					$content .= sprintf('<!-- wp:paragraph -->
+					<p><a href="%s" class="readmore">Read More</a></p>
+					<!-- /wp:paragraph -->',$permalink);		
+				}
+				else
+					$content .= $post->post_content;
 				if(($post->post_type == 'rsvpmaker') && get_post_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
@@ -1438,7 +1452,7 @@ foreach($templates as $index => $template)
 if(!empty($chimp_options["chimp-key"]))
 {
 ?>
-<input type="checkbox" name="mailchimp" value="1"> <?php _e('MailChimp list','rsvpmaker');?> <select name="mailchimp_list">
+<input type="checkbox" name="mailchimp" value="1" <?php if(isset($_GET['mailchimp'])) echo ' checked="checked" '; ?> > <?php _e('MailChimp list','rsvpmaker');?> <select name="mailchimp_list">
 <?php
 $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_list"][0] : $chimp_options["chimp-list"];
 echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
@@ -1663,6 +1677,9 @@ if (version_compare($ver, '7.1', '<'))
 ?>
 <div id="icon-options-general" class="icon32"><br /></div>
 <?php
+if(!empty($_POST['rsvpmail_nonce']) && (empty($_POST['rsvpmail_nonce']) || !wp_verify_nonce($_POST['rsvpmail_nonce'],'rsvpmail_template') ) )
+	die('insecure request');
+
 	if(isset($_POST['extra_email_styles']))
 		update_option('extra_email_styles',sanitize_textarea_field($_POST['extra_email_styles']));
 	if(isset($_POST['rsvpmaker_tx_template']))
@@ -1673,7 +1690,7 @@ if (version_compare($ver, '7.1', '<'))
 	$templates = $_POST['rsvpmaker_email_template'];
 	foreach($templates as $index => $template)
 		{
-		$template['html'] = wp_kses_post(stripslashes($template['html']));
+		$template['html'] = stripslashes($template['html']);
 		$templates[$index] = $template;
 		}
 	update_option('rsvpmaker_email_template',$templates);
@@ -1751,6 +1768,7 @@ foreach($template as $in => $value)
 </select></p>
 
 <p>
+<?php wp_nonce_field('rsvpmail_template','rsvpmail_nonce'); ?>
 <button><?php _e('Save','rsvpmaker');?></button>
 </p>
 
@@ -2008,12 +2026,14 @@ foreach($pages as $page)
 <form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
 <p><?php _e('Email Based on Post','rsvpmaker');?>: <select name="post_to_email"><?php echo $posts; ?></select>
 </select>
+<br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php _e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php _e('Excerpt','rsvpmaker');?>
 </p>
 <button><?php _e('Load Content','rsvpmaker');?></button>
 </form>	
 <form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
 <p><?php _e('Email Based on Page','rsvpmaker');?>: <select name="post_to_email"><?php echo $po; ?></select>
 </select>
+<br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php _e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php _e('Excerpt','rsvpmaker');?>
 </p>
 <button><?php _e('Load Content','rsvpmaker');?></button>
 </form>	

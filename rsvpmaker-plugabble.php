@@ -5002,7 +5002,13 @@ $wpdb->show_errors();
 
 	<div id="icon-edit" class="icon32"><br /></div>
 
-<h2><?php _e('RSVP Report','rsvpmaker'); ?></h2> 
+<h2><?php
+$param = (empty($_GET['limit'])) ? '': $_GET['limit'].' '.$_GET['detail']; 
+
+if(sizeof($_GET) > 2)
+printf('<a href="%s">%s</a> - %s %s',admin_url('edit.php?post_type=rsvpmaker&page=rsvp'),__('RSVP Report','rsvpmaker'),__('Details','rsvpmaker'), $param);
+else
+_e('RSVP Report','rsvpmaker'); ?></h2> 
 
 <?php
 
@@ -5087,6 +5093,7 @@ if(isset($_GET["event"]))
 	{
 
 	$eventid = (int) $_GET["event"];
+	$permalink = get_permalink($eventid);
 
 	$event_row = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$eventid");
 
@@ -5094,9 +5101,9 @@ if(isset($_GET["event"]))
 
 	$t = rsvpmaker_strtotime($date);
 
-	$title = $event_row->post_title ." ".rsvpmaker_strftime($rsvp_options['long_date'],$t);
+	$title = '<a target="_blank" href="'.$permalink.'">'.esc_html($event_row->post_title) ." ".rsvpmaker_strftime($rsvp_options['long_date'],$t).'</a>';
 
-	echo "<h2>".esc_html(__("RSVPs for",'rsvpmaker')." ".$title)."</h2>\n";
+	echo "<h2>".__("RSVPs for",'rsvpmaker')." ".$title."</h2>\n";
 
 	if(!isset($_GET["rsvp_print"]))
 
@@ -5332,7 +5339,7 @@ if(!isset($_GET["rsvp_print"]))
 
 		{
 
-			printf('<h1>%s %s</h1>',$f->post_title,$f->date);
+			printf('<h1>RSVPs for <a target="_blank" href="%s">%s %s</a></h1>',get_permalink($f->ID),$f->post_title,$f->date);
 
 			$emails = format_rsvp_details($rsvps);
 
