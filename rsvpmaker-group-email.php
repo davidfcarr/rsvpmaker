@@ -35,7 +35,6 @@ function rsvpmaker_relay_active_lists() {
 }
 
 
-
 function rsvpmaker_relay_menu_pages(){
 
     $parent_slug = "edit.php?post_type=rsvpemail";
@@ -123,8 +122,6 @@ function rsvpmaker_relay_init ($show = false) {
     }
 
 }
-
-
 
 function rsvpmaker_relay_queue() {
 
@@ -344,15 +341,11 @@ global $wpdb;
 
 //$wpdb->show_errors();
 
-
-
 $server = get_option('rsvpmaker_discussion_server');
 
 $recipients = array();
 
 $vars = get_option('rsvpmaker_discussion_'.$list_type);
-
-
 
 if(empty($vars) || empty($vars['password']))
 
@@ -363,7 +356,6 @@ if(empty($vars) || empty($vars['password']))
 $unsubscribed = get_option('rsvpmail_unsubscribed');
 
 if(empty($unsubscribed)) $unsubscribed = array();
-
 
 
 $user = $vars['user'];

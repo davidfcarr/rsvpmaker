@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 7.9.1
+Version: 7.9.3
 */
 
 function get_rsvpversion(){
-return '7.9.1';
+return '7.9.3';
 }
 
 global $wp_version;
@@ -153,6 +153,12 @@ if(strpos($rsvp_options['rsvplink'],'*|EMAIL|*')) {
 	$rsvp_options['rsvplink'] = str_replace('?e=*|EMAIL|*#rsvpnow','',$rsvp_options['rsvplink']);
 	update_option('RSVPMAKER_Options',$rsvp_options);	
 	}
+//if html removed (recover from error with sanitization on settings screen)
+if(!strpos($rsvp_options['rsvplink'],'</a>')) {
+	$rsvp_options['rsvplink'] = '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">'. __('RSVP Now!','rsvpmaker').'</a></p>';
+	update_option('RSVPMAKER_Options',$rsvp_options);	
+	}
+
 if(empty($rsvp_options['rsvp_confirm']))
 	{
 	$message = '<!-- wp:paragraph -->

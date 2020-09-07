@@ -974,7 +974,6 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 					$blockgraph = str_replace('</div><div class="rsvpcalendar_buttons">','<br />',$block['dateblock']);
 					$blockgraph = "<!-- wp:paragraph -->\n<p><strong>".strip_tags($blockgraph,'<br><a>').'</strong></p>'."\n<!-- /wp:paragraph -->";
 					$content .= $blockgraph;
-					//$content .= "<!-- wp:paragraph -->\n<strong>".$block['dateblock']."</strong>\n<!-- /wp:paragraph -->";
 				}
 				if(!empty($_GET['excerpt'])) {
 					$content .= sprintf("<!-- wp:heading -->\n".'<h2><a href="%s" class="article">%s</a></h2>'."\n<!-- /wp:heading -->\n",$permalink,$post->post_title);

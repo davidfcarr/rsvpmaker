@@ -518,8 +518,6 @@ global $wpdb;
 
 }
 
-
-
 function get_events_by_template($template_id, $order = 'ASC', $output = OBJECT) {
 
 global $wpdb;
@@ -2240,9 +2238,7 @@ function get_week_array() {
 
 return Array("Varies","First","Second","Third","Fourth","Last","Every");
 
-}
-
-	
+}	
 
 function get_template_sked($post_id) {
 
@@ -2342,7 +2338,9 @@ function get_template_sked($post_id) {
 
 		if(empty($sked['minutes']))
 
-			$sked['minutes'] = $rsvp_options['defaultmin'];		
+			$sked['minutes'] = $rsvp_options['defaultmin'];
+		//make sure this is consistent
+		update_post_meta($post_id,'_sked',$sked);		
 
 		return $sked;
 

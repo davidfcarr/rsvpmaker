@@ -918,7 +918,7 @@ if(isset($custom_fields["_rsvp_deadline"][0]) && $custom_fields["_rsvp_deadline"
 
 	$deadday = rsvpmaker_date('d',$t);
 
-	$deadtime = rsvpmaker_date('H:00:00',$t);
+	$deadtime = rsvpmaker_date('H:i:00',$t);
 
 	}
 
@@ -1025,8 +1025,7 @@ if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"
 ?>
 
 <br /><br /><strong><?php echo __('Special Options','rsvpmaker'); ?></strong>
-
-
+<br /><em><?php _e('By default, RSVP registration opens when the event is published and ends at the start time of the event. The options below allow you to specify when registration shold open and set an earlier deadline for RSVPs to close (or keep RSVPs open after the start of the event).','rsvpmaker');?></em>
 
 <table>
 
@@ -1044,7 +1043,7 @@ for($i = 0; $i < 31; $i++)
 
 	$s = (isset($custom_fields['_rsvp_deadline_daysbefore']) && ($custom_fields['_rsvp_deadline_daysbefore'][0] == $i)) ? ' selected="selected" ' : '';
 
-	$deadlinedaysbefore .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
+	$deadlinedaysbefore .= sprintf('<option %s value="%d">%d %s</option>',$s,$i,$i,__('days before','rsvpmaker'));
 
 	}
 
@@ -1058,20 +1057,23 @@ $regdays = '';
 
 		$s = (isset($custom_fields['_rsvp_reg_daysbefore']) && ($custom_fields['_rsvp_reg_daysbefore'][0] == $i)) ? ' selected="selected" ' : '';
 
-		$regdays .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
+		$regdays .= sprintf('<option %s value="%d">%d %s</option>',$s,$i,$i,__('days before','rsvpmaker'));
 
 		}
 
 $deadlinehours = '';
+$currentdeadhours = (empty($custom_fields['_rsvp_deadline_hours'][0])) ? 0 : (int) $custom_fields['_rsvp_deadline_hours'][0];
+		for($i = -12; $i < 0; $i++)
+		{
+		$dhour = abs($i);
+		$s = ($currentdeadhours == $i) ? ' selected="selected" ' : '';
+		$deadlinehours .= sprintf('<option %s value="%d">%d %s</option>',$s,$i,$i,__('hours after','rsvpmaker'));
+		}
 
 		for($i = 0; $i < 24; $i++)
-
 			{
-
-			$s = (isset($custom_fields['_rsvp_deadline_hours']) && ($custom_fields['_rsvp_deadline_hours'][0] == $i)) ? ' selected="selected" ' : '';
-
-			$deadlinehours .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
-
+			$s = ($currentdeadhours == $i) ? ' selected="selected" ' : '';
+			$deadlinehours .= sprintf('<option %s value="%d">%d %s</option>',$s,$i,$i,__('hours before','rsvpmaker'));
 			}
 
 $reghours = '';
@@ -1082,15 +1084,13 @@ $reghours = '';
 
 			$s = (isset($custom_fields['_rsvp_reg_hours']) && ($custom_fields['_rsvp_reg_hours'][0] == $i)) ? ' selected="selected" ' : '';
 
-			$reghours .= sprintf('<option %s value="%d">%d</option>',$s,$i,$i);
+			$reghours .= sprintf('<option %s value="%d">%d %s</option>',$s,$i,$i,__('hours before','rsvpmaker'));
 
 			}
 
-			
+printf('<tr><td>%s</td><td> <select name="setrsvp[deadline_daysbefore]">%s</select> <select name="setrsvp[deadline_hours]">%s</select>  </td></tr>',__('Deadline (optional)','rsvpmaker'),$deadlinedaysbefore,$deadlinehours);
 
-printf('<tr><td>%s</td><td>%s <select name="setrsvp[deadline_daysbefore]">%s</select> %s <select name="setrsvp[deadline_hours]">%s</select>  </td></tr>',__('Deadline (optional)','rsvpmaker'),__('Days Before','rsvpmaker'),$deadlinedaysbefore,__('Hours Before','rsvpmaker'),$deadlinehours);
-
-printf('<tr><td>%s</td><td>%s <select name="setrsvp[reg_daysbefore]">%s</select> %s <select name="setrsvp[reg_hours]">%s</select></td></tr>',__('Registration Starts (optional)','rsvpmaker'),__('Days Before','rsvpmaker'),$regdays,__('Hours Before','rsvpmaker'),$reghours);
+printf('<tr><td>%s</td><td> <select name="setrsvp[reg_daysbefore]">%s</select> <select name="setrsvp[reg_hours]">%s</select></td></tr>',__('Registration Starts (optional)','rsvpmaker'),$regdays,$reghours);
 
 }
 
@@ -1135,8 +1135,6 @@ if(!empty($remindday))
 
 
 </table>
-
-
 
 <br /><?php echo __('Show RSVP Count','rsvpmaker');?> <input type="checkbox" name="setrsvp[count]" id="setrsvp[count]" value="1" <?php if(isset($rsvp_count) && $rsvp_count) echo ' checked="checked" ';?> /> 
 
@@ -3914,8 +3912,6 @@ if(!function_exists('event_content') )
 
 function event_content($content, $formonly = false, $form ='') {
 
-
-
 if(is_admin()) // || !in_the_loop()
 
 	return $content;
@@ -4429,8 +4425,6 @@ if($rsvp_count) {
 $now = time();
 
 $rsvplink = get_rsvp_link($post->ID,true);
-
-
 
 if(isset($deadline) && ($now  > $deadline  ) )
 
@@ -6008,8 +6002,6 @@ $results = get_rsvp_dates($event);
 if($results)
 
 {
-
-
 
 $start = 2;
 

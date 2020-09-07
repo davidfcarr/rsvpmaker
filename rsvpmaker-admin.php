@@ -601,13 +601,17 @@ echo $label;
 				$newoptions["eventpage"] = sanitize_text_field($_POST["option"]["eventpage"]);
                   $newoptions["log_email"] = (isset($_POST["option"]["log_email"]) && $_POST["option"]["log_email"]) ? 1 : 0;
 
-				foreach($newoptions as $name => $value)
-				  $options[$name] = sanitize_text_field($value);
+				foreach($newoptions as $name => $value) {
+					if($name == 'rsvplink')
+						$options[$name] = wp_kses_post($value);
+					else
+						$options[$name] = sanitize_text_field($value);
+				}
 				  
                   update_option($this->db_option, $options);
                   
 				  echo '<div class="updated fade"><p>Plugin settings saved.</p></div>';
-				  if($_POST['defaultoverride']) {
+				  if(isset($_POST['defaultoverride'])) {
 					$future = get_future_events();
 					$fcount = sizeof($future);
 					$templates = rsvpmaker_get_templates();
@@ -1225,6 +1229,8 @@ $RSVPMaker_Email_Options->handle_options();
 <form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
 <h2><?php _e('Group Email','rsvpmaker'); ?></h2>
 <?php
+do_action('group_email_admin_notice');
+
 echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Designed to work with POP3 email accounts. Members can unsubscribe.','rsvpmaker').'</p>';
 
 if(isset($_GET['debug'])) {
@@ -1242,8 +1248,12 @@ $hooksays = wp_get_schedule('rsvpmaker_relay_init_hook');
 
 if(isset($_POST['rsvpmaker_discussion_server']))
 	update_option('rsvpmaker_discussion_server',sanitize_text_field($_POST['rsvpmaker_discussion_server']));
-if(isset($_POST['rsvpmaker_discussion_member']))
-	update_option('rsvpmaker_discussion_member',sanitize_text_field($_POST['rsvpmaker_discussion_member']));
+if(isset($_POST['rsvpmaker_discussion_member'])) {
+	$newarray = array();
+	foreach($_POST['rsvpmaker_discussion_member'] as $index => $value)
+		$newarray[$index] = sanitize_textarea_field($value);
+	update_option('rsvpmaker_discussion_member',$newarray);	
+}
 if(isset($_POST['rsvpmaker_discussion_officer'])) {
 	$newarray = array();
 	foreach($_POST['rsvpmaker_discussion_officer'] as $index => $value)
@@ -1298,6 +1308,10 @@ if(is_plugin_active( 'wp-mailster/wp-mailster.php' ) )
 	echo '<p>'.__('If you activate this feature, WP Mailster will be deactivated','rsvpmaker').'</p>';
 	echo '</div>';
 	}
+
+echo rsvpmaker_relay_get_pop('member');
+echo rsvpmaker_relay_get_pop('officer');
+echo rsvpmaker_relay_get_pop('extra');
 
 printf('<p><label>Activate</label> <input type="radio" name="rsvpmaker_discussion_active" value="1" %s /> Yes <input type="radio" name="rsvpmaker_discussion_active" value="0" %s /> No</p>',($active) ? ' checked="checked" ' : '',(!$active) ? ' checked="checked" ' : '');
 
@@ -3484,40 +3498,9 @@ function future_rsvpmakers_by_template($template_id) {
 }
 
 function rsvptimes ($time,$fieldname) {
-$timearray = array(
-'00:00:00' => __('12 am','rsvpmaker'),
-'01:00:00' => __('1 am','rsvpmaker'),
-'02:00:00' => __('2 am','rsvpmaker'),
-'03:00:00' => __('3 am','rsvpmaker'),
-'04:00:00' => __('4 am','rsvpmaker'),
-'05:00:00' => __('5 am','rsvpmaker'),
-'06:00:00' => __('6 am','rsvpmaker'),
-'07:00:00' => __('7 am','rsvpmaker'),
-'08:00:00' => __('8 am','rsvpmaker'),
-'09:00:00' => __('9 am','rsvpmaker'),
-'10:00:00' => __('10 am','rsvpmaker'),
-'11:00:00' => __('11 am','rsvpmaker'),
-'12:00:00' => __('12 pm','rsvpmaker'),
-'13:00:00' => __('1 pm','rsvpmaker'),
-'14:00:00' => __('2 pm','rsvpmaker'),
-'15:00:00' => __('3 pm','rsvpmaker'),
-'16:00:00' => __('4 pm','rsvpmaker'),
-'17:00:00' => __('5 pm','rsvpmaker'),
-'18:00:00' => __('6 pm','rsvpmaker'),
-'19:00:00' => __('7 pm','rsvpmaker'),
-'20:00:00' => __('8 pm','rsvpmaker'),
-'21:00:00' => __('9 pm','rsvpmaker'),
-'22:00:00' => __('10 pm','rsvpmaker'),
-'23:00:00' => __('11 pm','rsvpmaker'),
-'23:59:59' => __('midnight','rsvpmaker')  );
-
-printf('<select name="%s">',$fieldname);
-foreach($timearray as $index => $value)
-	{
-	$s = ($index == $time) ? ' selected="selected" ' : '';
-	printf('<option value="%s" %s>%s</option>',$index,$s,$value);
-	}
-echo '</select>';
+if(empty($time))
+	$time = '01:00:00';
+printf('%s <input name="%s" value="%s">',__('24 Hour Time'),$fieldname,$time);
 }
 
 function rsvpmaker_add_one () {
