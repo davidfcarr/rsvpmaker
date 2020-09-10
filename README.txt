@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5.1
-Stable tag: 7.9.3
+Stable tag: 7.9.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -121,6 +121,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 = 7.9.4 =
 
 * Allow RSVP deadline to extend past start time (if you want to welcome people to register after event starts)
+* Fix error in event pricing code (incorrect sanitization)
 
 = 7.9.3 =
 

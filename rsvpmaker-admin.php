@@ -416,7 +416,7 @@ if(isset($_POST["unit"]))
 			update_post_meta($postID, '_hiddenrsvpfields', $pricehide);
 		}
 	
-	$value = sanitize_text_field($per);
+	$value = $per;
 	$field = "_per";
 	
 	$current = get_post_meta($postID, $field, $single); 
@@ -436,6 +436,41 @@ if(isset($_POST["unit"]))
 		$ylive = sanitize_text_field($_POST["youtube_live"]);
 		unset($_POST);
 		rsvpmaker_youtube_live($postID, $ylive);
+		}
+
+		if(isset($_POST['coupon_code']))
+
+		{
+	
+		delete_post_meta($postID,'_rsvp_coupon_code');
+	
+		delete_post_meta($postID,'_rsvp_coupon_discount');
+	
+		delete_post_meta($postID,'_rsvp_coupon_method');
+	
+		foreach($_POST['coupon_code'] as $index => $value)
+	
+		{
+	
+			$value = sanitize_text_field($value);
+	
+			$discount = sanitize_text_field($_POST['coupon_discount'][$index]);
+	
+			if(!empty($value) && is_numeric($discount))
+	
+			{
+	
+				$method = $_POST['coupon_method'][$index];
+	
+				add_post_meta($postID,'_rsvp_coupon_code',$value);
+	
+				add_post_meta($postID,'_rsvp_coupon_discount',$discount);
+	
+				add_post_meta($postID,'_rsvp_coupon_method',$method);		
+	
+			}
+		}
+	
 		}
 }
 

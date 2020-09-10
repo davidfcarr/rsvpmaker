@@ -1514,44 +1514,6 @@ echo '</div>';
 
 	<?php
 
-	if(isset($_POST['coupon_code']))
-
-	{
-
-	delete_post_meta($post->ID,'_rsvp_coupon_code');
-
-	delete_post_meta($post->ID,'_rsvp_coupon_discount');
-
-	delete_post_meta($post->ID,'_rsvp_coupon_method');
-
-	foreach($_POST['coupon_code'] as $index => $value)
-
-	{
-
-		$value = sanitize_text_field($value);
-
-		$discount = sanitize_text_field($_POST['coupon_discount'][$index]);
-
-		if(!empty($value) && is_numeric($discount))
-
-		{
-
-			$method = $_POST['coupon_method'][$index];
-
-			add_post_meta($post->ID,'_rsvp_coupon_code',$value);
-
-			add_post_meta($post->ID,'_rsvp_coupon_discount',$discount);
-
-			add_post_meta($post->ID,'_rsvp_coupon_method',$method);		
-
-		}
-
-	}
-
-	}
-
-	
-
 	$coupon_codes = get_post_meta($post->ID,'_rsvp_coupon_code');
 
 	if(empty($coupon_codes))
