@@ -44,18 +44,6 @@ global $rsvp_options;
 
 global $custom_fields;
 
-
-
-if((isset($custom_fields["_sked"][0])) && isset($custom_fields["_rsvp_dates"][0]))  {
-
-	unset($custom_fields["_sked"][0]);
-
-	//cannot be both an individual event and a template
-
-	$wpdb->query("DELETE from $wpdb->postmeta WHERE meta_key LIKE '_ske%' AND post_id=".$post_id);
-
-}
-
 if(isset($_GET["clone"]))
 
 	{
@@ -104,7 +92,7 @@ if(isset($custom_fields["_rsvpmaker_special"][0]))
 
 	}
 
-elseif(isset($custom_fields["_sked"][0]) || isset($_GET["new_template"]) )
+elseif(rsvpmaker_is_template($post->ID) || isset($_GET["new_template"]) )
 
 	{
 
@@ -218,7 +206,7 @@ if(isset($_GET['t']))
 
 	
 
-	$sked = get_template_sked($t);//get_post_meta($t,'_sked',true);
+	$sked = get_template_sked($t);
 
 	$times = rsvpmaker_get_projected($sked);
 
@@ -699,8 +687,6 @@ if(!isset($_POST["sked"]))
 
 
 	new_template_schedule($postID,$sked);
-
-	//update_post_meta($postID, '_sked', $sked);
 
 	if(isset($_POST["rsvpautorenew"]))
 
@@ -7693,7 +7679,31 @@ printf(' <a href="%s"  class="add-new-h2">%s</a>',admin_url('edit.php?post_type=
 
 <?php
 
+if(!empty($_POST['import_shared_template'])) {
+	$url = sanitize_text_field($_POST['import_shared_template']);
+	printf('<p>Importing %s</p>',$url);
+	$duplicate = $wpdb->get_var("SELECT ID FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id  WHERE meta_key='template_imported_from' AND meta_value='$url' ");
+	$response = wp_remote_get( $url );
+ 
+	if ( empty($duplicate) && is_array( $response ) && ! is_wp_error( $response ) ) {
+		$headers = $response['headers']; // array of http header lines
+		$body    = $response['body']; // use the content
+		$data = json_decode($body);
+		print_r($data);
+		$newpost['post_type'] = 'rsvpmaker';
+		$newpost['post_status'] = 'publish';
+		$newpost['post_author'] = $current_user->ID;
+		$newpost['post_title'] = $data->post_title;
+		$newpost['post_content'] = $data->post_content;
+		$id = wp_insert_post($newpost);
+		rsvpmaker_set_template_defaults($id);
+		update_post_meta($id,'template_imported_from',$url);
+	}
+}
 
+if(!empty($_POST['share_template'])) {
+	update_post_meta($_POST['share_template'],'rsvpmaker_shared_template',true);
+}
 
 if(!empty($_POST["override"]))
 
@@ -7961,7 +7971,7 @@ if(isset($_GET['restore']))
 
 									 
 
-$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND meta_key='_sked' AND (post_status='publish' OR post_status='draft') GROUP BY $wpdb->posts.ID ORDER BY post_title";
+$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND meta_key='_sked_Varies' AND (post_status='publish' OR post_status='draft') GROUP BY $wpdb->posts.ID ORDER BY post_title";
 
 
 
@@ -8233,7 +8243,28 @@ ORDER BY meta_value LIMIT 0,100";
 
 		echo '</form>';
 
+		printf('<h2>%s</h2><p>%s</p>',__('Shared Templates','rsvpmaker'),__('RSVPMaker users can share the content of templates between websites','rsvpmaker'));
 
+		$shared_templates = '';
+		$results = $wpdb->get_results("SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID= $wpdb->postmeta.post_id WHERE meta_key='rsvpmaker_shared_template'");
+		if($results) {
+			echo '<h3>My Shared Templates</h3>';
+			foreach($results as $row) {
+				printf('<p>%s<br />%s</p>',$row->post_title,rest_url('rsvpmaker/v1/shared_template/'.$row->ID));
+			}
+		}
+
+		do_action('import_shared_template_prompt');
+
+		printf('<h3>%s</h3><form action="%s" method="post"><input name="import_shared_template" />',__('Import Shared Template','rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list'));
+		submit_button(__("Import",'rsvpmaker'));
+		echo '</form>';
+
+		if($template_options) {
+			printf('<h3>%s</h3><form action="%s" method="post"><select name="share_template">%s</select>',__('Share Template','rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list'),$template_options);
+			submit_button(__("Share Template",'rsvpmaker'));
+			echo '</form>';
+		}
 
 		$restore = '';
 
@@ -9127,10 +9158,6 @@ $singular = __('Event','rsvpmaker');
 
 $link = sprintf(' <a href="%s">%s %s</a>',esc_url( get_post_permalink($post_ID)),__('View','rsvpmaker'), $singular );
 
-
-
-//$sked = get_post_meta($post_ID,'_sked',true);
-
 $sked = get_template_sked($post_ID);
 
 if(!empty($sked) )
@@ -9702,11 +9729,9 @@ $wpdb->show_errors();
 
 $result = $wpdb->get_results($sql);
 
-$sql = "SELECT $wpdb->posts.ID as editid FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND post_status='publish' AND meta_key='_sked' AND post_author=$current_user->ID";
+$sql = "SELECT $wpdb->posts.ID as editid FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND post_status='publish' AND meta_key='_sked_Varies' AND post_author=$current_user->ID";
 
 $r2 = $wpdb->get_results($sql);
-
-
 
 if($result && $r2)
 

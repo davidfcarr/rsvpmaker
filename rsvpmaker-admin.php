@@ -2125,7 +2125,6 @@ function rsvpmaker_custom_column($column_name, $post_id) {
     if( $column_name == 'event_dates' ) {
 
 $results = get_rsvp_dates($post_id);
-//$template = get_post_meta($post_id,'_sked',true);
 $template = get_template_sked($post_id);
 $rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
@@ -2608,7 +2607,7 @@ add_filter( 'disable_months_dropdown', 'rsvpmaker_admin_months_dropdown',10,2 );
 
 function rsvpmaker_join_template($join) {
   global $wpdb;
-    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_sked'";
+    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_sked_Varies'";
 }
 function rsvpmaker_join_special($join) {
   global $wpdb;
@@ -3547,7 +3546,6 @@ global $current_user;
 
 $t = (int) $_POST["template"];
 $post = get_post($t);
-//$template = get_post_meta($t,'_sked',true);
 $template = get_template_sked($t);
 
 $hour = (isset($template["hour"]) ) ? (int) $template["hour"] : 17;
@@ -3723,7 +3721,6 @@ if(!empty($sofar))
 	$farthest = array_pop($sofar);
 	$fts = rsvpmaker_strtotime($farthest->datetime);
 }
-//$sked = get_post_meta($template_id,'_sked',true);
 $sked = get_template_sked($template_id);
 $hour = str_pad($sked['hour'],2,'0',STR_PAD_LEFT);
 $minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
@@ -3835,7 +3832,6 @@ global $wpdb, $current_user;
 $t = $_REQUEST['t'];
 $post = get_post($_REQUEST['t']);
 $template = $sked = get_template_sked($t);
-//$template = $sked = get_post_meta($t,'_sked',true);
 $template['hour'] = (int) $template['hour'];
 if($template['hour'] < 10)
 	$template['hour'] = $sked['hour'] = '0'.$template['hour']; // make sure of zero padding
@@ -3987,7 +3983,6 @@ if(isset($_POST["nomeeting"]) )
 	header('Location: ' . admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&update_messages=1&t='.$t));
 	die();
 }
-
 
 function rsvpmaker_copy_metadata($source_id, $target_id) {
 global $wpdb;
@@ -4638,6 +4633,7 @@ if(isset($_REQUEST['post_id']))
 if(isset($_GET['template_to_event']))
 	{
 	delete_post_meta($post->ID,'_sked');
+	delete_post_meta($post->ID,'_sked_Varies');
 	update_post_meta($post->ID,'_rsvp_dates',date('Y-m-d H:').'00:00',rsvpmaker_strtotime('+2 hours') );
 	}
 
@@ -4682,7 +4678,7 @@ foreach($results as $row)
 $options .= '</optgroup><optgroup label="'.__('Event Templates','rsvpmaker').'">';
 $sql = "SELECT DISTINCT $wpdb->posts.ID as post_id, $wpdb->posts.*
 	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_sked'
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_sked_Varies'
 	 ORDER BY post_title";
 
 $results = $wpdb->get_results($sql);

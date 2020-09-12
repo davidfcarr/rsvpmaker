@@ -761,7 +761,7 @@ function rsvpmaker_template_join($join) {
 
 function rsvpmaker_template_where($where) {
 
-	return " AND tmeta.meta_key='_sked'";
+	return " AND tmeta.meta_key='_sked_Varies'";
 
 }
 
@@ -1619,6 +1619,10 @@ $query->set('meta_query', array(
             'compare' => 'NOT EXISTS'
         ),
         array(
+            'key'   => '_sked_Varies',
+            'compare' => 'NOT EXISTS'
+        ),
+        array(
             'key'   => '_sked',
             'compare' => 'NOT EXISTS'
         )
@@ -1790,7 +1794,7 @@ if(empty($post_id))
 if(empty($custom_fields))
 	$custom_fields = get_post_custom($post_id);
 
-if(empty($custom_fields["_rsvp_dates"][0]) && empty($custom_fields["_sked"][0]))
+if(empty($custom_fields["_rsvp_dates"][0]) && !isset($custom_fields["_sked_Varies"][0]))
 	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
 $time_format = $rsvp_options["time_format"];
 $dur = $tzbutton = '';
@@ -1860,10 +1864,9 @@ if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calend
 	$dateblock .= sprintf('<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>',rsvpmaker_to_gcal($post,$firstrow["datetime"],$end_time), __('Add to Google Calendar','rsvpmaker'), plugins_url('rsvpmaker/button_gc.gif'),$permalink.$j.'ical=1', __('Add to Outlook/iCal','rsvpmaker'), plugins_url('rsvpmaker/button_ical.gif'), $tzbutton );
 	}
 }
-elseif(isset($custom_fields["_sked"][0]))
+elseif(rsvpmaker_is_template($post->ID))
 	{
-		$sked = unserialize($custom_fields["_sked"][0]);
-
+		$sked = get_template_sked($post->ID);
 		//backward compatability
 		if(is_array($sked["week"]))
 			{

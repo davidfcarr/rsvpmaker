@@ -177,7 +177,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$complex_template = get_post_meta($post->ID,'complex_template',true);
 		$chosen_gateway = get_rsvpmaker_payment_gateway ();
 		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.$post->ID);
-		$sked = get_template_sked($post->ID);// get_post_meta($post->ID,'_sked',true);
+		$sked = get_template_sked($post->ID);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
 			$top_message = $rsvpmaker_special;
@@ -208,7 +208,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 	if(empty($date))
 	{
 	$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
-	$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
+	$sked = get_template_sked($post_id);
 	if(empty($sked))
 		$sked = array();
 	}

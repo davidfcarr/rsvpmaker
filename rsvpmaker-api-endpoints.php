@@ -436,15 +436,11 @@ public function get_items($request) {
 
     $sked = get_template_sked($request['post_id']);
 
-    //$sked = get_post_meta($request['post_id'],'_sked',true);
-
     return new WP_REST_Response($sked, 200);
 
   }
 
 }
-
-
 
 class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
@@ -958,6 +954,47 @@ public function get_items($request) {
 
 }
 
+class RSVPMaker_Shared_Template extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+
+    $path = 'shared_template/(?P<post_id>[0-9]+)';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'GET',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+    $post_id = $request['post_id'];
+    $template = get_post($post_id);
+    $shared = get_post_meta($post_id,'rsvpmaker_shared_template',true);
+    if(empty($template) || empty($shared))
+      return new WP_REST_Response(false, 200);
+    $export['post_title'] = $template->post_title;
+    $export['post_content'] = $template->post_content;
+    return new WP_REST_Response($export, 200);
+  }
+}
 
 
 add_action('rest_api_init', function () {
@@ -1013,6 +1050,10 @@ add_action('rest_api_init', function () {
   $email_lookup = new RSVPMaker_Email_Lookup();
 
   $email_lookup->register_routes();
+
+  $sharedt = new RSVPMaker_Shared_Template();
+
+  $sharedt->register_routes();
 
 });
 

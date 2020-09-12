@@ -564,13 +564,33 @@ global $wpdb;
 
 }
 
-
+function rsvpmaker_set_template_defaults($post_id) {
+	global $rsvp_options;
+	update_post_meta($post_id,'_sked_Varies',1);
+	update_post_meta($post_id,'_sked_First','');
+	update_post_meta($post_id,'_sked_Second','');
+	update_post_meta($post_id,'_sked_Third','');
+	update_post_meta($post_id,'_sked_Fourth','');
+	update_post_meta($post_id,'_sked_Last','');
+	update_post_meta($post_id,'_sked_Every','');
+	update_post_meta($post_id,'_sked_Sunday','');
+	update_post_meta($post_id,'_sked_Monday','');
+	update_post_meta($post_id,'_sked_Tuesday','');
+	update_post_meta($post_id,'_sked_Wednesday','');
+	update_post_meta($post_id,'_sked_Thursday','');
+	update_post_meta($post_id,'_sked_Friday','');
+	update_post_meta($post_id,'_sked_Saturday','');
+	update_post_meta($post_id,'_sked_hour',str_pad($rsvp_options['defaulthour'],2,'0',STR_PAD_LEFT));
+	update_post_meta($post_id,'_sked_minutes',str_pad($rsvp_options['defaultmin'],2,'0',STR_PAD_LEFT));
+	update_post_meta($post_id,'_sked_stop','');
+	update_post_meta($post_id,'_sked_duration','');
+}
 
 function rsvpmaker_get_templates() {
 
 	global $wpdb;
 
-	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_sked' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
+	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_sked_Varies' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
 
 return $wpdb->get_results($sql);
 
@@ -952,17 +972,7 @@ function rsvpmaker_is_template ($post_id = 0) {
 
 	}
 
-	$dates = get_post_meta($post_id,'_rsvp_dates',true);
-
-	if($dates) { // if there are dates, it's not a template
-
-		$wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_key LIKE '_ske%' AND post_id=".$post_id);
-
-		return false;
-
-	}
-
-	return get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
+	return get_template_sked($post_id);
 
 }
 
@@ -2188,10 +2198,6 @@ function update_rsvp_post_metadata($check,$post_id,$meta_key,$meta_value) {
 
 		new_template_schedule($post_id,$sked,'update_rsvp_post_metadata');
 
-		//update_post_meta($post_id,'_sked',$sked);
-
-		//rsvpmaker_debug_log($sked,'modified sked');
-
 		return true; //short circuit regular meta update
 
 		}
@@ -2277,13 +2283,7 @@ function get_template_sked($post_id) {
 			elseif(($row->meta_key == '_sked_minutes') && ($row->meta_value == ''))
 
 				{	//fix for corrupted record
-
-					$sked = get_post_meta($post_id,'_sked',true);
-
-					$row->meta_value = (empty($sked['minutes'])) ? '00' : $sked['minutes'];
-
-					update_post_meta($post_id,'_sked_minutes',$row->meta_value);
-
+					update_post_meta($post_id,'_sked_minutes',$rsvp_options['defaultmin']);
 				}
 
 			$sked[$key] = $row->meta_value;
@@ -2339,44 +2339,29 @@ function get_template_sked($post_id) {
 		if(empty($sked['minutes']))
 
 			$sked['minutes'] = $rsvp_options['defaultmin'];
-		//make sure this is consistent
-		update_post_meta($post_id,'_sked',$sked);		
-
 		return $sked;
 
 	}
-
-	else {
-
-		$sked = get_post_meta($post_id,'_sked',true);
-
-		if($sked) {
-
-			//upgrade it
-
-			$sked = new_template_schedule($post_id,$sked);
-
-			if(empty($sked['hour']))
-
-				$sked['hour'] = $rsvp_options['defaulthour'];
-
-			if(empty($sked['minutes']))
-
-				$sked['minutes'] = $rsvp_options['defaultmin'];
-
-			return $sked;
-
-		}
-
-		else
-
-			return false;//not a template
-
-	}
+	return false;
 
 }
 
+function rsvpmaker_upgrade_templates() {
+	global $wpdb, $rsvp_options;
 
+	$oldtemplates = $wpdb->get_results("select post_id FROM $wpdb->postmeta WHERE meta_key='_sked'");
+	foreach($oldtemplates as $oldtemplate) {
+		if(!get_post_meta($oldtemplate->post_id,'_sked_Varies')) {
+			$sked = get_post_meta($oldtemplate->post_id,'_sked',true);
+			if(empty($sked['hour']))
+				$sked['hour'] = $rsvp_options['defaulthour'];
+			if(empty($sked['minutes']))
+				$sked['minutes'] = $rsvp_options['defaultmin'];
+			new_template_schedule($oldtemplate->post_id,$sked);
+		}
+		delete_post_meta($oldtemplate->post_id,'_sked');
+	}
+}
 
 function new_template_schedule($post_id,$template,$source = '') {
 
@@ -2441,8 +2426,6 @@ function new_template_schedule($post_id,$template,$source = '') {
 	$new_template_schedule['week'] = $weeks;
 
 	$new_template_schedule['dayofweek'] = $dows;
-
-	update_post_meta($post_id,'_sked',$new_template_schedule);
 
 	return $new_template_schedule;
 
