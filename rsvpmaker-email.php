@@ -9,8 +9,12 @@ function rsvpmailer($mail) {
 		print_r($mail);
 	}
 
+	if(isset($mail['subject']))
+		$mail['subject'] = do_shortcode($mail['subject']);
+
 	if(isset($mail['html']))
 	{
+		$mail['html'] = do_shortcode($mail['html']);
 		$mail['html'] = rsvpmaker_inliner($mail['html']);
 	}
 	global $post, $rsvp_options, $unsubscribed, $rsvpmaker_message_type;
@@ -1424,7 +1428,7 @@ foreach($templates as $index => $template)
 	}
 ?>
 <form method="get"  action="<?php echo get_permalink($post->ID); ?>">
-<?php _e('Email Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
+<?php _e('Email Design Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
 <button><?php _e('Switch Template','rsvpmaker'); ?></button>
 </form>
 <hr />
@@ -1697,7 +1701,7 @@ if(!empty($_POST['rsvpmail_nonce']) && (empty($_POST['rsvpmail_nonce']) || !wp_v
 	}
 
 ?>
-<h2><?php _e('RSVPMaker Email Template','rsvpmaker');?></h2>
+<h2><?php _e('RSVPMaker Email Design Templates','rsvpmaker');?></h2>
 <form id="form1" name="form1" method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>">
 <?php
 global $rsvp_options;
@@ -1834,7 +1838,7 @@ $function = "rsvpmaker_scheduled_email_list";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Email Template",'rsvpmaker');
+$page_title = __("Email Design Templates",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_email_template";
@@ -2651,8 +2655,7 @@ foreach($template_forms as $slug => $form)
 echo submit_button().'</form>';
 
 printf('<p><a href="%s">Reset to defaults</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates&reset=1'));
-
-echo   '<p>'.__("RSVPMaker template placeholders:<br />[rsvpyesno] YES/NO<br />[rsvptitle] event post title<br />[rsvpdate] event date<br />[rsvpmessage] the message you supplied when you created/edited the event (default is Thank you!)<br />[rsvpdetails] information supplied by attendee<br />[rsvpupdate] button users can click on to update their RSVP<br />[rsvpcount] number of people registered<br />[event_title_link] a link to the event, with the event title and date/time",'rsvpmaker').'</p>';
+echo   '<p>'.__("RSVPMaker template placeholders:<br />[rsvpyesno] YES/NO<br />[rsvptitle] event post title<br />[rsvpdate] event date<br />[datetime] event date and time<br />[rsvpmessage] the message you supplied when you created/edited the event (default is Thank you!)<br />[rsvpdetails] information supplied by attendee<br />[rsvpupdate] button users can click on to update their RSVP<br />[rsvpcount] number of people registered<br />[event_title_link] a link to the event, with the event title and date/time",'rsvpmaker').'</p>';
 do_action('rsvpmaker_notification_templates_doc');
 rsvpmaker_admin_page_bottom($hook);
 }
@@ -2792,9 +2795,11 @@ if($rsvpdata['total'] <= $rsvp['amountpaid'])
 $details = '';
 foreach($rsvpdata as $label => $value)
 	$details .= sprintf('%s: %s'."\n",$label,$value);;
+/*
 $rsvpdata['rsvptitle'] = $post->post_title;
 $ts = rsvpmaker_strtotime(get_rsvp_date($rsvp['event']));
 $rsvpdata['rsvpdate'] = rsvpmaker_strftime($rsvp_options['long_date'],$ts);
+*/
 
 $templates = get_rsvpmaker_notification_templates();
 $rsvp_to = get_post_meta($post->ID,'_rsvp_to',true);
@@ -2848,11 +2853,13 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 		
 	$details = '';
 	foreach($rsvpdata as $label => $value)
-		$details .= sprintf('%s: %s'."\n",$label,$value);;
+		$details .= sprintf('%s: %s'."\n",$label,$value);
+	/*
 	$rsvpdata['rsvptitle'] = $post->post_title;
 	$ts = rsvpmaker_strtotime(get_rsvp_date($rsvp['event']));
 	$rsvpdata['rsvpdate'] = rsvpmaker_strftime($rsvp_options['long_date'],$ts);
-	
+	*/
+
 	$templates = get_rsvpmaker_notification_templates();
 	$rsvp_to = get_post_meta($post->ID,'_rsvp_to',true);
 	$rsvp_to_array = explode(",", $rsvp_to);
@@ -3049,5 +3056,36 @@ if(empty($chimp_options["chimp-key"]))
 $apikey = $chimp_options["chimp-key"];
 return new MailChimpRSVP($apikey);
 }
+
+/*
+Shortcodes to allow these to be used in the body of confirmation messages
+add_shortcode('rsvptitle', 'rsvptitle_shortcode');
+add_shortcode('rsvpdate', 'rsvpdate_shortcode');
+add_shortcode('rsvpdatetime', 'rsvpdatetime_shortcode');
+already exists - [event_title_link]
+*/
+
+function rsvptitle_shortcode($atts) {
+	global $post;
+	return esc_html($post->post_title);
+}
+
+function rsvpdate_shortcode($atts) {
+	global $post, $rsvp_options;
+	$format = empty($atts['format']) ? $rsvp_options['long_date'] : $atts['format'];
+	$t = rsvpmaker_strtotime(get_rsvp_date($post->ID));
+	return rsvpmaker_strftime($format,$t);
+}
+
+function rsvpdatetime_shortcode($atts) {
+	global $post, $rsvp_options;
+	$format = empty($atts['format']) ? $rsvp_options['long_date'].' '.$rsvp_options['time_format'] : $atts['format'];
+	$t = rsvpmaker_strtotime(get_rsvp_date($post->ID));
+	return rsvpmaker_strftime($format,$t);
+}
+
+$prettydate = rsvpmaker_date('l F jS g:i A T',rsvpmaker_strtotime($date));
+	
+$subject = str_replace('[datetime]',$prettydate,$subject);
 
 ?>

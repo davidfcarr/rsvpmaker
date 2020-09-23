@@ -18,7 +18,6 @@ if(!wp_is_json_request()){
 	add_shortcode('rsvpmaker_upcoming_email','rsvpmaker_upcoming_email');
 	add_shortcode('rsvpmaker_recent_blog_posts','rsvpmaker_recent_blog_posts');
 	add_shortcode('rsvpcount','rsvpcount');
-	add_shortcode('event_title_link', 'event_title_link');
 	add_shortcode('embed_dateblock','embed_dateblock');
 	add_shortcode('rsvp_report_shortcode','rsvp_report_shortcode');
 	add_shortcode('rsvpguests','rsvpguests');
@@ -27,6 +26,11 @@ if(!wp_is_json_request()){
 	add_shortcode('rsvpfield','rsvpfield');
 	add_shortcode('rsvpmaker_stripe_checkout','rsvpmaker_stripe_checkout');
 	add_shortcode('RSVPMaker_chimpshort', 'RSVPMaker_chimpshort');
+	//primarily used in email confirmation messages etc.
+	add_shortcode('rsvptitle', 'rsvptitle_shortcode');
+	add_shortcode('rsvpdate', 'rsvpdate_shortcode');
+	add_shortcode('datetime', 'rsvpdatetime_shortcode');
+	add_shortcode('event_title_link', 'event_title_link');
 }
 
 //event_content defined in rsvpmaker-pluggable.php to allow for variations

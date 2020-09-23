@@ -1678,7 +1678,7 @@ if($results)
 
 	$out .= ($row->yesno) ? __('YES','rsvpmaker') : __('NO','rsvpmaker');
 
-	$out .= ' '.$row->first.' '.$row->last;
+	$out .= esc_html(' '.$row->first.' '.$row->last);
 
 	$sql = $wpdb->prepare("SELECT count(*) FROM ".$wpdb->prefix.'rsvpmaker WHERE master_rsvp=%d',$row->id);
 
@@ -1688,7 +1688,7 @@ if($results)
 
 		$out .= ' + '.esc_html($guests).' '.__('guests','rsvpmaker');
 
-	return sprintf('<div><a href="%s">%s</a> %s</div>',add_query_arg(array('e' => $row->email,'update' => $row->id),$p),__('Update','rsvpmaker'),esc_html($out));
+	return sprintf('<div><a href="%s">%s</a> %s</div>',add_query_arg(array('e' => $row->email,'update' => $row->id),$p),__('Update','rsvpmaker'),$out);
 
 	}
 
@@ -2994,8 +2994,6 @@ if(!empty($_POST["note"]))
 
 update_post_meta($post->ID,'_rsvp_'.$rsvp["email"],$cleanmessage);
 
-
-
 $include_event = get_post_meta($post->ID, '_rsvp_confirmation_include_event', true);
 
 if($include_event)
@@ -3012,7 +3010,7 @@ $rsvpdata["rsvpdetails"] = $cleanmessage;
 
 $rsvpdata["rsvpmessage"] = $rsvp_confirm; // confirmation message from editor
 
-$rsvpdata["rsvptitle"] = $post->post_title;
+//$rsvpdata["rsvptitle"] = $post->post_title;
 
 $rsvpdata["rsvpyesno"] = $answer;
 
@@ -3021,8 +3019,6 @@ $rsvpdata["rsvpdate"] = $date;
 $rsvp_options["rsvplink"] = get_rsvp_link($post->ID);
 
 $rsvpdata["rsvpupdate"] = preg_replace('/#rsvpnow">[^<]+/','#rsvpnow">'.$rsvp_options['update_rsvp'],str_replace('*|EMAIL|*',$rsvp["email"].'&update='.$rsvp_id, $rsvp_options["rsvplink"]));
-
-
 
 rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata);
 
@@ -7827,8 +7823,6 @@ if(isset($_GET['override_template']) || (isset($_GET['t']) && isset($_GET['overc
 
 }
 
-
-
 if(isset($_POST['event_to_template'])) {
 
 	$e = (int) $_POST['event_to_template'];
@@ -7994,8 +7988,6 @@ foreach ( $results as $post )
 		
 
 		$sked = get_template_sked($post->ID);
-
-
 
 		//backward compatability
 
@@ -8301,7 +8293,13 @@ ORDER BY meta_value LIMIT 0,100";
 		if(!empty($restore))
 
 			echo '<h3>Restore Templates</h3>'.$restore;
-
+		
+		$templates = rsvpmaker_get_templates();
+		foreach($templates as $template) {
+			$date = get_rsvp_date($template->ID);
+			if($date)
+				printf('<p>Template %s also shows date %s</p>',$template->ID, $date);
+		}
 ?>
 
 

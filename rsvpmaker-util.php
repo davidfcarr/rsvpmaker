@@ -2048,8 +2048,6 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 
 	}
 
-	
-
 	return $null; // don't alter
 
 }

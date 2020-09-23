@@ -2802,20 +2802,17 @@ wp_schedule_single_event( $reminder_time, 'rsvpmaker_send_reminder_email', array
 }
 
 function rsvpmaker_send_reminder_email ( $post_id, $hours ) {
-global $wpdb;
+global $wpdb, $post;
 global $rsvp_options;
 $wpdb->show_errors();
+	$post = get_post($post_id);
 	$reminder = rsvp_get_reminder($post_id,$hours);
 	$confirm = $reminder->post_content;
 	$subject = $reminder->post_title;
 	$include_event = get_post_meta($post_id, '_rsvp_confirmation_include_event', true);
 	$rsvpto = get_post_meta($post_id,'_rsvp_to',true);
-
-	$date = get_rsvp_date($post_id);
-	
-	$prettydate = rsvpmaker_date('l F jS g:i A T',rsvpmaker_strtotime($date));
-	
-	$subject = str_replace('[datetime]',$prettydate,$subject);
+	//handle codes like [datetime] and [rsvpdate]
+	$subject = do_shortcode($subject);
 	if(!empty($confirm))
 	{
 	$confirm = wpautop($confirm);				
