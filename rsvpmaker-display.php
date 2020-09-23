@@ -1647,7 +1647,7 @@ add_filter('pre_get_posts','rsvpmaker_author_page');
 function get_rsvp_link($post_id, $justlink = false) {
 	global $rsvp_options;
 	$rsvplink = get_permalink($post_id);
-	$rsvplink = add_query_arg('e','*EMAIL*',$rsvplink).'#rsvpnow';
+	$rsvplink = add_query_arg('e','*|EMAIL|*',$rsvplink).'#rsvpnow';
 	if(!is_user_logged_in() && get_post_meta($post_id, '_rsvp_login_required', true))
 		$rsvplink = wp_login_url( $rsvplink );
 	if($justlink)

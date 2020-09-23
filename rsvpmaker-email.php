@@ -2656,6 +2656,7 @@ echo submit_button().'</form>';
 
 printf('<p><a href="%s">Reset to defaults</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates&reset=1'));
 echo   '<p>'.__("RSVPMaker template placeholders:<br />[rsvpyesno] YES/NO<br />[rsvptitle] event post title<br />[rsvpdate] event date<br />[datetime] event date and time<br />[rsvpmessage] the message you supplied when you created/edited the event (default is Thank you!)<br />[rsvpdetails] information supplied by attendee<br />[rsvpupdate] button users can click on to update their RSVP<br />[rsvpcount] number of people registered<br />[event_title_link] a link to the event, with the event title and date/time",'rsvpmaker').'</p>';
+echo '<p>[rsvpmessage] and [rsvpdetails] should only be used in a notification template. Other codes can be used in the body of a confirmation message or the subject line of a reminder.</p>';
 do_action('rsvpmaker_notification_templates_doc');
 rsvpmaker_admin_page_bottom($hook);
 }
@@ -3083,9 +3084,5 @@ function rsvpdatetime_shortcode($atts) {
 	$t = rsvpmaker_strtotime(get_rsvp_date($post->ID));
 	return rsvpmaker_strftime($format,$t);
 }
-
-$prettydate = rsvpmaker_date('l F jS g:i A T',rsvpmaker_strtotime($date));
-	
-$subject = str_replace('[datetime]',$prettydate,$subject);
 
 ?>

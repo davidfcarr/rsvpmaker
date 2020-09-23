@@ -96,8 +96,6 @@ function rsvpmaker_strftime($date_format = '', $t = NULL) {
 
 }
 
-
-
 function rsvpmaker_date($date_format = '', $t = NULL) {
 
 	fix_timezone();

@@ -842,6 +842,8 @@ $rsvp_on = (isset($custom_fields["_rsvp_on"][0]) && (!$custom_fields["_rsvp_on"]
 
 $include_event = $custom_fields["_rsvp_confirmation_include_event"][0];
 
+$after_payment = $custom_fields["_rsvp_confirmation_include_event"][0];
+
 $login_required = $custom_fields["_rsvp_login_required"][0];
 
 $rsvp_to = $custom_fields["_rsvp_to"][0];
@@ -861,8 +863,6 @@ $rsvp_captcha = $custom_fields["_rsvp_captcha"][0];
 $rsvp_count_party = $custom_fields["_rsvp_count_party"][0];
 
 $rsvp_yesno = $custom_fields["_rsvp_yesno"][0];
-
-
 
 if(isset($custom_fields["_rsvp_reminder"][0]) && $custom_fields["_rsvp_reminder"][0])
 
@@ -999,6 +999,8 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 <br />
 
   <input type="checkbox" name="setrsvp[rsvpmaker_send_confirmation_email]" id="rsvpmaker_send_confirmation_email" value="1" <?php if(!isset($custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0]) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation emails','rsvpmaker'); ?>
+
+  <input type="checkbox" name="setrsvp[confirmation_after_payment]" id="rsvpmaker_send_confirmation_email" value="1" <?php if(!isset($custom_fields['_rsvp_confirmation_after_payment'][0]) || $custom_fields['_rsvp_confirmation_after_payment'][0] ) echo ' checked="checked" ' ?> > <?php _e('Send confirmation AFTER payment','rsvpmaker'); ?>
 
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event"  value="1" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 
