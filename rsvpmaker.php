@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 7.9.8
+Version: 8.0.4
 */
 
 function get_rsvpversion(){
-return '7.9.8';
+return '8.0.4';
 }
 
 global $wp_version;
@@ -656,20 +656,7 @@ add_post_meta($postID,'_end'.$slug,$end_time);
 
 function update_rsvpmaker_date($postID,$cddate,$duration='',$end_time = '', $index = 0) {
 $slug = ($index == 0) ? 'firsttime' : $cddate;
-$results = get_rsvp_dates($postID);
-//print_r($results);
-if(!empty($results) && is_array($results) && (!empty($results[$index]['datetime'])))
-	{
-		$datetime = $results[$index]['datetime'];
-		//echo '<p>Replace entry for '.$datetime.'<p>';
-		update_post_meta($postID,'_rsvp_dates',$cddate,$datetime);
-	}
-else
-	{
-		//echo "<p>Add: $postID,'_rsvp_dates',$cddate</p>";
-		add_post_meta($postID,'_rsvp_dates',$cddate);
-	}
-
+update_post_meta($postID,'_rsvp_dates',$cddate);
 update_post_meta($postID,'_'.$slug,$duration);
 if(!empty($end_time))
 	update_post_meta($postID,'_end'.$slug,$end_time);
@@ -897,14 +884,4 @@ function rsvpautog($content) {
 	return $content;
 }
 
-function clean_confirmations () {
-    global $wpdb;
-    $sql = "SELECT * FROM $wpdb->postmeta JOIN $wpdb->posts ON post_id = post_parent WHERE `meta_key` LIKE '_rsvp_dates' AND meta_value < '".get_sql_curdate()."' AND post_title LIKE 'Confirmation%'";
-	$results = $wpdb->get_results($sql);
-	if(is_array($results))
-    foreach($results as $row) 
-        $wpdb->query("DELETE FROM $wpdb->posts WHERE ID=".$row->ID);
-}
-
-add_action('init','clean_confirmations');
 ?>

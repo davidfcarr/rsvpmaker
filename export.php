@@ -162,11 +162,17 @@ $events = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE post_status='publ
 }
 else // future events + templates and other nondated rsvpmaker posts
 {
-$sql = "SELECT * FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type = 'rsvpmaker' AND (meta_key LIKE '_rsvpmaker_special' OR meta_key LIKE '_sked_Varies') ORDER BY meta_key, post_title ";
+$sql = "SELECT * FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type = 'rsvpmaker' AND meta_key LIKE '_rsvpmaker_special' ORDER BY meta_key, post_title ";
 $results = $wpdb->get_results($sql);
 if($results)
 foreach($results as $rsvpmaker)
+{
 	$post_ids[] = $rsvpmaker->ID;
+}
+$templates = rsvpmaker_get_templates();
+if($templates)
+foreach($templates as $template)
+	$post_ids[] = $template->ID;
 $events = get_future_events();	
 }
 

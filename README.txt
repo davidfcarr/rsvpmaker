@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5.1
-Stable tag: 7.9.8
+Stable tag: 8.0.4
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,20 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.0.2 =
+
+* Dropping support for multi-date events. Use templates instead.
+
+= 8.0.1 =
+
+* Workaround for problem with event end time gutenberg component
+* Bug fix for template listings
+
+= 7.9.9 =
+
+* Adding defaults to register_meta
+* Check for empty templates (no schedule set)
 
 = 7.9.7 =
 

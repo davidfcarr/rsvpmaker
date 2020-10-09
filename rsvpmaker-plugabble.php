@@ -92,7 +92,7 @@ if(isset($custom_fields["_rsvpmaker_special"][0]))
 
 	}
 
-elseif(rsvpmaker_is_template($post->ID) || isset($_GET["new_template"]) )
+elseif((isset($post->ID) && rsvpmaker_is_template($post->ID)) || isset($_GET["new_template"]) )
 
 	{
 
@@ -237,38 +237,6 @@ elseif($start == 0)
 	rsvpmaker_date_option($date, 0, rsvpmaker_date('Y-m-d H:i:s',$t));
 
 	}
-
-for($i=$start; $i < $start + 6; $i++)
-
-{
-
-if($i == $start)
-
-	{
-
-	$add_dates_div = true;
-
-	echo "<p><a onclick=\"document.getElementById('additional_dates').style.display='block'\" >".__('Add More Dates','rsvpmaker')."</a> <em>".__('Used for multi-date events with a single registration, such as a weekend workshop','rsvpmaker')."</em></p>
-
-	<div id=\"additional_dates\" style=\"display: none;\">";
-
-	$date = NULL;
-
-	}
-
-$t = $t + (60 * 60 * 24);
-
-rsvpmaker_date_option($date, $i, rsvpmaker_date('Y-m-d',$t));
-
-} // end for loop
-
-
-
-if(isset($add_dates_div))
-
-	echo "\n</div><!--add dates-->\n";
-
-
 
 if(!isset($_GET['t'])) // if this is based on a template, use the template defaults
 
@@ -6702,7 +6670,7 @@ if(!function_exists('rsvp_daily_reminder') )
 function rsvp_daily_reminder() {
 
 rsvpautorenew_test(); //also check for templates that autorenew
-
+cleanup_rsvpmaker_child_documents(); //delete form and confirmation messages 
 rsvpmaker_reminders_nudge(); //make sure events with reminders set are in cron
 
 global $wpdb;
@@ -7789,9 +7757,7 @@ if(isset($_GET['override_template']) || (isset($_GET['t']) && isset($_GET['overc
 
 	$results = $wpdb->get_results($sql);
 
-	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons
-
-','tm_sidebar','sidebar_officers');
+	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons','tm_sidebar','sidebar_officers');
 
 		if(is_array($results))
 
@@ -7849,9 +7815,7 @@ if(isset($_POST['event_to_template'])) {
 
 	$results = $wpdb->get_results($sql);
 
-	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons
-
-','tm_sidebar','sidebar_officers');
+	$docopy = array('_add_timezone','_convert_timezone','_calendar_icons','tm_sidebar','sidebar_officers');
 
 		if(is_array($results))
 
@@ -7883,11 +7847,7 @@ if(empty($_REQUEST['t']))
 
 printf('<h3>Add One or More Events Based on a Template</h3><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select><br /><br />%s %s<br >%s</form>',admin_url('edit.php'),__('Add','rsvpmaker'),__('One event','rsvpmaker'),__('Multiple events','rsvpmaker'),__('based on','rsvpmaker'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
 
-									 
-
 do_action('rsvpmaker_template_list_top');
-
-									 
 
 if(isset($_GET["t"]))
 
@@ -7965,17 +7925,9 @@ if(isset($_GET['restore']))
 
 }
 
-									 
-
-$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND meta_key='_sked_Varies' AND (post_status='publish' OR post_status='draft') GROUP BY $wpdb->posts.ID ORDER BY post_title";
-
-
-
-$results = $wpdb->get_results($sql);
+$results = rsvpmaker_get_templates();
 
 if ( $results ) {
-
-
 
 printf('<h3>Templates</h3><table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr></thead><tbody>',__('Title','rsvpmaker'),__('Schedule','rsvpmaker'),__('Projected Dates','rsvpmaker'),__('Event','rsvpmaker'));
 
@@ -9729,9 +9681,7 @@ $wpdb->show_errors();
 
 $result = $wpdb->get_results($sql);
 
-$sql = "SELECT $wpdb->posts.ID as editid FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND post_status='publish' AND meta_key='_sked_Varies' AND post_author=$current_user->ID";
-
-$r2 = $wpdb->get_results($sql);
+$r2 = rsvpmaker_get_templates('AND post_author=$current_user->ID');//$wpdb->get_results($sql);
 
 if($result && $r2)
 

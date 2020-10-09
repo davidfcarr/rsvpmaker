@@ -44,12 +44,21 @@ function rsvpmaker_server_block_render(){
 	register_block_type('rsvpmaker/submission', ['render_callback' => 'rsvpmaker_submission']);
 }
 
+function rsvpmaker_check_string($value) {
+	if(is_string($value))
+		return $value;
+	return '';
+}
+
 add_action( 'init', function(){
-	$args = array(
+
+$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'string',
 		 'single'	=> true,
+		 'default' => '',
 		 'show_in_rest'	=> true,
+		 'sanitize_callback' => 'rsvpmaker_check_string',
 		 'auth_callback' => function() {
 			return current_user_can('edit_posts');
 		}
@@ -62,14 +71,29 @@ add_action( 'init', function(){
 	register_meta( 'post', 'simple_price', $args );
 	register_meta( 'post', 'simple_price_label', $args );
 	register_meta( 'post', 'venue', $args );
-	$date_fields = array('_firsttime','_endfirsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration','_sked_duration','_sked_end');
+	$date_fields = array('_firsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration','_sked_duration','_sked_end');
 	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
 	foreach($date_fields as $field)
 		register_meta( 'post', $field, $args );
+
+	$args = array(
+		'object_subtype' => 'rsvpmaker',
+			'type'		=> 'string',
+			'single'	=> true,
+			'default' => '12:00',
+			'show_in_rest'	=> true,
+			'sanitize_callback' => 'rsvpmaker_check_string',
+			'auth_callback' => function() {
+			return current_user_can('edit_posts');
+		}
+	);
+	register_meta( 'post', '_endfirsttime', $args );
+	
 	$args = array(
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'integer',
 		 'single'	=> true,
+		 'default' => 0,
 		 'show_in_rest'	=> true,
 		 'auth_callback' => function() {
 			return current_user_can('edit_posts');
@@ -81,6 +105,7 @@ add_action( 'init', function(){
 		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'boolean',
 		 'single'	=> true,
+		 'default' => false,
 		 'show_in_rest'	=> true,
 		 'auth_callback' => function() {
 			return current_user_can('edit_posts');
@@ -99,7 +124,7 @@ add_action( 'init', function(){
 	register_meta( 'post', '_rsvp_count', $args );
 	register_meta( 'post', '_rsvp_yesno', $args );
 	register_meta( 'post', '_rsvp_captcha', $args );
-	register_meta( 'post', '_rsvp_timezone_string', $args );
+	//register_meta( 'post', '_rsvp_timezone_string', $args );
 	register_meta( 'post', '_rsvp_login_required', $args );
 	register_meta( 'post', '_rsvp_form_show_date', $args );
 });
@@ -177,7 +202,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$complex_template = get_post_meta($post->ID,'complex_template',true);
 		$chosen_gateway = get_rsvpmaker_payment_gateway ();
 		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.$post->ID);
-		$sked = get_template_sked($post->ID);
+		$sked = get_template_sked($post->ID);// get_post_meta($post->ID,'_sked',true);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
 			$top_message = $rsvpmaker_special;
@@ -192,7 +217,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			$template_msg = sked_to_text($sked);
 		}
 		$template_id = (int) get_post_meta($post->ID,'_meet_recur',true);
-		if($template_id)
+		if($template_id && !$sked)
 		{
 		$template_label = __('Edit Template','rsvpmaker');
 		$template_url = admin_url('post.php?action=edit&post='.$template_id);
@@ -207,8 +232,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 	$duration = '';
 	if(empty($date))
 	{
-	$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
-	$sked = get_template_sked($post_id);
+	//$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
+	$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 	if(empty($sked))
 		$sked = array();
 	}

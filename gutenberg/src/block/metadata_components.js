@@ -11,6 +11,7 @@ import { __experimentalGetSettings } from '@wordpress/date';
 const settings = __experimentalGetSettings();
 // To know if the current timezone is a 12 hour time with look for "a" in the time format
 // We also make sure this a is not escaped by a "/"
+
 const is12HourTime = /a(?!\\)/i.test(
 	settings.formats.time
 		.toLowerCase() // Test only the lower case a
@@ -225,6 +226,8 @@ var MetaEndDateControl = wp.compose.compose(
 		var hour = '';
 		var minutes = '';
 		var parts;
+		if(metaValue == 'Array')
+			metaValue = '12:00';
 		if((typeof metaValue === 'string') && (metaValue.indexOf(':') > 0))
 			parts = metaValue.split(':');
 		else

@@ -90,7 +90,7 @@ return $rsvp_options['rsvp_form'];
 
 function customize_rsvp_form () {
 
-global $current_user, $wpdb;
+global $current_user, $wpdb, $rsvp_options;
 
 if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
 
@@ -116,7 +116,7 @@ if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
 
 			$old = get_post($source);
 
-			$content = $old->post_content;
+			$content = (empty($old->post_content)) ? '' : $old->post_content;
 
 		}
 
@@ -134,7 +134,10 @@ if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
 
 	$new["post_content"] = $content;
 
+	rsvpmaker_debug_log($new,'customize document');
+
 	$id = wp_insert_post($new);
+	rsvpmaker_debug_log($id,'customize document ID');
 
 	if(!$id)
 

@@ -765,7 +765,7 @@ function rsvpmaker_template_join($join) {
 
 function rsvpmaker_template_where($where) {
 
-	return " AND tmeta.meta_key='_sked_Varies'";
+	return " AND (BINARY tmeta.`meta_key` REGEXP '_sked_[A-Z].+' AND tmeta.meta_value)";
 
 }
 
@@ -935,6 +935,8 @@ function get_adjacent_rsvp_where($where) {
 global $post;
 if($post->post_type != 'rsvpmaker')
 	return $where;
+if(!get_rsvp_date($post->ID)) //if not an event, we don't want to display adjacent post links
+	return 'WHERE false';
 global $wpdb;
 $op = strpos($where, '>') ? '>' : '<';
 $current_event_date = $wpdb->get_var("select meta_value from ".$wpdb->postmeta." WHERE meta_key='_rsvp_dates' AND post_id=".$post->ID);
@@ -1613,7 +1615,6 @@ return '<p class="signed_up">'.$output.'</p>';
 }
 }
 
-
 function rsvpmaker_exclude_templates_special( $query ) {
     if( is_admin() || !$query->is_search())
         return;
@@ -1623,7 +1624,7 @@ $query->set('meta_query', array(
             'compare' => 'NOT EXISTS'
         ),
         array(
-            'key'   => '_sked_Varies',
+            'key'   => '_sked_template',
             'compare' => 'NOT EXISTS'
         ),
         array(
@@ -1798,7 +1799,7 @@ if(empty($post_id))
 if(empty($custom_fields))
 	$custom_fields = get_post_custom($post_id);
 
-if(empty($custom_fields["_rsvp_dates"][0]) && !isset($custom_fields["_sked_Varies"][0]))
+if(empty($custom_fields["_rsvp_dates"][0]) && !rsvpmaker_is_template($post_id))
 	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
 $time_format = $rsvp_options["time_format"];
 $dur = $tzbutton = '';

@@ -138,8 +138,15 @@ if(isset($_POST["edit_month"]))
 			}
 	} // end edit month
 
+	rsvpmaker_debug_log($dates_array,'dates_array');
 	if(!empty($dates_array) )
-		update_rsvpmaker_dates($postID, $dates_array,$durations_array,$end_array);
+		{
+			update_post_meta($postID, '_rsvp_dates', $dates_array[0]);
+			if(!empty($durations_array[0]))
+			update_post_meta($postID, '_firsttime', $durations_array[0]);
+			if(!empty($end_array[0]))
+			update_post_meta($postID, '_endfirsttime', $end_array[0]);
+		}
 
 	if(isset($_POST["delete_date"]))
 		{
@@ -241,7 +248,7 @@ else
 $futureyear = 5 + (int) date('Y');
 
 ?>
-<div id="<?php echo $prefix; ?>date<?php echo $index;?>" style="border-bottom: thin solid #888;">
+<div id="<?php echo $prefix; ?>date<?php echo $index;?>" >
 <table width="100%">
 <tr>
             <td width="*"><div class="date_block"><?php echo __('Month:','rsvpmaker');?> 
@@ -2607,7 +2614,7 @@ add_filter( 'disable_months_dropdown', 'rsvpmaker_admin_months_dropdown',10,2 );
 
 function rsvpmaker_join_template($join) {
   global $wpdb;
-    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_sked_Varies'";
+    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND (BINARY rsvpdates.meta_key REGEXP '_sked_[A-Z].+'  AND rsvpdates.meta_value)";
 }
 function rsvpmaker_join_special($join) {
   global $wpdb;
@@ -4673,15 +4680,12 @@ foreach($results as $row)
 		$options .= sprintf('<option value="%d" %s>%s %s</option>',$row->ID,$s,$row->post_title,$row->date);
 	}
 $options .= '</optgroup><optgroup label="'.__('Event Templates','rsvpmaker').'">';
-$sql = "SELECT DISTINCT $wpdb->posts.ID as post_id, $wpdb->posts.*
-	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_sked_Varies'
-	 ORDER BY post_title";
-
-$results = $wpdb->get_results($sql);
+$results = rsvpmaker_get_templates();
 if(!empty($results))
 foreach($results as $row)
 	{
+		if(!rsvpmaker_is_template($row->ID))
+			continue;
 		$s = '';
 		if(isset($_REQUEST["post_id"]) && ($row->ID == $_REQUEST["post_id"]))
 			$s = ' selected="selected" ';
@@ -5046,6 +5050,7 @@ if(!empty($_POST["rsvpmaker_new_post"]))
 		else {
 			save_rsvp_meta($post_id, true);
 		}
+		rsvpmaker_debug_log($_POST,'call to rsvpmaker_save_calendar_data');
 		rsvpmaker_save_calendar_data($post_id);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
 		wp_redirect($editurl);
@@ -5128,7 +5133,7 @@ function rsvpmaker_override () {
 			return; // don't mess with it
 		if(empty($post))
 		$post = get_post($post_id);
-		if($post->post_author != $current_user->ID) {
+		if(isset($post->post_author) && ($post->post_author != $current_user->ID)) {
 			$eds = get_additional_editors($post_id);
 			if(in_array($current_user->ID,$eds))
 			{

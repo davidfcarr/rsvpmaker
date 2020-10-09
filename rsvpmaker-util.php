@@ -584,17 +584,19 @@ function rsvpmaker_set_template_defaults($post_id) {
 	update_post_meta($post_id,'_sked_duration','');
 }
 
-function rsvpmaker_get_templates() {
-
+function rsvpmaker_get_templates($criteria = '') {
 	global $wpdb;
-
-	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_sked_Varies' AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title";
-
-return $wpdb->get_results($sql);
-
+	$templates = array();
+	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title".$criteria;
+	$results = $wpdb->get_results($sql);
+	foreach($results as $template) {
+		$templates[$template->ID] = $template;
+		delete_post_meta($template->ID,'_rsvp_dates');
+		delete_post_meta($template->ID,'_meet_recur');
+	}
+	delete_transient('rsvpmakerdates');//clear date cache
+return $templates;
 }
-
-
 
 function get_next_rsvpmaker ($where = '', $offset_hours = 0) {
 
@@ -1858,8 +1860,6 @@ function rsvp_complex_price($post_id) {
 
 }
 
-
-
 function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 
 	global $wpdb, $current_user;
@@ -1875,8 +1875,8 @@ function get_rsvp_post_metadata($null, $post_id, $meta_key, $single) {
 		$content = rsvp_simple_price_label($post_id);
 
 	//fix for some older posts 
-
-	$date_fields = array('_firsttime','_endfirsttime','_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
+	//'_firsttime','_endfirsttime',
+	$date_fields = array('_day_of_week','_week_of_month','_template_start_hour','_template_start_minutes','complex_template');
 
 	if(in_array($meta_key,$date_fields))
 
@@ -2056,6 +2056,9 @@ function update_post_meta_unfiltered($post_id,$meta_key,$meta_value) {
 
 	global $wpdb;
 
+	if(is_array($meta_value))
+		$meta_value = serialize($meta_value);
+
 	$meta_id = $wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE post_id=$post_id and meta_key='$meta_key' ");
 
 	if($meta_id)
@@ -2068,11 +2071,7 @@ function update_post_meta_unfiltered($post_id,$meta_key,$meta_value) {
 
 }
 
-
-
-
-
-add_filter('get_post_metadata','get_rsvp_post_metadata',10,4);
+//add_filter('get_post_metadata','get_rsvp_post_metadata',10,4);
 
 
 
@@ -2286,6 +2285,9 @@ function get_template_sked($post_id) {
 
 		}
 
+		if(empty($week) && empty($dayofweek))
+			return false; //not a valid template
+		update_post_meta($post_id,'_sked_template',true);
 		rsvpmaker_debug_log($sked,'sked from newsked newsked');
 
 		sort($week);
@@ -2713,8 +2715,6 @@ return $args;
 
 }
 
-
-
 function get_conf_links ($post_id, $t, $parent_tag) {
 
 global $rsvp_options, $wpdb;
@@ -2731,12 +2731,11 @@ elseif($confirm_id) {
 
 	$cpost = get_post($confirm_id);
 
-	if(empty($cpost))
+	if(empty($cpost->ID))
 
 	{
 
-		$confirm_id == $rsvp_options['rsvp_confirm'];
-
+		$confirm_id = $rsvp_options['rsvp_confirm'];
 		$label = ' (Default)';	
 
 	}
@@ -2764,8 +2763,6 @@ else {
 	$label = ' (Default)';
 
 }
-
-
 
 $args[] = array(
 
@@ -2943,8 +2940,6 @@ function get_more_related($post, $post_id, $t, $parent_tag) {
 
 global $wpdb, $rsvp_options;
 
-
-
 $args[] = array(
 
 	'parent'    => $parent_tag,
@@ -2959,17 +2954,10 @@ $args[] = array(
 
 );
 
-
-
 $confs = get_conf_links($post_id, $t, $parent_tag);
 
 foreach($confs as $arg)
-
 	$args[] = $arg;
-
-
-
-
 
 		$forms = get_form_links($post_id, $t, $parent_tag);
 
@@ -3059,7 +3047,7 @@ foreach($confs as $arg)
 
 function get_related_documents ( $post_id = 0, $query = '') {
 
-	global $post;
+	global $post, $rsvp_options;
 
 	$backup = $post;
 
@@ -3182,8 +3170,6 @@ function get_related_documents ( $post_id = 0, $query = '') {
 	return $args;		
 
 	} // end this is a default message
-
-
 
 	$rsvp_parent = $post->post_parent;//get_post_meta($post->ID,'_rsvpmaker_parent',true);
 
@@ -3413,4 +3399,13 @@ return $rsvp_users;
 
 }
 
+function cleanup_rsvpmaker_child_documents () {
+	global $wpdb;
+	//forms and messages with no event document
+	$sql = "SELECT parent_post.ID, child_post.ID as child_ID, child_post.post_parent
+FROM $wpdb->posts as parent_post right join $wpdb->posts as child_post ON parent_post.ID=child_post.post_parent where parent_post.ID IS NULL AND child_post.post_parent";
+	$results = $wpdb->get_results($sql);
+	foreach($results as $row)
+		wp_delete_post($row->child_ID, true);
+}
 ?>
