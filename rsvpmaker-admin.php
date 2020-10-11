@@ -138,7 +138,6 @@ if(isset($_POST["edit_month"]))
 			}
 	} // end edit month
 
-	rsvpmaker_debug_log($dates_array,'dates_array');
 	if(!empty($dates_array) )
 		{
 			update_post_meta($postID, '_rsvp_dates', $dates_array[0]);
@@ -4947,11 +4946,12 @@ if(isset($_GET['t']))
 	echo '<p><em>'.__('To create a new event based on this template, use the form below.','rsvpmaker').'</em><p>';
 	}
 }
+
 ?>
 <h2><?php _e('Set Event Title and Schedule','rsvpmaker'); ?></h2> 
 <?php
 printf('<p><em>%s</em></p>',__('Start by entering an event title and date or schedule details. A draft event post will be created and loaded into the editor.'));
-printf('<form action="%s" method="post"><input type="hidden" name="template" value="%d">', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'),$template);
+printf('<form id="rsvpmaker_setup" action="%s" method="post"><input type="hidden" name="template" value="%d">', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'),$template);
 echo '<h1 style="font-size: 20px;">Title: <input type="text" name="rsvpmaker_new_post" style="font-size: 20px; width: 60%" value="'.$title.'" /></h1>';
 draw_eventdates();
 if(isset($_GET['t']))
@@ -5028,7 +5028,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	
 }
 
-function rsvpmaker_setup_post () {
+function rsvpmaker_setup_post ($ajax = false) {
 if(!empty($_POST["rsvpmaker_new_post"]))
 	{
 		$t = 0;
@@ -5053,6 +5053,8 @@ if(!empty($_POST["rsvpmaker_new_post"]))
 		rsvpmaker_debug_log($_POST,'call to rsvpmaker_save_calendar_data');
 		rsvpmaker_save_calendar_data($post_id);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
+		if($ajax)
+			return $editurl;
 		wp_redirect($editurl);
 		die();			
 		}

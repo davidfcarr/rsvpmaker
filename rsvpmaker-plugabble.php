@@ -263,7 +263,6 @@ echo '</pre>';
 } // end draw event dates
 
 
-
 if(!function_exists('template_schedule') )
 
 {

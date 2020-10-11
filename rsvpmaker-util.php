@@ -2688,12 +2688,24 @@ function get_form_links($post_id, $t, $parent_tag) {
 		'meta'  => array( 'class' => 'rsvpmenu')
 
 	);
+	if(empty($label) || $label == ' (From Template)') {
+		$args[] = array(
 
+			'parent'    => 'edit_form',
+
+			'id' => 'customize_form',
+
+			'title' => 'RSVP Form -> Default',
+
+			'href'  => admin_url("edit.php?title=Form&rsvpcz_default=rsvp_form&post_id=$post_id"),
+
+			'meta'  => array( 'class' => 'rsvpmenu-custom')
+
+		);
+	}
 	if(!empty($label)) {
 
 		//if inherited, provide option to customize
-
-		$formurl = rsvp_customize_form_url($post_id);
 
 		$args[] = array(
 
@@ -2777,6 +2789,21 @@ $args[] = array(
 	'meta'  => array( 'class' => 'rsvpmenu')
 
 );
+if(empty($label) || $label == ' (From Template)') {
+	$args[] = array(
+
+		'parent'    => 'edit_confirm',
+
+		'id' => 'default_form',
+
+		'title' => 'RSVP confirmation -> Default',
+
+		'href'  => admin_url("edit.php?title=Form&rsvpcz_default=rsvp_confirm&post_id=$post_id"),//$formurl,
+
+		'meta'  => array( 'class' => 'rsvpmenu-custom')
+
+	);
+}
 
 if(!empty($label)) {
 

@@ -996,6 +996,38 @@ public function get_items($request) {
   }
 }
 
+class RSVPMaker_Setup extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'setup';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'POST',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return current_user_can('edit_rsvpmakers');
+  }
+
+public function get_items($request) {
+    $editurl = rsvpmaker_setup_post(true);
+    return new WP_REST_Response($editurl, 200);
+  }
+}
 
 add_action('rest_api_init', function () {
 
@@ -1054,9 +1086,9 @@ add_action('rest_api_init', function () {
   $sharedt = new RSVPMaker_Shared_Template();
 
   $sharedt->register_routes();
+  $setup = new RSVPMaker_Setup();
+  $setup->register_routes();
 
 });
-
-
 
 ?>

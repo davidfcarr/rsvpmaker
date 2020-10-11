@@ -98,6 +98,13 @@ if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
 
 }	
 
+if(isset($_GET['rsvpcz_default']) && isset($_GET['post_id'])) {
+	$meta_key = $_GET['rsvpcz_default'];
+	$post_id = (int) $_GET['post_id'];
+	$id = $rsvp_options[$meta_key];
+	update_post_meta($post_id,'_'.$meta_key,$id);
+}
+
 if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
 
 	$meta_key = $_GET['rsvpcz'];

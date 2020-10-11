@@ -271,4 +271,26 @@ $('#reset_paypal_sandbox').click(function(event) {
 	$('#paypal_sandbox').html('<p>Client ID (Sandbox):<br /><input name="rsvpmaker_paypal_rest_keys[sandbox_client_id]" value=""></p><p>Client Secret (Sandbox):<br /><input name="rsvpmaker_paypal_rest_keys[sandbox_client_secret]" value=""></p>');
 });
 
+$( "form#rsvpmaker_setup" ).submit(function( event ) {
+	var data = $( this ).serializeArray();
+	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/setup';
+	$( "form#rsvpmaker_setup" ).html('<h1>Creating Draft ...</h1>');
+	jQuery.post(url, data, function(editurl) {
+		window.location.href = editurl;
+		$( "form#rsvpmaker_setup" ).html('<h1>Draft Created: <a href="'+editurl+'">Edit</a></h1><p>Draft should load automatically.</p>');
+	});
+	event.preventDefault();
+});
+
+$('#month0').change( function () {
+var datestring = $('#year0').val()+'-'+$('#month0').val()+'-'+$('#day0').val();
+var target = new Date(datestring);
+var now = new Date();
+var nextyear = parseInt($('#year0').val()) +1; 
+if(target < now)
+	var nextyeartext = nextyear.toString();
+	$('#year0').val(nextyeartext);
+}
+);
+
 });

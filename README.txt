@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5.1
-Stable tag: 8.0.4
+Stable tag: 8.0.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.0.6 =
+
+* Option to revert to default confirmation message or default form
+
+= 8.0.5 =
+
+* Fix for white screen issue when creating new events or templates (theme or plugin conflict?)
 
 = 8.0.2 =
 

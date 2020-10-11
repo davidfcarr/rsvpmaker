@@ -1,5 +1,5 @@
 <?php
-$scriptversion = '202008151';
+$scriptversion = '20201010.11';
 
 function rsvpmaker_rest_array () {
     global $post;
