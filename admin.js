@@ -282,6 +282,38 @@ $( "form#rsvpmaker_setup" ).submit(function( event ) {
 	event.preventDefault();
 });
 
+$( "form#email_templates" ).submit(function( event ) {
+	var data = $( this ).serializeArray();
+	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/email_templates';
+	$( "form#email_templates" ).html('<h1>Saving ...</h1>');
+	jQuery.post(url, data, function(response) {
+		$( "form#email_templates" ).html(response);
+	});
+	event.preventDefault();
+});
+
+$( "form#rsvpmaker_notification_templates" ).submit(function( event ) {
+	var data = $( this ).serializeArray();
+	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/notification_templates';
+	$( "form#rsvpmaker_notification_templates" ).html('<h1>Saving ...</h1>');
+	jQuery.post(url, data, function(response) {
+		document.getElementById("rsvpmaker_notification_templates").scrollIntoView(true);
+		$( "form#rsvpmaker_notification_templates" ).html(response);
+	});
+	event.preventDefault();
+});
+
+$( "form#rsvpmaker_details" ).submit(function( event ) {
+	var data = $( this ).serializeArray();
+	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/rsvpmaker_details';
+	$( "form#rsvpmaker_details" ).html('<h1>Saving ...</h1>');
+	jQuery.post(url, data, function(response) {
+		$( "form#rsvpmaker_details" ).html(response);
+		document.getElementById("wpbody-content").scrollIntoView(true);
+	});
+	event.preventDefault();
+});
+
 $('#month0').change( function () {
 var datestring = $('#year0').val()+'-'+$('#month0').val()+'-'+$('#day0').val();
 var target = new Date(datestring);

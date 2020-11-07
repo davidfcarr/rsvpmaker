@@ -1029,6 +1029,125 @@ public function get_items($request) {
   }
 }
 
+class RSVPMaker_Email_Templates extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'email_templates';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'POST',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return current_user_can('edit_others_rsvpemails');
+  }
+
+public function get_items($request) {
+    $templates = $_POST['rsvpmaker_email_template'];
+    $output = '<h2>'.__('Updated','rsvpmaker').'</h2>';
+    foreach($templates as $index => $template)
+      {
+      $template['html'] = stripslashes($template['html']);
+      $templates[$index] = $template;
+      $output .= sprintf('<p><a target="_blank" href="%s">Preview %s</a></p>',admin_url('?preview_broadcast_in_template='.$index),$template['slug']);
+      }
+    update_option('rsvpmaker_email_template',$templates);
+    $output .=  sprintf('<p><a href="%s">%s</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'),__('Edit','rsvpmaker'));
+    return new WP_REST_Response($output, 200);
+  }
+}
+
+class RSVPMaker_Notification_Templates extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'notification_templates';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'POST',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return current_user_can('edit_others_rsvpemails');
+  }
+
+public function get_items($request) {
+    $output = '<h2>'.__('Updated','rsvpmaker').'</h2>';
+    if(isset($_POST['ntemp']))
+    {
+    $ntemp = $_POST['ntemp'];
+    if(!empty($_POST["newtemplate"]["subject"]) && !empty($_POST["newtemplate_label"]))
+      {
+      $ntemp[$_POST["newtemplate_label"]]["subject"] = sanitize_text_field($_POST["newtemplate"]["subject"]);
+      $ntemp[$_POST["newtemplate_label"]]["body"] = wp_kses_post($_POST["newtemplate"]["body"]);
+      }
+    update_option('rsvpmaker_notification_templates',stripslashes_deep($ntemp));
+    }
+    $output .=  sprintf('<p><a href="%s">%s</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates'),__('Edit','rsvpmaker'));
+    return new WP_REST_Response($output, 200);
+  }
+}
+
+class RSVPMaker_Details extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'rsvpmaker_details';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'POST',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return current_user_can('edit_rsvpmakers');
+  }
+
+public function get_items($request) {
+    $output = rsvpmaker_details_post();
+    return new WP_REST_Response($output, 200);
+  }
+}
+
 add_action('rest_api_init', function () {
 
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -1088,6 +1207,12 @@ add_action('rest_api_init', function () {
   $sharedt->register_routes();
   $setup = new RSVPMaker_Setup();
   $setup->register_routes();
+  $et = new RSVPMaker_Email_Templates();
+  $et->register_routes();
+  $nt = new RSVPMaker_Notification_Templates();
+  $nt->register_routes();
+  $deet = new RSVPMaker_Details();
+  $deet->register_routes();
 
 });
 
