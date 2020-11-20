@@ -151,12 +151,15 @@ $start = 0;
 
 
 if($results)
-
 {
+$row = $results[0];
+$count = sizeof($results);
+if($count > 1)
+	$row['duration'] = 'multi|'.$count;
+$index = 0;
+//foreach($results as $index => $row)
 
-foreach($results as $index => $row)
-
-	{
+	//{
 
 	echo "\n<div class=\"event_dates\"> \n";
 
@@ -166,7 +169,7 @@ foreach($results as $index => $row)
 
 	$dur = $row["duration"];
 
-	if($dur != 'allday')
+	if(($dur != 'allday') && !strpos($dur,'|'))
 
 		echo rsvpmaker_strftime(' '.$rsvp_options["time_format"],$t);
 
@@ -182,7 +185,7 @@ foreach($results as $index => $row)
 
 	$start = $index + 1;
 
-	}
+	//}
 
 }
 
@@ -256,7 +259,6 @@ echo '</pre>';
 
 }	
 
-	
 
 }
 
@@ -5954,7 +5956,7 @@ foreach($results as $row)
 
 		$timeblock .= ' <span class="end_time">'.__('to','rsvpmaker')." ".rsvpmaker_strftime($rsvp_options["time_format"],$dur).'</span>';
 
-	if($dur != 'allday')
+	if(($dur != 'allday') && !strpos($dur,'|'))
 
 		$dateblock .= $timeblock.'<span>';
 

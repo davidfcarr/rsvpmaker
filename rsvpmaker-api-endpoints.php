@@ -356,8 +356,6 @@ class RSVPMaker_ClearDateCache extends WP_REST_Controller {
 
     $path = 'clearcache/(?P<post_id>[0-9]+)';
 
-
-
     register_rest_route( $namespace, '/' . $path, [
 
       array(

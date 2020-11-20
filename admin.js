@@ -224,9 +224,30 @@ $('.end_time_type').each(function() {
 $('.end_time_type').change(function() {
 	var type = $( this ).val();
 	//alert(type);
-	if(type == 'set')
-		$('.end_time').show();
+	if((type == 'set') || (type.search('ulti') > 0))
+		{
+			default_end_time();
+			$('.end_time').show();
+		}
+	else
+		$('.end_time').hide();
 });
+
+function default_end_time() {
+	var hour = $('#hour0').val();
+	var minutes = $('#minutes0').val();
+	var time = new Date(Date.parse('2020-01-01 '+ hour+':'+minutes+':00') + (60*60*1000));
+	var endhours = time.getHours();
+	if(endhours < 10)
+		endhours = '0' + endhours;
+	$('#endhour0').val(endhours);
+	var endminutes = time.getMinutes();
+	if(endminutes < 10)
+		endminutes = '0' + endminutes;
+	$('#endminutes0').val(endminutes);
+	//time.setTime();
+	console.log(time);
+}
 
 $('.rsvphour').change(function() {
 	var hour = $( this ).val();
@@ -306,10 +327,10 @@ $( "form#rsvpmaker_notification_templates" ).submit(function( event ) {
 $( "form#rsvpmaker_details" ).submit(function( event ) {
 	var data = $( this ).serializeArray();
 	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/rsvpmaker_details';
-	$( "form#rsvpmaker_details" ).html('<h1>Saving ...</h1>');
+	$( "#rsvpmaker_details_status" ).html('<h1>Saving ...</h1>');
+	document.getElementById("headline").scrollIntoView(true);
 	jQuery.post(url, data, function(response) {
-		$( "form#rsvpmaker_details" ).html(response);
-		document.getElementById("wpbody-content").scrollIntoView(true);
+		$( "#rsvpmaker_details_status" ).html(response);
 	});
 	event.preventDefault();
 });

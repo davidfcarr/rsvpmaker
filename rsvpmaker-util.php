@@ -1,7 +1,5 @@
 <?php
 
-
-
 function fix_timezone($timezone = '' ) {
 
 	global $post;
@@ -232,13 +230,17 @@ printf(' <select name="%s" class="end_time_type" > ',$slug);
 
 <option value="set" <?php if($duration_type == 'set') echo ' selected="selected" '; ?> ><?php echo __("Set end time",'rsvpmaker');?></option>
 
-<option value="allday" <?php if($duration_type == 'allday') echo ' selected="selected" '; ?>><?php echo __("All day/don't show time in headline",'rsvpmaker');?></option>
+<option value="allday" <?php if($duration_type == 'allday') echo ' selected="selected" '; ?>><?php echo __("All day/time not shown",'rsvpmaker');?></option>
 
 <?php
+for($i=2; $i < 8; $i++)
+	{
+		$multi = 'multi|'.$i;
+		$s = ($duration_type == $multi) ? ' selected="selected" ' : '';
+		printf('<option value="%s" %s>%s</option>',$multi,$s,$i.' '.__("days/time not shown",'rsvpmaker'));
+	}
 
 echo '</select>';
-
-
 
 if(empty($end_time) && !empty($start_time))
 
@@ -352,7 +354,7 @@ if(empty($rsvpdates))
 
 	cache_rsvp_dates(50);
 
-if(!empty($rsvpdates[$post_id]))
+if(!empty($rsvpdates[$post_id]) && (count($rsvpdates[$post_id]) == 1) )
 
 {
 
@@ -373,6 +375,18 @@ if(!empty($rsvpdates[$post_id]))
 		$drow = (object) $drow;
 
 	$dates[] = $drow;		
+	if(strpos($drow["duration"],'|')) //multidate
+	{
+		$parts = explode('|',$drow["duration"]);
+		$limit = (int) $parts[1];
+		$endtime = get_post_meta($post_id,'_endfirsttime',true);
+		$endtime = empty($endtime) ? '00:00:00' : $endtime.':00';
+		for($i=1; $i < $limit; $i++) {
+			$drow["datetime"] = date('Y-m-d '.$endtime,strtotime($drow["datetime"].' +1 day'));
+			$dates[] = $drow;
+		}
+		update_post_meta($post_id,'_rsvp_end_date',$drow['datetime']);
+	}
 
 	}
 
@@ -380,27 +394,28 @@ if(!empty($rsvpdates[$post_id]))
 
 }
 
-
-
 if(empty($post_id))
 
 	return array();
-
-
 
 $wpdb->show_errors();
 
 $sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
 
 $results = $wpdb->get_results($sql);
-
+if(empty($results))
+	return array();
+$row = $results[0];
+$index = 0;
+$count = sizeof($results);
+if($count > 1)
+{ //upgrade data model
+	$datetime = $row->meta_value;
+	delete_post_meta($post_id,'_rsvp_dates');
+	update_post_meta($post_id,'_rsvp_dates',$datetime);
+	update_post_meta($post_id,'_firsttime','multi|'.$count);
+}
 $dates = array();
-
-if($results)
-
-foreach($results as $index => $row)
-
-	{
 
 	$drow = array();
 
@@ -424,6 +439,14 @@ if($obj)
 
 	$dates[] = $drow;
 
+	if(strpos($drow["duration"],'|')) //multidate
+	{
+		$parts = explode('|',$drow["duration"]);
+		$limit = (int) $parts[1];
+		for($i=1; $i < $limit; $i++) {
+			$drow["datetime"] = date('Y-m-d H:i:s',strtotime($drow["datetime"].' +1 day'));
+			$dates[] = $drow;
+		}
 	}
 
 set_transient('rsvpmakerdates',$rsvpdates, HOUR_IN_SECONDS); 
@@ -2405,16 +2428,6 @@ function new_template_schedule($post_id,$template,$source = '') {
 
 	foreach($new_template_schedule as $label => $value) {
 
-/*		if($label == 'duration')
-
-			update_post_meta_unfiltered($post_id,'_firsttime',$value);
-
-		elseif($label == 'end')
-
-			update_post_meta_unfiltered($post_id,'_endfirsttime',$value);
-
-*/
-
 		$label = '_sked_'.$label;
 
 		update_post_meta_unfiltered($post_id,$label,$value);
@@ -3434,5 +3447,26 @@ FROM $wpdb->posts as parent_post right join $wpdb->posts as child_post ON parent
 	$results = $wpdb->get_results($sql);
 	foreach($results as $row)
 		wp_delete_post($row->child_ID, true);
+}
+
+function rsvpmaker_check_outliers() {
+global $wpdb, $rsvp_outliers;
+//start date in the past but end date in the future
+$sql = "select maindate.meta_value as datetime, enddate.meta_value as end_date, wp_posts.* FROM $wpdb->posts 
+LEFT JOIN  $wpdb->postmeta as maindate ON  $wpdb->posts.ID = maindate.post_id AND maindate.meta_key='_rsvp_dates'
+LEFT JOIN  $wpdb->postmeta as enddate ON  $wpdb->posts.ID = enddate.post_id AND enddate.meta_key='_rsvp_end_date'
+WHERE maindate.meta_value < CURDATE() AND enddate.meta_value > CURDATE()";
+$results = $wpdb->get_results($sql);
+if(empty($results))
+	return $false;
+foreach($results as $row)
+	$rsvp_outliers[] = $row->ID;
+return true;
+}
+function rsvpmaker_where_outliers($where) {
+	global $rsvp_outliers;
+	foreach($rsvp_outliers as  $outlier)
+		$where .= " OR ID = $outlier";
+	return $where;
 }
 ?>

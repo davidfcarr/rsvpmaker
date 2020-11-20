@@ -27,8 +27,6 @@ var additional_dates = '';
 var time_display = '';
 const rsvpdates = Array();
 
-if(rsvpmaker_ajax._rsvp_count && (rsvpmaker_ajax._rsvp_count != '1'))
-	additional_dates = 'This event spans multiple dates ('+rsvpmaker_ajax._rsvp_count+' total)';
 var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
 if(rsvpmaker_ajax.special)
 	{
@@ -57,13 +55,12 @@ if(rsvpmaker_ajax.special)
 <div>
 <h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
 {rsvpmaker_ajax.top_message}
-{(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && 
+{(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && 
 <div>
 <MetaDateControl metaKey='_rsvp_dates' />
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
-{(rsvpmaker_ajax._rsvp_count > '1') && <p><a href={rsvpmaker_ajax.rsvpmaker_details} >{__('Edit Multiple Dates')}</a></p>}
 {(!rsvpmaker_ajax._rsvp_first_date && rsvpmaker_ajax.projected_url && <div>
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle

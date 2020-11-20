@@ -16,7 +16,7 @@ input.jump {
 	display: inline;
 }
 .rsvpmaker_nav {
-float: right;
+text-align: center;
 }
 p.rsvpmeta {
 font-size: small;

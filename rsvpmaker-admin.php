@@ -131,7 +131,7 @@ if(isset($_POST["edit_month"]))
 				}
 			else
 				$duration = sanitize_text_field($_POST["edit_duration"][$index]); // empty or all day			
-			if($duration == 'set')
+			if(($duration == 'set') || strpos($duration,'|') )
 				$end_array[] = sanitize_text_field($_POST["houredit_duration"][$index]).':'.sanitize_text_field($_POST["minedit_duration"][$index]);
 			$dates_array[] = $cddate;
 			$durations_array[] = $duration;
@@ -292,7 +292,10 @@ echo "<option ";
 </div> 
             </td> 
           </tr> 
-<tr> 
+<tr>
+</table>
+<div id="timetable<?php echo $index;?>">
+<table> 
 <td><?php echo __('Hour:','rsvpmaker');?> <select class="rsvphour" id="hour<?php echo $index;?>" name="<?php echo $prefix; ?>hour[<?php echo $index;?>]"> 
 <?php
 for($i=0; $i < 24; $i++)
@@ -338,6 +341,7 @@ rsvpmaker_duration_select ($prefix.'duration['.$index.']', $datevar, $datestring
 </td> 
           </tr> 
 </table>
+</div>
 </div>
 <?php
 
@@ -1926,7 +1930,7 @@ if($week)
 
 <?php echo __('Duration','rsvpmaker');?> <select name="event_duration">
 <option value=""><?php echo __('Not set (optional)','rsvpmaker');?></option>
-<option value="allday"><?php echo __("All day/don't show time in headline",'rsvpmaker');?></option>
+<option value="allday"><?php echo __("All day/time not shown",'rsvpmaker');?></option>
 <?php for($h = 1; $h < 24; $h++) { ;?>
 <option value="<?php echo $h;?>"><?php echo $h;?> hours</option>
 <option value="<?php echo $h;?>:15"><?php echo $h;?>:15</option>
@@ -4611,23 +4615,9 @@ if(!strpos($rsvp_options["time_format"],'T') )
 <?php
 }
 
-function rsvpmaker_details() {
-	global $post;
-	global $custom_fields;
-	global $rsvp_options;
-
-?>
-<style>
-<?php 
-$styles = rsvpmaker_included_styles();
-echo $styles; ?>
-</style>
-<div class="wrap" style="margin-right: 200px;"> 
-	<div id="icon-edit" class="icon32"><br /></div>
-<h1><?php _e('RSVP / Event Options','rsvpmaker'); ?></h1>
-<?php
-
-if(isset($_POST['publish_draft']) && isset($_REQUEST['post_id']))
+function rsvpmaker_details_post() {
+	$output = '';
+	if(isset($_POST['publish_draft']) && isset($_REQUEST['post_id']))
 	wp_publish_post((int) $_REQUEST['post_id']);
 	
 if(isset($_REQUEST['post_id']))
@@ -4641,7 +4631,7 @@ if(isset($_GET['template_to_event']))
 	}
 
 if(isset($post->post_status) && ($post->post_status != 'publish') )
-	printf('<h2>Post not published, status = <span style="color:red">%s</span></h2>',$post->post_status);
+	$output .= sprintf('<h2>Post not published, status = <span style="color:red">%s</span></h2>',$post->post_status);
 if(isset($_POST["_require_webinar_passcode"]))
 	{
 	update_post_meta($post->ID,'_require_webinar_passcode',sanitize_text_field($_POST["_require_webinar_passcode"]));
@@ -4649,7 +4639,7 @@ if(isset($_POST["_require_webinar_passcode"]))
 if(isset($_POST['post_id']))
 {
 	$template_prompt = (isset($_POST['sked'])) ? sprintf(' - <a href="%s">%s</a> %s',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=') . $post->ID, __('Create/update events','rsvpmaker'),__('based on this template','rsvpmaker') ) : '';
-	printf('<div class="notice notice-info"><p>%s%s</p></div>',__('Saving RSVP Options','rsvpmaker'),$template_prompt);
+	$output .= sprintf('<div class="notice notice-info"><p>%s%s</p></div>',__('Saved RSVP Options','rsvpmaker'),$template_prompt);
 	rsvpmaker_save_calendar_data($post->ID);
 	cache_rsvp_dates(50);
 	if(isset($_POST['setrsvp']))
@@ -4658,9 +4648,31 @@ if(isset($_POST['post_id']))
 	}
 	else
 		do_action('save_post',$post->ID);
-	printf('<p><a href="%s">Refresh</a> to see updates or <a href="%s">View event post</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post->ID),get_permalink($post->ID));
-}	
-elseif(empty($post->ID))
+	$output .= sprintf('<p><a href="%s">View event post</a></p>',get_permalink($post->ID));
+}
+return $output;
+}
+
+function rsvpmaker_details() {
+	global $post;
+	global $custom_fields;
+	global $rsvp_options;
+
+?>
+<style>
+<?php 
+$styles = rsvpmaker_included_styles();
+echo $styles; ?>
+</style>
+<div class="wrap" style="margin-right: 200px;"> 
+	<div id="icon-edit" class="icon32"><br /></div>
+<h1 id="headline"><?php _e('RSVP / Event Options','rsvpmaker'); ?></h1>
+<div id="rsvpmaker_details_status"></div>
+<?php
+
+echo rsvpmaker_details_post();
+
+if(empty($post->ID))
 {
 global $wpdb;
 $sql = "SELECT DISTINCT $wpdb->posts.ID as post_id, $wpdb->posts.*, date_format(a1.meta_value,'%M %e, %Y') as date

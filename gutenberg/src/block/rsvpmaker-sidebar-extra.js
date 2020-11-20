@@ -38,7 +38,7 @@ const PluginRSVPMaker = () => {
             title='RSVPMaker'
             icon="calendar-alt"
         >
-<p>{__('For additional options, events spanning multiple dates, and event pricing see','rsvpmaker')}: {related_link()}</p>
+<p>{__('For additional options, such as event pricing see','rsvpmaker')}: {related_link()}</p>
 <Panel header={__('"RSVPMaker Event Options"','rsvpmaker')}>
 <PanelBody
             title={__("Set Basic Options",'rsvpmaker')}
@@ -47,12 +47,11 @@ const PluginRSVPMaker = () => {
         >
 { /* <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
  */
-(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && (rsvpmaker_ajax._rsvp_count == '1') && <div>
+(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && <div>
 <MetaDateControl metaKey='_rsvp_dates' />
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
-{(rsvpmaker_ajax._rsvp_count > '1') && <PanelRow><a href={rsvpmaker_ajax.rsvpmaker_details} >{__('Edit Multiple Dates')}</a></PanelRow>}
 {(!rsvpmaker_ajax._rsvp_first_date && rsvpmaker_ajax.projected_url && <div>
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle
@@ -344,7 +343,7 @@ metaKey="_rsvp_count"/>
 </PanelBody>
 </Panel>
 
-<div>For additional options, including multiple dates and complex event pricing see: {related_link()}</div>
+<div>For additional options, such as complex event pricing see: {related_link()}</div>
         </PluginSidebar>
 		</Fragment>
     )

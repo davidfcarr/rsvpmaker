@@ -198,7 +198,6 @@ function rsvpmaker_relay_queue() {
             $mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail["to"],'<div class="rsvpexplain">'.$message_description.'</div>');    
 
             if(isset($_GET['debug']))
-
             {
 
                 printf('<pre>%s</pre>',htmlentities($template));
@@ -206,8 +205,6 @@ function rsvpmaker_relay_queue() {
                 printf('<pre>%s</pre>',htmlentities($mail['html']));
 
             }
-
-            
 
             rsvpmailer($mail);
 
@@ -261,7 +258,7 @@ function get_mime_type(&$structure) {
 
 
 
-function get_part($stream, $msg_number, $mime_type, $structure = false,$part_number    = false) {
+function rsvpmaker_get_part($stream, $msg_number, $mime_type, $structure = false,$part_number    = false) {
 
     
 
@@ -315,7 +312,7 @@ function get_part($stream, $msg_number, $mime_type, $structure = false,$part_num
 
                 }
 
-                $data = get_part($stream, $msg_number, $mime_type, $sub_structure,$prefix .    ($index + 1));
+                $data = rsvpmaker_get_part($stream, $msg_number, $mime_type, $sub_structure,$prefix .    ($index + 1));
 
                 if($data) {
 
@@ -352,12 +349,6 @@ if(empty($vars) || empty($vars['password']))
     return '<div>no password set for '.$list_type.'</div>';
 
 
-
-$unsubscribed = get_option('rsvpmail_unsubscribed');
-
-if(empty($unsubscribed)) $unsubscribed = array();
-
-
 $user = $vars['user'];
 
 $password = $vars['password'];
@@ -366,23 +357,24 @@ $p = explode('@',$user);
 
 $actionslug = $p[0];
 
+$unsubscribed = get_option('rsvpmail_unsubscribed');
 
+if(empty($unsubscribed)) $unsubscribed = array();
+//don't want loops, list sending to itself
+$unsubscribed[] = $user;
 
 $html = "";
-
 
 
 if(isset($_GET['test']))
 
     mail('relay@toastmost.org','Subject',"This is a test\n\nmultiple lines of text");
 
-
-
 # Connect to the mail server and grab headers from the mailbox
 
 $html .= sprintf('<p>%s, %s, %s</p>',$server,$user,$password);
 
-$mail = @imap_open($server,$user,$password);
+$mail = @imap_open($server,$user,$password, CL_EXPUNGE);
 
 if(empty($mail))
 
@@ -393,8 +385,6 @@ $headers = imap_headers($mail);
 if(empty($headers))
 
     return '<div>no messages found for '.$list_type.'</div>';
-
-
 
 $html .= '<pre>'."Mail:\n".var_export($mail,true).'</pre>';
 
@@ -474,11 +464,14 @@ $realdata = '';
 
 $headerinfo = imap_headerinfo($mail,$n);
 
+if(rsvpmaker_relay_duplicate($headerinfo->message_id)) {
+    echo 'duplicate for '.$headerinfo->message_id;
+    continue; //already tried to process this, something is wrong        
+}
+
 if(isset($_GET['debug']))
 
     $html .= '<pre>'."Header Info:\n".htmlentities(var_export($headerinfo,true)).'</pre>';
-
-
 
 $subject = '';
 
@@ -494,13 +487,9 @@ if(!strpos($subject,$subject_prefix.']'))
 
     $subject = '['.$subject_prefix.'] '.$subject;
 
-
-
 $fromname = $headerinfo->from[0]->personal;
 
 $from = strtolower($headerinfo->from[0]->mailbox.'@'.$headerinfo->from[0]->host);
-
-
 
 if(in_array($from,$recipients))
 
@@ -510,17 +499,13 @@ else
 
     $html .= '<p>'.$from.' is <strong>NOT</strong> a member email</p>';
 
-
-
 $html .= var_export($headerinfo->from,true);
-
-
 
 $html .= '<h3>'.$subject.'<br />'.$fromname.' '.$from.'</h3>';
 
-$mailqtext = get_part($mail,$n,"TEXT/PLAIN");
+$mailqtext = rsvpmaker_get_part($mail,$n,"TEXT/PLAIN");
 
-$mailq = get_part($mail,$n,"TEXT/HTML");
+$mailq = rsvpmaker_get_part($mail,$n,"TEXT/HTML");
 
 $member_user = get_user_by('email',$from);
 
@@ -556,15 +541,11 @@ else {
 
 }
 
-
-
 $struct = imap_fetchstructure($mail,$n);
 
 if(isset($_GET['debug']))
 
     $html .= sprintf('<h1>Structure</h1><pre>%s</pre>',var_export($struct,true));
-
-
 
 $contentParts = count($struct->parts);
 
@@ -581,8 +562,6 @@ $atturls = array();
 $image_types = array('jpg','jpeg','png','gif');
 
 $imagecount = 0;
-
-
 
 if ($contentParts >= 2) {
 
@@ -708,8 +687,6 @@ if ($contentParts >= 2) {
 
 }// loop content parts
 
-
-
 //if we weren't able to substitue url for embedded images coding
 
 $qpost['post_content'] = preg_replace('/<img.+cid:[^>]+>/','IMAGE OMMITTED',$qpost['post_content']);
@@ -722,8 +699,6 @@ if (sizeof($atturls) > 0) {
 
 }
 
-
-
 if(isset($_GET['nosave'])) {
 
     echo '<h1>Version to send (not saved)</h2>'.$qpost['post_content'];
@@ -731,8 +706,6 @@ if(isset($_GET['nosave'])) {
     return;
 
 }
-
-
 
 if(($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients)) {
 
@@ -775,6 +748,7 @@ elseif(in_array($from,$recipients) || in_array($from,$whitelist))
     $html .= var_export($qpost,true);
 
     if($post_id) {
+        add_post_meta($post_id,'imap_message_id',$headerinfo->message_id);
 
         add_post_meta($post_id,'rsvprelay_from',$from);
 
@@ -787,8 +761,6 @@ elseif(in_array($from,$recipients) || in_array($from,$whitelist))
             $fromname = $from;
 
         add_post_meta($post_id,'rsvprelay_fromname',$fromname);
-
-        //add_post_meta($post_id,'rsvprelay_attpath',$attpath);
 
         if(!empty($recipients))
 
@@ -968,3 +940,7 @@ return $schedules;
 
 }
 
+function rsvpmaker_relay_duplicate($message_id) {
+    global $wpdb;
+    return $wpdb->get_var("SELECT post_id FROM $wpdb->post_meta WHERE meta_value='$message_id' ");
+}

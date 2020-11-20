@@ -1,5 +1,5 @@
 <?php
-$scriptversion = '20201012.4';
+$scriptversion = '20201120.1';
 
 function rsvpmaker_rest_array () {
     global $post;
@@ -32,8 +32,8 @@ global $rsvp_options;
 	$myStyleUrl = (isset($rsvp_options["custom_css"]) && $rsvp_options["custom_css"]) ? $rsvp_options["custom_css"] : plugins_url('style.css',__FILE__);
 	wp_register_style('rsvp_style', $myStyleUrl, array(), $scriptversion);
 	wp_enqueue_style( 'rsvp_style');
-	wp_localize_script( 'rsvpmaker_ajaxurl', 'ajaxurl', admin_url('admin-ajax.php') );
 	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker.js',__FILE__), array(), $scriptversion);
+	wp_localize_script( 'rsvpmaker_js', 'ajaxurl', admin_url('admin-ajax.php') );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
     wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array () );
     if(is_single())

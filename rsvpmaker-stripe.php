@@ -136,10 +136,6 @@ $currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp
 
 $vars['currency'] = $currency;
 
-
-
-
-
 //$rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
 
 $rsvpmaker_stripe_checkout_page_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' ");
@@ -351,8 +347,6 @@ $intent = \Stripe\PaymentIntent::create([
 	'payment_method_types' => ['card'],
 
 	'statement_descriptor' => substr('Paid on '.$_SERVER['SERVER_NAME'],0,21),
-
-	
 
 ], ["idempotency_key" => $idempotency_key,]
 

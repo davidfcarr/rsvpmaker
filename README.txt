@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5.3
-Stable tag: 8.0.6
+Stable tag: 8.1.0
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,25 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.1.0 =
+
+* Show in my timezone button will now convert times in paragaphs, headings, or other blocks tagged with "tz_convert"
+* Also applied to cells of a table where the table is tagged with the class "tz_convert"
+
+= 8.0.9 =
+
+* Updated way of handling multi-date events, works better with Gutenberg editor and other updated code
+* Updates to iCal export and add to Google for multi-date events
+
+= 8.0.8 =
+
+* Don't run inliner on emails with no html
+
+= 8.0.7 =
+
+* AJAX fix for RSVP Options page
+* Correct end time for iCal calendar items
 
 = 8.0.6 =
 

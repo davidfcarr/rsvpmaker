@@ -283,14 +283,20 @@ var MetaEndDateControl = wp.compose.compose(
 			props.setMetaValue(getTimeValues());
 		}
 
-		if(props.display != 'set')
+		if((props.display != 'set') && (props.display.search('ulti') < 0) )
 		return <SelectControl
 			label="Time Display"
 			value={props.display}
 			options={ [
 				{ label: 'End Time Not Displayed', value: '' },
 				{ label: 'Show End Time', value: 'set' },
-				{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+				{ label: 'All Day / Time Not Shown', value: 'allday' },
+				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
+            { label: '3 Days / Time Not Shown', value: 'multi|3' },
+            { label: '4 Days / Time Not Shown', value: 'multi|4' },
+            { label: '5 Days / Time Not Shown', value: 'multi|5' },
+            { label: '6 Days / Time Not Shown', value: 'multi|6' },
+            { label: '7 Days / Time Not Shown', value: 'multi|7' },
 			] }
 			onChange={function( content ) {
 				props.setDisplay( content );
@@ -304,7 +310,13 @@ var MetaEndDateControl = wp.compose.compose(
 			options={ [
 				{ label: 'End Time Not Displayed', value: '' },
 				{ label: 'Show End Time', value: 'set' },
-				{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+				{ label: 'All Day / Time Not Shown', value: 'allday' },
+				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
+            { label: '3 Days / Time Not Shown', value: 'multi|3' },
+            { label: '4 Days / Time Not Shown', value: 'multi|4' },
+            { label: '5 Days / Time Not Shown', value: 'multi|5' },
+            { label: '6 Days / Time Not Shown', value: 'multi|6' },
+            { label: '7 Days / Time Not Shown', value: 'multi|7' },
 			] }
 			onChange={function( content ) {
 				props.setDisplay( content );
@@ -369,14 +381,20 @@ var MetaTemplateEndDateControl = wp.compose.compose(
 			setMetaValue(newtime);
 		}
 
-		if(props.display != 'set')
+		if((props.display != 'set') && (props.display.search('ulti') < 0) )
 		return <SelectControl
 			label="Time Display"
 			value={props.display}
 			options={ [
 				{ label: 'End Time Not Displayed', value: '' },
 				{ label: 'Show End Time', value: 'set' },
-				{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+				{ label: 'All Day / Time Not Shown', value: 'allday' },
+				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
+            { label: '3 Days / Time Not Shown', value: 'multi|3' },
+            { label: '4 Days / Time Not Shown', value: 'multi|4' },
+            { label: '5 Days / Time Not Shown', value: 'multi|5' },
+            { label: '6 Days / Time Not Shown', value: 'multi|6' },
+            { label: '7 Days / Time Not Shown', value: 'multi|7' },
 			] }
 			onChange={function( content ) {
 				props.setDisplay( content );
@@ -390,7 +408,13 @@ var MetaTemplateEndDateControl = wp.compose.compose(
 			options={ [
 				{ label: 'End Time Not Displayed', value: '' },
 				{ label: 'Show End Time', value: 'set' },
-				{ label: 'Add Day / Do Not Show Time', value: 'allday' },
+				{ label: 'All Day / Time Not Shown', value: 'allday' },
+				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
+            { label: '3 Days / Time Not Shown', value: 'multi|3' },
+            { label: '4 Days / Time Not Shown', value: 'multi|4' },
+            { label: '5 Days / Time Not Shown', value: 'multi|5' },
+            { label: '6 Days / Time Not Shown', value: 'multi|6' },
+            { label: '7 Days / Time Not Shown', value: 'multi|7' },
 			] }
 			onChange={function( content ) {
 				props.setDisplay( content );
