@@ -70,8 +70,6 @@ public function get_items($request) {
 
 }
 
-
-
 class RSVPMaker_Types_Controller extends WP_REST_Controller {
 
   public function register_routes() {
@@ -79,8 +77,6 @@ class RSVPMaker_Types_Controller extends WP_REST_Controller {
     $namespace = 'rsvpmaker/v1';
 
     $path = 'types';
-
-
 
     register_rest_route( $namespace, '/' . $path, [
 
@@ -108,11 +104,7 @@ class RSVPMaker_Types_Controller extends WP_REST_Controller {
 
   }
 
-
-
 public function get_items($request) {
-
-
 
     $types = get_terms('rsvpmaker-type');
 

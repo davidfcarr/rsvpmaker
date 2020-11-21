@@ -3458,7 +3458,7 @@ LEFT JOIN  $wpdb->postmeta as enddate ON  $wpdb->posts.ID = enddate.post_id AND 
 WHERE maindate.meta_value < CURDATE() AND enddate.meta_value > CURDATE()";
 $results = $wpdb->get_results($sql);
 if(empty($results))
-	return $false;
+	return false;
 foreach($results as $row)
 	$rsvp_outliers[] = $row->ID;
 return true;

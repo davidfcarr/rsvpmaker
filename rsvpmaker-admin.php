@@ -4922,6 +4922,125 @@ return;
 	}
 }
 
+function rsvpmaker_quick_post() {
+	global $current_user;
+	$_POST = stripslashes_deep($_POST);
+	if(!empty($_POST['type']))
+		$types[] = (int) $_POST['type'];
+	if(!empty($_POST['type2']))
+		$types[] = (int) $_POST['type2'];
+	if(!empty($_POST['newtype']))
+	{
+		$result = wp_insert_term($_POST['newtype'],'rsvpmaker-type');
+		if(is_array($result) && !empty($result["term_id"]))
+			$types[] = $result["term_id"];
+	}
+
+	foreach($_POST["quicktime"] as $index => $time) {
+		if(!empty($time)) {
+		$date = $_POST["quickdate"][$index];
+		if(empty($date) && ($index == 0))
+			{
+			echo '<p>Error: at least the first date must not be left blank</p>';
+			break;
+			}
+		if(empty($date))
+			$date = $prevdate;
+		else
+			$prevdate = $date;
+		$title = sanitize_text_field($_POST["quicktitle"][$index]);
+		$content = (empty($_POST["quickcontent"][$index])) ? '' : wp_kses_post( rsvpautog($_POST["quickcontent"][$index]));
+		if(preg_match('/[^0-9 :apmAPM]/',$time)) // should be only numbers, spaces : and am or pm
+		{
+			echo "<p>Time not formatted correctly for $title ($time)</p>";
+			continue;
+		}
+		$t = rsvpmaker_strtotime($date.' '.$time);
+		$rsvptime = rsvpmaker_date('Y-m-d H:i:s',$t);
+		$post_id = wp_insert_post(array('post_type' => 'rsvpmaker', 'post_title' => $title, 'post_content' => $content, 'post_author' => $current_user->ID, 'post_status' => $_POST['status']));
+		add_post_meta($post_id,'_rsvp_dates',$rsvptime);
+		if(!empty($types)) {
+			wp_set_object_terms( $post_id, $types, 'rsvpmaker-type' );
+		}
+		if(!empty($_POST['rsvp_on']))
+			add_post_meta($post_id,'_rsvp_on',1);
+		if(!empty($_POST['calendar_icons']))
+			add_post_meta($post_id,'_calendar_icons',1);
+		if(!empty($_POST['add_timezone']))
+			add_post_meta($post_id,'_add_timezone',1);
+		if(!empty($_POST['convert_timezone']))
+			add_post_meta($post_id,'_convert_timezone',1);
+		
+		if(empty($confirmation)) {
+			$confirmation = sprintf('<h3>%s</h3>',__('Event Posts Created','rsvpmaker'));
+			echo $confirmation;
+		}
+		printf('<p><a href="%s">View</a> <a href="%s">Edit</a> %s %s</p>',get_permalink($post_id),admin_url("post.php?post=$post_id&action=edit"),$title,$rsvptime);
+		}		
+	}
+}
+function rsvpmaker_quick_ui() {
+	global $rsvp_options;
+	$limit = (int) $_GET['quick'];
+	if(!$limit)
+		$limit = 5;
+	printf('<h3>%s</h3>',__('Quickly Setup Multiple Event Posts','rsvpmaker'));
+	printf('<p>%s</p>',__('Enter start time and title for each event to be created. Optionally, you can include post body text. Can include multiple paragraphs, separated by a blank line. Events can be published immediately or saved as drafts for further editing.','rsvpmaker'));
+	printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
+	for($i = 0; $i < $limit; $i++) {
+		$datetext = ($i == 0) ? 'Date in YYYY-MM-DD format or January 1, 2025' : 'If left blank, previous date assumed';
+		$datedefault = ($i == 0) ? date('Y-m-d') : '';
+		echo '<div class="quickentry">';
+		printf('<div class="quickfield"><label>%s</label><input type="text" id="quickdate-'.$i.'" class="quickdate" name="quickdate[]" value="%s"> <em>%s</em></div>',__('Date','rsvpmaker'),$datedefault,$datetext);
+		printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktime-'.$i.'" class="quicktime" name="quicktime[]"> <em>%s</em></div>',__('Start Time','rsvpmaker'),__('Time in 15:00 or 3:00 PM format'));
+		printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktitle-'.$i.'" class="quicktitle" name="quicktitle[]"></div>',__('Title','rsvpmaker'));
+		printf('<div class="quickfield"><label>%s</label><br /><textarea name="quickcontent[]" rows="2" cols="100"></textarea></div>',__('Starter Text','rsvpmaker'));
+		echo '<div id="quickmessage-'.$i.'"></div>';
+		echo '</div>';
+	}
+	echo '<div>';
+	wp_dropdown_categories( array(
+		'taxonomy'      => 'rsvpmaker-type',
+		'hide_empty'    => 0,
+		'orderby'       => 'name',
+		'order'         => 'ASC',
+		'name'          => 'type',
+		'show_option_none' => __('Event Type (optional)','rsvpmaker'),
+		'option_none_value' => 0
+	) );
+	wp_dropdown_categories( array(
+		'taxonomy'      => 'rsvpmaker-type',
+		'hide_empty'    => 0,
+		'orderby'       => 'name',
+		'order'         => 'ASC',
+		'name'          => 'type2',
+		'show_option_none' => __('Event Type (optional)','rsvpmaker'),
+		'option_none_value' => 0
+	) );
+	echo '<label>New Event Type </label> <input type="text" name="newtype"> <div>';
+	?>
+	<p>
+	<?php _e('Collect RSVPs','rsvpmaker');?>
+	  <input type="radio" name="rsvp_on" id="setrsvpon" value="1" <?php if( $rsvp_on ) echo 'checked="checked" ';?> />
+	<?php _e('YES','rsvpmaker');?> <input type="radio" name="rsvp_on" id="setrsvpon" value="0" <?php if( !$rsvp_on ) echo 'checked="checked" ';?> />
+	<?php _e('NO','rsvpmaker');?> </p>
+	<p><input type="checkbox" name="calendar_icons" value="1" <?php if($rsvp_options["calendar_icons"]) echo ' checked="checked" ';?> /> <?php _e('Show Add to Google / Download to Outlook (iCal) icons','rsvpmaker'); ?> 
+	<br />
+	<p id="timezone_options">
+	<?php
+	if(!strpos($rsvp_options["time_format"],'T') )
+	{
+	?>
+	<input type="checkbox" name="add_timezone" value="1" <?php if($rsvp_options["add_timezone"]) echo ' checked="checked" '; ?> /><?php _e('Display timezone code as part of date/time','rsvpmaker'); echo ' '; ?>
+	<?php
+	}
+	?>
+	<input type="checkbox" name="convert_timezone" value="1" <?php if($rsvp_options["convert_timezone"]) echo ' checked="checked" '; ?> /><?php _e('Show timezone conversion button next to calendar icons','rsvpmaker'); ?>
+	</p>
+	<?php
+	echo '<div><input type="radio" name="status" value="draft" checked="checked"> Draft <input type="radio" name="status" value="publish"> Publish </div><p><button>Submit</button></p><form>';
+}
+
 function rsvpmaker_setup () {
 global $rsvp_options, $current_user;
 ?>
@@ -4929,11 +5048,26 @@ global $rsvp_options, $current_user;
 select {
 	max-width: 228px;
 }
+.quickentry label {
+	display: inline-block;
+	width: 100px;
+	font-weight: bold;
+}
 </style>
 <div class="wrap">
 	<div id="icon-edit" class="icon32"><br /></div> 
 <h2><?php _e('Event Setup','rsvpmaker'); ?></h2> 
 <?php
+if(isset($_POST["quickdate"]))
+	rsvpmaker_quick_post();
+elseif(isset($_GET["quick"])) {
+	rsvpmaker_quick_ui();
+	echo '</div>';
+	return;
+}
+
+
+
 $title = '';
 $template = 0;
 if(isset($_GET['t']))
@@ -5004,6 +5138,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	printf('%s %s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('create a' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
 	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><br />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select> %s %s<br >%s</form>',admin_url('edit.php'),__('Or add','rsvpmaker'),__('One event','rsvpmaker'),__('Multiple events','rsvpmaker'),__('based on','rsvpmaker'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
 	do_action('rsvpmaker_setup_template_prompt');
+	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_setup">%s <select name="quick"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option></select> %s %s</form>',admin_url('edit.php'),__('Or quickly create up to','rsvpmaker'),__('events without a template','rsvpmaker'),get_submit_button('Show Form'));
 	echo '</div>';
 }				
 

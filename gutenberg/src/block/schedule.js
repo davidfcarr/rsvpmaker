@@ -9,10 +9,10 @@ const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { Component } = wp.element;
 const { InspectorControls } = wp.editor;
-const { PanelBody, DateTimePicker, SelectControl } = wp.components;
+const { PanelBody, DateTimePicker, SelectControl, ToggleControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
 const rsvptypes = [{value: '', label: 'None selected (optional)'}];
-apiFetch( {path: rsvpmaker_json_url+'types'} ).then( types => {
+apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
 	if(Array.isArray(types))
 			types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
 		else {
@@ -53,6 +53,10 @@ attributes: {
 	type: {
 		type: 'string',
 		default: '0',
+	},
+	convert_tz: {
+		type: 'boolean',
+		default: false,
 	},
 },
 
@@ -116,6 +120,13 @@ class TimeInspector extends Component {
 		    />
 			</div>
 			 )}
+	</PanelBody>
+	<PanelBody title={ __( 'Display Options', 'rsvpmaker' ) } >
+	<ToggleControl
+        label={__('Display "Show in my timezone" button','rsvpmaker')}
+        checked={ attributes.convert_tz }
+        onChange={ ( convert_tz ) => { setAttributes( { convert_tz } ) } }
+    />
 
      <SelectControl
         label={__("Event Type",'rsvpmaker')}

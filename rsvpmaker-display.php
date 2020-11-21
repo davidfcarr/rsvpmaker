@@ -1719,7 +1719,7 @@ function rsvpmaker_form( $atts = array(), $form_content='' ) {
 }
 
 function rsvpmaker_daily_schedule($atts) {
-	global $rsvp_options;
+	global $rsvp_options, $post;
 	$output = '';
 	$last = '';
 	$start_limit = $end_limit = 0;
@@ -1729,6 +1729,7 @@ function rsvpmaker_daily_schedule($atts) {
 		$end_limit = rsvpmaker_strtotime($atts['end']);
 
 	$where = ($start_limit) ? "datetime > '".date('Y-m-d H:i:s',$start_limit)."'" : '';
+	$where .= " post_content NOT LIKE '%rsvpmaker/schedule%' ";
 	$future = get_future_events($where,50);
 	foreach($future as $event) {
 		$t = rsvpmaker_strtotime($event->datetime);
@@ -1752,13 +1753,14 @@ function rsvpmaker_daily_schedule($atts) {
 		if(isset($atts['type']) && !in_array($atts['type'],$termslugs))
 			continue;
 		$index = rsvpmaker_strftime($rsvp_options['long_date'],$event->datetime);
-		$end = '';
 		if(get_post_meta($event->ID,'_firsttime', true) == 'set')
 			{
 			$endtime = get_post_meta($event->ID,'_endfirsttime', true);
 			$end = ' - '.rsvpmaker_strftime($rsvp_options['time_format'],$endtime);
 			}
-		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time">'.rsvpmaker_strftime($rsvp_options['time_format'],$t).$end.'</span>';
+		else
+			$end = '';
+		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">'.rsvpmaker_strftime($rsvp_options['time_format'],$t).$end.'</span>';
 		$eventcontent .= ' <span class="rsvpmaker-schedule-title">'.$event->post_title.'</h3>';
 		$parts = explode('<!--more-->',$event->post_content);
 		$content = $parts[0];
@@ -1781,8 +1783,24 @@ function rsvpmaker_daily_schedule($atts) {
 	}
 	if(!empty($schedule))
 	foreach($schedule as $day => $eventcontent) {
+		if(!empty($atts['convert_tz']) && empty($timezone))
+		{
+			$t = rsvpmaker_strtotime($event->datetime);
+			$timezone = '<div>'."\n";
+				if(is_email_context()) {
+					$timezone .= sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',1,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
+				}
+				else {
+					$timezone .= '<button class="timezone_on">'.__('Show in my timezone','rsvpmaker').'</button>';
+				}
+			
+			$timezone .= '</div><span class="timezone_hint" utc="'.gmdate('c',$t). '" target="timezone_converted'.$event->ID.'" event_tz="'.rsvpmaker_strftime('%z',$t).'"></span><div id="tz_convert_to'.$event->ID.'">'.__('Timezone: ').' '.rsvpmaker_date('T',$t).'</div>';
+		}
+		else
+			$timezone = '';
+		$end = '';
 		if($day != $last)
-			$output .= sprintf('<h2>%s</h2>',$day);
+			$output .= sprintf('<h3 class="rsvpmaker_schedule_date">%s</h3>',$day).$timezone;
 		$output .= $eventcontent;
 		$last = $day;
 	}

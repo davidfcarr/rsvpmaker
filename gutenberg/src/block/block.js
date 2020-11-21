@@ -21,7 +21,7 @@ const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.b
 const { SelectControl, TextControl, ToggleControl } = wp.components;
 
 const rsvpupcoming = [{label: 'Next event',value: 'next'},{label: 'Next event - RSVP on',value: 'nextrsvp'}];
-apiFetch( {path: rsvpmaker_json_url+'future'} ).then( events => {
+apiFetch( {path: 'rsvpmaker/v1/future'} ).then( events => {
 	if(Array.isArray(events)) {
 		 events.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
 	}
@@ -34,7 +34,7 @@ apiFetch( {path: rsvpmaker_json_url+'future'} ).then( events => {
 });
 
 const rsvptypes = [{value: '', label: 'None selected (optional)'}];
-apiFetch( {path: rsvpmaker_json_url+'types'} ).then( types => {
+apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
 	if(Array.isArray(types))
 			types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
 		else {
@@ -46,7 +46,7 @@ apiFetch( {path: rsvpmaker_json_url+'types'} ).then( types => {
 });	
 
 const rsvpauthors = [{value: '', label: 'Any'}];
-apiFetch( {path: rsvpmaker_json_url+'authors'} ).then( authors => {
+apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( authors => {
 	if(Array.isArray(authors))
 			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
 		else {

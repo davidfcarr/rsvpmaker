@@ -471,7 +471,7 @@ var MetaDateControl = wp.compose.compose(
 		return {
 			setMetaValue: function( metaValue ) {
 				metaValue = metaValue.replace('T',' ');
-				apiFetch({path: rsvpmaker_json_url+'clearcache/'+rsvpmaker_ajax.event_id});
+				apiFetch({path: 'rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id});
 				dispatch( 'core/editor' ).editPost(
 					{ meta: { [ props.metaKey ]: metaValue } }
 				);

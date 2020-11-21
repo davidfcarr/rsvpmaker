@@ -4,7 +4,52 @@ jQuery(document).ready(function( $ ) {
         headers: {
             'X-WP-Nonce': rsvpmaker_rest.nonce,
         }
-    });
+	});
+	
+	$('#quickdate-0').change(
+		function () {
+			var startdate = $(this).val();
+			$('.quickdate').each(
+				function() {
+					$(this).val(startdate);
+				}
+			);
+		}
+	);
+
+	$('.quicktime, .quicktitle').change(
+		function() {
+			var newvalue = $(this).val();
+			console.log(newvalue);
+			var id = $(this).attr('id');
+			var messagetarget = '';
+			var othertarget = '';
+			console.log(id);
+			if(id.search('time') > 0)
+			{
+				console.log('time changed');
+				messagetarget = id.replace('quicktime','quickmessage');
+				othertarget = id.replace('quicktime','quicktitle');
+				if(newvalue.match(/[^0-9: ampAMP]/))
+					$('#'+messagetarget).html('<span style="color: red;">Date format not valid</span>');
+				else if($('#'+othertarget).val() == '')
+					$('#'+messagetarget).html('Both date and time are required');
+				else
+					$('#'+messagetarget).html('');
+			}
+			else {
+				messagetarget = id.replace('quicktitle','quickmessage');
+				othertarget = id.replace('quicktitle','quicktime');
+				console.log('title changed');
+				console.log('other target '+othertarget);
+				console.log('Date value '+$('#'+othertarget).val());
+				if($('#'+othertarget).val() == '')
+					$('#'+messagetarget).html('Both date and time are required');
+				else
+					$('#'+messagetarget).html('<span style="color: green; font-weight: bold;">OK</span>');
+			}
+		}
+	);
 
 	$('select.rsvpsort').change(function() {
 		var sort = $( this ).val();

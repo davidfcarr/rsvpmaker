@@ -19,6 +19,7 @@ jQuery(document).ready(function($) {
 		var utc = $(this).attr('utc');
 
         var target = $(this).attr('target');
+        var newtz = target.replace('timezone_converted','tz_convert_to');
         var event_tz  = $(this).attr('event_tz');
 
 		var localdate = new Date(utc);
@@ -26,11 +27,13 @@ jQuery(document).ready(function($) {
 		localstring = localdate.toString();
 
         $('#'+target).html(localstring);
+        var match = localstring.match(/\(([^)]+)/);
+        $('#'+newtz).html('Converting to '+match[1]);
         var timeparts = utc.split(/T/);
         var newtime;
         var timecount = 0;
         console.log(timeparts);
-        $('.tz_convert, .tz_convert table tr td').each(
+        $('.tz-convert, .tz-convert table tr td, .tz-table1 table tr td:first-child, .tz-table2 table tr td:nth-child(2), .tz-table3 table tr td:nth-child(3)').each(
             function () {
             celltime = this.innerHTML.replace('&nbsp;',' ');
             //if contains time but not more html
@@ -39,24 +42,39 @@ jQuery(document).ready(function($) {
             newtime = timeparts[0]+' '+celltime+' '+event_tz;
             console.log(newtime);
             ts = Date.parse(newtime);
-            localdate.setTime(ts);
-            //console.log(date);
-            var isPM = localdate.getHours() >= 12;
-            var isMidday = localdate.getHours() == 12;
-            var result = document.querySelector('#result');
-            var minutes = localdate.getMinutes();
-            if(minutes && (minutes < 10))
-                minutes = '0'+minutes;
-            if(minutes == 0)
-                minutes = '00';
-            var time = [localdate.getHours() - (isPM && !isMidday ? 12 : 0), 
-                        minutes].join(':') +
-                       (isPM ? '&nbsp;PM' : '&nbsp;AM');
-            this.innerHTML = '<strong>'+time+'</strong>';
+            if(!Number.isNaN(ts))
+                {
+                localdate.setTime(ts);
+                //console.log(date);
+                var isPM = localdate.getHours() >= 12;
+                var isMidday = localdate.getHours() == 12;
+                var result = document.querySelector('#result');
+                var minutes = localdate.getMinutes();
+                if(minutes && (minutes < 10))
+                    minutes = '0'+minutes;
+                if(minutes == 0)
+                    minutes = '00';
+                var hours = localdate.getHours() - (isPM && !isMidday ? 12 : 0);
+                if(hours == 0) //midnight
+                    hours = 12;
+                var time = [hours, 
+                            minutes].join(':') +
+                           (isPM ? '&nbsp;PM' : '&nbsp;AM');
+                this.innerHTML = '<strong>'+time+'</strong>';    
+                }
             }            
             
             }
         );//end tz_convert each
+
+        var checkrow = true;
+        $('.tz-table1 table tr td:first-child, .tz-table2 table tr td:nth-child(2), .tz-table3 table tr td:nth-child(3)').each( 
+            function() {
+                if(checkrow && (this.innerHTML != '') && (this.innerHTML.search(':') < 0) ) // if this looks like a column header
+                    this.innerHTML = '<strong>Your TZ</strong>';
+                checkrow = false;
+            }
+        );
         
             var data = {
 
