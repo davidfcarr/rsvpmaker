@@ -37,7 +37,6 @@ add_action('import_end','import_rsvpmaker');
 add_action('log_paypal','log_paypal');
 add_action('loop_end','rsvpmaker_archive_loop_end');
 add_action('manage_posts_extra_tablenav','rsvpmaker_sort_message');
-add_action('manage_posts_custom_column', 'rsvpmaker_custom_column', 10, 2);
 add_action( 'pre_get_posts', 'rsvpmaker_archive_pages' );
 add_action( 'plugins_loaded', 'rsvpmaker_load_plugin_textdomain' );
 add_action('plugins_loaded','rsvpmaker_gutenberg_check');
@@ -93,7 +92,12 @@ add_action('wp_ajax_rsvpmaker_paypal_config','rsvpmaker_paypal_config_ajax');
 add_action('wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
 add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 
+add_action('init','rsvpmaker_submission_post');
+
 add_action('wp_login','rsvpmaker_data_check');
+add_action('quick_edit_custom_box',  'rsvpmaker_quick_edit_fields', 10, 2);
+add_action('manage_posts_custom_column', 'rsvpmaker_custom_column', 99, 2);
+add_action( 'save_post', 'rsvpmaker_quick_edit_save', 1 );
 
 function rsvpmaker_init_router () {
 add_rsvpmaker_roles();

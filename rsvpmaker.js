@@ -45,22 +45,9 @@ jQuery(document).ready(function($) {
             if(!Number.isNaN(ts))
                 {
                 localdate.setTime(ts);
-                //console.log(date);
-                var isPM = localdate.getHours() >= 12;
-                var isMidday = localdate.getHours() == 12;
-                var result = document.querySelector('#result');
-                var minutes = localdate.getMinutes();
-                if(minutes && (minutes < 10))
-                    minutes = '0'+minutes;
-                if(minutes == 0)
-                    minutes = '00';
-                var hours = localdate.getHours() - (isPM && !isMidday ? 12 : 0);
-                if(hours == 0) //midnight
-                    hours = 12;
-                var time = [hours, 
-                            minutes].join(':') +
-                           (isPM ? '&nbsp;PM' : '&nbsp;AM');
-                this.innerHTML = '<strong>'+time+'</strong>';    
+                newtime = localdate.toLocaleTimeString().replace(':00 ',' ');
+                this.innerHTML = newtime;
+                $(this).css('font-weight','bold');
                 }
             }            
             

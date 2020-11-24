@@ -20,14 +20,11 @@ jQuery(document).ready(function( $ ) {
 	$('.quicktime, .quicktitle').change(
 		function() {
 			var newvalue = $(this).val();
-			console.log(newvalue);
 			var id = $(this).attr('id');
 			var messagetarget = '';
 			var othertarget = '';
-			console.log(id);
 			if(id.search('time') > 0)
 			{
-				console.log('time changed');
 				messagetarget = id.replace('quicktime','quickmessage');
 				othertarget = id.replace('quicktime','quicktitle');
 				if(newvalue.match(/[^0-9: ampAMP]/))
@@ -40,9 +37,6 @@ jQuery(document).ready(function( $ ) {
 			else {
 				messagetarget = id.replace('quicktitle','quickmessage');
 				othertarget = id.replace('quicktitle','quicktime');
-				console.log('title changed');
-				console.log('other target '+othertarget);
-				console.log('Date value '+$('#'+othertarget).val());
 				if($('#'+othertarget).val() == '')
 					$('#'+messagetarget).html('Both date and time are required');
 				else
@@ -59,7 +53,6 @@ jQuery(document).ready(function( $ ) {
 		var bottom = $('#bulk-action-selector-bottom').val();
 		if((top == '-1') && (bottom == '-1'))
 			window.location.replace(url);
-		console.log($('.rsvpsortwrap').html());
 		$('.rsvpsortwrap').html('<a style="font-size: large;" href="'+url+'">View: '+sort+'</a>');
 	});
 
@@ -291,7 +284,6 @@ function default_end_time() {
 		endminutes = '0' + endminutes;
 	$('#endminutes0').val(endminutes);
 	//time.setTime();
-	console.log(time);
 }
 
 $('.rsvphour').change(function() {
@@ -390,5 +382,89 @@ if(target < now)
 	$('#year0').val(nextyeartext);
 }
 );
+
+$('.quick_event_date').change(
+	function () {
+		const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+		var datestring = $(this).val();
+		var id = $(this).attr('id');
+		var post_id = $(this).attr('post_id');
+		var target = id.replace('quick_event_date','quick_event_date_text');
+		var date = new Date(datestring);
+		var localestring = date.toLocaleDateString(undefined, options)+' '+date.toLocaleTimeString();
+		$('#'+target).html(localestring);
+		//$( '.event_dates', '#post-'+post_id ).text(localestring);
+	}
+);
+
+$('.quick_end_time').change(
+	function () {
+		var timestring = $(this).val();
+		var id = $(this).attr('id');
+		var post_id = $(this).attr('post_id');
+		var datestr = $('#quick_event_date-'+post_id).val();
+		var dateparts = datestr.split(' ');
+		var target = id.replace('quick_end_time','quick_end_time_text');
+		console.log('date '+dateparts[0]+' time '+timestring);
+		var date = new Date(dateparts[0]+' '+timestring);
+		var localestring = date.toLocaleTimeString().replace(':00 ',' ');
+		$('#'+target).html(localestring);
+		//$( '.event_dates', '#post-'+post_id ).text(localestring);
+	}
+);
+
+// update quick edit ui based on https://rudrastyh.com/wordpress/quick-edit-tutorial.html
+// it is a copy of the inline edit function
+var wp_inline_edit_function = inlineEditPost.edit;
+
+// we overwrite the it with our own
+inlineEditPost.edit = function( post_id ) {
+
+	// let's merge arguments of the original function
+	wp_inline_edit_function.apply( this, arguments );
+
+	// get the post ID from the argument
+	var id = 0;
+	if ( typeof( post_id ) == 'object' ) { // if it is object, get the ID number
+		id = parseInt( this.getId( post_id ) );
+	}
+
+	//if post id exists
+	if ( id > 0 ) {
+
+		// add rows to variables
+		var specific_post_edit_row = $( '#edit-' + id ),
+			specific_post_row = $( '#post-' + id ),
+			datetext = $( '.event_dates', specific_post_row ).text(); 
+		var dt = new Date(datetext);
+		var dtstring = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
+		var justdate = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
+
+		var endtext = $( '.rsvpmaker_end', specific_post_row ).text();
+		if(endtext.search(/\d\d\d\d/) > 0)
+			{
+				console.log('1 calc date based on '+endtext);
+				var end_date_time = new Date(endtext);
+			}
+		else
+			{
+				var end_date_text = justdate+' '+endtext;
+				console.log('2 calc date based on '+end_date_text);
+				var end_date_time = new Date(end_date_text);
+			}
+		var end_tstring = pad2(end_date_time.getHours()) + ':' + pad2(end_date_time.getMinutes());
+
+		// populate the inputs with column data
+		//$( ':input[name="quick_event_date"]', specific_post_edit_row ).val( dtstring );
+		$( ':input[name="event_dates"]', specific_post_edit_row ).val( dtstring );
+		//$('#quick_event_date_text-'+id).html(datetext);
+		$(':input[name="end_time"]', specific_post_edit_row ).val( end_tstring );
+		//$('#quick_end_time_text-'+id).html(endtext);
+	}
+}
+
+function pad2(number) {  
+	return (number < 10 ? '0' : '') + number
+}
 
 });

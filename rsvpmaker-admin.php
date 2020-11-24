@@ -2123,34 +2123,42 @@ add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'ma
 
 add_filter('manage_posts_columns', 'rsvpmaker_columns');
 function rsvpmaker_columns($defaults) {
-	if(!empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpmaker'))
-    	$defaults['event_dates'] = __('Event Dates','rsvpmaker');
+	//if(!empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpmaker'))
+    	//$defaults['event_dates'] = __('Event Dates','rsvpmaker');
 	if(!empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpemail'))
     	$defaults['rsvpmaker_cron'] = __('Scheduled','rsvpmaker');
     return $defaults;
 }
 
 function rsvpmaker_custom_column($column_name, $post_id) {
-    global $wpdb;
-    if( $column_name == 'event_dates' ) {
+	global $wpdb, $rsvp_options;
+	
+    if( $column_name == 'rsvpmaker_end' ) {
+		$end_type = get_post_meta($post_id,'_firsttime',true);
+		$end_time = get_post_meta($post_id,'_endfirsttime',true);
+		if(strpos($end_type,'|')) {
+			$end_datetime = get_post_meta($post_id,'_rsvp_end_date',true);
+			$t = rsvpmaker_strtotime($end_datetime);
+			echo rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);	
+		}
+		elseif(strpos($end_time,':')) {
+			$t = rsvpmaker_strtotime($end_time);
+			echo rsvpmaker_strftime($rsvp_options['time_format'],$t);
+		}
+	}
 
-$results = get_rsvp_dates($post_id);
+    elseif( $column_name == 'event_dates' ) {
+
+$datetime = get_post_meta($post_id,'_rsvp_dates',true);
 $template = get_template_sked($post_id);
 $rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
 $s = $dateline = '';
 
-if($results)
+if($datetime)
 {
-foreach($results as $row)
-		{
-		$t = rsvpmaker_strtotime($row["datetime"]);
-		if($dateline)
-			$dateline .= ", ";
-		$dateline .= rsvpmaker_date('F jS, Y',$t);
-		}
-if(isset($dateline)) echo $dateline;
-
+		$t = rsvpmaker_strtotime($datetime);
+		echo rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);
 }
 elseif($template)
 	{
@@ -5765,7 +5773,102 @@ function rsvpmaker_submission_post() {
 	}
 }
 
-add_action('init','rsvpmaker_submission_post');
 add_shortcode('rsvpmaker_submission','rsvpmaker_submission');
 
-?>
+/*
+ * New columns
+ */
+add_filter('manage_rsvpmaker_posts_columns', 'rsvpmaker_edit_columns');
+// the above hook will add columns only for default 'post' post type, for CPT:
+// manage_{POST TYPE NAME}_posts_columns
+function rsvpmaker_edit_columns( $column_array ) {
+
+	$column_array['event_dates'] = __('Event Dates','rsvpmaker');
+	$column_array['rsvpmaker_end'] = __('End Time','rsvpmaker');
+
+	return $column_array;
+}
+
+/*
+ * quick_edit_custom_box allows to add HTML in Quick Edit
+ * Please note: it files for EACH column, so it is similar to manage_posts_custom_column
+ */
+
+function rsvpmaker_quick_edit_fields( $column_name, $post_type ) {
+global $post;
+	// you can check post type as well but is seems not required because your columns are added for specific CPT anyway
+
+switch( $column_name ) :
+		case 'event_dates': {
+
+			// you can also print Nonce here, do not do it ouside the switch() because it will be printed many times
+			wp_nonce_field( 'quick_edit_rsvpmaker_nonce', 'rsvpmaker_nonce' );
+
+			// please not the fieldset classes could be:
+			// inline-edit-col-left, inline-edit-col-center, inline-edit-col-right
+			// each class for each column, all columns are float:left,
+			// so, if you want a left column, use clear:both element before
+			// the best way to use classes here is to look in browser "inspect element" at the other fields
+
+			// for the FIRST columns only, it opens <fieldset> element, all our fields will be there
+			echo '<fieldset class="inline-edit-col-right"><div class="inline-edit-col"><div class="inline-edit-group wp-clearfix">';
+
+			echo '<label class="alignleft">
+					<span class="title">Datetime</span>
+					<span class="input-text-wrap"><input type="text" class="quick_event_date" id="quick_event_date-'.$post->ID.'" post_id="'.$post->ID.'" name="event_dates" value=""></span>
+					<span id="quick_event_date_text-'.$post->ID.'"></span>
+				</label>';
+
+			break;
+
+		}
+		case 'rsvpmaker_end': {
+			//$end_type = get_post_meta($post->ID,'_firsttime',true);
+			$end = get_post_meta($post->ID,'_endfirsttime',true);
+			if(strpos($end,':'))
+			echo '<label class="alignleft">
+			<span class="title">End Time</span>
+			<span class="input-text-wrap"><input type="text" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
+			<span id="quick_end_time_text-'.$post->ID.'"></span>
+</label>';
+
+			// for the LAST column only - closing the fieldset element
+			echo '</div></div></fieldset>';
+
+			break;
+
+		}
+
+	endswitch;
+}
+
+/*
+ * Quick Edit Save
+ */
+
+function rsvpmaker_quick_edit_save( $post_id ){
+
+	// check user capabilities
+	if ( !current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	// check nonce
+	if ( !wp_verify_nonce( $_POST['rsvpmaker_nonce'], 'quick_edit_rsvpmaker_nonce' ) ) {
+		return;
+	}
+
+	// update the price
+	if ( isset( $_POST['event_dates'] ) ) {
+ 		update_post_meta( $post_id, '_rsvp_dates', $_POST['event_dates'] );
+	}
+	if ( isset( $_POST['end_time'] ) ) {
+		update_post_meta( $post_id, '_endfirsttime', $_POST['end_time'] );
+		$end_date = get_post_meta($post_id,'_rsvp_end_date',true);
+		if($end_date) {
+			$parts = explode(' ',$end_date);
+			update_post_meta($post_id,'_rsvp_end_date',$parts[0].' '.$_POST['end_time']);
+		}
+   	}
+
+}
