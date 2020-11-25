@@ -144,11 +144,7 @@ else
 
 	$results = false;
 
-
-
 $start = 0;
-
-
 
 if($results)
 {
@@ -157,9 +153,6 @@ $count = sizeof($results);
 if($count > 1)
 	$row['duration'] = 'multi|'.$count;
 $index = 0;
-//foreach($results as $index => $row)
-
-	//{
 
 	echo "\n<div class=\"event_dates\"> \n";
 
@@ -185,15 +178,13 @@ $index = 0;
 
 	$start = $index + 1;
 
-	//}
-
 }
 
 else
 
 	{
 
-	echo '<p><em>'.__('Enter one or more dates. For an event starting at 1:30 p.m., you would select 1 p.m. (or 13: for 24-hour format) and then 30 minutes. Specifying the duration is optional.','rsvpmaker').'</em> </p>';
+	echo '<p><em>'.__('You can enter dates and times in either text format or the numeric/database format.','rsvpmaker').'</em> </p>';
 
 	$t = time();
 
@@ -205,9 +196,7 @@ if(isset($_GET['t']))
 
 {
 
-	$t = (int) $_GET['t'];
-
-	
+	$t = (int) $_GET['t'];	
 
 	$sked = get_template_sked($t);
 

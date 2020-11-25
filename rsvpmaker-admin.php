@@ -75,6 +75,12 @@ if($parent_id = wp_is_post_revision($postID))
 	$postID = $parent_id;
 	}
 
+if(!empty($_POST['rsvp_sql_date']) && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['rsvp_sql_date']))
+	update_post_meta($postID,'_rsvp_dates',$_POST['rsvp_sql_date']);
+if(!empty($_POST['rsvp_sql_end']) && preg_match('/^\d{2}:\d{2}$/',$_POST['rsvp_sql_end']))
+	update_post_meta($postID,'_endfirsttime',$_POST['rsvp_sql_end']);
+if(!empty($_POST['end_time_type']))
+	update_post_meta($postID,'_firsttime',sanitize_text_field($_POST['end_time_type']));
 if(isset($_POST["_require_webinar_passcode"]))
 	{
 	update_post_meta($postID,'_require_webinar_passcode',sanitize_text_field($_POST["_require_webinar_passcode"]));
@@ -248,86 +254,9 @@ $futureyear = 5 + (int) date('Y');
 
 ?>
 <div id="<?php echo $prefix; ?>date<?php echo $index;?>" >
-<table width="100%">
-<tr>
-            <td width="*"><div class="date_block"><?php echo __('Month:','rsvpmaker');?> 
-<select id="month<?php echo $index;?>" name="<?php echo $prefix; ?>month[<?php echo $index;?>]"> 
-<?php
-for($i = 1; $i <= 12; $i++)
-{
-echo "<option ";
-	if($i == $month)
-		echo ' selected="selected" ';
-	echo 'value="'.$i.'">'.$i."</option>\n";
-}
-?>
-</select> 
-<?php echo __('Day:','rsvpmaker');?> 
-<select  id="day<?php echo $index;?>"  name="<?php echo $prefix; ?>day[<?php echo $index;?>]"> 
-<?php
-if($day == 0)
-	echo '<option value="0">'.__('Not Set','rsvpmaker').'</option>';
-for($i = 1; $i <= 31; $i++)
-{
-echo "<option ";
-	if($i == $day)
-		echo ' selected="selected" ';
-	echo 'value="'.$i.'">'.$i."</option>\n";
-}
-?>
-</select> 
-<?php echo __('Year','rsvpmaker');?>
-<select  id="year<?php echo $index;?>" name="<?php echo $prefix; ?>year[<?php echo $index ;?>]"> 
-<?php
-for($i = 2000; $i < $futureyear; $i++)
-{
-echo "<option ";
-	if($i == $year)
-		echo ' selected="selected" ';
-	echo 'value="'.$i.'">'.$i."</option>\n";
-}
-?>
-</select> 
-<input type="hidden" id="datepicker<?php echo $index;?>" value="<?php echo $jquery_date;?>">
-</div> 
-            </td> 
-          </tr> 
-<tr>
-</table>
-<div id="timetable<?php echo $index;?>">
-<table> 
-<td><?php echo __('Hour:','rsvpmaker');?> <select class="rsvphour" id="hour<?php echo $index;?>" name="<?php echo $prefix; ?>hour[<?php echo $index;?>]"> 
-<?php
-for($i=0; $i < 24; $i++)
-	{
-	$selected = ($i == $hour) ? ' selected="selected" ' : '';
-	$padded = ($i < 10) ? '0'.$i : $i;
-	if($i == 0)
-		$twelvehour = "12 a.m.";
-	elseif($i == 12)
-		$twelvehour = "12 p.m.";
-	elseif($i > 12)
-		$twelvehour = ($i - 12) ." p.m.";
-	else		
-		$twelvehour = $i." a.m.";
-	if(strpos($rsvp_options['time_format'],'%p'))
-		printf('<option  value="%s" %s>%s</option>',$padded,$selected,$twelvehour);
-	else
-		printf('<option  value="%s" %s>%s:</option>',$padded,$selected,$padded);
-	}
-?>
-</select> 
- 
-<?php echo __('Minutes:','rsvpmaker');?> <select  class="rsvpminutes" id="minutes<?php echo $index;?>" name="<?php echo $prefix; ?>minutes[<?php echo $index;?>]"> 
-<?php
-for($i=0; $i < 60; $i ++)
-	{
-	$selected = ($i == $minutes) ? ' selected="selected" ' : '';
-	$padded = ($i < 10) ? '0'.$i : $i;
-	printf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
-	}
-?>
-</select><br />
+<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date" value="<?php echo rsvpmaker_strftime('%B %e, %Y '.$rsvp_options['time_format'],$t); ?>" size="30"> or <input name="rsvp_sql_date" type="text" class="sql-date" id="sql-date" value="<?php echo rsvpmaker_date('Y-m-d H:i:s',$t) ?>"> <span id="date-weekday"><?php echo rsvpmaker_strftime('%A',$t) ?></span>
+</p>
+<div id="date_error"></div>
 
 <?php
 if(!empty($sked['duration']))
@@ -337,11 +266,6 @@ if(empty($datestring))
 rsvpmaker_duration_select ($prefix.'duration['.$index.']', $datevar, $datestring, $index );
 
 ?>
-<br /> 
-</td> 
-          </tr> 
-</table>
-</div>
 </div>
 <?php
 
@@ -2141,12 +2065,32 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 			$t = rsvpmaker_strtotime($end_datetime);
 			echo rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);	
 		}
-		elseif(strpos($end_time,':')) {
+		elseif(!empty($end_type) && strpos($end_time,':') > 0) {
 			$t = rsvpmaker_strtotime($end_time);
 			echo rsvpmaker_strftime($rsvp_options['time_format'],$t);
 		}
 	}
-
+    elseif( $column_name == 'rsvpmaker_display' ) {
+		$end_type = get_post_meta($post_id,'_firsttime',true);
+		if(empty($end_type))
+			echo 'End Time Not Shown';
+		else {
+			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
+			if(!empty($options[$end_type]))
+				echo $options[$end_type];//.' ('.$end_type.')';
+		}
+		printf('<input type="hidden" class="end_display_code" value="%s" />',$end_type);
+		$rsvp_on = get_post_meta($post_id,'_rsvp_on',true);
+		$convert_timezone = get_post_meta($post_id,'_convert_timezone',true);
+		$add_timezone = get_post_meta($post_id,'_add_timezone',true);
+		if(!empty($rsvp_on))
+			echo '<br />RSVP On';
+		if(!empty($add_timezone))
+			echo '<br />Timezone code added to time';
+		if(!empty($convert_timezone))
+			echo '<br /><em>Show in my timezone</em> button displayed';
+		//echo $end_type;
+	}
     elseif( $column_name == 'event_dates' ) {
 
 $datetime = get_post_meta($post_id,'_rsvp_dates',true);
@@ -4944,29 +4888,26 @@ function rsvpmaker_quick_post() {
 			$types[] = $result["term_id"];
 	}
 
-	foreach($_POST["quicktime"] as $index => $time) {
-		if(!empty($time)) {
-		$date = $_POST["quickdate"][$index];
-		if(empty($date) && ($index == 0))
-			{
-			echo '<p>Error: at least the first date must not be left blank</p>';
-			break;
-			}
-		if(empty($date))
-			$date = $prevdate;
-		else
-			$prevdate = $date;
-		$title = sanitize_text_field($_POST["quicktitle"][$index]);
-		$content = (empty($_POST["quickcontent"][$index])) ? '' : wp_kses_post( rsvpautog($_POST["quickcontent"][$index]));
-		if(preg_match('/[^0-9 :apmAPM]/',$time)) // should be only numbers, spaces : and am or pm
-		{
-			echo "<p>Time not formatted correctly for $title ($time)</p>";
+	foreach($_POST["quicktitle"] as $index => $title) {
+		if(!empty($title)) {
+		$datetime = trim($_POST["quick_rsvp_sql_date"][$index]);
+		if(!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$datetime)) {
+			echo 'invalid time'.$datetime;
 			continue;
 		}
-		$t = rsvpmaker_strtotime($date.' '.$time);
-		$rsvptime = rsvpmaker_date('Y-m-d H:i:s',$t);
+		$title = sanitize_text_field($title);
+		$content = (empty($_POST["quickcontent"][$index])) ? '' : wp_kses_post( rsvpautog($_POST["quickcontent"][$index]));
 		$post_id = wp_insert_post(array('post_type' => 'rsvpmaker', 'post_title' => $title, 'post_content' => $content, 'post_author' => $current_user->ID, 'post_status' => $_POST['status']));
-		add_post_meta($post_id,'_rsvp_dates',$rsvptime);
+		add_post_meta($post_id,'_rsvp_dates',$datetime);
+		$end_type = sanitize_text_field($_POST["quick_end_time_type"][$index]);
+		$end_time = sanitize_text_field($_POST["quick_rsvp_sql_end"][$index]);
+		if(empty($end_time)) {
+			$t = strtotime($datetime." +1 hour");
+			$end_time = date('H:i',$t);
+		}
+		add_post_meta($post_id,'_firsttime',$end_type);
+		add_post_meta($post_id,'_endfirsttime',$end_time);
+
 		if(!empty($types)) {
 			wp_set_object_terms( $post_id, $types, 'rsvpmaker-type' );
 		}
@@ -4983,24 +4924,39 @@ function rsvpmaker_quick_post() {
 			$confirmation = sprintf('<h3>%s</h3>',__('Event Posts Created','rsvpmaker'));
 			echo $confirmation;
 		}
-		printf('<p><a href="%s">View</a> <a href="%s">Edit</a> %s %s</p>',get_permalink($post_id),admin_url("post.php?post=$post_id&action=edit"),$title,$rsvptime);
+		printf('<p><a href="%s">View</a> <a href="%s">Edit</a> %s %s</p>',get_permalink($post_id),admin_url("post.php?post=$post_id&action=edit"),$title,$datetime);
 		}		
 	}
 }
 function rsvpmaker_quick_ui() {
 	global $rsvp_options;
+	$t = strtotime('tomorrow noon');
+	$datedefault = date('Y-m-d H:i:s',$t);
+	$date_text_default = strftime('%B %e, %Y '.$rsvp_options['time_format'],$t);
 	$limit = (int) $_GET['quick'];
 	if(!$limit)
 		$limit = 5;
 	printf('<h3>%s</h3>',__('Quickly Setup Multiple Event Posts','rsvpmaker'));
 	printf('<p>%s</p>',__('Enter start time and title for each event to be created. Optionally, you can include post body text. Can include multiple paragraphs, separated by a blank line. Events can be published immediately or saved as drafts for further editing.','rsvpmaker'));
+	printf('<p>%s</p>',__('You must enter at least a title for the event to be recorded.','rsvpmaker'));
 	printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
+	echo '<p class="quickentry"><label>Start Date/Time</label> <input id="quick_start_date" value="'.$date_text_default.'" size="30" /> <span id="weekday"></span><br />Becomes the default for all the date fields below &mdash; useful for specifiying a series of events on the same day or subsequent days.</p>';
 	for($i = 0; $i < $limit; $i++) {
 		$datetext = ($i == 0) ? 'Date in YYYY-MM-DD format or January 1, 2025' : 'If left blank, previous date assumed';
-		$datedefault = ($i == 0) ? date('Y-m-d') : '';
 		echo '<div class="quickentry">';
-		printf('<div class="quickfield"><label>%s</label><input type="text" id="quickdate-'.$i.'" class="quickdate" name="quickdate[]" value="%s"> <em>%s</em></div>',__('Date','rsvpmaker'),$datedefault,$datetext);
-		printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktime-'.$i.'" class="quicktime" name="quicktime[]"> <em>%s</em></div>',__('Start Time','rsvpmaker'),__('Time in 15:00 or 3:00 PM format'));
+		printf('<div id="event_date0" >
+		<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date-'.$i.'" value="%s" size="30"> or 
+		<input name="quick_rsvp_sql_date[]" type="text" class="sql-date" id="sql-date-'.$i.'" value="%s"> <span id="date-weekday-'.$i.'"></span>
+		</p>
+		<div id="date_error"></div>
+		<p><label>End Time</label> <select id="end_time_type-'.$i.'" name="quick_end_time_type[]" class="end_time_type" ><option value="">Not set (optional)</option>
+		<option value="set"  >Set end time</option>		
+		<option value="allday" >All day/time not shown</option>
+		<option value="multi|2" >2 days/time not shown</option><option value="multi|3" >3 days/time not shown</option><option value="multi|4" >4 days/time not shown</option><option value="multi|5" >5 days/time not shown</option><option value="multi|6" >6 days/time not shown</option><option value="multi|7" >7 days/time not shown</option></select><span id="end_time-'.$i.'" class="end_time"> 
+		<input type="text" class="free-text-end" id="free-text-end-'.$i.'" size="8" value=""> or 
+		<input name="quick_rsvp_sql_end[]" type="text" class="sql-end" id="sql-end-'.$i.'" size="5" value="">
+		<span id="end_time_error"></span> </span></p></div>',$date_text_default,$datedefault);
+
 		printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktitle-'.$i.'" class="quicktitle" name="quicktitle[]"></div>',__('Title','rsvpmaker'));
 		printf('<div class="quickfield"><label>%s</label><br /><textarea name="quickcontent[]" rows="2" cols="100"></textarea></div>',__('Starter Text','rsvpmaker'));
 		echo '<div id="quickmessage-'.$i.'"></div>';
@@ -5066,7 +5022,7 @@ select {
 	<div id="icon-edit" class="icon32"><br /></div> 
 <h2><?php _e('Event Setup','rsvpmaker'); ?></h2> 
 <?php
-if(isset($_POST["quickdate"]))
+if(isset($_POST["quicktitle"]))
 	rsvpmaker_quick_post();
 elseif(isset($_GET["quick"])) {
 	rsvpmaker_quick_ui();
@@ -5782,10 +5738,10 @@ add_filter('manage_rsvpmaker_posts_columns', 'rsvpmaker_edit_columns');
 // the above hook will add columns only for default 'post' post type, for CPT:
 // manage_{POST TYPE NAME}_posts_columns
 function rsvpmaker_edit_columns( $column_array ) {
-
+	unset($column_array["tags"]);
 	$column_array['event_dates'] = __('Event Dates','rsvpmaker');
 	$column_array['rsvpmaker_end'] = __('End Time','rsvpmaker');
-
+	$column_array['rsvpmaker_display'] = __('Display','rsvpmaker');
 	return $column_array;
 }
 
@@ -5823,13 +5779,30 @@ switch( $column_name ) :
 
 		}
 		case 'rsvpmaker_end': {
-			//$end_type = get_post_meta($post->ID,'_firsttime',true);
+			$end_type = get_post_meta($post->ID,'_firsttime',true);
 			$end = get_post_meta($post->ID,'_endfirsttime',true);
-			if(strpos($end,':'))
+			//if(!empty($end_type) && (strpos($end,':') > 0))
 			echo '<label class="alignleft">
 			<span class="title">End Time</span>
 			<span class="input-text-wrap"><input type="text" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
 			<span id="quick_end_time_text-'.$post->ID.'"></span>
+</label>';
+
+			break;
+
+		}
+		case 'rsvpmaker_display': {
+			$end_type = get_post_meta($post->ID,'_firsttime',true);
+			$end = get_post_meta($post->ID,'_endfirsttime',true);
+			//if(!empty($end_type) && (strpos($end,':') > 0))
+			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
+			echo '<label class="alignleft">
+			<span class="title">Time Display</span>
+			<select name="quick_time_display" class="quick_time_display">
+			<option value="">End Time Not Shown</option>';
+			foreach($options as $key => $option)
+				printf('<option value="%s">%s</option>',$key,$option);
+			echo '</select>
 </label>';
 
 			// for the LAST column only - closing the fieldset element
@@ -5847,7 +5820,8 @@ switch( $column_name ) :
  */
 
 function rsvpmaker_quick_edit_save( $post_id ){
-
+	if(empty($_POST['rsvpmaker_nonce']) || empty($_POST['event_dates']))
+		return;
 	// check user capabilities
 	if ( !current_user_can( 'edit_post', $post_id ) ) {
 		return;
@@ -5860,14 +5834,28 @@ function rsvpmaker_quick_edit_save( $post_id ){
 
 	// update the price
 	if ( isset( $_POST['event_dates'] ) ) {
- 		update_post_meta( $post_id, '_rsvp_dates', $_POST['event_dates'] );
+		if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['event_dates']))
+			update_post_meta( $post_id, '_rsvp_dates', $_POST['event_dates'] );
+		else
+			return;
 	}
-	if ( isset( $_POST['end_time'] ) ) {
+	if ( isset( $_POST['quick_time_display'] ) ) {
+		update_post_meta( $post_id, '_firsttime', $_POST['quick_time_display'] );
+		rsvpmaker_debug_log(strpos($_POST['quick_time_display'],'|'),'position of pipe');
+		if(strpos($_POST['quick_time_display'],'|') > 0)
+			{
+				$parts = explode('|',$_POST['quick_time_display']);
+				rsvpmaker_debug_log($_POST['event_dates'].' +'.$parts[1].' days','strtotime for multiday');
+				$t = rsvpmaker_strtotime($_POST['event_dates'].' +'.$parts[1].' days');
+				$enddate = rsvpmaker_date('Y-m-d',$t);
+				$enddatetime = rsvpmaker_date('Y-m-d H:i:s',$t);
+			}
+   }
+   if ( isset( $_POST['end_time'] ) ) {
+	   if(preg_match('/^\d{2}:\d{2}$/',$_POST['end_time'])) 
 		update_post_meta( $post_id, '_endfirsttime', $_POST['end_time'] );
-		$end_date = get_post_meta($post_id,'_rsvp_end_date',true);
-		if($end_date) {
-			$parts = explode(' ',$end_date);
-			update_post_meta($post_id,'_rsvp_end_date',$parts[0].' '.$_POST['end_time']);
+		if($enddate) {
+			update_post_meta($post_id,'_rsvp_end_date',$enddate.' '.$_POST['end_time']);
 		}
    	}
 

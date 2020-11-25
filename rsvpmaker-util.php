@@ -176,8 +176,6 @@ return $wpdb->get_var($sql);
 
 }
 
-
-
 function rsvpmaker_duration_select ($slug, $datevar = array(), $start_time='', $index = 0) {
 
 global $rsvp_options;
@@ -207,7 +205,6 @@ if(!empty($datevar['end_time']))
 	{
 
 		$end_time = (is_array($datevar['end_time'])) ? $datevar['end_time'][$index] : $datevar['end_time'];
-
 	}
 
 elseif(!empty($datevar['end']))
@@ -218,14 +215,8 @@ elseif(!empty($datevar['end']))
 
 }
 
-
-
-echo __('End Time','rsvpmaker');
-
-printf(' <select name="%s" class="end_time_type" > ',$slug);
-
+echo '<p><label>'.__('End Time','rsvpmaker').'<label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
 ?>
-
 <option value=""><?php echo __('Not set (optional)','rsvpmaker');?></option>
 
 <option value="set" <?php if($duration_type == 'set') echo ' selected="selected" '; ?> ><?php echo __("Set end time",'rsvpmaker');?></option>
@@ -241,105 +232,23 @@ for($i=2; $i < 8; $i++)
 	}
 
 echo '</select>';
-
 if(empty($end_time) && !empty($start_time))
-
-	{
-
 		$t = rsvpmaker_strtotime($start_time.' +1 hour');
-
-		$defaulthour = rsvpmaker_date('H',$t);
-
-		$defaultmin = rsvpmaker_date('i',$t);
-
-	}
-
 else {
-
 	if(empty($end_time))
-
 	{
 
 		$start_time = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
-
 		$t = rsvpmaker_strtotime($start_time.' +1 hour');
-
-		$defaulthour = rsvpmaker_date('H',$t);
-
-		$defaultmin = rsvpmaker_date('i',$t);
-
 	}
-
 	else {
-
-		$p = explode(':',$end_time);
-
-		$defaulthour = $p[0];
-
-		$defaultmin = $p[1];
-
+		$t = rsvpmaker_strtotime('2020-01-01 '.$end_time);
 	}
-
 }
 
-
-
-$houropt = $minopt ="";
-
-
-
-for($i=0; $i < 24; $i++)
-
-	{
-
-	$selected = ($i == $defaulthour) ? ' selected="selected" ' : '';
-
-	$padded = ($i < 10) ? '0'.$i : $i;
-
-	if($i == 0)
-
-		$twelvehour = "12 a.m.";
-
-	elseif($i == 12)
-
-		$twelvehour = "12 p.m.";
-
-	elseif($i > 12)
-
-		$twelvehour = ($i - 12) ." p.m.";
-
-	else		
-
-		$twelvehour = $i." a.m.";
-
-	if(strpos($rsvp_options['time_format'],'%p'))
-
-		$houropt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$twelvehour);
-
-	else
-
-		$houropt .= sprintf('<option  value="%s" %s>%s:</option>',$padded,$selected,$padded);
-
-	//sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
-
-	}
-
-
-
-for($i=0; $i < 60; $i++)
-
-	{
-
-	$selected = ($i == $defaultmin) ? ' selected="selected" ' : '';
-
-	$padded = ($i < 10) ? '0'.$i : $i;
-
-	$minopt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
-
-	}
-
-printf('<span class="end_time"> <select id="endhour%d" name="hour%s" >%s</select> <select id="endminutes%d" name="min%s" >%s</select> </span>',$index,$slug,$houropt,$index,$slug,$minopt);
-
+printf('<span id="end_time" class="end_time"> <input type="text" class="free-text-end" id="free-text-end" size="8" value="%s"> or <input name="rsvp_sql_end" type="text" class="sql-end" id="sql-end" size="5" value="%s">
+<span id="end_time_error"></span> </span>',rsvpmaker_strftime('%l:%M %p',$t),rsvpmaker_date('H:i',$t));
+echo '</p>';
 }
 
 

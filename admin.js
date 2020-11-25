@@ -6,45 +6,52 @@ jQuery(document).ready(function( $ ) {
         }
 	});
 	
-	$('#quickdate-0').change(
+	$('#quick_start_date').change(
 		function () {
 			var startdate = $(this).val();
-			$('.quickdate').each(
+			var dt = new Date(startdate);
+			var sqldate = rsvpsql_date(dt);
+			$('#weekday').html(rsvpmaker_weekday(dt));
+			$('.free-text-date').each(
 				function() {
 					$(this).val(startdate);
 				}
 			);
+			$('.sql-date').each(
+				function() {
+					$(this).val(sqldate);
+				}
+			);
 		}
 	);
+/*
 
-	$('.quicktime, .quicktitle').change(
-		function() {
-			var newvalue = $(this).val();
+$('.quickdate, .quicktime').change(
+		function () {
 			var id = $(this).attr('id');
-			var messagetarget = '';
-			var othertarget = '';
-			if(id.search('time') > 0)
-			{
-				messagetarget = id.replace('quicktime','quickmessage');
-				othertarget = id.replace('quicktime','quicktitle');
-				if(newvalue.match(/[^0-9: ampAMP]/))
-					$('#'+messagetarget).html('<span style="color: red;">Date format not valid</span>');
-				else if($('#'+othertarget).val() == '')
-					$('#'+messagetarget).html('Both date and time are required');
-				else
-					$('#'+messagetarget).html('');
+			var parts = id.split('-');
+			var date = $('#quickdate-'+parts[1]).val();
+			var time = $('#quicktime-'+parts[1]).val();
+			if((date == '') || (time == '')) {
+				$('#quicktime-text-'+parts[1]).html('Date format error');
 			}
-			else {
-				messagetarget = id.replace('quicktitle','quickmessage');
-				othertarget = id.replace('quicktitle','quicktime');
-				if($('#'+othertarget).val() == '')
-					$('#'+messagetarget).html('Both date and time are required');
+			else 
+			{
+				var t = Date.parse(date+' '+time);
+				if(Number.isNaN(t)) {
+					$('#quicktime-text-'+parts[1]).html('Date format error');
+				}
 				else
-					$('#'+messagetarget).html('<span style="color: green; font-weight: bold;">OK</span>');
+				{
+					var dt = new Date(t);
+					const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+					var localestring = dt.toLocaleDateString(undefined, options)+' '+dt.toLocaleTimeString().replace(':00 ',' ');
+					$('#quicktime-text-'+parts[1]).html(localestring);
+				}	
 			}
 		}
 	);
-
+*/
 	$('select.rsvpsort').change(function() {
 		var sort = $( this ).val();
 		var parts = window.location.href.split('&');
@@ -254,57 +261,36 @@ $('.end_time').hide();
 
 $('.end_time_type').each(function() {
 	var type = $( this ).val();
-	//alert(type);
-	if(type == 'set')
-		$('.end_time').show();
+	var target = $(this).attr('id').replace('end_time_type','end_time');
+	if((type == 'set') || (type.search('ulti') > 0))
+		$('#'+target).show();
 });
 
 $('.end_time_type').change(function() {
 	var type = $( this ).val();
-	//alert(type);
+	var target = $(this).attr('id').replace('end_time_type','end_time');
+	console.log('target '+target);
 	if((type == 'set') || (type.search('ulti') > 0))
 		{
-			default_end_time();
-			$('.end_time').show();
+			default_end_time(target);
+			$('#'+target).show();
 		}
 	else
-		$('.end_time').hide();
+		$('#'+target).hide();
 });
 
-function default_end_time() {
-	var hour = $('#hour0').val();
-	var minutes = $('#minutes0').val();
-	var time = new Date(Date.parse('2020-01-01 '+ hour+':'+minutes+':00') + (60*60*1000));
-	var endhours = time.getHours();
-	if(endhours < 10)
-		endhours = '0' + endhours;
-	$('#endhour0').val(endhours);
-	var endminutes = time.getMinutes();
-	if(endminutes < 10)
-		endminutes = '0' + endminutes;
-	$('#endminutes0').val(endminutes);
-	//time.setTime();
+function default_end_time(target) {
+	var end_id = target.replace('end_time','sql-end');
+	var free_id = target.replace('end_time','free-text-end');
+	var start_id = target.replace('end_time','sql-date');
+	var start_date_sql = $('#'+start_id).val();
+	console.log(start_date_sql);
+	var t = Date.parse(start_date_sql)+(60*60*1000);
+	var dt = new Date(t);
+	$('#'+end_id).val(rsvpsql_end_time(dt));
+	var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
+	$('#'+free_id).val(localestring);       
 }
-
-$('.rsvphour').change(function() {
-	var hour = $( this ).val();
-	var target = '#end' + $( this ).attr('id');
-	var endhour = parseInt(hour) + 1;
-	var endhourstring = '';
-	if(endhour == 24)
-		endhourstring = '00';
-	else if(endhour < 10)
-		endhourstring = '0'+endhour.toString();
-	else
-		endhourstring = endhour.toString();
-	$(target).val(endhourstring);
-});
-
-$('.rsvpminutes').change(function() {
-	var minutes = $( this ).val();
-	var target = '#end' + $( this ).attr('id');
-	$(target).val(minutes);
-});
 
 $('.end_time select').change(function() {
 	$('.end_time_type').val('set');
@@ -390,10 +376,20 @@ $('.quick_event_date').change(
 		var id = $(this).attr('id');
 		var post_id = $(this).attr('post_id');
 		var target = id.replace('quick_event_date','quick_event_date_text');
-		var date = new Date(datestring);
-		var localestring = date.toLocaleDateString(undefined, options)+' '+date.toLocaleTimeString();
-		$('#'+target).html(localestring);
-		//$( '.event_dates', '#post-'+post_id ).text(localestring);
+		var illegal = datestring.match(/[^\d: -]/);
+		if(illegal)
+			{
+				$('#'+target).html('Illegal characters in datetime string');
+				return;
+			}
+		var dt = new Date(datestring);
+		var localestring = dt.toLocaleDateString(undefined, options)+' '+dt.toLocaleTimeString().replace(':00 ',' ');
+		if(localestring == 'Invalid Date Invalid Date')
+			$('#'+target).html('Date string not valid');
+		else {
+			$('#'+target).html(localestring);
+			$(this).val(dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds()));
+		}		
 	}
 );
 
@@ -401,70 +397,175 @@ $('.quick_end_time').change(
 	function () {
 		var timestring = $(this).val();
 		var id = $(this).attr('id');
+		var target = id.replace('quick_end_time','quick_end_time_text');
+		var illegal = timestring.match(/[^\d:]/);
+		if(illegal)
+			{
+				$('#'+target).html('Illegal characters in time string');
+				return;
+			}
 		var post_id = $(this).attr('post_id');
 		var datestr = $('#quick_event_date-'+post_id).val();
 		var dateparts = datestr.split(' ');
-		var target = id.replace('quick_end_time','quick_end_time_text');
-		console.log('date '+dateparts[0]+' time '+timestring);
-		var date = new Date(dateparts[0]+' '+timestring);
-		var localestring = date.toLocaleTimeString().replace(':00 ',' ');
-		$('#'+target).html(localestring);
+		var dt = new Date(dateparts[0]+' '+timestring);
+		var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
+		if(localestring == 'Invalid Date')
+			$('#'+target).html('Time string not valid');
+		else {
+			$('#'+target).html(localestring);
+			$(this).val(pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()));
+		}
 		//$( '.event_dates', '#post-'+post_id ).text(localestring);
 	}
 );
 
 // update quick edit ui based on https://rudrastyh.com/wordpress/quick-edit-tutorial.html
 // it is a copy of the inline edit function
-var wp_inline_edit_function = inlineEditPost.edit;
+if(typeof inlineEditPost !== 'undefined') {
+	var wp_inline_edit_function = inlineEditPost.edit;
 
-// we overwrite the it with our own
-inlineEditPost.edit = function( post_id ) {
-
-	// let's merge arguments of the original function
-	wp_inline_edit_function.apply( this, arguments );
-
-	// get the post ID from the argument
-	var id = 0;
-	if ( typeof( post_id ) == 'object' ) { // if it is object, get the ID number
-		id = parseInt( this.getId( post_id ) );
-	}
-
-	//if post id exists
-	if ( id > 0 ) {
-
-		// add rows to variables
-		var specific_post_edit_row = $( '#edit-' + id ),
-			specific_post_row = $( '#post-' + id ),
-			datetext = $( '.event_dates', specific_post_row ).text(); 
-		var dt = new Date(datetext);
-		var dtstring = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
-		var justdate = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
-
-		var endtext = $( '.rsvpmaker_end', specific_post_row ).text();
-		if(endtext.search(/\d\d\d\d/) > 0)
-			{
-				console.log('1 calc date based on '+endtext);
-				var end_date_time = new Date(endtext);
+	// we overwrite the it with our own
+	inlineEditPost.edit = function( post_id ) {
+	
+		// let's merge arguments of the original function
+		wp_inline_edit_function.apply( this, arguments );
+	
+		// get the post ID from the argument
+		var id = 0;
+		if ( typeof( post_id ) == 'object' ) { // if it is object, get the ID number
+			id = parseInt( this.getId( post_id ) );
+		}
+	
+		//if post id exists
+		if ( id > 0 ) {
+	
+			// add rows to variables
+			var specific_post_edit_row = $( '#edit-' + id ),
+				specific_post_row = $( '#post-' + id ),
+				datetext = $( '.event_dates', specific_post_row ).text(); 
+			var dt = new Date(datetext);
+			var dtstring = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
+			var justdate = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
+	
+			var endtext = $( '.rsvpmaker_end', specific_post_row ).text();
+			if(endtext == '') {
+				var hourplus = pad2(dt.getHours()+1) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
+				var end_date_time = new Date(justdate+' '+hourplus);
 			}
-		else
-			{
-				var end_date_text = justdate+' '+endtext;
-				console.log('2 calc date based on '+end_date_text);
-				var end_date_time = new Date(end_date_text);
-			}
-		var end_tstring = pad2(end_date_time.getHours()) + ':' + pad2(end_date_time.getMinutes());
-
-		// populate the inputs with column data
-		//$( ':input[name="quick_event_date"]', specific_post_edit_row ).val( dtstring );
-		$( ':input[name="event_dates"]', specific_post_edit_row ).val( dtstring );
-		//$('#quick_event_date_text-'+id).html(datetext);
-		$(':input[name="end_time"]', specific_post_edit_row ).val( end_tstring );
-		//$('#quick_end_time_text-'+id).html(endtext);
-	}
+			else if(endtext.search(/\d\d\d\d/) > 0)
+				{
+					var end_date_time = new Date(endtext);
+				}
+			else
+				{
+					var end_date_text = justdate+' '+endtext;
+					var end_date_time = new Date(end_date_text);
+				}
+			var end_tstring = pad2(end_date_time.getHours()) + ':' + pad2(end_date_time.getMinutes());
+			
+			var end_display_code = $( '.end_display_code', specific_post_row ).val();
+	
+			// populate the inputs with column data
+			$( ':input[name="event_dates"]', specific_post_edit_row ).val( dtstring );
+			$(':input[name="end_time"]', specific_post_edit_row ).val( end_tstring );
+			//console.log('target: '+'#quick_time_display-'+id);
+			if(end_display_code)
+				$('.quick_time_display', specific_post_edit_row ).val( end_display_code );
+		}
+	}	
 }
 
 function pad2(number) {  
 	return (number < 10 ? '0' : '') + number
 }
+
+function rsvpmaker_weekday(dt) {
+    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[dt.getDay()];
+}
+
+function rsvpsql_date(dt) {
+return dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
+}
+
+function rsvpsql_end_time(dt) {
+return pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());// + ':' + pad2(dt.getSeconds());
+}
+
+$('.free-text-end').change(
+    function() {
+        var datetext = $(this).val();
+        var t = Date.parse('2020-01-01 '+datetext);
+        if(Number.isNaN(t))
+        {
+            $('#end_time_error').html('<span style="color:red">Error:</span> free text end time is not valid');
+        }
+        else {
+            $('#end_time_error').html('');
+            var dt = new Date(t);
+			var target = $(this).attr('id').replace('free-text','sql');
+            $('#'+target).val(rsvpsql_end_time(dt));
+        }
+    }
+);
+
+$('.sql-end').change(
+    function() {
+        var datetext = $(this).val();
+        var t = Date.parse('2020-01-01 '+datetext);
+        if(Number.isNaN(t))
+        {
+            $('#end_time_error').html('<span style="color:red">Error:</span> numeric end time is not valid');
+        }
+        else {
+            $('#end_time_error').html('');
+            var dt = new Date(t);
+            var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
+			var target = $(this).attr('id').replace('free-text','sql');
+            $('#'+target).val(localestring);       
+            $(this).val(rsvpsql_end_time(dt));//standardize format        
+        }
+    }
+);
+
+$('.free-text-date').change(
+    function() {
+        var datetext = $(this).val();
+        var t = Date.parse(datetext);
+        if(Number.isNaN(t))
+        {
+            $('#date_error').html('<span style="color:red">Error:</span> free text date is not valid');
+        }
+        else {
+            $('#date_error').html('');
+            var dt = new Date(t);
+			var target = $(this).attr('id').replace('free-text','sql');
+			var weekday_id = target.replace('sql-date','date-weekday');
+            $('#'+target).val(rsvpsql_date(dt));      
+            $('#'+weekday_id).html(rsvpmaker_weekday(dt));        
+        }
+    }
+);
+
+$('.sql-date').change(
+    function() {
+        var datetext = $(this).val();
+        var t = Date.parse(datetext);
+        if(Number.isNaN(t))
+        {
+            $('#date_error').html('<span style="color:red">Error:</span> sql date is not valid');
+        }
+        else {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            $('#date_error').html('');
+			var dt = new Date(t);
+            var localestring = dt.toLocaleDateString(undefined, options)+' '+dt.toLocaleTimeString().replace(':00 ',' ');
+			var target = $(this).attr('id').replace('sql','free-text');
+            $('#'+target).val(localestring);       
+            $(this).val(rsvpsql_date(dt));//standardize format        
+            $('#date-weekday').html(rsvpmaker_weekday(dt));        
+        }
+    }
+);
 
 });
