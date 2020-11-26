@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.5.3
-Stable tag: 8.1.3
+Stable tag: 8.1.5
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -117,6 +117,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.1.5 =
+
+* Additional validation for dates. Removed reference to JQuery UI datepicker
+
+= 8.1.4 =
+
+* New date setup UI allows you to enter dates in either free text or SQL format
+* Quickly Setup Multiple Event Posts screen also uses this format. Good for setting up a series of events on the same day (for example, sessions within a conference) or on subsequent days.
 
 = 8.1.1 =
 

@@ -215,7 +215,7 @@ elseif(!empty($datevar['end']))
 
 }
 
-echo '<p><label>'.__('End Time','rsvpmaker').'<label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
+echo '<p><label>'.__('End Time','rsvpmaker').'</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
 ?>
 <option value=""><?php echo __('Not set (optional)','rsvpmaker');?></option>
 

@@ -233,26 +233,6 @@ $.post(
     });
   });
 
-  $( function() {
- $("#datepicker0, #datepicker1, #datepicker2, #datepicker3, #datepicker4, #datepicker5").datepicker(
-{
-      showOn: "button",
-      buttonImage: "../wp-content/plugins/rsvpmaker/datepicker.gif",
-      buttonImageOnly: true,
-      buttonText: "Select date",
-	  dateFormat: "yy-mm-dd", 
-    onSelect: function()
-    { 
-        var count = $(this).attr('id').replace('datepicker','');
-		var dateObject = $(this).datepicker('getDate'); 
-		$('#day'+count+' option[value="'+ dateObject.getDate() +'"]').attr("selected", "selected");
-		$('#year'+count+' option[value="'+ dateObject.getFullYear() +'"]').attr("selected", "selected");
-		$('#month'+count+' option[value="'+ (dateObject.getMonth() + 1) +'"]').attr("selected", "selected");
-		return false;
-    }
-});
-  } );
-
 $("#multireminder #checkall").click(function(){
     $('#multireminder input:checkbox').not(this).prop('checked', this.checked);
 });	
@@ -284,7 +264,6 @@ function default_end_time(target) {
 	var free_id = target.replace('end_time','free-text-end');
 	var start_id = target.replace('end_time','sql-date');
 	var start_date_sql = $('#'+start_id).val();
-	console.log(start_date_sql);
 	var t = Date.parse(start_date_sql)+(60*60*1000);
 	var dt = new Date(t);
 	$('#'+end_id).val(rsvpsql_end_time(dt));
@@ -316,6 +295,34 @@ $('#reset_paypal_sandbox').click(function(event) {
 });
 
 $( "form#rsvpmaker_setup" ).submit(function( event ) {
+	var error = false;
+	var date = $('#sql-date').val();
+	var end = $('#sql-end').val();
+	if(!date.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/))
+		{
+			error = true;
+			console.log('date ('+date+') did not validate');
+		}
+	else if((end != '') && !end.match(/^\d{2}:\d{2}$/)) 
+		{
+			error = true;
+			console.log('end time ('+end+') did not validate');
+		}
+	else if(Number.isNaN(Date.parse(date)) || Number.isNaN(Date.parse('2001-01-01 '+end)))
+		{
+		error = true;
+		console.log('date parse error');
+		}
+	else
+		error = false;
+	if(error) {
+		alert( "Fix date format errors" );
+		event.preventDefault();
+		return;
+	}
+	else
+		console.log('no errors detected');
+
 	var data = $( this ).serializeArray();
 	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/setup';
 	$( "form#rsvpmaker_setup" ).html('<h1>Creating Draft ...</h1>');
@@ -511,17 +518,20 @@ $('.free-text-end').change(
 
 $('.sql-end').change(
     function() {
-        var datetext = $(this).val();
+		var datetext = $(this).val();
+		console.log('sql end time '+datetext);
         var t = Date.parse('2020-01-01 '+datetext);
         if(Number.isNaN(t))
         {
-            $('#end_time_error').html('<span style="color:red">Error:</span> numeric end time is not valid');
+			$('#end_time_error').html('<span style="color:red">Error:</span> numeric end time is not valid');
+			console.log('sql end time does not compute');
         }
         else {
             $('#end_time_error').html('');
             var dt = new Date(t);
             var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
-			var target = $(this).attr('id').replace('free-text','sql');
+			var target = $(this).attr('id').replace('sql','free-text');
+			console.log('change value for '+target+' to '+localestring);
             $('#'+target).val(localestring);       
             $(this).val(rsvpsql_end_time(dt));//standardize format        
         }

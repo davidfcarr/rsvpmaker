@@ -79,3 +79,9 @@ a.update_from_template {
 	color:red;
 	font-weight: bold;
 }
+
+#rsvpmaker_setup label {
+	display: inline-block;
+	width: 8em;
+	font-weight: bold;
+}
