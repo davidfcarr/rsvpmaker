@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 5.5.3
-Stable tag: 8.1.5
+Tested up to: 5.6
+Stable tag: 8.1.7
 
 Schedule events, send invitations, track RSVPs, and collect PayPal payments.
 
@@ -23,9 +23,9 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
 * Use the Limited Time Content Gutenberg block -- a wrapper block that can include paragraphs, images, and other content -- to set a start and/or end time for the display of content. Useful for promoting events and limited time pricing on your home page or in the body of a blog post, without looking foolish if you forget to take down those promotions.
 
-https://youtu.be/gt6fE07a8bc
+https://youtu.be/kL-E2dwd4c0
 
-RSVPMaker is free and open source, with no upsell to a premium version. We occasionally create custom features on contract, but where possible those enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
+RSVPMaker is free and open source, with no upsell to a premium version. The author is available to consult on customizations, but generally useful enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
 
 Creating and Managing Events
 
@@ -64,7 +64,7 @@ Norwegian: Thomas Nybø
 
 Thank you!
 
-POT source file for translators updated May 2020
+Translators please reach out to me if you want an updated POT source file
 
 == Installation ==
 
@@ -74,8 +74,7 @@ POT source file for translators updated May 2020
 1. Check that you have set the timezone for your site on the Settings -> General WordPress admin screen
 1. Add the Gutenberg block for the RSVPMaker events listing to a page on your site. For the Classic Editor, see the documentation for shortcodes you can use to create an events listing page, or a list of event headlines for the home page. Use the RSVPMaker widget if you would like to add an events listing to your WordPress sidebar.
 1. OPTIONAL: Depending on your theme, you may want to create a single-rsvpmaker.php template to prevent confusion between the post date and the event date (move the post date display code to the bottom or just remove it). A sample for the Twentyten theme is included with this distribution.
-1. OPTIONAL: To enable online payments for events, obtain a PayPal API signature and password.
-1. OPTIONAL: Install [RSVPMaker Excel](http://wordpress.org/extend/plugins/rsvpmaker-excel) if you want the ability to export RSVP reports to a spreadsheet.
+1. OPTIONAL: To enable online payments for events, obtain the necessary credentials from PayPal or Stripe to enter into RSVPMaker settings.
 
 For basic usage, you can also have a look at the [plugin homepage](http://www.rsvpmaker.com/).
 
@@ -117,6 +116,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.1.7 =
+
+* Further refinements to timezone conversion and new date/time editing UI
+
+= 8.1.6 =
+
+* Bug fix, new template creation
 
 = 8.1.5 =
 

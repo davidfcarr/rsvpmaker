@@ -9,7 +9,7 @@ const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { Component } = wp.element;
 const { InspectorControls } = wp.editor;
-const { PanelBody, DateTimePicker, SelectControl, ToggleControl } = wp.components;
+const { PanelBody, DateTimePicker, SelectControl, ToggleControl, TextControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
 const rsvptypes = [{value: '', label: 'None selected (optional)'}];
 apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
@@ -57,6 +57,10 @@ attributes: {
 	convert_tz: {
 		type: 'boolean',
 		default: false,
+	},
+	limit: {
+		type: 'int',
+		default: 30,
 	},
 },
 
@@ -133,7 +137,12 @@ class TimeInspector extends Component {
         value={ attributes.type }
         options={ rsvptypes }
         onChange={ ( type ) => { setAttributes( { type: type } ) } }
-    />		
+    />
+	<TextControl
+		label={__('Max Events Displayed')}
+		value={attributes.limit}
+        onChange={ ( limit ) => { setAttributes( { limit: limit } ) } }
+	/>		
     </PanelBody>
 			</InspectorControls>
 		);

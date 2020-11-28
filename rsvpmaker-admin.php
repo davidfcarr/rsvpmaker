@@ -4928,6 +4928,28 @@ function rsvpmaker_quick_post() {
 		}		
 	}
 }
+
+function print_quick_date_entry($i,$date_text_default,$datedefault) {
+	echo '<div class="quickentry">';
+	printf('<div id="event_date0" >
+	<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date-'.$i.'" value="%s" size="30"> or 
+	<input name="quick_rsvp_sql_date[]" type="text" class="sql-date" id="sql-date-'.$i.'" value="%s"> <span id="date-weekday-'.$i.'"></span>
+	</p>
+	<div id="date_error-'.$i.'"></div>
+	<p><label>End Time</label> <select id="end_time_type-'.$i.'" name="quick_end_time_type[]" class="end_time_type" ><option value="">Not set (optional)</option>
+	<option value="set"  >Set end time</option>		
+	<option value="allday" >All day/time not shown</option>
+	<option value="multi|2" >2 days/time not shown</option><option value="multi|3" >3 days/time not shown</option><option value="multi|4" >4 days/time not shown</option><option value="multi|5" >5 days/time not shown</option><option value="multi|6" >6 days/time not shown</option><option value="multi|7" >7 days/time not shown</option></select><span id="end_time-'.$i.'" class="end_time"> 
+	<input type="text" class="free-text-end" id="free-text-end-'.$i.'" size="8" value=""> or 
+	<input name="quick_rsvp_sql_end[]" type="text" class="sql-end" id="sql-end-'.$i.'" size="5" value="">
+	<span id="end_time_error-'.$i.'"></span> </span></p></div>',$date_text_default,$datedefault);
+
+	printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktitle-'.$i.'" class="quicktitle" name="quicktitle[]"></div>',__('Title','rsvpmaker'));
+	printf('<div class="quickfield"><label>%s</label><br /><textarea name="quickcontent[]" rows="2" cols="100"></textarea></div>',__('Starter Text','rsvpmaker'));
+	echo '<div id="quickmessage-'.$i.'"></div>';
+	echo '</div>';
+}
+
 function rsvpmaker_quick_ui() {
 	global $rsvp_options;
 	$t = strtotime('tomorrow noon');
@@ -4942,26 +4964,11 @@ function rsvpmaker_quick_ui() {
 	printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
 	echo '<p class="quickentry"><label>Start Date/Time</label> <input id="quick_start_date" value="'.$date_text_default.'" size="30" /> <span id="weekday"></span><br />Becomes the default for all the date fields below &mdash; useful for specifiying a series of events on the same day or subsequent days.</p>';
 	for($i = 0; $i < $limit; $i++) {
-		$datetext = ($i == 0) ? 'Date in YYYY-MM-DD format or January 1, 2025' : 'If left blank, previous date assumed';
-		echo '<div class="quickentry">';
-		printf('<div id="event_date0" >
-		<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date-'.$i.'" value="%s" size="30"> or 
-		<input name="quick_rsvp_sql_date[]" type="text" class="sql-date" id="sql-date-'.$i.'" value="%s"> <span id="date-weekday-'.$i.'"></span>
-		</p>
-		<div id="date_error"></div>
-		<p><label>End Time</label> <select id="end_time_type-'.$i.'" name="quick_end_time_type[]" class="end_time_type" ><option value="">Not set (optional)</option>
-		<option value="set"  >Set end time</option>		
-		<option value="allday" >All day/time not shown</option>
-		<option value="multi|2" >2 days/time not shown</option><option value="multi|3" >3 days/time not shown</option><option value="multi|4" >4 days/time not shown</option><option value="multi|5" >5 days/time not shown</option><option value="multi|6" >6 days/time not shown</option><option value="multi|7" >7 days/time not shown</option></select><span id="end_time-'.$i.'" class="end_time"> 
-		<input type="text" class="free-text-end" id="free-text-end-'.$i.'" size="8" value=""> or 
-		<input name="quick_rsvp_sql_end[]" type="text" class="sql-end" id="sql-end-'.$i.'" size="5" value="">
-		<span id="end_time_error"></span> </span></p></div>',$date_text_default,$datedefault);
-
-		printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktitle-'.$i.'" class="quicktitle" name="quicktitle[]"></div>',__('Title','rsvpmaker'));
-		printf('<div class="quickfield"><label>%s</label><br /><textarea name="quickcontent[]" rows="2" cols="100"></textarea></div>',__('Starter Text','rsvpmaker'));
-		echo '<div id="quickmessage-'.$i.'"></div>';
-		echo '</div>';
+		print_quick_date_entry($i,$date_text_default,$datedefault);
 	}
+	//echo '<div id="quick_entry_more"></div><p><button id="quick_entry_add">Add More</button></p><div id="quick_entry_hidden">';
+	//print_quick_date_entry('x',$date_text_default,$datedefault);
+	//echo '</div>';
 	echo '<div>';
 	wp_dropdown_categories( array(
 		'taxonomy'      => 'rsvpmaker-type',
@@ -4985,7 +4992,7 @@ function rsvpmaker_quick_ui() {
 	?>
 	<p>
 	<?php _e('Collect RSVPs','rsvpmaker');?>
-	  <input type="radio" name="rsvp_on" id="setrsvpon" value="1" <?php if( $rsvp_on ) echo 'checked="checked" ';?> />
+	  <input type="radio" name="rsvp_on" id="setrsvpon" value="1" <?php if( !empty($rsvp_options['rsvp_on']) ) echo 'checked="checked" ';?> />
 	<?php _e('YES','rsvpmaker');?> <input type="radio" name="rsvp_on" id="setrsvpon" value="0" <?php if( !$rsvp_on ) echo 'checked="checked" ';?> />
 	<?php _e('NO','rsvpmaker');?> </p>
 	<p><input type="checkbox" name="calendar_icons" value="1" <?php if($rsvp_options["calendar_icons"]) echo ' checked="checked" ';?> /> <?php _e('Show Add to Google / Download to Outlook (iCal) icons','rsvpmaker'); ?> 
@@ -5102,7 +5109,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	printf('%s %s<br /><a href="%s">%s</a>',__('For recurring events','rsvpmaker'),__('create a' ,'rsvpmaker'),admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1'),__('New Template','rsvpmaker'));
 	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><br />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select> %s %s<br >%s</form>',admin_url('edit.php'),__('Or add','rsvpmaker'),__('One event','rsvpmaker'),__('Multiple events','rsvpmaker'),__('based on','rsvpmaker'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
 	do_action('rsvpmaker_setup_template_prompt');
-	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_setup">%s <select name="quick"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option></select> %s %s</form>',admin_url('edit.php'),__('Or quickly create up to','rsvpmaker'),__('events without a template','rsvpmaker'),get_submit_button('Show Form'));
+	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_setup">%s <select name="quick"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option></select> %s %s</form>',admin_url('edit.php'),__('Or quickly create up to','rsvpmaker'),__('events without a template','rsvpmaker'),get_submit_button('Show Form'));
 	echo '</div>';
 }				
 

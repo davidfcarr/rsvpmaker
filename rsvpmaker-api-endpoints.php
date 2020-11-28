@@ -236,8 +236,6 @@ add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
 
   $posts = $wp_query->get_posts();
 
-	
-
   remove_filter('posts_join', 'rsvpmaker_join' );
 
   remove_filter('posts_groupby', 'rsvpmaker_groupby' );

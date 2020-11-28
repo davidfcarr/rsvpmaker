@@ -637,12 +637,9 @@ if(!isset($_POST["sked"]))
 	if(empty($sked["dayofweek"]))
 
 		$sked["dayofweek"][0] = 0;
-
-	if($sked['duration'] == 'set')
-
-		$sked['end'] = sanitize_text_field($_POST["hoursked"]['duration'].':'.$_POST["minsked"]['duration']);
-
-
+	
+	$sked['duration'] = $sked['end_time_type'] = sanitize_text_field($_POST['end_time_type']);
+	$sked['end'] = $sked['rsvp_sql_end'] = sanitize_text_field($_POST['rsvp_sql_end']);
 
 	new_template_schedule($postID,$sked);
 

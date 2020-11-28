@@ -10,29 +10,27 @@ jQuery(document).ready(function($) {
 
     });
 
-    
-
-	$('.timezone_on').click( function () {
-
-		$('.timezone_hint').each( function () {
-
-		var utc = $(this).attr('utc');
-
+    $('.timezone_on').click( function () {
+    	var utc = $(this).attr('utc');
         var target = $(this).attr('target');
         var newtz = target.replace('timezone_converted','tz_convert_to');
         var event_tz  = $(this).attr('event_tz');
-
+        if(event_tz == '')
+        {
+            console.log('tz convert already ran');
+            return;
+        }
 		var localdate = new Date(utc);
 
 		localstring = localdate.toString();
 
         $('#'+target).html(localstring);
         var match = localstring.match(/\(([^)]+)/);
+        $(this).attr('event_tz','');//so it won't run twice
         $('#'+newtz).html('Converting to '+match[1]);
         var timeparts = utc.split(/T/);
         var newtime;
         var timecount = 0;
-        console.log(timeparts);
         $('.tz-convert, .tz-convert table tr td, .tz-table1 table tr td:first-child, .tz-table2 table tr td:nth-child(2), .tz-table3 table tr td:nth-child(3)').each(
             function () {
             celltime = this.innerHTML.replace('&nbsp;',' ');
@@ -40,7 +38,6 @@ jQuery(document).ready(function($) {
             if((celltime.search(/\d:\d\d/) >= 0) && (celltime.search('<') < 0)) {
             timecount++;
             newtime = timeparts[0]+' '+celltime+' '+event_tz;
-            console.log(newtime);
             ts = Date.parse(newtime);
             if(!Number.isNaN(ts))
                 {
@@ -51,8 +48,7 @@ jQuery(document).ready(function($) {
                 }
             }            
             
-            }
-        );//end tz_convert each
+            });
 
         var checkrow = true;
         $('.tz-table1 table tr td:first-child, .tz-table2 table tr td:nth-child(2), .tz-table3 table tr td:nth-child(3)').each( 
@@ -76,7 +72,6 @@ jQuery(document).ready(function($) {
 		$('#'+target).html(response);
 
 		});
-    } );
 
 });
 
@@ -243,10 +238,6 @@ class RSVPJsonWidget {
 
     var d = new Date(value.datetime);
 
-    console.log('event '+ index);
-
-    console.log(d);
-
     eventslist = eventslist.concat('<li><a href="' + value.guid + '">' + value.post_title + ' - ' + value.date + '</a></li>');
 
     });
@@ -258,8 +249,6 @@ class RSVPJsonWidget {
         {
 
             this.el.innerHTML = 'None found: '+data.code;
-
-            console.log(data);
 
         }
 

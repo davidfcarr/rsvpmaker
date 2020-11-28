@@ -249,7 +249,6 @@ $('.end_time_type').each(function() {
 $('.end_time_type').change(function() {
 	var type = $( this ).val();
 	var target = $(this).attr('id').replace('end_time_type','end_time');
-	console.log('target '+target);
 	if((type == 'set') || (type.search('ulti') > 0))
 		{
 			default_end_time(target);
@@ -264,6 +263,12 @@ function default_end_time(target) {
 	var free_id = target.replace('end_time','free-text-end');
 	var start_id = target.replace('end_time','sql-date');
 	var start_date_sql = $('#'+start_id).val();
+	if(typeof start_date_sql == 'undefined') {
+		//try template
+		start_date_sql = '2001-01-01 ' + $('#hour0').val()+':'+$('#minutes0').val();
+	}
+	console.log('start date sql');
+	console.log(start_date_sql);
 	var t = Date.parse(start_date_sql)+(60*60*1000);
 	var dt = new Date(t);
 	$('#'+end_id).val(rsvpsql_end_time(dt));
@@ -301,17 +306,17 @@ $( "form#rsvpmaker_setup" ).submit(function( event ) {
 	if(!date.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/))
 		{
 			error = true;
-			console.log('date ('+date+') did not validate');
+			//console.log('date ('+date+') did not validate');
 		}
 	else if((end != '') && !end.match(/^\d{2}:\d{2}$/)) 
 		{
 			error = true;
-			console.log('end time ('+end+') did not validate');
+			//console.log('end time ('+end+') did not validate');
 		}
 	else if(Number.isNaN(Date.parse(date)) || Number.isNaN(Date.parse('2001-01-01 '+end)))
 		{
 		error = true;
-		console.log('date parse error');
+		//console.log('date parse error');
 		}
 	else
 		error = false;
@@ -320,8 +325,6 @@ $( "form#rsvpmaker_setup" ).submit(function( event ) {
 		event.preventDefault();
 		return;
 	}
-	else
-		console.log('no errors detected');
 
 	var data = $( this ).serializeArray();
 	var url = rsvpmaker_rest.rest_url+'rsvpmaker/v1/setup';
@@ -502,13 +505,15 @@ return pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());// + ':' + pad2(dt.getS
 $('.free-text-end').change(
     function() {
         var datetext = $(this).val();
+		datetext = datetext.replace(/^(\d{1,2}) ([aApP])/,'$1:00 $2');
         var t = Date.parse('2020-01-01 '+datetext);
+		var error_id = $(this).attr('id').replace('free-text-end','end_time_error');
         if(Number.isNaN(t))
         {
-            $('#end_time_error').html('<span style="color:red">Error:</span> free text end time is not valid');
+            $('#'+error_id).html('<span style="color:red">Error:</span> free text end time is not valid');
         }
         else {
-            $('#end_time_error').html('');
+            $('#'+error_id).html('');
             var dt = new Date(t);
 			var target = $(this).attr('id').replace('free-text','sql');
             $('#'+target).val(rsvpsql_end_time(dt));
@@ -519,19 +524,17 @@ $('.free-text-end').change(
 $('.sql-end').change(
     function() {
 		var datetext = $(this).val();
-		console.log('sql end time '+datetext);
         var t = Date.parse('2020-01-01 '+datetext);
+		var error_id = $(this).attr('id').replace('sql-end','end_time_error');
         if(Number.isNaN(t))
         {
-			$('#end_time_error').html('<span style="color:red">Error:</span> numeric end time is not valid');
-			console.log('sql end time does not compute');
+			$('#'+error_id).html('<span style="color:red">Error:</span> numeric end time is not valid');
         }
         else {
-            $('#end_time_error').html('');
+            $('#'+error_id).html('');
             var dt = new Date(t);
             var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
 			var target = $(this).attr('id').replace('sql','free-text');
-			console.log('change value for '+target+' to '+localestring);
             $('#'+target).val(localestring);       
             $(this).val(rsvpsql_end_time(dt));//standardize format        
         }
@@ -541,13 +544,15 @@ $('.sql-end').change(
 $('.free-text-date').change(
     function() {
         var datetext = $(this).val();
+		datetext = datetext.replace(/ (\d{1,2}) ([aApP])/,' $1:00 $2');
+		var error_id = $(this).attr('id').replace('free-text-date','date_error');
         var t = Date.parse(datetext);
         if(Number.isNaN(t))
         {
-            $('#date_error').html('<span style="color:red">Error:</span> free text date is not valid');
+            $('#'+error_id).html('<span style="color:red">Error:</span> free text date is not valid');
         }
         else {
-            $('#date_error').html('');
+            $('#'+error_id).html('');
             var dt = new Date(t);
 			var target = $(this).attr('id').replace('free-text','sql');
 			var weekday_id = target.replace('sql-date','date-weekday');
@@ -559,15 +564,16 @@ $('.free-text-date').change(
 
 $('.sql-date').change(
     function() {
-        var datetext = $(this).val();
-        var t = Date.parse(datetext);
+		var datetext = $(this).val();
+		var t = Date.parse(datetext);
+		var error_id = $(this).attr('id').replace('sql-date','date_error');
         if(Number.isNaN(t))
         {
-            $('#date_error').html('<span style="color:red">Error:</span> sql date is not valid');
+            $('#'+error_id).html('<span style="color:red">Error:</span> sql date is not valid');
         }
         else {
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            $('#date_error').html('');
+            $('#'+error_id).html('');
 			var dt = new Date(t);
             var localestring = dt.toLocaleDateString(undefined, options)+' '+dt.toLocaleTimeString().replace(':00 ',' ');
 			var target = $(this).attr('id').replace('sql','free-text');
