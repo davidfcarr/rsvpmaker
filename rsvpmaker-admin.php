@@ -4963,9 +4963,16 @@ function rsvpmaker_quick_ui() {
 	printf('<p>%s</p>',__('You must enter at least a title for the event to be recorded.','rsvpmaker'));
 	printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
 	echo '<p class="quickentry"><label>Start Date/Time</label> <input id="quick_start_date" value="'.$date_text_default.'" size="30" /> <span id="weekday"></span><br />Becomes the default for all the date fields below &mdash; useful for specifiying a series of events on the same day or subsequent days.</p>';
-	for($i = 0; $i < $limit; $i++) {
+	for($i = 0; $i < 50; $i++) {
+		if($i >= $limit)
+			echo '<div class="quick-extra-blank" id="quick-extra-blank-'.$i.'">';
+		echo '<div>Entry '.($i+1).'</div>';
 		print_quick_date_entry($i,$date_text_default,$datedefault);
+		if($i >= $limit)
+			echo '</div>';
 	}
+	echo '<div class="quick-extra-blank" id="quick-extra-blank-'.$i.'"><em>Maximum Entries Reached</em></div>';
+	echo '<div><button id="add-quick-blank" start="'.$limit.'">+ Show more entries</button></div>';
 	//echo '<div id="quick_entry_more"></div><p><button id="quick_entry_add">Add More</button></p><div id="quick_entry_hidden">';
 	//print_quick_date_entry('x',$date_text_default,$datedefault);
 	//echo '</div>';

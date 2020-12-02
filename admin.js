@@ -584,4 +584,17 @@ $('.sql-date').change(
     }
 );
 
+$('.quick-extra-blank').hide();
+var quickeditcount = 0;
+
+$('#add-quick-blank').click(
+	function (e) {
+		if(quickeditcount == 0)
+			quickeditcount = parseInt($(this).attr('start'));
+		e.preventDefault();
+		$('#quick-extra-blank-'+quickeditcount).show();
+		quickeditcount++;
+	}
+);
+
 });

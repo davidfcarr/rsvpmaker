@@ -665,19 +665,16 @@ function rsvpmaker_roles() {
 
 global $wp_roles;
 
-
-
 if(!isset($wp_roles) )
 
 	$wp_roles = new WP_Roles();
 
+//subscribers should not be able to edit
+$wp_roles->remove_cap( 'subscriber', 'edit_rsvpmakers' );
+
 // if roles persist from previous session, return
-
 if(!empty($wp_roles->roles["administrator"]["capabilities"]["edit_rsvpmakers"]))
-
 	return;
-
-
 
 if(is_array($wp_roles->roles))
 
@@ -692,15 +689,11 @@ foreach ($wp_roles->roles as $role => $rolearray)
 			if(strpos($cap,'post') )
 
 				{
-
 					$fbcap = str_replace('post','rsvpmaker',$cap);
-
 					$wp_roles->add_cap( $role, $fbcap );
-
+					//rsvpmaker_debug_log($fbcap,'role:'.$role);
 				}
-
 		}
-
 	}
 
 
