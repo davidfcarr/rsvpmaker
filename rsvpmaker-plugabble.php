@@ -498,7 +498,7 @@ jQuery(function () {
 
 
 
-$h = (int) $template["hour"];
+$h = $template["hour"];
 
 $minutes = $template["minutes"];
 
@@ -507,98 +507,11 @@ $duration = isset($template["duration"]) ? $template["duration"] : '';
 $displayminutes = $displayhour = '';
 
 ?>
-
-<table border="0">
-
-<tr><td><?php _e("Time",'rsvpmaker'); ?>:</td>
-
-<td><?php _e("Hour",'rsvpmaker'); ?>: <select name="sked[hour]" class="rsvphour" id="hour0">
-
-<?php
-
-for($hour = 0; $hour < 24; $hour++)
-
-{
-
-
-
-if($hour == $h)
-
-	$selected = ' selected = "selected" ';
-
-else
-
-	$selected = '';
-
-
-
-	if($hour > 12)
-
-		$displayhour .= "\n<option $selected " . 'value="' . $hour . '">' . ($hour - 12) . ' p.m.</option>';
-
-	elseif($hour == 12)
-
-		$displayhour .= "\n<option $selected " . 'value="' . $hour . '">12 p.m.</option>';
-
-	elseif($hour == 0)
-
-		$displayhour .= "\n<option $selected " . 'value="00">12 a.m.</option>';
-
-	else
-
-		$displayhour .= "\n<option $selected " . 'value="' . $hour . '">' . $hour . ' a.m.</option>';
-
-}
-
-echo $displayhour;
-
-?>
-
-</select>
-
-
-
-<?php _e("Minutes",'rsvpmaker'); ?>: <select class="rsvpminutes" id="minutes0" name="sked[minutes]">
-
-<?php
-
-echo '<option value="'.$minutes.'">'.$minutes.'</option>';
-
-for($i = 0; $i < 60; $i++)
-
-{
-
-$zpad = ($i < 10) ? '0' : '';
-
-	printf('<option value="%s%d">%s%d</option>',$zpad,$i,$zpad,$i);
-
-}
-
-?>
-
-</select> <?php _e("For an event starting at 12:30 p.m., you would select 12 p.m. and 30 minutes",'rsvpmaker'); ?>
-
-<br />
-
+<div><label>Time</label> <input type="text" size="8" id="skedtimetext" > or <input name="sked[hour]" id="hour0" size="2" maxlength="2" value="<?php echo $h; ?>" />:<input name="sked[minutes]" id="minutes0" size="2" maxlength="2" value="<?php echo $minutes; ?>" /> </div>
+<div id="template-time-error"></div>
 <?php
 
 rsvpmaker_duration_select ('sked[duration]', $template, $h.':'.$minutes, 0);
-
-if(isset($debug)) echo $debug; 
-
-?>
-
-</td>
-
-          </tr>
-
-</table>
-
-
-
-<?php
-
-
 
 	}
 
@@ -607,8 +520,6 @@ if(isset($debug)) echo $debug;
 
 
 function save_rsvp_template_meta($postID) {
-
-
 
 if(!isset($_POST["sked"]))
 

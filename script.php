@@ -1,5 +1,5 @@
 <?php
-$scriptversion = '20201126.7';
+$scriptversion = '20201206';
 //$rsvpscript = 'rsvpmaker.js';
 $rsvpscript = 'rsvpmaker.min.js';
 
@@ -231,23 +231,11 @@ function rsvp_form_jquery() {
 
 function rsvpmaker_timezone_footer() {
 	if(isset($_GET['tz'])) {
+        $id = (int) $_GET['tz'];
 ?>
 <script>
 jQuery(document).ready(function($) {
-$('.timezone_hint').each( function () {
-var utc = $(this).attr('utc');
-var target = $(this).attr('target');
-var localdate = new Date(utc);
-localstring = localdate.toString();
-$('#'+target).html('<div>'+localstring+'<div>');
-var data = {
-	'action': 'rsvpmaker_localstring',
-	'localstring': localstring
-};
-jQuery.post(ajaxurl, data, function(response) {
-$('#'+target).html('<div>'+response+'</div>');
-});
-});
+    $('#timezone_on<?php echo $id ?>').click();
 });
 </script>
 <?php

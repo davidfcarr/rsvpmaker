@@ -1811,7 +1811,7 @@ function rsvpmaker_daily_schedule($atts) {
 					$timezone .= sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',1,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
 				}
 				else {
-					$timezone .= '<button class="timezone_on"  utc="'.gmdate('c',$t). '" target="timezone_converted'.$event->ID.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
+					$timezone .= '<button id="timezone_on'.$event->ID.'" class="timezone_on"  utc="'.gmdate('c',$t). '" target="timezone_converted'.$event->ID.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
 				}
 			$timezone .= '</div><div id="tz_convert_to'.$event->ID.'">'.__('Timezone: ').' '.rsvpmaker_date('T',$t).'</div>';
 		}
@@ -1897,13 +1897,13 @@ foreach($results as $index => $row)
 		}
 	if($top && isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0]) {
 		if(is_email_context()) {
-			$tzbutton = sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',1,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
+			$tzbutton = sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',$post_id,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
 		}
 		else {
-			$tzbutton = '<button class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post->ID.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
+			$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
 		}
 	}
-	$dateblock .= '<div><span id="timezone_converted'.$post->ID.'"></span><span id="extra_timezone_converted'.$post->ID.'"></span></div></div>';
+	$dateblock .= '<div><span id="timezone_converted'.$post_id.'"></span><span id="extra_timezone_converted'.$post_id.'"></span></div></div>';
 
 	}
 //gcal link

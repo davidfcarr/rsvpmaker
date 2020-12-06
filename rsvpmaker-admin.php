@@ -5766,6 +5766,8 @@ function rsvpmaker_edit_columns( $column_array ) {
 
 function rsvpmaker_quick_edit_fields( $column_name, $post_type ) {
 global $post;
+if(!get_rsvp_date($post->ID))
+	return; // only for dated events, not templates etc
 	// you can check post type as well but is seems not required because your columns are added for specific CPT anyway
 
 switch( $column_name ) :
