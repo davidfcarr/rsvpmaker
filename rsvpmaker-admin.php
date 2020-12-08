@@ -2035,6 +2035,7 @@ if($rsvp_options["show_screen_recurring"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Recurring Event",'rsvpmaker'), __("Recurring Event",'rsvpmaker'), $rsvp_options["recurring_event"], "add_dates", "add_dates" );
 if(!empty($rsvp_options["show_screen_multiple"]))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events","rsvpmaker"), __("Multiple Events",'rsvpmaker'), $rsvp_options["multiple_events"], "multiple", "multiple" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events (without a template)",'rsvpmaker'), __("Multiple Events (without a template)",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&quick=5", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'edit_rsvpmakers', "rsvp_reminders", "rsvp_reminders" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
@@ -3011,7 +3012,7 @@ $existing = $options = '';
 $templates = rsvpmaker_get_templates();
 $post_id = (isset($_REQUEST["post_id"])) ? (int) $_REQUEST["post_id"] : false;
 
-if($_POST['defaults'])
+if(isset($_POST['defaults']))
 {
 	foreach($_POST['defaults'] as $index => $value) {
 		$value = sanitize_text_field($value);
@@ -3038,7 +3039,7 @@ echo $styles; ?>
 </style>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
-<h1><?php _e('Confirmation / Reminder Messages','rsvpmaker'); ?></h1> 
+<h1><?php echo __('Confirmation / Reminder Messages','rsvpmaker').': '.get_the_title($post_id); ?></h1> 
 <?php
 
 if($post_id)

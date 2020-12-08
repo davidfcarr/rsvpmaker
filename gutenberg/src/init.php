@@ -208,7 +208,6 @@ function rsvpmaker_block_cgb_editor_assets() {
 			$top_message = $rsvpmaker_special;
 		$top_message = apply_filters('rsvpmaker_ajax_top_message',$top_message);
 		$bottom_message = apply_filters('rsvpmaker_ajax_bottom_message',$bottom_message);
-		$confirmation_options = get_confirmation_options();
 		
 		if($sked)
 		{

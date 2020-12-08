@@ -38,7 +38,6 @@ const PluginRSVPMaker = () => {
             title='RSVPMaker'
             icon="calendar-alt"
         >
-<p>{__('For additional options, such as event pricing see','rsvpmaker')}: {related_link()}</p>
 <Panel header={__('"RSVPMaker Event Options"','rsvpmaker')}>
 <PanelBody
             title={__("Set Basic Options",'rsvpmaker')}

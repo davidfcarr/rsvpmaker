@@ -597,27 +597,6 @@ $('#add-quick-blank').click(
 	}
 );
 
-function quick_template_time() {
-let hour = $('#hour0').val().replace(/[^0-9]/,'');
-hour = pad2(parseInt(hour));
-let minutes = $('#minutes0').val().replace(/[^0-9]/,'');
-minutes = pad2(parseInt(minutes));
-let t = Date.parse('January 1, 2000 '+hour+':'+minutes);
-console.log('January 1, 2000 '+hour+':'+minutes);
-if(Number.isNaN(t))
-{
-	//set to a legal default value
-	hour = '12';
-	minutes = '00';
-	t = Date.parse('January 1, 2000 '+hour+':'+minutes);
-}
-$('#hour0').val(hour);
-$('#minutes0').val(minutes);
-let dt = new Date(t);
-let localestring = dt.toLocaleTimeString().replace(':00 ',' ');
-$('#skedtimetext').val(localestring);
-}
-
 $('#skedtimetext').change(
 	function() {
 		let datetext = 'January 1, 2000 '+$('#skedtimetext').val();
@@ -636,14 +615,36 @@ $('#skedtimetext').change(
 	}
 ); 
 
+function quick_template_time() {
+	let hour = $('#hour0').val();
+	if(typeof hour == 'undefined')
+		return;
+	hour = hour.replace(/[^0-9]/,'');
+	hour = pad2(parseInt(hour));
+	let minutes = $('#minutes0').val().replace(/[^0-9]/,'');
+	minutes = pad2(parseInt(minutes));
+	let t = Date.parse('January 1, 2000 '+hour+':'+minutes);
+	if(Number.isNaN(t))
+	{
+		//set to a legal default value
+		hour = '12';
+		minutes = '00';
+		t = Date.parse('January 1, 2000 '+hour+':'+minutes);
+	}
+	$('#hour0').val(hour);
+	$('#minutes0').val(minutes);
+	let dt = new Date(t);
+	let localestring = dt.toLocaleTimeString().replace(':00 ',' ');
+	$('#skedtimetext').val(localestring);
+	$('#template-time-error').html('');
+}
+	
 $('#hour0, #minutes0').change( 
 	function() {
 		quick_template_time();
 	}
- );
+);
 
-if($('#hour0'))
-	quick_template_time();
-else
-	console.log('not a template')
+quick_template_time();
+
 });

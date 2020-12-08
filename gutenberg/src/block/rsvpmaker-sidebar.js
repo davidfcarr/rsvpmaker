@@ -211,8 +211,9 @@ label={__('Collect RSVPs','rsvpmaker')}
 metaKey="_rsvp_on"/>
 
 <div class="rsvpmaker_related">
+<p>{__('Event display and RSVP confirmation options can be edited through the RSVPMaker sidebar (calendar icon above).')}</p>
+<p>{__('For complex event pricing and a few other special-purpose options, follow the link below.')}</p>
 <p>{related_link()}</p>
-<p>{__('Basic options can be edited through the RSVPMaker sidebar (calendar icon above).')}</p>
 </div>
 {rsvpmaker_ajax.bottom_message}
 </div>

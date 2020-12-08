@@ -3058,15 +3058,11 @@ function get_related_documents ( $post_id = 0, $query = '') {
 
 			'meta'  => array( 'class' => 'edit-rsvpmaker-options'));
 
-
-
 			if(!empty($_GET['back']))
 
 			{
 
 			$rsvp_parent = (int) $_GET['back'];//get_post_meta($post->ID,'_rsvpmaker_parent',true);
-
-				
 
 			$args[] = array(
 
@@ -3307,22 +3303,6 @@ function get_related_documents ( $post_id = 0, $query = '') {
 return $args;
 
 }
-
-
-
-function test_get_related_documents() {
-
-	$args = get_related_documents();
-
-	return sprintf('<pre>%s</pre>',var_export($args,true));
-
-}
-
-
-
-add_shortcode('test_get_related_documents','test_get_related_documents');
-
-
 
 function get_rsvpmaker_authors() {
 

@@ -641,9 +641,19 @@ function get_confirmation_options($post_id = 0, $documents = array()) {
 
 	}
 
-	if((empty($_GET['page']) || $_GET['page'] != 'rsvp_reminders') && !empty($reminders))
-
-		$output .= sprintf('<div><a href="%s" target="_blank">Create / Edit Reminders</a></div>',$reminders);
+	if((empty($_GET['page']) || $_GET['page'] != 'rsvp_reminders'))
+	{
+		$output .= sprintf('<p><a href="%s" target="_blank">Create / Edit Reminders</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id));
+		$payment_confirmation = get_post_meta($post_id,'payment_confirmation_message',true);
+		if(empty($payment_confirmation) || empty(get_post($payment_confirmation)))
+		{
+				$add_payment_conf = admin_url('edit.php?title=Payment%20Confirmation&rsvpcz=payment_confirmation_message&post_id='.$post_id);
+				$output .= sprintf('<p><a href="%s">%s</a></p>',$add_payment_conf,__('Add Payment Confirmation Message'));
+		}
+		else {
+			$output .= sprintf('<p><a href="%s">%s</a></p>',admin_url('post.php?post='.$payment_confirmation.'&action=edit'),__('Edit Payment Confirmation Message'));
+		}
+	}
 
 	$templates = get_rsvpmaker_email_template();
 
@@ -863,7 +873,7 @@ if(empty($remindtime)) $remindtime = '00:00:00';
 
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event"  value="1" <?php if( $include_event ) echo ' checked="checked" ' ?> > <?php _e('Include event listing with confirmation and reminders','rsvpmaker'); ?>
 
-<?php echo get_confirmation_options();
+<?php echo get_confirmation_options($post->ID,get_related_documents());
 
 if(empty($custom_fields["_webinar_landing_page_id"][0]) || isset($_GET["youtube"]))
 
