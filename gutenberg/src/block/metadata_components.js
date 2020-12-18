@@ -221,8 +221,6 @@ var MetaEndDateControl = wp.compose.compose(
 	} ),
 	withSelect( function( select, props ) {
 		let metaValue = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[props.timeKey];
-		console.log('end time meta value');
-		console.log(metaValue);
 		var hour = '';
 		var minutes = '';
 		var parts;
@@ -233,11 +231,8 @@ var MetaEndDateControl = wp.compose.compose(
 		else
 			{	
 				parts = ['12','00'];
-				console.log('props type '+props.type);
 				if(props.type == 'date') {
 					var time = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_rsvp_date'];
-					console.log('event time');
-					console.log(time);
 					var p = time.split('/ :/');
 					var h = parseInt(p[1])+1;
 					if(h < 10)
@@ -253,13 +248,10 @@ var MetaEndDateControl = wp.compose.compose(
 					hour = '0'+h.toString();
 					hour = h.toString();
 					parts = [hour,minutes];
-					console.log(parts);
 				}
 
 				}
 		let display = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[props.statusKey];
-		console.log('end time display');
-		console.log(display);
 		return {
 			parts: parts,
 			display: display,
@@ -275,7 +267,6 @@ var MetaEndDateControl = wp.compose.compose(
 			if((typeof minutes === 'undefined') || !minutes)
 				minutes = '00';
 			var newend = hour.value+':'+minutes.value;
-			console.log('newend '+newend);
 			return newend;
 		}
 
@@ -371,13 +362,11 @@ var MetaTemplateEndDateControl = wp.compose.compose(
 		//inner function to handle change
 		function setHour(hour) {
 			var newtime = hour+':'+props.parts[1];
-			console.log(newtime);
 			setMetaValue(newtime);
 		}
 
 		function setMinutes(minutes) {
 			var newtime = props.parts[0]+':'+minutes;
-			console.log(newtime);
 			setMetaValue(newtime);
 		}
 

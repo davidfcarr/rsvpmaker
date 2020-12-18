@@ -1,4 +1,4 @@
-// JavaScript Document
+/* JavaScript Document */
 jQuery(document).ready(function( $ ) {
     $.ajaxSetup({
         headers: {
@@ -264,7 +264,7 @@ function default_end_time(target) {
 	var start_id = target.replace('end_time','sql-date');
 	var start_date_sql = $('#'+start_id).val();
 	if(typeof start_date_sql == 'undefined') {
-		//try template
+		/*try template*/
 		start_date_sql = '2001-01-01 ' + $('#hour0').val()+':'+$('#minutes0').val();
 	}
 	console.log('start date sql');
@@ -306,17 +306,14 @@ $( "form#rsvpmaker_setup" ).submit(function( event ) {
 	if(!date.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/))
 		{
 			error = true;
-			//console.log('date ('+date+') did not validate');
 		}
 	else if((end != '') && !end.match(/^\d{2}:\d{2}$/)) 
 		{
 			error = true;
-			//console.log('end time ('+end+') did not validate');
 		}
 	else if(Number.isNaN(Date.parse(date)) || Number.isNaN(Date.parse('2001-01-01 '+end)))
 		{
 		error = true;
-		//console.log('date parse error');
 		}
 	else
 		error = false;
@@ -425,35 +422,35 @@ $('.quick_end_time').change(
 			$('#'+target).html(localestring);
 			$(this).val(pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()));
 		}
-		//$( '.event_dates', '#post-'+post_id ).text(localestring);
 	}
 );
 
-// update quick edit ui based on https://rudrastyh.com/wordpress/quick-edit-tutorial.html
-// it is a copy of the inline edit function
+/* update quick edit ui based on https://rudrastyh.com/wordpress/quick-edit-tutorial.html
+it is a copy of the inline edit function */
 if(typeof inlineEditPost !== 'undefined') {
 	var wp_inline_edit_function = inlineEditPost.edit;
 
-	// we overwrite the it with our own
+	/* we overwrite the it with our own */
 	inlineEditPost.edit = function( post_id ) {
 	
-		// let's merge arguments of the original function
+		/* let's merge arguments of the original function */
 		wp_inline_edit_function.apply( this, arguments );
 	
-		// get the post ID from the argument
+		/* get the post ID from the argument */
 		var id = 0;
-		if ( typeof( post_id ) == 'object' ) { // if it is object, get the ID number
+		if ( typeof( post_id ) == 'object' ) { 
 			id = parseInt( this.getId( post_id ) );
 		}
 	
-		//if post id exists
+		/* if post id exists */
 		if ( id > 0 ) {
-	
-			// add rows to variables
 			var specific_post_edit_row = $( '#edit-' + id ),
 				specific_post_row = $( '#post-' + id ),
-				datetext = $( '.event_dates', specific_post_row ).text(); 
-			var dt = new Date(datetext);
+				datetext = $( '.event_dates', specific_post_row ).text();
+			var timestamp = Date.parse(datetext);
+			if(Number.isNaN(timestamp))
+				return; 
+			var dt = new Date(timestamp);
 			var dtstring = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
 			var justdate = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
 	
@@ -475,10 +472,9 @@ if(typeof inlineEditPost !== 'undefined') {
 			
 			var end_display_code = $( '.end_display_code', specific_post_row ).val();
 	
-			// populate the inputs with column data
+			/* populate the inputs with column data */
 			$( ':input[name="event_dates"]', specific_post_edit_row ).val( dtstring );
 			$(':input[name="end_time"]', specific_post_edit_row ).val( end_tstring );
-			//console.log('target: '+'#quick_time_display-'+id);
 			if(end_display_code)
 				$('.quick_time_display', specific_post_edit_row ).val( end_display_code );
 		}
@@ -499,7 +495,7 @@ return dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate())
 }
 
 function rsvpsql_end_time(dt) {
-return pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());// + ':' + pad2(dt.getSeconds());
+return pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());
 }
 
 $('.free-text-end').change(
@@ -562,6 +558,34 @@ $('.free-text-date').change(
     }
 );
 
+$( function() {
+	$( "#sql-date" ).datepicker({
+		showOn: "button",
+		buttonImage: "../wp-content/plugins/rsvpmaker/datepicker.gif",
+		buttonImageOnly: true,
+		buttonText: "Select date",
+		onSelect: function()
+	  { 
+		  var dt = $(this).datepicker('getDate');
+		  var sql = $('#sql-date').val();
+		  var hour = parseInt($('#defaulthour').val());
+		  var minutes = parseInt($('#defaultmin').val());
+		  dt.setHours(hour);
+		  dt.setMinutes(minutes);
+		  $('#sql-date').val(rsvpsql_date(dt));      
+		  set_free_text_date(dt);
+		  $('#date-weekday').html(rsvpmaker_weekday(dt));      
+		  return false;
+	  }
+  });
+} );
+
+function set_free_text_date(dt) {
+	const options = { year: 'numeric', month: 'long', day: 'numeric' };
+	var localestring = dt.toLocaleDateString(undefined, options)+' '+dt.toLocaleTimeString().replace(':00 ',' ');
+	$('#free-text-date').val(localestring);
+}
+
 $('.sql-date').change(
     function() {
 		var datetext = $(this).val();
@@ -578,11 +602,13 @@ $('.sql-date').change(
             var localestring = dt.toLocaleDateString(undefined, options)+' '+dt.toLocaleTimeString().replace(':00 ',' ');
 			var target = $(this).attr('id').replace('sql','free-text');
             $('#'+target).val(localestring);       
-            $(this).val(rsvpsql_date(dt));//standardize format        
+            $(this).val(rsvpsql_date(dt));/* standardize format */
             $('#date-weekday').html(rsvpmaker_weekday(dt));        
         }
     }
 );
+/*simulate a change on load*/
+$('.sql-date').change();
 
 $('.quick-extra-blank').hide();
 var quickeditcount = 0;
@@ -626,7 +652,7 @@ function quick_template_time() {
 	let t = Date.parse('January 1, 2000 '+hour+':'+minutes);
 	if(Number.isNaN(t))
 	{
-		//set to a legal default value
+		/* set to a legal default value */
 		hour = '12';
 		minutes = '00';
 		t = Date.parse('January 1, 2000 '+hour+':'+minutes);

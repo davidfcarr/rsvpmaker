@@ -120,29 +120,17 @@ function rsvpmaker_date($date_format = '', $t = NULL) {
 
 }
 
-
-
 function get_sql_now() {
 
-	
-
 	$date = rsvpmaker_date('Y-m-d H:i:s');
-
-	 
 
 	return $date;
 
 }
 
-
-
 function get_sql_curdate() {
 
-	
-
 	$date = rsvpmaker_date('Y-m-d 00:00:00');
-
-	 
 
 	return $date;
 
@@ -424,7 +412,15 @@ global $wpdb;
 
 }
 
-
+function is_rsvpmaker_deadline_future($post_id) {
+	$deadline = (int) get_post_meta($post_id,"_rsvp_deadline",true);
+	if(!$deadline)
+	{
+		$date = get_rsvp_date($post_id);
+		$deadline = rsvpmaker_strtotime($date.' +1 hour');
+	}
+	return $deadline > time();
+}
 
 function get_next_rsvp_on() {
 
@@ -700,8 +696,6 @@ $wpdb->show_errors();
 
 $startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offset_hours.' HOUR) ' : '"'.get_sql_now().'"';
 
-
-
 	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
 
 	 FROM ".$wpdb->posts."
@@ -709,7 +703,6 @@ $startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offse
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
 
 	 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
-
 	 if( !empty($where) )
 
 	 	{
@@ -736,7 +729,35 @@ $startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offse
 
 }
 
+function get_future_dates ($limit) {
 
+	global $wpdb;
+	
+	$wpdb->show_errors();
+	
+	$startfrom = '"'.get_sql_curdate().'"';
+	
+		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
+	
+		 FROM ".$wpdb->posts."
+	
+		 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	
+		 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
+		$sql .= ' ORDER BY a1.meta_value ';
+	
+		 if( !empty($limit) )
+	
+			$sql .= ' LIMIT 0,'.$limit.' ';
+	
+		if(!empty($_GET["debug_sql"]))
+	
+			echo $sql;
+	
+		return $wpdb->get_results($sql);
+	
+}
+	
 
 function count_future_events () {
 

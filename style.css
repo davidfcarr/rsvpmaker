@@ -201,6 +201,16 @@ p.daily-schedule-event-types {
     clear: both;
 }
 
+.countdowndigits-line {
+    font-size: 40px;
+}
+
+.countdowndigits {
+    display: inline-block;
+    min-width: 1.5em;
+    text-align: center;
+}
+
 /*! jQuery UI - v1.11.4 - 2016-05-11
 * http://jqueryui.com
 * Includes: core.css, tooltip.css, theme.css

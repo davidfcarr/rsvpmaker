@@ -16,11 +16,6 @@ const { Panel, PanelBody, PanelRow } = wp.components;
 
 import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaFormToggle} from './metadata_components.js';
 
-function recordChange(metaKey, metaValue) {
-	console.log(metaKey + ': ', metaValue);
-}
-
-//<!-- RSVPTemplate / -->
 function related_link() {
 	if(rsvpmaker_ajax && rsvpmaker_ajax.special)
 		{

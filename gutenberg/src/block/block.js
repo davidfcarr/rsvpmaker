@@ -20,7 +20,7 @@ const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const { SelectControl, TextControl, ToggleControl } = wp.components;
 
-const rsvpupcoming = [{label: 'Next event',value: 'next'},{label: 'Next event - RSVP on',value: 'nextrsvp'}];
+const rsvpupcoming = [{label: __('Choose event'),value: ''},{label: __('Next event'),value: 'next'},{label: __('Next event - RSVP on'),value: 'nextrsvp'}];
 apiFetch( {path: 'rsvpmaker/v1/future'} ).then( events => {
 	if(Array.isArray(events)) {
 		 events.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
@@ -1061,6 +1061,83 @@ registerBlockType( 'rsvpmaker/future-rsvp-links', {
 	 */
 	save: function( props ) {
 		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/countdown', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Countdown Timer' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a countdown timer for the specified event'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Countdown' ),
+		__( 'Timer' ),
+	],
+       attributes: {
+            event_id: {
+            type: 'string',
+            default: '',
+            	},
+            countdown_id: {
+				type: 'string',
+				default: '',
+				},
+            expiration_display: {
+				type: 'string',
+				default: 'stoppedclock',
+				},
+			expiration_message: {
+				type: 'string',
+				default: 'The wait is over!',
+				},
+			},
+	edit: function( props ) {
+	const { attributes: { event_id, countdown_id, expiration_display, expiration_message }, setAttributes, isSelected } = props;
+	let	current_id = wp.data.select("core/editor").getCurrentPostId();
+	let isEvent = ((rsvpmaker_type == 'rsvpmaker') && rsvpmaker_ajax._rsvp_first_date);
+	setAttributes( { countdown_id : 'countdown-'+current_id } );
+
+	function showFormPrompt () {
+		return <div>
+		<p><strong>Click here to set options.</strong></p>
+		</div>
+	}
+
+	function showForm() {
+			return (
+				<form>
+{(!isEvent && <SelectControl
+        label={__("Select Event",'rsvpmaker')}
+        value={ event_id }
+        options={ rsvpupcoming }
+        onChange={ ( event_id ) => { setAttributes( { event_id: event_id} ) } }
+    />)}
+<SelectControl
+        label={__("Show When Time Expires",'rsvpmaker')}
+        value={ expiration_display }
+        options={ [{label: __('Stopped Clock 00:00:00'),value: 'stoppedclock'},{label: __('Stopped Clock Plus Message'),value: 'clockmessage'},{label: __('Message Only'),value: 'message'},{label: __('Nothing, Clear Content'),value: 'nothing'}] }
+        onChange={ ( expiration_display ) => { setAttributes( { expiration_display: expiration_display} ) } }
+    />
+<TextControl label={__('Expiration Message','rsvpmaker')} value={expiration_message} onChange={ ( expiration_message ) => { setAttributes( { expiration_message: expiration_message} ) } } />
+	</form>
+);
+}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Embed a countdown clock.
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ (!isSelected) && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	save: function(props) {
+	const { attributes: { event_id, countdown_id, expiration_display, expiration_message } } = props;
+	return <div id={countdown_id} event_id={event_id} expiration_display={expiration_display} expiration_message={expiration_message} className={ props.className } ></div>
 	},
 } );
 

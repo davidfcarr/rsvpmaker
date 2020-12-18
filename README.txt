@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.6
-Stable tag: 8.2.1
+Stable tag: 8.2.7
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -116,6 +116,20 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.2.7 =
+
+* Better cross-browser support for countdown block
+
+= 8.2.6 =
+
+* Tweaked countdown timer block to allow you to use next event (or next event with rsvp on) instead of specifying event ID. Added options for what to display after the countdown expires.
+* Fix for glitch in Quick Edit options for setting event dates.
+
+= 8.2.4 =
+
+* New Countdown Timer block. Can be used within an event or on another page or post where you specify the event you want to count down to.
+* Fix issue with Stripe code and minification
 
 = 8.2.1 =
 

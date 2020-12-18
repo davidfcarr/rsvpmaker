@@ -5,13 +5,16 @@
  * which makes it higher in priority.
  */
 
-.wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event, .wp-block-rsvpmaker-rsvpdateblock, .wp-block-rsvpmaker-placeholder, .schedule-placeholder  {
+.wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event, .wp-block-rsvpmaker-rsvpdateblock, .wp-block-rsvpmaker-placeholder, .schedule-placeholder, .wp-block-rsvpmaker-countdown {
   background: #ddd;
   border: 0.2rem solid $black;
   color: $black;
   margin: 0 auto;
   max-width: 740px;
   padding: 1rem;
+}
+.wp-block-rsvpmaker-countdown form {
+	height: 400px;
 }
 .wp-block-rsvpmaker-upcoming label, .wp-block-rsvpmaker-event label {
 	display: block;
@@ -64,4 +67,13 @@ div.guestnote {
 
 .rsvpmenu-custom {
 	padding-left: 10px;
+}
+
+select {
+	height: 2em;
+	padding: 5px;
+}
+option {
+	height: 1.5em;
+	padding: 5px;
 }

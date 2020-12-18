@@ -1301,7 +1301,7 @@ if(!isset($atts["hide_title"]) || !$atts["hide_title"])
 	
 	if(isset($atts['one_format']) && ($atts["one_format"] == 'button_only')) {
 		$content = embed_dateblock($atts);
-	if(is_rsvpmaker_future($post_id)) 
+	if(is_rsvpmaker_deadline_future($post_id)) 
 		{
 		$rsvp = get_rsvp_link($post_id);
 		}
@@ -1328,7 +1328,8 @@ else
 	if($atts["one_format"] == 'button_only')
 	{
 	rsvpmaker_debug_log('one_format att = button_only','rsvpmaker_one atts');
-	if(is_rsvpmaker_future($post_id)) 
+	$content = get_rsvp_link($post_id);
+/*	if(is_rsvpmaker_future($post_id)) 
 		{
 		$content = get_rsvp_link($post_id);
 		}
@@ -1336,6 +1337,7 @@ else
 		{
 		$content = __('Event date is past','rsvpmaker');
 		}
+*/
 	}
 	elseif($atts["one_format"] == 'embed_dateblock') {
 		$content = embed_dateblock($atts);
@@ -1423,7 +1425,8 @@ while ( have_posts() ) : the_post();
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
 <p class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><?php the_title(); echo $dateblock; ?></span></p>
 <?php
-if(is_rsvpmaker_future($post_id))
+
+if(is_rsvpmaker_deadline_future($post_id))
 {
 	if(isset($atts["show_form"]))
 		echo rsvpmaker_form($atts);
@@ -1433,6 +1436,7 @@ if(is_rsvpmaker_future($post_id))
 }
 	else
 		_e('Event date is past','rsvpmaker');
+
 endwhile;
 
 }

@@ -1910,7 +1910,6 @@ if(isset($_POST["onfile"]))
 global $current_user; // if logged in
 
 
-
 $future = is_rsvpmaker_future($event, 1); // if start time in the future (or within one hour)
 
 $yesno = ($future) ? 1 : 2;// 2 for replay
@@ -4235,8 +4234,6 @@ if($rsvp_count) {
 
 }
 
-
-
 $now = time();
 
 $rsvplink = get_rsvp_link($post->ID,true);
@@ -4245,9 +4242,7 @@ if(isset($deadline) && ($now  > $deadline  ) )
 
 	{
 
-		//if deadline is set, use it rather than $last_time
-
-			$content .= '<p class="rsvp_status">'.__('RSVP deadline is past','rsvpmaker').'</p>';
+			$content .= '<p class="rsvp_status">'.__('RSVP deadline is past','rsvpmaker').rsvpmaker_date('r',$deadline).':'.rsvpmaker_date('r',$now).'</p>';
 
 	}
 

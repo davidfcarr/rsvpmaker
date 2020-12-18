@@ -10,6 +10,55 @@ jQuery(document).ready(function($) {
 
     });
 
+    $('.wp-block-rsvpmaker-countdown').each(
+        function () {
+            var event_id = $(this).attr('event_id');
+            var countdown_id = $(this).attr('id');
+            if(event_id == '')
+            {
+                var parts = countdown_id.split('-');
+                if(parts[1])
+                    event_id = parts[1];
+            }
+            if(event_id == '')
+                return;
+            let apiurl = rsvpmaker_rest.rest_url+'rsvpmaker/v1/time_and_zone/'+event_id;
+            jQuery.get(apiurl, null, function(response) {
+                let t = parseInt(response);
+                if(Number.isNaN(t)) {
+                    $('#'+countdown_id).html('Event not found');
+                    return;
+                }
+                let interval = setInterval(function() {
+                var now = new Date().getTime();
+                var distance = t - now;
+                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var hpad = (hours < 10) ? '0' : '';
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var mpad = (minutes < 10) ? '0' : '';
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                var spad = (seconds < 10) ? '0' : '';
+                    if (distance < 0) {
+                        clearInterval(interval);
+                        days = hours = minutes = seconds = '00'; 
+                        let display = $('#'+countdown_id).attr('expiration_display');
+                        let message = $('#'+countdown_id).attr('expiration_message');
+                        let expiration = '';
+                        if((display == 'stoppedclock') || display=='clockmessage')
+                        expiration = '<div class="countdowndigits-line"><div class="countdowndigits countdowndays">'+days+'</div> <span class="countdowndayslabel">days</span> <div class="countdowndigits countdownhours">'+hours+'</div><span class="countdownspacer">:</span><div class="countdowndigits countdownminutes">'+minutes+'</div><span class="countdownspacer">:</span><div class="countdowndigits countdownseconds">'+seconds+'</div></div>';
+                        if((display == 'message') || display=='clockmessage')
+                        expiration = expiration + '<p class="countdown_expiration_message">'+message+'</p>';
+                        $('#'+countdown_id).html(expiration);
+                    }
+                    else
+                        $('#'+countdown_id).html('<div class="countdowndigits-line"><div class="countdowndigits countdowndays">'+days+'</div> <span class="countdowndayslabel">days</span> <div class="countdowndigits countdownhours">'+hpad+hours+'</div><span class="countdownspacer">:</span><div class="countdowndigits countdownminutes">'+mpad+minutes+'</div><span class="countdownspacer">:</span><div class="countdowndigits countdownseconds">'+spad+seconds+'</div></div>');
+                    }, 1000);
+                });
+        }
+    );
+
+
     $('.timezone_on').click( function () {
     	var utc = $(this).attr('utc');
         var target = $(this).attr('target');
@@ -17,7 +66,6 @@ jQuery(document).ready(function($) {
         var event_tz  = $(this).attr('event_tz');
         if(event_tz == '')
         {
-            console.log('tz convert already ran');
             return;
         }
 		var localdate = new Date(utc);

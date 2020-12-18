@@ -184,7 +184,7 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 
     $namespace = 'rsvpmaker/v1';
 
-    $path = 'type/(?P<type>[A-Za-z_\-]+)';	  
+    $path = 'type/(?P<type>[A-Z0-9a-z_\-]+)';	  
 
 	  
 
@@ -502,10 +502,6 @@ public function get_items($request) {
 
       $invoice_id = get_post_meta($rsvp_post_id,'_open_invoice_'.$rsvp_id, true);
 
-      //if($invoice_id)
-
-      //{
-
       $charge = get_post_meta($rsvp_post_id,'_invoice_'.$rsvp_id, true);
 
       $paid_amounts = get_post_meta($rsvp_post_id,'_paid_'.$rsvp_id);
@@ -537,8 +533,6 @@ public function get_items($request) {
       delete_post_meta($rsvp_post_id,'_open_invoice_'.$rsvp_id);
 
       delete_post_meta($rsvp_post_id,'_invoice_'.$rsvp_id);
-
-      //}	
 
     }
 
@@ -1136,6 +1130,55 @@ public function get_items($request) {
   }
 }
 
+class RSVPMaker_Time_And_Zone extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'time_and_zone/(?P<post_id>[0-9a-z]+)';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'GET',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+  $date = '';
+  if($request["post_id"] == 'nextrsvp')
+  {
+    $event = get_next_rsvp_on();
+    if($event)
+    $date = $event->datetime;
+  }
+  elseif($request["post_id"] == 'next') {
+    $event = get_next_rsvpmaker();
+    if($event)
+    $date = $event->datetime;
+  }
+  elseif(is_numeric($request["post_id"]))
+    $date = get_rsvp_date($request["post_id"]);
+
+    if(!empty($date))
+      $t = rsvpmaker_strtotime($date) * 1000;
+    return new WP_REST_Response($t, 200);
+  }
+}
+
 add_action('rest_api_init', function () {
 
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -1201,7 +1244,8 @@ add_action('rest_api_init', function () {
   $nt->register_routes();
   $deet = new RSVPMaker_Details();
   $deet->register_routes();
-
+  $tz = new RSVPMaker_Time_And_Zone();
+  $tz->register_routes();
 });
 
 ?>

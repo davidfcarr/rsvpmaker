@@ -1,5 +1,5 @@
 <?php
-$scriptversion = '20201206';
+$scriptversion = '20201217c';
 //$rsvpscript = 'rsvpmaker.js';
 $rsvpscript = 'rsvpmaker.min.js';
 
@@ -15,7 +15,8 @@ $post_id = isset($post->ID) ? $post->ID : 0;
 	if((!function_exists('do_blocks') && isset($_GET['action'])) || (isset($_GET['post_type']) && ($_GET['post_type'] == 'rsvpmaker') ) || ((isset($_GET['page']) && 
 	((strpos($_GET['page'],'rsvp') !== false ) || (strpos($_GET['page'],'toast') !== false ) )  ) ) )
 	{
-	wp_enqueue_script('jquery-ui-dialog');
+    wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
+    wp_enqueue_script('jquery-ui-dialog');
 	wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css',array(),'4.1' );
 	wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js',array('jquery'), $scriptversion );
 	wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css',array(),$scriptversion);

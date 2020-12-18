@@ -11,8 +11,6 @@ var TemplateTextControl = wp.compose.compose(
     //if(props.key == 'hour')
     return {
 			setValue: function( value ) {
-        console.log('new value');
-        console.log(value);
 				dispatch( 'rsvpevent' ).setHour(value);
 			}
 		}
@@ -23,7 +21,6 @@ var TemplateTextControl = wp.compose.compose(
 			value: select( 'rsvpevent' ).getHour(),
 		}
 	} ) )( function( props ) {
-    console.log(props);
 		return el( TextControl, {
 			label: props.label,
 			value: props.value,

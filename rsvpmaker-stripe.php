@@ -111,9 +111,6 @@ return rsvpmaker_stripe_form($vars, $show);
 }
 
 
-
-//global variable to prevent loops
-
 $rsvpmaker_stripe_form = '';
 
 
@@ -123,11 +120,6 @@ function rsvpmaker_stripe_form($vars, $show = false) {
 rsvpmaker_debug_log('rsvpmaker_stripe_form');
 
 global $post, $rsvp_options, $current_user, $button, $rsvpmaker_stripe_form, $wpdb;
-
-//if(!empty($rsvpmaker_stripe_form))
-
-	//return $rsvpmaker_stripe_form;
-
 if(!$show)
 
 	$show =(!empty($vars['showdescription']) && ($vars['showdescription'] == 'yes')) ? true : false;
@@ -136,11 +128,9 @@ $currency = (empty($rsvp_options['paypal_currency'])) ? 'usd' : strtolower($rsvp
 
 $vars['currency'] = $currency;
 
-//$rsvpmaker_stripe_checkout_page_id = get_option('rsvpmaker_stripe_checkout_page_id');
-
 $rsvpmaker_stripe_checkout_page_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' ");
 
-if(empty($rsvpmaker_stripe_checkout_page_id)) {// || isset($_GET['reset_stripe_checkout_page'])) {
+if(empty($rsvpmaker_stripe_checkout_page_id)) {
 
 	rsvpmaker_debug_log($rsvpmaker_stripe_checkout_page_id,'attempting rsvpmaker_stripe_checkout_page_id');
 
@@ -173,8 +163,6 @@ if(empty($rsvpmaker_stripe_checkout_page_id)) {// || isset($_GET['reset_stripe_c
 	update_post_meta($rsvpmaker_stripe_checkout_page_id,'_rsvpmaker_special','Payment checkout page for Stripe');
 
 	rsvpmaker_debug_log($rsvpmaker_stripe_checkout_page_id,'new checkout page');
-
-	//update_option('rsvpmaker_stripe_checkout_page_id',$rsvpmaker_stripe_checkout_page_id);
 
 }
 
@@ -289,10 +277,6 @@ $secret = $keys['sk'];
 if(strpos($public,'test'))
 
 	$vars['test'] = 'TEST TRANSACTION';
-
-
-
-//$vars['currency'] = 'XYZ';
 
 $currency_symbol = '';
 
@@ -472,8 +456,6 @@ card.addEventListener('change', ({error}) => {
 
 });
 
-
-
 var cardFields = document.getElementById('stripe-checkout-form');
 
 var submitButton = document.getElementById('card-button');
@@ -482,77 +464,40 @@ var cardResult = document.getElementById('card-result');
 
 var clientSecret = document.getElementById('card-button').getAttribute('data-secret');
 
-
-
 submitButton.addEventListener('click', function(ev) {
-
 ev.preventDefault();
-
 var name = document.getElementById('stripe-checkout-name').value;
-
 var email = document.getElementById('stripe-checkout-email').value;
-
-var successurl = '<?php echo site_url('/wp-json/rsvpmaker/v1/stripesuccess/'.$idempotency_key) ?>';//rsvpmaker_json_url+'stripesuccess/< ?php echo $idempotency_key; ? >';
-
+var successurl = '<?php echo site_url('/wp-json/rsvpmaker/v1/stripesuccess/'.$idempotency_key) ?>';
 if((name == '') || (email == '')){
-
 	cardResult.innerHTML = 'Name and email are both required';
-
 	return;
-
 }
-
 cardResult.innerHTML = '<?php _e('Please wait','rsvpmaker');?>';
-
 cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
   stripe.confirmCardPayment(clientSecret, {
-
     payment_method: {
-
       card: card,
-
       billing_details: {
-
         name: name,
-
 		email: email,
-
       }
-
     }
-
   }).then(function(result) {
-
     if (result.error) {
-
 		cardResult.innerHTML = result.error.message;
-
-      // Show error to your customer (e.g., insufficient funds)
-
       console.log(result.error.message);
-
 	  console.log(result);
-
     } else {
-
-      // The payment has been processed!
-
 	submitButton.style = 'display: none';
-
 	cardFields.style = 'display: none';
-
       if (result.paymentIntent.status === 'succeeded') {
-
 		  console.log(result);
-
 		cardResult.innerHTML = '<?php _e('Recording payment','rsvpmaker');?> ...';
-
 		const form = new FormData(document.getElementById('payee-form'));
-
 		fetch(successurl, {
-
-  method: 'POST', // or 'PUT'
+  method: 'POST',
 
   body: form,
 
@@ -574,7 +519,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
 			else
 
-				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase();//+myJson.payment_confirmation_message;
+				cardResult.innerHTML = '<?php _e('Payment processed for','rsvpmaker');?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol?>'+myJson.amount+' '+myJson.currency.toUpperCase();
 
 		});
 
@@ -627,18 +572,8 @@ function stripe_log_by_email ($email, $months = 0) {
 		if($months && ($timestamp < $start))
 
 			{
-
-			//$log .= 'stamp: '.date('Y-m-d',$timestamp)." is less than ";
-
-			//$log .= 'start: '.date('Y-m-d',$start)."\n";
-
 			break;
-
 			}
-
-			//$log .= 'stamp: '.date('Y-m-d',$timestamp)." is greater than ";
-
-			//$log .= 'start: '.date('Y-m-d',$start)." \n";
 
 		foreach($vars as $name => $value)
 
@@ -683,9 +618,6 @@ function rsvpmaker_stripe_notify($vars) {
 	if(!empty($vars['rsvp_id']))
 
 	{
-
-		//if connected to rsvp, send payment confirmation
-
 		rsvp_confirmation_after_payment($vars['rsvp_id']);
 
 		return;
@@ -835,8 +767,6 @@ function stripe_balance_history ($limit = 20) {
 		"https://rsvpmaker.com"
 
 	);
-
-//use https://stripe.com/docs/api/balance/balance_history
 
 $stripe = new \Stripe\StripeClient($secret);
 

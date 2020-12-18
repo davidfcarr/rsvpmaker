@@ -253,7 +253,7 @@ else
 $futureyear = 5 + (int) date('Y');
 
 ?>
-<div id="<?php echo $prefix; ?>date<?php echo $index;?>" >
+<div id="<?php echo $prefix; ?>date<?php echo $index;?>" ><input type="hidden" id="defaulthour" value="<?php echo $rsvp_options["defaulthour"]; ?>" /><input type="hidden" id="defaultmin" value="<?php echo $rsvp_options["defaultmin"]; ?>" />
 <p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date" value="<?php echo rsvpmaker_strftime('%B %e, %Y '.$rsvp_options['time_format'],$t); ?>" size="30"> or <input name="rsvp_sql_date" type="text" class="sql-date" id="sql-date" value="<?php echo rsvpmaker_date('Y-m-d H:i:s',$t) ?>"> <span id="date-weekday"><?php echo rsvpmaker_strftime('%A',$t) ?></span>
 </p>
 <div id="date_error"></div>
@@ -5849,7 +5849,6 @@ function rsvpmaker_quick_edit_save( $post_id ){
 		return;
 	}
 
-	// update the price
 	if ( isset( $_POST['event_dates'] ) ) {
 		if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['event_dates']))
 			update_post_meta( $post_id, '_rsvp_dates', $_POST['event_dates'] );
