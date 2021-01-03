@@ -32,8 +32,6 @@ if(!function_exists('draw_eventdates')) {
 
 function draw_eventdates() {
 
-
-
 global $post;
 
 $post_id = (isset($post->ID)) ? $post->ID : 0;
@@ -47,18 +45,13 @@ global $custom_fields;
 if(isset($_GET["clone"]))
 
 	{
-
 		$id = (int) $_GET["clone"];
-
 		$custom_fields = get_rsvpmaker_custom($id);
-
 	}
 
 elseif(isset($post->ID))
 
 	$custom_fields = get_rsvpmaker_custom($post->ID);
-
-
 
 if(isset($custom_fields["_rsvpmaker_special"][0]))
 
@@ -260,13 +253,9 @@ if(!function_exists('template_schedule') )
 
 function template_schedule($template) {
 
-
-
 if(!is_array($template))
 
 	$template = unserialize($template);
-
-
 
 global $post;
 
@@ -303,7 +292,6 @@ else
 		$dows[0] = (isset($template["dayofweek"])) ? $template["dayofweek"] : 0;
 
 	}
-
 
 
 // default values
@@ -4344,7 +4332,7 @@ echo '</p>';
 
   }
 
-if ($rsvp_yesno) { echo '<p>'.__('Your Answer','rsvpmaker');?>: <input name="yesno" type="radio" value="1" <?php if(!isset($rsvprow) || $rsvprow["yesno"]) echo 'checked="checked"';?> /> <?php echo __('Yes','rsvpmaker');?> <input name="yesno" type="radio" value="0" <?php if(isset($rsvprow["yesno"]) && ($rsvprow["yesno"] == 0)) echo 'checked="checked"';?> /> <?php echo __('No','rsvpmaker').'</p>'; } else echo '<input name="yesno" type="hidden" value="1" />'; 
+if ($rsvp_yesno) { echo '<p>'.__('Your Answer','rsvpmaker');?>: <input name="yesno" class="radio_buttons" type="radio" value="1" <?php if(!isset($rsvprow) || $rsvprow["yesno"]) echo 'checked="checked"';?> /> <?php echo __('Yes','rsvpmaker');?> <input name="yesno" type="radio"  class="radio_buttons" value="0" <?php if(isset($rsvprow["yesno"]) && ($rsvprow["yesno"] == 0)) echo 'checked="checked"';?> /> <?php echo __('No','rsvpmaker').'</p>'; } else echo '<input name="yesno" type="hidden" value="1" />'; 
 
 
 
@@ -8423,8 +8411,6 @@ $cd = rsvpmaker_date("j");
 		$schedoptions = sprintf(' (<a href="%s">Options</a>)',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$sched->ID);
 
 		$editlist .= sprintf('<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s</td><td>%s</td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>',$a,$sched->postID,$timechange,$edit, $d,date('F d, Y',$thistime),get_post_permalink($sched->postID),$sched->post_title.$ifdraft.$schedoptions);
-
-
 
 		$template_update = get_post_meta($sched->postID,"_updated_from_template",true);
 

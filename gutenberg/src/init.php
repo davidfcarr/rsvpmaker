@@ -21,29 +21,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 1.0.0
  */
 
-function rsvpmaker_server_block_render(){
-	if(wp_is_json_request())
-		return;
-	register_block_type('rsvpmaker/event', ['render_callback' => 'rsvpmaker_one']);	
-	register_block_type('rsvpmaker/upcoming', ['render_callback' => 'rsvpmaker_upcoming']);	
-	register_block_type('rsvpmaker/stripecharge', ['render_callback' => 'rsvpmaker_stripecharge']);	
-	register_block_type('rsvpmaker/limited', ['render_callback' => 'rsvpmaker_limited_time']);	
-	register_block_type('rsvpmaker/formfield', ['render_callback' => 'rsvp_form_text']);	
-	register_block_type('rsvpmaker/formtextarea', ['render_callback' => 'rsvp_form_textarea']);	
-	register_block_type('rsvpmaker/formselect', ['render_callback' => 'rsvp_form_select']);	
-	register_block_type('rsvpmaker/formradio', ['render_callback' => 'rsvp_form_radio']);	
-	register_block_type('rsvpmaker/formnote', ['render_callback' => 'rsvp_form_note']);	
-	register_block_type('rsvpmaker/guests', ['render_callback' => 'rsvp_form_guests']);
-	register_block_type('rsvpmaker/stripe-form-wrapper', ['render_callback' => 'stripe_form_wrapper']);
-	register_block_type('rsvpmaker/eventlisting', ['render_callback' => 'event_listing']);
-	register_block_type('rsvpmaker/rsvpdateblock', ['render_callback' => 'rsvpdateblock']);
-	register_block_type('rsvpmaker/upcoming-by-json', ['render_callback' => 'rsvpjsonlisting']);
-	register_block_type('rsvpmaker/embedform', ['render_callback' => 'rsvpmaker_form']);	
-	register_block_type('rsvpmaker/schedule', ['render_callback' => 'rsvpmaker_daily_schedule']);
-	register_block_type('rsvpmaker/future-rsvp-links', ['render_callback' => 'future_rsvp_links']);
-	register_block_type('rsvpmaker/submission', ['render_callback' => 'rsvpmaker_submission']);
-}
-
 function rsvpmaker_check_string($value) {
 	if(is_string($value))
 		return $value;

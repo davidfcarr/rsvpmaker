@@ -465,7 +465,14 @@ echo $label;
           // handle the options page
           function handle_options()
           {
-              $options = $this->get_options();
+			if(!empty($_POST['rsvpmaker_save_form']) && !empty($_POST['form_id']))
+			{
+				$forms = rsvpmaker_get_forms();
+				$forms[sanitize_text_field($_POST['rsvpmaker_save_form'])] = (int) $_POST['form_id'];
+				update_option('rsvpmaker_forms',$forms);
+			}
+
+			$options = $this->get_options();
 			  if(isset($_POST["payment_option"])) {
               $newoptions = stripslashes_deep($_POST["payment_option"]);
 				$newoptions["stripe"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'stripe')) ? 1 : 0;
@@ -523,6 +530,7 @@ echo $label;
 
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').'</p>'.default_gateway_check( get_rsvpmaker_payment_gateway () ).'</div>';				  
 			  }	
+
 
 			  if(isset($_POST["enotify_option"])) {
               $newoptions = stripslashes_deep($_POST["enotify_option"]);
@@ -648,6 +656,7 @@ if(isset($_POST['timezone_string']))
       <a class="rsvpmaker-nav-tab nav-tab" href="#notification_email"><?php _e('Email Server','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab" href="#email"><?php _e('Mailing List','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab" href="#groupemail"><?php _e('Group Email','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab" href="#rsvpforms"><?php _e('RSVP Forms','rsvpmaker');?></a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
@@ -754,23 +763,18 @@ printf('<div id="editconfirmation"><a target="_blank" href="%s">'.__('Edit','rsv
 <?php
 if(isset($options["rsvp_form"]) && is_numeric($options["rsvp_form"]))
 {
-echo '<h3>RSVP Form</h3>';
+echo '<h3>Default RSVP Form</h3>';
 $fpost = get_post($options["rsvp_form"]);
 if(empty($fpost))
 	{
 	$options["rsvp_form"] = upgrade_rsvpform();
 	$fpost = get_post($options["rsvp_form"]);
 	}
-$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? __('Yes','rsvpmaker') : __('No','rsvpmaker');
-$note = (strpos($fpost->post_content,'name="note"')) ?  __('Yes','rsvpmaker') : __('No','rsvpmaker');
-preg_match_all('/"slug":"([^"]+)/',$fpost->post_content,$matches);
-if(!empty($matches[1]))
-foreach($matches[1] as $match)
-	$fields[$match] = $match;
-printf('<div>'.__('Fields','rsvpmaker').': %s<br />'.__('Guests','rsvpmaker').': %s<br />'.__('Note field','rsvpmaker').': %s</div>',implode(',',$fields),$guest,$note);
+echo rsvpmaker_form_summary($fpost);
 $edit = admin_url('post.php?action=edit&post='.$options["rsvp_form"]);
 printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','rsvpmaker'));
-printf('<a style="display: block; margin-top: 15px; color: red;" href="%s">%s</a>',admin_url('options-general.php?page=rsvpmaker-admin.php&rsvp_form_reset='.$options['rsvp_form']),__('Reset Form to Default','rsvpmaker'));
+printf('<div><a style="display: block; margin-top: 15px; color: red;" href="%s">%s</a></div>',admin_url('options-general.php?page=rsvpmaker-admin.php&rsvp_form_reset='.$options['rsvp_form']),__('Reset Form to Default','rsvpmaker'));
+printf('<div>%s <a href="%s">%s</a></div>',__('For alternative forms, see ','rsvpmaker'),admin_url('options-general.php?page=rsvpmaker-admin.php&tab=rsvpforms'), __('RSVP Forms tab','rsvpmaker'));
 }
 else
 {
@@ -1317,6 +1321,52 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
 <button>Submit</button>
 </form>
 </section>
+<section id="rsvpforms" class="rsvpmaker">
+<?php
+printf('<p>%s</p>',__('Use this page to manage alternative RSVP Forms. Like the default form, any of these alternative forms can be customized for an event post or template. If you created a custom form that worked well, you can assign it a name so that it can be reused with other events and templates.','rsvpmaker'));
+printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><h3>%s</h3><p><label>%s</label> <input type="text" name="rsvp_form_new" value=""></p><p><em>%s</em></p><p> %s</p></form>',admin_url('edit.php'),__('Create a Reusable RSVP Form','rsvpmaker'),__('Label','rsvpmaker'),__('A form will be created with a sampling of input fields you can copy, modify, or delete to create a form that meets your needs.','rsvpmaker'),get_submit_button('Create'));
+$forms = rsvpmaker_get_forms();
+echo '<h3>Default Form</h3>';
+$fpost = get_post($options["rsvp_form"]);
+if(empty($fpost))
+	{
+	$options["rsvp_form"] = upgrade_rsvpform();
+	$fpost = get_post($options["rsvp_form"]);
+	}
+echo rsvpmaker_form_summary($fpost);
+$edit = admin_url('post.php?action=edit&post='.$options["rsvp_form"]);
+printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','rsvpmaker'));
+
+foreach($forms as $label => $form_id) {
+	$fpost = get_post($form_id);
+	if($fpost) {
+		printf('<h3>Form: %s</h3>',$label);
+		echo rsvpmaker_form_summary($fpost);
+		$edit = admin_url('post.php?action=edit&post='.$form_id);
+		printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','rsvpmaker'));
+	}
+}
+
+$results = $wpdb->get_results("SELECT ID, post_title, post_parent, post_content FROM $wpdb->posts JOIN $wpdb->postmeta ON ID=post_id WHERE meta_key='_rsvpmaker_special' AND meta_value='RSVP Form' AND post_parent ORDER BY ID DESC ");
+if($results)
+{
+	printf('<h2>%s</h2>',__('Save Existing Forms for Reuse','rsvpmaker'));
+
+$tab = (isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'rsvpforms') ? '<input type="hidden" id="activetab" value="rsvpforms" />' : '';
+$tab .= '<input type="hidden" name="tab" value="rsvpforms">';
+
+	foreach($results as $fpost) {
+		if(in_array($fpost->ID,$forms)) // if already in collection
+			continue;
+		printf('<h3>%s %s</h3>',get_the_title($fpost->post_parent),get_rsvp_date($fpost->post_parent));
+		echo rsvpmaker_form_summary($fpost);
+		$edit = admin_url('post.php?action=edit&post='.$fpost->ID);
+		printf('<form action="%s" method="post"><input type="hidden" name="form_id" value="%d">%s: <input type="text" name="rsvpmaker_save_form">%s <button>%s</button></form>',admin_url('options-general.php?page=rsvpmaker-admin.php'),$fpost->ID,__('Name','rsvpmaker'),$tab,__('Save','rsvpmaker'));
+	}
+}
+
+?>
+</section>
 </sections>
 
 </div>
@@ -1337,7 +1387,19 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
   if (isset($RSVPMAKER_Options)) {
       // register the activation function by passing the reference to our instance
       register_activation_hook(__FILE__, array(&$RSVPMAKER_Options, 'install'));
-  }
+}
+
+function rsvpmaker_form_summary($fpost) {
+	$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? __('Yes','rsvpmaker') : __('No','rsvpmaker');
+	$note = (strpos($fpost->post_content,'name="note"') || strpos($fpost->post_content,'formnote')) ?  __('Yes','rsvpmaker') : __('No','rsvpmaker');
+	preg_match_all('/"slug":"([^"]+)/',$fpost->post_content,$matches);
+	if(!empty($matches[1]))
+	foreach($matches[1] as $match)
+		$fields[$match] = $match;
+	if(empty($fields))
+		return;
+	return sprintf('<div>'.__('Fields','rsvpmaker').': %s<br />'.__('Guests','rsvpmaker').': %s<br />'.__('Note field','rsvpmaker').': %s</div>',implode(', ',$fields),$guest,$note);
+}
 
 function print_group_list_options($list_type, $vars) {
 	printf('<h3>%s List</h3>',ucfirst($list_type));
@@ -2662,7 +2724,7 @@ if($week == 6)
 	}
 else {
 	//monthly
-	$ts = rsvpmaker_mktime(0,0,0,$cm,1,$cy); // first day of month
+	$ts = rsvpmaker_mktime($template['hour'],$template['minutes'],0,$cm,1,$cy); // first day of month
 	if(isset($_GET["start"]))
 		$ts = rsvpmaker_strtotime($_GET["start"]);
 	$i = 0;
@@ -2672,7 +2734,7 @@ else {
 		{
 		$firstdays[$ts] = $ts;
 		$i++;
-		$ts = rsvpmaker_mktime(0,0,0,$cm+$i,1,$cy); // first day of month
+		$ts = rsvpmaker_mktime($template['hour'],$template['minutes'],0,$cm+$i,1,$cy); // first day of month
 		if($week == 0)
 			$projected[$ts] = $ts;
 		}
@@ -4027,6 +4089,7 @@ function rsvpmaker_reg_from_template($target_id,$days,$hours) {
 
 function rsvp_time_options ($post_id) {
 global $rsvp_options;
+$forms = rsvpmaker_get_forms();
 if(empty($post_id))
 {
 	$icons = $rsvp_options["calendar_icons"];
@@ -5105,6 +5168,14 @@ if(!strpos($rsvp_options["time_format"],'T') )
 </p>
 
 <?php
+$o = sprintf('<option value="%d">%s</option>',$rsvp_options['rsvp_form'],__('Default','rsvpmaker'));
+$forms = rsvpmaker_get_forms();
+foreach($forms as $label => $form_id)
+{
+$o .= sprintf('<option value="%d">%s</option>',$form_id,$label);
+}
+printf('<p class="rsvp_form_select"><label>%s</label> <select name="rsvp_form">%s</select></p>',__('RSVP Form','rsvpmaker'),$o);
+
 }
 submit_button();
 echo '</form></div>';
@@ -5190,6 +5261,8 @@ if(!empty($_POST["rsvpmaker_new_post"]))
 		else {
 			save_rsvp_meta($post_id, true);
 		}
+		if(!empty($_POST['rsvp_form']))
+			update_post_meta($post_id,'_rsvp_form', (int) $_POST['rsvp_form']);
 		rsvpmaker_debug_log($_POST,'call to rsvpmaker_save_calendar_data');
 		rsvpmaker_save_calendar_data($post_id);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);

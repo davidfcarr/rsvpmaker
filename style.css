@@ -205,10 +205,20 @@ p.daily-schedule-event-types {
     font-size: 40px;
 }
 
+/* smaller on mobile */
+@media screen and (max-width: 400px) {
+	.countdowndigits-line {
+		font-size: 30px;
+	}
+}
+
 .countdowndigits {
     display: inline-block;
     min-width: 1.5em;
     text-align: center;
+}
+#rsvpform .radio_buttons, #rsvpform .email_list_ok  {
+	display: inline-block;
 }
 
 /*! jQuery UI - v1.11.4 - 2016-05-11

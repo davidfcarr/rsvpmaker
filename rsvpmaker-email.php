@@ -2127,6 +2127,7 @@ if(empty($templates) || isset($_GET["reset_email_template"]))
 {
 update_option('rsvpmaker_email_template',$model_templates);
 update_option('rsvpmaker_tx_template',1);
+$templates = $model_templates;
 if(isset($_GET["reset_email_template"]))
 	return $model_templates;
 }
