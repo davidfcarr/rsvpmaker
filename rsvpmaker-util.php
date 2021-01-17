@@ -2596,26 +2596,21 @@ function get_form_links($post_id, $t, $parent_tag) {
 
 	$form_id = get_post_meta($post_id,'_rsvp_form',true);
 
+	$forms = rsvpmaker_get_forms();
+
 	if($form_id) {
 
 		$parent_id = rsvpmaker_parent ($form_id);
-
+		$formtype = array_search($form_id,$forms);
 		if(empty($parent_id))
-
-			$label = ' (Default)';
-
+			$label = empty($formtype) ? ' (Default)' : '(Default: '.$formtype.')';
 		elseif($parent_id == $t)
-
 			$label = ' (From Template)';
-
 	}
 
 	else {
-
 		$form_id = $rsvp_options['rsvp_form'];
-
 		$label = ' (Default)';
-
 	}
 
 	$args[] = array(
@@ -2631,7 +2626,7 @@ function get_form_links($post_id, $t, $parent_tag) {
 		'meta'  => array( 'class' => 'rsvpmenu')
 
 	);
-	if(empty($label) || $label == ' (From Template)') {
+	if(empty($label) || ($label == ' (From Template)') || (strpos($label, ':') ) ) {
 		$args[] = array(
 
 			'parent'    => 'edit_form',
@@ -2664,6 +2659,32 @@ function get_form_links($post_id, $t, $parent_tag) {
 
 		);
 
+	}
+	foreach($forms as $label => $named_form_id) {
+		if($named_form_id == $form_id)
+			continue;
+			$args[] = array(
+
+				'parent'    => 'edit_form',
+	
+				'id' => 'switch_form_'.$label,
+	
+				'title' => 'RSVP Form, '.$label.' -> Switch',
+	
+				'href'  => admin_url("edit.php?post_id=$post_id&rsvp_form_switch=".$named_form_id),
+				'meta'  => array( 'class' => 'rsvpmenu-custom')
+			);		
+			$args[] = array(
+
+			'parent'    => 'edit_form',
+
+			'id' => 'customize_form_'.$label,
+
+			'title' => 'RSVP Form, '.$label.' -> Customize',
+
+			'href'  => admin_url("edit.php?title=Form&rsvpcz=_rsvp_form&post_id=$post_id&source=".$named_form_id),
+			'meta'  => array( 'class' => 'rsvpmenu-custom')
+		);		
 	}
 
 return $args;

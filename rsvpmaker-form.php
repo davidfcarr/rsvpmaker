@@ -92,6 +92,20 @@ function customize_rsvp_form () {
 
 global $current_user, $wpdb, $rsvp_options;
 
+if(!empty($_GET['rsvp_form_new'])) {
+	$id = rsvpmaker_get_form_id($_GET['rsvp_form_new']);
+	wp_safe_redirect(admin_url('post.php?post='.$id.'&action=edit'));
+	exit;
+}
+
+if(!empty($_GET['rsvp_form_switch']) && !empty($_GET['post_id'])) {
+	$id = (int) $_GET['rsvp_form_switch'];
+	$post_id = (int) $_GET['post_id'];
+	update_post_meta($post_id,'_rsvp_form',$id);
+	wp_safe_redirect(admin_url('post.php?post='.$id.'&action=edit'));
+	exit;
+}
+
 if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
 
 	$id = upgrade_rsvpform();
@@ -556,7 +570,7 @@ function rsvp_form_radio($atts, $content = '') {
 
 	foreach($atts['choicearray'] as $choice)
 
-		$choices .= sprintf('<span><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s"/> %s </span>',$slug,$slug,$slug,$choice,$choice);
+		$choices .= sprintf('<span class="rsvp-form-radio"><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s"/> %s </span>',$slug,$slug,$slug,$choice,$choice);
 
 	$required = '';
 
@@ -922,8 +936,72 @@ function remove_save_content_filters () {
 
 }
 
-add_action( 'init', 'remove_save_content_filters', 99 );
+function rsvpmaker_get_forms() {
+global $post;
+$post_id = empty($post->ID) ? 0 : $post->ID;
+$forms = get_option('rsvpmaker_forms');
+if(empty($forms))
+	{
+		$form = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
+		<!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
+		<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+		<!-- wp:rsvpmaker/formchimp -->
+		<div class="wp-block-rsvpmaker-formchimp"><p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1"/> Add me to your email list</p></div>
+		<!-- /wp:rsvpmaker/formchimp -->
+		<!-- wp:rsvpmaker/formnote /-->';
+		$data['post_title'] = 'Form:Default for Webinars';
+		$data['post_content'] = $form;
+		$data['post_status'] = 'publish';
+		$data['post_author'] = 1;
+		$data['post_type'] = 'rsvpmaker';
+		$forms['webinar'] = wp_insert_post($data);
+		update_post_meta($forms['webinar'],'_rsvpmaker_special','RSVP Form');
+		if($post_id)
+			get_post_meta($post_id,'_rsvp_form',$forms['webinar']);
+		update_option('rsvpmaker_forms',$forms);		
+	}
+	return $forms;
+}
 
+function rsvpmaker_get_form_id($slug) {
+	$title = $slug;
+	$slug = preg_replace('/[^a-zA-Z0-9]/','_',$slug);
+	$forms = rsvpmaker_get_forms();
+	$post_id = empty($post->ID) ? 0 : $post->ID;
+	if(empty($forms[$slug]))
+		{
+			$form = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone"} /-->
+<!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} /-->
+<!-- wp:rsvpmaker/formradio {"label":"Radio Buttons","slug":"radio_buttons","choicearray":["Choice A"," Choice B"," Choice C"],"guestform":true} /-->
+<!-- wp:rsvpmaker/formselect {"label":"Dropdown List","slug":"dropdown_list","choicearray":["Choice A"," Choice B"," Choice C"],"guestform":true} /-->
+<!-- wp:rsvpmaker/formchimp -->
+<div class="wp-block-rsvpmaker-formchimp"><p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1"/> Add me to your email list</p></div>
+<!-- /wp:rsvpmaker/formchimp -->
+<!-- wp:rsvpmaker/formtextarea {"label":"Text Area","slug":"text_area","guestform":true} /-->
+<!-- wp:rsvpmaker/guests -->
+<div class="wp-block-rsvpmaker-guests"><!-- wp:paragraph -->
+<p></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:rsvpmaker/guests -->
+<!-- wp:rsvpmaker/formnote /-->';
+			$data['post_title'] = 'Form:'.$title;
+			$data['post_content'] = $form;
+			$data['post_status'] = 'publish';
+			$data['post_author'] = 1;
+			$data['post_type'] = 'rsvpmaker';
+			$forms[$slug] = wp_insert_post($data);
+			update_post_meta($forms[$slug],'_rsvpmaker_special','RSVP Form');
+			if($post_id)
+				get_post_meta($post_id,'_rsvp_form',$forms['webinar']);
+			update_option('rsvpmaker_forms',$forms);
+		}
+		return $forms[$slug];
+}
+
+add_action( 'init', 'remove_save_content_filters', 99 );
 add_action( 'set_current_user', 'remove_save_content_filters', 99 );
 
 ?>

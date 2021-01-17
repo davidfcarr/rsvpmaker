@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.6
-Stable tag: 8.2.7
+Stable tag: 8.2.8
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -116,6 +116,12 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.2.8 =
+
+* Alternative RSVP Forms, such as variant for webinars
+* Restored calendar button on event setup form
+* CSS fix for forms to display correctly with the Twenty Twenty One theme
 
 = 8.2.7 =
 

@@ -1,6 +1,5 @@
 <?php
-$scriptversion = '20201217c';
-//$rsvpscript = 'rsvpmaker.js';
+$scriptversion = '20201219';
 $rsvpscript = 'rsvpmaker.min.js';
 
 function rsvpmaker_rest_array () {
