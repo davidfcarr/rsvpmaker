@@ -3380,7 +3380,7 @@ FROM $wpdb->posts as parent_post right join $wpdb->posts as child_post ON parent
 function rsvpmaker_check_outliers() {
 global $wpdb, $rsvp_outliers;
 //start date in the past but end date in the future
-$sql = "select maindate.meta_value as datetime, enddate.meta_value as end_date, wp_posts.* FROM $wpdb->posts 
+$sql = "select maindate.meta_value as datetime, enddate.meta_value as end_date, $wpdb->posts.* FROM $wpdb->posts 
 LEFT JOIN  $wpdb->postmeta as maindate ON  $wpdb->posts.ID = maindate.post_id AND maindate.meta_key='_rsvp_dates'
 LEFT JOIN  $wpdb->postmeta as enddate ON  $wpdb->posts.ID = enddate.post_id AND enddate.meta_key='_rsvp_end_date'
 WHERE maindate.meta_value < CURDATE() AND enddate.meta_value > CURDATE()";

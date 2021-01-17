@@ -1239,7 +1239,13 @@ if(isset($_POST['rsvpmaker_discussion_extra'])) {
 		$newarray[$index] = sanitize_textarea_field($value);
 	update_option('rsvpmaker_discussion_extra',$newarray);
 }
-if(!empty($_POST['rsvpmaker_discussion_active'])) {
+if(isset($_POST['rsvpmaker_discussion_bot'])) {
+	$newarray = array();
+	foreach($_POST['rsvpmaker_discussion_bot'] as $index => $value)
+		$newarray[$index] = sanitize_textarea_field($value);
+	update_option('rsvpmaker_discussion_bot',$newarray);
+}
+if(isset($_POST['rsvpmaker_discussion_active'])) {
 	update_option('rsvpmaker_discussion_active',(int) $_POST['rsvpmaker_discussion_active']);
 	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
 	if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
@@ -1285,6 +1291,7 @@ if(is_plugin_active( 'wp-mailster/wp-mailster.php' ) )
 echo rsvpmaker_relay_get_pop('member');
 echo rsvpmaker_relay_get_pop('officer');
 echo rsvpmaker_relay_get_pop('extra');
+echo rsvpmaker_relay_get_pop('bot');
 
 printf('<p><label>Activate</label> <input type="radio" name="rsvpmaker_discussion_active" value="1" %s /> Yes <input type="radio" name="rsvpmaker_discussion_active" value="0" %s /> No</p>',($active) ? ' checked="checked" ' : '',(!$active) ? ' checked="checked" ' : '');
 
@@ -1310,6 +1317,12 @@ if(empty($extra))
 print_group_list_options('extra', $extra);
 echo '<p><em>'.__('Use for small custom distribution lists. Or use to forward an email you want to share to WordPress, then edit further with RSVP Mailer before sending.','rsvpmaker').'</em></p>';
 
+$bot = get_option('rsvpmaker_discussion_bot');
+if(empty($bot))
+	$bot = array('user' => '','password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '','additional_recipients' => '');
+print_group_list_options('bot', $bot);
+echo '<p><em>'.__('Use for automations triggered by an email.','rsvpmaker').'</em></p>';
+
 if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
 {
 ?>
@@ -1320,6 +1333,22 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
 <input type="hidden" name="tab" value="groupemail">
 <button>Submit</button>
 </form>
+
+<h3>Using the Bot Account</h3>
+<p>Email sent to the bot account can be processed using a WordPress action where the email content is past in the form of post variables (subject as post_title, content as post_content). Example:</p>
+<pre>
+add_action('rsvpmaker_autoreply','my_post_to_email',10,5);
+function my_post_to_email($email_as_post, $email_user, $from, $to, $fromname = '') {
+	$myemail = 'mytrustedemail@gmail.com';
+	if($from == $myemail) {
+	$email_as_post['post_type'] = 'post';
+	$email_as_post['post_status'] = 'draft';
+	$id = wp_insert_post($email_as_post);
+	wp_mail($myemail,'Draft '.$id.' '.$email_as_post['post_title'],'Edit draft '.$id);
+	}
+}
+</pre>
+
 </section>
 <section id="rsvpforms" class="rsvpmaker">
 <?php
@@ -1411,11 +1440,13 @@ function print_group_list_options($list_type, $vars) {
 		}
 	//print_r($vars);
 	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[user]" value="%s" /> </p>',__('Email/User','rsvpmaker'),$vars["user"]);	
-	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[password]" value="%s" /> </p>',__('Password','rsvpmaker'),$vars["password"]);	
-	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[subject_prefix]" value="%s" /> </p>',__('Subject Prefix','rsvpmaker'),$vars["subject_prefix"]);
-	printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[whitelist]">%s</textarea> </p>',__('Whitelist - additional allowed sender emails','rsvpmaker'),$vars["whitelist"]);	
-	printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[blocked]">%s</textarea> </p>',__('Blocked - not allowed to send to list','rsvpmaker'),$vars["blocked"]);	
-	printf('<p><label>%s</label> <br /><textarea  rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[additional_recipients]">%s</textarea> </p>',__('Additional Recipients','rsvpmaker'),$vars["additional_recipients"]);
+	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[password]" value="%s" /> </p>',__('Password','rsvpmaker'),$vars["password"]);
+	if($list_type != 'bot') {
+		printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.$list_type.'[subject_prefix]" value="%s" /> </p>',__('Subject Prefix','rsvpmaker'),$vars["subject_prefix"]);
+		printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[whitelist]">%s</textarea> </p>',__('Whitelist - additional allowed sender emails','rsvpmaker'),$vars["whitelist"]);	
+		printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[blocked]">%s</textarea> </p>',__('Blocked - not allowed to send to list','rsvpmaker'),$vars["blocked"]);	
+		printf('<p><label>%s</label> <br /><textarea  rows="3" cols="80" name="rsvpmaker_discussion_'.$list_type.'[additional_recipients]">%s</textarea> </p>',__('Additional Recipients','rsvpmaker'),$vars["additional_recipients"]);	
+	}	
 }
 
 function admin_event_listing() {

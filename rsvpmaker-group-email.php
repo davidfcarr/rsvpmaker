@@ -75,8 +75,6 @@ else
 
 }
 
-
-
 add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
 
 function rsvpmaker_relay_init ($show = false) {
@@ -91,8 +89,6 @@ function rsvpmaker_relay_init ($show = false) {
 
         return;
 
-    //$qresult = false;//disable
-
     if(empty($qresult))
 
     {
@@ -106,6 +102,10 @@ function rsvpmaker_relay_init ($show = false) {
         if(!strpos($result,'Mail:'))
 
         $result .= rsvpmaker_relay_get_pop('extra');    
+
+        if(!strpos($result,'Mail:'))
+
+        $result .= rsvpmaker_relay_get_pop('bot');   
 
     }
 
@@ -215,8 +215,6 @@ function rsvpmaker_relay_queue() {
     }    
 
 }
-
-
 
 function group_emails_extract($text) {
 
@@ -426,15 +424,13 @@ if($list_type == 'member') {
 
     }
 
-    
-
-$subject_prefix = $vars['subject_prefix'];
+$subject_prefix = empty($vars['subject_prefix']) ? '' : $vars['subject_prefix'];
 
 $whitelist = (empty($vars['whitelist'])) ? array() : group_emails_extract($vars['whitelist']);
 
 $blocked = (empty($vars['blocked'])) ? array() : group_emails_extract($vars['blocked']);
 
-$additional_recipients = group_emails_extract($vars['additional_recipients']);
+$additional_recipients = (empty($vars['additional_recipients'])) ? array() : group_emails_extract($vars['additional_recipients']);
 
 
 
@@ -483,7 +479,7 @@ elseif(!empty($headerinfo->Subject))
 
     $subject = $headerinfo->Subject;
 
-if(!strpos($subject,$subject_prefix.']'))
+if(!strpos($subject,$subject_prefix.']') && !empty($subject_prefix))
 
     $subject = '['.$subject_prefix.'] '.$subject;
 
@@ -691,12 +687,8 @@ if ($contentParts >= 2) {
 
 $qpost['post_content'] = preg_replace('/<img.+cid:[^>]+>/','IMAGE OMMITTED',$qpost['post_content']);
 
-$qpost['post_content'] .= "\n<p>*****</p>".sprintf('<p>Relayed from the <a href="mailto:%s" target="_blank">%s</a> email list</p><p>Replies will go to SENDER. <a target="_blank" href="mailto:%s?subject=Re:%s">Reply to list instead</a></p>',$user,$user,$user,$subject);
-
 if (sizeof($atturls) > 0) {
-
-    $qpost['post_content'] .= '<p>Attachments: <br />'.implode("<br />", $atturls)."</p>";
-
+    $qpost['post_content'] .= '<div style="padding: 10px; margin: 5px; background-color: #eee; border: thin solid #555;"><p><strong>Attachments:</strong> <br />'.implode("<br />", $atturls)."</p></div>";
 }
 
 if(isset($_GET['nosave'])) {
@@ -707,15 +699,13 @@ if(isset($_GET['nosave'])) {
 
 }
 
-if(($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients)) {
-
+//(($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients))
+if($list_type == 'bot') {
     echo "Action call: 'rsvpmaker_autoreply'";
-
-    do_action('rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress);
-
+    do_action('rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress, $fromname);
 }
 
-elseif(in_array($from,$blocked))
+if(in_array($from,$blocked))
 
 {
 
@@ -739,6 +729,7 @@ elseif(in_array($from,$recipients) || in_array($from,$whitelist))
 
 {
 
+    $qpost['post_content'] .= "\n<p>*****</p>".sprintf('<p>Relayed from the <a href="mailto:%s" target="_blank">%s</a> email list</p><p>Replies will go to SENDER. <a target="_blank" href="mailto:%s?subject=Re:%s">Reply to list instead</a></p>',$user,$user,$user,$subject);
     $post_id = 0;
 
     if(!empty($qpost['post_content']) && !empty($from))
@@ -788,7 +779,7 @@ elseif(in_array($from,$recipients) || in_array($from,$whitelist))
 
 }
 
-else {
+elseif($list_type != 'bot') {
 
     $rmail['subject'] = 'NOT DELIVERED '.$qpost['post_title'];
 
@@ -824,8 +815,6 @@ else {
 
 }
 
-
-
 imap_expunge($mail);
 
 $html .= '<p>Expunge deleted messages</p>';
@@ -835,8 +824,6 @@ return $html;
 //end function rsvpmaker_relay_get_pop() {  
 
 }
-
-
 
 function rsvpmailer_embedded_images($mailq) {
 
@@ -880,8 +867,6 @@ function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath
 
         $ContentType = 'application/octetstream';
 
-
-
         if ($strFileType == "txt")
 
             $ContentType = "text/plain";
@@ -889,8 +874,6 @@ function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath
         if (($strFileType == "ics") || ($strFileType == "ifb"))
 
             $ContentType = "text/calendar";
-
-    
 
     if(isset($_GET['debug']))
 
@@ -920,7 +903,7 @@ function rsvpmaker_relay_save_attachment($att,$file,$msgno,$mbox, $path,$urlpath
 
 }
 
-add_filter( 'cron_schedules', 'rsvpmaker_relay_interval', 999 );
+add_filter( 'cron_schedules', 'rsvpmaker_relay_interval' );
 
 function rsvpmaker_relay_interval( $schedules ) { 
 
@@ -942,5 +925,5 @@ return $schedules;
 
 function rsvpmaker_relay_duplicate($message_id) {
     global $wpdb;
-    return $wpdb->get_var("SELECT post_id FROM $wpdb->post_meta WHERE meta_value='$message_id' ");
+    return $wpdb->get_var("SELECT post_id FROM $wpdb->postmeta WHERE meta_value='$message_id' ");
 }
