@@ -55,7 +55,7 @@ Then, list all the mailing lists (with a `get` on the `lists` method)
 ```php
 $result = $MailChimp->get('lists');
 
-print_r($result);
+//print_r($result);
 ```
 
 Subscribe someone to a list (with a `post` to the `lists/{listID}/members` method):
@@ -68,7 +68,7 @@ $result = $MailChimp->post("lists/$list_id/members", [
 				'status'        => 'subscribed',
 			]);
 
-print_r($result);
+//print_r($result);
 ```
 
 Update a list member with more information (using `patch` to update):
@@ -82,7 +82,7 @@ $result = $MailChimp->patch("lists/$list_id/members/$subscriber_hash", [
 				'interests'    => ['2s3a384h' => true],
 			]);
 
-print_r($result);
+//print_r($result);
 ```
 
 Remove a list member using the `delete` method:
@@ -105,7 +105,7 @@ $result = $MailChimp->post("lists/$list_id/members", [
 			]);
 
 if ($MailChimp->success()) {
-	print_r($result);	
+	//print_r($result);	
 } else {
 	echo $MailChimp->getLastError();
 }
@@ -173,7 +173,7 @@ To listen for the `unsubscribe` webhook:
 use \DrewM\MailChimp\Webhook;
 
 Webhook::subscribe('unsubscribe', function($data){
-	print_r($data);
+	//print_r($data);
 });
 ```
 
@@ -185,7 +185,7 @@ If you'd rather just catch all webhooks and deal with them yourself, you can use
 use \DrewM\MailChimp\Webhook;
 
 $result = Webhook::receive();
-print_r($result);
+//print_r($result);
 ```
 
 There doesn't appear to be any documentation for the content of the webhook data. It's helpful to use something like [ngrok](https://ngrok.com) for tunneling the webhooks to your development machine - you can then use its web interface to inspect what's been sent and to replay incoming webhooks while you debug your code.
@@ -202,13 +202,13 @@ echo $MailChimp->getLastError();
 For further debugging, you can inspect the headers and body of the response:
 
 ```php
-print_r($MailChimp->getLastResponse());
+//print_r($MailChimp->getLastResponse());
 ```
 
 If you suspect you're sending data in the wrong format, you can look at what was sent to MailChimp by the wrapper:
 
 ```php
-print_r($MailChimp->getLastRequest());
+//print_r($MailChimp->getLastRequest());
 ```
 
 If your server's CA root certificates are not up to date you may find that SSL verification fails and you don't get a response. The correction solution for this [is not to disable SSL verification](http://snippets.webaware.com.au/howto/stop-turning-off-curlopt_ssl_verifypeer-and-fix-your-php-config/). The solution is to update your certificates. If you can't do that, there's an option at the top of the class file. Please don't just switch it off without at least attempting to update your certs -- that's lazy and dangerous. You're not a lazy, dangerous developer are you?

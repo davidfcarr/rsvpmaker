@@ -116,9 +116,9 @@ $group_label = 'RSVPMaker';
 
 		echo $sql .'<br />';
 
-		print_r($results);
+		//print_r($results);
 
-		print_r($export_items);
+		//print_r($export_items);
 
 		die();
 

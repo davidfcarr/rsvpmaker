@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.6
-Stable tag: 8.3.2
+Stable tag: 8.4
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -116,6 +116,23 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.4 =
+
+* Another adjustment to HTML output, specifically for dates and calendar icons at the top of each block.
+* Better way of checking whether rsvpmaker_event table needs to be updated
+
+= 8.3.8 =
+
+* Fix to group email functions.
+
+= 8.3.7 =
+
+* Fix for HTML output error
+
+= 8.3.5 =
+
+* Fixes related to updated custom table for event dates
 
 = 8.3.2 =
 

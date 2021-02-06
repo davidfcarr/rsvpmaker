@@ -6,8 +6,6 @@ Group Email Functions
 
 */
 
-
-
 function rsvpmaker_relay_active_lists() {
 
     $active = get_option('rsvpmaker_discussion_active');
@@ -139,7 +137,7 @@ function rsvpmaker_relay_queue() {
 
     $html = '<p>Results: '.sizeof($results).'</p>';
 
-    //print_r($results);
+    ////print_r($results);
 
     if(!empty($results))
 
@@ -148,13 +146,13 @@ function rsvpmaker_relay_queue() {
         foreach($results as $row) {
 
             if(!isset($_GET['nodelete']))
-
             {
-
                 $sql = "DELETE FROM $wpdb->postmeta WHERE meta_id=".$row->meta_id;
-
                 $wpdb->query($sql);    
-
+            }
+            if(rsvpmaker_cronmail_check_duplicate($row->meta_value.$row->post_content)) {
+                $html .= '<div>skipped duplicate to '.$row->meta_value.'</div>';
+                continue;
             }
 
             $mail['message_type'] = 'email_rule_group_email';
@@ -180,8 +178,6 @@ function rsvpmaker_relay_queue() {
             $mail['to'] = $row->meta_value;
 
             $html .= sprintf('<p>%s to %s</p>',$row->post_title,$row->meta_value);
-
-            
 
             $post = get_post($row->ID);
 
@@ -209,11 +205,8 @@ function rsvpmaker_relay_queue() {
             rsvpmailer($mail);
 
         }
-
         return $html;
-
     }    
-
 }
 
 function group_emails_extract($text) {
@@ -460,7 +453,7 @@ $realdata = '';
 
 $headerinfo = imap_headerinfo($mail,$n);
 
-if(rsvpmaker_relay_duplicate($headerinfo->message_id)) {
+if(!empty($headerinfo->message_id) && rsvpmaker_relay_duplicate($headerinfo->message_id)) {
     echo 'duplicate for '.$headerinfo->message_id;
     continue; //already tried to process this, something is wrong        
 }
@@ -698,6 +691,10 @@ if(isset($_GET['nosave'])) {
     return;
 
 }
+
+$log_id = wp_insert_post($qpost);
+update_post_meta($log_id,'headerinfo',$headerinfo);
+
 
 //(($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients))
 if($list_type == 'bot') {

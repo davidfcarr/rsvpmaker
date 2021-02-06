@@ -294,15 +294,7 @@ elseif($vars['currency'] == 'eur')
 
 $paylabel = __('Pay','rsvpmaker') .' '. $currency_symbol.$vars['amount'].' '.strtoupper($vars['currency']);
 
-
-
-rsvpmaker_debug_log('stripe set apikey');
-
 \Stripe\Stripe::setApiKey($secret);
-
-
-
-rsvpmaker_debug_log('stripe set apikey');
 
 \Stripe\Stripe::setAppInfo(
 

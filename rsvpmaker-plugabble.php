@@ -235,7 +235,7 @@ if(isset($_GET["debug"]))
 
 echo '<pre>';
 
-print_r($custom_fields);
+//print_r($custom_fields);
 
 echo '</pre>';
 
@@ -590,7 +590,6 @@ foreach ($wp_roles->roles as $role => $rolearray)
 				{
 					$fbcap = str_replace('post','rsvpmaker',$cap);
 					$wp_roles->add_cap( $role, $fbcap );
-					//rsvpmaker_debug_log($fbcap,'role:'.$role);
 				}
 		}
 	}
@@ -1471,10 +1470,6 @@ if(isset($_GET["debug"]))
 
 	$newfields = array_diff($matches[2],$defaultfields);
 
-	if(!empty($newfields))
-
-	rsvpmaker_debug_log(var_export($newfields,true));
-
 }
 
 
@@ -1940,18 +1935,12 @@ else
 
 	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
 
-	//rsvpmaker_debug_log($sql,'event check');
 
 	if(empty($wpdb->get_var($sql)))
 
 	   {
-
 		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
-
-		//rsvpmaker_debug_log($sql,'rsvpmaker_event');
-
 		$wpdb->query($sql);
-
 	   }
 
 	}
@@ -2067,12 +2056,6 @@ global $rsvpdata;
 $rsvp_id = (isset($_POST["rsvp_id"])) ? (int) $_POST["rsvp_id"] : 0;
 
 $cleanmessage = '';
-
-
-
-rsvpmaker_debug_log($_POST,'save RSVP POST');
-
-
 
 if(isset($_POST["withdraw"]) )
 
@@ -2223,10 +2206,6 @@ if(isset($_POST["required"]) || empty($rsvp['email']))
 			$required[] = 'email';
 
 		$missing = "";
-
-		rsvpmaker_debug_log($required,'missing required');
-
-		rsvpmaker_debug_log($rsvp,'missing required rsvp variables');
 
 		foreach($required as $r)
 
@@ -2586,15 +2565,11 @@ else
 
 	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
 
-	//rsvpmaker_debug_log($sql,'event check');
-
 	if(empty($wpdb->get_var($sql)))
 
 	   {
 
 		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
-
-		//rsvpmaker_debug_log($sql,'rsvpmaker_event');
 
 		$wpdb->query($sql);
 
@@ -4116,41 +4091,27 @@ elseif($e && isset($_GET["update"]))
 
 	}
 
+$dateblock = rsvpmaker_format_event_dates($post->ID);
+$event = get_rsvpmaker_event($post->ID);
+$dur = $event->display_type;
 
+$last_time = rsvpmaker_strtotime($event->enddate);
 
-$date_array = rsvp_date_block($post->ID, $custom_fields);
-
-if(strpos($content,'rsvpdateblock'))
-
-	$dateblock = ''; //if shortcode/block is included in content
-
-else
-
-	$dateblock = $date_array["dateblock"];
-
-$dur = $date_array["dur"];
-
-$last_time = $date_array["last_time"];
-
-$firstrow = $date_array["firstrow"];
-
-
+$firstrow = $event->date;
 
 if(!empty($rsvpconfirm))
 
 $rsvpconfirm = '<div id="rsvpconfirm">'.$rsvpconfirm.'</div>'; 
 
-
+//$content = '<div>'.$content;
 
 if(!$formonly && !empty($dateblock))
 
-	$content = '<div class="dateblock">'.$dateblock."\n</div>\n".$content;
+	$content = $dateblock.$content;
 
 if(!empty($rsvpconfirm))	
 
 	$content = $rsvpconfirm.$content;
-
-
 
 if(isset($_GET['rsvp']))	
 
@@ -4250,7 +4211,7 @@ elseif( empty($deadline) && ( $now > $last_time  ) )
 
 		$content .= '<p class="rsvp_status">'.esc_html(__('Event date is past','rsvpmaker')).'</p>';
 
-		$content .= sprintf('<div>%s last time: %s</div>',date('r',$now), rsvpmaker_date('r',$last_time));
+		//$content .= sprintf('<div>%s last time: %s</div>',date('r',$now), rsvpmaker_date('r',$last_time));
 
 	}
 
@@ -4311,11 +4272,7 @@ elseif($rsvp_on && (is_single() || is_admin() || $formonly) ) //
 if(get_post_meta($post->ID,'_rsvp_form_show_date',true))
 
 {
-
-	$date_array = rsvp_date_block($post->ID,array(),false);
-
-	echo $date_array["dateblock"];
-
+	echo rsvpmaker_format_event_dates($post->ID);
 }
 
 if($rsvp_instructions) echo '<p>'.esc_html(nl2br($rsvp_instructions)).'</p>';
@@ -4907,7 +4864,7 @@ if(isset($_GET["event"]))
 
 		</div>';
 
-		echo '<p><a href="'.$_SERVER['REQUEST_URI'].'&print_rsvp_report=1&rsvp_print='.$print_nonce.'" target="_blank" >Format for printing</a></p>';	
+		echo '<p><a href="'.$_SERVER['REQUEST_URI'].'&//print_rsvp_report=1&rsvp_print='.$print_nonce.'" target="_blank" >Format for printing</a></p>';	
 
 		echo '<p><a href="edit.php?post_type=rsvpmaker&page=rsvp&event='.$eventid.'&paypal_log=1">Show PayPal Log</a></p>';
 
@@ -5099,7 +5056,7 @@ elseif(isset($_GET["detail"]))
 
 if(!isset($_GET["rsvp_print"]))
 
-	echo '<p><a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvp').'">'.__('Show Events List','rsvpmaker').'</a> | <a href="'.$_SERVER['REQUEST_URI'].'&print_rsvp_report=1&rsvp_print='.$print_nonce.'" target="_blank" >'.__('Format for printing','rsvpmaker').'</a></p>';	
+	echo '<p><a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvp').'">'.__('Show Events List','rsvpmaker').'</a> | <a href="'.$_SERVER['REQUEST_URI'].'&//print_rsvp_report=1&rsvp_print='.$print_nonce.'" target="_blank" >'.__('Format for printing','rsvpmaker').'</a></p>';	
 
 
 
@@ -5607,7 +5564,7 @@ printf('<input type="hidden" name="rsvp_print" value="%s" />',$print_nonce);
 
 ?>
 
-<p><button name="print_rsvp_report" value="1" ><?php _e('Print Report','rsvpmaker');?></button> <button name="rsvp_csv" value="1" ><?php _e('Download CSV','rsvpmaker');?></button></p>
+<p><button name="//print_rsvp_report" value="1" ><?php _e('Print Report','rsvpmaker');?></button> <button name="rsvp_csv" value="1" ><?php _e('Download CSV','rsvpmaker');?></button></p>
 
 <?php
 
@@ -6041,17 +5998,13 @@ if(is_numeric($form)) {
 
 }
 
-	echo do_shortcode($form);
+	echo do_blocks(do_shortcode($form));
 
 printf('<input type="hidden" name="rsvp_id" id="rsvp_id" value="%s" /><input type="hidden" id="event" name="event" value="%s" /><input type="hidden" name="rsvp_nonce" value="%s" /><p><button>Submit</button></p></form>',$id,$event,wp_create_nonce('rsvp'));
 
 echo '<p>'.__('Tip: If you do not have an email address for someone you registered offline, you can use the format firstnamelastname@example.com (example.com is an Internet domain reserved for examples and testing). You will get an error message if you try to leave it blank').'</p>';
 
-
-
 echo rsvp_form_jquery();
-
-
 
 }
 
@@ -6178,8 +6131,6 @@ $out = fopen('php://output', 'w');
 		if($row["details"])
 
 			{
-
-			//rsvpmaker_debug_log($row["details"],'rsvpmaker details serialized');
 
 			$details = unserialize($row["details"]);
 
@@ -7539,7 +7490,7 @@ if(!empty($_POST['import_shared_template'])) {
 		$headers = $response['headers']; // array of http header lines
 		$body    = $response['body']; // use the content
 		$data = json_decode($body);
-		print_r($data);
+		//print_r($data);
 		$newpost['post_type'] = 'rsvpmaker';
 		$newpost['post_status'] = 'publish';
 		$newpost['post_author'] = $current_user->ID;

@@ -206,8 +206,6 @@ $cron = get_post_meta($post->ID,'rsvpmaker_cron_email', true);
 
 	$notekey = get_rsvp_notekey();
 
-	//rsvpmaker_debug_log($notekey,'notekey');
-
 	$chosen = (int) get_post_meta($post->ID,$notekey,true);
 
 	if($chosen)
@@ -284,8 +282,6 @@ if($rsvpmaker_cron_context && $cron_active)
 
 	$scheduled_email = get_post_meta($post->ID,'scheduled_email',true);
 
-	//rsvpmaker_debug_log($scheduled_email,'scheduled email');
-
 	$chimp_options = get_option('chimp');
 
 	if(!empty($scheduled_email))
@@ -325,12 +321,6 @@ if($rsvpmaker_cron_context && $cron_active)
 		$from_email = $chimp_options['email-from'];
 
 	}
-
-
-
-	//rsvpmaker_debug_log('name:'.$from_name.' email: '.$from_email,'cron email parameters');
-
-	//rsvpmaker_debug_log($chimp_options,'chimp options');
 
 	if(empty($from_email))
 
@@ -384,11 +374,11 @@ if(!$MailChimp->success())
 
 	}
 
-//print_r($content_result);
+////print_r($content_result);
 
 $send_result = $MailChimp->post("campaigns/".$campaign["id"].'/actions/send');
 
-//print_r($send_result);
+////print_r($send_result);
 
 if($MailChimp->success())
 
@@ -430,7 +420,7 @@ else
 
 			$result = rsvpmailer($mail);		
 
-			print_r($result);
+			//print_r($result);
 
 			}
 
@@ -456,7 +446,7 @@ else
 
 			$result = rsvpmailer($mail);		
 
-			print_r($result);
+			//print_r($result);
 
 		}	
 
@@ -480,7 +470,7 @@ else
 
 			$result = rsvpmailer($mail);		
 
-			print_r($result);
+			//print_r($result);
 
 			update_option('rsvpmaker_cron_preview_result',$result.': '.var_export($mail,true));
 

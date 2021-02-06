@@ -126,7 +126,7 @@ function rsvpmaker_filter_debug() {
 		return;
 	global $wp_filter;
 	echo '<pre>';
-	print_r($wp_filter);
+	//print_r($wp_filter);
 	echo '</pre>';
 	exit;
 }

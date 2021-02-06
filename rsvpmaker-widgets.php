@@ -54,7 +54,7 @@ class CPEventsWidget extends WP_Widget {
 
               <?php 
 
-			  $events = get_future_dates($atts['limit']);
+			  $events = get_future_events('',$atts['limit']);
 
 			  if(!empty($events))
 
@@ -65,7 +65,7 @@ class CPEventsWidget extends WP_Widget {
 			  foreach($events as $event)
 
 			  	{
-				printf('<li><a href="%s">%s</a> - %s</li>',get_permalink($event->ID),$event->post_title,$event->date);
+				printf('<li><a href="%s">%s</a><br />%s</li>',get_permalink($event->ID),$event->post_title,$event->date);
 				}
 
 			

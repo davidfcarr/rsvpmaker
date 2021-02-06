@@ -136,14 +136,24 @@ function get_sql_curdate() {
 
 }
 
+function get_rsvpmaker_event($post_id)
+{
 
-
+	if(empty($post_id))
+		return;
+	
+	global $wpdb, $rsvpdates;
+	
+	$wpdb->show_errors();
+	
+	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id;
+	return $wpdb->get_row($sql);	
+}
+	
 function get_rsvp_date($post_id)
-
 {
 
 if(empty($post_id))
-
 	return;
 
 global $wpdb, $rsvpdates;
@@ -158,7 +168,7 @@ if(!empty($rsvpdates[$post_id]))
 
 $wpdb->show_errors();
 
-$sql = "SELECT meta_value FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
+$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id;
 
 return $wpdb->get_var($sql);
 
@@ -416,32 +426,15 @@ function is_rsvpmaker_deadline_future($post_id) {
 	$deadline = (int) get_post_meta($post_id,"_rsvp_deadline",true);
 	if(!$deadline)
 	{
-		$date = get_rsvp_date($post_id);
-		$deadline = rsvpmaker_strtotime($date.' +1 hour');
+		$event = get_rsvpmaker_event($post_id);
+		$deadline = rsvpmaker_strtotime($event->enddate);
 	}
 	return $deadline > time();
 }
 
 function get_next_rsvp_on() {
-
-global $wpdb;
-
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
-
-	 FROM ".$wpdb->posts."
-
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-	 JOIN ".$wpdb->postmeta." a2 ON ".$wpdb->posts.".ID =a2.post_id AND a2.meta_key='_rsvp_on' AND a2.meta_value=1 
-
-	 WHERE a1.meta_value > '".get_sql_curdate()."' AND post_status='publish'
-
-	 ORDER BY a1.meta_value ASC ";
-
-	$wpdb->show_errors();
-
-	return $wpdb->get_row($sql);
-
+	$events = get_future_events_by_meta (array('meta_key' => '_rsvp_on','meta_value' => 1), 1);
+	return $events[0];
 }
 
 function get_events_by_template($template_id, $order = 'ASC', $output = OBJECT) {
@@ -656,8 +649,6 @@ function rsvpmaker_week_reminders () {
 
 }
 
-
-
 function rsvpmaker_reminders_nudge () {
 
 	$posts_with_reminders = rsvpmaker_week_reminders();
@@ -684,7 +675,116 @@ function rsvpmaker_reminders_nudge () {
 
 }
 
+function rsvpmaker_event_dates_table_update($new = false) {
+	global $wpdb;
+	if(!$new) {
+		$haserror = $wpdb->get_var("SELECT event FROM ".$wpdb->prefix."rsvpmaker_event WHERE enddate IS NULL OR enddate='0000-00-00 00:00:00' ");
+		if(!$haserror)
+			return;
+	}
+	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates' AND post_status='publish' ";
+	$events = $wpdb->get_results($sql);
+	$log = '';
+	foreach($events as $event) {
+		$date = $event->datetime;
+		$type = get_post_meta($event->ID,'_firsttime',true);
+		$end =  get_post_meta($event->ID,'_endfirsttime',true);
+		if(empty($end))
+			$enddatetime = date('Y-m-d H:i:s',strtotime($date.' +1 hour'));		
+		elseif(strpos($type,'|')) {
+			$p = explode('|',$type);
+			$days = $p[1] - 1;
+			$enddatetime = date('Y-m-d ',strtotime($date.' +'.$days.' days')).$end.':00';		
+		}
+		elseif($type == 'set')
+			$enddatetime = date('Y-m-d',strtotime($date)).' '.$end.':00';
+		else
+			$enddatetime = date('Y-m-d H:i:s',strtotime($date.' +1 hour'));
+		$enddatetime = fix_enddatetime($enddatetime,$date,$event->ID);
+		$title = get_the_title($event->ID);
+		$sql = $wpdb->prepare('REPLACE INTO '.$wpdb->prefix.'rsvpmaker_event SET event=%d, post_title=%s, date=%s, enddate=%s, display_type=%s',$event->ID,$title,$date,$enddatetime,$type);
+		$wpdb->query($sql);
+		$log .= $sql."\n";
+	}
+	rsvpmaker_debug_log($log,'table update sql');
+	update_option('rsvpmaker_event_table',time());
+}
 
+function sync_rsvpmaker_event_dates ($meta_id, $object_id, $meta_key, $meta_value) {
+	global $wpdb, $post;
+	if($meta_key == '_endfirsttime') {
+	$end = $meta_value;
+	$type = get_post_meta($object_id,'_firsttime',true);
+	$date = get_post_meta($object_id,'_rsvp_dates',true);
+	if(strpos($type,'|')) {
+		$p = explode('|',$type);
+		$enddatetime = date('Y-m-d ',strtotime($date.' +'.$p[1].' days'));		
+	}
+	else
+		$enddatetime = preg_replace('/\d{2}:\d{2}:\d{2}/','',$date);
+	$enddatetime .= $end.':00';
+	$enddatetime = fix_enddatetime($enddatetime,$date, $object_id);
+	$title = empty($post->post_title) ? get_the_title($object_id) : $post->post_title;
+	$sql = $wpdb->prepare('REPLACE INTO '.$wpdb->prefix.'rsvpmaker_event SET event=%d, post_title=%s, date=%s, enddate=%s, display_type=%s',$object_id,$title,$date,$enddatetime,$type);
+	//rsvpmaker_debug_log($sql,'sync sql2 endfirsttime');
+	$wpdb->query($sql);
+	}
+	elseif($meta_key == '_rsvp_dates') {
+		$date = $meta_value;
+		$end = get_post_meta($object_id,'_endfirsttime',true);
+		rsvpmaker_debug_log($end,'end from meta');
+		$type = get_post_meta($object_id,'_firsttime',true);
+		if(empty($end)) 
+			$end = date('H:i',strtotime($date.' +1 hour'));
+		if(strpos($type,'|')) {
+			$p = explode('|',$type);
+			$days = $p[1] - 1;
+			$enddatetime = date('Y-m-d ',strtotime($date.' +'.$days.' days'));
+		}
+		else
+			$enddatetime = preg_replace('/\d{2}:\d{2}:\d{2}/','',$date);
+		$enddatetime .= $end.':00';
+		$enddatetime = fix_enddatetime($enddatetime, $date, $object_id);
+		$title = empty($post->post_title) ? get_the_title($object_id) : $post->post_title;
+		$sql = $wpdb->prepare('REPLACE INTO '.$wpdb->prefix.'rsvpmaker_event SET post_title=%s, date=%s, enddate=%s, display_type=%s, event=%d',$title,$date,$enddatetime,$type,$object_id);
+		//rsvpmaker_debug_log($sql,'sync sql2 date');
+		$wpdb->query($sql);
+	}
+	elseif($meta_key == '_firsttime') {
+		$type = $meta_value;
+		$date = get_post_meta($object_id,'_rsvp_dates',true);
+		$end = get_post_meta($object_id,'_endfirsttime',true);
+		if(empty($end)) 
+			$end = date('H:i',strtotime($date.' +1 hour'));
+		if(strpos($type,'|')) {
+			$p = explode('|',$type);
+			$days = $p[1] - 1;
+			$enddatetime = date('Y-m-d ',strtotime($date.' +'.$days.' days'));
+		}
+		else
+			$enddatetime = preg_replace('/\d{2}:\d{2}:\d{2}/','',$date);
+		$enddatetime .= $end.':00';
+		$enddatetime = fix_enddatetime($enddatetime, $date, $object_id);
+		$title = empty($post->post_title) ? get_the_title($object_id) : $post->post_title;
+		$sql = $wpdb->prepare('REPLACE INTO '.$wpdb->prefix.'rsvpmaker_event SET post_title=%s, date=%s, enddate=%s, display_type=%s, event=%d',$title, $date,$enddatetime,$type,$object_id);
+		//rsvpmaker_debug_log($sql,'sync sql2 firstime');
+		$wpdb->query($sql);
+	}
+}
+add_action('updated_postmeta','sync_rsvpmaker_event_dates',10,4);
+add_action('added_post_meta','sync_rsvpmaker_event_dates',10,4);
+
+function fix_enddatetime($enddatetime, $date, $post_id) {
+	global $wpdb;
+	if($enddatetime < $date) {
+		$t = strtotime($date.' +1 hour');
+		$enddatetime = date('Y-m-d H:i:s',$t);
+		update_post_meta($post_id,'_endfirsttime',date('H:i',$t));
+	}
+	return $enddatetime;
+}
 
 function get_future_events ($where = '', $limit='', $output = OBJECT, $offset_hours = 0) {
 
@@ -694,26 +794,19 @@ $wpdb->show_errors();
 
 $startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offset_hours.' HOUR) ' : '"'.get_sql_now().'"';
 
-	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-
+	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(a1.date,'%M %e, %Y') as date, a1.enddate, a1.display_type
 	 FROM ".$wpdb->posts."
 
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-	 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
+	 JOIN ".$wpdb->prefix."rsvpmaker_event"." a1 ON ".$wpdb->posts.".ID =a1.event
+	 WHERE ( (a1.date > ".$startfrom.") OR (a1.enddate > ".$startfrom.") ) AND post_status='publish' ";
 	 if( !empty($where) )
-
 	 	{
-
 		$where = trim($where);
-
-		$where = str_replace('datetime','a1.meta_value',$where);
-
+		$where = str_replace('datetime','a1.date',$where);
 		$sql .= ' AND '.$where.' ';
-
 		}
 
-	$sql .= ' ORDER BY a1.meta_value ';
+	$sql .= ' ORDER BY a1.date ';
 
 	 if( !empty($limit) )
 
@@ -727,6 +820,46 @@ $startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offse
 
 }
 
+function get_future_events_by_meta ($kv, $limit='', $output = OBJECT, $offset_hours = 0) {
+
+	global $wpdb;
+	$wpdb->show_errors();
+	
+	$startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offset_hours.' HOUR) ' : '"'.get_sql_now().'"';
+	
+		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(a1.date,'%M %e, %Y') as date, a1.enddate, a1.display_type, meta.meta_value
+		 FROM ".$wpdb->posts."
+		 JOIN ".$wpdb->prefix."rsvpmaker_event"." a1 ON ".$wpdb->posts.".ID =a1.event
+		 JOIN ".$wpdb->postmeta." meta ON ".$wpdb->posts.".ID =meta.post_id
+		 WHERE (a1.date > ".$startfrom." OR a1.enddate > ".$startfrom.") AND post_status='publish' 
+		 AND meta_key='".$kv['meta_key']."' ";
+		 if(isset($kv['meta_value'])) {
+			 $comparison = '=';
+			 if(isset($kv['comparison']))
+			 	$comparison = $kv['comparison'];
+			 $sql .= " $comparison '".$kv['meta_value']."'";
+		 }
+		$sql .= ' ORDER BY a1.date ';
+	
+		 if( !empty($limit) )
+	
+			$sql .= ' LIMIT 0,'.$limit.' ';
+	
+		if(!empty($_GET["debug_sql"]))
+	
+			echo $sql;
+
+		rsvpmaker_debug_log($sql,'meta lookup test');
+	
+		return $wpdb->get_results($sql, $output);	
+}
+
+function future_events_test() {
+	$events = get_future_events();
+	return var_export($events,true);
+}
+add_shortcode('future_events_test','future_events_test');
+
 function get_future_dates ($limit) {
 
 	global $wpdb;
@@ -739,11 +872,13 @@ function get_future_dates ($limit) {
 	
 		 FROM ".$wpdb->posts."
 	
-		 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+		 JOIN ".$wpdb->prefix." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
 	
 		 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
 		$sql .= ' ORDER BY a1.meta_value ';
 	
+
+
 		 if( !empty($limit) )
 	
 			$sql .= ' LIMIT 0,'.$limit.' ';
@@ -751,7 +886,7 @@ function get_future_dates ($limit) {
 		if(!empty($_GET["debug_sql"]))
 	
 			echo $sql;
-	
+
 		return $wpdb->get_results($sql);
 	
 }
@@ -1015,7 +1150,7 @@ function get_rsvpmaker_payment_gateway () {
 
 		}
 
-	//print_r($active_options);
+	////print_r($active_options);
 
 	return $active_options[0]; // if no default specified, grab the first one on the list (Cash or Custom if no others set up)
 
@@ -1183,8 +1318,6 @@ function rsvpmaker_data_check() {
 
 		{
 
-			rsvpmaker_debug_log($last_data_check,'stopping rsvpmaker_data_check');
-
 			return;
 
 		}
@@ -1328,11 +1461,7 @@ function rsvpmaker_data_check() {
 	if($allones)
 
 		{
-
-			rsvpmaker_debug_log($allones,'allones = rsvpmaker_set_defaults_all');
-
 			rsvpmaker_set_defaults_all();
-
 		}
 
 }
@@ -2205,9 +2334,6 @@ function get_template_sked($post_id) {
 
 	if($newsked) {
 
-		//retrieved new format
-
-		rsvpmaker_debug_log($newsked,'newsked');
 
 		$dayofweek = array();
 
@@ -2238,7 +2364,6 @@ function get_template_sked($post_id) {
 		if(empty($week) && empty($dayofweek))
 			return false; //not a valid template
 		update_post_meta($post_id,'_sked_template',true);
-		rsvpmaker_debug_log($sked,'sked from newsked newsked');
 
 		sort($week);
 
@@ -2313,12 +2438,6 @@ function rsvpmaker_upgrade_templates() {
 
 function new_template_schedule($post_id,$template,$source = '') {
 
-	rsvpmaker_debug_log($template,'submitted to new template schedule');
-
-	if(!empty($source))
-
-		rsvpmaker_debug_log($source,'new template source');
-
 	if(is_array($template["week"]))
 
 	{
@@ -2350,8 +2469,6 @@ function new_template_schedule($post_id,$template,$source = '') {
 	$stop = (isset($template['stop'])) ? $template['stop'] : '';	
 
 	$new_template_schedule = build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$end,$stop);
-
-	rsvpmaker_debug_log($new_template_schedule,'new_template_schedule');
 
 	foreach($new_template_schedule as $label => $value) {
 
@@ -2406,12 +2523,6 @@ function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,
 	$atomic_sked['duration'] = $duration;
 
 	$atomic_sked['end'] = $end;
-
-	//rsvpmaker_debug_log($atomic_sked,'build template schedule');
-
-	//$atomic_sked['firsttime'] = $duration;
-
-	//$atomic_sked['endfirsttime'] = $end;
 
 	return $atomic_sked;
 
@@ -2868,7 +2979,7 @@ if(empty($payconf) )
 
 		'id' => 'edit_payment_confirmation',
 
-		'title' => 'Payment Confirmation (New)',
+		'title' => 'Payment Confirmation',
 
 		'href'  => admin_url("edit.php?title=Payment Confirmation&rsvpcz=$meta_key&post_id=$post_id"),
 
@@ -3377,24 +3488,44 @@ FROM $wpdb->posts as parent_post right join $wpdb->posts as child_post ON parent
 		wp_delete_post($row->child_ID, true);
 }
 
-function rsvpmaker_check_outliers() {
-global $wpdb, $rsvp_outliers;
-//start date in the past but end date in the future
-$sql = "select maindate.meta_value as datetime, enddate.meta_value as end_date, $wpdb->posts.* FROM $wpdb->posts 
-LEFT JOIN  $wpdb->postmeta as maindate ON  $wpdb->posts.ID = maindate.post_id AND maindate.meta_key='_rsvp_dates'
-LEFT JOIN  $wpdb->postmeta as enddate ON  $wpdb->posts.ID = enddate.post_id AND enddate.meta_key='_rsvp_end_date'
-WHERE maindate.meta_value < CURDATE() AND enddate.meta_value > CURDATE()";
-$results = $wpdb->get_results($sql);
-if(empty($results))
-	return false;
-foreach($results as $row)
-	$rsvp_outliers[] = $row->ID;
-return true;
+add_filter('mailpoet_newsletter_shortcode', 'mailpoet_rsvpmaker_shortcode', 10, 5);
+
+function mailpoet_rsvpmaker_shortcode($shortcode, $newsletter, $subscriber, $queue, $newsletter_body) {
+rsvpmaker_debug_log($shortcode,'mailpoet shortcode filter');
+  // always return the shortcode if it doesn't match your own!
+  if (!strpos($shortcode,'rsvpmaker') && !strpos($shortcode,'event_listing') ) return $shortcode;
+  global $email_context;
+  $email_context = true;
+  $shortcode = str_replace('custom:','',$shortcode);
+  return do_shortcode($shortcode);
 }
-function rsvpmaker_where_outliers($where) {
-	global $rsvp_outliers;
-	foreach($rsvp_outliers as  $outlier)
-		$where .= " OR ID = $outlier";
-	return $where;
+
+function mailpoet_email_list_okay($rsvp) {
+	if (class_exists(\MailPoet\API\API::class)) {
+		$mailpoet_api = \MailPoet\API\API::MP('v1');
+		$list = get_option('rsvpmaker_mailpoet_list');
+		if(!$list)
+			return;
+		$list_ids = array($list);
+		$mailpoet_api = \MailPoet\API\API::MP('v1');
+		$first = (empty($rsvp['first'])) ? '' : $rsvp['first'];
+		$last = (empty($rsvp['last'])) ? '' : $rsvp['last'];
+		$subscriber = array('email' => $rsvp['email'], 'first_name' => $first,'last_name' => $last);
+			try {
+				$get_subscriber = $mailpoet_api->getSubscriber($subscriber['email']);
+			  } catch (\Exception $e) {}			
+			  try {
+				if (!$get_subscriber) {
+				  // Subscriber doesn't exist let's create one
+				  $mailpoet_api->addSubscriber($subscriber, $list_ids);
+				} else {
+				  // In case subscriber exists just add him to new lists
+				  $mailpoet_api->subscribeToLists($subscriber['email'], $list_ids);
+				}
+			  } catch (\Exception $e) {
+				$error_message = $e->getMessage();
+			  }
+	}
 }
+
 ?>

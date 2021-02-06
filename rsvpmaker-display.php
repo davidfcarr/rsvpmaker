@@ -83,7 +83,9 @@ function event_listing($atts = array()) {
 global $rsvp_options;
 $events = rsvpmaker_upcoming_data($atts);
 $date_format = (isset($atts["date_format"])) ? $atts["date_format"] : $rsvp_options["long_date"];
-
+if(isset($atts['show_time']))
+	$date_format .= ' '.$rsvp_options['time_format'];
+$listings = '';
 if(is_array($events))
 foreach($events as $event)
 	{
@@ -136,13 +138,13 @@ if(!$at_least_one)
 function rsvpmaker_select($select) {
   global $wpdb;
 
-    $select .= ", rsvpdates.meta_value as datetime, rsvpdates.meta_id, date_format(rsvpdates.meta_value,'%M %e, %Y') as date";
+    $select .= ", rsvpdates.date as datetime, date_format(rsvpdates.date,'%M %e, %Y') as date, rsvpdates.enddate, rsvpdates.display_type";
   return $select;
 }
 
 function rsvpmaker_join($join) {
   global $wpdb;
-	return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_rsvp_dates' ";
+	return $join." JOIN ".$wpdb->prefix."rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";
 }
 
 function rsvpmaker_groupby($groupby) {
@@ -155,7 +157,7 @@ function rsvpmaker_distinct($distinct){
 }
 
 function rsvpmaker_where_schedule($where) {
-	$where .= " AND rsvpdates.meta_value > CURDATE( ) AND post_content NOT LIKE '%rsvpmaker/schedule%' ";
+	$where .= " AND rsvpdates.date > CURDATE( ) AND post_content NOT LIKE '%rsvpmaker/schedule%' ";
 	return $where;
 }
 
@@ -169,80 +171,70 @@ global $datelimit;
 if(isset($_REQUEST["cm"]))
 	{
 	$date = rsvp_url_date_query();
-	$where .= " AND rsvpdates.meta_value >= '".$date."' ";
+	$where .= " AND ( ( rsvpdates.date >= '".$date."' ) OR ( rsvpdates.enddate >= '".$date."' ))";
 	if(!empty($datelimit))
-	$where .= "AND rsvpdates.meta_value < DATE_ADD('".$date."',INTERVAL $datelimit) ";
+	$where .= "AND rsvpdates.date < DATE_ADD('".$date."',INTERVAL $datelimit) ";
 	return $where;
 	}
 elseif(isset($startday) && $startday)
 	{
 		$t = rsvpmaker_strtotime($startday);
 		$d = rsvpmaker_date('Y-m-d',$t);
-		 $where .= " AND rsvpdates.meta_value > '$d' ";
+		 $where .= " AND rsvpdates.enddate > '$d' ";
 		 if(!empty($datelimit))
-		 	$where .= " AND rsvpdates.meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";
+		 	$where .= " AND ( (rsvpdates.date < DATE_ADD('$d',INTERVAL $datelimit) OR (rsvpdates.enddate < DATE_ADD('$d',INTERVAL $datelimit) ) ";
 		 return $where;
-	}
-elseif(!empty($startday))
-	{
-		$t = rsvpmaker_strtotime($startday);
-		$d = rsvpmaker_date('Y-m-d',$t);
-		$where .= " AND rsvpdates.meta_value > '$d' AND rsvpdates.meta_value > '$d' ";
-		if(!empty($datelimit))
-			$where .= "AND rsvpdates.meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";
-		return $where;
 	}
 elseif(isset($_GET["startdate"]))
 	{
 		$d = $_GET["startdate"];
-		$where .= " AND rsvpdates.meta_value > '$d' ";
+		$where .= " AND ( (rsvpdates.date > '$d') OR (rsvpdates.enddate > '$d') ) ";
 		if(!empty($datelimit))
-			$where .=  " AND rsvpdates.meta_value < DATE_ADD('$d',INTERVAL $datelimit) ";		
+			$where .=  " AND ( ( rsvpdates.date < DATE_ADD('$d',INTERVAL $datelimit) OR ( rsvpdates.enddate < DATE_ADD('$d',INTERVAL $datelimit)) ) ";		
 		return $where;
 	}
 else
 	{
-		$where .= " AND rsvpdates.meta_value > CURDATE( ) ";
+		$where .= " AND ( ( rsvpdates.date > CURDATE( ) OR rsvpdates.enddate > CURDATE() ) )";
 		if(!empty($datelimit))
-			$where .=  " AND rsvpdates.meta_value < DATE_ADD(CURDATE( ),INTERVAL $datelimit) ";		
+			$where .=  " AND ( ( rsvpdates.date < DATE_ADD(CURDATE( ),INTERVAL $datelimit)) OR ( rsvpdates.enddate < DATE_ADD(CURDATE( ),INTERVAL $datelimit)) ) ";	
 		return $where;
 	}
 }
 
 function rsvpmaker_orderby($orderby) {
-  return " rsvpdates.meta_value";
+  return " rsvpdates.date";
 }
 
 // if listing past dates
 function rsvpmaker_where_past($where) {
 
 global $startday;
-$where .= " AND rsvpdates.meta_key='_rsvp_dates' ";
 
 if(isset($_REQUEST["cm"]))
    {
 	$date = rsvp_url_date_query('past');
-	return $where . " AND rsvpdates.meta_value < '".$date."'";
+	return $where . " AND rsvpdates.date < '".$date."'";
    }
 elseif(isset($startday) && $startday)
 	{
 		$t = rsvpmaker_strtotime($startday);
 		$d = rsvpmaker_date('Y-m-d',$t);
-		return $where . " AND rsvpdates.meta_value < '$d'";
+		return $where . " AND rsvpdates.date < '$d'";
 	}
 elseif(isset($_GET["startday"]))
 	{
 		$t = rsvpmaker_strtotime($_GET["startday"]);
 		$d = date('Y-m-d',$t);
-		return $where . " AND rsvpdates.meta_value < '$d'";
+		return $where . " AND rsvpdates.date < '$d'";
 	}
 else
-	return $where . " AND rsvpdates.meta_value < CURDATE( )";
+	return $where . " AND rsvpdates.date < CURDATE( )";
 
 }
 
 function rsvpmaker_orderby_past($orderby) {
-  return " rsvpdates.meta_value DESC";
+  return " rsvpdates.date DESC";
 }
 
 function rsvpmaker_upcoming ($atts = array())
@@ -301,8 +293,6 @@ if(isset($atts["past"]) && $atts["past"])
 else
 	{
 	add_filter('posts_where', 'rsvpmaker_where' );
-	if(empty($_GET['cm']) && rsvpmaker_check_outliers())
-		add_filter('posts_where', 'rsvpmaker_where_outliers', 12 );
 	add_filter('posts_orderby', 'rsvpmaker_orderby' );
 	if($paged == 1)
 		cache_rsvp_dates($limit + 20);
@@ -460,7 +450,7 @@ elseif(isset($_GET["startday"]))
 else
 		$d = "'".rsvpmaker_date('Y-m')."-01'";
 	//$d = ' CURDATE() ';
-	return $where . " AND meta_value > ".$d.' AND meta_value < DATE_ADD('.$d.', INTERVAL 5 WEEK) ';
+	return $where . " AND enddate > ".$d.' AND enddate < DATE_ADD('.$d.', INTERVAL 5 WEEK) ';
 }
 
 function rsvpmaker_calendar_clear($g) {
@@ -559,12 +549,8 @@ if(!empty($atts['exclude_type']))
 		$post->post_title = __('Title left blank','rsvpmaker');
 	
 	$t = rsvpmaker_strtotime($post->datetime);
-	$duration_type = get_post_meta($post->ID,'_firsttime', true);
-	if(empty($duration_type))
-		$duration_type = get_post_meta($post->ID,'_'.$post->datetime, true);
-	$end = get_post_meta($post->ID,'_endfirsttime', true);
-	if(empty($end))
-		$end = get_post_meta($post->ID,'_end'.$post->datetime, true);
+	$duration_type = $post->display_type;
+	$end = $post->enddate;
 	$time = ($duration_type == 'allday') ? '' : '<br />&nbsp;'.rsvpmaker_strftime($rsvp_options["time_format"],$t);
 	if(($duration_type == 'set') && !empty($end) )
 		{
@@ -684,19 +670,11 @@ for ($i = 1; $i <= rsvpmaker_date("t",$bom); $i++) {
 		$class .= ' past';
 	if($thisdate > $todaydate)
 		$class .= ' future';
-	if(isset($_GET['debug']))
-	{
-		rsvpmaker_debug_log($thisdate,'calendar thisdate ');
-	}
 	$content .= '<td valign="top" class="'.$class.'">';
    if(!empty($eventarray[$thisdate]) )
    {
    $content .= $i;
    $content .= $eventarray[$thisdate];
-   if(isset($_GET['debug']))
-   {
-	   rsvpmaker_debug_log($eventarray[$thisdate],'calendar eventarray '.$thisdate);
-   }
   $t = rsvpmaker_strtotime($thisdate);
    }
    else
@@ -1278,10 +1256,9 @@ $offset = $atts["hide_past"];
 if(!is_rsvpmaker_future($post_id, $offset))
 	return;
 }
-//rsvpmaker_debug_log($atts,'rsvpmaker_one atts');
+
 if(empty($atts["one_format"]) || ($atts["one_format"] == 'button'))
-{//one post loop
-//rsvpmaker_debug_log('loop for event plus button','rsvpmaker_one atts');
+{
 ob_start();
 ?>
 <div class="rsvpmaker_embedded">
@@ -1685,10 +1662,90 @@ function get_rsvp_link($post_id, $justlink = false) {
 
 function rsvpdateblock ($atts = array()) {
 	global $post;
-	$custom_fields = get_rsvpmaker_custom($post->ID);
-	$date_array = rsvp_date_block($post->ID, $custom_fields);
-	$dateblock = $date_array["dateblock"];
+	$dateblock = rsvpmaker_format_event_dates($post->ID);
+	//$custom_fields = get_rsvpmaker_custom($post->ID);
+	//$date_array = rsvp_date_block($post->ID, $custom_fields);
+	//$dateblock = $date_array["dateblock"];
 	return '<div class="dateblock">'.$dateblock."\n</div>\n";
+}
+
+function rsvpmaker_format_event_dates($post_id) {
+	global $post, $rsvp_options;
+	if(is_admin())
+		return;
+	if(empty($post_id))
+		$post_id = $post->ID;
+	$eventrow = get_rsvpmaker_event($post_id);
+	$custom_fields = get_post_custom($post_id);
+	$time_format = $rsvp_options["time_format"];
+	$dur = $tzbutton = '';
+	if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
+		{
+		$time_format .= ' %Z';
+		}
+	$permalink = get_permalink($post_id);
+	$dateblock = '<div class="dateblock">';
+	$sked = get_template_sked($post->ID);
+
+	if(!empty($eventrow) || !empty($sked))
+	{
+		if(!empty($sked))
+		{
+			$t = rsvpmaker_strtotime('tomorrow '.$sked['hour'].':'.$sked['minutes']);
+			$dateblock .= '<p><em>Template displayed using tomorrow\'s date</em> <br />'. sprintf('<a href="%s">%s</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id),__('Create/update events from template','rsvpmaker'));
+			;
+		}
+		else
+			$t = rsvpmaker_strtotime($eventrow->date);
+		$endt = rsvpmaker_strtotime($eventrow->enddate);
+		$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'">';
+		$dateblock .= utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$t));
+		$dur = $eventrow->display_type;
+		if($dur == 'set') {
+			$tzcode = strpos($time_format,'%Z');
+			if($tzcode) 
+				$time_format = str_replace('%Z','',$time_format);
+			$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t);
+			$dateblock .= ' <span class="end_time">'.__('to','rsvpmaker')." ".rsvpmaker_strftime($time_format,$endt).'</span>';
+			if($tzcode)
+				$dateblock .= ' '.rsvpmaker_strftime('%Z',$t);
+			$dateblock .= '</span>';
+		}		
+		elseif(strpos($dur,'|')) {
+			$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';			
+			$dateblock .= ' <span class="end_time">'.__('to','rsvpmaker')."<br />".utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$endt)).rsvpmaker_strftime($time_format,$endt).'</span>';
+		}
+		elseif(($dur != 'allday'))
+			{
+			$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';
+			}
+		$dateblock .= '</div>';//end startdate div
+		if(isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0]) {
+			if(is_email_context()) {
+				$tzbutton = sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',$post_id,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
+			}
+			else {
+				$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
+			}
+			$dateblock .= '<div><span id="timezone_converted'.$post_id.'"></span><span id="extra_timezone_converted'.$post_id.'"></span></div>';
+		}
+		if( ( (!empty($rsvp_options["calendar_icons"]) && !isset($custom_fields["_calendar_icons"][0])) || !empty($custom_fields["_calendar_icons"][0]) ))// && !is_email_context ())
+		{
+		$j = (strpos($permalink,'?')) ? '&' : '?';
+		if(is_email_context())
+		$dateblock .= sprintf('<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>',rsvpmaker_to_gcal($post,$eventrow->date,$eventrow->enddate),$permalink.$j.'ical=1',$tzbutton );
+		else
+		$dateblock .= sprintf('<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>',rsvpmaker_to_gcal($post,$eventrow->date,$eventrow->enddate), __('Add to Google Calendar','rsvpmaker'), plugins_url('rsvpmaker/button_gc.gif'),$permalink.$j.'ical=1', __('Add to Outlook/iCal','rsvpmaker'), plugins_url('rsvpmaker/button_ical.gif'), $tzbutton );
+		}
+		elseif (!empty($custom_fields['_convert_timezone'][0]) ) //convert button without calendar icons
+			$dateblock .= '<div class="rsvpcalendar_buttons">'.$tzbutton.'</div>';
+		$dateblock .= '</div>';//end of dateblock div
+		}
+		else // no dates, no sked, maybe this is an agenda or a landing page
+		{
+			return;			
+		}		
+	return $dateblock;//.'<span class="format_function">test<span></div>';	
 }
 
 function rsvpmaker_hide_time_posted($time) {

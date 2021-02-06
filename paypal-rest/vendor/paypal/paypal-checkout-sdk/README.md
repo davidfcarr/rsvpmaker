@@ -63,10 +63,10 @@ try {
     $response = $client->execute($request);
     
     // If call returns body in response, you can get the deserialized version from the result attribute of the response
-    print_r($response);
+    //print_r($response);
 }catch (HttpException $ex) {
     echo $ex->statusCode;
-    print_r($ex->getMessage());
+    //print_r($ex->getMessage());
 }
 ```
 #### Example Output:
@@ -114,10 +114,10 @@ try {
     $response = $client->execute($request);
     
     // If call returns body in response, you can get the deserialized version from the result attribute of the response
-    print_r($response);
+    //print_r($response);
 }catch (HttpException $ex) {
     echo $ex->statusCode;
-    print_r($ex->getMessage());
+    //print_r($ex->getMessage());
 }
 ```
 

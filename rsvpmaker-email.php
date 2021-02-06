@@ -6,7 +6,7 @@ $rsvpmaker_message_type = '';
 function rsvpmailer($mail) {
 	if(isset($_GET['debug'])){
 		echo 'rsvpmailer ';
-		print_r($mail);
+		//print_r($mail);
 	}
 
 	if(isset($mail['subject']))
@@ -24,7 +24,6 @@ function rsvpmailer($mail) {
 	if(defined('RSVPMAILOFF'))
 	{
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
-		//rsvpmaker_debug_log($log,'disabled email');
 		return;
 	}
 	if(strpos($mail['to'],'@example.com'))
@@ -34,7 +33,6 @@ function rsvpmailer($mail) {
 	if(empty($unsubscribed)) $unsubscribed = array();
 
 	$rsvpmailer_rule = apply_filters('rsvpmailer_rule','',$mail['to'], $rsvpmaker_message_type);
-	//rsvpmaker_debug_log($unsubscribed,'testing unsub list vs '.$mail['to']);
 	if($rsvpmailer_rule == 'deny') {
 		$mail['html'] = '[content omitted]';
 		$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
@@ -346,11 +344,10 @@ if($mail["html"])
 <div class="wrap" style="max-width:950px !important;">
 	<h3><?php _e('RSVPMaker Email List','rsvpmaker');?></h3>
 	<p><?php _e("These settings are related to integration with the MailChimp broadcast email service, as well as RSVPMaker's own functions for broadcasting email to website members or people who have registered for your events.",'rsvpmaker');?></p>			
+	<p><?php _e("<strong>New for 2021</strong>: scroll down to see options for MailPoet integration",'rsvpmaker');?></p>			
 	<div id="poststuff" style="margin-top:10px;">
-
 	 <div id="mainblock" style="width:710px">
-	 
-		<div class="dbx-content">
+	<div class="dbx-content">
 		 	<form name="EmailOptions" action="<?php echo $action_url ; ?>" method="post">
 <?php
 if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'email')
@@ -417,6 +414,46 @@ if($slug == 'administrator')
 	 </div>
 
 	</div>
+</div>
+
+<div id="mailpoet">
+<h2>MailPoet Integration</h2>
+<p>MailPoet is a WordPress plugin and web service for sending email newsletters and other mass email, with the permission of the recipients.</p>
+<p>You can add RSVPMaker events or event listings to the content of a MailPoet newsletter using these shortcodes:</p>
+<ul>
+<li><strong>[custom:rsvpmaker_upcoming hideauthor="1"]</strong> list upcoming events. Omit hideauthor attribute if you want the post author for each event displayed</li>
+<li><strong>[custom:rsvpmaker_next]</strong> next event or <strong>[custom:rsvpmaker_next rsvp_on="1"]</strong> next event with RSVPs active </li>
+<li><strong>[custom:event_listing show_time="1"]</strong> list of links with dates and titles of upcoming events. The optional show_time attribute will add the time, in addition to the event date.</li>
+<li><strong>[custom:rsvpmaker_one post_id="99"]</strong> specific rsvpmaker event by post id</li>
+</ul>
+<?php
+	if (class_exists(\MailPoet\API\API::class)) {
+		$mailpoet_api = \MailPoet\API\API::MP('v1');
+		$lists = $mailpoet_api->getLists();
+		if(isset($_POST['rsvpmaker_mailpoet_list']))
+		{
+			$listok = (int) $_POST['rsvpmaker_mailpoet_list'];
+			update_option('rsvpmaker_mailpoet_list',$listok);
+			echo '<div class="notice notice-success"><p>MailPoet List Set</p></div>';
+		}
+		else
+			$listok = get_option('rsvpmaker_mailpoet_list');
+		$o = '<option value="">Choose List</option>';
+		foreach($lists as $list) {
+			$s = ($list['id'] == $listok) ? ' selected="selected" ' : '';
+			$o .= sprintf('<option value="%d" %s>%s</option>',$list['id'], $s, $list['name']);
+		}
+	printf('<form method="post" action="%s"><p>List to use with "Add me to your email list" checkbox <select name="rsvpmaker_mailpoet_list">%s</select><button>Update</button></p></form>',site_url($_SERVER['REQUEST_URI']),$o);
+	}
+	else
+		echo '<p>MailPoet not enabled</p>';
+?>
+<h2>Add to Email Checkbox</h2>
+<p>You can include an "Add me to your email list" checkbox on your RSVP forms to enlist people when they sign up for your events. This works with both MailChimp and MailPoet.</p>
+<p><image src="<?php echo plugins_url('rsvpmaker/images/add_to_email_block.png'); ?>" width="600" height="348">
+<br />Adding the Mailing List Checkbox block</p>
+<p><image src="<?php echo plugins_url('rsvpmaker/images/add_to_email_checkbox.png'); ?>" width="468" height="578">
+<br />Checkbox as it appears on the form</p>
 </div>
 
 <?php              
@@ -572,7 +609,7 @@ foreach($results as $row)
 			if($hook == 'rsvpmaker_cron_email')
 				foreach($properties as $key => $property_array)
 					{
-					//print_r($property_array);
+					////print_r($property_array);
 					$post_id = array_shift($property_array["args"]);
 					$post = get_post($post_id);
 					if(!empty($post))
@@ -1368,17 +1405,12 @@ $input = array(
 				'settings' => array('subject_line' => sanitize_text_field(stripslashes($_POST["subject"])),'from_email' => sanitize_text_field($_POST["from_email"]), 'from_name' => sanitize_text_field($_POST["from_name"]), 'reply_to' => sanitize_text_field($_POST["from_email"]))
 );
 
-rsvpmaker_debug_log(json_encode($input),'mailchimp request');
-
 $campaign = $MailChimp->post("campaigns", $input);
 if(!$MailChimp->success())
 	{
 	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
 	return;
 	}
-else {
-	rsvpmaker_debug_log($campaign,'mailchimp result');
-}
 if(!empty($campaign["id"]))
 {
 $content_result = $MailChimp->put("campaigns/".$campaign["id"].'/content', array(
@@ -2049,8 +2081,8 @@ function rsvpmaker_email_list_okay ($rsvp) {
 		$mergevars["FNAME"] = stripslashes($rsvp["first"]);
 		$mergevars["LNAME"] = stripslashes($rsvp["last"]);
 		RSVPMaker_Chimp_Add($rsvp["email"],$mergevars);
+		mailpoet_email_list_okay($rsvp);
 }
-
 
 function get_rsvpmaker_email_template() {
 global $rsvpmail_templates;
@@ -2181,7 +2213,6 @@ if(empty($t_index))
 	$t_index = (int) get_option('rsvpmaker_tx_template');
 
 $template = $templates[$t_index]["html"];
-rsvpmaker_debug_log($template,'tx template');
 if(!strpos($template,'*|UNSUB')) // if not already in template
 $rsvpmaker_tx_content .= '<div id="messagefooter">
     *|LIST:DESCRIPTION|*<br>
@@ -2243,7 +2274,7 @@ foreach($wp_filter["the_content"] as $priority => $filters)
 		}
 if(isset($_GET["debug"])) {
 	echo '<pre>';
-	print_r($wp_filter);
+	//print_r($wp_filter);
 	echo '</pre>';
 }
 
@@ -2278,7 +2309,6 @@ try {
 }
 
 $retval = $MailChimp->get('lists');
-rsvpmaker_debug_log($retval,'mailchimp lists');
 
 $options = '';
 if (is_array($retval)){
@@ -2712,15 +2742,10 @@ elseif(!empty($atts) && is_numeric($atts))
 else
 	$post_id = $post->ID;
 	
-//rsvpmaker_debug_log($atts,'rspcount atts');
-//rsvpmaker_debug_log($post_id,'rspcount post_id');
-	
 if(!$post_id)
 	return;
 $sql = "SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post_id AND yesno=1 ORDER BY id DESC";
-//rsvpmaker_debug_log($sql,'rspcount sql');
 $total = (int) $wpdb->get_var($sql);
-//rsvpmaker_debug_log($total,'rspcount total');
 $rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
 $output = $total.' '.__('signed up so far.','rsvpmaker');
 if($rsvp_max)
@@ -2782,7 +2807,6 @@ foreach($rsvpdata as $field => $value)
 }
 
 function rsvp_payment_reminder ($rsvp_id) {
-rsvpmaker_debug_log($rsvp_id,'payment_reminder_test');
 global $post;
 global $rsvp_options;
 global $wpdb;
@@ -2790,7 +2814,6 @@ $sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
 $rsvp = (array) $wpdb->get_row($sql);
 $post = get_post($rsvp['event']);
 $rsvpdata = unserialize($rsvp['details']);
-rsvpmaker_debug_log($rsvpdata,'payment_reminder_test');
 if($rsvpdata['total'] <= $rsvp['amountpaid'])
 	return;
 	
@@ -2832,7 +2855,6 @@ rsvpmaker_tx_email($post, $mail);
 
 function rsvp_confirmation_after_payment ($rsvp_id) {
 	include 'rsvpmaker-ical.php';
-	rsvpmaker_debug_log($rsvp_id,'rsvp_confirmation_after_payment');
 	global $post;
 	global $rsvp_options;
 	global $wpdb;
@@ -2934,7 +2956,7 @@ $member = $MailChimp->get("/lists/".$listId."/members/".md5($email));
 if(isset($_GET['debug']))
 {
 	echo '<pre>';
-	print_r($member);
+	//print_r($member);
 	echo '</pre>';
 }
 if (!empty($member["id"]) && ($member["status"] == 'subscribed'))
@@ -2960,7 +2982,6 @@ function email_content_minfilters() {
 					//$log .= "REMOVED  \n";
 					}
 				}	
-	//rsvpmaker_debug_log($log,'email filters scan');
 }
 
 add_action('admin_init','rsvpmailer_template_preview');
@@ -3086,4 +3107,12 @@ function rsvpdatetime_shortcode($atts) {
 	return rsvpmaker_strftime($format,$t);
 }
 
+function rsvpmaker_cronmail_check_duplicate($content) {
+	$key = 'cronemail'.md5($content);
+	$found = get_transient($key);
+	if($found)
+		return true;
+	set_transient($key,$content);
+	return false;
+}
 ?>

@@ -155,13 +155,8 @@ if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
 
 	$new["post_content"] = $content;
 
-	rsvpmaker_debug_log($new,'customize document');
-
 	$id = wp_insert_post($new);
-	rsvpmaker_debug_log($id,'customize document ID');
-
 	if(!$id)
-
 		return;
 
 	if($source)
@@ -384,7 +379,7 @@ if(isset($_GET['customize_form'])) {
 
 	$new["post_content"] = $old->post_content;
 
-	//print_r($new);
+	////print_r($new);
 
 	remove_all_filters("content_save_pre"); //don't allow form fields to be filtered out
 
@@ -583,10 +578,6 @@ function rsvp_form_radio($atts, $content = '') {
 
 
 function rsvp_form_field($atts, $content = '') {
-
-	rsvpmaker_debug_log($atts,'form field render atts');
-
-	rsvpmaker_debug_log($content,'form field render $content');
 
 	//same for all field types
 

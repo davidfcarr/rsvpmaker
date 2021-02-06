@@ -457,7 +457,7 @@ if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP F
 if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formchimp', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
-	title: __( 'RSVPField Mailchimp Checkbox' ), // Block title.
+	title: __( 'RSVPField Mailing List Checkbox' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [

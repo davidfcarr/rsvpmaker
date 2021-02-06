@@ -7,15 +7,14 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.3.2
+Version: 8.4
 */
 
 function get_rsvpversion(){
-return '8.3.2';
+return '8.4';
 }
 
-global $wp_version;
-global $default_tz;
+global $wp_version, $wpdb, $rsvp_options, $default_tz;
 $default_tz = date_default_timezone_get();
 
 if (version_compare($wp_version,"3.0","<"))
@@ -25,7 +24,6 @@ function rsvpmaker_load_plugin_textdomain() {
     load_plugin_textdomain( 'rsvpmaker', FALSE, basename( dirname( __FILE__ ) ) . '/translations/' );
 }
 
-global $rsvp_options;
 $rsvp_options = get_option('RSVPMAKER_Options');
 
 $locale = get_locale();
@@ -378,7 +376,9 @@ dbDelta($sql);
 $sql = "CREATE TABLE `".$wpdb->prefix."rsvpmaker_event` (
   `event` int(11) NOT NULL default '0',
   `post_title` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
+  `display_type` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
   `date` datetime,
+  `enddate` datetime,
   PRIMARY KEY  (`event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 dbDelta($sql);
@@ -418,7 +418,7 @@ if(! $wpdb->get_var($sql) )
 $sql = "UPDATE $wpdb->posts SET post_type='rsvpemail' WHERE post_type='rsvpmaker' AND post_parent != 0 ";
 $wpdb->query($sql);
 
-$rsvp_options["dbversion"] = 14;
+$rsvp_options["dbversion"] = 16;
 update_option('RSVPMAKER_Options',$rsvp_options);
 }
 
@@ -453,15 +453,18 @@ if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 7))
 		}
 	}
 	}
-if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 10))
+if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 16))
 	cpevent_activate();
 global $wpdb;
-$test = $wpdb->get_var("SHOW TABLES LIKE '".$wpdb->prefix."rsvpmaker_event'");
-if(!$test)
+$test = $wpdb->get_var("SELECT enddate FROM ".$wpdb->prefix."rsvpmaker_event WHERE enddate IS NOT NULL");
+if(!$test) // table doesn't exist or is missing enddate column
 {
 	rsvpmaker_debug_log('cpevent_activate fired');
 	cpevent_activate();
+	rsvpmaker_event_dates_table_update(true);
 }
+else
+	rsvpmaker_event_dates_table_update(); // check for data errors
 
 if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 14))
 {
