@@ -380,7 +380,11 @@ $events_displayed[] = $post->ID;
 <h1 class="rsvpmaker-entry-title"><a href="<?php the_permalink(); ?>"  itemprop="url"><span itemprop="name"><?php the_title(); ?></span></a></h1>
 <div class="rsvpmaker-entry-content">
 
-<?php the_content(); ?>
+<?php 
+if(!empty($atts['excerpt']))
+	echo rsvpmaker_excerpt($post);
+else
+	the_content(); ?>
 
 </div><!-- .entry-content -->
 
@@ -1306,15 +1310,6 @@ else
 	{
 	rsvpmaker_debug_log('one_format att = button_only','rsvpmaker_one atts');
 	$content = get_rsvp_link($post_id);
-/*	if(is_rsvpmaker_future($post_id)) 
-		{
-		$content = get_rsvp_link($post_id);
-		}
-	else
-		{
-		$content = __('Event date is past','rsvpmaker');
-		}
-*/
 	}
 	elseif($atts["one_format"] == 'embed_dateblock') {
 		$content = embed_dateblock($atts);

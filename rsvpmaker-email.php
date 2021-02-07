@@ -426,6 +426,7 @@ if($slug == 'administrator')
 <li><strong>[custom:event_listing show_time="1"]</strong> list of links with dates and titles of upcoming events. The optional show_time attribute will add the time, in addition to the event date.</li>
 <li><strong>[custom:rsvpmaker_one post_id="99"]</strong> specific rsvpmaker event by post id</li>
 </ul>
+<p>For more attributes and options, see <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">Shortcodes Documentation</a>.</p>
 <?php
 	if (class_exists(\MailPoet\API\API::class)) {
 		$mailpoet_api = \MailPoet\API\API::MP('v1');

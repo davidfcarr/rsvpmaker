@@ -1,5 +1,4 @@
-/**
- * BLOCK: rsvpmaker-block
+/* BLOCK: rsvpmaker-block
  *
  * Registering a basic block with Gutenberg.
  * Simple block, renders and saves the same content without any interactivity.
@@ -11,14 +10,14 @@ import './rsvpmaker-sidebar.js';
 import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
-import './schedule.js';
 import './form.js';		
-import './form-wrapper.js';
 import apiFetch from '@wordpress/api-fetch';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
-const { SelectControl, TextControl, ToggleControl } = wp.components;
+const { PanelBody, SelectControl, TextControl, ToggleControl } = wp.components;
+const { Component, Fragment } = wp.element;
+const { InspectorControls } = wp.editor;
 
 const rsvpupcoming = [{label: __('Choose event'),value: ''},{label: __('Next event'),value: 'next'},{label: __('Next event - RSVP on'),value: 'nextrsvp'}];
 apiFetch( {path: 'rsvpmaker/v1/future'} ).then( events => {
@@ -258,7 +257,8 @@ registerBlockType( 'rsvpmaker/submission', {
 	],
        attributes: {
             to: {
-            type: 'string',
+	
+				type: 'string',
             default: '',
             },
             timezone: {
@@ -318,6 +318,10 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	],
        attributes: {
             calendar: {
+                type: 'int',
+                default: 0,
+            },
+            excerpt: {
                 type: 'int',
                 default: 0,
             },
@@ -450,12 +454,15 @@ registerBlockType( 'rsvpmaker/upcoming', {
 		}
 
 		return (
+			<Fragment>
 			<div className={ props.className }>
+					<UpcomingInspector {...props}/>
 				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker</strong>: Add an Events Listing and/or Calendar Display
 				</p>
-			{ isSelected && ( showForm() ) }
-			{ !isSelected && ( showFormPrompt() ) }
-			</div>
+				<p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
+				{ isSelected && ( <p><strong>{__('Set options from properties sidebar.','rsvpmaker')}</strong></p> ) }
+				</div>
+				</Fragment>
 		);
 	},
 
@@ -471,6 +478,95 @@ registerBlockType( 'rsvpmaker/upcoming', {
 		return null;
 	},
 } );
+
+class UpcomingInspector extends Component {
+	render() {
+		const { attributes: { calendar, excerpt, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author }, setAttributes, isSelected } = this.props;
+		return (
+			<InspectorControls key="upcominginspector">
+			<PanelBody title={ __( 'RSVPMaker Upcoming Options', 'rsvpmaker' ) } >
+			<form  >
+					<SelectControl
+        label={__("Display Calendar",'rsvpmaker')}
+        value={ calendar }
+        options={ [{value: 1, label: __('Yes - Calendar plus events listing')},{value: 0, label:  __('No - Events listing only')},{value: 2, label: __('Calendar only')}] }
+        onChange={ ( calendar ) => { setAttributes( { calendar: calendar } ) } }
+    />
+					<SelectControl
+        label={__("Format",'rsvpmaker')}
+        value={ excerpt }
+        options={ [{value: 0, label: __('Full Text')},{value: 1, label:  __('Excerpt')}] }
+        onChange={ ( excerpt ) => { setAttributes( { excerpt: excerpt } ) } }
+    />
+					<SelectControl
+        label={__("Events Per Page",'rsvpmaker')}
+        value={ posts_per_page }
+        options={ [{value: 5, label: 5},
+			{value: 10, label: 10},
+			{value: 15, label: 15},
+			{value: 20, label: 20},
+			{value: 25, label: 25},
+			{value: 30, label: 30},
+			{value: 35, label: 35},
+			{value: 40, label: 40},
+			{value: 45, label: 45},
+			{value: 50, label: 50},
+			{value: '-1', label: 'No limit'}]}
+        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page: posts_per_page } ) } }
+    />
+					<SelectControl
+        label={__("Date Range",'rsvpmaker')}
+        value={ days }
+        options={ [{value: 5, label: 5},
+			{value: 30, label: '30 Days'},
+			{value: 60, label: '60 Days'},
+			{value: 90, label: '90 Days'},
+			{value: 180, label: '180 Days'},
+			{value: 366, label: '1 Year'}] }
+        onChange={ ( days ) => { setAttributes( { days: days } ) } }
+    />
+					<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+					<SelectControl
+        label={__("Author",'rsvpmaker')}
+        value={ author }
+        options={ rsvpauthors }
+        onChange={ ( author ) => { setAttributes( { author: author } ) } }
+    />
+					<SelectControl
+        label={__("Exclude Event Type",'rsvpmaker')}
+        value={ exclude_type }
+        options={ rsvptypes }
+        onChange={ ( exclude_type ) => { setAttributes( { exclude_type: exclude_type } ) } }
+    />
+					<SelectControl
+        label={__("Calendar Navigation",'rsvpmaker')}
+        value={ nav }
+        options={ [{value: 'top', label: __('Top')},{value: 'bottom', label: __('Bottom')},{value: 'both', label: __('Both')}] }
+        onChange={ ( nav ) => { setAttributes( { nav: nav } ) } }
+    />
+				<SelectControl
+        label={__("Show Event Author",'rsvpmaker')}
+        value={ hideauthor }
+        options={ [
+            { label: 'No', value: true },
+            { label: 'Yes', value: false },
+        ] }
+        onChange={ ( hideauthor ) => { setAttributes( { hideauthor: hideauthor } ) } }
+    />
+				<TextControl
+        label={__("Text to show for no events listed",'rsvpmaker')}
+        value={ no_events }
+        onChange={ ( no_events ) => { setAttributes( { no_events: no_events } ) } }
+    />
+				</form>
+				</PanelBody>
+				</InspectorControls>
+);	} }
 
 
 registerBlockType( 'rsvpmaker/eventlisting', {

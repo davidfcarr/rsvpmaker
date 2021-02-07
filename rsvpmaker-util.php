@@ -786,8 +786,43 @@ function fix_enddatetime($enddatetime, $date, $post_id) {
 	return $enddatetime;
 }
 
-function get_future_events ($where = '', $limit='', $output = OBJECT, $offset_hours = 0) {
+function rsvpmaker_excerpt($post) {
+	global $rsvp_options, $post;
+	$rsvp_on = get_post_meta($post->ID,'_rsvp_on',true);
+	$excerpt = rsvpdateblock();
+	if(strpos($post->post_content,'<!--more-->')) {
+		$morelink = true;
+		$p = explode('<!--more-->',$post->post_content);
+		$excerpt = do_blocks($p[0]);
+	}
+	else {
+		$content = do_blocks($post->post_content);
+		$blocks = explode("<p",$content);
+		$fullsize = sizeof($blocks);
+		$blocks = array_slice($blocks,0,3);
+		$excerpt .= do_blocks(implode("<p",$blocks));
+		$shortened = sizeof($blocks);
+		$morelink = ($fullsize > $shortened);
+	}
+	$permalink = get_permalink($post->ID);
+	$rsvplink = add_query_arg('e','*|EMAIL|*',$permalink).'#rsvpnow';
+	if($morelink)
+	$excerpt .= sprintf('<p style="text-align: right;"><a href="%s">%s</a></p>',$permalink,__('Read More','rsvpmaker'));
+	if($rsvp_on)
+		$excerpt .= sprintf($rsvp_options['rsvplink'],$rsvplink);
+	return $excerpt;
+}
 
+function get_future_events ($where_or_atts = '', $limit='', $output = OBJECT, $offset_hours = 0) {
+if(is_array($where_or_atts)) {
+	$where = (isset($where_or_atts['where'])) ? $where_or_atts['where'] : '';
+	$limit = (isset($where_or_atts['limit'])) ? $where_or_atts['limit'] : '';
+	if(isset($where_or_atts['posts_per_page']))
+		$limit = $where_or_atts['posts_per_page'];
+	$offset_hours = (isset($where_or_atts['offset_hours'])) ? $where_or_atts['offset_hours'] : 0;
+}
+else
+	$where = $where_or_atts;
 global $wpdb;
 
 $wpdb->show_errors();
