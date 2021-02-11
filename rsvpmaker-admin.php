@@ -1396,6 +1396,52 @@ $tab .= '<input type="hidden" name="tab" value="rsvpforms">';
 
 ?>
 </section>
+<section id="rsvpforms" class="rsvpmaker">
+<?php
+printf('<p>%s</p>',__('Use this page to manage alternative RSVP Forms. Like the default form, any of these alternative forms can be customized for an event post or template. If you created a custom form that worked well, you can assign it a name so that it can be reused with other events and templates.','rsvpmaker'));
+printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><h3>%s</h3><p><label>%s</label> <input type="text" name="rsvp_form_new" value=""></p><p><em>%s</em></p><p> %s</p></form>',admin_url('edit.php'),__('Create a Reusable RSVP Form','rsvpmaker'),__('Label','rsvpmaker'),__('A form will be created with a sampling of input fields you can copy, modify, or delete to create a form that meets your needs.','rsvpmaker'),get_submit_button('Create'));
+$forms = rsvpmaker_get_forms();
+echo '<h3>Default Form</h3>';
+$fpost = get_post($options["rsvp_form"]);
+if(empty($fpost))
+	{
+	$options["rsvp_form"] = upgrade_rsvpform();
+	$fpost = get_post($options["rsvp_form"]);
+	}
+echo rsvpmaker_form_summary($fpost);
+$edit = admin_url('post.php?action=edit&post='.$options["rsvp_form"]);
+printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','rsvpmaker'));
+
+foreach($forms as $label => $form_id) {
+	$fpost = get_post($form_id);
+	if($fpost) {
+		printf('<h3>Form: %s</h3>',$label);
+		echo rsvpmaker_form_summary($fpost);
+		$edit = admin_url('post.php?action=edit&post='.$form_id);
+		printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','rsvpmaker'));
+	}
+}
+
+$results = $wpdb->get_results("SELECT ID, post_title, post_parent, post_content FROM $wpdb->posts JOIN $wpdb->postmeta ON ID=post_id WHERE meta_key='_rsvpmaker_special' AND meta_value='RSVP Form' AND post_parent ORDER BY ID DESC ");
+if($results)
+{
+	printf('<h2>%s</h2>',__('Save Existing Forms for Reuse','rsvpmaker'));
+
+$tab = (isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'rsvpforms') ? '<input type="hidden" id="activetab" value="rsvpforms" />' : '';
+$tab .= '<input type="hidden" name="tab" value="rsvpforms">';
+
+	foreach($results as $fpost) {
+		if(in_array($fpost->ID,$forms)) // if already in collection
+			continue;
+		printf('<h3>%s %s</h3>',get_the_title($fpost->post_parent),get_rsvp_date($fpost->post_parent));
+		echo rsvpmaker_form_summary($fpost);
+		$edit = admin_url('post.php?action=edit&post='.$fpost->ID);
+		printf('<form action="%s" method="post"><input type="hidden" name="form_id" value="%d">%s: <input type="text" name="rsvpmaker_save_form">%s <button>%s</button></form>',admin_url('options-general.php?page=rsvpmaker-admin.php'),$fpost->ID,__('Name','rsvpmaker'),$tab,__('Save','rsvpmaker'));
+	}
+}
+
+?>
+</section>
 </sections>
 
 </div>
