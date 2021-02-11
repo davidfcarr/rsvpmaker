@@ -1,11 +1,11 @@
 <?php
 
-namespace DrewM\MailChimp;
+namespace RSVPbyDrewM\MailChimp;
 
 /**
  * Super-simple, minimum abstraction MailChimp API v3 wrapper
  * MailChimp API v3: http://developer.mailchimp.com
- * This wrapper: https://github.com/drewm/mailchimp-api
+ * This wrapper: https://github.com/DrewM/mailchimp-api
  *
  * @author  Drew McLellan <drew.mclellan@gmail.com>
  * @version 2.5
@@ -234,7 +234,7 @@ class MailChimp
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $httpHeader);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'DrewM/MailChimp-API/3.0 (github.com/drewm/mailchimp-api)');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'RSVPbyDrewM/MailChimp-API/3.0 (github.com/RSVPbyDrewM/mailchimp-api)');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_VERBOSE, true);
         curl_setopt($ch, CURLOPT_HEADER, true);

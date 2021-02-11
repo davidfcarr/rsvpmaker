@@ -99,6 +99,18 @@ add_action('quick_edit_custom_box',  'rsvpmaker_quick_edit_fields', 10, 2);
 add_action('manage_posts_custom_column', 'rsvpmaker_custom_column', 99, 2);
 add_action( 'save_post', 'rsvpmaker_quick_edit_save', 1 );
 
+add_action('init','admin_init_test',1);
+
+function admin_init_test() {
+if(isset($_GET['backtrace']))
+{
+	echo '<pre>';
+	var_dump(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+	echo '</pre>';
+	return;
+}
+}
+
 function rsvpmaker_init_router () {
 add_rsvpmaker_roles();
 rsvpmaker_create_post_type();

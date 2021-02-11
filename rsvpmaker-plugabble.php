@@ -1150,7 +1150,7 @@ if ((class_exists('Stripe_Checkout_Functions') || (!empty($rsvp_options["rsvpmak
 
 	$s = ( !empty($custom_fields["_rsvp_stripe"][0]) ) ? 'checked="checked"' : '';	
 
-	echo '<p><input type="checkbox" name="setrsvp[stripe]" value="1" '.$s.' /> '.__('Use Stripe instead of PayPal','rsvpmaker').'</p>';
+	echo '<p><input type="checkbox" name="setrsvp[stripe]" value="1" '.$s.' /> '.__('use RSVPMakerStripe instead of PayPal','rsvpmaker').'</p>';
 
 	}
 
@@ -3701,8 +3701,6 @@ $rsvpconfirm = $rsvp_confirm = '';
 
 $display = array();
 
-
-
 //On return from paypal payment process, show confirmation
 
 if(isset($_GET["PayerID"]))
@@ -4255,11 +4253,7 @@ elseif($rsvp_on && (is_single() || is_admin() || $formonly) ) //
 
 	echo '<div id="rsvpsection">';
 
-
-
 ;?>
-
-
 
 <form id="rsvpform" action="<?php echo esc_url_raw($permalink);?>" method="post">
 

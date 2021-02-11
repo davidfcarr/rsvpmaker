@@ -1017,7 +1017,8 @@ add_action( 'init', 'remove_save_content_filters', 99 );
 add_action( 'set_current_user', 'remove_save_content_filters', 99 );
 
 function rsvpmaker_formchimp($atts, $content) {
-	return '<p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1"/> '.__('Add me to your email list','rsvpmaker').'</p>';
+	$checked = empty($atts['checked']) ? '' : ' checked="checked" ';
+	return '<p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1" '.$checked.' /> '.__('Add me to your email list','rsvpmaker').'</p>';
 }
 
 ?>

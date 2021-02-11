@@ -517,43 +517,10 @@ function rsvpmaker_get_templates($criteria = '') {
 return $templates;
 }
 
-function get_next_rsvpmaker ($where = '', $offset_hours = 0) {
-
-global $wpdb;
-
-$wpdb->show_errors();
-
-$startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offset_hours.' HOUR) ' : "'".get_sql_now()."'";
-
-
-
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-
-	 FROM ".$wpdb->posts."
-
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-	 WHERE a1.meta_value > ".$startfrom." AND post_status='publish' ";
-
-	 if( !empty($where) )
-
-	 	{
-
-		$where = trim($where);
-
-		$where = str_replace('datetime','a1.meta_value',$where);
-
-		$sql .= ' AND '.$where.' ';
-
-		}
-
-	$sql .= ' ORDER BY a1.meta_value ';
-
-	return $wpdb->get_row($sql);
-
+function get_next_rsvpmaker () {
+$events = get_future_events('',1);
+return $events[0];
 }
-
-
 
 function get_events_by_author ($author, $limit='', $status = "") {
 
@@ -872,7 +839,7 @@ function get_future_events_by_meta ($kv, $limit='', $output = OBJECT, $offset_ho
 			 $comparison = '=';
 			 if(isset($kv['comparison']))
 			 	$comparison = $kv['comparison'];
-			 $sql .= " $comparison '".$kv['meta_value']."'";
+			 $sql .= " AND meta_value $comparison '".$kv['meta_value']."'";
 		 }
 		$sql .= ' ORDER BY a1.date ';
 	
@@ -3526,7 +3493,6 @@ FROM $wpdb->posts as parent_post right join $wpdb->posts as child_post ON parent
 add_filter('mailpoet_newsletter_shortcode', 'mailpoet_rsvpmaker_shortcode', 10, 5);
 
 function mailpoet_rsvpmaker_shortcode($shortcode, $newsletter, $subscriber, $queue, $newsletter_body) {
-rsvpmaker_debug_log($shortcode,'mailpoet shortcode filter');
   // always return the shortcode if it doesn't match your own!
   if (!strpos($shortcode,'rsvpmaker') && !strpos($shortcode,'event_listing') ) return $shortcode;
   global $email_context;

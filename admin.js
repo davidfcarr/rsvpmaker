@@ -24,6 +24,8 @@ jQuery(document).ready(function( $ ) {
 			);
 		}
 	);
+
+	
 /*
 
 $('.quickdate, .quicktime').change(

@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.6.1
-Stable tag: 8.4.2
+Stable tag: 8.4.5
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -19,7 +19,7 @@ RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it 
 * Schedule and promote events of all sorts: conferences, classes, seminars, speaking events, parties and weddings are a few common uses.
 * Register attendees, prompting them to enter whatever information you need, including the names of guests.
 * Collect money using PayPal or Stripe.
-* Promote your event on social media and send out email list invitations using the integration with MailChimp. Can also be used to for email newsletters based on blog posts or event roundups from your website.
+* Promote your event on social media and send out email list invitations using the integrations with MailChimp and MailPoet. Can also be used to for email newsletters based on blog posts or event roundups from your website.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
 * Use the Limited Time Content Gutenberg block -- a wrapper block that can include paragraphs, images, and other content -- to set a start and/or end time for the display of content. Useful for promoting events and limited time pricing on your home page or in the body of a blog post, without looking foolish if you forget to take down those promotions.
 
@@ -116,6 +116,22 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.4.5 =
+
+* Improved shortcodes display for MailPoet
+
+= 8.4.4 =
+
+* MailPoet shortcodes widget displayed in the notices header with show/hide toggle
+
+= 8.4.3 =
+
+* Change name space on included MailChimp library to avoid conflicts with other plugins
+
+= 8.4.2 =
+
+* MailPoet integration
 
 = 8.4 =
 
@@ -296,7 +312,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 = 7.8.3 =
 
 * Additional security fixes required by wordpress.org plugin team
-* MailChimp API functions more clearly bundled as an external library https://github.com/drewm/mailchimp-api
+* MailChimp API functions more clearly bundled as an external library https://github.com/DrewM/mailchimp-api
 * Stripe report screen now allows you to fetch records of past transactions, including fees and refunds
 
 = 7.8.2 =

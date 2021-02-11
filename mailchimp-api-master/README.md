@@ -7,9 +7,9 @@ I hate complex wrappers. This lets you get from the MailChimp API docs to the co
 
 Requires PHP 5.3 and a pulse. Abstraction is for chimps.
 
-[![Build Status](https://travis-ci.org/drewm/mailchimp-api.svg?branch=master)](https://travis-ci.org/drewm/mailchimp-api)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/drewm/mailchimp-api/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/drewm/mailchimp-api/?branch=master)
-[![Packagist](https://img.shields.io/packagist/dt/drewm/mailchimp-api.svg?maxAge=2592000)](https://packagist.org/packages/drewm/mailchimp-api)
+[![Build Status](https://travis-ci.org/DrewM/mailchimp-api.svg?branch=master)](https://travis-ci.org/DrewM/mailchimp-api)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/DrewM/mailchimp-api/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/DrewM/mailchimp-api/?branch=master)
+[![Packagist](https://img.shields.io/packagist/dt/DrewM/mailchimp-api.svg?maxAge=2592000)](https://packagist.org/packages/DrewM/mailchimp-api)
 
 Installation
 ------------
@@ -17,7 +17,7 @@ Installation
 You can install mailchimp-api using Composer:
 
 ```
-composer require drewm/mailchimp-api
+composer require DrewM/mailchimp-api
 ```
 
 You will then need to:

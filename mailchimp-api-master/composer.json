@@ -1,5 +1,5 @@
 {
-    "name": "drewm/mailchimp-api",
+    "name": "RSVPbyDrewM/mailchimp-api",
     "description": "Super-simple, minimum abstraction MailChimp API v3 wrapper",
     "license": "MIT",
     "require": {
@@ -13,15 +13,15 @@
     },
     "autoload": {
         "psr-4": {
-            "DrewM\\MailChimp\\": "src"
+            "RSVPbyDrewM\\MailChimp\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "DrewM\\MailChimp\\Tests\\": "tests/"
+            "RSVPbyDrewM\\MailChimp\\Tests\\": "tests/"
         }
     },
-    "homepage": "https://github.com/drewm/mailchimp-api",
+    "homepage": "https://github.com/RSVPbyDrewM/mailchimp-api",
     "authors": [ 
         {
             "name": "Drew McLellan",

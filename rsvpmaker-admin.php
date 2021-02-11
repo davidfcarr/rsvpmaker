@@ -2117,8 +2117,9 @@ if(isset($_GET["author"]))
 //my_events_rsvp function in rsvpmaker-pluggable.php
 
 function rsvpmaker_admin_menu() {
+	
 global $rsvp_options;
-do_action('rsvpmaker_admin_menu_top');
+//do_action('rsvpmaker_admin_menu_top');
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("New Template",'rsvpmaker'), __("New Template",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&new_template=1", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Templates",'rsvpmaker'), __("Event Templates",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
@@ -2134,15 +2135,14 @@ add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'
 add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
 if(isset($rsvp_options["debug"]) && $rsvp_options["debug"])
 	add_submenu_page('edit.php?post_type=rsvpmaker', "Debug", "Debug", 'manage_options', "rsvpmaker_debug", "rsvpmaker_debug");
-do_action('rsvpmaker_admin_menu_bottom');
+//do_action('rsvpmaker_admin_menu_bottom');
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
+
 }
 
 add_filter('manage_posts_columns', 'rsvpmaker_columns');
 function rsvpmaker_columns($defaults) {
-	//if(!empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpmaker'))
-    	//$defaults['event_dates'] = __('Event Dates','rsvpmaker');
 	if(!empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpemail'))
     	$defaults['rsvpmaker_cron'] = __('Scheduled','rsvpmaker');
     return $defaults;
@@ -2272,7 +2272,7 @@ if($results)
 return $txt;
 }
 
-add_action('admin_init','rsvpmaker_create_calendar_page');
+//add_action('admin_init','rsvpmaker_create_calendar_page');
 
 function rsvpmaker_create_calendar_page() {
 global $current_user;
@@ -2600,6 +2600,15 @@ $( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
 });
 </script>
 <?php
+
+if(isset($_GET['backtrace']))
+{
+	echo '<pre>';
+	var_dump(debug_backtrace());//DEBUG_BACKTRACE_IGNORE_ARGS
+	echo '</pre>';
+	die();
+}
+
 }
 
 function set_rsvpmaker_order_in_admin( $wp_query ) {
@@ -3717,7 +3726,6 @@ function rsvpmaker_editors() {
 if(isset($_GET['page']) && ($_GET['page'] == 'rsvp_reminders'))
 	wp_enqueue_editor();
 }
-
 
 function rsvpmaker_admin_notice_format($message, $slug, $cleared, $type='info')
 {
@@ -5133,7 +5141,9 @@ function rsvpmaker_quick_ui() {
 }
 
 function rsvpmaker_setup () {
+
 global $rsvp_options, $current_user;
+
 ?>
 <style>
 select {
@@ -5156,8 +5166,6 @@ elseif(isset($_GET["quick"])) {
 	echo '</div>';
 	return;
 }
-
-
 
 $title = '';
 $template = 0;
@@ -5250,7 +5258,6 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 			printf('<p><a href="%s">Edit event</a>: %s %s %s</p>',admin_url('post.php?action=edit&post='.$event->ID),$event->post_title,$event->date,$draft);			
 		}
 	}
-	
 	$templates = rsvpmaker_get_templates();
 	$tedit = $list = '';
 	if(is_array($templates))
@@ -5273,6 +5280,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	}
 
 	}
+
 	if(!empty($tedit))
 	{
 		printf('<h3>%s</h3><p>%s</p>',__('Your Templates','rsvpmaker'),__('Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series.','rsvpmaker'));
@@ -5285,7 +5293,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 		<input type="hidden" name="page" value="rsvpmaker_template_list">
 		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Create/Update','rsvpmaker')));
 	}
-	
+	rsvpmaker_debug_log(memory_get_peak_usage(),'peak memory used');
 }
 
 function rsvpmaker_setup_post ($ajax = false) {
@@ -5410,7 +5418,7 @@ function rsvpmaker_override () {
 	}
 }
 
-add_action('admin_init','rsvpmaker_override',1);
+//add_action('admin_init','rsvpmaker_override',1);
 
 function rsvpmaker_share() {
 ?>	

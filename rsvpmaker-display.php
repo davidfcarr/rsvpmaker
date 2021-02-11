@@ -252,16 +252,17 @@ if(!empty($post->post_type) && ($post->post_type == 'rsvpmaker'))
 }
 
 $post_backup = $post;
-global $wp_query;
-global $wpdb;
-global $showbutton;
-global $startday;
-global $rsvp_options;
-global $datelimit;
-global $last_time;
+global $wp_query, $wpdb, $showbutton, $startday, $rsvp_options, $datelimit, $last_time, $dataloop, $email_context;
 $last_time = time();
 $listings = '';
 $showbutton = true;
+
+$format = (empty($atts['format'])) ? '' : $atts['format'];
+if(!empty($atts['excerpt']))
+	$format = 'excerpt';
+
+if($email_context && (($format == 'form') || $format == 'with_form') )
+	$format = 'button';
 
 $backup = $wp_query;
 
@@ -320,6 +321,10 @@ if(isset($atts["add_to_query"]))
 			$atts["add_to_query"] = '&'.$atts["add_to_query"];
 		$querystring .= $atts["add_to_query"];
 	}
+if(!empty($atts['post_id'])) {
+	$querystring .= '&p='.$atts['post_id'];
+	$dataloop = true;//prevents more events link from being displayed
+}
 
 $wpdb->show_errors();
 
@@ -340,6 +345,11 @@ remove_filter('posts_orderby', 'rsvpmaker_orderby' );
 
 ob_start();
 
+if($_GET['dctest'])
+{
+	print_r($atts);
+	echo $querystring;
+}
 if(isset($atts["demo"]))
 	{
 		$demo = "<div><strong>Shortcode:</strong></div>\n<code>[rsvpmaker_upcoming";
@@ -374,6 +384,29 @@ if(!empty($atts['exclude_type']))
 		continue;
 }
 $events_displayed[] = $post->ID;
+if($format == 'compact') {
+	echo rsvpmaker_compact_format($post);
+	continue;
+}
+elseif($format == 'compact_form') {
+	$atts["show_form"] = 1;
+	$content = rsvpmaker_compact_format($post,$atts);
+}
+elseif($format == 'form') {
+	//form only
+	echo rsvpmaker_form($post);
+	continue;
+}
+elseif($format == 'button_only') {
+	//form only
+	echo get_rsvp_link($post->ID);
+	continue;
+}
+elseif($format == 'embed_dateblock') {
+	echo embed_dateblock($atts);
+	continue;
+}
+
 ?>
 
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
@@ -381,8 +414,10 @@ $events_displayed[] = $post->ID;
 <div class="rsvpmaker-entry-content">
 
 <?php 
-if(!empty($atts['excerpt']))
+if($format == 'excerpt')
 	echo rsvpmaker_excerpt($post);
+elseif($format == 'with_form')
+	echo rsvpmaker_form($post, do_blocks($post->post_content));
 else
 	the_content(); ?>
 
@@ -411,11 +446,7 @@ if(current_user_can('edit_post',$post->ID) && !is_email_context())
 endwhile;
 ?>
 <p><?php
-if(isset($atts['one']) && $atts['one'])
-	echo get_next_events_link(__('More Events','rsvpmaker'));
-} 
-else
-	echo get_next_events_link(__('More Events','rsvpmaker'),$no_events);
+}//end has_posts
 echo '</div><!-- end rsvpmaker_upcoming -->';
 
 $wp_query = $backup;
@@ -1148,197 +1179,74 @@ if(isset($_GET["height"]))
 return $note . sprintf('<iframe src="%s" width="%s" height="%s"></iframe>',esc_url_raw($url),esc_attr($width),esc_attr($height)) . sprintf('<p>%s <a href="%s" target="_blank">%s</a>. %s</p>',__('If the chat prompt does not appear below,','rsvpmaker'), $login_url, __('please login to your YouTube/Google account','rsvpmaker'), __('Then refresh this window.','rsvpmaker'));
 }
 
-function rsvpmaker_next ($atts = array())
+function rsvpmaker_next ($atts = array('post_id' => 'next'))
 {
 if(!empty($atts['rsvp_on']))
 	$atts['post_id'] = 'nextrsvp';
-else
-	$atts["post_id"] = 'next';
 return rsvpmaker_one($atts);
 }
 
 function rsvpmaker_one ($atts = array())
-{
-global $post;
-global $wp_query;
-global $wpdb;
-global $showbutton;
-global $startday;
-global $rsvp_options;
-$showbutton = (isset($atts["showbutton"])) ? $atts["showbutton"] : 0;
-$content = '';
-
+{	
 email_content_minfilters();
+if(isset($atts['one_format']))
+	$atts['format'] = $atts['one_format'];
+if(empty($atts['format']))
+	$atts['format'] = 'with_form';
+$atts['limit'] = 1;
+$atts['hideauthor'] = 1;
 
-if(empty($atts['type'])) {
-//event type lookup is more complicated, but here are simple cases
-	if(isset($atts["one"]))
-		$atts['post_id'] = $atts["one"];
-	if(empty($atts['post_id']))
-		$atts['post_id'] = 'next';
-
-	if($atts['post_id'] == 'nextrsvp') 
+if(empty($atts['post_id']) || ($atts['post_id'] == 'next'))
 	{
-		$event = get_next_rsvp_on();
-		if(empty($event))
-			return;
+		$atts['post_id'] = '';
+	}
+elseif($atts['post_id'] == 'nextrsvp') {
+	$event = get_next_rsvp_on();
+	if($event)
 		$atts['post_id'] = $event->ID;
-	}
-	elseif($atts['post_id'] == 'next')
-	{
-		if(isset($atts['one_format']) && ( ($atts['one_format'] == 'button_only') || ($atts['one_format'] == 'form') || !empty($atts["showbutton"]) ) )
-			$event = get_next_rsvp_on();
-		else
-			$event = get_next_rsvpmaker();
-		if(empty($event))
-		{
+	else
 		return;
-		}
-		$atts['post_id']=$event->ID;
-	}
-
-	if(isset($atts['one_format'])) {
-		if($atts['one_format'] == 'button_only')
-			{
-			return get_rsvp_link($atts['post_id']);
-			}
-		if($atts['one_format'] == 'form')
-		{
-			return rsvpmaker_form($atts);
-		}
-	}
+}
+return rsvpmaker_upcoming($atts);
 }
 
-if(isset($atts["one_format"]) && (($atts["one_format"] == 'button') || ($atts["one_format"] == 'button_only')) )
-	$showbutton = 1;
-
-$post_id = $atts["post_id"];	
-
-$backup_post = $post;
-$backup_query = $wp_query;
-
-if($atts["post_id"] == 'next')
+function rsvpmaker_compact_format ($post, $atts = array())
 {
-add_filter('posts_join', 'rsvpmaker_join' );
-add_filter('posts_groupby', 'rsvpmaker_groupby' );
-add_filter('posts_distinct', 'rsvpmaker_distinct' );
-add_filter('posts_fields', 'rsvpmaker_select' );
-add_filter('posts_where', 'rsvpmaker_where' );
-add_filter('posts_orderby', 'rsvpmaker_orderby' );
-$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1";
-if(isset($atts["type"]))
-	$querystring .= "&rsvpmaker-type=".$atts["type"];
-if(isset($atts["add_to_query"]))
+global $rsvp_options;
+$time_format = $rsvp_options["time_format"];
+if(!strpos($time_format,'%Z'))
 	{
-		if(!strpos($atts["add_to_query"],'&'))
-			$atts["add_to_query"] = '&'.$atts["add_to_query"];
-		$querystring .= $atts["add_to_query"];
+	if(get_post_meta($post_id,'_add_timezone',true))
+		$time_format .= ' %Z';
 	}
-$wp_query = new WP_Query($querystring);
+$post_id = $post->ID;
 
-remove_filter('posts_join', 'rsvpmaker_join' );
-remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-remove_filter('posts_fields', 'rsvpmaker_select' );
-remove_filter('posts_where', 'rsvpmaker_where' );
-remove_filter('posts_orderby', 'rsvpmaker_orderby' );
-}
-else
-{
-$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=1&p=". (int) $atts["post_id"];
-$wp_query = new WP_Query($querystring);	
-}
-$wp_query->is_single = true;
-	
-if ( have_posts() ) {
-global $events_displayed;
-the_post();
-$atts["post_id"] = $post_id = $post->ID;
-if(!empty($atts["hide_past"]))
-{
-$offset = $atts["hide_past"];
-if(!is_rsvpmaker_future($post_id, $offset))
-	return;
-}
-
-if(empty($atts["one_format"]) || ($atts["one_format"] == 'button'))
-{
+	global $events_displayed;
 ob_start();
-?>
-<div class="rsvpmaker_embedded">
-<div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
+echo '<div class="rsvpmaker_compact">';
 
-<?php 
-if(!isset($atts["hide_title"]) || !$atts["hide_title"])
-{
-?>
-<h2 class="rsvpmaker-entry-title" itemprop="url"><span itemprop="name"><?php the_title(); ?></span></h2>
-<?php
-}
-?>
-<div class="rsvpmaker-entry-content">
-
-<?php
+	$datestamp = get_rsvp_date($post_id);
+	$dur = get_post_meta($post_id,'_'.$datestamp, true);
+	$t = rsvpmaker_strtotime($datestamp);
+	$dateblock = ', '.utf8_encode(rsvpmaker_strftime($rsvp_options["short_date"],$t));
+	if(($dur != 'allday') && !strpos($dur,'|'))
+		{
+		$dateblock .= rsvpmaker_strftime(', '.$time_format,$t);
+		}
+	// dchange
+	$dateblock = str_replace(':00','',$dateblock);
 	
-	if(isset($atts['one_format']) && ($atts["one_format"] == 'button_only')) {
-		$content = embed_dateblock($atts);
-	if(is_rsvpmaker_deadline_future($post_id)) 
-		{
-		$rsvp = get_rsvp_link($post_id);
-		}
-	else
-		{
-		$rsvp = __('Event date is past','rsvpmaker');
-		}
-	echo $content.'<div style="margin-top: 10px;">'.$rsvp.'</div>';
-	}
-	else
-		the_content(); ?>
-</div><!-- .entry-content -->
-
+?>
+<div id="rsvpmaker-<?php echo $post_id ;?>" itemscope itemtype="http://schema.org/Event" >  
+<p class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><?php echo get_the_title($post); echo $dateblock; ?></span></p>
 <?php
-if(is_admin() )
-	{
-		echo '<p><a href="'.admin_url('post.php?action=edit&post='.$post->ID).'">Edit</a></p>';
+	if(isset($atts["show_form"]))
+		echo rsvpmaker_form($atts);
+	else{
+		echo get_rsvp_link($post_id);
 	}
-echo '</div></div><!-- end rsvpmaker_embedded -->';
-$content = ob_get_clean();	
-}
-else
-{
-	if($atts["one_format"] == 'button_only')
-	{
-	rsvpmaker_debug_log('one_format att = button_only','rsvpmaker_one atts');
-	$content = get_rsvp_link($post_id);
-	}
-	elseif($atts["one_format"] == 'embed_dateblock') {
-		$content = embed_dateblock($atts);
-	}
-	elseif($atts["one_format"] == 'form') {
-		if(is_rsvpmaker_future($post_id)) 
-			$content = rsvpmaker_form($atts);
-		else
-			$content = __('Event date is past','rsvpmaker');
-	}
-	elseif($atts["one_format"] == 'compact') {
-		$content = rsvpmaker_compact($atts);
-	}
-	elseif($atts["one_format"] == 'compact_form') {
-		$atts["show_form"] = 1;
-		$content = rsvpmaker_compact($atts);
-	}
-}
-}
-
-$wp_query = $backup_query;
-$post = $backup_post;
-wp_reset_postdata();
-
-if(!empty($atts["style"]))
-	$content = '<div style="'.$atts["style"].'">'.$content.'</div>';
-if(strpos($content,'<!--') && function_exists('do_blocks'))
-	$content = do_blocks($content);
-return $content; //.$filterslist;
+echo '</div></div><!-- end rsvpmaker_compact -->';
+return ob_get_clean();
 }
 
 function rsvpmaker_compact ($atts = array())
@@ -1771,10 +1679,12 @@ function rsvpmaker_form( $atts = array(), $form_content='' ) {
 	$showbutton = false;
 	$output = '';
 	$backup = $post;
-	if(!empty($atts['post_id'])) {
+	if(is_object($atts))
+		$post = $atts;
+	elseif(!empty($atts['post_id']))
 		$post = get_post($atts['post_id']);
+	if($post->ID)
 		$output = event_content($form_content,true).rsvp_form_jquery();
-	}
 	$post = $backup;
 	return $output;
 }

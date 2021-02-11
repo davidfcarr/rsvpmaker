@@ -1,5 +1,5 @@
 <?php
-use DrewM\MailChimp\MailChimp as MailChimpRSVP;
+use RSVPbyDrewM\MailChimp\MailChimp as MailChimpRSVP;
 
 $rsvpmaker_message_type = '';
 
@@ -419,14 +419,7 @@ if($slug == 'administrator')
 <div id="mailpoet">
 <h2>MailPoet Integration</h2>
 <p>MailPoet is a WordPress plugin and web service for sending email newsletters and other mass email, with the permission of the recipients.</p>
-<p>You can add RSVPMaker events or event listings to the content of a MailPoet newsletter using these shortcodes:</p>
-<ul>
-<li><strong>[custom:rsvpmaker_upcoming hideauthor="1"]</strong> list upcoming events. Omit hideauthor attribute if you want the post author for each event displayed</li>
-<li><strong>[custom:rsvpmaker_next]</strong> next event or <strong>[custom:rsvpmaker_next rsvp_on="1"]</strong> next event with RSVPs active </li>
-<li><strong>[custom:event_listing show_time="1"]</strong> list of links with dates and titles of upcoming events. The optional show_time attribute will add the time, in addition to the event date.</li>
-<li><strong>[custom:rsvpmaker_one post_id="99"]</strong> specific rsvpmaker event by post id</li>
-</ul>
-<p>For more attributes and options, see <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">Shortcodes Documentation</a>.</p>
+<p>You can add RSVPMaker events or event listings to the content of a MailPoet newsletter using a modified versions of the RSVPMaker Shortcodes (see the <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>">Content for Email</a> screen and the <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker Shortcodes Documentation</a>).</p>
 <?php
 	if (class_exists(\MailPoet\API\API::class)) {
 		$mailpoet_api = \MailPoet\API\API::MP('v1');
@@ -871,7 +864,7 @@ if(!function_exists('do_blocks'))
 add_meta_box( 'BlastBox', 'RSVPMaker Email Options', 'RSVPMaker_email_notice', 'rsvpemail', 'normal', 'high' );
 }
 
-add_action('admin_init','save_rsvpemail_data');
+//add_action('admin_init','save_rsvpemail_data');
 
 function save_rsvpemail_data() {
 
@@ -1929,6 +1922,80 @@ add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slu
 
 }
 
+function rsvpmaker_mailpoet_notice() {
+	$screen = get_current_screen();
+	if(strpos($screen->id,'mailpoet-newsletter-editor')) {
+		echo '<div class="notice notice-info">';
+		echo '<div><p><button id="showhide_mailpoet_shortcodes">Show RSVPMaker Shortcodes for MailPoet</button></p></div>';
+		echo '<div id="rsvpmaker_mailpoet_shortcodes_notice">';
+		rsvpmaker_mailpoet_shortcodes();
+		echo '<div><p><button id="showhide_mailpoet_shortcodes2">Hide RSVPMaker Shortcodes for MailPoet</button></p></div>';
+		echo '</div>';
+		echo '</div>';
+?>
+<script>
+jQuery(document).ready(function( $ ) {
+
+console.log('mailpoet shortcodes button');
+
+$('#rsvpmaker_mailpoet_shortcodes_notice').hide();
+var mailpoetshow = false;
+function toggleMailPoetShort()  {
+		if(mailpoetshow)
+		{
+			$('#showhide_mailpoet_shortcodes').text('Show RSVPMaker Shortcodes for MailPoet');
+			$('#rsvpmaker_mailpoet_shortcodes_notice').hide();
+			mailpoetshow = false;
+		}
+		else {
+			$('#showhide_mailpoet_shortcodes').text('Hide RSVPMaker Shortcodes for MailPoet');
+			$('#rsvpmaker_mailpoet_shortcodes_notice').show();
+			mailpoetshow = true;
+		}
+}
+
+$('#showhide_mailpoet_shortcodes').click( function() {
+	toggleMailPoetShort();
+}
+);
+
+$('#showhide_mailpoet_shortcodes2').click( function() {
+	toggleMailPoetShort();
+}
+);
+
+});
+</script>
+<?php
+	} 
+}
+
+add_action('admin_notices','rsvpmaker_mailpoet_notice');
+
+function rsvpmaker_mailpoet_shortcodes() {
+?>
+
+<p>You can use standard RSVPMaker shortcodes with a custom:prefix. For rsvpmaker_upcoming, rsvpmaker_next, and rsvpmaker_one, you can include a formatting attribtue, such as [custom:rsvpmaker_next format="compact"]<br />
+Useful formatting codes for email:
+<br />format="excerpt" - shows the first few paragraphs, or all the content up to the more tag (if included), plus a link to read more and the RSVP button if active.
+<br />format="compact" - just the headline, date and button (if RSVPs active).
+<br />format="button_only" - embeds just the RSVP button
+<br />format="embed_dateblock" - embeds just the date and time block
+</p>
+<p>The format="excerpt" option works well in many cases</p>
+<textarea rows="15" style="width:80%;">
+[custom:rsvpmaker_upcoming hideauthor="1" limit="5" days="14"] list upcoming events. Omit hideauthor attribute if you want the post author for each event displayed. Limit by number of posts (limit="5") or limit by number of days (days="14")
+[custom:event_listing show_time="1" title="Upcoming Events"] list of links with dates and titles of upcoming events. The optional show_time attribute will add the time, in addition to the event date. You can also include a title to be displayed at the top of the listing
+[custom:rsvpmaker_next format="excerpt"] next event
+[custom:rsvpmaker_next rsvp_on="1" format="excerpt"] next event with RSVPs active
+<?php
+	$events = get_future_events(array('limit' => 20));
+	foreach($events as $event) {
+		printf('[custom:rsvpmaker_one post_id="%d" format="excerpt"] %s %s'."\n",$event->ID,$event->post_title,$event->date);
+	}
+echo '</textarea>';
+}
+
 function email_log () {
 global $wpdb;
 $sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key = '_rsvpmaker_email_log' ORDER BY meta_id DESC LIMIT 0, 100";
@@ -2074,8 +2141,13 @@ foreach($pages as $page)
 <button><?php _e('Load Content','rsvpmaker');?></button>
 </form>	
 
+<h2>Shortcodes for MailPoet</h2>
+<p>If you use the MailPoet integration, you can include a variations on the <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker Shortcodes</a> that include the custom: prefix.</p>
 
 <?php
+
+rsvpmaker_mailpoet_shortcodes();
+
 } // end chimp get content
 
 function rsvpmaker_email_list_okay ($rsvp) {
@@ -2976,16 +3048,14 @@ function email_content_minfilters() {
 		foreach($wp_filter["the_content"] as $priority => $filters)
 			foreach($filters as $name => $details)
 				{
-				//$log .= $name .': '. $priority."   \n";
 				if(!in_array($name,$corefilters) && !strpos($name,'hortcode') && !strpos($name,'lock'))//don't mess with block/shortcode processing
 					{
 					$r = remove_filter( 'the_content', $name, $priority );
-					//$log .= "REMOVED  \n";
 					}
 				}	
 }
 
-add_action('admin_init','rsvpmailer_template_preview');
+//add_action('admin_init','rsvpmailer_template_preview');
 function rsvpmailer_template_preview() {
 	global $wpdb;
 	if(isset($_GET['preview_broadcast_in_template'])) {
