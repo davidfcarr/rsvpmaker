@@ -381,13 +381,13 @@ $send_result = $MailChimp->post("campaigns/".$campaign["id"].'/actions/send');
 ////print_r($send_result);
 
 if($MailChimp->success())
-
-	echo '<div>'.__('Sent MailChimp campaign','rsvpmaker').': '.$campaign["id"].'</div>';
-
+{
+	$chimpmsg = __('Sent MailChimp campaign','rsvpmaker').': '.$campaign["id"];
+	echo '<div>'.$chimpmsg.'</div>';
+	add_post_meta($post->ID,'rsvp_mailchimp_sent',$chimpmsg.' '.rsvpmaker_date('r'));
+}
 else
-
 	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
-
 }
 
 

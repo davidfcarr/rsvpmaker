@@ -1255,6 +1255,7 @@ if(!empty($_POST["preview"]))
 		$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 		echo $result = rsvpmailer($mail);
+		add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' (preview) '.rsvpmaker_date('r'));
 		}
 	else
 		echo '<div style="color:red;">Error: '.$previewto.' - '.__('Error, not a single valid email address','rsvpmaker').'</div>';
@@ -1452,6 +1453,33 @@ foreach($templates as $index => $template)
 		$s = ($index == $t_index) ? ' selected="selected" ' : '';
 		$o .= sprintf('<option value="%d" %s>%s</option>',$index,$s,$template['slug']);
 	}
+$queued = get_post_meta($post->ID,'rsvprelay_to');
+if($queued) {
+	rsvpmaker_relay_queue();
+	//make sure this is turned on
+	update_option('rsvpmaker_discussion_active',true);
+	if(!wp_next_scheduled('rsvpmaker_relay_init_hook'))
+		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+	$queued = get_post_meta($post->ID,'rsvprelay_to');
+	if($queued) {
+		//if more in queue
+		printf('<p>%s emails queued to send (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($queued),$permalink,$permalink.'?show_log');
+		if(isset($_GET['show_log']))
+			printf('</p>%s</p>',implode(', ',$queued));
+	}
+}
+$sent = get_post_meta($post->ID,'rsvpmail_sent');
+if($sent) {
+	printf('<p>%s emails sent (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($sent),$permalink,$permalink.'?show_log');
+	if(isset($_GET['show_log']))
+		printf('</p>%s</p>',implode(', ',$sent));
+}
+if(!isset($_POST))
+{
+	$mailchimp_sent = get_post_meta($post->ID,'rsvp_mailchimp_sent');
+	if($mailchimp_sent)
+		printf('</p>%s</p>',implode(', ',$mailchimp_sent));	
+}
 ?>
 <form method="get"  action="<?php echo get_permalink($post->ID); ?>">
 <?php _e('Email Design Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
@@ -1975,17 +2003,16 @@ add_action('admin_notices','rsvpmaker_mailpoet_notice');
 function rsvpmaker_mailpoet_shortcodes() {
 ?>
 
-<p>You can use standard RSVPMaker shortcodes with a custom:prefix. For rsvpmaker_upcoming, rsvpmaker_next, and rsvpmaker_one, you can include a formatting attribtue, such as [custom:rsvpmaker_next format="compact"]<br />
-Useful formatting codes for email:
+<p>You can use standard <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker shortcodes</a> with a custom:prefix. For rsvpmaker_upcoming, rsvpmaker_next, and rsvpmaker_one, you can include a formatting attribtue, such as [custom:rsvpmaker_next format="compact"]<br />
+Useful formatting codes for email ("excerpt" works well in most cases):
 <br />format="excerpt" - shows the first few paragraphs, or all the content up to the more tag (if included), plus a link to read more and the RSVP button if active.
 <br />format="compact" - just the headline, date and button (if RSVPs active).
 <br />format="button_only" - embeds just the RSVP button
 <br />format="embed_dateblock" - embeds just the date and time block
 </p>
-<p>The format="excerpt" option works well in many cases</p>
-<textarea rows="15" style="width:80%;">
-[custom:rsvpmaker_upcoming hideauthor="1" limit="5" days="14"] list upcoming events. Omit hideauthor attribute if you want the post author for each event displayed. Limit by number of posts (limit="5") or limit by number of days (days="14")
-[custom:event_listing show_time="1" title="Upcoming Events"] list of links with dates and titles of upcoming events. The optional show_time attribute will add the time, in addition to the event date. You can also include a title to be displayed at the top of the listing
+<textarea rows="10" style="width:80%;">
+[custom:rsvpmaker_upcoming hideauthor="1" limit="5" days="14"] list upcoming events
+[custom:event_listing show_time="1" title="Upcoming Events"] links with dates and titles of upcoming events
 [custom:rsvpmaker_next format="excerpt"] next event
 [custom:rsvpmaker_next rsvp_on="1" format="excerpt"] next event with RSVPs active
 <?php
@@ -2069,7 +2096,7 @@ elseif(isset($atts["format"]) && ($atts["format"] == 'full'))
 </div><!-- .entry-content -->
 <?php
 }
-; ?>
+?>
 </div>
 <?php 
 endwhile;

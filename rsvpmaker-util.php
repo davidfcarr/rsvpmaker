@@ -169,8 +169,12 @@ if(!empty($rsvpdates[$post_id]))
 $wpdb->show_errors();
 
 $sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id;
-
-return $wpdb->get_var($sql);
+$date = $wpdb->get_var($sql);
+if($date == '0000-00-00 00:00:00') {
+	$wpdb->query("DELETE FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id );
+	return;
+}
+return $date;
 
 }
 
@@ -438,6 +442,8 @@ function get_next_rsvp_on() {
 }
 
 function get_events_by_template($template_id, $order = 'ASC', $output = OBJECT) {
+
+//return rsvpmaker_upcoming_data(array('meta_key' => '_meet_recur', 'meta_value' => $template_id));
 
 global $wpdb;
 
@@ -780,46 +786,21 @@ function rsvpmaker_excerpt($post) {
 	return $excerpt;
 }
 
-function get_future_events ($where_or_atts = '', $limit='', $output = OBJECT, $offset_hours = 0) {
+add_shortcode('future_events_test','future_events_test');
+
+function get_future_events ($where_or_atts = '', $limit=0, $output = OBJECT, $offset_hours = 0) {
+global $offset_hours;
 if(is_array($where_or_atts)) {
-	$where = (isset($where_or_atts['where'])) ? $where_or_atts['where'] : '';
-	$limit = (isset($where_or_atts['limit'])) ? $where_or_atts['limit'] : '';
-	if(isset($where_or_atts['posts_per_page']))
-		$limit = $where_or_atts['posts_per_page'];
+	$atts = $where_or_atts;
+	$atts['is_array'] = 1;
 	$offset_hours = (isset($where_or_atts['offset_hours'])) ? $where_or_atts['offset_hours'] : 0;
 }
-else
-	$where = $where_or_atts;
-global $wpdb;
-
-$wpdb->show_errors();
-
-$startfrom = ($offset_hours) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offset_hours.' HOUR) ' : '"'.get_sql_now().'"';
-
-	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(a1.date,'%M %e, %Y') as date, a1.enddate, a1.display_type
-	 FROM ".$wpdb->posts."
-
-	 JOIN ".$wpdb->prefix."rsvpmaker_event"." a1 ON ".$wpdb->posts.".ID =a1.event
-	 WHERE ( (a1.date > ".$startfrom.") OR (a1.enddate > ".$startfrom.") ) AND post_status='publish' ";
-	 if( !empty($where) )
-	 	{
-		$where = trim($where);
-		$where = str_replace('datetime','a1.date',$where);
-		$sql .= ' AND '.$where.' ';
-		}
-
-	$sql .= ' ORDER BY a1.date ';
-
-	 if( !empty($limit) )
-
-		$sql .= ' LIMIT 0,'.$limit.' ';
-
-	if(!empty($_GET["debug_sql"]))
-
-		echo $sql;
-
-	return $wpdb->get_results($sql, $output);
-
+else {
+	$atts = array('where' => $where_or_atts, 'limit' => $limit, 'offset_hours' => $offset_hours);
+}
+	$atts['afternow'] = 1;
+	$data = rsvpmaker_upcoming_data($atts);
+	return $data;
 }
 
 function get_future_events_by_meta ($kv, $limit='', $output = OBJECT, $offset_hours = 0) {
@@ -858,9 +839,10 @@ function get_future_events_by_meta ($kv, $limit='', $output = OBJECT, $offset_ho
 
 function future_events_test() {
 	$events = get_future_events();
+	foreach($events as $event) 
+		echo $event->post_title;
 	return var_export($events,true);
 }
-add_shortcode('future_events_test','future_events_test');
 
 function get_future_dates ($limit) {
 
@@ -2441,29 +2423,17 @@ function rsvpmaker_upgrade_templates() {
 function new_template_schedule($post_id,$template,$source = '') {
 
 	if(is_array($template["week"]))
-
 	{
-
 		$weeks = $template["week"];
-
-		$dows = $template["dayofweek"];
-
+		$dows = (empty($template["dayofweek"])) ? array() : $template["dayofweek"];
 	}
-
 	else
-
 	{
-
 		$weeks[0] = $template["week"];
-
-		$dows[0] = (isset($template["dayofweek"])) ? $template["dayofweek"] : 0;
-
+		$dows[0] = (isset($template["dayofweek"])) ? $template["dayofweek"] : 9; // no day for varies
 	}
-
 	$hour = (isset($template['hour'])) ? $template['hour'] : '00';	
-
 	$minutes = (isset($template['minutes'])) ? $template['minutes'] : '00';	
-
 	$duration = (isset($template['duration'])) ? $template['duration'] : '';
 
 	$end = (isset($template['end'])) ? $template['end'] : '';
@@ -2471,21 +2441,13 @@ function new_template_schedule($post_id,$template,$source = '') {
 	$stop = (isset($template['stop'])) ? $template['stop'] : '';	
 
 	$new_template_schedule = build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$end,$stop);
-
 	foreach($new_template_schedule as $label => $value) {
-
 		$label = '_sked_'.$label;
-
 		update_post_meta_unfiltered($post_id,$label,$value);
-
 	}
-
 	$new_template_schedule['week'] = $weeks;
-
 	$new_template_schedule['dayofweek'] = $dows;
-
 	return $new_template_schedule;
-
 }
 
 
@@ -2493,27 +2455,14 @@ function new_template_schedule($post_id,$template,$source = '') {
 function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$end,$stop) {
 
 		$weekarray = get_week_array();
-
 		foreach($weekarray as $index => $label)
-
 		{
-
-			//printf('<p>check %s %s</p>',$index,$label);
-
 			$atomic_sked[$label] = in_array($index,$weeks);
-
 		}
-
 		$dayarray = get_day_array();
-
 		foreach($dayarray as $index => $label)
-
 		{
-
-			//printf('<p>check %s %s</p>',$index,$label);
-
 			$atomic_sked[$label] = in_array($index,$dows);
-
 		}
 
 	$atomic_sked['hour'] = (empty($hour)) ? '00' : $hour;
@@ -3498,7 +3447,18 @@ function mailpoet_rsvpmaker_shortcode($shortcode, $newsletter, $subscriber, $que
   global $email_context;
   $email_context = true;
   $shortcode = str_replace('custom:','',$shortcode);
-  return do_shortcode($shortcode);
+  $atts = shortcode_parse_atts(str_replace(']','',str_replace('[','',$shortcode)));
+if(strpos($shortcode,'upcoming'))
+	$content = rsvpmaker_upcoming($atts);
+elseif(strpos($shortcode,'one'))
+	$content = rsvpmaker_one($atts);
+if(strpos($shortcode,'next'))
+	$content = rsvpmaker_next($atts);
+elseif(strpos($shortcode,'listing'))
+	$content = event_listing($atts);
+$content = str_replace('<h1','<h1 style="line-height: 1.3" ',$content);
+$content = str_replace('class="rsvpmaker-entry-title-link"','style="text-decoration: none" ',$content);
+return $content;
 }
 
 function mailpoet_email_list_okay($rsvp) {
@@ -3527,6 +3487,27 @@ function mailpoet_email_list_okay($rsvp) {
 				$error_message = $e->getMessage();
 			  }
 	}
+}
+
+function rsvpmaker_sametime($datetime, $post_id=0) {
+
+global $wpdb;
+$sql = sprintf("SELECT * FROM $wpdb->posts JOIN %s ON $wpdb->posts.ID=%s.event WHERE post_status='publish' AND ID != %d AND date='%s' ",$wpdb->prefix.'rsvpmaker_event',$wpdb->prefix.'rsvpmaker_event',$post_id,$datetime);
+$sametime_events = $wpdb->get_results($sql);
+$mod = '';
+if($sametime_events)
+{
+	$label = (sizeof($sametime_events) > 1) ? __('Events','rsvpmaker') : __('Event','rsvpmaker');
+	$mod .= ' <span style="color:red;">* '.$label.' '.__(' at same time','rsvpmaker')."</span>: ";
+	$same = array();
+	foreach($sametime_events as $sametime)
+		$same[] = sprintf('<a href="%s">%s</a> ',admin_url('post.php?action=edit&post='.$sametime->ID),$sametime->post_title );
+	$mod .= implode(', ',$same);
+	$d = get_post_meta($sametime->ID,'_detached_from_template',true);
+	$mod .= ($d) ? ' - detached from template '.$d : '';
+}
+
+return $mod;
 }
 
 ?>

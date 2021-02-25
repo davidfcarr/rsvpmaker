@@ -216,49 +216,13 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 
 public function get_items($request) {
 
-
-
-add_filter('posts_join', 'rsvpmaker_join' );
-
-add_filter('posts_groupby', 'rsvpmaker_groupby' );
-
-add_filter('posts_distinct', 'rsvpmaker_distinct' );
-
-add_filter('posts_fields', 'rsvpmaker_select' );
-
-add_filter('posts_where', 'rsvpmaker_where' );
-
-add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
-
-	$querystring = "post_type=rsvpmaker&post_status=publish&rsvpmaker-type=".$request['type'];
-
-	$wp_query = new WP_Query($querystring);
-
+$wp_query = rsvpmaker_upcoming_query();
   $posts = $wp_query->get_posts();
-
-  remove_filter('posts_join', 'rsvpmaker_join' );
-
-  remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-
-  remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-
-  remove_filter('posts_fields', 'rsvpmaker_select' );
-
-  remove_filter('posts_where', 'rsvpmaker_where' );
-
-  remove_filter('posts_orderby', 'rsvpmaker_orderby',99 );  
-
-
-
     if (empty($posts)) {
-
             return new WP_Error( 'empty_category', 'there is no post in this category '.$querystring, array( 'status' => 404 ) );
-
     }
-
     return new WP_REST_Response($posts, 200);
-
-  }
+}
 
 
 

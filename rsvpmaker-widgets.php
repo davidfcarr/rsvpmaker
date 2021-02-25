@@ -42,6 +42,8 @@ class CPEventsWidget extends WP_Widget {
 
 		$dateformat = (isset($instance["dateformat"])) ? $instance["dateformat"] : 'M. j';
 
+        $break = empty($instance["break"]) ? ' - ' : '<br />';
+
         global $rsvp_options;
 
 		;?>
@@ -54,7 +56,7 @@ class CPEventsWidget extends WP_Widget {
 
               <?php 
 
-			  $events = get_future_events('',$atts['limit']);
+			  $events = rsvpmaker_upcoming_data($atts);
 
 			  if(!empty($events))
 
@@ -63,12 +65,10 @@ class CPEventsWidget extends WP_Widget {
 			  echo "\n<ul>\n";
 
 			  foreach($events as $event)
-
 			  	{
-				printf('<li><a href="%s">%s</a><br />%s</li>',get_permalink($event->ID),$event->post_title,$event->date);
+                $date = rsvpmaker_date($dateformat,rsvpmaker_strtotime($event->datetime));
+				printf('<li class="rsvpmaker-widget-li"><span class="rsvpmaker-widget-title"><a href="%s">%s</a></span>%s<span class="rsvpmaker-widget-date">%s</span></li>',get_permalink($event->ID),$event->post_title,$break,$date);
 				}
-
-			
 
 			if(!empty($rsvp_options["eventpage"]))
 
@@ -106,6 +106,8 @@ class CPEventsWidget extends WP_Widget {
 
 	$instance['event_type'] = $new_instance['event_type'];
 
+    $instance['break'] = $new_instance['break'];
+
         return $instance;
 
     }
@@ -124,19 +126,19 @@ class CPEventsWidget extends WP_Widget {
 
 		$event_type = (!empty($instance["event_type"])) ? $instance["event_type"] : '';
 
+        $break = !empty($instance["break"]);
+
         ?>
 
             <p><label for="<?php echo $this->get_field_id('title');?>"><?php _e('Title:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('title');?>" name="<?php echo $this->get_field_name('title');?>" type="text" value="<?php echo $title;?>" /></label></p>
 
             <p><label for="<?php echo $this->get_field_id('limit');?>"><?php _e('Number to Show:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('limit');?>" name="<?php echo $this->get_field_name('limit');?>" type="text" value="<?php echo $limit;?>" /></label></p>
 
-
-
             <p><label for="<?php echo $this->get_field_id('dateformat');?>"><?php _e('Date Format:','rsvpmaker');?> <input class="widefat" id="<?php echo $this->get_field_id('dateformat');?>" name="<?php echo $this->get_field_name('dateformat');?>" type="text" value="<?php echo $dateformat;?>" /></label> (PHP <a target="_blank" href="http://us2.php.net/manual/en/function.date.php">date</a> format string)</p>
+            
+            <p><label for="<?php echo $this->get_field_id('break');?>"><?php _e('Date on Separate Line:','rsvpmaker');?> <select id="<?php echo $this->get_field_id('break');?>" name="<?php echo $this->get_field_name('break');?>" ><option value="0" ><?php _e('No','rsvpmaker'); ?></option><option value="1" <?php if($break) echo 'selected="selected"';?> ><?php _e('Yes','rsvpmaker'); ?></option> </select></label></p>
 
-
-
-<p><label for="<?php echo $this->get_field_id('event_type');?>">
+<p><label for="<?php echo $this->get_field_id('event_type');?>"><?php _e('Event Type:','rsvpmaker');?>
 
 <?php
 
@@ -167,8 +169,11 @@ if(is_array($tax_terms))
 </select>
 
 </p>
-
-
+<p>CSS classes:
+<br />rsvpmaker-widget-li event
+<br />rsvpmaker-widget-title event post title
+<br />rsvpmaker-widget-date event date
+</p>
 
         <?php 
 
@@ -195,8 +200,6 @@ class RSVPTypeWidget extends WP_Widget {
         parent::__construct('rsvpmaker_type_widget', $name = 'RSVPMaker Events by Type');	
 
     }
-
-
 
     /** @see WP_Widget::widget */
 
@@ -227,12 +230,7 @@ class RSVPTypeWidget extends WP_Widget {
               <?php 
 
 
-
-
-
 $args = array( 'hide_empty=0' );
-
- 
 
 $terms = get_terms( 'rsvpmaker-type', $args );
 
@@ -314,8 +312,6 @@ if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 
 }
 
-
-
 class RSVPMakerByJSON extends WP_Widget {
 
     /** constructor */
@@ -361,9 +357,11 @@ class RSVPMakerByJSON extends WP_Widget {
 <div id="rsvpjsonwidget-<?php echo $slug; ?>"><?php _e('Loading','rsvpmaker'); ?> ...</div>
 
 <script>
+jQuery(document).ready(function($) {
 
 var jsonwidget<?php echo $slug; ?> = new RSVPJsonWidget('rsvpjsonwidget-<?php echo $slug; ?>','<?php echo $url; ?>',<?php echo $limit; ?>,'<?php echo $morelink; ?>');
 
+});
 </script>
 
 <?php		

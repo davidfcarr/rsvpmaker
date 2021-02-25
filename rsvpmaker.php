@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.4.5
+Version: 8.5
 */
 
 function get_rsvpversion(){
-return '8.4.5';
+return '8.5';
 }
 
 global $wp_version;
@@ -667,6 +667,8 @@ if(!empty($end_time))
 delete_transient('rsvpmakerdates');
 }
 
+
+
 function rsvpmaker_upcoming_data ($atts)
 {
 global $post;
@@ -675,58 +677,18 @@ global $dataloop;
 $dataloop = true; // prevent ui output of More Events link
 
 $backup = $wp_query;
-$limit = isset($atts["limit"]) ? $atts["limit"] : 10;
-if(isset($atts["posts_per_page"]))
-	$limit = $atts["posts_per_page"];
-if(isset($atts["days"]))
-		$datelimit = $atts["days"].' DAY';
-else
-		$datelimit = '365 DAY';
-
-add_filter('posts_select', 'rsvpmaker_select' );
-add_filter('posts_join', 'rsvpmaker_join' );
-add_filter('posts_groupby', 'rsvpmaker_groupby' );
-add_filter('posts_distinct', 'rsvpmaker_distinct' );
-add_filter('posts_fields', 'rsvpmaker_select' );
-add_filter('posts_where', 'rsvpmaker_where' );
-add_filter('posts_orderby', 'rsvpmaker_orderby' );
-
-$querystring = "post_type=rsvpmaker&post_status=publish";
-if(isset($atts["type"]))
-	$querystring .= "&rsvpmaker-type=".$atts["type"];
-if($limit)
-	$querystring .= "&posts_per_page=".$limit;
-if(isset($atts["add_to_query"]))
-	{
-		if(!strpos($atts["add_to_query"],'&'))
-			$atts["add_to_query"] = '&'.$atts["add_to_query"];
-		$querystring .= $atts["add_to_query"];
-	}
-$wp_query = new WP_Query($querystring);
-
-// clean up so this doesn't interfere with other operations
-remove_filter('posts_select', 'rsvpmaker_select' );
-remove_filter('posts_join', 'rsvpmaker_join' );
-remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-remove_filter('posts_fields', 'rsvpmaker_select' );
-remove_filter('posts_where', 'rsvpmaker_where' );
-remove_filter('posts_orderby', 'rsvpmaker_orderby' );
+$wp_query = rsvpmaker_upcoming_query($atts);
 
 $events = array();
 
 if ( have_posts() ) {
-while ( have_posts() ) : the_post();
-$event['title'] = $post->post_title;
-$event['ID'] = $post->ID; 
-$event['permalink'] = get_permalink($post->ID);
-$event['dates'] = get_rsvp_dates($post->ID);
-$events[] = $event;
-endwhile;
+	while ( have_posts() ) : the_post();
+	$events[] = $post;
+	endwhile;
 }
-$wp_query = $backup;
-wp_reset_postdata();
-return $events;
+	$wp_query = $backup;
+	wp_reset_postdata();
+	return $events;
 }
 
 function rsvpmaker_duplicate_dates() {

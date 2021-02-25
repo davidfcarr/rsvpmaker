@@ -46,7 +46,7 @@ const PluginRSVPMaker = () => {
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
-{(!rsvpmaker_ajax._rsvp_first_date && rsvpmaker_ajax.projected_url && <div>
+{(rsvpmaker_ajax.projected_url && <div>
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle
 			label="Varies" 

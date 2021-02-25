@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 5.6.1
-Stable tag: 8.4.5
+Tested up to: 5.6.2
+Stable tag: 8.5
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -116,6 +116,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.4.8 =
+
+* Updates to MailPoet and Stripe integration features
 
 = 8.4.5 =
 

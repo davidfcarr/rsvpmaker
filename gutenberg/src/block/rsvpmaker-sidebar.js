@@ -18,7 +18,7 @@ function related_link() {
 
 const RSVPMakerSidebarPlugin = function() {
 if(typeof rsvpmaker_ajax === 'undefined')
-		return null; //not an rsvpmaker post
+	return null; //not an rsvpmaker post
 const end_times = Array();
 const end_times_display = Array();
 var datecount = '';
@@ -30,7 +30,6 @@ const rsvpdates = Array();
 var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
 if(rsvpmaker_ajax.special)
 	{
-		
 	return (
 		el(
 			wp.editPost.PluginPostStatusInfo,
@@ -61,7 +60,7 @@ if(rsvpmaker_ajax.special)
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
-{(!rsvpmaker_ajax._rsvp_first_date && rsvpmaker_ajax.projected_url && <div>
+{(rsvpmaker_ajax.projected_url && <div>
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle
 			label="Varies" 

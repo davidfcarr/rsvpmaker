@@ -813,8 +813,7 @@ rsvp_form_setup_form($options["rsvp_form"]);
 			  {
 				  $privacy_url = get_permalink($privacy_page);
 ?>
-				?>
-				<p><input type="radio" name="option[privacy_confirmation]" value="1" <?php if(!empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> Yes <input type="radio" name="option[privacy_confirmation]" value="0" <?php if(empty($options["privacy_confirmation"])) echo 'checked="checked"'; ?> /> <?php _e('No - Add checkbox?','rsvpmaker');?></p>
+				<p><input type="radio" name="option[privacy_confirmation]" value="1" <?php if(!empty($options["privacy_confirmation"]) && ($options["privacy_confirmation"]) ) echo 'checked="checked"'; ?> /> Yes <input type="radio" name="option[privacy_confirmation]" value="no" <?php if(empty($options["privacy_confirmation"]) || ($options["privacy_confirmation"] == 'no')) echo 'checked="checked"'; ?> /> <?php _e('No - Add checkbox?','rsvpmaker');?></p>
 				<p><textarea name="option[privacy_confirmation_message]" style="width: 95%"><?php if(empty($options['privacy_confirmation_message'])) printf('I consent to the <a target="_blank" href="%s">privacy policy</a> site of this site for purposes of follow up to this registration.',$privacy_url); else echo $options['privacy_confirmation_message'] ?></textarea></p>
 <?php				  
 			  }
@@ -2534,7 +2533,7 @@ if(!isset($rsvp_options["privacy_confirmation"]) || isset($_GET['test']) )
 		if($privacy_page)
 			{
 				$message = __('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox. This may be important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php#privacy_consent').'">('.__('more details','rsvpmaker').')</a>';
-				$basic_options .= sprintf('<p>%s</p><input type="radio" name="privacy_confirmation" value="1" checked="checked" /> %s <input type="radio" name="privacy_confirmation" value="0" /> %s - %s</p>',$message,__('Yes','rsvpmaker'),__('No','rsvpmaker'),__('Add checkbox?','rsvpmaker'));
+				$basic_options .= sprintf('<p>%s</p><input type="radio" name="privacy_confirmation" value="1" checked="checked" /> %s <input type="radio" name="privacy_confirmation" value="no" /> %s - %s</p>',$message,__('Yes','rsvpmaker'),__('No','rsvpmaker'),__('Add checkbox?','rsvpmaker'));
 			}
 		else
 			$basic_options .= '<p>'.__('You may want for your RSVPMaker forms to include a privacy policy confirmation checkbox, particularly if any site visitors are covered by the European Union\'s GDPR or similar privacy regulations.','rsvpmaker').' '.__('First, you must register a privacy page with WordPress','rsvpmaker').': <a href="'.admin_url('options-privacy.php').'">'.admin_url('options-privacy.php').'</a></p>';
@@ -2759,6 +2758,18 @@ function rsvpmaker_sort_message() {
 	}
 }
 
+function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
+	if(!$t) 
+		$t = time();
+	$weektext = rsvpmaker_week($week);
+	if($week == '0')
+		return rsvpmaker_date('Y-m',$t).'-01 '.$template['hour'].':'.$template['minutes'].':00';
+	elseif($week == '6')
+		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+	else
+	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+}
+
 function rsvpmaker_get_projected($template) {
 
 if(!isset($template["week"]))
@@ -2794,52 +2805,71 @@ if(empty($dows))
 foreach($weeks as $week)
 foreach($dows as $dow) {
 //printf('<p>week %s day %s</p>',$week,$dow);
+$i = 0;
+$startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
+$ts = rsvpmaker_strtotime($startdaytxt);
+rsvpmaker_debug_log($startdaytxt,'startdaytext top');
+if(!$ts) {
+	echo 'Error parsing '.$startdaytxt;
+	return;
+}
 if($week == 6)
 	{
+	$i = 0;
 	if(empty($stopdate))
 		$stopdate = rsvpmaker_strtotime('+6 months');
-	$ts = rsvpmaker_strtotime(rsvpmaker_day($dow,'rsvpmaker_strtotime'));
 	if(isset($_GET["start"]))
 		$ts = rsvpmaker_strtotime($_GET["start"]);
-	$i = 0;
 	while($ts < $stopdate)
 		{
 		$projected[$ts] = $ts; // add numeric value for 1 week
+		$ts = $ts + WEEK_IN_SECONDS;
 		$i++;
-		$text = rsvpmaker_day($dow,'rsvpmaker_strtotime') ." +".$i." week";
-		$ts = rsvpmaker_strtotime($text);
+		if($i > 20)
+			break;
 		}
 	}
 else {
-	//monthly
-	$ts = rsvpmaker_mktime($template['hour'],$template['minutes'],0,$cm,1,$cy); // first day of month
 	if(isset($_GET["start"]))
 		$ts = rsvpmaker_strtotime($_GET["start"]);
-	$i = 0;
 	if(empty($stopdate))
 		$stopdate = rsvpmaker_strtotime('+1 year');
-	while($ts < $stopdate)
+	if($week == 0) {
+		$i = 0;
+		$firstdaytxt = rsvpmaker_projected_datestring($dow,0,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
+		$tcount = rsvpmaker_strtotime($firstdaytxt);
+		for($tcount; $tcount < $stopdate; $tcount+= MONTH_IN_SECONDS )
 		{
-		$firstdays[$ts] = $ts;
+		$firstdaytxt = rsvpmaker_projected_datestring($dow,0,$template,$tcount);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
+		$ts = rsvpmaker_strtotime($firstdaytxt);
+		//printf('<div>%s %s</div>',$firstdaytxt,rsvpmaker_date('r',$ts));
+		$projected[$ts] = $ts;
 		$i++;
-		$ts = rsvpmaker_mktime($template['hour'],$template['minutes'],0,$cm+$i,1,$cy); // first day of month
-		if($week == 0)
-			$projected[$ts] = $ts;
-		}
-	if($week > 0)
+		if($i > 10)
+			break;
+		}	
+	}
+	else
 		{
-			if($week == 5)
-				$wtext = 'Last';
-			else
-				$wtext = '+'. ($week - 1) .' week';
-			foreach($firstdays as $i => $firstday)
-				{
-				$datetext =  "$wtext ".rsvpmaker_day($dow,'rsvpmaker_strtotime')." ".date("F Y",$firstday).' '.$template['hour'].':'.$template['minutes'].':00';
+			$i = 0;
+			for($ts; $ts < $stopdate; $ts+= MONTH_IN_SECONDS )
+			{
+				$datetext = rsvpmaker_projected_datestring($dow,$week,$template,$ts);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
+				//printf('<div>%s</div>',$datetext);
+				//$datetext =  "$wtext ".$firstdaytxt.' '.date('F',$ts);
+				//rsvpmaker_debug_log($datetext,'datetext string in projected dates');
 				$ts = rsvpmaker_strtotime($datetext);
-				//printf('<p>datetext %s = %s</p>',$datetext, $ts);
+				if(!$ts)
+				{
+					echo 'Error parsing date string '.$datetext;
+					return;
+				}
 				if(isset($stopdate) && $ts > $stopdate)
 					break;
 				$projected[$ts] = $ts;
+				$i++;
+				if($i > 10)
+					break;
 				}
 		}
 	}
@@ -4007,6 +4037,21 @@ if(isset($_POST["update_from_template"]))
 				$update_messages .= '<div class="updated">Updated: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
 			}
 	}
+
+if(isset($_POST["detach_from_template"]))
+{
+	if(!current_user_can('publish_rsvpmakers'))
+	{
+		$update_messages .= '<div class="updated">Error</div>';
+	}
+	else
+	foreach($_POST["detach_from_template"] as $target_id)
+		{
+			$sql = $wpdb->prepare("UPDATE $wpdb->postmeta SET meta_key='_detached_from_template' WHERE meta_key='_meet_recur' AND post_id=%d", $target_id);
+			$result = $wpdb->query($sql);
+			$update_messages .= '<div class="updated">Detached from Template: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
+		}
+}
 
 
 if(isset($_POST["recur_check"]) )

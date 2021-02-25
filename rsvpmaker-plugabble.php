@@ -534,8 +534,7 @@ if(!isset($_POST["sked"]))
 	$sked = $_POST["sked"];
 
 	if(empty($sked["dayofweek"]))
-
-		$sked["dayofweek"][0] = 0;
+		$sked["dayofweek"][0] = 9;
 	
 	$sked['duration'] = $sked['end_time_type'] = sanitize_text_field($_POST['end_time_type']);
 	$sked['end'] = $sked['rsvp_sql_end'] = sanitize_text_field($_POST['rsvp_sql_end']);
@@ -543,13 +542,9 @@ if(!isset($_POST["sked"]))
 	new_template_schedule($postID,$sked);
 
 	if(isset($_POST["rsvpautorenew"]))
-
 		update_post_meta($postID, 'rsvpautorenew', 1);
-
 	else
-
-		delete_post_meta($postID, 'rsvpautorenew');		
-
+		delete_post_meta($postID, 'rsvpautorenew');	
 }
 
 
@@ -1935,17 +1930,14 @@ else
 
 	$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event ";
 
-
 	if(empty($wpdb->get_var($sql)))
-
 	   {
 		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
+		rsvpmaker_debug_log($sql,'replay rsvpmaker_event');
 		$wpdb->query($sql);
 	   }
 
 	}
-
-
 
 setcookie ( 'rsvp_for_'.$event, $rsvp_id, time()+(60*60*24*90), "/" , $_SERVER['SERVER_NAME'] );
 
@@ -2570,7 +2562,7 @@ else
 	   {
 
 		$sql = $wpdb->prepare("INSERT INTO  ".$wpdb->prefix."rsvpmaker_event SET event=%d, post_title=%s, date=%s",$event,$post->post_title,get_rsvp_date($event));
-
+		rsvpmaker_debug_log($sql,'save_rsvp rsvpmaker_event');
 		$wpdb->query($sql);
 
 	   }
@@ -4519,7 +4511,7 @@ if(isset($custom_fields["_rsvp_captcha"][0]) && $custom_fields["_rsvp_captcha"][
 
 <?php _e('Type the hidden security message','rsvpmaker'); ?>:<br />                    
 
-<input maxlength="10" size="10" name="captcha" type="text" />
+<input maxlength="10" size="10" name="captcha" type="text" autocomplete="off" />
 
 </p>
 
@@ -4535,7 +4527,7 @@ global $rsvp_required_field;
 
 
 
-if(isset($rsvp_options['privacy_confirmation']) && $rsvp_options['privacy_confirmation'])
+if(isset($rsvp_options['privacy_confirmation']) && ($rsvp_options['privacy_confirmation'] == '1'))
 
 {
 
@@ -4673,11 +4665,7 @@ if(!function_exists('rsvp_report') )
 
 function rsvp_report() {
 
-
-
 global $wpdb, $post, $rsvp_options;
-
-
 
 $wpdb->show_errors();
 
@@ -4713,8 +4701,6 @@ if(isset($_POST['move_rsvp']) && isset($_POST['move_to'])) {
 
 }
 
-
-
 $sql = "SELECT post_title, event, meta_value FROM `".$wpdb->prefix."rsvpmaker` join $wpdb->posts ON ".$wpdb->prefix."rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
 
 $results = $wpdb->get_results($sql);
@@ -4722,20 +4708,14 @@ $results = $wpdb->get_results($sql);
 if($results)
 
 foreach($results as $row) {
-
 	$sql = $wpdb->prepare("REPLACE INTO `".$wpdb->prefix."rsvpmaker_event` SET event=%d, post_title=%s, date=%s ",$row->event,$row->post_title,$row->meta_value);
-
+	rsvpmaker_debug_log($sql,'rsvp report rsvpmaker_event');
 	$wpdb->query($sql);
-
 }
-
-	
 
 $guest_check = '';
 
 $print_nonce = wp_create_nonce('rsvp_print');
-
-
 
 $wpdb->show_errors();
 
@@ -7521,7 +7501,8 @@ if(!empty($_POST["override"]))
 	$newpost = array('ID' => $overridden, 'post_title' => $opost->post_title, 'post_content' => $opost->post_content, 'post_name' => $target->post_name);
 
 	wp_update_post($newpost);
-
+	$sql = $wpdb->prepare("UPDATE $wpdb->postmeta SET meta_key='_detached_from_template' WHERE meta_key='_meet_recur' AND post_id=%d", $overridden);
+	$wpdb->query($sql);
 	update_post_meta($overridden, '_meet_recur', $override );
 
 	printf('<div class="updated notice notice-success">Applied "%s" template: <a href="%s">View</a> | <a href="%s">Edit</a></div>',$opost->post_title,get_permalink($overridden),admin_url('post.php?action=edit&post='.$overridden));
@@ -8277,8 +8258,6 @@ $cd = rsvpmaker_date("j");
 
 	global $current_user;
 
-	
-
 	$sched_result = get_events_by_template($t);
 
 	$add_date_checkbox = $updatelist = $editlist = $nomeeting = '';	
@@ -8355,21 +8334,17 @@ $cd = rsvpmaker_date("j");
 
 		$schedoptions = sprintf(' (<a href="%s">Options</a>)',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$sched->ID);
 
-		$editlist .= sprintf('<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s</td><td>%s</td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>',$a,$sched->postID,$timechange,$edit, $d,date('F d, Y',$thistime),get_post_permalink($sched->postID),$sched->post_title.$ifdraft.$schedoptions);
+		$editlist .= sprintf('<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>',$a,$sched->postID,$timechange,$edit, $sched->postID, $d,date('F d, Y',$thistime),get_post_permalink($sched->postID),$sched->post_title.$ifdraft.$schedoptions);
 
 		$template_update = get_post_meta($sched->postID,"_updated_from_template",true);
 
 		if(!empty($template_update) && ($template_update != $sched->post_modified))
-
-			$mod = ' <span style="color:red;">* '.__('Modified independently of template. Update could overwrite customizations.','rsvpmaker').'</span>';
-
+			$mod = ' <span style="color:red;">* '.__('Modified independently of template. Update could overwrite customizations.','rsvpmaker').'</span> '.sprintf('<input type="checkbox" name="detach_from_template[]" value="%d" /> ',$sched->postID).__('Detach','rsvpmaker');
 		else
-
 			$mod = '';
-
-		$updatelist .= sprintf('<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s</p>',$a,$sched->postID,__('Update','rsvpmaker'),$sched->post_title.$ifdraft,$fulldate, $mod, $timechange );
-
-		
+		//$sametime_events
+		$mod .= rsvpmaker_sametime($sched->datetime,$sched->ID);
+		$updatelist .= sprintf('<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s</p>',$a,$sched->postID,__('Update','rsvpmaker'),$sched->post_title.$ifdraft,$fulldate, $mod, $timechange );		
 
 		}
 
@@ -8391,10 +8366,10 @@ if(!empty($updatelist))
 
 //problem call
 
+//print_r($template);
+
 $projected = rsvpmaker_get_projected($template);
-
-
-
+if($projected && is_array($projected))
 foreach($projected as $i => $ts)
 
 {
@@ -8424,8 +8399,6 @@ if(isset($donotproject) && is_array($donotproject) && in_array(date('Y-m-j',$ts)
 if(empty($nomeeting)) $nomeeting = '';
 
 $nomeeting .= sprintf('<option value="%s">%s</option>',date('Y-m-d',$ts),date('F j, Y',$ts));
-
-
 
 ?>
 
@@ -8552,10 +8525,8 @@ $nomeeting .= sprintf('<option value="%s">%s</option>',date('Y-m-d',$ts),date('F
             </select>
 
 			<input type="text" name="recur_title[<?php echo $i;?>]" value="<?php echo $post->post_title; ?>" >
-
+<?php echo rsvpmaker_sametime(rsvpmaker_date('Y-m-d H:i:s',$ts));?>
 </div>
-
-
 
 <?php
 
@@ -8620,7 +8591,7 @@ if(isset($_GET["trashed"]))
 $projected = rsvpmaker_get_projected($template);
 
 
-
+if($projected && is_array($projected))
 foreach($projected as $i => $ts)
 
 {
@@ -8811,7 +8782,7 @@ do_action("update_from_template_prompt");
 
 <thead>
 
-<tr><th class="manage-column column-cb check-column" scope="col" ><input type="checkbox" class="checkall" title="Check all"></th><th>'.__('Edit').'</th><th><input type="checkbox" class="trashall" title="Trash all"> '.__('Move to Trash').'<th>'.__('Date').'</th><th>'.__('Title').'</th></tr>
+<tr><th class="manage-column column-cb check-column" scope="col" ><input type="checkbox" class="checkall" title="Check all"></th><th>'.__('Edit').'</th><th>'.__('Detach').'</th><th><input type="checkbox" class="trashall" title="Trash all"> '.__('Move to Trash').'<th>'.__('Date').'</th><th>'.__('Title').'</th></tr>
 
 </thead>
 

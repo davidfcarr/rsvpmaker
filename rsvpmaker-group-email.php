@@ -203,6 +203,7 @@ function rsvpmaker_relay_queue() {
             }
 
             rsvpmailer($mail);
+            add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' '.rsvpmaker_date('r'));
 
         }
         return $html;

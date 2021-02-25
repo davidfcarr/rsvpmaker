@@ -24,6 +24,7 @@ if(!wp_is_json_request()){
 	add_shortcode('rsvpprofiletable','rsvpprofiletable');
 	add_shortcode('rsvpnote','rsvpnote');
 	add_shortcode('rsvpfield','rsvpfield');
+	add_shortcode('rsvpmaker_formchimp','rsvpmaker_formchimp');//add me to your email list checkbox for form
 	add_shortcode('rsvpmaker_stripe_checkout','rsvpmaker_stripe_checkout');
 	add_shortcode('RSVPMaker_chimpshort', 'RSVPMaker_chimpshort');
 	//primarily used in email confirmation messages etc.
@@ -89,14 +90,12 @@ $listings = '';
 if(is_array($events))
 foreach($events as $event)
 	{
-	$dateline = '';
-	if(is_array($event['dates']))
-	foreach($event['dates'] as $date)
-		{
-		$t = rsvpmaker_strtotime($date['datetime']);
-		$dateline .= rsvpmaker_strftime($date_format, $t).' ';
-		}
-	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",esc_url_raw($event['permalink']),esc_html($event["title"]),$dateline);
+	$t = rsvpmaker_strtotime($event->datetime);
+	$dateline = rsvpmaker_strftime($date_format, $t);
+	$endt = (empty($event->enddate)) ? 0 : rsvpmaker_strtotime($event->enddate);
+	if($endt && (rsvpmaker_date('Ymd',$t) != rsvpmaker_date('Ymd',$endt)) )
+		$dateline .= ' - '. rsvpmaker_strftime($date_format, $endt);
+	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",esc_url_raw(get_permalink($event->ID)),esc_html($event->post_title),$dateline);
 	}	
 
 	if(!empty($atts["limit"]) && !empty($rsvp_options["eventpage"]))
@@ -137,8 +136,7 @@ if(!$at_least_one)
 
 function rsvpmaker_select($select) {
   global $wpdb;
-
-    $select .= ", rsvpdates.date as datetime, date_format(rsvpdates.date,'%M %e, %Y') as date, rsvpdates.enddate, rsvpdates.display_type";
+    $select .= ", ID as postID, rsvpdates.date as datetime, date_format(rsvpdates.date,'%M %e, %Y') as date, rsvpdates.enddate, rsvpdates.display_type";
   return $select;
 }
 
@@ -202,6 +200,13 @@ else
 	}
 }
 
+function rsvpmaker_where_afternow($where) {
+	global $offset_hours;
+	$startfrom = (!empty($offset_hours)) ? ' DATE_SUB("'.get_sql_now().'", INTERVAL '.$offset_hours.' HOUR) ' : '"'.get_sql_now().'"';
+	$where .= " AND ( ( rsvpdates.date > $startfrom OR rsvpdates.enddate > $startfrom ) )";
+	return $where;
+}
+
 function rsvpmaker_orderby($orderby) {
   return " rsvpdates.date";
 }
@@ -237,6 +242,96 @@ function rsvpmaker_orderby_past($orderby) {
   return " rsvpdates.date DESC";
 }
 
+function rsvpmaker_upcoming_query($atts = array()) {
+global $wpdb, $dataloop;
+	if(isset($_GET["debug_query"]))
+	add_filter('posts_request','rsvpmaker_examine_query');
+
+if(isset($atts["startday"]))
+	$startday = $atts["startday"];
+
+$limit = isset($atts["limit"]) ? $atts["limit"] : 10;
+if(isset($atts["posts_per_page"]))
+	$limit = $atts["posts_per_page"];
+if(isset($atts["days"]))
+		$datelimit = $atts["days"].' DAY';
+else
+		$datelimit = '180 DAY';
+$paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+
+add_filter('posts_join', 'rsvpmaker_join' );
+add_filter('posts_groupby', 'rsvpmaker_groupby' );
+add_filter('posts_distinct', 'rsvpmaker_distinct' );
+add_filter('posts_fields', 'rsvpmaker_select' );
+
+if(isset($atts["past"]) && $atts["past"])
+	{
+	add_filter('posts_where', 'rsvpmaker_where_past' );
+	add_filter('posts_orderby', 'rsvpmaker_orderby_past' );
+	}
+elseif(isset($atts["afternow"]))
+	{
+	add_filter('posts_where', 'rsvpmaker_where_afternow' );
+	add_filter('posts_orderby', 'rsvpmaker_orderby' );
+	}
+else
+	{
+	add_filter('posts_where', 'rsvpmaker_where' );
+	add_filter('posts_orderby', 'rsvpmaker_orderby' );
+	if($paged == 1)
+		cache_rsvp_dates($limit + 20);
+	}
+$queryarg = array('post_type' => 'rsvpmaker','post_status' => 'publish', 'paged' => $paged);
+//$querystring = "post_type=rsvpmaker&post_status=publish&paged=$paged";
+
+if(!empty($atts["author"]))
+	$queryarg['author'] = $atts["author"];
+	//$querystring .= "&author=".$atts["author"];
+if(isset($atts["one"]) && !empty($atts["one"]))
+	{
+	$queryarg['posts_per_page'] = 1;
+	//$querystring .= "&posts_per_page=1";
+	if(is_numeric($atts["one"]))
+		$queryarg['p'] = $atts["one"];
+		//$querystring .= '&p='.$atts["one"];
+	elseif($atts["one"] != 'next')
+		$queryarg['name'] = $atts["one"];
+		//$querystring .= '&name='.$atts["one"];
+	}
+if(isset($atts["type"]))
+	$queryarg['rsvpmaker-type'] = $atts["type"];
+	//$querystring .= "&rsvpmaker-type=".$atts["type"];
+if($limit)
+	$queryarg['posts_per_page'] = $limit;
+	//$querystring .= "&posts_per_page=".$limit;
+if(!empty($atts['post_id']) && is_numeric($atts['post_id']) ) {
+	//$querystring .= '&p='.$atts['post_id'];
+	$queryarg['p'] = $atts['post_id'];
+	$dataloop = true;//prevents more events link from being displayed
+}
+
+if(isset($atts['meta_key']))
+	$queryarg['meta_key'] = $atts['meta_key'];
+if(isset($atts['meta_value']))
+	$queryarg['meta_value'] = $atts['meta_value'];
+
+if(isset($_GET['debug']))
+$wpdb->show_errors();
+
+$wp_query = new WP_Query($queryarg);
+// clean up so this doesn't interfere with other operations
+remove_filter('posts_join', 'rsvpmaker_join' );
+remove_filter('posts_groupby', 'rsvpmaker_groupby' );
+remove_filter('posts_distinct', 'rsvpmaker_distinct' );
+remove_filter('posts_fields', 'rsvpmaker_select' );
+remove_filter('posts_where', 'rsvpmaker_where_past' );
+remove_filter('posts_orderby', 'rsvpmaker_orderby_past' );
+remove_filter('posts_where', 'rsvpmaker_where_afternow' );
+remove_filter('posts_where', 'rsvpmaker_where' );
+remove_filter('posts_orderby', 'rsvpmaker_orderby' );
+return $wp_query;
+}
+
 function rsvpmaker_upcoming ($atts = array())
 {
 $no_events = (isset($atts["no_events"])) ? $atts["no_events"] : 'No events currently listed.';
@@ -266,82 +361,7 @@ if($email_context && (($format == 'form') || $format == 'with_form') )
 
 $backup = $wp_query;
 
-if(isset($_GET["debug_query"]))
-	add_filter('posts_request','rsvpmaker_examine_query');
-
-if(isset($atts["startday"]))
-	$startday = $atts["startday"];
-
-$limit = isset($atts["limit"]) ? $atts["limit"] : 10;
-if(isset($atts["posts_per_page"]))
-	$limit = $atts["posts_per_page"];
-if(isset($atts["days"]))
-		$datelimit = $atts["days"].' DAY';
-else
-		$datelimit = '180 DAY';
-$paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-
-add_filter('posts_join', 'rsvpmaker_join' );
-add_filter('posts_groupby', 'rsvpmaker_groupby' );
-add_filter('posts_distinct', 'rsvpmaker_distinct' );
-add_filter('posts_fields', 'rsvpmaker_select' );
-
-if(isset($atts["past"]) && $atts["past"])
-	{
-	add_filter('posts_where', 'rsvpmaker_where_past' );
-	add_filter('posts_orderby', 'rsvpmaker_orderby_past' );
-	}
-else
-	{
-	add_filter('posts_where', 'rsvpmaker_where' );
-	add_filter('posts_orderby', 'rsvpmaker_orderby' );
-	if($paged == 1)
-		cache_rsvp_dates($limit + 20);
-	}
-
-$querystring = "post_type=rsvpmaker&post_status=publish&paged=$paged";
-
-if(!empty($atts["author"]))
-	$querystring .= "&author=".$atts["author"];
-if(isset($atts["one"]) && !empty($atts["one"]))
-	{
-	$querystring .= "&posts_per_page=1";
-	if(is_numeric($atts["one"]))
-		$querystring .= '&p='.$atts["one"];
-	elseif($atts["one"] != 'next')
-		$querystring .= '&name='.$atts["one"];
-	}
-if(isset($atts["type"]))
-	$querystring .= "&rsvpmaker-type=".$atts["type"];
-if($limit)
-	$querystring .= "&posts_per_page=".$limit;
-if(isset($atts["add_to_query"]))
-	{
-		if(!strpos($atts["add_to_query"],'&'))
-			$atts["add_to_query"] = '&'.$atts["add_to_query"];
-		$querystring .= $atts["add_to_query"];
-	}
-if(!empty($atts['post_id'])) {
-	$querystring .= '&p='.$atts['post_id'];
-	$dataloop = true;//prevents more events link from being displayed
-}
-
-$wpdb->show_errors();
-
-$wp_query = new WP_Query($querystring);
-// clean up so this doesn't interfere with other operations
-remove_filter('posts_join', 'rsvpmaker_join' );
-remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-remove_filter('posts_fields', 'rsvpmaker_select' );
-
-if(isset($atts["past"]) && $atts["past"])
-	{
-	remove_filter('posts_where', 'rsvpmaker_where_past' );
-	remove_filter('posts_orderby', 'rsvpmaker_orderby_past' );
-	}
-remove_filter('posts_where', 'rsvpmaker_where' );
-remove_filter('posts_orderby', 'rsvpmaker_orderby' );
+$wp_query = rsvpmaker_upcoming_query($atts);
 
 ob_start();
 
@@ -410,7 +430,7 @@ elseif($format == 'embed_dateblock') {
 ?>
 
 <div id="rsvpmaker-<?php the_ID();?>" <?php post_class();?> itemscope itemtype="http://schema.org/Event" >  
-<h1 class="rsvpmaker-entry-title"><a href="<?php the_permalink(); ?>"  itemprop="url"><span itemprop="name"><?php the_title(); ?></span></a></h1>
+<h1 class="rsvpmaker-entry-title"><a class="rsvpmaker-entry-title-link" href="<?php the_permalink(); ?>"  itemprop="url"><span itemprop="name"><?php the_title(); ?></span></a></h1>
 <div class="rsvpmaker-entry-content">
 
 <?php 
@@ -1698,25 +1718,9 @@ function rsvpmaker_daily_schedule($atts) {
 		$start_limit = rsvpmaker_strtotime($atts['start']);
 	if(isset($atts['end']))
 		$end_limit = rsvpmaker_strtotime($atts['end']);
-
-	add_filter('posts_join', 'rsvpmaker_join' );
-	add_filter('posts_groupby', 'rsvpmaker_groupby' );
-	add_filter('posts_distinct', 'rsvpmaker_distinct' );
-	add_filter('posts_fields', 'rsvpmaker_select' );
-	add_filter('posts_where', 'rsvpmaker_where' );
-	add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
-	$limit = (empty($atts['limit'])) ? 50 : (int) $atts['limit'];
-	$querystring = "post_type=rsvpmaker&post_status=publish&posts_per_page=".$limit;
-	if(!empty($atts['type']))
-		$querystring .= "&rsvpmaker-type=".$atts['type'];
-	$wp_query = new WP_Query($querystring);
+	$atts['limit'] = (empty($atts['limit'])) ? 50 : (int) $atts['limit'];
+	$wp_query = rsvpmaker_upcoming_query($atts);
 	$future = $wp_query->get_posts();
-	remove_filter('posts_join', 'rsvpmaker_join' );
-	remove_filter('posts_groupby', 'rsvpmaker_groupby' );
-	remove_filter('posts_distinct', 'rsvpmaker_distinct' );
-	remove_filter('posts_fields', 'rsvpmaker_select' );
-	remove_filter('posts_where', 'rsvpmaker_where' );
-	remove_filter('posts_orderby', 'rsvpmaker_orderby',99 );
 	foreach($future as $event) {
 		$t = rsvpmaker_strtotime($event->datetime);
 		if($start_limit && ($t < $start_limit))

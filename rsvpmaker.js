@@ -234,101 +234,91 @@ $( ".rsvpmaker_show_attendees" ).click(function( event ) {
 
 //end jquery
 
-
-
 class RSVPJsonWidget {
 
-    constructor(divid, url, limit, morelink = '') {
+constructor(divid, url, limit, morelink = '') {
 
-        this.el = document.getElementById(divid);
+    this.el = document.getElementById(divid);
 
-        this.url = url;
+    this.url = url;
 
-        this.limit = limit;
+    this.limit = limit;
 
-        this.morelink = morelink;
+    this.morelink = morelink;
 
-        let eventslist = '';
+    let eventslist = '';
 
-        //this.showEvent = ;
+fetch(url).then(response => {
 
+return response.json()
 
+})
+.then(data => {
 
-  fetch(url)
+var showmorelink = false;
 
-  .then(response => {
+if(Array.isArray(data))
 
-    return response.json()
+    {
 
-  })
+    if(limit && (data.length >= limit)) {
 
-  .then(data => {
+        data = data.slice(0,limit);
 
-    var showmorelink = false;
+        showmorelink = true;
 
-    if(Array.isArray(data))
+    }
 
-        {
+    data.forEach(function (value, index, data) {
 
-        if(limit && (data.length >= limit)) {
+if(!value.datetime)
 
-            data = data.slice(0,limit);
+    return '';
 
-            showmorelink = true;
+var d = new Date(value.datetime);
 
-        }
+eventslist = eventslist.concat('<li class="rsvpmaker-widget-li"><span class="rsvpmaker-widget-title"><a href="' + value.guid + '">' + value.post_title + '</a></span> - <span class="rsvpmaker-widget-date">' + value.date + '</span></li>');
 
-        data.forEach(function (value, index, data) {
+});
 
-    if(!value.datetime)
+    }
 
-        return '';
+else
 
-    var d = new Date(value.datetime);
+    {
 
-    eventslist = eventslist.concat('<li><a href="' + value.guid + '">' + value.post_title + ' - ' + value.date + '</a></li>');
+        this.el.innerHTML = 'None found: '+data.code;
 
-    });
+    }
 
-        }
+if(eventslist == '')
 
-    else
+   this.el.innerHTML = 'No event listings found';
 
-        {
+else
 
-            this.el.innerHTML = 'None found: '+data.code;
+    {
 
-        }
+        if(showmorelink && (morelink != ''))
 
-    if(eventslist == '')
+            eventslist = eventslist.concat('<li><a href="'+morelink+'">More events</a></li>');
 
-       this.el.innerHTML = 'No event listings found';
+        this.el.innerHTML = '<ul class="eventslist rsvpmakerjson">'+eventslist+'</ul>';
 
-    else
+    }
 
-        {
+})
 
-            if(showmorelink && (morelink != ''))
+.catch(err => {
 
-                eventslist = eventslist.concat('<li><a href="'+morelink+'">More events</a></li>');
+this.el.innerHTML = 'Error fetching events from '+this.url;
 
-            this.el.innerHTML = '<ul class="eventslist rsvpmakerjson">'+eventslist+'</ul>';
-
-        }
-
-  })
-
-  .catch(err => {
-
-    this.el.innerHTML = 'Error fetching events from '+this.url;
-
-    console.log(err);
+console.log(err);
 
 });
 
 
 
-    }
-
 }
 
+}
