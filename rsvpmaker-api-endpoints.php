@@ -234,8 +234,6 @@ $wp_query = rsvpmaker_upcoming_query();
 
 }
 
-
-
 class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 
   public function register_routes() {
@@ -1143,6 +1141,53 @@ public function get_items($request) {
   }
 }
 
+class RSVPMaker_Events_with_Timezone extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'events_with_timezone';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'GET',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+	global $default_tz;
+  $last_tz = '';
+  $events = [];
+  $list = get_future_events(array('limit' => 10));
+  if($list)
+  foreach($list as $event) {
+    $timezone = rsvpmaker_get_timezone_string($event->ID);
+    if($timezone != $last_tz) {
+      date_default_timezone_set($timezone);
+      $last_tz = $timezone;
+    }
+    $t = strtotime($event->datetime);
+    $end = strtotime($event->enddate);
+    $events[] = array('ts' => $t, 'end' => $end, 'timezone_string' => $timezone, 'site' => get_option('blogname'),'post_title' => $event->post_title,'permalink' => get_permalink($event->ID));
+  }
+    return new WP_REST_Response($events, 200);
+  }
+}
+
 add_action('rest_api_init', function () {
 
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -1210,6 +1255,8 @@ add_action('rest_api_init', function () {
   $deet->register_routes();
   $tz = new RSVPMaker_Time_And_Zone();
   $tz->register_routes();
+  $tzevents = new RSVPMaker_Events_with_Timezone();
+  $tzevents->register_routes();
 });
 
 ?>

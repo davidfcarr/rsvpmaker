@@ -5314,6 +5314,24 @@ if(!strpos($rsvp_options["time_format"],'T') )
 ?>
 <input type="checkbox" name="convert_timezone" value="1" <?php if($rsvp_options["convert_timezone"]) echo ' checked="checked" '; ?> /><?php _e('Show timezone conversion button next to calendar icons','rsvpmaker'); ?>
 </p>
+<div><label>Timezone</label> 
+<select id="timezone_string" name="timezone_string">
+<script>
+var tz = jstz.determine();
+var tzstring = tz.name();
+document.write('<option selected="selected" value="' + tzstring + '">' + tzstring + '</option>');
+</script>
+<option value=""><?php _e('Default','rsvpmaker'); ?></option>
+<optgroup label="U.S. (Common Choices)">
+<option value="America/New_York">New York</option>
+<option value="America/Chicago">Chicago</option>
+<option value="America/Denver">Denver</option>
+<option value="America/Los_Angeles">Los Angeles</option>
+</optgroup>
+<?php $choices = wp_timezone_choice('');
+echo str_replace('<option selected="selected" value="">Select a city</option>','',$choices);
+?>
+</select> <br /><em><?php _e('Choose a city in the same timezone as you','rsvpmaker'); ?>.</em>
 
 <?php
 $o = sprintf('<option value="%d">%s</option>',$rsvp_options['rsvp_form'],__('Default','rsvpmaker'));
@@ -5411,6 +5429,8 @@ if(!empty($_POST["rsvpmaker_new_post"]))
 		}
 		if(!empty($_POST['rsvp_form']))
 			update_post_meta($post_id,'_rsvp_form', (int) $_POST['rsvp_form']);
+		if(!empty($_POST['timezone_string']))
+			update_post_meta($post_id,'_rsvp_timezone_string', $_POST['timezone_string']);
 		rsvpmaker_save_calendar_data($post_id);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
 		if($ajax)

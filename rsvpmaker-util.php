@@ -1,5 +1,21 @@
 <?php
 
+function rsvpmaker_get_timezone_string($post_id=0) {
+global $post;
+if(!$post_id && !empty($post->ID))
+	$post_id = $post->ID;
+$timezone = get_option('timezone_string');
+if($post_id)
+{
+	$post_tz = get_post_meta($post_id,'_rsvp_timezone_string',true);
+	if(!empty($post_tz) && $post_tz != $timezone)
+		$timezone = $post_tz;
+}
+if(empty($timezone))
+	$timezone = 'UTC';
+return $timezone;
+}
+
 function fix_timezone($timezone = '' ) {
 
 	global $post;
@@ -25,8 +41,6 @@ function fix_timezone($timezone = '' ) {
 		date_default_timezone_set($timezone);
 
 }
-
-	
 
 function restore_timezone() {
 

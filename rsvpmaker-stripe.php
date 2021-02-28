@@ -730,6 +730,8 @@ function rsvpmaker_stripe_latest_transaction_by_user ($user_id, $start_date = ''
 	$where = ($start_date) ? " AND date > '$start_date' " : '';
 	$stripetable = $wpdb->prefix."rsvpmaker_money";
 	$sql = "SELECT * FROM $stripetable WHERE user_id=$user_id $where ORDER BY date DESC";
+	//if(isset($_GET['debug']))
+		//printf('<p>latest tx %s</p>',$sql);
 	return $wpdb->get_row($sql);
 }
 
