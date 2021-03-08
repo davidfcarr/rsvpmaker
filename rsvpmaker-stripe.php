@@ -598,6 +598,9 @@ wp_schedule_single_event( time() + 300 ,'stripe_balance_history_cron'); // updat
 
 function rsvpmaker_stripe_notify($vars) {
 
+	//$receipt = get_option('rsvpmaker_stripe_receipt');
+	$receipt = true;
+
 	if(!empty($vars['rsvp_id']))
 
 	{
@@ -638,6 +641,11 @@ function rsvpmaker_stripe_notify($vars) {
 	$mail['subject'] = 'Stripe payment from '.$vars['name'];
 
 	rsvpmailer($mail);
+	if($receipt) {
+		$mail['to'] = $vars['email'];
+		$mail['subject'] = __('Confirming your payment','rsvpmaker').': '.$vars['description'];
+		rsvpmailer($mail);
+	}
 
 }
 

@@ -687,11 +687,17 @@ if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 					
                     <input type="hidden" name="submitted" value="1" /> 
 					<?php wp_nonce_field('calendar-nonce');?>
-
-					<h3><?php _e('Default Content for Events (such as standard meeting location)','rsvpmaker'); ?>:</h3>
-  <textarea name="option[default_content]"  rows="5" cols="80" id="default_content"><?php if(isset($options["default_content"])) echo $options["default_content"];?></textarea>
-	<br />
-<?php _e('Hour','rsvpmaker'); ?>: <select name="option[defaulthour]"> 
+<?php
+//legacy feature
+if(!empty($options["default_content"])) {
+?>
+<h3><?php _e('Default Content for Events (such as standard meeting location)','rsvpmaker'); ?>:</h3>
+<textarea name="option[default_content]"  rows="5" cols="80" id="default_content"><?php if(isset($options["default_content"])) echo $options["default_content"];?></textarea>
+<br />
+<?php
+}
+?>
+<strong><?php _e('Default Time','rsvpmaker'); ?></strong><br /> <?php _e('Hour','rsvpmaker'); ?>: <select name="option[defaulthour]"> 
 <?php echo $houropt;?>
 </select> 
  
@@ -700,6 +706,8 @@ if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 </select>
 <br />
 <?php echo __('See also','rsvpmaker') . ' <a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list').'">'.__('Event Templates','rsvpmaker').'</a> '.__('for events held an a recurring schedule.','rsvpmaker'); ?><br />
+<input type="checkbox" name="option[autorenew]" value="1" <?php if(isset($options["autorenew"]) && $options["autorenew"]) echo ' checked="checked" ';?> /> <strong><?php _e('Autorenew Events from Template','rsvpmaker'); ?></strong> <?php _e('check to turn on by default','rsvpmaker'); ?> - <?php _e('means new events are automatically added according to the schedule set in the template.','rsvpmaker');?>
+<br />
 <strong><?php _e('RSVP TO','rsvpmaker'); ?>:</strong><br />
 <input type="radio" name="option[rsvp_to_current]" value="0" <?php if(!isset($options["rsvp_to_current"]) || ! $options["rsvp_to_current"] ) echo ' checked="checked" ';?> /> <strong><?php _e('Use this address','rsvpmaker'); ?></strong>: 
 <input type="text" name="option[rsvp_to]" id="rsvp_to" value="<?php if(isset($options["rsvp_to"])) echo $options["rsvp_to"];?>" /><br />

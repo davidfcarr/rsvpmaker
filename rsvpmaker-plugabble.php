@@ -479,8 +479,10 @@ jQuery(function () {
 
 
 <p><?php _e('Stop date (optional)','rsvpmaker');?>: <input type="text" name="sked[stop]" value="<?php if(isset($template["stop"])) echo $template["stop"];?>" placeholder="<?php _e('example','rsvpmaker'); echo ": ".date('Y').'-12-31' ?>" /> <em>(<?php _e('format','rsvpmaker'); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
-
-<p><input type="checkbox" name="rsvpautorenew" id="rsvpautorenew" <?php if(get_post_meta($post->ID,'rsvpautorenew',true)) echo 'checked="checked"'?> /> <?php _e('Automatically add dates according to this schedule','rsvpmaker');?></em></p>
+<?php 
+$auto = ((isset($_GET['new_template']) && !empty($rsvp_options['autorenew'])) || get_post_meta($post->ID,'rsvpautorenew',true));
+?>
+<p><input type="checkbox" name="rsvpautorenew" id="rsvpautorenew" <?php if($auto) echo 'checked="checked"'?> /> <?php _e('Automatically add dates according to this schedule','rsvpmaker');?></em></p>
 
 <?php
 

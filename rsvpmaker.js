@@ -58,7 +58,6 @@ jQuery(document).ready(function($) {
         }
     );
 
-
     $('.timezone_on').click( function () {
     	var utc = $(this).attr('utc');
         var target = $(this).attr('target');
@@ -122,7 +121,6 @@ jQuery(document).ready(function($) {
 		});
 
 });
-
 
 $('.signed_up_ajax').each( function () {
 

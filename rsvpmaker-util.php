@@ -662,18 +662,50 @@ function rsvpmaker_reminders_nudge () {
 
 }
 
+if(isset($_GET['tabletest']))
+	add_action('admin_init','rsvpmaker_update_table_continue');
+add_action('rsvpmaker_update_table_continue','rsvpmaker_update_table_continue');
+
+function rsvpmaker_update_table_continue() {
+	rsvpmaker_event_dates_table_update(true);
+}
+
+function rsvpmaker_date_table_errors() {
+	global $wpdb;
+	$eventtable = $wpdb->prefix."rsvpmaker_event";
+	$errors = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE enddate IS NULL OR enddate='0000-00-00 00:00:00' ");
+	if($errors)
+	foreach($errors as $row) {
+		$post = get_post($row->event);
+		if(!$post) {
+			$wpdb->query("DELETE FROM $eventtable WHERE event =".$row->event);
+			continue;
+		}
+		$date = $row->date;
+		$type = $row->type;
+		if(strpos($type,'|')) {
+			$p = explode('|',$type);
+			$days = $p[1] - 1;
+			$enddatetime = date('Y-m-d ',strtotime($date.' +'.$days.' days')).$end.':00';		
+		}
+		else 
+			$enddatetime = date('Y-m-d H:i:s',strtotime($date.' +1 hour'));		
+		$wpdb->query("UPDATE $eventtable SET enddate='$enddatetime' WHERE event=$row->event ");
+	}
+}
+
 function rsvpmaker_event_dates_table_update($new = false) {
 	global $wpdb;
-	if(!$new) {
-		$haserror = $wpdb->get_var("SELECT event FROM ".$wpdb->prefix."rsvpmaker_event WHERE enddate IS NULL OR enddate='0000-00-00 00:00:00' ");
-		if(!$haserror)
-			return;
-	}
+	$last_date = get_option('rsvpmaker_update_last_date');
+	$where = ($last_date) ? " AND a1.meta_value <= '".$last_date."'" : '';
 	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime
 	 FROM ".$wpdb->posts."
-	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates' AND post_status='publish' ";
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates' AND post_status='publish' $where ORDER BY a1.meta_value DESC LIMIT 0, 100";
+	 rsvpmaker_debug_log($sql,'event lookup');
 	$events = $wpdb->get_results($sql);
 	$log = '';
+	$last_date = '';//remove for now
+	if($events)
 	foreach($events as $event) {
 		$date = $event->datetime;
 		$type = get_post_meta($event->ID,'_firsttime',true);
@@ -693,10 +725,29 @@ function rsvpmaker_event_dates_table_update($new = false) {
 		$title = get_the_title($event->ID);
 		$sql = $wpdb->prepare('REPLACE INTO '.$wpdb->prefix.'rsvpmaker_event SET event=%d, post_title=%s, date=%s, enddate=%s, display_type=%s',$event->ID,$title,$date,$enddatetime,$type);
 		$wpdb->query($sql);
+		$last_date = $event->datetime;
 		$log .= $sql."\n";
 	}
-	rsvpmaker_debug_log($log,'table update sql');
-	update_option('rsvpmaker_event_table',time());
+	rsvpmaker_debug_log($log,'log of updated events');
+	$where = " AND a1.meta_value < '".$last_date."'";
+	$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime
+	 FROM ".$wpdb->posts."
+	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates' AND post_status='publish' $where ORDER BY a1.meta_key DESC ";
+	rsvpmaker_debug_log($sql,'more events lookup');
+	$events = $wpdb->get_results($sql);
+	$more = (is_array($events)) ? sizeof($events) : 0;
+	rsvpmaker_debug_log($more,'more events to convert');
+	update_option('rsvpmaker_update_last_date',$last_date);
+	rsvpmaker_debug_log($last_date,'recording last date');
+	if(empty($events)) {
+		update_option('rsvpmaker_event_table',time());
+		wp_clear_scheduled_hook('rsvpmaker_update_table_continue');
+	}
+	else
+	{
+		$timestamp = time() + 300;
+		wp_schedule_single_event( $timestamp, 'rsvpmaker_update_table_continue' );
+	}
 }
 
 function sync_rsvpmaker_event_dates ($meta_id, $object_id, $meta_key, $meta_value) {
@@ -3470,10 +3521,19 @@ if(strpos($shortcode,'next'))
 	$content = rsvpmaker_next($atts);
 elseif(strpos($shortcode,'listing'))
 	$content = event_listing($atts);
+elseif(strpos($shortcode,'youtube'))
+	{
+	preg_match('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/',$atts['url'],$match);
+	$image = 'https://img.youtube.com/vi/'.$match[2].'/mqdefault.jpg';
+	$link = (empty($atts['link'])) ? $match[0] : $atts['link'];
+	$content = sprintf('<p><a href="%s">Watch on YouTube: %s<br /><img src="%s" width="320" height="180" /></a></p>',$link,$link,$image);
+	}
 $content = str_replace('<h1','<h1 style="line-height: 1.3" ',$content);
 $content = str_replace('class="rsvpmaker-entry-title-link"','style="text-decoration: none" ',$content);
 return $content;
 }
+
+add_shortcode('custom:rsvpmaker_youtube', function() { return '';});
 
 function mailpoet_email_list_okay($rsvp) {
 	if (class_exists(\MailPoet\API\API::class)) {

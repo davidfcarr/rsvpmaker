@@ -2015,6 +2015,7 @@ Useful formatting codes for email ("excerpt" works well in most cases):
 [custom:event_listing show_time="1" title="Upcoming Events"] links with dates and titles of upcoming events
 [custom:rsvpmaker_next format="excerpt"] next event
 [custom:rsvpmaker_next rsvp_on="1" format="excerpt"] next event with RSVPs active
+[custom:rsvpmaker_youtube url="YOUTUBE URL" link="LINK IF DIFFERENT"] display preview image of a youtube video, with to view
 <?php
 	$events = get_future_events(array('limit' => 20));
 	foreach($events as $event) {
@@ -2333,7 +2334,7 @@ $rsvp_text = rsvpmaker_text_version($mail["html"], $rsvpfooter_text);
 
 $mail["html"] = do_blocks(do_shortcode($template));
 
-$mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/hqdefault.jpg" width="480" height="360" /></a></p>',$mail["html"]);
+$mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>',$mail["html"]);
 
 global $unsub;
 if(empty($unsub))
