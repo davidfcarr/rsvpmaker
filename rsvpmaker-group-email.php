@@ -122,7 +122,6 @@ function rsvpmaker_relay_init ($show = false) {
 }
 
 function rsvpmaker_relay_queue() {
-
     global $wpdb, $post, $page, $pages;
 
     $rsvpmaker_message_type = 'email_rule_group_email';
@@ -769,7 +768,7 @@ elseif(in_array($from,$recipients) || in_array($from,$whitelist))
 
             elseif(!in_array($to,$unsubscribed) )
 
-                add_post_meta($post_id,'rsvprelay_to',$to);        
+                add_post_meta($post_id,'rsvprelay_to',$to);
 
         }
 

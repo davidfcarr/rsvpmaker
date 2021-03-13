@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.5.5
+Version: 8.5.6
 */
 
 function get_rsvpversion(){
-return '8.5.5';
+return '8.5.6';
 }
 
 global $wp_version;
@@ -380,6 +380,9 @@ $sql = "CREATE TABLE `".$wpdb->prefix."rsvpmaker_event` (
   `display_type` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
   `date` datetime,
   `enddate` datetime,
+  `ts_start` int(11) NOT NULL default '0',
+  `ts_end` int(11) NOT NULL default '0',
+  `timezone` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
   PRIMARY KEY  (`event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 dbDelta($sql);
@@ -419,7 +422,7 @@ if(! $wpdb->get_var($sql) )
 $sql = "UPDATE $wpdb->posts SET post_type='rsvpemail' WHERE post_type='rsvpmaker' AND post_parent != 0 ";
 $wpdb->query($sql);
 
-$rsvp_options["dbversion"] = 16;
+$rsvp_options["dbversion"] = 17;
 update_option('RSVPMAKER_Options',$rsvp_options);
 }
 
@@ -454,7 +457,7 @@ if(!empty($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 7))
 		}
 	}
 	}
-if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 16))
+if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 17))
 	cpevent_activate();
 global $wpdb;
 $test = $wpdb->get_var("SELECT enddate FROM ".$wpdb->prefix."rsvpmaker_event WHERE enddate IS NOT NULL");
@@ -464,8 +467,10 @@ if(!$test) // table doesn't exist or is missing enddate column
 	cpevent_activate();
 	rsvpmaker_event_dates_table_update(true);
 }
-else
+else {
 	rsvpmaker_date_table_errors(); // check for data errors
+	rsvpmaker_add_timestamps();
+}
 
 if(isset($rsvp_options["dbversion"]) && ($rsvp_options["dbversion"] < 14))
 {

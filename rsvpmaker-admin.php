@@ -254,7 +254,7 @@ $futureyear = 5 + (int) date('Y');
 
 ?>
 <div id="<?php echo $prefix; ?>date<?php echo $index;?>" ><input type="hidden" id="defaulthour" value="<?php echo $rsvp_options["defaulthour"]; ?>" /><input type="hidden" id="defaultmin" value="<?php echo $rsvp_options["defaultmin"]; ?>" />
-<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date" value="<?php echo rsvpmaker_strftime('%B %e, %Y '.$rsvp_options['time_format'],$t); ?>" size="30"> or <input name="rsvp_sql_date" type="text" class="sql-date" id="sql-date" value="<?php echo rsvpmaker_date('Y-m-d H:i:s',$t) ?>"> <span id="date-weekday"><?php echo rsvpmaker_strftime('%A',$t) ?></span>
+<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date" value="<?php echo date('F j, Y g:i A',$t); ?>" size="30"> or <input name="rsvp_sql_date" type="text" class="sql-date" id="sql-date" value="<?php echo rsvpmaker_date('Y-m-d H:i:s',$t) ?>"> <span id="date-weekday"><?php echo rsvpmaker_strftime('%A',$t) ?></span>
 </p>
 <div id="date_error"></div>
 
@@ -2205,17 +2205,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	global $wpdb, $rsvp_options;
 	
     if( $column_name == 'rsvpmaker_end' ) {
-		$end_type = get_post_meta($post_id,'_firsttime',true);
-		$end_time = get_post_meta($post_id,'_endfirsttime',true);
-		if(strpos($end_type,'|')) {
-			$end_datetime = get_post_meta($post_id,'_rsvp_end_date',true);
-			$t = rsvpmaker_strtotime($end_datetime);
-			echo rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);	
-		}
-		elseif(!empty($end_type) && strpos($end_time,':') > 0) {
-			$t = rsvpmaker_strtotime($end_time);
-			echo rsvpmaker_strftime($rsvp_options['time_format'],$t);
-		}
+		echo rsvpmaker_end_date($post_id, true);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
 		$end_type = get_post_meta($post_id,'_firsttime',true);
@@ -2240,7 +2230,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	}
     elseif( $column_name == 'event_dates' ) {
 
-$datetime = get_post_meta($post_id,'_rsvp_dates',true);
+$datetime = rsvpmaker_long_date($post_id,true);
 $template = get_template_sked($post_id);
 $rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
@@ -2248,8 +2238,7 @@ $s = $dateline = '';
 
 if($datetime)
 {
-		$t = rsvpmaker_strtotime($datetime);
-		echo rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);
+		echo $datetime;
 }
 elseif($template)
 	{

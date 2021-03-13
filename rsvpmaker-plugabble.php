@@ -4085,11 +4085,14 @@ elseif($e && isset($_GET["update"]))
 
 $dateblock = rsvpmaker_format_event_dates($post->ID);
 $event = get_rsvpmaker_event($post->ID);
-$dur = $event->display_type;
-
-$last_time = rsvpmaker_strtotime($event->enddate);
-
-$firstrow = $event->date;
+if($event) {
+	$dur = $event->display_type;
+	$last_time = rsvpmaker_strtotime($event->enddate);	
+	$firstrow = $event->date;
+}
+else {
+	$dur = $last_time = $firstrow = '';
+}
 
 if(!empty($rsvpconfirm))
 
