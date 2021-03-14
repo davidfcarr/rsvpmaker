@@ -10,6 +10,7 @@ import './rsvpmaker-sidebar.js';
 import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
+import './schedule.js';		
 import './form.js';		
 import apiFetch from '@wordpress/api-fetch';
 
@@ -780,7 +781,7 @@ registerBlockType( 'rsvpmaker/stripecharge', {
 		if(!isSelected)
 			return (
 			<div className={ props.className }>
-				<p class="dashicons-before dashicons-products"><strong>Payment Button</strong>: Embed in any post or page (not meant to be included in events). Clicke to set price and options.
+				<p class="dashicons-before dashicons-products"><strong>Payment Button</strong>: Embed in any post or page (not meant to be included in events). Click to set price and options.
 				</p>
 				</div>
 			);
