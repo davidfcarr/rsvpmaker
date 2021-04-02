@@ -10,6 +10,34 @@ jQuery(document).ready(function($) {
 
     });
 
+if($( '.calendar_item' )[0])
+$( '.calendar_item' ).tooltip({
+    show: null, // show immediately 
+    position:{my:"right top", at: "left top" },
+    content: $(this).html(),
+    hide: { effect: "" }, 
+    close: function(event, ui){
+    ui.tooltip.hover(
+    function () {
+        $(this).stop(true).fadeTo(400, 1); 
+    },
+    function () {
+        $(this).fadeOut("400", function(){
+        $(this).remove(); 
+        })
+    }
+    );
+    }  
+});
+
+$('.rsvpmaker-schedule-detail').hide();
+$( '.rsvpmaker-schedule-button' ).click(function( event ) {
+var button_id = $(this).attr('id');
+var more_id = button_id.replace('button','detail');
+$('#'+button_id).hide();
+$('#'+more_id).show();
+});
+
     $('.wp-block-rsvpmaker-countdown').each(
         function () {
             var event_id = $(this).attr('event_id');
@@ -124,8 +152,6 @@ jQuery(document).ready(function($) {
 
 $('.signed_up_ajax').each( function () {
 
-
-
 var post = $(this).attr('post');
 
 var data = {
@@ -145,6 +171,33 @@ $('#signed_up_'+post).html(response);
 });
 
 
+$('.tz_converter').each( function () {
+var tz = jstz.determine();
+var tzstring = tz.name();
+    
+var id = $(this).attr('id');
+var time = $(this).attr('time');
+var end = $(this).attr('end');
+var format = $(this).attr('format');
+var server_timezone = $(this).attr('server_timezone');
+if(tzstring == server_timezone)
+{
+    console.log('timezone matches');
+    return;
+}
+var data = {
+    'time' : time,
+    'end' : end,
+    'tzstring' : tzstring,
+    'format' : format,
+};
+console.log(data);
+jQuery.post(rsvpmaker_rest.rest_url+'rsvpmaker/v1/flux_capacitor', data, function(response) {
+    console.log(response);
+    $('#'+id).html(response.content);    
+});
+    
+});
 
 var guestlist = '';
 

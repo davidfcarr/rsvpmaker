@@ -128,9 +128,9 @@ function rsvpmailer($mail) {
 		if(function_exists('set_html_content_type') )
 			remove_filter('wp_mail_content_type', 'set_html_content_type');
 		return;
-		}
+	}
 	global $wp_version;//once 5.5 is out of beta, delete 2nd test
-	if(is_wp_version_compatible('5.5') || strpos($wp_version,'.5-beta')) {
+	if(is_wp_version_compatible('5.5')) {
 	require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
 	require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
 	require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';

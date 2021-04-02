@@ -26,7 +26,26 @@ jQuery(document).ready(function( $ ) {
 	);
 
 	
-/*
+$('.free-text-date').change(
+	function() {
+		var datetext = $(this).val();
+		datetext = datetext.replace(/ (\d{1,2}) ([aApP])/,' $1:00 $2');
+		var error_id = $(this).attr('id').replace('free-text-date','date_error');
+		var t = Date.parse(datetext);
+		if(Number.isNaN(t))
+		{
+			$('#'+error_id).html('<span style="color:red">Error:</span> free text date is not valid');
+		}
+		else {
+			$('#'+error_id).html('');
+			var dt = new Date(t);
+			var target = $(this).attr('id').replace('free-text','sql');
+			var weekday_id = target.replace('sql-date','date-weekday');
+			$('#'+target).val(rsvpsql_date(dt));      
+			$('#'+weekday_id).html(rsvpmaker_weekday(dt));        
+		}
+	}
+);
 
 $('.quickdate, .quicktime').change(
 		function () {
@@ -53,7 +72,7 @@ $('.quickdate, .quicktime').change(
 			}
 		}
 	);
-*/
+
 	$('select.rsvpsort').change(function() {
 		var sort = $( this ).val();
 		var parts = window.location.href.split('&');
@@ -262,20 +281,17 @@ $('.end_time_type').change(function() {
 
 function default_end_time(target) {
 	var end_id = target.replace('end_time','sql-end');
-	var free_id = target.replace('end_time','free-text-end');
 	var start_id = target.replace('end_time','sql-date');
 	var start_date_sql = $('#'+start_id).val();
 	if(typeof start_date_sql == 'undefined') {
 		/*try template*/
-		start_date_sql = '2001-01-01 ' + $('#hour0').val()+':'+$('#minutes0').val();
+		start_date_sql = '2001-01-01 ' + $('#sql-time').val();
 	}
 	console.log('start date sql');
 	console.log(start_date_sql);
 	var t = Date.parse(start_date_sql)+(60*60*1000);
 	var dt = new Date(t);
 	$('#'+end_id).val(rsvpsql_end_time(dt));
-	var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
-	$('#'+free_id).val(localestring);       
 }
 
 $('.end_time select').change(function() {
@@ -499,66 +515,6 @@ return dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate())
 function rsvpsql_end_time(dt) {
 return pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());
 }
-
-$('.free-text-end').change(
-    function() {
-        var datetext = $(this).val();
-		datetext = datetext.replace(/^(\d{1,2}) ([aApP])/,'$1:00 $2');
-        var t = Date.parse('2020-01-01 '+datetext);
-		var error_id = $(this).attr('id').replace('free-text-end','end_time_error');
-        if(Number.isNaN(t))
-        {
-            $('#'+error_id).html('<span style="color:red">Error:</span> free text end time is not valid');
-        }
-        else {
-            $('#'+error_id).html('');
-            var dt = new Date(t);
-			var target = $(this).attr('id').replace('free-text','sql');
-            $('#'+target).val(rsvpsql_end_time(dt));
-        }
-    }
-);
-
-$('.sql-end').change(
-    function() {
-		var datetext = $(this).val();
-        var t = Date.parse('2020-01-01 '+datetext);
-		var error_id = $(this).attr('id').replace('sql-end','end_time_error');
-        if(Number.isNaN(t))
-        {
-			$('#'+error_id).html('<span style="color:red">Error:</span> numeric end time is not valid');
-        }
-        else {
-            $('#'+error_id).html('');
-            var dt = new Date(t);
-            var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
-			var target = $(this).attr('id').replace('sql','free-text');
-            $('#'+target).val(localestring);       
-            $(this).val(rsvpsql_end_time(dt));//standardize format        
-        }
-    }
-);
-
-$('.free-text-date').change(
-    function() {
-        var datetext = $(this).val();
-		datetext = datetext.replace(/ (\d{1,2}) ([aApP])/,' $1:00 $2');
-		var error_id = $(this).attr('id').replace('free-text-date','date_error');
-        var t = Date.parse(datetext);
-        if(Number.isNaN(t))
-        {
-            $('#'+error_id).html('<span style="color:red">Error:</span> free text date is not valid');
-        }
-        else {
-            $('#'+error_id).html('');
-            var dt = new Date(t);
-			var target = $(this).attr('id').replace('free-text','sql');
-			var weekday_id = target.replace('sql-date','date-weekday');
-            $('#'+target).val(rsvpsql_date(dt));      
-            $('#'+weekday_id).html(rsvpmaker_weekday(dt));        
-        }
-    }
-);
 
 $( function() {
 	$( "#sql-date" ).datepicker({

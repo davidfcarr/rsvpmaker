@@ -3170,7 +3170,7 @@ function rsvp_get_reminder($post_id,$hours) {
 	global $rsvp_options, $wpdb;
 	$key = '_rsvp_reminder_msg_'.$hours;
 	$reminder_id = get_post_meta($post_id, $key,true);
-	if(empty($reminder_id) && ($t = has_template($post_id)) &&!isset($_GET['was']) )
+	if(empty($reminder_id) && ($t = rsvpmaker_has_template($post_id)) &&!isset($_GET['was']) )
 		$reminder_id = get_post_meta($t, $key,true);
 	if(empty($reminder_id) || !is_numeric($reminder_id))
 		return;
@@ -6045,7 +6045,7 @@ switch( $column_name ) :
 			//if(!empty($end_type) && (strpos($end,':') > 0))
 			echo '<label class="alignleft">
 			<span class="title">End Time</span>
-			<span class="input-text-wrap"><input type="text" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
+			<span class="input-text-wrap"><input type="time" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
 			<span id="quick_end_time_text-'.$post->ID.'"></span>
 </label>';
 

@@ -264,9 +264,9 @@ function rsvpmaker_time_format($post_id, $end_time = false) {
 	return $time;
 }
 
-function rsvpmaker_timestamp_to_time($t) {
+function rsvpmaker_timestamp_to_time($t, $add_tz = false) {
 	global $rsvp_options, $wpdb;
-	if(!strpos($rsvp_options["time_format"],'%Z') && get_post_meta($post_id,'_add_timezone',true) )
+	if(!strpos($rsvp_options["time_format"],'%Z') && ($add_tz || get_post_meta($post_id,'_add_timezone',true)) )
 		$rsvp_options["time_format"] .= ' %Z';
 	fix_timezone();
 	$time_format = $rsvp_options['time_format'];
@@ -435,8 +435,8 @@ else {
 	}
 }
 
-printf('<span id="end_time" class="end_time"> <input type="text" class="free-text-end" id="free-text-end" size="8" value="%s"> or <input name="rsvp_sql_end" type="text" class="sql-end" id="sql-end" size="5" value="%s">
-<span id="end_time_error"></span> </span>',rsvpmaker_strftime('%l:%M %p',$t),rsvpmaker_date('H:i',$t));
+printf('<span id="end_time" class="end_time"> <input name="rsvp_sql_end" type="time" class="sql-end" id="sql-end" size="5" value="%s">
+<span id="end_time_error"></span> </span>',rsvpmaker_date('H:i',$t));
 echo '</p>';
 }
 
@@ -1309,9 +1309,7 @@ function rsvpmaker_is_template ($post_id = 0) {
 
 }
 
-
-
-function has_template ($post_id = 0) {
+function rsvpmaker_has_template ($post_id = 0) {
 
 	global $post;
 
@@ -3388,7 +3386,7 @@ function get_related_documents ( $post_id = 0, $query = '') {
 
 		return;
 
-	$t = has_template($post->ID);
+	$t = rsvpmaker_has_template($post->ID);
 
 	$parent_tag = 'edit'; // front end
 
@@ -3468,7 +3466,7 @@ function get_related_documents ( $post_id = 0, $query = '') {
 
 			$parent_tag = 'rsvpmaker_parent';
 
-			$more = get_more_related(get_post($rsvp_parent), $rsvp_parent, has_template($rsvp_parent), $parent_tag);	
+			$more = get_more_related(get_post($rsvp_parent), $rsvp_parent, rsvpmaker_has_template($rsvp_parent), $parent_tag);	
 
 			foreach($more as $add)
 
@@ -3530,7 +3528,7 @@ function get_related_documents ( $post_id = 0, $query = '') {
 
 	);
 
-	$more = get_more_related(get_post($rsvp_parent), $rsvp_parent, has_template($rsvp_parent), $parent_tag);
+	$more = get_more_related(get_post($rsvp_parent), $rsvp_parent, rsvpmaker_has_template($rsvp_parent), $parent_tag);
 
 	foreach($more as $add)
 

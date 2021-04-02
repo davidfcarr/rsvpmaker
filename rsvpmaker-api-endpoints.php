@@ -1188,6 +1188,67 @@ public function get_items($request) {
   }
 }
 
+class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
+
+  public function register_routes() {
+
+    $namespace = 'rsvpmaker/v1';
+    $path = 'flux_capacitor';
+
+    register_rest_route( $namespace, '/' . $path, [
+
+      array(
+
+        'methods'             => 'POST',
+
+        'callback'            => array( $this, 'get_items' ),
+
+        'permission_callback' => array( $this, 'get_items_permissions_check' )
+
+            ),
+
+        ]);     
+
+    }
+
+  public function get_items_permissions_check($request) {
+    return true;
+  }
+
+public function get_items($request) {
+	global $default_tz, $rsvp_options;
+  $time = $_POST['time'];
+  $end = $_POST['end'];
+  $tz = $_POST['tzstring'];
+  $format = $_POST['format'];
+  $time = rsvpmaker_strtotime($time);
+  if($end)
+    $end = rsvpmaker_strtotime($end);
+	date_default_timezone_set($tz);
+  //strip off year
+  $rsvp_options['long_date'] = str_replace(', %Y','',$rsvp_options['long_date']);
+  $times['content'] = 'Or: ';
+  if($format == 'time') {
+    $times['content'] .= strftime($rsvp_option['time_format'],$time);
+    if($end)
+      $times['content'] .= ' to '.date('g:i A T',$end);
+  }
+  else {
+    $times['content'] .= $day1 = strftime($rsvp_options['long_date'],$time);
+    $times['content'] .= ' '.date('g:i A T',$time);
+    if($end) {
+      $times['content'] .= ' to ';
+      $day2 = strftime($rsvp_options['long_date'],$end);
+      if($day2 != $day1)
+        $times['content'] .= $day2.' ';
+      $times['content'] .= date('g:i A T',$end);
+      }
+  }
+  restore_timezone();
+  return new WP_REST_Response($times, 200);
+  }
+}
+
 add_action('rest_api_init', function () {
 
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -1257,6 +1318,8 @@ add_action('rest_api_init', function () {
   $tz->register_routes();
   $tzevents = new RSVPMaker_Events_with_Timezone();
   $tzevents->register_routes();
+  $flux = new RSVPMaker_Flux_Capacitor();
+  $flux->register_routes();
 });
 
 ?>

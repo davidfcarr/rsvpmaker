@@ -135,7 +135,9 @@ function rsvpmaker_select($select) {
 
 function rsvpmaker_join($join) {
   global $wpdb;
-	return $join." JOIN ".$wpdb->prefix."rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";
+  if(strpos($join,'rsvpdates'))
+	return $join; // don't add twice
+return $join." JOIN ".$wpdb->prefix."rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";
 }
 
 function rsvpmaker_groupby($groupby) {
@@ -765,39 +767,6 @@ $content .= '<div class="rsvpmaker_nav"><span class="navprev">'. $prev_link. '</
 //jump form
 $content .= sprintf('<form id="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="text" name="cm" value="%s" size="4" class="jump" />/<input type="text" name="cy" value="%s" size="4" class="jump" /><button>%s</button>%s</form>', $self,__('Month/Year','rsvpmaker'),rsvpmaker_date('m',$monthafter),rsvpmaker_date('Y',$monthafter),__('Go','rsvpmaker'),$page_id);
 
-$calj = "
-
-    $( '.calendar_item' ).tooltip({
-        show: null, // show immediately 
-        position: { my: \"right top\", at: \"left top\" },
-        content: $(this).html(),
-        hide: { effect: \"\" }, //fadeOut
-        close: function(event, ui){
-            ui.tooltip.hover(
-                function () {
-                    $(this).stop(true).fadeTo(400, 1); 
-                },
-                function () {
-                    $(this).fadeOut(\"400\", function(){
-                        $(this).remove(); 
-                    })
-                }
-            );
-        }  
-    });
-
-";
-
-if(!empty($calj))
-	{
-$content .= '<script>
-jQuery(document).ready(function($) {
-'.$calj.'
-
-});
-</script>
-';
-	}
 $post = $post_backup;
 
 return $content;
@@ -1676,6 +1645,10 @@ function rsvpmaker_daily_schedule($atts) {
 	//$future = $wp_query->get_posts();
 	while ( have_posts() ) : the_post();
 		$event = $post;
+		$time_format = $rsvp_options['time_format'];
+		if(!empty($atts['convert_tz']) && !strpos($time_format,'%Z'))
+			$time_format .= ' %Z';
+		/*
 		if(!empty($atts['convert_tz']) && empty($output))
 		{
 			$t = rsvpmaker_strtotime($event->datetime);
@@ -1690,6 +1663,7 @@ function rsvpmaker_daily_schedule($atts) {
 		}
 		else
 			$timezone = '';
+		*/
 		if(isset($_GET['debug']))
 			printf('<p>%s %s %s</p>',$event->post_title,$event->datetime,$event->ts_start);
 		$t = (int) $event->ts_start;
@@ -1718,14 +1692,21 @@ function rsvpmaker_daily_schedule($atts) {
 		$last = $day;
 		if($event->display_type == 'set')
 			{
-			$end = ' - <span class="tz-convert">'.rsvpmaker_strftime($rsvp_options['time_format'],(int) $event->ts_end).'</span>';
+			$end = ' - <span class="tz-convert">'.rsvpmaker_strftime($time_format,(int) $event->ts_end).'</span>';
 			}
 		else
 			$end = '';
-		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">'.rsvpmaker_strftime($rsvp_options['time_format'],$t).'</span>'.$end.'</span>';
-		$eventcontent .= ' <span class="rsvpmaker-schedule-title">'.$event->post_title.'</h3>';
+		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">'.rsvpmaker_strftime($time_format,$t).'</span>'.$end.'</span>';
+		$eventcontent .= ' <a href="'.get_permalink($event->ID).'"><span class="rsvpmaker-schedule-title">'.$event->post_title.'</a></h3>';
+		if(!empty($atts['convert_tz']))
+		{
+			$atts['time'] = $event->datetime;
+			if(!empty($event->display_type))
+				$atts['end'] = $event->enddate;
+			$eventcontent .= rsvpmaker_timezone_converter($atts);
+		}
 		$parts = explode('<!--more-->',$event->post_content);
-		$content = $parts[0];
+		$content = do_blocks($parts[0]);
 		if(!empty($parts[1]))
 		{
 			$content .= '<p ><button id="rsvpmaker-schedule-button'.$event->ID.'" class="rsvpmaker-schedule-button">'.__('Read more').'</button></p>
@@ -1734,24 +1715,13 @@ function rsvpmaker_daily_schedule($atts) {
 			$content = str_replace('<!-- wp:more -->','',$content);
 			$content = str_replace('<!-- /wp:more -->','',$content);
 		}
-		$eventcontent .= apply_filters('the_content',$content);
+		$eventcontent .= $content;
 		//$eventcontent .= get_the_content(__('Read more','rsvpmaker'),false,$event);
 		$output .= '<div class="rsvpmaker-schedule-item'.$wrapclass.'">'."\n".$eventcontent.$termline."\n".'</div>';
 	endwhile;
 
 		//}
 	$output = '<div class="rsvpmaker-schedule">'."\n".$output."\n</div>";
-	$output .= "\n<script>
-	jQuery(document).ready(function($) {
-	$('.rsvpmaker-schedule-detail').hide();
-	$( '.rsvpmaker-schedule-button' ).click(function( event ) {
-		var button_id = $(this).attr('id');
-		var more_id = button_id.replace('button','detail');
-		$('#'+button_id).hide();
-		$('#'+more_id).show();
-	  });
-	});
-	</script>";
 	$wp_query = $backup;
 	return $output;
 }
@@ -1922,5 +1892,18 @@ return $output;
 add_shortcode('future_rsvp_links','future_rsvp_links');
 
 add_action('wp_footer','rsvpmaker_timezone_footer');
+
+function rsvpmaker_timezone_converter ($atts) {
+	if(!isset($atts['time']))
+		return;
+	$server_timezone = rsvpmaker_get_timezone_string();
+	$time = $atts['time'];
+	$id = 'convert'.strtotime($time).rand();
+	$end = (isset($atts['end'])) ? $atts['end'] : ''; 
+	$format = (isset($atts['format'])) ? $atts['format'] : ''; 
+	return sprintf('<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s"></div>',$id,$time,$end,$format,$server_timezone);
+}
+
+add_shortcode('timezone_converter','rsvpmaker_timezone_converter');
 
 ?>

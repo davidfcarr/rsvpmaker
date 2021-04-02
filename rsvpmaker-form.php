@@ -801,8 +801,6 @@ if($max_guests > ($count + 1))
 
 $output .= '<script type="text/javascript"> var guestcount ='.$count.'; </script>';
 
-
-
 return $output;
 
 }

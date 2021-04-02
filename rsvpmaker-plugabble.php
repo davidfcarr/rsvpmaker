@@ -34,13 +34,21 @@ function draw_eventdates() {
 
 global $post;
 
-$post_id = (isset($post->ID)) ? $post->ID : 0;
+$post_id = (isset($_GET['post_id'])) ? (int) $_GET['post_id'] : 0;
+$post = ($post_id) ? get_post($post_id) : null;
 
 global $wpdb;
 
 global $rsvp_options;
 
 global $custom_fields;
+
+if(isset($_GET['debug']))
+{
+	echo '<pre>';
+	print_r($post);
+	echo '</pre>';
+}
 
 if(isset($_GET["clone"]))
 
@@ -497,7 +505,7 @@ $duration = isset($template["duration"]) ? $template["duration"] : '';
 $displayminutes = $displayhour = '';
 
 ?>
-<div><label>Time</label> <input type="text" size="8" id="skedtimetext" > or <input name="sked[hour]" id="hour0" size="2" maxlength="2" value="<?php echo $h; ?>" />:<input name="sked[minutes]" id="minutes0" size="2" maxlength="2" value="<?php echo $minutes; ?>" /> </div>
+<div><label>Time</label> <input type="time" id="sql-time" name="sked[time]" value="<?php echo $h.":".$minutes; ?>" > </div>
 <div id="template-time-error"></div>
 <?php
 
@@ -534,6 +542,13 @@ if(!isset($_POST["sked"]))
 		}
 
 	$sked = $_POST["sked"];
+
+	if($sked['time'])
+		{
+			$p = explode(':',$sked['time']);
+			$sked['hour'] = $p[0];
+			$sked['minutes'] = $p[1];
+		}
 
 	if(empty($sked["dayofweek"]))
 		$sked["dayofweek"][0] = 9;
@@ -4678,8 +4693,6 @@ if(isset($_GET['event']))
 
 	$post = get_post((int) $_GET['event']);
 
-
-
 if(isset($_POST['move_rsvp']) && isset($_POST['move_to'])) {
 
 	if(empty($_POST['move_rsvp']))
@@ -4689,23 +4702,15 @@ if(isset($_POST['move_rsvp']) && isset($_POST['move_to'])) {
 	else {
 
 		$move_rsvp = (int) $_POST['move_rsvp'];
-
 		$move_to =  (int) $_POST['move_to'];
-
 		$sql = "UPDATE ".$wpdb->prefix."rsvpmaker SET event=$move_to WHERE id=$move_rsvp " ;
-
 		$wpdb->query($sql);
-
-		//move guests
-
 		$sql = "UPDATE ".$wpdb->prefix."rsvpmaker SET event=$move_to WHERE master_id=$move_rsvp " ;
-
 		$wpdb->query($sql);
-
 	}
 
 }
-
+/*
 $sql = "SELECT post_title, event, meta_value FROM `".$wpdb->prefix."rsvpmaker` join $wpdb->posts ON ".$wpdb->prefix."rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
 
 $results = $wpdb->get_results($sql);
@@ -4717,6 +4722,7 @@ foreach($results as $row) {
 	rsvpmaker_debug_log($sql,'rsvp report rsvpmaker_event');
 	$wpdb->query($sql);
 }
+*/
 
 $guest_check = '';
 
@@ -4874,8 +4880,6 @@ if(isset($_GET["event"]))
 		}
 
 	}
-
-
 
 if(!empty($_POST['paymentAmount']))
 
