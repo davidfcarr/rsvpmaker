@@ -1959,13 +1959,13 @@ if(isset($_POST['default_field'])) {
 
 }
 
-
-
 if(isset($_POST['older_than']))
-
 {
 
-$older = (int) $_POST['older_than'];
+$older = $_POST['older_than'];
+$regex = '/^\d{4}-\d{2}-\d{2}$/';
+if(!preg_match($regex,$older))
+	die('invalid date');
 
 if(!isset($_POST['confirm']))
 
@@ -1995,7 +1995,7 @@ if(!isset($_POST['confirm']))
 
 	 JOIN ".$wpdb->postmeta." a1 ON ".$wpdb->posts.".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
 
-	 WHERE a1.meta_value < DATE_SUB('".get_sql_now()."',INTERVAL $older DAY) AND (post_status='publish' OR post_status='draft') ";
+	 WHERE a1.meta_value < '$older' ";
 
 	//echo $sql;
 
@@ -2025,23 +2025,72 @@ if(!isset($_POST['confirm']))
 
 }
 
-if(!isset($_POST['older_than']))
+if(isset($_POST['rsvps_older_than']))
+{
+
+$older = $_POST['rsvps_older_than'];
+$regex = '/^\d{4}-\d{2}-\d{2}$/';
+if(!preg_match($regex,$older))
+	die('invalid date');
+
+if(!isset($_POST['confirm']))
 
 {
 
+?>
+
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+
+<input type="hidden" name="confirm" value="1" />
+
+RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo $older; ?>" /> 
+
+<?php submit_button('Confirm Delete') ?>
+
+</form>
+
+<?php	
+
+}
+
+if(isset($_POST['confirm'])) {
+	$wpdb->query("DELETE FROM ".$wpdb->prefix."rsvpmaker WHERE timestamp < '$older' ");
+	printf('<p style="color: red;">Deleting RSVPs older than %s </p>',$older);
+}
+else {
+	$sql = "SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE timestamp < '$older' ";
+	$count = $wpdb->get_var($sql);
+	printf('<p style="color: red;">%d RSVPs older than %s </p>',$count,$older);
+}
+
+
+}
+
+if(!empty($_POST))
+	printf('<p><a href="%s">Reload form</a></p>', admin_url('tools.php?page=rsvpmaker_cleanup'));
+else {
+$minus30 = strtotime('30 days ago');
 ?>
 
 <h2><?php _e('Remove Past Events from Database','rsvpmaker'); ?></h2>
 
 <form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
 
-<?php _e('Delete events older than','rsvpmaker'); ?> <input type="text" name="older_than" value="30" /> <?php _e('days','rsvpmaker'); ?> 
+<?php _e('Delete events older than','rsvpmaker'); ?> <input type="date" name="older_than" value="<?php echo date('Y-m-d',$minus30); ?>" /> 
 
 <?php submit_button('Delete') ?>
 
 </form>
 
+<h2><?php _e('Remove RSVP Event Registrations from Database','rsvpmaker'); ?></h2>
 
+<form method="post" action="<?php echo admin_url('tools.php?page=rsvpmaker_cleanup') ?>">
+
+<?php _e('Delete RSVP event registrations older than','rsvpmaker'); ?> <input type="date" name="rsvps_older_than" value="<?php echo date('Y-m-d',$minus30); ?>" /> 
+
+<?php submit_button('Delete') ?>
+
+</form>
 
 <h2><?php _e('Apply Defaults','rsvpmaker'); ?></h2>
 
@@ -2079,13 +2128,9 @@ $(document).on( 'click', '.default_field', function() {
 
 </script>
 
-
-
-
-
 <?php
-
-}//end initial form
+}
+//end initial form
 
 }
 

@@ -3903,6 +3903,8 @@ add_rsvpmaker_from_template($template_id, $sked, $date);
 function add_rsvpmaker_from_template($t, $template, $date) {
 	global $wpdb;
 	$post = get_post($t);
+	if($post->post_status != 'publish')
+		return;
 	$my_post['post_title'] = $post->post_title;
 	$my_post['post_content'] = $post->post_content;
 	$my_post['post_status'] = 'publish';
@@ -3941,7 +3943,7 @@ global $rsvp_options;
 	global $wpdb;
 	$wpdb->show_errors();
 
-	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' ";
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' AND $wpdb->posts.post_status='publish' ";
 	//echo $sql;
 	$results = $wpdb->get_results($sql);
 	if(is_array($results))
