@@ -244,6 +244,24 @@ wp.plugins.registerPlugin( 'rsvpmaker-sidebar-postpublish', {
 	render: RSVPPluginPostPublishPanel,
 } );
 
+if(rsvpmaker_ajax.template_url) {
+	wp.data.dispatch('core/notices').createNotice(
+		'info', // Can be one of: success, info, warning, error.
+		__('You are editing one event in a series defined by a template. To make changes you can apply to the whole series of events, switch to editing the template.'), // Text string to display.
+		{
+			id: 'rsvptemplateedit', //assigning an ID prevents the notice from being added repeatedly
+			isDismissible: true, // Whether the user can dismiss the notice.
+			// Any actions the user can perform.
+			actions: [
+				{
+					url: rsvpmaker_ajax.template_url,
+					label: rsvpmaker_ajax.template_label,
+				},
+			]
+		}
+	);	
+}
+
 if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
 
 		let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();

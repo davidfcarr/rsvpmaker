@@ -1911,11 +1911,7 @@ $yesno = ($future) ? 1 : 2;// 2 for replay
 
 $rsvp_sql = $wpdb->prepare(" SET first=%s, last=%s, email=%s, yesno=%d, event=%d, note=%s, details=%s, participants=%d, user_id=%d ", $rsvp["first"], $rsvp["last"], $rsvp["email"],$yesno,$event, $note, serialize($rsvp), 1, $current_user->ID );
 
-
-
 capture_email($rsvp);
-
-
 
 $rsvp_id = (isset($_POST["rsvp_id"])) ? (int) $_POST["rsvp_id"] : 0;
 
@@ -2522,15 +2518,9 @@ if(!empty($rsvpmaker_coupon_message))
 
 $rsvp['coupon'] = $rsvpmaker_coupon_message;
 
-	
-
 $rsvp_sql = $wpdb->prepare(" SET first=%s, last=%s, email=%s, yesno=%d, event=%d, note=%s, details=%s, participants=%d, user_id=%d ", $rsvp["first"], $rsvp["last"], $rsvp["email"],$yesno,$event, $note, serialize($rsvp), $participants, $current_user->ID );
 
-
-
 capture_email($rsvp);
-
-
 
 if($rsvp_id)
 
@@ -4710,19 +4700,6 @@ if(isset($_POST['move_rsvp']) && isset($_POST['move_to'])) {
 	}
 
 }
-/*
-$sql = "SELECT post_title, event, meta_value FROM `".$wpdb->prefix."rsvpmaker` join $wpdb->posts ON ".$wpdb->prefix."rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
-
-$results = $wpdb->get_results($sql);
-
-if($results)
-
-foreach($results as $row) {
-	$sql = $wpdb->prepare("REPLACE INTO `".$wpdb->prefix."rsvpmaker_event` SET event=%d, post_title=%s, date=%s ",$row->event,$row->post_title,$row->meta_value);
-	rsvpmaker_debug_log($sql,'rsvp report rsvpmaker_event');
-	$wpdb->query($sql);
-}
-*/
 
 $guest_check = '';
 
@@ -5015,8 +4992,6 @@ if(isset($_GET["edit_rsvp"]) && current_user_can('edit_rsvpmakers'))
 
 	admin_edit_rsvp($_GET["edit_rsvp"],$eventid);
 
-	
-
 	$rsvp_order = (isset($_GET["rsvp_order"]) && ($_GET["rsvp_order"] == 'alpha')) ? ' ORDER BY yesno DESC, last, first' : ' ORDER BY yesno DESC, timestamp DESC';
 
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$eventid $rsvp_order";
@@ -5025,11 +5000,7 @@ if(isset($_GET["edit_rsvp"]) && current_user_can('edit_rsvpmakers'))
 
 	$results = $wpdb->get_results($sql, ARRAY_A);
 
-
-
 	format_rsvp_details($results);
-
-		
 
 	}
 
@@ -5267,10 +5238,8 @@ if(!function_exists('format_rsvp_details') )
 
 function format_rsvp_details($results, $editor_options = true) {
 
-	
-
-	global $rsvp_options;
-
+	global $rsvp_options, $wpdb;
+	$update = false;
 	$print_nonce = wp_create_nonce('rsvp_print');
 
 	$missing = $owed_list = '';
@@ -5290,8 +5259,6 @@ function format_rsvp_details($results, $editor_options = true) {
 		if($row["yesno"])
 
 			$emails[$row["email"]] = $row["email"];
-
-
 
 		if(get_user_by('email',$row["email"]))
 
@@ -5335,8 +5302,6 @@ function format_rsvp_details($results, $editor_options = true) {
 
 			$details = unserialize($row["details"]);
 
-
-
 		if(isset($details["total"]))
 
 			echo '<div style="font-weight: bold;">'.__('Total','rsvpmaker').': '.$details["total"]."</div>";
@@ -5378,29 +5343,22 @@ function format_rsvp_details($results, $editor_options = true) {
 			{
 
 			$details = unserialize($row["details"]);
-
+			$newdetails = array();
 			if(is_array($details))
-
 			foreach($details as $name => $value)
 
 				if($value) {
-
-					
-
+					if(strpos($name,' '))
+						$update = true;
 					$label = get_post_meta($row["event"],'rsvpform'.$name,true);
-
 					if($label)
-
 						$name = $label;
-
-					
-
 					echo $name.': '.esc_attr($value)."<br />";
 
+					$field = preg_replace('/[^a-z0-9_]/','_',strtolower($name));
+					$newdetails[$field] = $value;
 					if(!in_array($name,$fields) )
-
 						$fields[] = $name;
-
 					}
 
 			}
@@ -5415,7 +5373,10 @@ function format_rsvp_details($results, $editor_options = true) {
 
 		echo "</p>";
 
-		
+		if($update) {
+			$sql = $wpdb->prepare("UPDATE ".$wpdb->prefix."rsvpmaker SET details=%s WHERE id=%d",serialize($newdetails),$row["id"]);
+			$wpdb->query($sql);
+		}
 
 		if(!isset($_GET["rsvp_print"]) && current_user_can('edit_others_posts') && $editor_options)
 
@@ -6867,8 +6828,6 @@ if( isset($atts["text"]) && !isset($atts["textfield"])  ) $atts["textfield"] = $
 
 if( isset($atts["select"]) && !isset($atts["selectfield"])  ) $atts["selectfield"] = $atts["select"];
 
-
-
 if(is_admin() && !isset($_REQUEST["edit_rsvp"]))
 
 	{
@@ -7001,15 +6960,11 @@ if(is_admin() && !isset($_REQUEST["edit_rsvp"]))
 
 	}
 
-
-
 //front end behavior
-
-
 
 if(isset($atts["textfield"])) {
 
-	$field = $atts["textfield"];
+	$field = str_replace(' ',"_",$atts["textfield"]);//preg_replace('/[^a-zA-Z0-9_]/','_',$atts["textfield"]);
 
 	$meta = (is_user_logged_in()) ? get_user_meta($current_user->ID,$field,true) : '';
 

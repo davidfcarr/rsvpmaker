@@ -117,6 +117,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 8.6 =
+
+* Check post status on autorenew templates
+* Updates to RSVPMaker cleanup tool
+
 = 8.5.8 =
 
 * Using input type="time" on setup form

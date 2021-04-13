@@ -460,6 +460,8 @@ function rsvp_form_text($atts, $content) {
 		return;
 
 	$slug = $atts["slug"];
+	if(strpos($slug,' '))
+		$slug = preg_replace('/[^a-zA-Z0-9_]/','_',$slug);
 
 	$label = $atts["label"];
 

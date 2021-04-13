@@ -275,7 +275,8 @@ function rsvpmaker_block_cgb_editor_assets() {
         array(
 			'projected_label' => $projected_label,'projected_url' => $projected_url,
 			'template_label' => $template_label,
-			'template_url' => $template_url,            'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
+			'template_url' => $template_url,
+			'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
 			'_rsvp_first_date' => $date,
 			'_rsvp_end' => $end,
 			'_rsvp_on' => (empty(get_post_meta($post->ID,'_rsvp_on',true)) ? 'No' : 'Yes' ),
