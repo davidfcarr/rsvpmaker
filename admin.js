@@ -75,8 +75,8 @@ $('.quickdate, .quicktime').change(
 
 	$('select.rsvpsort').change(function() {
 		var sort = $( this ).val();
-		var parts = window.location.href.split('&');
-		var url = parts[0]+'&rsvpsort='+sort;
+		var parts = window.location.href.split('?');
+		var url = parts[0]+'?post_type=rsvpmaker&rsvpsort='+sort;
 		var top = $('#bulk-action-selector-top').val();
 		var bottom = $('#bulk-action-selector-bottom').val();
 		if((top == '-1') && (bottom == '-1'))

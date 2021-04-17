@@ -2663,6 +2663,10 @@ if(isset($_GET["rsvpsort"])) {
 	$sort = $_GET["rsvpsort"];
 update_user_meta($current_user->ID,'rsvpsort',$sort);
 }
+elseif(isset($_GET['all_posts']) || isset($_GET['post_status'])) {
+	$sort = 'all';
+	update_user_meta($current_user->ID,'rsvpsort',$sort);
+}
 else
 	$sort = get_user_meta($current_user->ID,'rsvpsort',true);
 if(empty($sort))
