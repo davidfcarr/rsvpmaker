@@ -2626,9 +2626,7 @@ $rows = get_rsvp_dates($event);
 
 $row = $rows[0];
 
-$t = rsvpmaker_strtotime($row["datetime"]);
-
-$date = rsvpmaker_date('M j',$t);
+$date = rsvpdate_shortcode(array('format' => '%b %e'));
 
 foreach($rsvp as $name => $value)
 
@@ -3694,8 +3692,6 @@ if(is_admin()) // || !in_the_loop()
 
 global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
 
-
-
 $rsvpconfirm = $rsvp_confirm = '';
 
 $display = array();
@@ -4088,7 +4084,7 @@ elseif($e && isset($_GET["update"]))
 
 	}
 
-$dateblock = rsvpmaker_format_event_dates($post->ID);
+$dateblock = (strpos($post->post_content,'rsvpdateblock]')) ? '' : rsvpmaker_format_event_dates($post->ID);
 $event = get_rsvpmaker_event($post->ID);
 if($event) {
 	$dur = $event->display_type;
@@ -8119,7 +8115,6 @@ else
 	}
 
 
-
 $template = get_template_sked($t);
 
 $weeks = $template['week'];
@@ -8335,9 +8330,7 @@ if(!empty($updatelist))
 $projected = rsvpmaker_get_projected($template);
 if($projected && is_array($projected))
 foreach($projected as $i => $ts)
-
 {
-
 ob_start();
 
 $today = rsvpmaker_date('d',$ts);
@@ -8350,13 +8343,11 @@ $y0 = $y-1;
 
 $y2 = $y+1;
 
-
-
 if(($ts < current_time('timestamp')) && !isset($_GET["start"]) )
 
 	continue; // omit dates past
 
-if(isset($donotproject) && is_array($donotproject) && in_array(date('Y-m-j',$ts), $donotproject) )
+if(isset($donotproject) && is_array($donotproject) && in_array(rsvpmaker_date('Y-m-j',$ts), $donotproject) )
 
 	continue;
 

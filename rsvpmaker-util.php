@@ -147,7 +147,7 @@ function rsvpmaker_long_date($post_id, $and_time = false, $end_time = false) {
 		}
 		$output .= ' '.$time;
 	}
-	if($end_time) {
+	if($end_time && !empty($timerow->ts_end)) {
 		$end_date = strftime($rsvp_options['long_date'], $timerow->ts_end);
 		if(($end_date != $start_date) || $and_time)
 		$output .= ' '.__('to','rsvpmaker').' ';
@@ -214,7 +214,7 @@ function rsvpmaker_end_date($post_id, $and_time = false) {
 	global $rsvp_options, $wpdb;
 	if(!strpos($rsvp_options["time_format"],'%Z') && get_post_meta($post_id,'_add_timezone',true) )
 		$rsvp_options["time_format"] .= ' %Z';
-	$event_table = $wpdb->prefix.'rsvpmaker_event';
+	$event_table = $wpdb->prefix.'rsvpdate_shortcode';
 	$sql = "SELECT * FROM $event_table where event=$post_id";
 	$timerow = $wpdb->get_row($sql);
 	if(empty($timerow))
@@ -699,7 +699,7 @@ function rsvpmaker_set_template_defaults($post_id) {
 function rsvpmaker_get_templates($criteria = '') {
 	global $wpdb;
 	$templates = array();
-	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title".$criteria;
+	$sql = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title".$criteria;
 	$results = $wpdb->get_results($sql);
 	foreach($results as $template) {
 		$templates[$template->ID] = $template;
@@ -3815,8 +3815,10 @@ if($sametime_events)
 	$label = (sizeof($sametime_events) > 1) ? __('Events','rsvpmaker') : __('Event','rsvpmaker');
 	$mod .= ' <span style="color:red;">* '.$label.' '.__(' at same time','rsvpmaker')."</span>: ";
 	$same = array();
-	foreach($sametime_events as $sametime)
-		$same[] = sprintf('<a href="%s">%s</a> ',admin_url('post.php?action=edit&post='.$sametime->ID),$sametime->post_title );
+	foreach($sametime_events as $sametime) {
+		$title = (empty($sametime->post_title)) ? '?' : $sametime->post_title;
+		$same[] = sprintf('<a href="%s">%s</a> ',admin_url('post.php?action=edit&post='.$sametime->ID),$title );
+	}
 	$mod .= implode(', ',$same);
 	$d = get_post_meta($sametime->ID,'_detached_from_template',true);
 	$mod .= ($d) ? ' - detached from template '.$d : '';

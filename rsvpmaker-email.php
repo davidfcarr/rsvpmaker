@@ -1225,6 +1225,9 @@ $chimp_options = get_option('chimp');
 
 ob_start();
 
+if(isset($_POST['preview_text']))
+	update_post_meta($post->ID,'_rsvpmailer_preview',sanitize_text_field(stripslashes($_POST['preview_text'])));
+
 if(!current_user_can('publish_rsvpemails') )
 	return;
 
@@ -1492,6 +1495,8 @@ if(!isset($_POST))
 <tr><td><?php _e('Subject','rsvpmaker');?>:</td><td><input type="text"  size="50" name="subject" value="<?php echo htmlentities($post->post_title); ?>" /></td></tr>
 <tr><td><?php _e('From Name','rsvpmaker');?>:</td><td><input type="text"  size="50" name="from_name" value="<?php echo (isset($custom_fields["_email_from_name"][0])) ? $custom_fields["_email_from_name"][0] : $chimp_options["email-name"]; ?>" /></td></tr>
 <tr><td><?php _e('From Email','rsvpmaker');?>:</td><td><input type="text" size="50"  name="from_email" value="<?php echo (isset($custom_fields["_email_from_email"][0])) ? $custom_fields["_email_from_email"][0] : $chimp_options["email-from"]; ?>" />
+</td></tr>
+<tr><td><?php _e('Preview Text','rsvpmaker');?>:</td><td><input type="text" size="50"  name="preview_text" value="<?php echo rsvpmailer_preview(array()); ?>" />
 </td></tr>
 </table>
 <div><input type="checkbox" name="user_email" value="1" checked="checked" /><?php _e('Except for MailChimp, use the email of the logged in user as from email.','rsvpmaker'); ?></div>
@@ -1792,6 +1797,11 @@ else {
   </p>
   <?php    
 	printf('<p>Preview with <a target="_blank" href="%s">Broadcast Message</a> or <a target="_blank" href="%s">RSVP Notification</a></p>',admin_url('?preview_broadcast_in_template='.$index),admin_url('?preview_confirmation_in_template='.$index));
+}
+
+if(!strpos($template[$index]["html"],'rsvpmailer_preview'))
+{
+	$template[$index]["html"] = str_replace('<body>',"<body>\n<div style=\"display: none\">[rsvpmailer_preview]</div>",$template[$index]["html"]);
 }
 
 printf('<p><textarea name="rsvpmaker_email_template[%s][html]" id="rsvpmaker_email_template[%s][html]" cols="80" rows="10">%s</textarea></p>',$index,$index,$template[$index]["html"]);
@@ -2200,6 +2210,7 @@ $model_templates[0]['html'] = '<html>
 </style>
 </head>
 <body>
+<div style="display: none">[rsvpmailer_preview]</div>
 <div id="background">
 <div id="content">
 
@@ -2234,6 +2245,7 @@ $model_templates[1]['html'] = '<html>
 </style>
 </head>
 <body>
+<div style="display: none">[rsvpmailer_preview]</div>
 <div id="tx-background">
 <div id="tx-content">
 
@@ -3192,11 +3204,20 @@ function rsvptitle_shortcode($atts) {
 	return esc_html($post->post_title);
 }
 
-function rsvpdate_shortcode($atts) {
+function rsvpdate_shortcode($atts = array()) {
 	global $post, $rsvp_options;
 	$format = empty($atts['format']) ? $rsvp_options['long_date'] : $atts['format'];
-	$t = rsvpmaker_strtotime(get_rsvp_date($post->ID));
-	return rsvpmaker_strftime($format,$t);
+	$daterow = get_rsvpmaker_event($post->ID);
+	$start_date = preg_replace('/ .+/','',$daterow->date);//date not time
+	$end_date = preg_replace('/ .+/','',$daterow->enddate);//date not time
+	$t = (int) $daterow->ts_start;
+	if($start_date == $end_date){
+		return rsvpmaker_strftime($format,$t);
+	}
+	else {
+		$endt = (int) $daterow->ts_end;
+		return rsvpmaker_strftime($format,$t).' - '.rsvpmaker_strftime($format,$endt);
+	}
 }
 
 function rsvpdatetime_shortcode($atts) {
@@ -3214,4 +3235,22 @@ function rsvpmaker_cronmail_check_duplicate($content) {
 	set_transient($key,$content);
 	return false;
 }
+
+function rsvpmailer_preview($atts) {
+global $post, $rsvpmaker_tx_content;
+$preview = get_post_meta($post->ID,'_rsvpmailer_preview',true);
+if(empty($preview)) {
+
+if(!empty($rsvpmaker_tx_content))
+	$preview = $rsvpmaker_tx_content;
+else
+	$preview = trim(strip_tags($post->post_content));
+$preview = trim(strip_tags($preview));
+if(strlen($preview) > 200)
+	$preview = substr($preview,0,200).' ...';
+}
+return $preview;
+}
+
+add_shortcode('rsvpmailer_preview','rsvpmailer_preview');
 ?>

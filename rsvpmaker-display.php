@@ -84,12 +84,16 @@ function event_listing($atts = array()) {
 global $rsvp_options;
 $events = rsvpmaker_upcoming_data($atts);
 $date_format = (isset($atts["date_format"])) ? $atts["date_format"] : $rsvp_options["long_date"];
+if(!empty($atts['time']))
+	$date_format .= ' '.$rsvp_options['time_format'];
 $listings = '';
 if(is_array($events))
 foreach($events as $event)
 	{
-	$dateline = rsvpmaker_long_date($event->ID, isset($atts['show_time']), true);
+	$t = ($event->ts_start) ? (int) $event->ts_start : rsvpmaker_strtotime($event->datetime);
+	$dateline = rsvpmaker_strftime($date_format,$t); //rsvpmaker_long_date($event->ID, isset($atts['time']), false);
 	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",esc_url_raw(get_permalink($event->ID)),esc_html($event->post_title),$dateline);
+	$test = var_export($event,true);
 	}
 	if(!empty($atts["limit"]) && !empty($rsvp_options["eventpage"]))
 		$listings .= '<li><a href="'.esc_url($rsvp_options["eventpage"]).'">'.__("Go to Events Page",'rsvpmaker')."</a></li>";
@@ -310,6 +314,12 @@ if(isset($atts['meta_key']))
 	$queryarg['meta_key'] = $atts['meta_key'];
 if(isset($atts['meta_value']))
 	$queryarg['meta_value'] = $atts['meta_value'];
+
+//not a template
+$queryarg['meta_query'] = array(
+	'key' => '_sked_Monday',
+	'compare' => 'NOT EXISTS',
+);
 
 if(isset($_GET['debug']))
 $wpdb->show_errors();
@@ -1215,6 +1225,58 @@ echo '</div></div><!-- end rsvpmaker_compact -->';
 return ob_get_clean();
 }
 
+function rsvpmaker_next_rsvps ($atts = array())
+{
+if(is_admin())
+	return;
+global $wp_query, $post, $dataloop;
+$dataloop = true;
+$atts['posts_per_page'] = (empty($atts['number_of_posts'])) ? 5 : $atts['number_of_posts'];
+$atts['meta_key'] = '_rsvp_on';
+$atts['meta_value'] = '1';
+$backup_query = $wp_query;
+$backup_post = $post;
+$wp_query = rsvpmaker_upcoming_query($atts);
+$output = $list = '';
+$count = 0;
+if ( have_posts() ) {
+	$output .= '<div class="rsvpmaker_next_events">';
+	while ( have_posts() ) : the_post();
+	$count++;
+	if($count == 1) {
+		$output .= '<div class="rsvpmaker_next_events_featured">';
+		$url = get_permalink($post->ID);
+		$output .= '<h3 class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><a href="'.$url.'">'.get_the_title($post).'</a></span></h3>';
+		$d = rsvp_date_block($post->ID);
+		$output .= $d["dateblock"];
+		$output .= '<p>&nbsp;</p>'.get_rsvp_link($post->ID);
+		$output .= '</div><!-- end next featured -->';
+	}
+	else {
+		if(empty($list))
+			$list = '<ul>';
+		$url = get_permalink($post->ID).'#rsvpnow';
+		$t = rsvpmaker_strtotime($post->datetime);
+		$datetime = rsvpmaker_strftime('',$t).' '.rsvpmaker_strftime($rsvp_options['time_format'],$t);
+		$list .= sprintf('<li><a href="%s">%s</a></li>',esc_url_raw($url),esc_html($event->post_title.' '.$datetime));
+	}
+	//printf('<p>Additional %s</p>',$post->post_title);
+	endwhile;
+	if(!empty($list)) {
+		$list .= '</ul>';
+		$output .= $list;	
+	}
+
+	$output .= '</div><!-- end rsvpmaker_next_events -->';
+}
+
+$wp_query = $backup_query;
+$post = $backup_post;
+wp_reset_postdata();
+
+return $output;
+}
+
 function rsvpmaker_compact ($atts = array())
 {
 global $post;
@@ -1741,7 +1803,6 @@ if(empty($post_id))
 	$post_id = $post->ID;
 if(empty($custom_fields))
 	$custom_fields = get_post_custom($post_id);
-
 if(empty($custom_fields["_rsvp_dates"][0]) && !rsvpmaker_is_template($post_id))
 	return array('dateblock' => '','dur' => NULL, 'last_time' => NULL, 'firstrow' => array());	
 $time_format = $rsvp_options["time_format"];

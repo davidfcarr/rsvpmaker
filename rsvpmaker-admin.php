@@ -2688,7 +2688,7 @@ if($sort == 'past')
 elseif($sort == 'templates')
 	{
 	add_filter('posts_join', 'rsvpmaker_join_template',99 );
-	add_filter('posts_where', function($content) {return '';}, 9999 );
+	add_filter('posts_where', function($content) {return " AND post_type='rsvpmaker'";}, 9999 );
 	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
 	}
 elseif($sort == 'special')
@@ -2720,11 +2720,11 @@ add_filter( 'disable_months_dropdown', 'rsvpmaker_admin_months_dropdown',10,2 );
 
 function rsvpmaker_join_template($join) {
   global $wpdb;
-    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND (BINARY rsvpdates.meta_key REGEXP '_sked_[A-Z].+'  AND rsvpdates.meta_value)";
+    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND (BINARY rsvpdates.meta_key REGEXP '_sked_[A-Z].+')"; //  AND rsvpdates.meta_value
 }
 function rsvpmaker_join_special($join) {
   global $wpdb;
-    return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_rsvpmaker_special'";
+return $join." JOIN ".$wpdb->postmeta." rsvpdates ON rsvpdates.post_id = $wpdb->posts.ID AND rsvpdates.meta_key='_rsvpmaker_special'";
 }
 
 function rsvpmaker_sort_message() {
@@ -2793,6 +2793,8 @@ if(empty($template['hour']))
 if(empty($template['minutes']))
 	$template['minutes'] = '00';
 
+$th = (int) $template['hour'];
+
 $cy = date("Y");
 $cm = date("m");
 
@@ -2826,7 +2828,7 @@ if($week == 6)
 		$projected[$ts] = $ts; // add numeric value for 1 week
 		$ts = $ts + WEEK_IN_SECONDS;
 		$i++;
-		if($i > 20)
+		if($i > 52)
 			break;
 		}
 	}
@@ -2834,7 +2836,7 @@ else {
 	if(isset($_GET["start"]))
 		$ts = rsvpmaker_strtotime($_GET["start"]);
 	if(empty($stopdate))
-		$stopdate = rsvpmaker_strtotime('+1 year');
+		$stopdate = rsvpmaker_strtotime('+12 months');
 	if($week == 0) {
 		$i = 0;
 		$firstdaytxt = rsvpmaker_projected_datestring($dow,0,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
@@ -2879,9 +2881,19 @@ else {
 //order by timestamp
 if(empty($projected))
 	return array();
+//timezone correction
+foreach($projected as $index => $value) {
+	$checkhour = (int) rsvpmaker_date('G',$value);
+	$diff =  $th - $checkhour; 
+	if($diff) {
+		$value+= ($diff * HOUR_IN_SECONDS);
+		unset($projected[$index]);
+		$projected[$value] = $value;
+	}
+}
 ksort($projected);
 
-return $projected; 
+return $projected;
 }
 
 // RSVPMaker Replay Follow up

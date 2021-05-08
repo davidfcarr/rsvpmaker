@@ -190,6 +190,56 @@ registerBlockType( 'rsvpmaker/event', {
 	},
 } );
 
+registerBlockType( 'rsvpmaker/next-events', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Next Events' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Invites registration for next event, or next few dates'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            number_of_posts: {
+            type: 'int',
+            default: '5',
+            },
+        },
+	edit: function( props ) {
+	const { attributes: { number_of_posts }, setAttributes, isSelected } = props;
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Registration invite for one or more events.
+				</p>
+	<SelectControl
+	label={__("Number of Event Links Shown",'rsvpmaker')}
+	value={ number_of_posts }
+	options={ [
+	{label: '1 (next only)', value:1},
+	{label: '2 (next +1)', value:2},
+	{label: '3 (next +2)', value:3},
+	{label: '4 (next +3)', value:4},
+	{label: '5 (next +4)', value:5},
+	{label: '6 (next +5)', value:6},
+	{label: '7 (next +6)', value:7},
+	{label: '8 (next +7)', value:8},
+	{label: '9 (next +8)', value:9},
+	{label: '10 (next +9)', value:10}] }
+        onChange={ ( number_of_posts ) => { setAttributes( { number_of_posts } ) } }
+/>
+			</div>
+		);
+	},
+
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+
 registerBlockType( 'rsvpmaker/embedform', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Embed Form' ), // Block title.
@@ -598,6 +648,10 @@ registerBlockType( 'rsvpmaker/eventlisting', {
                 type: 'string',
                 default: '%A %B %e, %Y',
             },
+            time: {
+                type: 'int',
+                default: 0,
+            },
         },
 	/**
 	 * The edit function describes the structure of your block in the context of the editor.
@@ -609,7 +663,7 @@ registerBlockType( 'rsvpmaker/eventlisting', {
 	 */
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
-	const { attributes: { days, posts_per_page, type, date_format }, setAttributes, isSelected } = props;
+	const { attributes: { days, posts_per_page, type, date_format, time }, setAttributes, isSelected } = props;
 
 	function showFormPrompt () {
 		return <p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
@@ -662,6 +716,11 @@ registerBlockType( 'rsvpmaker/eventlisting', {
             { label: '8 August 2019', value: '%e %B %Y' },
         ] }
         onChange={ ( date_format ) => { setAttributes( { date_format: date_format } ) } }
+    />
+				<ToggleControl
+        label={__("Include Time",'rsvpmaker')}
+        checked={ time }
+        onChange={ ( time ) => { setAttributes( { time: time } ) } }
     />
 				</form>
 			);
