@@ -170,34 +170,75 @@ $('#signed_up_'+post).html(response);
 
 });
 
-
-$('.tz_converter').each( function () {
-var tz = jstz.determine();
-var tzstring = tz.name();
-    
-var id = $(this).attr('id');
-var time = $(this).attr('time');
-var end = $(this).attr('end');
-var format = $(this).attr('format');
-var server_timezone = $(this).attr('server_timezone');
-if(tzstring == server_timezone)
-{
-    console.log('timezone matches');
-    return;
+function flux_capacitor(tzstring = '', check = true) {
+    $('.tz_converter').each( function () {
+        var id = $(this).attr('id');
+        var time = $(this).attr('time');
+        var end = $(this).attr('end');
+        var format = $(this).attr('format');
+        var server_timezone = $(this).attr('server_timezone');
+        var select = {};
+        var fluxbutton = {};
+        if(check && (tzstring == server_timezone))
+        {
+            $(this).css('display','inline-block');
+            fluxbutton[id] = document.createElement("BUTTON");
+            fluxbutton[id].innerHTML = 'Show in My Timezone';
+            fluxbutton[id].className = 'tzbutton';
+            fluxbutton[id].style.display = 'block';
+            document.getElementById(id).appendChild(fluxbutton[id]);
+            fluxbutton[id].addEventListener('click', (event) => {
+                fluxbutton[id].style.display = 'none';
+                var tz = jstz.determine();
+                var tzstring = tz.name();    
+                flux_capacitor(tzstring,false);
+            });
+            return;
+        }
+        var data = {
+            'time' : time,
+            'end' : end,
+            'tzstring' : tzstring,
+            'format' : format,
+        };
+        console.log(data);
+        jQuery.post(rsvpmaker_rest.rest_url+'rsvpmaker/v1/flux_capacitor', data, function(response) {
+            console.log(response);
+            $('#'+id).html(response.content+' ');// + '<select class="timezone_options">'+response.tzoptions+'</select>');
+            select[id] = document.createElement("SELECT");
+            select[id].innerHTML = response.tzoptions;
+            select[id].className = 'tzselect';
+            select[id].style.display = 'none';
+            document.getElementById(id).appendChild(select[id]);
+            select[id].addEventListener('change', (event) => {
+                var tzstring = event.target.value;
+                flux_capacitor(tzstring, false);
+                });
+            fluxbutton[id] = document.createElement("A");
+            fluxbutton[id].innerHTML = 'Switch Timzeone?';
+            fluxbutton[id].className = 'tzswitch';
+            fluxbutton[id].style.padding = '3px';
+            fluxbutton[id].style.border = '2px solid gray';
+            document.getElementById(id).appendChild(fluxbutton[id]);
+            fluxbutton[id].addEventListener('click', (event) => {
+                select[id].style.display = 'block';
+                fluxbutton[id].style.display = 'none';
+            });   
+        });        
+    });    
 }
-var data = {
-    'time' : time,
-    'end' : end,
-    'tzstring' : tzstring,
-    'format' : format,
-};
-console.log(data);
-jQuery.post(rsvpmaker_rest.rest_url+'rsvpmaker/v1/flux_capacitor', data, function(response) {
-    console.log(response);
-    $('#'+id).html(response.content);    
-});
-    
-});
+var tz = jstz.determine();
+var tzstring = tz.name();    
+flux_capacitor(tzstring);
+/*
+$('.tzselect').change(
+    function() {
+    console.log('detected tz_converter select change');
+    var tzstring = $(this).value();
+    flux_capacitor(tzstring);
+    }
+);
+*/
 
 var guestlist = '';
 

@@ -1229,7 +1229,7 @@ function rsvpmaker_next_rsvps ($atts = array())
 {
 if(is_admin())
 	return;
-global $wp_query, $post, $dataloop;
+global $wp_query, $post, $dataloop, $rsvp_options;
 $dataloop = true;
 $atts['posts_per_page'] = (empty($atts['number_of_posts'])) ? 5 : $atts['number_of_posts'];
 $atts['meta_key'] = '_rsvp_on';
@@ -1257,8 +1257,8 @@ if ( have_posts() ) {
 			$list = '<ul>';
 		$url = get_permalink($post->ID).'#rsvpnow';
 		$t = rsvpmaker_strtotime($post->datetime);
-		$datetime = rsvpmaker_strftime('',$t).' '.rsvpmaker_strftime($rsvp_options['time_format'],$t);
-		$list .= sprintf('<li><a href="%s">%s</a></li>',esc_url_raw($url),esc_html($event->post_title.' '.$datetime));
+		$datetime = rsvpmaker_strftime('',$t);
+		$list .= sprintf('<li><a href="%s">%s</a></li>',esc_url_raw($url),esc_html($post->post_title.'&#8212;'.$datetime));
 	}
 	//printf('<p>Additional %s</p>',$post->post_title);
 	endwhile;
@@ -1631,7 +1631,11 @@ function rsvpmaker_format_event_dates($post_id) {
 				$tzbutton = sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',$post_id,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
 			}
 			else {
-				$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
+				$atts['time'] = $eventrow->datetime;
+				if(!empty($eventrow->display_type))
+					$atts['end'] = $eventrow->enddate;
+				$tzbutton .= rsvpmaker_timezone_converter($atts);
+				//$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
 			}
 			$dateblock .= '<div><span id="timezone_converted'.$post_id.'"></span><span id="extra_timezone_converted'.$post_id.'"></span></div>';
 		}
@@ -1849,7 +1853,11 @@ foreach($results as $index => $row)
 			$tzbutton = sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',$post_id,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
 		}
 		else {
-			$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
+			$atts['time'] = $row['datetime'];
+			if($dur == 'set')
+				$atts['end'] = $row["end_time"];
+			$tzbutton = rsvpmaker_timezone_converter($atts);
+		//$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
 		}
 	}
 	$dateblock .= '<div><span id="timezone_converted'.$post_id.'"></span><span id="extra_timezone_converted'.$post_id.'"></span></div></div>';

@@ -1245,6 +1245,7 @@ public function get_items($request) {
       }
   }
   restore_timezone();
+  $times['tzoptions'] = wp_timezone_choice($tz);
   return new WP_REST_Response($times, 200);
   }
 }
