@@ -52,15 +52,17 @@ if(rsvpmaker_ajax.special)
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div>
-<h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
-{rsvpmaker_ajax.top_message}
 {(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && 
 <div>
+<h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
+{rsvpmaker_ajax.top_message}
 <MetaDateControl metaKey='_rsvp_dates' />
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
 {(rsvpmaker_ajax.projected_url && <div>
+<h3>RSVPMaker Template <a href={rsvpmaker_ajax.projected_url}>(Create/Update)</a></h3>
+{rsvpmaker_ajax.top_message}
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle
 			label="Varies" 

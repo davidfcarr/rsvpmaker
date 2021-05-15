@@ -7823,7 +7823,7 @@ foreach ( $results as $post )
 
 			$schedoptions = sprintf(' (<a href="%s">Options</a>)',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID);
 
-			printf('<tr><td>%s</td><td>%s</td><td><a href="%s">'.__('Projected Dates','rsvpmaker').'</a></td><td>%s</td></tr>'."\n",$title.$schedoptions,$s,$template_recur_url,next_or_recent($post->ID));
+			printf('<tr><td>%s</td><td>%s</td><td><a href="%s">'.__('Create/Update','rsvpmaker').'</a></td><td>%s</td></tr>'."\n",$title.$schedoptions,$s,$template_recur_url,next_or_recent($post->ID));
 
 			}
 
@@ -8224,7 +8224,6 @@ $cd = rsvpmaker_date("j");
 	if($sched_result)
 
 	foreach($sched_result as $index => $sched)
-
 		{
 
 		$thistime = rsvpmaker_strtotime($sched->datetime);
@@ -8273,8 +8272,6 @@ $cd = rsvpmaker_date("j");
 
 			$sched->post_title = '<span style="color:red;">'.$sched->post_title.'</span>';
 
-		
-
 		if ( current_user_can( "delete_post", $sched->postID ) ) {
 
 				$delete_text = __('Move to Trash');
@@ -8301,6 +8298,7 @@ $cd = rsvpmaker_date("j");
 			$mod = ' <span style="color:red;">* '.__('Modified independently of template. Update could overwrite customizations.','rsvpmaker').'</span> '.sprintf('<input type="checkbox" name="detach_from_template[]" value="%d" /> ',$sched->postID).__('Detach','rsvpmaker');
 		else
 			$mod = '';
+
 		//$sametime_events
 		$mod .= rsvpmaker_sametime($sched->datetime,$sched->ID);
 		$updatelist .= sprintf('<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s</p>',$a,$sched->postID,__('Update','rsvpmaker'),$sched->post_title.$ifdraft,$fulldate, $mod, $timechange );		

@@ -67,13 +67,20 @@ add_filter('wp_unique_post_slug','rsvpmaker_unique_date_slug',10);
 
 function rsvpmaker_save_calendar_data($postID) {
 
-	global $wpdb;
+	global $wpdb, $current_user;
 	$end_array = array();
 	
 	if($parent_id = wp_is_post_revision($postID))
 		{
 		$postID = $parent_id;
 		}
+	if(rsvpmaker_is_template($postID))
+	{
+		$args = array($postID,$current_user->user_email);
+		wp_clear_scheduled_hook( 'rsvpmaker_create_update_reminder', $args );
+		wp_schedule_single_event( strtotime('+2 hours'), 'rsvpmaker_create_update_reminder', $args);
+		//update_post_meta($postID,'template_last_updated_by',$current_user->user_email);
+	}
 	
 	if(!empty($_POST['rsvp_sql_date']) && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['rsvp_sql_date']))
 		update_post_meta($postID,'_rsvp_dates',$_POST['rsvp_sql_date']);
@@ -188,10 +195,38 @@ function rsvpmaker_save_calendar_data($postID) {
 		if(isset($_POST['calendar_icons']) && $_POST['calendar_icons'])
 			update_post_meta($postID,'_calendar_icons',1);
 		else
-			update_post_meta($postID,'_calendar_icons',0);	
-	
+			update_post_meta($postID,'_calendar_icons',0);
 }
-	
+
+add_action('rsvpmaker_create_update_reminder','rsvpmaker_create_update_reminder',10,3);
+function rsvpmaker_create_update_reminder($t, $author_email = '') {
+	$template = get_post($t);
+	$output = '';
+	$sched_result = get_events_by_template($t);
+	if(empty($sched_result))
+		return;//no events to update
+	$nag = true;
+	foreach($sched_result as $event) {
+		$updated_from_template = get_post_meta($event->ID,"_updated_from_template",true);
+		if($updated_from_template >= $template->post_modified)
+			$nag = false; // at least one event has been updated
+		$up = ($updated_from_template < $template->post_modified) ? 'not updated'." $updated_from_template < $template->post_modified " : 'updated';
+		$output .= sprintf('%d %s ',$event->ID, $up);
+	}
+	if($nag) {
+		$mail['html'] = sprintf('<p>You updated the <strong>%s</strong> template but not the events based on that template.</p>'."\n".'<p>To update the whole series, use <a href="%s">Create/Update<a></p>',$template->post_title,admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t));
+		$mail['to'] = get_option('admin_email');
+		$mail['from'] = get_option('admin_email');
+		$mail['subject'] = __('Event template not applied to existing events:','rsvpmaker'). ' ('.$template->post_title.')';
+		rsvpmailer($mail);
+		if($author_email != $mail['to'])
+		{
+			$mail['to'] = $author_email;
+			rsvpmailer($mail);
+		}
+	}
+}
+
 function rsvpmaker_date_option($datevar = NULL, $index = NULL, $jquery_date = NULL, $sked = NULL) {
 
 global $rsvp_options;
@@ -4032,8 +4067,10 @@ if(isset($_POST["update_from_template"]))
 						$update_messages .= '<div class="updated">Error</div>';
 						break;
 					}
-				$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$post->post_title,$post->post_content, (int) $target_id);
-				$wpdb->query($sql);
+				$update_post['ID'] = $target_id;
+				$update_post['post_title'] = $post->post_title;
+				$update_post['post_content'] = $post->post_content;
+				wp_update_post($update_post);
 				rsvpmaker_copy_metadata($t, $target_id);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
 				update_post_meta($target_id,"_updated_from_template",$ts);
@@ -4123,7 +4160,6 @@ if(isset($_POST["recur_check"]) )
 				add_post_meta($postID,'_meet_recur',$t,true);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$postID);
 				update_post_meta($postID,"_updated_from_template",$ts);
-				
 				rsvpmaker_copy_metadata($t, $postID);
 				
 				}

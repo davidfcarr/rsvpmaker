@@ -182,10 +182,10 @@ function flux_capacitor(tzstring = '', check = true) {
         if(check && (tzstring == server_timezone))
         {
             $(this).css('display','inline-block');
-            fluxbutton[id] = document.createElement("BUTTON");
+            fluxbutton[id] = document.createElement("A");
             fluxbutton[id].innerHTML = 'Show in My Timezone';
             fluxbutton[id].className = 'tzbutton';
-            fluxbutton[id].style.display = 'block';
+            fluxbutton[id].style.fontSize = 'small';
             document.getElementById(id).appendChild(fluxbutton[id]);
             fluxbutton[id].addEventListener('click', (event) => {
                 fluxbutton[id].style.display = 'none';
@@ -217,8 +217,7 @@ function flux_capacitor(tzstring = '', check = true) {
             fluxbutton[id] = document.createElement("A");
             fluxbutton[id].innerHTML = 'Switch Timzeone?';
             fluxbutton[id].className = 'tzswitch';
-            fluxbutton[id].style.padding = '3px';
-            fluxbutton[id].style.border = '2px solid gray';
+            fluxbutton[id].style.fontSize = 'small';
             document.getElementById(id).appendChild(fluxbutton[id]);
             fluxbutton[id].addEventListener('click', (event) => {
                 select[id].style.display = 'block';
@@ -230,15 +229,6 @@ function flux_capacitor(tzstring = '', check = true) {
 var tz = jstz.determine();
 var tzstring = tz.name();    
 flux_capacitor(tzstring);
-/*
-$('.tzselect').change(
-    function() {
-    console.log('detected tz_converter select change');
-    var tzstring = $(this).value();
-    flux_capacitor(tzstring);
-    }
-);
-*/
 
 var guestlist = '';
 
