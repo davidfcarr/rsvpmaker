@@ -4088,7 +4088,7 @@ $dateblock = (strpos($post->post_content,'rsvpdateblock]')) ? '' : rsvpmaker_for
 $event = get_rsvpmaker_event($post->ID);
 if($event) {
 	$dur = $event->display_type;
-	$last_time = rsvpmaker_strtotime($event->enddate);	
+	$last_time = (int) $event->ts_end;	
 	$firstrow = $event->date;
 }
 else {
@@ -4171,8 +4171,6 @@ else
 
 	$blanks_allowed = 1000;
 
-
-
 if($rsvp_count) {
 
 	$content .= '<div class="signed_up_ajax" id="signed_up_'.$post->ID.'" post="'.$post->ID.'"></div>';
@@ -4184,11 +4182,8 @@ $now = time();
 $rsvplink = get_rsvp_link($post->ID,true);
 
 if(isset($deadline) && ($now  > $deadline  ) )
-
 	{
-
 			$content .= '<p class="rsvp_status">'.__('RSVP deadline is past','rsvpmaker').rsvpmaker_date('r',$deadline).':'.rsvpmaker_date('r',$now).'</p>';
-
 	}
 
 elseif( empty($deadline) && ( $now > $last_time  ) )

@@ -1244,7 +1244,12 @@ public function get_items($request) {
       $times['content'] .= date('g:i A T',$end);
       }
   }
+  $tz3 = date('T');
+  fix_timezone();//wordpress locale setting
+  $s3 = date('T');
   restore_timezone();
+  if($tz3 == $s3) // if same 3 letter tz (even if not same locale)
+    $times['content'] = '';
   $times['tzoptions'] = wp_timezone_choice($tz);
   return new WP_REST_Response($times, 200);
   }

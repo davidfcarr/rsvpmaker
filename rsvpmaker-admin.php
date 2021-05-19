@@ -217,7 +217,7 @@ function rsvpmaker_create_update_reminder($t, $author_email = '') {
 		$mail['html'] = sprintf('<p>You updated the <strong>%s</strong> template but not the events based on that template.</p>'."\n".'<p>To update the whole series, use <a href="%s">Create/Update<a></p>',$template->post_title,admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t));
 		$mail['to'] = get_option('admin_email');
 		$mail['from'] = get_option('admin_email');
-		$mail['subject'] = __('Event template not applied to existing events:','rsvpmaker'). ' ('.$template->post_title.')';
+		$mail['subject'] = __('Event template not applied to existing events:','rsvpmaker').' '.$template->post_title;
 		rsvpmailer($mail);
 		if($author_email != $mail['to'])
 		{

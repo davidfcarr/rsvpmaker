@@ -16,7 +16,7 @@ Text Domain: rsvpmaker
 
 Domain Path: /translations
 
-Version: 8.6.8
+Version: 8.7
 
 */
 
@@ -24,7 +24,7 @@ Version: 8.6.8
 
 function get_rsvpversion(){
 
-return '8.6.8';
+return '8.7';
 
 }
 
