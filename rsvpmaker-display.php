@@ -91,7 +91,7 @@ if(is_array($events))
 foreach($events as $event)
 	{
 	$t = ($event->ts_start) ? (int) $event->ts_start : rsvpmaker_strtotime($event->datetime);
-	$dateline = rsvpmaker_strftime($date_format,$t); //rsvpmaker_long_date($event->ID, isset($atts['time']), false);
+	$dateline = rsvpmaker_date($date_format,$t); //rsvpmaker_long_date($event->ID, isset($atts['time']), false);
 	$listings .= sprintf('<li><a href="%s">%s</a> %s</li>'."\n",esc_url_raw(get_permalink($event->ID)),esc_html($event->post_title),$dateline);
 	$test = var_export($event,true);
 	}
@@ -663,12 +663,12 @@ $monthafter = $eom + (DAY_IN_SECONDS * 32);
 $eonext = rsvpmaker_date("Y-m-d",'month after '.$monthname.' '.$cy);
 
 // Link to previous month (but do not link to too early dates)
-   $prev_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $bom - 90000);
+   $prev_link = '<a href="' . $req_uri . rsvpmaker_date('cm=%m&cy=%Y">%B %Y</a>', $bom - 90000);
 
 // Link to next month (but do not link to too early dates)
-   $next_link = '<a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y</a>', $eom + 90000);
+   $next_link = '<a href="' . $req_uri . rsvpmaker_date('cm=%m&cy=%Y">%B %Y</a>', $eom + 90000);
 
-$current_link = ' &nbsp;&lt;&nbsp; <a href="' . $req_uri . rsvpmaker_strftime('cm=%m&cy=%Y">%B %Y',$bom).'</a> &nbsp;&gt;&nbsp; ';
+$current_link = ' &nbsp;&lt;&nbsp; <a href="' . $req_uri . rsvpmaker_date('cm=%m&cy=%Y">%B %Y',$bom).'</a> &nbsp;&gt;&nbsp; ';
 
 	$page_id = (isset($_GET["page_id"])) ? '<input type="hidden" name="page_id" value="'. (int) $_GET["page_id"].'" />' : '';
 
@@ -682,7 +682,7 @@ $content .= '<div class="rsvpmaker_nav"><span class="navprev">'. $prev_link. '</
 
 $content .= '
 
-<table id="cpcalendar" width="100%" cellspacing="0" cellpadding="3"><caption>'.rsvpmaker_strftime('<b>%B %Y</b>', $bom)."</caption>\n".'<tr>'."\n";
+<table id="cpcalendar" width="100%" cellspacing="0" cellpadding="3"><caption>'.rsvpmaker_date('<b>%B %Y</b>', $bom)."</caption>\n".'<tr>'."\n";
 
 if(isset($atts["weekstart"]) && ($atts["weekstart"] == 'Monday'))
 {
@@ -1257,7 +1257,7 @@ if ( have_posts() ) {
 			$list = '<ul>';
 		$url = get_permalink($post->ID).'#rsvpnow';
 		$t = rsvpmaker_strtotime($post->datetime);
-		$datetime = rsvpmaker_strftime('',$t);
+		$datetime = rsvpmaker_date('',$t);
 		$list .= sprintf('<li><a href="%s">%s</a></li>',esc_url_raw($url),esc_html($post->post_title.'&#8212;'.$datetime));
 	}
 	//printf('<p>Additional %s</p>',$post->post_title);
@@ -1591,9 +1591,9 @@ function rsvpmaker_format_event_dates($post_id) {
 	$custom_fields = get_post_custom($post_id);
 	$time_format = $rsvp_options["time_format"];
 	$dur = $tzbutton = '';
-	if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
+	if(!strpos($time_format,'T') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
 		{
-		$time_format .= ' %Z';
+		$time_format .= ' T';
 		}
 	$permalink = get_permalink($post_id);
 	$dateblock = '<div class="dateblock">';
@@ -1612,7 +1612,7 @@ function rsvpmaker_format_event_dates($post_id) {
 			$t = (int) $eventrow->ts_start;
 		$endt = (int) $eventrow->ts_end;
 		$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'">';
-		$dateblock .= utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$t));
+		$dateblock .= utf8_encode(rsvpmaker_date($rsvp_options["long_date"],$t));
 		$dur = $eventrow->display_type;
 		if($dur == 'set') {
 			$dateblock .= '<span class="time"> '.rsvpmaker_timestamp_to_time($t);
@@ -1621,7 +1621,7 @@ function rsvpmaker_format_event_dates($post_id) {
 		}		
 		elseif(strpos($dur,'|')) {
 			$dateblock .= '<span class="time"> '.rsvpmaker_timestamp_to_time($t).'</span>';			
-			$dateblock .= ' <span class="end_time"> <br />'.__('to','rsvpmaker')." ".utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$endt)).' '.rsvpmaker_timestamp_to_time($endt).'</span>';
+			$dateblock .= ' <span class="end_time"> <br />'.__('to','rsvpmaker')." ".utf8_encode(rsvpmaker_date($rsvp_options["long_date"],$endt)).' '.rsvpmaker_timestamp_to_time($endt).'</span>';
 		}
 		elseif(($dur != 'allday'))
 			{
@@ -1637,7 +1637,6 @@ function rsvpmaker_format_event_dates($post_id) {
 				if(!empty($eventrow->display_type))
 					$atts['end'] = $eventrow->enddate;
 				$tzbutton = rsvpmaker_timezone_converter($atts);
-				//$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
 			}
 			$dateblock .= '<div><span id="timezone_converted'.$post_id.'"></span><span id="extra_timezone_converted'.$post_id.'"></span></div>';
 		}
@@ -1714,24 +1713,8 @@ function rsvpmaker_daily_schedule($atts) {
 	while ( have_posts() ) : the_post();
 		$event = $post;
 		$time_format = $rsvp_options['time_format'];
-		if(!empty($atts['convert_tz']) && !strpos($time_format,'%Z'))
-			$time_format .= ' %Z';
-		/*
-		if(!empty($atts['convert_tz']) && empty($output))
-		{
-			$t = rsvpmaker_strtotime($event->datetime);
-			$output = '<div>'."\n";
-				if(is_email_context()) {
-					$output .= sprintf('<a href="%s">%s</a>',esc_url_raw(add_query_arg('tz',1,get_permalink($post_id))),__('Show in my timezone','rsvpmaker'));
-				}
-				else {
-					$output .= '<button id="timezone_on'.$event->ID.'" class="timezone_on"  utc="'.gmdate('c',$t). '" target="timezone_converted'.$event->ID.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
-				}
-			$output .= '</div><div id="tz_convert_to'.$event->ID.'">'.__('Timezone: ').' '.rsvpmaker_date('T',$t).'</div>';
-		}
-		else
-			$timezone = '';
-		*/
+		if(!empty($atts['convert_tz']) && !strpos($time_format,'T'))
+			$time_format .= ' T';
 		if(isset($_GET['debug']))
 			printf('<p>%s %s %s</p>',$event->post_title,$event->datetime,$event->ts_start);
 		$t = (int) $event->ts_start;
@@ -1754,17 +1737,17 @@ function rsvpmaker_daily_schedule($atts) {
 		$termline = '<p class="daily-schedule-event-types">'.implode(', ',$term_links).'</p>';
 		if(isset($atts['type']) && !in_array($atts['type'],$termslugs))
 			continue;
-		$day = rsvpmaker_strftime($rsvp_options['long_date'],(int) $event->ts_start);
+		$day = rsvpmaker_date($rsvp_options['long_date'],(int) $event->ts_start);
 		if($day != $last)
 			$output .= sprintf('<h3 class="rsvpmaker_schedule_date">%s</h3>',$day).$timezone;
 		$last = $day;
 		if($event->display_type == 'set')
 			{
-			$end = ' - <span class="tz-convert">'.rsvpmaker_strftime($time_format,(int) $event->ts_end).'</span>';
+			$end = ' - <span class="tz-convert">'.rsvpmaker_date($time_format,(int) $event->ts_end).'</span>';
 			}
 		else
 			$end = '';
-		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">'.rsvpmaker_strftime($time_format,$t).'</span>'.$end.'</span>';
+		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">'.rsvpmaker_date($time_format,$t).'</span>'.$end.'</span>';
 		$eventcontent .= ' <a href="'.get_permalink($event->ID).'"><span class="rsvpmaker-schedule-title">'.$event->post_title.'</a></h3>';
 		if(!empty($atts['convert_tz']))
 		{
@@ -1815,9 +1798,9 @@ $time_format = $rsvp_options["time_format"];
 $dur = $tzbutton = '';
 $firstrow = array();
 
-if(!strpos($time_format,'%Z') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
+if(!strpos($time_format,'T') && isset($custom_fields['_add_timezone'][0]) && $custom_fields['_add_timezone'][0] )
 	{
-	$time_format .= ' %Z';
+	$time_format .= ' T';
 	}
 $permalink = get_permalink($post_id);
 $results = get_rsvp_dates($post_id);
@@ -1832,23 +1815,23 @@ foreach($results as $index => $row)
 		$firstrow = $row;
 	$last_time = $t = rsvpmaker_strtotime($row["datetime"]);
 	$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'">';
-	$dateblock .= utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"],$t));
+	$dateblock .= utf8_encode(rsvpmaker_date($rsvp_options["long_date"],$t));
 	$dur = $row["duration"];
 	if($dur == 'set') {
 		$end_time = $row['end_time'];
 		$dur = rsvpmaker_strtotime($end_time);
-		$tzcode = strpos($time_format,'%Z');
+		$tzcode = strpos($time_format,'T');
 		if($tzcode) 
-			$time_format = str_replace('%Z','',$time_format);
-		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t);
-		$dateblock .= ' <span class="end_time">'.__('to','rsvpmaker')." ".rsvpmaker_strftime($time_format,$dur).'</span>';
+			$time_format = str_replace('T','',$time_format);
+		$dateblock .= '<span class="time">'.rsvpmaker_date(' '.$time_format,$t);
+		$dateblock .= ' <span class="end_time">'.__('to','rsvpmaker')." ".rsvpmaker_date($time_format,$dur).'</span>';
 		if($tzcode)
-			$dateblock .= ' '.rsvpmaker_strftime('%Z',$t);
+			$dateblock .= ' '.rsvpmaker_date('T',$t);
 		$dateblock .= '</span>';
 	}
 	elseif(($dur != 'allday') && !strpos($dur,'|'))
 		{
-		$dateblock .= '<span class="time">'.rsvpmaker_strftime(' '.$time_format,$t).'</span>';
+		$dateblock .= '<span class="time">'.rsvpmaker_date(' '.$time_format,$t).'</span>';
 		}
 	if($top && isset($custom_fields['_convert_timezone'][0]) && $custom_fields['_convert_timezone'][0]) {
 		if(is_email_context()) {
@@ -1859,7 +1842,6 @@ foreach($results as $index => $row)
 			if($dur == 'set')
 				$atts['end'] = $row["end_time"];
 			$tzbutton = rsvpmaker_timezone_converter($atts);
-		//$tzbutton = '<button  id="timezone_on'.$post_id.'" class="timezone_on" utc="'.gmdate('c',$t). '"  target="timezone_converted'.$post_id.'" event_tz="'.rsvpmaker_strftime('%z',$t).'">'.__('Show in my timezone','rsvpmaker').'</button>';
 		}
 	}
 	$dateblock .= '<div><span id="timezone_converted'.$post_id.'"></span><span id="extra_timezone_converted'.$post_id.'"></span></div></div>';
@@ -1924,7 +1906,7 @@ elseif(rsvpmaker_is_template($post->ID))
 			}
 		
 		$t = rsvpmaker_mktime($sked["hour"],$sked["minutes"],0,date('n'),date('j'),date('Y'));
-		$dateblock = $s.' '.rsvpmaker_strftime($rsvp_options["time_format"],$t);
+		$dateblock = $s.' '.rsvpmaker_date($rsvp_options["time_format"],$t);
 	
 		$dateblock .= '<div id="startdate'.$post_id.'" itemprop="startDate" datetime="'.date('c',$t).'"></div>';
 		if(current_user_can('edit_rsvpmakers'))
@@ -1951,7 +1933,7 @@ foreach($events as $index => $event)
 			continue;
 		$url = get_permalink($event->ID).'#rsvpnow';
 		$t = rsvpmaker_strtotime($event->datetime);
-		$datetime = rsvpmaker_strftime('',$t).' '.rsvpmaker_strftime($rsvp_options['time_format'],$t);
+		$datetime = rsvpmaker_date('',$t).' '.rsvpmaker_date($rsvp_options['time_format'],$t);
 		$output .= sprintf('<li><a href="%s">%s</a></li>',esc_url_raw($url),esc_html($event->post_title.' '.$datetime));
 		$event->post_content = '';
 		//$output .= '<li>'.var_export($event,true).'</li>';
@@ -1965,6 +1947,8 @@ add_shortcode('future_rsvp_links','future_rsvp_links');
 add_action('wp_footer','rsvpmaker_timezone_footer');
 
 function rsvpmaker_timezone_converter ($atts) {
+	global $post;
+	$post_id = (empty($post->ID)) ? 0 : $post->ID;
 	if(!isset($atts['time']))
 		return;
 	$server_timezone = rsvpmaker_get_timezone_string();
@@ -1972,7 +1956,7 @@ function rsvpmaker_timezone_converter ($atts) {
 	$id = 'convert'.strtotime($time).rand();
 	$end = (isset($atts['end'])) ? $atts['end'] : ''; 
 	$format = (isset($atts['format'])) ? $atts['format'] : ''; 
-	return sprintf('<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s"></div>',$id,$time,$end,$format,$server_timezone);
+	return sprintf('<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d"></div>',$id,$time,$end,$format,$server_timezone,$post_id);
 }
 
 add_shortcode('timezone_converter','rsvpmaker_timezone_converter');

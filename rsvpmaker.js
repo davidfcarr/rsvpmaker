@@ -176,6 +176,7 @@ function flux_capacitor(tzstring = '', check = true) {
         var time = $(this).attr('time');
         var end = $(this).attr('end');
         var format = $(this).attr('format');
+        var post_id = $(this).attr('post_id');
         var server_timezone = $(this).attr('server_timezone');
         var select = {};
         var fluxbutton = {};
@@ -200,6 +201,7 @@ function flux_capacitor(tzstring = '', check = true) {
             'end' : end,
             'tzstring' : tzstring,
             'format' : format,
+            'post_id' : post_id,
         };
         console.log(data);
         jQuery.post(rsvpmaker_rest.rest_url+'rsvpmaker/v1/flux_capacitor', data, function(response) {

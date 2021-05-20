@@ -4,15 +4,13 @@ function rsvpmaker_get_timezone_string($post_id=0) {
 global $post;
 if(!$post_id && !empty($post->ID))
 	$post_id = $post->ID;
-$timezone = get_option('timezone_string');
+$timezone = wp_timezone_string();
 if($post_id)
 {
 	$post_tz = get_post_meta($post_id,'_rsvp_timezone_string',true);
 	if(!empty($post_tz) && $post_tz != $timezone)
 		$timezone = $post_tz;
 }
-if(empty($timezone))
-	$timezone = 'UTC';
 return $timezone;
 }
 
@@ -60,9 +58,7 @@ function fix_timezone($timezone = '' ) {
 	}
 
 	if(!empty($timezone) )
-
 		date_default_timezone_set($timezone);
-
 }
 
 function restore_timezone() {
@@ -95,35 +91,13 @@ function rsvpmaker_mktime($hour=NULL, $minute = NULL, $second = NULL,$month = NU
 }
 
 function rsvpmaker_strftime($date_format = '', $t = NULL) {
-
-	fix_timezone();
-
-	global $rsvp_options;
-
-	if(empty($date_format))
-
-		$date_format = $rsvp_options['long_date'];
-
-	if(empty($t))
-
-		$t = time();
-
-	if(!is_int($t))
-
-		$t = strtotime($t);
-
-	$output = strftime($date_format, $t);
-
-	restore_timezone();
-
-	return $output;
-
+	return rsvpmaker_date($date_format,$t);
 }
 
 function rsvpmaker_long_date($post_id, $and_time = false, $end_time = false) {
 	global $rsvp_options, $wpdb;
-	if(!strpos($rsvp_options["time_format"],'%Z') && get_post_meta($post_id,'_add_timezone',true) )
-		$rsvp_options["time_format"] .= ' %Z';
+	if(!strpos($rsvp_options["time_format"],'T') && get_post_meta($post_id,'_add_timezone',true) )
+		$rsvp_options["time_format"] .= ' T';
 	$event_table = $wpdb->prefix.'rsvpmaker_event';
 	$sql = "SELECT * FROM $event_table where event=$post_id";
 	$timerow = $wpdb->get_row($sql);
@@ -134,41 +108,29 @@ function rsvpmaker_long_date($post_id, $and_time = false, $end_time = false) {
 	}
 	if($timerow->display_type == 'allday')
 		$and_time = false;
-	fix_timezone();
-	$output = $start_date = strftime($rsvp_options['long_date'], $timerow->ts_start);
-	if($and_time) {
+	
+	$output = $start_date = rsvpmaker_date($rsvp_options['long_date'], (int) $timerow->ts_start);
 		$time_format = $rsvp_options['time_format'];
-		$time = strftime($time_format, $timerow->ts_start);
-		if(empty($time)) { // for operating systems that don't work well with strftime
-			$time_format = (strpos($rsvp_options['time_format'],'%p') || strpos($rsvp_options['time_format'],'%P')) ? 'g:i A' : 'H:i';
-			if(strpos($rsvp_options['time_format'],'%Z'))
-				$time_format .= ' T';
-			$time = date($time_format, $timerow->ts_start);
-		}
+		$time = rsvpmaker_date($time_format, (int) $timerow->ts_start);
 		$output .= ' '.$time;
-	}
 	if($end_time && !empty($timerow->ts_end)) {
-		$end_date = strftime($rsvp_options['long_date'], $timerow->ts_end);
+		$end_date = rsvpmaker_date($rsvp_options['long_date'], (int) $timerow->ts_end);
 		if(($end_date != $start_date) || $and_time)
 		$output .= ' '.__('to','rsvpmaker').' ';
 		if($end_date != $start_date)
 			$output .= $end_date .' ';
 		if($and_time) {
-			if(strpos($time_format,'%'))
-				$time = strftime($time_format, $timerow->ts_end);
-			else
-				$time = date($time_format, $timerow->ts_end);
+		$time = rsvpmaker_date($time_format, (int) $timerow->ts_end);
 			$output .= ' '.$time;
 		}
 	}
-		restore_timezone();
 	return $output;
 }
 
 function rsvpmaker_short_date($post_id, $and_time = false, $end_time = false) {
 	global $rsvp_options, $wpdb;
-	if(!strpos($rsvp_options["time_format"],'%Z') && get_post_meta($post_id,'_add_timezone',true) )
-		$rsvp_options["time_format"] .= ' %Z';
+	if(!strpos($rsvp_options["time_format"],'T') && get_post_meta($post_id,'_add_timezone',true) )
+		$rsvp_options["time_format"] .= ' T';
 	$event_table = $wpdb->prefix.'rsvpmaker_event';
 	$sql = "SELECT * FROM $event_table where event=$post_id";
 	$timerow = $wpdb->get_row($sql);
@@ -180,29 +142,20 @@ function rsvpmaker_short_date($post_id, $and_time = false, $end_time = false) {
 	if(empty($timerow))
 		return;
 	fix_timezone();
-	$output = $start_date = strftime($rsvp_options['short_date'], $timerow->ts_start);
+	$output = $start_date = wp_date($rsvp_options['short_date'], $timerow->ts_start);
 	if($and_time) {
 		$time_format = $rsvp_options['time_format'];
-		$time = strftime($time_format, $timerow->ts_start);
-		if(empty($time)) { // for operating systems that don't work well with strftime
-			$time_format = (strpos($rsvp_options['time_format'],'%p') || strpos($rsvp_options['time_format'],'%P')) ? 'g:i A' : 'H:i';
-			if(strpos($rsvp_options['time_format'],'%Z'))
-				$time_format .= ' T';
-			$time = date($time_format, $timerow->ts_start);
-		}
+		$time = wp_date($time_format, $timerow->ts_start);
 		$output .= ' '.$time;
 	}
 	if($end_time) {
-		$end_date = strftime($rsvp_options['short_date'], $timerow->ts_end);
+		$end_date = wp_date($rsvp_options['short_date'], $timerow->ts_end);
 		if(($end_date != $start_date) || $and_time)
 		$output .= ' '.__('to','rsvpmaker').' ';
 		if($end_date != $start_date)
 			$output .= $end_date .' ';
 		if($and_time) {
-			if(strpos($time_format,'%'))
-				$time = strftime($time_format, $timerow->ts_end);
-			else
-				$time = date($time_format, $timerow->ts_end);
+			$time = wp_date($time_format, $timerow->ts_end);
 			$output .= ' '.$time;
 		}
 	}
@@ -212,8 +165,8 @@ function rsvpmaker_short_date($post_id, $and_time = false, $end_time = false) {
 
 function rsvpmaker_end_date($post_id, $and_time = false) {
 	global $rsvp_options, $wpdb;
-	if(!strpos($rsvp_options["time_format"],'%Z') && get_post_meta($post_id,'_add_timezone',true) )
-		$rsvp_options["time_format"] .= ' %Z';
+	if(!strpos($rsvp_options["time_format"],'T') && get_post_meta($post_id,'_add_timezone',true) )
+		$rsvp_options["time_format"] .= ' T';
 	$event_table = $wpdb->prefix.'rsvpdate_shortcode';
 	$sql = "SELECT * FROM $event_table where event=$post_id";
 	$timerow = $wpdb->get_row($sql);
@@ -225,16 +178,10 @@ function rsvpmaker_end_date($post_id, $and_time = false) {
 	if($timerow->display_type == 'allday')
 		$and_time = false;
 	fix_timezone();
-	$output = strftime($rsvp_options['long_date'], $timerow->ts_end);
+	$output = wp_date($rsvp_options['long_date'], $timerow->ts_end);
 	if($and_time) {
 		$time_format = $rsvp_options['time_format'];
-		$time = strftime($time_format, $timerow->ts_end);
-		if(empty($time)) { // for operating systems that don't work well with strftime
-			$time_format = (strpos($rsvp_options['time_format'],'%p') || strpos($rsvp_options['time_format'],'%P')) ? 'g:i A' : 'H:i';
-			if(strpos($rsvp_options['time_format'],'%Z'))
-				$time_format .= ' T';
-			$time = date($time_format, $timerow->ts_end);
-		}
+		$time = wp_date($time_format, $timerow->ts_end);
 		$output .= ' '.$time;
 	}
 		restore_timezone();
@@ -243,8 +190,8 @@ function rsvpmaker_end_date($post_id, $and_time = false) {
 
 function rsvpmaker_time_format($post_id, $end_time = false) {
 	global $rsvp_options, $wpdb;
-	if(!strpos($rsvp_options["time_format"],'%Z') && get_post_meta($post_id,'_add_timezone',true) )
-		$rsvp_options["time_format"] .= ' %Z';
+	if(!strpos($rsvp_options["time_format"],'T') && get_post_meta($post_id,'_add_timezone',true) )
+		$rsvp_options["time_format"] .= ' T';
 	$event_table = $wpdb->prefix.'rsvpmaker_event';
 	$sql = "SELECT * FROM $event_table where event=$post_id";
 	$timerow = $wpdb->get_row($sql);
@@ -253,59 +200,43 @@ function rsvpmaker_time_format($post_id, $end_time = false) {
 	fix_timezone();
 	$t = ($end_time) ? $timerow->ts_end : $timerow->ts_start;
 	$time_format = $rsvp_options['time_format'];
-	$time = strftime($time_format, $timerow->ts_start);
-	if(empty($time)) { // for operating systems that don't work well with strftime
-		$time_format = (strpos($rsvp_options['time_format'],'%p') || strpos($rsvp_options['time_format'],'%P')) ? 'g:i A' : 'H:i';
-		if(strpos($rsvp_options['time_format'],'%Z'))
-			$time_format .= ' T';
-		$time = date($time_format, $timerow->ts_start);
-	}
+	$time = wp_date($time_format, $timerow->ts_start);
 	restore_timezone();
 	return $time;
 }
 
 function rsvpmaker_timestamp_to_time($t, $add_tz = false) {
 	global $rsvp_options, $wpdb;
-	if(!strpos($rsvp_options["time_format"],'%Z') && ($add_tz || get_post_meta($post_id,'_add_timezone',true)) )
-		$rsvp_options["time_format"] .= ' %Z';
-	fix_timezone();
-	$time_format = $rsvp_options['time_format'];
-	$time = strftime($time_format, $t);
-	if(empty($time)) { // for operating systems that don't work well with strftime
-		$time_format = (strpos($rsvp_options['time_format'],'%p') || strpos($rsvp_options['time_format'],'%P')) ? 'g:i A' : 'H:i';
-		if(strpos($rsvp_options['time_format'],'%Z'))
-			$time_format .= ' T';
-		$time = date($time_format, $t);
-	}
-	restore_timezone();
-	return $time;
+	if(!strpos($rsvp_options["time_format"],'T') && ($add_tz || get_post_meta($post_id,'_add_timezone',true)) )
+		$rsvp_options["time_format"] .= ' T';
+	return rsvpmaker_date($rsvp_options["time_format"],$t);
 }
 
 function rsvpmaker_date($date_format = '', $t = NULL) {
+	global $post;
+	if(strpos($date_format,'%') !== false)
+		$date_format = strftime_format_to_date_format($date_format);
 
-	fix_timezone();
-
-	global $rsvp_options;
+	$post_id = (empty($post->ID)) ? 0 : $post->ID;
+	$tzstring = rsvpmaker_get_timezone_string($post_id);
+	$tz = new DateTimeZone($tzstring);
 
 	if(empty($date_format))
-
-		$date_format = $rsvp_options['long_date'];
-
+		$date_format = 'F jS, Y g:i A T';
 	if(empty($t))
-
 		$t = time();
-
 	if(!is_int($t))
+		$t = rsvpmaker_strtotime($t);
 
-		$t = strtotime($t);
-
-	$output = date($date_format, $t);
-
-	restore_timezone();
-
-	return $output;
-
+	$output = wp_date($date_format, $t, $tz);
+	return $output;// . "($date_format)";
 }
+
+function rsvpmaker_date_test() {
+	return rsvpmaker_date();
+}
+
+add_shortcode('rsvpmaker_date_test','rsvpmaker_date_test');
 
 function get_sql_now() {
 
@@ -921,6 +852,12 @@ function rsvpmaker_event_dates_table_update($new = false) {
 		$timestamp = time() + 300;
 		wp_schedule_single_event( $timestamp, 'rsvpmaker_update_table_continue' );
 	}
+}
+
+add_action('updated_option','timezone_change_check');
+function timezone_change_check ($option_name) {
+	if($option_name == 'timezone_string')
+		rsvpmaker_consistency_check();
 }
 
 add_action('rsvpmaker_consistency_check','rsvpmaker_consistency_check');
@@ -3897,6 +3834,20 @@ function rsvpmaker_edit_link($post_id, $label = '', $new=false) {
 	else {
 		return $label . ' ('. __('You cannot edit','rsvpmaker');
 	}
+}
+
+function strftime_format_to_date_format($strftimeformat){
+    // It is important to note that some do not translate accurately ie. lowercase L is supposed to convert to number with a preceding space if it is under 10, there is no accurate conversion so we just use 'g'
+    $phpdateformat = str_replace(
+        ['%a','%A','%d','%e','%u','%w','%W','%b','%h','%B','%m','%y','%Y', '%D',    '%F',   '%x', '%n', '%t', '%H', '%k', '%I', '%l', '%M', '%p', '%P', '%r' /* %I:%M:%S %p */, '%R' /* %H:%M */, '%S', '%T' /* %H:%M:%S */, '%X', '%z', '%Z',
+            '%c', '%s',
+            '%%'],
+        ['D','l', 'd', 'j', 'N', 'w', 'W', 'M', 'M', 'F', 'm', 'y', 'Y', 'm/d/y', 'Y-m-d', 'm/d/y',"\n","\t", 'H', 'G', 'h', 'g', 'i', 'A', 'a', 'h:i:s A', 'H:i', 's', 'H:i:s', 'H:i:s', 'O', 'T',
+            'D M j H:i:s Y' /*Tue Feb 5 00:45:10 2009*/, 'U',
+            '%'],
+        $strftimeformat
+    );
+    return $phpdateformat;
 }
 
 ?>

@@ -544,7 +544,7 @@ function rsvpmaker_next_scheduled( $post_id, $returnint = false ) {
 						$rsvpnext_time[$post_id] = $timestamp;
 						if($returnint)
 							return $timestamp;
-						return utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
+						return utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
 						}
 					}
 			}
@@ -611,7 +611,7 @@ foreach($results as $row)
 						printf('<tr><td>%s <br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>',$post->post_title,admin_url('post.php?post='.$post_id.'&action=edit'),__('Edit Post','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post_id),__('Schedule Options','rsvpmaker'));
 						$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
 						
-						echo utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
+						echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
 						echo '</td></tr>';
 						}
 					}
@@ -724,10 +724,10 @@ if($event_timestamp)
 		$reminder = $event_timestamp - $deduct;
 		$s = ($reminder == $ts) ? ' selected="selected" ' : '';
 			
-		$evopt .= '<option value="'.$reminder.'"'.$s.'>'.rsvpmaker_strftime($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$reminder).$dtext.'</option>';
+		$evopt .= '<option value="'.$reminder.'"'.$s.'>'.rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$reminder).$dtext.'</option>';
 	}
 	$checked = (!empty($cron["cron_active"]) && ($cron["cron_active"]) == "relative") ? 'checked="checked"' : '';
-printf('<p><input type="radio" name="cron_active" value="relative" '.$checked.' /> Set reminder relative to event %s<br /><select name="cron_relative">%s</select></p>',rsvpmaker_strftime($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$event_timestamp),$evopt);
+printf('<p><input type="radio" name="cron_active" value="relative" '.$checked.' /> Set reminder relative to event %s<br /><select name="cron_relative">%s</select></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$event_timestamp),$evopt);
 }
 $checked = (!empty($cron["cron_active"]) && ($cron["cron_active"]) == "rsvpmaker_strtotime") ? 'checked="checked"' : '';
 $timestring = ($ts) ? date('Y-m-d H:i:s',$ts) : date('Y-m-d H:00:00',rsvpmaker_strtotime('+ 1 hour'));
@@ -1045,7 +1045,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				
 				$t = rsvpmaker_strtotime($date);
 				global $rsvp_options;
-				$title .= ' - '.rsvpmaker_strftime($rsvp_options["short_date"],$t);
+				$title .= ' - '.rsvpmaker_date($rsvp_options["short_date"],$t);
 				
 				}
 			}
@@ -2936,7 +2936,7 @@ foreach($rsvpdata as $label => $value)
 /*
 $rsvpdata['rsvptitle'] = $post->post_title;
 $ts = rsvpmaker_strtotime(get_rsvp_date($rsvp['event']));
-$rsvpdata['rsvpdate'] = rsvpmaker_strftime($rsvp_options['long_date'],$ts);
+$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],$ts);
 */
 
 $templates = get_rsvpmaker_notification_templates();
@@ -2994,7 +2994,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	/*
 	$rsvpdata['rsvptitle'] = $post->post_title;
 	$ts = rsvpmaker_strtotime(get_rsvp_date($rsvp['event']));
-	$rsvpdata['rsvpdate'] = rsvpmaker_strftime($rsvp_options['long_date'],$ts);
+	$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],$ts);
 	*/
 
 	$templates = get_rsvpmaker_notification_templates();
@@ -3172,13 +3172,13 @@ function event_title_link () {
 	global $post, $rsvp_options;
 	$time_format = $rsvp_options["time_format"];
 	$add_timezone = get_post_meta($post->ID,'_add_timezone',true);	
-	if(!strpos($time_format,'%Z') && $add_timezone )
+	if(!strpos($time_format,'T') && $add_timezone )
 		{
-		$time_format .= ' %Z';
+		$time_format .= ' T';
 		}
 	$datestring = get_rsvp_date($post->ID);	
 	$t = rsvpmaker_strtotime($datestring);
-	$display_date = utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"].' '.$time_format,$t));
+	$display_date = utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$time_format,$t));
 	$permalink = get_permalink($post->ID);
 	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink,$post->post_title,$display_date);
 }
@@ -3212,11 +3212,11 @@ function rsvpdate_shortcode($atts = array()) {
 	$end_date = preg_replace('/ .+/','',$daterow->enddate);//date not time
 	$t = (int) $daterow->ts_start;
 	if($start_date == $end_date){
-		return rsvpmaker_strftime($format,$t);
+		return rsvpmaker_date($format,$t);
 	}
 	else {
 		$endt = (int) $daterow->ts_end;
-		return rsvpmaker_strftime($format,$t).' - '.rsvpmaker_strftime($format,$endt);
+		return rsvpmaker_date($format,$t).' - '.rsvpmaker_date($format,$endt);
 	}
 }
 
@@ -3224,7 +3224,7 @@ function rsvpdatetime_shortcode($atts) {
 	global $post, $rsvp_options;
 	$format = empty($atts['format']) ? $rsvp_options['long_date'].' '.$rsvp_options['time_format'] : $atts['format'];
 	$t = rsvpmaker_strtotime(get_rsvp_date($post->ID));
-	return rsvpmaker_strftime($format,$t);
+	return rsvpmaker_date($format,$t);
 }
 
 function rsvpmaker_cronmail_check_duplicate($content) {

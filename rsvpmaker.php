@@ -16,7 +16,7 @@ Text Domain: rsvpmaker
 
 Domain Path: /translations
 
-Version: 8.7
+Version: 8.7.1
 
 */
 
@@ -24,7 +24,7 @@ Version: 8.7
 
 function get_rsvpversion(){
 
-return '8.7';
+return '8.7.1';
 
 }
 
@@ -156,39 +156,26 @@ $rsvp_defaults = array("menu_security" => 'manage_options',
 
 );
 
-
-
 $rsvp_defaults = apply_filters('rsvpmaker_defaults',$rsvp_defaults);
-
-
 
 foreach($rsvp_defaults as $index => $value)
 
 	{
-
 		if(!isset($rsvp_options[$index]))
-
 			$rsvp_options[$index] = $rsvp_defaults[$index];
-
 	}
 
-
-
-if(empty($rsvp_options["long_date"]) || (strpos($rsvp_options["long_date"],'%')  === false))
-
+if(empty($rsvp_options["long_date"]) || (strpos($rsvp_options["long_date"],'%')  !== false))
 	{
 
-	$rsvp_options["long_date"] = '%A %B %e, %Y';
+	$rsvp_options["long_date"] = 'l F j, Y';
 
-	$rsvp_options["short_date"] = '%B %e';
+	$rsvp_options["short_date"] = 'M j';
 
-	$rsvp_options["time_format"] = '%l:%M %p';
+	$rsvp_options["time_format"] = 'g:i A';
 
 	update_option('RSVPMAKER_Options',$rsvp_options);
-
-	}
-
-
+}
 
 if(isset($rsvp_options["rsvp_to_current"]) && $rsvp_options["rsvp_to_current"] && is_user_logged_in() ) 
 

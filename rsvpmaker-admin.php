@@ -289,7 +289,7 @@ $futureyear = 5 + (int) date('Y');
 
 ?>
 <div id="<?php echo $prefix; ?>date<?php echo $index;?>" ><input type="hidden" id="defaulthour" value="<?php echo $rsvp_options["defaulthour"]; ?>" /><input type="hidden" id="defaultmin" value="<?php echo $rsvp_options["defaultmin"]; ?>" />
-<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date" value="<?php echo date('F j, Y g:i A',$t); ?>" size="30"> or <input name="rsvp_sql_date" type="text" class="sql-date" id="sql-date" value="<?php echo rsvpmaker_date('Y-m-d H:i:s',$t) ?>"> <span id="date-weekday"><?php echo rsvpmaker_strftime('%A',$t) ?></span>
+<p><label>Date/Time</label> <input type="text" class="free-text-date" id="free-text-date" value="<?php echo date('F j, Y g:i A',$t); ?>" size="30"> or <input name="rsvp_sql_date" type="text" class="sql-date" id="sql-date" value="<?php echo rsvpmaker_date('Y-m-d H:i:s',$t) ?>"> <span id="date-weekday"><?php echo rsvpmaker_date('%A',$t) ?></span>
 </p>
 <div id="date_error"></div>
 
@@ -871,21 +871,21 @@ rsvp_form_setup_form($options["rsvp_form"]);
 					<h3><?php _e('Date Format (short)','rsvpmaker'); ?>:</h3>
   <input type="text" name="option[short_date]"  id="short_date" value="<?php if(isset($options["short_date"]) ) echo $options["short_date"];?>" /> (used in headlines for event_listing shortcode, also sidebar widget)
 	
-<br />For reference, see PHP <a target="_blank" href="http://php.net/manual/en/function.strftime.php">strftime date format strings</a>
+<br />For reference, see PHP <a target="_blank" href="https://www.php.net/manual/en/datetime.format.php">date format strings</a>
 <br />Examples:<br />
 <?php
-echo '%A %B %e, %Y = '.rsvpmaker_strftime('%A %B %e, %Y').'<br />'; 
-echo '%e %B %Y = '.rsvpmaker_strftime('%e %B %Y').'<br />'; 
-echo '%m-%d-%Y = '.rsvpmaker_strftime('%m-%d-%Y').'<br />'; 
+echo 'l F j, Y = '.rsvpmaker_date('l F j, Y').'<br />'; 
+echo 'j F Y = '.rsvpmaker_date('j F Y').'<br />'; 
+echo 'm-d-Y = '.rsvpmaker_date('m-d-Y').'<br />'; 
 ?>
 <br />
 <h3><?php _e('Time Format','rsvpmaker'); ?>:</h3>
 <p>
-<input type="radio" name="option[time_format]" value="%l:%M %p" <?php if( isset($options["time_format"]) && ($options["time_format"] == "%l:%M %p")) echo ' checked="checked"';?> /> 12 hour AM/PM 
-<input type="radio" name="option[time_format]" value="%H:%M" <?php if( isset($options["time_format"]) && ($options["time_format"] == "%H:%M")) echo ' checked="checked"';?> /> 24 hour 
+<input type="radio" name="option[time_format]" value="g:i A" <?php if( isset($options["time_format"]) && ($options["time_format"] == "g:i A")) echo ' checked="checked"';?> /> 12 hour AM/PM 
+<input type="radio" name="option[time_format]" value="h:i" <?php if( isset($options["time_format"]) && ($options["time_format"] == "h:i")) echo ' checked="checked"';?> /> 24 hour 
 
-<input type="radio" name="option[time_format]" value="%l:%M %p %Z" <?php if( isset($options["time_format"]) && ($options["time_format"] == "%l:%M %p %Z")) echo ' checked="checked"';?> /> 12 hour AM/PM (include timezone)
-<input type="radio" name="option[time_format]" value="%H:%M %Z" <?php if( isset($options["time_format"]) && ($options["time_format"] == "%H:%M %Z")) echo ' checked="checked"';?> /> 24 hour (include timezone)
+<input type="radio" name="option[time_format]" value="g:i A T" <?php if( isset($options["time_format"]) && ($options["time_format"] == "g:i A T")) echo ' checked="checked"';?> /> 12 hour AM/PM (include timezone)
+<input type="radio" name="option[time_format]" value="h:i T" <?php if( isset($options["time_format"]) && ($options["time_format"] == "h:i T")) echo ' checked="checked"';?> /> 24 hour (include timezone)
 
 <br />
 					<h3><?php _e('Event Page','rsvpmaker'); ?>:</h3>
@@ -2240,7 +2240,8 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	global $wpdb, $rsvp_options;
 	
     if( $column_name == 'rsvpmaker_end' ) {
-		echo rsvpmaker_end_date($post_id, true);
+		$event = get_rsvpmaker_event($post_id);
+		echo $event->enddate;
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
 		$end_type = get_post_meta($post_id,'_firsttime',true);
@@ -2265,7 +2266,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	}
     elseif( $column_name == 'event_dates' ) {
 
-$datetime = rsvpmaker_long_date($post_id,true);
+$datetime = get_rsvp_date($post_id);
 $template = get_template_sked($post_id);
 $rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
@@ -2273,7 +2274,7 @@ $s = $dateline = '';
 
 if($datetime)
 {
-		echo $datetime;
+		printf('<span class="rsvpmaker-date" id="rsvpmaker-date-%d">%s</span>',$post_id,$datetime);//echo $datetime;
 }
 elseif($template)
 	{
@@ -3054,7 +3055,7 @@ $wpdb->show_errors();
 				if(!empty($row["note"]))
 					$notification .= "note: " . nl2br($row["note"])."<br />";
 				$t = rsvpmaker_strtotime($row["timestamp"]);
-				$notification .= 'posted: '.rsvpmaker_strftime($rsvp_options["short_date"],$t);
+				$notification .= 'posted: '.rsvpmaker_date($rsvp_options["short_date"],$t);
 				$notification .=  "</p>";
 				$notification .=  "<h3>Event Details</h3>\n".str_replace('#rsvpnow">','#rsvpnow">'.__('Update','rsvptoast').' ',str_replace('*|EMAIL|*',$notify, $event_content));
 				
@@ -3094,7 +3095,7 @@ global $current_user;
 		
 		$event = get_post($post_id);
 		$start_time = $date = get_rsvp_date($post_id);
-		$date = utf8_encode(rsvpmaker_strftime($rsvp_options["long_date"].' %l:%M %p %Z',rsvpmaker_strtotime($date)));
+		$date = utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options['time_format'],rsvpmaker_strtotime($date)));
 		$landing["post_type"] = 'rsvpmaker';
 		$landing["post_title"] = __('Live','rsvpmaker').': '.$event->post_title;
 		$landing["post_content"] = __('The event starts','rsvpmaker').' '.$date."\n\n".$ylive;
@@ -5216,8 +5217,8 @@ function print_quick_date_entry($i,$date_text_default,$datedefault) {
 function rsvpmaker_quick_ui() {
 	global $rsvp_options;
 	$t = strtotime('tomorrow noon');
-	$datedefault = date('Y-m-d H:i:s',$t);
-	$date_text_default = strftime('%B %e, %Y '.$rsvp_options['time_format'],$t);
+	$datedefault = rsvpmaker_date('Y-m-d H:i:s',$t);
+	$date_text_default = rsvpmaker_date('F j, Y '.$rsvp_options['time_format'],$t);
 	$limit = (int) $_GET['quick'];
 	if(!$limit)
 		$limit = 5;
@@ -5539,7 +5540,7 @@ else {
 	$url = rest_url('/rsvpmaker/v1/import/'.$export_code);
 	printf('<p>To move your club\'s event records to another website that also uses this software, copy this web address:</p>
 	<pre>%s</pre>
-	<p>This link will expire at %s. (<a href="%s">reset</a>)</p>',$url,rsvpmaker_strftime($rsvp_options['short_date'].' '.$rsvp_options['time_format'].' %Z',$jt),admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1'));	
+	<p>This link will expire at %s. (<a href="%s">reset</a>)</p>',$url,rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'].' T',$jt),admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1'));	
 }
 ?>
 <h3>Import Events</h3>
@@ -5743,7 +5744,7 @@ else {
 	echo '<p>Preview</p><div style="border: thin dotted #111; padding: 10px; margin: 10px;">';
 	$date = get_rsvp_date($post_id);
 	$t = rsvpmaker_strtotime($date);
-	$date = rsvpmaker_strftime($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);
+	$date = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);
 	printf('<h3>%s</h3><h3>%s</h3>%s',$post->post_title,$date,$post->post_content);	
 	echo '</div>';
 }
@@ -6096,7 +6097,6 @@ switch( $column_name ) :
 		case 'rsvpmaker_end': {
 			$end_type = get_post_meta($post->ID,'_firsttime',true);
 			$end = get_post_meta($post->ID,'_endfirsttime',true);
-			//if(!empty($end_type) && (strpos($end,':') > 0))
 			echo '<label class="alignleft">
 			<span class="title">End Time</span>
 			<span class="input-text-wrap"><input type="time" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>

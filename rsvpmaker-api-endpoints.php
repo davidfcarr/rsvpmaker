@@ -1215,46 +1215,47 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
     return true;
   }
 
-public function get_items($request) {
-	global $default_tz, $rsvp_options;
-  $time = $_POST['time'];
-  $end = $_POST['end'];
-  $tz = $_POST['tzstring'];
-  $format = $_POST['format'];
-  $time = rsvpmaker_strtotime($time);
-  if($end)
-    $end = rsvpmaker_strtotime($end);
-	date_default_timezone_set($tz);
-  //strip off year
-  $rsvp_options['long_date'] = str_replace(', %Y','',$rsvp_options['long_date']);
-  $times['content'] = 'Or: ';
-  if($format == 'time') {
-    $times['content'] .= strftime($rsvp_option['time_format'],$time);
+  public function get_items($request) {
+    global $default_tz, $rsvp_options, $post;
+    $time = $_POST['time'];
+    $end = $_POST['end'];
+    $tz = $_POST['tzstring'];
+    $format = $_POST['format'];
+    $post = get_post($_POST['post_id']);
+    $time = rsvpmaker_strtotime($time);
     if($end)
-      $times['content'] .= ' to '.date('g:i A T',$end);
-  }
-  else {
-    $times['content'] .= $day1 = strftime($rsvp_options['long_date'],$time);
-    $times['content'] .= ' '.date('g:i A T',$time);
-    if($end) {
-      $times['content'] .= ' to ';
-      $day2 = strftime($rsvp_options['long_date'],$end);
-      if($day2 != $day1)
-        $times['content'] .= $day2.' ';
-      $times['content'] .= date('g:i A T',$end);
-      }
-  }
-  $tz3 = date('T');
-  fix_timezone();//wordpress locale setting
-  $s3 = date('T');
-  restore_timezone();
-  if($tz3 == $s3) // if same 3 letter tz (even if not same locale)
-    $times['content'] = '';
-  $times['tzoptions'] = wp_timezone_choice($tz);
-  return new WP_REST_Response($times, 200);
-  }
+      $end = rsvpmaker_strtotime($end);
+    date_default_timezone_set($tz);
+    //strip off year
+    $rsvp_options['long_date'] = str_replace(', %Y','',$rsvp_options['long_date']);
+    $times['content'] = 'Or: ';
+    if($format == 'time') {
+      $times['content'] .= date($rsvp_option['time_format'],$time);
+      if($end)
+        $times['content'] .= ' to '.date('g:i A T',$end);
+    }
+    else {
+      $times['content'] .= $day1 = date($rsvp_options['long_date'],$time);
+      $times['content'] .= ' '.date('g:i A T',$time);
+      if($end) {
+        $times['content'] .= ' to ';
+        $day2 = date($rsvp_options['long_date'],$end);
+        if($day2 != $day1)
+          $times['content'] .= $day2.' ';
+        $times['content'] .= date('g:i A T',$end);
+        }
+    }
+    $tz3 = date('T');
+    fix_timezone();//wordpress locale setting
+    $s3 = date('T');
+    restore_timezone();
+    //if($tz3 == $s3) // if same 3 letter tz (even if not same locale)
+      //$times['content'] = '';
+    $times['tzoptions'] = wp_timezone_choice($tz);
+    return new WP_REST_Response($times, 200);
+    }
 }
-
+  
 add_action('rest_api_init', function () {
 
   $rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();

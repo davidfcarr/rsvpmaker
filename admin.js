@@ -414,7 +414,8 @@ $('.quick_event_date').change(
 		else {
 			$('#'+target).html(localestring);
 			$(this).val(dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds()));
-		}		
+		}
+		$('span #rsvpmaker-date-'+post_id+' .rsvpmaker-date').text(datestring);
 	}
 );
 
@@ -430,9 +431,12 @@ $('.quick_end_time').change(
 				return;
 			}
 		var post_id = $(this).attr('post_id');
-		var datestr = $('#quick_event_date-'+post_id).val();
+		//var datestr = $('#quick_event_date-'+post_id).val();
+		var datestr = $('#post-'+post_id+' .rsvpmaker_end').text();
 		var dateparts = datestr.split(' ');
-		var dt = new Date(dateparts[0]+' '+timestring);
+		var newendstr = dateparts[0]+' '+timestring;
+		var datestr = $('#post-'+post_id+' .rsvpmaker_end').text(newendstr);
+		var dt = new Date(newendstr);
 		var localestring = dt.toLocaleTimeString().replace(':00 ',' ');
 		if(localestring == 'Invalid Date')
 			$('#'+target).html('Time string not valid');
@@ -464,7 +468,7 @@ if(typeof inlineEditPost !== 'undefined') {
 		if ( id > 0 ) {
 			var specific_post_edit_row = $( '#edit-' + id ),
 				specific_post_row = $( '#post-' + id ),
-				datetext = $( '.event_dates', specific_post_row ).text();
+				datetext = $( '.rsvpmaker-date', specific_post_row ).text();
 			var timestamp = Date.parse(datetext);
 			if(Number.isNaN(timestamp))
 				return; 
@@ -477,14 +481,9 @@ if(typeof inlineEditPost !== 'undefined') {
 				var hourplus = pad2(dt.getHours()+1) + ':' + pad2(dt.getMinutes()) + ':' + pad2(dt.getSeconds());
 				var end_date_time = new Date(justdate+' '+hourplus);
 			}
-			else if(endtext.search(/\d\d\d\d/) > 0)
-				{
-					var end_date_time = new Date(endtext);
-				}
 			else
 				{
-					var end_date_text = justdate+' '+endtext;
-					var end_date_time = new Date(end_date_text);
+					var end_date_time = new Date(endtext);
 				}
 			var end_tstring = pad2(end_date_time.getHours()) + ':' + pad2(end_date_time.getMinutes());
 			
