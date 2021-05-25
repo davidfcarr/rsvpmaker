@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.7.2
+Version: 8.7.5
 */
 
 function get_rsvpversion(){
-return '8.7.2';
+return '8.7.5';
 }
 
 global $wp_version;
@@ -451,47 +451,30 @@ else
 
 }
 
-
-
-if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
-
-	include_once WP_PLUGIN_DIR."/rsvpmaker-custom.php";
-
-
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-util.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-admin.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-api-endpoints.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-display.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-plugabble.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/mailchimp-api-master/src/MailChimp.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-email.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-privacy.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-actions.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-form.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-widgets.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-group-email.php";
-
-include WP_PLUGIN_DIR."/rsvpmaker/script.php";
-
-
-
-if(!function_exists('do_blocks'))
-
-	include WP_PLUGIN_DIR."/rsvpmaker/rsvpmaker-classic.php";
-
-
+rsvpmaker_includes();
+function rsvpmaker_includes() {
+	$plugins_dir = plugin_dir_path(__DIR__);
+	$rsvpmaker_dir = plugin_dir_path(__FILE__);
+	
+	if(file_exists($plugins_dir."rsvpmaker-custom.php") )
+		include_once $plugins_dir."rsvpmaker-custom.php";
+	
+	include $rsvpmaker_dir."rsvpmaker-util.php";
+	include $rsvpmaker_dir."rsvpmaker-admin.php";
+	include $rsvpmaker_dir."rsvpmaker-api-endpoints.php";
+	include $rsvpmaker_dir."rsvpmaker-display.php";
+	include $rsvpmaker_dir."rsvpmaker-plugabble.php";
+	include $rsvpmaker_dir."mailchimp-api-master/src/MailChimp.php";
+	include $rsvpmaker_dir."rsvpmaker-email.php";
+	include $rsvpmaker_dir."rsvpmaker-privacy.php";
+	include $rsvpmaker_dir."rsvpmaker-actions.php";
+	include $rsvpmaker_dir."rsvpmaker-form.php";
+	include $rsvpmaker_dir."rsvpmaker-widgets.php";
+	include $rsvpmaker_dir."rsvpmaker-group-email.php";
+	include $rsvpmaker_dir."script.php";
+	if(!function_exists('do_blocks'))
+		include $rsvpmaker_dir."rsvpmaker/rsvpmaker-classic.php";
+}
 
 $gateways = get_rsvpmaker_payment_options ();
 

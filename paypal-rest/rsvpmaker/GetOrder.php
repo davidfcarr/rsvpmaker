@@ -18,8 +18,8 @@ class RSVPMakerGetOrder
         $response = $client->execute(new OrdersGetRequest($orderId));
         {
             if(!empty($_GET['rsvp'])) {
-                $rsvp_id = $_GET['rsvp'];
-                $event = $_GET['event'];
+                $rsvp_id = (int) $_GET['rsvp'];
+                $event = (int) $_GET['event'];
                 rsvpmaker_custom_payment('PayPal REST api',$response->result->purchase_units[0]->amount->value,$rsvp_id,$event, $response->result->id);
             $log = sprintf('%s %s %s %s',$response->result->purchase_units[0]->amount->value,$rsvp_id,$event, $response->result->id);
             //rsvpmaker_debug_log($log,'PayPal test');

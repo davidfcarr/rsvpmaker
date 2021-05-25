@@ -1,6 +1,5 @@
 <?php
-$scriptversion = '20210525';
-$rsvpscript = 'rsvpmaker.min.js';
+$scriptversion = '20210526';
 
 function rsvpmaker_rest_array () {
     global $post;
@@ -24,7 +23,7 @@ $post_id = isset($post->ID) ? $post->ID : 0;
 }
 
 function rsvpmaker_event_scripts() {
-global $post, $scriptversion, $rsvpscript;
+global $post, $scriptversion;
 $scriptversion = time();
 $post_id = isset($post->ID) ? $post->ID : 0;
 global $rsvp_options;
@@ -33,7 +32,7 @@ global $rsvp_options;
 	$myStyleUrl = (isset($rsvp_options["custom_css"]) && $rsvp_options["custom_css"]) ? $rsvp_options["custom_css"] : plugins_url('style.css',__FILE__);
 	wp_register_style('rsvp_style', $myStyleUrl, array(), $scriptversion);
 	wp_enqueue_style( 'rsvp_style');
-	wp_enqueue_script('rsvpmaker_js',str_replace('http:','https:',plugins_url($rsvpscript,__FILE__)), array(), $scriptversion);
+	wp_enqueue_script('rsvpmaker_js',plugins_url('rsvpmaker.min.js',__FILE__), array(), $scriptversion);
 	wp_localize_script( 'rsvpmaker_js', 'ajaxurl', admin_url('admin-ajax.php') );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
     wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array () );

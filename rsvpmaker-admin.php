@@ -83,8 +83,8 @@ function rsvpmaker_save_calendar_data($postID) {
 	}
 	
 	if(!empty($_POST['rsvp_sql_date']) && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['rsvp_sql_date']))
-		update_post_meta($postID,'_rsvp_dates',$_POST['rsvp_sql_date']);
-	if(!empty($_POST['rsvp_sql_end']) && preg_match('/^\d{2}:\d{2}$/',$_POST['rsvp_sql_end']))
+		update_post_meta($postID,'_rsvp_dates',sanitize_text_field($_POST['rsvp_sql_date']));
+	if(!empty($_POST['rsvp_sql_end']) && preg_match('/^\d{2}:\d{2}$/',sanitize_text_field($_POST['rsvp_sql_end'])))
 		update_post_meta($postID,'_endfirsttime',$_POST['rsvp_sql_end']);
 	if(!empty($_POST['end_time_type']))
 		update_post_meta($postID,'_firsttime',sanitize_text_field($_POST['end_time_type']));
@@ -99,11 +99,11 @@ function rsvpmaker_save_calendar_data($postID) {
 			if(isset($_POST["event_day"][$index]) && $_POST["event_day"][$index])
 				{
 				$cddate = format_cddate($year,$_POST["event_month"][$index], $_POST["event_day"][$index], $_POST["event_hour"][$index], $_POST["event_minutes"][$index]);
-				$dpart = explode(':',sanitize_text_field($_POST["event_duration"][$index]));
+				$dpart = explode(':',$_POST["event_duration"][$index]);
 				if( is_numeric($dpart[0]) )
 					{
-					$hour = sanitize_text_field($_POST["event_hour"][$index]) + $dpart[0];
-					$minutes = (isset($dpart[1]) ) ? sanitize_text_field($_POST["event_minutes"][$index]) + $dpart[1] : sanitize_text_field($_POST["event_minutes"][$index]);
+					$hour = sanitize_text_field($_POST["event_hour"][$index]) + sanitize_text_field($dpart[0]);
+					$minutes = (isset($dpart[1]) ) ? sanitize_text_field($_POST["event_minutes"][$index]) + sanitize_text_field($dpart[1]) : sanitize_text_field($_POST["event_minutes"][$index]);
 					$t = rsvpmaker_mktime( $hour, $minutes,0,sanitize_text_field($_POST["event_month"][$index]),sanitize_text_field($_POST["event_day"][$index]),$year);
 					$duration = rsvpmaker_date('Y-m-d H:i:s',$t);
 					}
@@ -310,6 +310,7 @@ function save_rsvp_meta($postID, $new = false)
 {
 
 $setrsvp = $_POST["setrsvp"];
+$setrsvp = rsvpmaker_sanitize_array($setrsvp);
 if($new)
 {
 rsvpmaker_defaults_for_post($postID); //if details not set, import defaults
@@ -513,8 +514,8 @@ echo $label;
 				$newoptions["stripe"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'stripe')) ? 1 : 0;
 				$newoptions["cash_or_custom"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'cash_or_custom')) ? 1 : 0;
 				$nfparts = explode('|',$_POST["currency_format"]);
-				$newoptions["currency_decimal"] = $nfparts[0];
-				$newoptions["currency_thousands"] = $nfparts[1];
+				$newoptions["currency_decimal"] = sanitize_text_field($nfparts[0]);
+				$newoptions["currency_thousands"] = sanitize_text_field($nfparts[1]);
 
 				foreach($newoptions as $name => $value)
 				  $options[$name] = sanitize_text_field($value);
@@ -524,6 +525,7 @@ echo $label;
 				  {
 					//don't overwrite keys that are not displayed
 					$keys = $_POST['rsvpmaker_stripe_keys'];
+					$keys = rsvpmaker_sanitize_array($keys);
 					if(!isset($keys['sk']) || !isset($keys['sandbox_pk']))
 					{
 						$prev = get_option('rsvpmaker_stripe_keys');
@@ -543,6 +545,7 @@ echo $label;
 				if(isset($_POST['rsvpmaker_paypal_rest_keys']))
 				{
 					$keys = $_POST['rsvpmaker_paypal_rest_keys'];
+					$keys = rsvpmaker_sanitize_array($keys);
 					if(!isset($keys['client_id']) || !isset($keys['sandbox_client_id']))
 					{
 						$prev = get_option('rsvpmaker_paypal_rest_keys');
@@ -597,8 +600,8 @@ echo $label;
                   $newoptions["login_required"] = (isset($_POST["option"]["login_required"]) && $_POST["option"]["login_required"]) ? 1 : 0;
                   $newoptions["rsvp_captcha"] = (isset($_POST["option"]["rsvp_captcha"]) && $_POST["option"]["rsvp_captcha"]) ? 1 : 0;
 				  if(isset($_POST["option"]["rsvp_recaptcha_site_key"])) {
-                  $newoptions["rsvp_recaptcha_site_key"] = $_POST["option"]["rsvp_recaptcha_site_key"];
-                  $newoptions["rsvp_recaptcha_secret"] = $_POST["option"]["rsvp_recaptcha_secret"];		  
+                  $newoptions["rsvp_recaptcha_site_key"] = sanitize_text_field($_POST["option"]["rsvp_recaptcha_site_key"]);
+                  $newoptions["rsvp_recaptcha_secret"] = sanitize_text_field($_POST["option"]["rsvp_recaptcha_secret"]);		  
 				  }
                   $newoptions["rsvp_yesno"] = (isset($_POST["option"]["rsvp_yesno"]) && $_POST["option"]["rsvp_yesno"]) ? 1 : 0;
                   $newoptions["calendar_icons"] = (isset($_POST["option"]["calendar_icons"]) && $_POST["option"]["calendar_icons"]) ? 1 : 0;
@@ -669,9 +672,6 @@ for($i=0; $i < 60; $i += 5)
 	$padded = ($i < 10) ? '0'.$i : $i;
 	$minopt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
 	}
-
-if(isset($_GET["test"]))
-	//print_r($options);
 
 if(isset($_POST['timezone_string']))
 {
@@ -1921,8 +1921,8 @@ for($i =0; $i < $futuremonths; $i++)
 }
 else
 {
-	$week = $_GET["week"];
-	$dow = $_GET["dayofweek"];
+	$week = (int) $_GET["week"];
+	$dow = (int) $_GET["dayofweek"];
 	$futuremonths = 12;
 	for($i =0; $i < $futuremonths; $i++)
 		{
@@ -2696,7 +2696,7 @@ if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker
 global $current_user;
 
 if(isset($_GET["rsvpsort"])) {
-	$sort = $_GET["rsvpsort"];
+	$sort = sanitize_text_field($_GET["rsvpsort"]);
 update_user_meta($current_user->ID,'rsvpsort',$sort);
 }
 elseif(isset($_GET['all_posts']) || isset($_GET['post_status'])) {

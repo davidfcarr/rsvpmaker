@@ -370,7 +370,7 @@ elseif(isset($_GET["startdate"]))
 
 	{
 
-		$d = $_GET["startdate"];
+		$d = sanitize_text_field($_GET["startdate"]);
 
 		$where .= " AND ( (rsvpdates.date > '$d') OR (rsvpdates.enddate > '$d') ) ";
 

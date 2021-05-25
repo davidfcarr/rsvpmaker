@@ -438,7 +438,7 @@ public function get_items($request) {
 
     foreach($_POST as $name => $value)
 
-      $vars[$name] = $value;
+      $vars[$name] = sanitize_text_field($value);
 
     if(is_array($base))
 
@@ -708,15 +708,10 @@ class RSVP_RunImport extends WP_REST_Controller {
 
     if(isset($_POST['importrsvp'])) {
 
-      $url = $_POST['importrsvp'];
+      $url = sanitize_text_field($_POST['importrsvp']);
+      $url .= '/'. (int) $_POST['start'];
 
-      $url .= '/'.$_POST['start'];
-
-      $siteurl = get_option( 'siteurl' );
-
-      $parts = explode(':',$siteurl);
-
-      if(strpos($url,$parts[1]))
+      if(rsvpmaker_is_url_local($url))
 
         $error = 'You cannot import into the same site you are exporting from';
 
@@ -836,7 +831,7 @@ public function get_items($request) {
 
     $event = $request['event'];
 
-    $email = $_GET['email_search'];
+    $email = sanitize_email($_GET['email_search']);
 
     $output = ajax_rsvp_email_lookup ($email, $event);
 
@@ -1217,10 +1212,10 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 
   public function get_items($request) {
     global $default_tz, $rsvp_options, $post;
-    $time = $_POST['time'];
-    $end = $_POST['end'];
-    $tz = $_POST['tzstring'];
-    $format = $_POST['format'];
+    $time = sanitize_text_field($_POST['time']);
+    $end = sanitize_text_field($_POST['end']);
+    $tz = sanitize_text_field($_POST['tzstring']);
+    $format = sanitize_text_field($_POST['format']);
     $post = get_post($_POST['post_id']);
     $time = rsvpmaker_strtotime($time);
     if($end)

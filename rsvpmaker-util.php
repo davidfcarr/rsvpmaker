@@ -3850,4 +3850,23 @@ function strftime_format_to_date_format($strftimeformat){
     return $phpdateformat;
 }
 
+function rsvpmaker_is_url_local($url) {
+	$host = parse_url($url, PHP_URL_HOST);
+
+	// Case of an url passed w/o protocol
+	if ($host === NULL)
+		$host = $url;
+
+	$ip = gethostbyname($host);
+
+	return ! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+}
+
+function rsvpmaker_sanitize_array($data) {
+return array_map(
+    function($value) { return sanitize_text_field($value); },
+    $data
+);
+}
+
 ?>
