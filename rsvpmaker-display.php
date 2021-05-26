@@ -10,7 +10,7 @@ if(!wp_is_json_request()){
 
 	add_shortcode('rsvpmaker_form','rsvpmaker_form');
 
-	add_shortcode('event_listing', 'event_listing');
+	add_shortcode('event_listing', 'rsvpmaker_event_listing');
 
 	add_shortcode("rsvpmaker_upcoming","rsvpmaker_upcoming");
 
@@ -72,11 +72,11 @@ if(!wp_is_json_request()){
 
 //event_content defined in rsvpmaker-pluggable.php to allow for variations
 
-add_filter('the_content','event_content_anchor',50);
+add_filter('the_content','rsvpmaker_event_content_anchor',50);
 
 
 
-function event_content_anchor ($content) {
+function rsvpmaker_event_content_anchor ($content) {
 
 global $post;
 
@@ -162,7 +162,7 @@ function rsvp_url_date_query ($direction = '') {
 
 
 
-function event_listing($atts = array()) {
+function rsvpmaker_event_listing($atts = array()) {
 
 global $rsvp_options;
 

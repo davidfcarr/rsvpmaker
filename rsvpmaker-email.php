@@ -298,13 +298,13 @@ if($mail["html"])
           // handle the options page
           function handle_options()
           {
+			if(!empty($_POST['rsvpelist']) && !wp_verify_nonce($_POST['rsvpelist'],'rsvpmaker_settings'))
+				wp_die('security error');
+
               $options = $this->get_options();
               
               if (isset($_POST["emailsubmitted"])) {
-              		
-              		//check security
-              		check_admin_referer('email-nonce');
-              		
+                 		
 				  //$options = array();
 				  if(is_array($options))
                   foreach ($options as $name => $value)
@@ -349,6 +349,7 @@ if($mail["html"])
 	 <div id="mainblock" style="width:710px">
 	<div class="dbx-content">
 		 	<form name="EmailOptions" action="<?php echo $action_url ; ?>" method="post">
+			 <?php echo wp_nonce_field('rsvpmaker_settings','rsvpelist'); ?>
 <?php
 if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'email')
 {
@@ -359,8 +360,6 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'email')
 ?>
 <input type="hidden" name="tab" value="email">
 					<input type="hidden" name="emailsubmitted" value="1" /> 
-					
-					<?php wp_nonce_field('email-nonce'); ?>
 					
                     <p><?php _e('Email From','rsvpmaker');?>: 
                       <input type="text" name="email-from" id="email-from" value="<?php echo $options["email-from"]; ?>" />

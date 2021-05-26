@@ -35,11 +35,11 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       createOrder: function(data, actions) {
         return actions.order.create({
           purchase_units: [{
-          custom_id: '<?php echo $rsvp_id; ?>',
-          description: '<?php echo $description; ?>',
+          custom_id: '<?php echo esc_html($rsvp_id); ?>',
+          description: '<?php echo esc_html($description); ?>',
             amount: {
-              value: '<?php echo $amount; ?>',
-              currency_code: '<?php echo $currency_code; ?>'
+              value: '<?php echo esc_html($amount); ?>',
+              currency_code: '<?php echo esc_html($currency_code); ?>'
             }
           }]
         });

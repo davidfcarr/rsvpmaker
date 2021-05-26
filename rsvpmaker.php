@@ -7,20 +7,17 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.7.5
+Version: 8.7.6
 */
 
 function get_rsvpversion(){
-return '8.7.5';
+return '8.7.6';
 }
 
 global $wp_version;
-
 global $default_tz;
 
 $default_tz = date_default_timezone_get();
-
-
 
 if (version_compare($wp_version,"3.0","<"))
 
@@ -1684,7 +1681,7 @@ function rsvpmaker_server_block_render(){
 
 	register_block_type('rsvpmaker/stripe-form-wrapper', ['render_callback' => 'stripe_form_wrapper']);
 
-	register_block_type('rsvpmaker/eventlisting', ['render_callback' => 'event_listing']);
+	register_block_type('rsvpmaker/eventlisting', ['render_callback' => 'rsvpmaker_event_listing']);
 
 	register_block_type('rsvpmaker/rsvpdateblock', ['render_callback' => 'rsvpdateblock']);
 

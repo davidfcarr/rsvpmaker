@@ -2378,7 +2378,7 @@ if(isset($_POST["payingfor"]) && is_array($_POST["payingfor"]) )
 
 		$price = (float) $_POST["price"][$index];
 
-		$price = check_coupon_code($price);
+		$price = rsvpmaker_check_coupon_code($price);
 
 		$cost = $value * $price;
 
@@ -2474,7 +2474,7 @@ if($participants && isset($_POST["guest_count_price"]))
 
 		if($multiple == 1) //coupon codes not applied to multiple admission "table" pricing
 
-			$price = check_coupon_code($price);
+			$price = rsvpmaker_check_coupon_code($price);
 
 		if($multiple > 1)
 
@@ -9535,7 +9535,7 @@ $wp_meta_boxes['dashboard']['normal']['core'] = $sorted_dashboard;
 
 
 
-function check_coupon_code($price) {
+function rsvpmaker_check_coupon_code($price) {
 
 	global $post;
 

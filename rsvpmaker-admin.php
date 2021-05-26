@@ -501,6 +501,8 @@ echo $label;
           // handle the options page
           function handle_options()
           {
+			if(!empty($_POST) && !isset($_POST['rsvpelist']) && !wp_verify_nonce($_POST['_wpnonce'],'rsvpmaker_settings'))
+				wp_die('nonce security error');
 			if(!empty($_POST['rsvpmaker_save_form']) && !empty($_POST['form_id']))
 			{
 				$forms = rsvpmaker_get_forms();
@@ -524,8 +526,8 @@ echo $label;
 				  if(isset($_POST['rsvpmaker_stripe_keys']))
 				  {
 					//don't overwrite keys that are not displayed
-					$keys = $_POST['rsvpmaker_stripe_keys'];
-					$keys = rsvpmaker_sanitize_array($keys);
+					$keys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_stripe_keys']);
+
 					if(!isset($keys['sk']) || !isset($keys['sandbox_pk']))
 					{
 						$prev = get_option('rsvpmaker_stripe_keys');
@@ -544,8 +546,8 @@ echo $label;
 				  }
 				if(isset($_POST['rsvpmaker_paypal_rest_keys']))
 				{
-					$keys = $_POST['rsvpmaker_paypal_rest_keys'];
-					$keys = rsvpmaker_sanitize_array($keys);
+					$keys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_paypal_rest_keys']);
+
 					if(!isset($keys['client_id']) || !isset($keys['sandbox_client_id']))
 					{
 						$prev = get_option('rsvpmaker_paypal_rest_keys');
@@ -571,27 +573,19 @@ echo $label;
 
 
 			  if(isset($_POST["enotify_option"])) {
-              $newoptions = stripslashes_deep($_POST["enotify_option"]);
-				foreach($newoptions as $name => $value)
-				  $options[$name] = sanitize_text_field($value);
+				$newoptions = array_map( 'sanitize_text_field', stripslashes_deep($_POST["enotify_option"] ) );
                   update_option($this->db_option, $options);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - email server.','rsvpmaker').'</p></div>';
 			  }	
 			  
 			  if(isset($_POST["security_option"])) {
-              $newoptions = stripslashes_deep($_POST["security_option"]);
-				  $newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
-				foreach($newoptions as $name => $value)
-				  $options[$name] = sanitize_text_field($value);
+				$newoptions = array_map( 'sanitize_text_field', stripslashes_deep($_POST["security_option"] ) );
+				$newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
                   update_option($this->db_option, $options);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - security.','rsvpmaker').'</p></div>';
-
 			  }	
 
 			  if (isset($_POST['submitted'])) {
-              		
-              		//check security
-              		check_admin_referer('calendar-nonce');
               		
                   $newoptions = stripslashes_deep($_POST["option"]);
                   $newoptions["rsvp_on"] = (isset($_POST["option"]["rsvp_on"]) && $_POST["option"]["rsvp_on"]) ? 1 : 0;
@@ -721,7 +715,7 @@ if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 		 	<form name="caldendar_options" action="<?php echo $action_url ;?>" method="post">
 					
                     <input type="hidden" name="submitted" value="1" /> 
-					<?php wp_nonce_field('calendar-nonce');?>
+					<?php echo wp_nonce_field('rsvpmaker_settings'); ?>
 <?php
 //legacy feature
 if(!empty($options["default_content"])) {
@@ -758,8 +752,8 @@ if(function_exists('rsvpmaker_recaptcha_output'))
 {
 ?>
 <strong>Or use Google ReCaptcha (v2) </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a><br />
-ReCaptcha (v2) Site Key: <input type="text" name="option[rsvp_recaptcha_site_key]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_site_key"]) echo $options["rsvp_recaptcha_site_key"];?>"><br />
-ReCaptcha (v2) Secret: <input type="text" name="option[rsvp_recaptcha_secret]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_secret"]) echo $options["rsvp_recaptcha_secret"];?>"><br />
+ReCaptcha (v2) Site Key: <input type="text" name="option[rsvp_recaptcha_site_key]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_site_key"]) echo esc_attr($options["rsvp_recaptcha_site_key"]);?>"><br />
+ReCaptcha (v2) Secret: <input type="text" name="option[rsvp_recaptcha_secret]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_secret"]) echo esc_attr($options["rsvp_recaptcha_secret"]);?>"><br />
 <?php
 }
 ?>
@@ -964,7 +958,7 @@ foreach($templates as $tname => $tfile)
 </section>
 <section id="security" class="rsvpmaker">
 <form name="rsvpmaker_security_options" action="<?php echo $action_url ;?>" method="post">
-
+<?php echo wp_nonce_field('rsvpmaker_settings'); ?>
 <h3><?php _e('Menu Security','rsvpmaker'); ?>:</h3>
 <?php
 rsvpmaker_menu_security( __("RSVP Report",'rsvpmaker'),  "menu_security", $options );
@@ -993,6 +987,7 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 </section>
 <section id="payments" class="rsvpmaker">
 <form name="rsvpmaker_payment_options" action="<?php echo $action_url ;?>" method="post">
+<?php echo wp_nonce_field('rsvpmaker_settings'); ?>
 
 <p>If you wish to collect online payments for an event, please set up API access to the payment gateway of your choice.</p>
 <?php do_action('rsvpmaker_payment_settings'); ?>
@@ -1168,6 +1163,7 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')
 </section>
 <section id="notification_email" class="rsvpmaker">
 <form name="notify_options" action="<?php echo $action_url ;?>" method="post">
+<?php echo wp_nonce_field('rsvpmaker_settings'); ?>
 <?php do_action('rsvpmaker_email_settings'); ?>
 <p><?php _e('These settings are related to transactional emails, such as registration confirmation messages. If you are using another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults.','rsvpmaker'); ?></p>
 
@@ -1236,12 +1232,15 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'notification_email')
 
 <?php
 global $RSVPMaker_Email_Options;
+if(empty($RSVPMaker_Email_Options))
+$RSVPMaker_Email_Options = new RSVPMaker_Email_Options();
 $RSVPMaker_Email_Options->handle_options();
 ?>
 
     </section>
 <section id="groupemail" class="rsvpmaker">
 <form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
+<?php echo wp_nonce_field('rsvpmaker_settings'); ?>
 <h2><?php _e('Group Email','rsvpmaker'); ?></h2>
 <?php
 do_action('group_email_admin_notice');
@@ -1432,7 +1431,7 @@ $tab .= '<input type="hidden" name="tab" value="rsvpforms">';
 		printf('<h3>%s %s</h3>',get_the_title($fpost->post_parent),get_rsvp_date($fpost->post_parent));
 		echo rsvpmaker_form_summary($fpost);
 		$edit = admin_url('post.php?action=edit&post='.$fpost->ID);
-		printf('<form action="%s" method="post"><input type="hidden" name="form_id" value="%d">%s: <input type="text" name="rsvpmaker_save_form">%s <button>%s</button></form>',admin_url('options-general.php?page=rsvpmaker-admin.php'),$fpost->ID,__('Name','rsvpmaker'),$tab,__('Save','rsvpmaker'));
+		printf('<form action="%s" method="post"><input type="hidden" name="form_id" value="%d">%s: <input type="text" name="rsvpmaker_save_form">%s <button>%s</button>%s</form>',admin_url('options-general.php?page=rsvpmaker-admin.php'),$fpost->ID,__('Name','rsvpmaker'),$tab,__('Save','rsvpmaker'),wp_nonce_field('rsvpmaker_settings'));
 	}
 }
 
@@ -1537,40 +1536,7 @@ function print_group_list_options($list_type, $vars) {
 	}	
 }
 
-function admin_event_listing() {
-global $wpdb;
-
-$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-FROM `".$wpdb->postmeta."`
-JOIN $wpdb->posts ON ".$wpdb->postmeta.".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates' 
-WHERE meta_value > CURDATE( ) AND $wpdb->posts.post_status = 'publish'
-ORDER BY meta_value";
-$listings = '';
-if(empty($_GET["events"]) || ($_GET["events"] != 'all') )
-	$sql .= " LIMIT 0, 20";
-
-$results = $wpdb->get_results($sql,ARRAY_A);
-if($results)
-foreach($results as $row)
-	{
-	$t = rsvpmaker_strtotime($row["datetime"]);
-	if(empty($dateline[$row["postID"]])) $dateline[$row["postID"]] = '';
-	$dateline[$row["postID"]] .= rsvpmaker_date('F jS',$t)." ";
-	if(empty($eventlist[$row["postID"]]))
-		$eventlist[$row["postID"]] = $row;
-	}
-
-if(!empty($eventlist))
-foreach($eventlist as $event)
-	{
-		$listings .= sprintf('<li><a href="'.admin_url().'post.php?post=%d&action=edit">%s</a> %s</li>'."\n",$event["postID"],$event["post_title"],$dateline[$event["postID"]]);
-	}	
-
-	$listings = "<p><strong>".__('Events (click to edit)','rsvpmaker')."</strong></p>\n<ul id=\"eventheadlines\">\n$listings</ul>\n".'<p><a href="?events=all">'.__('Show All','rsvpmaker').'</a></p>';
-	return $listings;
-}
-
-function default_event_content($content) {
+function rsvpmaker_default_event_content($content) {
 global $post;
 global $rsvp_options;
 global $rsvp_template;
@@ -1586,7 +1552,7 @@ else
 return $content;
 }
 
-function title_from_template($title) {
+function rsvpmaker_title_from_template($title) {
 global $rsvp_template;
 global $post;
 global $wpdb;
@@ -1600,465 +1566,8 @@ if(isset($_GET["from_template"]) )
 return $title;
 }
 
-add_filter('the_editor_content','default_event_content');
-add_filter('default_title','title_from_template');
-
-function multiple() {
-
-global $wpdb;
-global $current_user;
-
-if(isset($_POST))
-{
-
-	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
-	$my_post['post_author'] = $current_user->ID;
-	$my_post['post_type'] = 'rsvpmaker';
-	if(!empty($_POST["recur_year"]))
-	foreach($_POST["recur_year"] as $index => $year)
-		{
-		if($_POST["recur_day"][$index] )
-			{
-			$my_post['post_title'] = sanitize_text_field($_POST["title"][$index]);
-			$my_post['post_content'] = wp_kses_post($_POST["body"][$index]);
-			$cddate = format_cddate($year, sanitize_text_field($_POST["recur_month"][$index]), sanitize_text_field($_POST["recur_day"][$index]), sanitize_text_field($_POST["recur_hour"][$index]), sanitize_text_field($_POST["recur_minutes"][$index]));// Insert the post into the database
-  			if($postID = wp_insert_post( $my_post ) )
-				{
-				add_post_meta($postID,'_rsvp_dates',$cddate);
-				echo '<div class="updated">'."Added post # $postID for $cddate.</div>\n";
-				}
-			}		
-		}
-}
-
-global $rsvp_options;
-
-;?>
-<div class="wrap"> 
-	<div id="icon-edit" class="icon32"><br /></div> 
-<h2><?php _e('Multiple Events','rsvpmaker'); ?></h2> 
-
-<p><?php _e('Use this form to enter multiple events quickly with basic formatting','rsvpmaker'); ?>.</p>
-
-<form id="form1" name="form1" method="post" action="<?php echo admin_url('edit.php?post_type=rsvpmaker&page=multiple');?>">
-<?php
-$today = '<option value="0">None</option>';
-for($i=0; $i < 10; $i++)
-{
-
-$m = date('n');
-$y = date('Y');
-$y2 = $y+1;
-
-wp_nonce_field(-1,'add_date'.$i);
-?>
-<p><?php _e('Title','rsvpmaker'); ?>: <input type="text" name="title[<?php echo $i;?>]" /></p>
-<p><textarea name="body[<?php echo $i;?>]" rows="5" cols="80"><?php echo $rsvp_options["default_content"];?></textarea></p>
-
-<div id="recur_date<?php echo $i;?>" style="border-bottom: thin solid #888;">
-
-<?php _e('Month','rsvpmaker'); ?>: 
-              <select name="recur_month[<?php echo $i;?>]"> 
-              <option value="<?php echo $m;?>"><?php echo $m;?></option> 
-              <option value="1">1</option> 
-              <option value="2">2</option> 
-              <option value="3">3</option> 
-              <option value="4">4</option> 
-              <option value="5">5</option> 
-              <option value="6">6</option> 
-              <option value="7">7</option> 
-              <option value="8">8</option> 
-              <option value="9">9</option> 
-              <option value="10">10</option> 
-              <option value="11">11</option> 
-              <option value="12">12</option> 
-              </select> 
-            <?php _e('Day','rsvpmaker'); ?> 
-            <select name="recur_day[<?php echo $i;?>]"> 
-              <?php echo $today;?> 
-              <option value="1">1</option> 
-              <option value="2">2</option> 
-              <option value="3">3</option> 
-              <option value="4">4</option> 
-              <option value="5">5</option> 
-              <option value="6">6</option> 
-              <option value="7">7</option> 
-              <option value="8">8</option> 
-              <option value="9">9</option> 
-              <option value="10">10</option> 
-              <option value="11">11</option> 
-              <option value="12">12</option> 
-              <option value="13">13</option> 
-              <option value="14">14</option> 
-              <option value="15">15</option> 
-              <option value="16">16</option> 
-              <option value="17">17</option> 
-              <option value="18">18</option> 
-              <option value="19">19</option> 
-              <option value="20">20</option> 
-              <option value="21">21</option> 
-              <option value="22">22</option> 
-              <option value="23">23</option> 
-              <option value="24">24</option> 
-              <option value="25">25</option> 
-              <option value="26">26</option> 
-              <option value="27">27</option> 
-              <option value="28">28</option> 
-              <option value="29">29</option> 
-              <option value="30">30</option> 
-              <option value="31">31</option> 
-            </select> 
-            <?php _e('Year','rsvpmaker'); ?>
-            <select name="recur_year[<?php echo $i;?>]"> 
-              <option value="<?php echo $y;?>"><?php echo $y;?></option> 
-              <option value="<?php echo $y2;?>"><?php echo $y2;?></option> 
-            </select> 
-
-<?php _e('Hour','rsvpmaker'); ?>: <select name="recur_hour[<?php echo $i;?>]"> 
- 
-<option  value="00">12 a.m.</option> 
-<option  value="1">1 a.m.</option> 
-<option  value="2">2 a.m.</option> 
-<option  value="3">3 a.m.</option> 
-<option  value="4">4 a.m.</option> 
-<option  value="5">5 a.m.</option> 
-<option  value="6">6 a.m.</option> 
-<option  value="7">7 a.m.</option> 
-<option  value="8">8 a.m.</option> 
-<option  value="9">9 a.m.</option> 
-<option  value="10">10 a.m.</option> 
-<option  value="11">11 a.m.</option> 
-<option  value="12">12 p.m.</option> 
-<option  value="13">1 p.m.</option> 
-<option  value="14">2 p.m.</option> 
-<option  value="15">3 p.m.</option> 
-<option  value="16">4 p.m.</option> 
-<option  value="17">5 p.m.</option> 
-<option  value="18">6 p.m.</option> 
-<option  selected = "selected"  value="19">7 p.m.</option> 
-<option  value="20">8 p.m.</option> 
-<option  value="21">9 p.m.</option> 
-<option  value="22">10 p.m.</option> 
-<option  value="23">11 p.m.</option></select> 
- 
-<?php _e('Minutes','rsvpmaker'); ?>: <select name="recur_minutes[<?php echo $i;?>]"> 
-<option value="00">00</option> 
-<option value="15">15</option> 
-<option value="30">30</option> 
-<option value="45">45</option> 
-</select>
-
-</div>
-<?php
-} // end for loop
-;?>
-
-<input type="submit" name="button" id="button" value="<?php _e('Submit','rsvpmaker'); ?>" />
-</form>
-</div>
-<?php
-}
-
-
-
-function add_dates() {
-
-global $wpdb;
-global $current_user;
-
-if(isset($_POST))
-{
-
-if(empty($_POST['add_recur']) || !wp_verify_nonce($_POST['add_recur'],'recur'))
-	die("Security error");
-
-if(!empty($_POST["recur-title"]))
-	{
-	$my_post['post_title'] = sanitize_text_field($_POST["recur-title"]);
-	$my_post['post_content'] = wp_kses_post($_POST["recur-body"]);
-	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
-	$my_post['post_author'] = $current_user->ID;
-	$my_post['post_type'] = 'rsvpmaker';
-
-	foreach($_POST["recur_checked"] as $index => $on)
-		{
-		$year = sanitize_text_field($_POST["recur_year"][$index]);
-		if(!empty($_POST["recur_day"][$index]) )
-			{
-			$cddate = format_cddate(sanitize_text_field($year,$_POST["recur_month"][$index], $_POST["recur_day"][$index], $_POST["event_hour"], $_POST["event_minutes"]));
-
-			$dpart = explode(':',sanitize_text_field($_POST["event_duration"]));			
-			
-			if( is_numeric($dpart[0]) )
-				{
-				$dtext = $cddate.' +'.$dpart[0].' hours';
-				if(!empty($dpart[1]))
-					$dtext .= ' +'.$dpart[1].' minutes';
-				$dt = rsvpmaker_strtotime($dtext);
-				$duration = rsvpmaker_date('Y-m-d H:i:s',$dt);
-				}
-			else
-				$duration = sanitize_text_field($_POST["event_duration"]); // empty or all day
-
-			if($duration == 'set')
-				$end_time = sanitize_text_field($_POST["hourevent_duration"][$index].':'.$_POST["minevent_duration"][$index]);
-
-// Insert the post into the database
-  			if($postID = wp_insert_post( $my_post ) )
-				{
-				add_rsvpmaker_date($postID,$cddate,$duration,$end_time);
-				echo '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$postID.'">Edit</a> / <a href="'.site_url().'/?p='.$postID.'">View</a></div>';	
-
-				save_rsvp_meta($postID);
-			}
-		}
-	}
-	}
-	rsvpmaker_reminders_nudge(); // make sure new events with reminders get added to cron
-}
-
-global $rsvp_options;
-
-;?>
-<div class="wrap"> 
-	<div id="icon-edit" class="icon32"><br /></div> 
-<h2><?php _e('Recurring Event','rsvpmaker'); ?></h2> 
-
-<?php
-
-$defaulthour = (isset($_GET["hour"])) ? ( (int) $_GET["hour"]) : 19;
-$defaultmin = (isset($_GET["minutes"])) ? ( (int) $_GET["minutes"]) : 0;
-$houropt = $minopt = '';
-for($i=0; $i < 24; $i++)
-	{
-	$selected = ($i == $defaulthour) ? ' selected="selected" ' : '';
-	$padded = ($i < 10) ? '0'.$i : $i;
-	if($i == 0)
-		$twelvehour = "12 a.m.";
-	elseif($i == 12)
-		$twelvehour = "12 p.m.";
-	elseif($i > 12)
-		$twelvehour = ($i - 12) ." p.m.";
-	else		
-		$twelvehour = $i." a.m.";
-
-	$houropt .= sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
-	}
-
-for($i=0; $i < 60; $i += 5)
-	{
-	$selected = ($i == $defaultmin) ? ' selected="selected" ' : '';
-	$padded = ($i < 10) ? '0'.$i : $i;
-	$minopt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
-	}
-
-$cm = date('n');
-$y = date('Y');
-$y2 = $y+1;
-
-if(!isset($_GET["week"]))
-{
-;?>
-
-<p><?php _e('Use this form to create multiple events with the same headline, description, and RSVP paramaters. You can have the program automatically calculate dates for a regular montly schedule.','rsvpmaker');?></p>
-
-<p><em><?php _e('Optional: Calculate dates for a recurring schedule','rsvpmaker');?> ...</em></p>
-
-<form method="get" action="<?php echo admin_url("edit.php");?>" id="recursked">
-
-<p><?php _e('Regular schedule','rsvpmaker');?>: 
-
-<select name="week" id="week">
-
-<option value="+0 week"><?php _e('First','rsvpmaker');?></option> 
-<option value="+1 week"><?php _e('Second','rsvpmaker');?></option> 
-<option value="+2 week"><?php _e('Third','rsvpmaker');?></option> 
-<option value="+3 week"><?php _e('Fourth','rsvpmaker');?></option> 
-<option value="Last"><?php _e('Last','rsvpmaker');?></option> 
-</select>
-
-<select name="dayofweek" id="dayofweek">
-
-<option value="Sunday"><?php _e('Sunday','rsvpmaker');?></option> 
-<option value="Monday"><?php _e('Monday','rsvpmaker');?></option> 
-<option value="Tuesday"><?php _e('Tuesday','rsvpmaker');?></option> 
-<option value="Wednesday"><?php _e('Wednesday','rsvpmaker');?></option> 
-<option value="Thursday"><?php _e('Thursday','rsvpmaker');?></option> 
-<option value="Friday"><?php _e('Friday','rsvpmaker');?></option> 
-<option value="Saturday"><?php _e('Saturday','rsvpmaker');?></option> 
-</select>
-
-</p>
-        <table border="0">
-
-<tr><td><?php _e('Time','rsvpmaker');?>:</td>
-<td><?php _e('Hour','rsvpmaker');?>: <select name="hour" id="hour">
-<?php echo $houropt;?>
-</select>
-
-<?php _e('Minutes','rsvpmaker');?>: <select id="minutes" name="minutes">
-<?php echo $minopt;?>
-</select> 
-
-<em><?php _e('For an event starting at 12:30 p.m., you would select 12 p.m. and 30 minutes.','rsvpmaker');?></em>
-
-</td>
-
-          </tr>
-</table>
-
-<input type="hidden" name="post_type" value="rsvpmaker" />
-<input type="hidden" name="page" value="add_dates" />
-<input type="submit" value="Get Dates" />
-</form>
-
-<p><em>... <?php _e('or enter dates individually.','rsvpmaker');?></em></p>
-
-<?php
-$futuremonths = 12;
-for($i =0; $i < $futuremonths; $i++)
-	$projected[$i] = rsvpmaker_mktime(0,0,0,$cm+$i,1,$y); // first day of month
-}
-else
-{
-	$week = (int) $_GET["week"];
-	$dow = (int) $_GET["dayofweek"];
-	$futuremonths = 12;
-	for($i =0; $i < $futuremonths; $i++)
-		{
-		$thisdate = rsvpmaker_mktime(0,0,0,$cm+$i,1,$y); // first day of month
-		$datetext =  "$week $dow ".date("F Y",$thisdate);
-		$projected[$i] = rsvpmaker_strtotime($datetext);
-		$datetexts[$i] = $datetext;
-		}//end for loop
-
-echo "<p>".__('Loading recurring series of dates for','rsvpmaker'). " $week $dow. ".__("To omit a date in the series, change the day field to &quot;Not Set&quot;",'rsvpmaker')."</p>\n";
-}
-
-;?>
-
-<h3><?php _e('Enter Recurring Events','rsvpmaker'); ?></h3>
-
-<form id="form1" name="form1" method="post" action="<?php echo admin_url("edit.php?post_type=rsvpmaker&page=add_dates");?>">
-<p>Headline: <input type="text" name="recur-title" size="60" value="<?php if(isset($_POST["recur-title"])) echo (stripslashes($_POST["recur-title"]));?>" /></p>
-<p><textarea name="recur-body" rows="5" cols="80"><?php echo (isset($_POST["recur-body"]) && wp_kses_post($_POST["recur-body"])) ? stripslashes(wp_kses_post($_POST["recur-body"])) : $rsvp_options["default_content"];?></textarea></p>
-<?php
-wp_nonce_field('recur','add_recur');
-
-foreach($projected as $i => $ts)
-{
-
-$today = rsvpmaker_date('d',$ts);
-$cm = date('n',$ts);
-$y = date('Y',$ts);
-
-$y2 = $y+1;
-
-;?>
-<div id="recur_date<?php echo $i;?>" style="margin-bottom: 5px;">
-
-<input type="checkbox" name="recur_checked[<?php echo $i;?>]" value="<?php echo $i;?>" />
-
-<?php _e('Month','rsvpmaker'); ?>: 
-              <select name="recur_month[<?php echo $i;?>]"> 
-              <option value="<?php echo $cm;?>"><?php echo $cm;?></option> 
-              <option value="1">1</option> 
-              <option value="2">2</option> 
-              <option value="3">3</option> 
-              <option value="4">4</option> 
-              <option value="5">5</option> 
-              <option value="6">6</option> 
-              <option value="7">7</option> 
-              <option value="8">8</option> 
-              <option value="9">9</option> 
-              <option value="10">10</option> 
-              <option value="11">11</option> 
-              <option value="12">12</option> 
-              </select> 
-            <?php _e('Day','rsvpmaker'); ?> 
-            <select name="recur_day[<?php echo $i;?>]"> 
-<?php
-if($week)
-	echo sprintf('<option value="%s">%s</option>',$today,$today);
-?>
-              <option value="1">1</option> 
-              <option value="2">2</option> 
-              <option value="3">3</option> 
-              <option value="4">4</option> 
-              <option value="5">5</option> 
-              <option value="6">6</option> 
-              <option value="7">7</option> 
-              <option value="8">8</option> 
-              <option value="9">9</option> 
-              <option value="10">10</option> 
-              <option value="11">11</option> 
-              <option value="12">12</option> 
-              <option value="13">13</option> 
-              <option value="14">14</option> 
-              <option value="15">15</option> 
-              <option value="16">16</option> 
-              <option value="17">17</option> 
-              <option value="18">18</option> 
-              <option value="19">19</option> 
-              <option value="20">20</option> 
-              <option value="21">21</option> 
-              <option value="22">22</option> 
-              <option value="23">23</option> 
-              <option value="24">24</option> 
-              <option value="25">25</option> 
-              <option value="26">26</option> 
-              <option value="27">27</option> 
-              <option value="28">28</option> 
-              <option value="29">29</option> 
-              <option value="30">30</option> 
-              <option value="31">31</option> 
-            </select> 
-            <?php _e('Year','rsvpmaker'); ?>
-            <select name="recur_year[<?php echo $i;?>]"> 
-              <option value="<?php echo $y;?>"><?php echo $y;?></option> 
-              <option value="<?php echo $y2;?>"><?php echo $y2;?></option> 
-            </select> 
-
-</div>
-
-<?php
-} // end for loop
-
-?>
-<p><?php echo __('Hour:','rsvpmaker');?> <select name="event_hour"> 
-<?php echo $houropt;?>
-</select> 
- 
-<?php echo __('Minutes:','rsvpmaker');?> <select name="event_minutes"> 
-<?php echo $minopt;?>
-</select> -
-
-<?php echo __('Duration','rsvpmaker');?> <select name="event_duration">
-<option value=""><?php echo __('Not set (optional)','rsvpmaker');?></option>
-<option value="allday"><?php echo __("All day/time not shown",'rsvpmaker');?></option>
-<?php for($h = 1; $h < 24; $h++) { ;?>
-<option value="<?php echo $h;?>"><?php echo $h;?> hours</option>
-<option value="<?php echo $h;?>:15"><?php echo $h;?>:15</option>
-<option value="<?php echo $h;?>:30"><?php echo $h;?>:30</option>
-<option value="<?php echo $h;?>:45"><?php echo $h;?>:45</option>
-<?php 
-}
-;?>
-</select>
-</p>
-<?php
-echo GetRSVPAdminForm(0);
-
-;?>
-
-<input type="submit" name="button" id="button" value="Submit" />
-</form>
-
-</div><!-- wrap -->
-
-<?php
-}
-
+add_filter('the_editor_content','rsvpmaker_default_event_content');
+add_filter('default_title','rsvpmaker_title_from_template');
 
 function rsvpmaker_doc () {
 global $rsvp_options;
