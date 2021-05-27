@@ -1241,9 +1241,9 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
         }
     }
     $tz3 = date('T');
-    fix_timezone();//wordpress locale setting
+    rsvpmaker_fix_timezone();//wordpress locale setting
     $s3 = date('T');
-    restore_timezone();
+    rsvpmaker_restore_timezone();
     //if($tz3 == $s3) // if same 3 letter tz (even if not same locale)
       //$times['content'] = '';
     $times['tzoptions'] = wp_timezone_choice($tz);

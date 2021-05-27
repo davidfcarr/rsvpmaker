@@ -178,7 +178,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$complex_pricing = rsvp_complex_price($post->ID);
 		$complex_template = get_post_meta($post->ID,'complex_template',true);
 		$chosen_gateway = get_rsvpmaker_payment_gateway ();
-		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.$post->ID);
+		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.intval($post->ID));
 		$sked = get_template_sked($post->ID);// get_post_meta($post->ID,'_sked',true);
 		$rsvpmaker_special = get_post_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
@@ -189,7 +189,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		if($sked)
 		{
 			$projected_label = __('Create/update events from template','rsvpmaker');
-			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post->ID);
+			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.intval($post->ID));
 			$template_msg = sked_to_text($sked);
 		}
 		$template_id = (int) get_post_meta($post->ID,'_meet_recur',true);
@@ -239,7 +239,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$form_id = (int) $rsvp_options['rsvp_form'];
 	$fpost = get_post($form_id);
 	//rsvpmaker_debug_log($form_id);
-	$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$post->ID);
+	$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.intval($post->ID));
 	$form_customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
 	$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
 	$note = (strpos($fpost->post_content,'name="note"') || strpos($fpost->post_content,'formnote')) ? 'Yes' : 'No';
@@ -288,9 +288,9 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'top_message' => $top_message,
 			'bottom_message' => $bottom_message,
 			'confirmation_excerpt' => $excerpt,
-			'confirmation_edit' => admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.$post->ID),
+			'confirmation_edit' => admin_url('post.php?action=edit&post='.$confirm->ID.'&back='.intval($post->ID)),
 			'confirmation_customize' => admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$confirm->ID.'#confirmation'),
-			'reminders' => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
+			'reminders' => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.intval($post->ID)),
 			'confirmation_type' => $confirmation_type,
 			'confirm_edit_post' => $confirm_edit_post,
 			'rsvp_tx_template_choices' => $confirmation_email_templates,

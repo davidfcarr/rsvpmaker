@@ -190,23 +190,21 @@ $url = get_permalink($rsvpmaker_stripe_checkout_page_id);
 
 if(isset($vars['paymentType']) && ( $vars['paymentType'] == 'donation'))
 
-	$output = sprintf('<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,__('Amount','rsvpmaker'),strtoupper($vars['currency']),$vars['amount'],$idempotency_key,__('Pay with Card'));
+	$output = sprintf('<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,__('Amount','rsvpmaker'),esc_attr(strtoupper($vars['currency'])),esc_attr($vars['amount']),esc_attr($idempotency_key),__('Pay with Card'));
 
 else
 
-	$output = sprintf('<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,$idempotency_key,__('Pay with Card'));
+	$output = sprintf('<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>',$url,esc_attr($idempotency_key),__('Pay with Card'));
 
 if($show)
 
-	$output .= sprintf('<p>%s%s %s<br />%s</p>',$currency_symbol,$vars['amount'],$rsvp_options["paypal_currency"],$vars["description"]);
+	$output .= sprintf('<p>%s%s %s<br />%s</p>',$currency_symbol,esc_html($vars['amount']),esc_html($rsvp_options["paypal_currency"]),esc_html($vars["description"]));
 
 $rsvpmaker_stripe_form = $output;
 
 return $output;
 
 }
-
-
 
 function rsvpmaker_stripe_checkout() {
 
@@ -220,13 +218,13 @@ if(empty($_GET['txid']))
 
 ob_start();
 
-$varkey = $idempotency_key = $_GET['txid'];
+$varkey = $idempotency_key = sanitize_text_field($_GET['txid']);
 
 $vars = get_option($idempotency_key);
 
 if(empty($vars))
 
-	return '<p>'.__('No pending payment found for','rsvpmaker').' '.$idempotency_key.'</p>';
+	return '<p>'.__('No pending payment found for','rsvpmaker').' '.esc_html($idempotency_key).'</p>';
 
 if($vars['paymentType'] == 'donation')
 
@@ -236,7 +234,7 @@ if($vars['paymentType'] == 'donation')
 
 		return '<p>No amount given</p>';
 
-	$vars['amount'] = $_GET['amount'];
+	$vars['amount'] = sanitize_text_field($_GET['amount']);
 
 	} 
 
@@ -248,9 +246,9 @@ if(!empty($vars['email']))
 
 {
 
-	$email = $vars['email'];
+	$email = sanitize_email($vars['email']);
 
-	$name = (empty($vars['name'])) ? '' : $vars['name']; 
+	$name = (empty($vars['name'])) ? '' : sanitize_text_field($vars['name']); 
 
 }
 
@@ -292,7 +290,7 @@ elseif($vars['currency'] == 'eur')
 
 
 
-$paylabel = __('Pay','rsvpmaker') .' '. $currency_symbol.$vars['amount'].' '.strtoupper($vars['currency']);
+$paylabel = __('Pay','rsvpmaker') .' '. $currency_symbol.esc_attr($vars['amount']).' '.esc_attr(strtoupper($vars['currency']));
 
 \Stripe\Stripe::setApiKey($secret);
 
@@ -348,9 +346,9 @@ $price = $vars['amount'] * 100;
 
 <form id="payee-form">
 
-<div><input id="stripe-checkout-name" name="name" placeholder="<?php _e('Your Name Here','rsvpmaker');?>" value="<?php echo $name; ?>"></div>
+<div><input id="stripe-checkout-name" name="name" placeholder="<?php _e('Your Name Here','rsvpmaker');?>" value="<?php echo esc_attr($name); ?>"></div>
 
-<div><input id="stripe-checkout-email" name="email" placeholder="email@example.com" value="<?php echo $email; ?>"></div>
+<div><input id="stripe-checkout-email" name="email" placeholder="email@example.com" value="<?php echo esc_attr($email); ?>"></div>
 
 <div id="card-element">
 
@@ -360,9 +358,9 @@ $price = $vars['amount'] * 100;
 
 
 
-<p><button id="card-button" class="stripebutton" data-secret="<?php echo $intent->client_secret; ?>">
+<p><button id="card-button" class="stripebutton" data-secret="<?php echo esc_attr($intent->client_secret); ?>">
 
-    <?php echo $paylabel; ?>
+    <?php echo esc_html($paylabel); ?>
 
 </button></p>
 
@@ -634,7 +632,7 @@ function rsvpmaker_stripe_notify($vars) {
 
 	{
 
-		$mail['html'] .= sprintf('<div>%s: %s</div>',$index, $value);
+		$mail['html'] .= sprintf('<div>%s: %s</div>',$index, esc_html($value));
 
 	}
 
@@ -648,8 +646,6 @@ function rsvpmaker_stripe_notify($vars) {
 	}
 
 }
-
-
 
 function rsvpmaker_stripe_report () {
 
@@ -683,7 +679,7 @@ function rsvpmaker_stripe_report () {
 	<button>Get</button></form></div>',admin_url('edit.php'));
 
 	$tx = rsvpmaker_stripe_transactions (100);
-	echo $tx['content'];
+	echo wp_kses_post($tx['content']);
 	echo '<h3>Export Format</h3>
 	<p>Formatted for copy-paste into Excel or other spreadsheet program
 	<br />
@@ -855,7 +851,7 @@ foreach($history->data as $index => $data) {
 
         $refunds[$data->id] = array('amount' => $amount, 'date' => $date);
 	if($output)
-    printf('<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>',$name, $date, number_format(($data->amount / 100),2),number_format(($data->fee / 100),2),$data->reporting_category, $data->id);
+    printf('<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>',esc_html($name), esc_html($date), number_format(($data->amount / 100),2),number_format(($data->fee / 100),2),esc_html($data->reporting_category), esc_html($data->id));
 
 }
 
@@ -865,29 +861,23 @@ if(!$output)
 if(!empty($tablerow)) {
 	ksort($tablerow);
 	$table = implode("",$tablerow);
-		echo  '<h3>Export Format</h3><pre>Date,Name,Amount,Fee,Yield'."\n".$table.'</pre>';
+	echo '<h3>Export Format</h3><pre>Date,Name,Amount,Fee,Yield'."\n".wp_kses_post($table).'</pre>';
 }
 
 if(!empty($fees))
 
 {
-
     echo '<h2>Fees</h2>';
 
     $feetotal = 0;
 
     foreach($fees as $index => $fee)
-
     {
-
         $feetotal += $fee;
-
-        printf('<p>%s %s</p>',$index,$fee);
-
+        printf('<p>%s %s</p>',esc_html($index),esc_html($fee));
     }
 
-    printf('<p>Total Fees: %s</p>',$feetotal);
-
+    printf('<p>Total Fees: %s</p>',esc_html($feetotal));
 }
 
 if(!empty($refunds))
@@ -897,9 +887,9 @@ if(!empty($refunds))
     foreach($refunds as $index => $refund)
     {
         $rtotal += $refund['amount'];
-        printf('<p>%s %s %s</p>',$index,$refund["amount"],$refund['date']);
+        printf('<p>%s %s %s</p>',esc_html($index),esc_html($refund["amount"]),esc_html($refund['date']));
     }
-    printf('<p>Total Refunds: %s</p>',$rtotal);
+    printf('<p>Total Refunds: %s</p>',esc_html($rtotal));
 }
 
 }
@@ -939,7 +929,7 @@ function rsvpmaker_stripe_transactions () {
 		foreach($transaction as $column => $value) {
 		if(($column == 'id') || ($column == 'metadata') || ($column == 'status') )
 			continue;
-			$td .= '<td>'.$value.'</td>';
+			$td .= '<td>'.esc_html($value).'</td>';
 			if(strpos($value,'"'))
 				$value = str_replace('"','\"',$value);
 			if(!is_numeric($value))

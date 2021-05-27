@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.7.6
+Version: 8.7.7
 */
 
 function get_rsvpversion(){
-return '8.7.6';
+return '8.7.7';
 }
 
 global $wp_version;
@@ -26,12 +26,8 @@ if (version_compare($wp_version,"3.0","<"))
 
 
 function rsvpmaker_load_plugin_textdomain() {
-
 	load_plugin_textdomain( 'rsvpmaker', FALSE, basename( dirname( __FILE__ ) ) . '/translations/' );
-
 }
-
-
 
 global $rsvp_options;
 
@@ -1491,11 +1487,9 @@ $rsvp_id = $_COOKIE['rsvp_for_'.$post->ID];
 
 	
 
-	$message = sprintf('<p>%s '.__('payment for','rsvpmaker').' %s %s '.__(' c/o Stripe transaction','rsvpmaker').' %s<br />'.__('Post ID','rsvpmaker').': %s<br />'.__('Time','rsvpmaker').': %s</p>',$charge,$row["first"],$row["last"],$tx_id,$event,date('r'));
+	$message = sprintf('<p>%s '.__('payment for','rsvpmaker').' %s %s '.__(' c/o Stripe transaction','rsvpmaker').' %s<br />'.__('Post ID','rsvpmaker').': %s<br />'.__('Time','rsvpmaker').': %s</p>',esc_html($charge),esc_html($row["first"]),esc_html($row["last"]),esc_html($tx_id),esc_html($event),date('r'));
 
 add_post_meta($event, '_paypal_log', $message);
-
-
 
 }
 
@@ -1543,15 +1537,11 @@ function rsvpmaker_before_post_display_action (){
 
 }
 
-
-
 function add_rsvpmaker_roles() {
 
 $rsvpmakereditor = get_role('rsvpmakereditor');
 
 if(!$rsvpmakereditor)
-
-
 
 add_role( 'rsvpmakereditor', 'RSVPMaker Editor', array( 
 
@@ -1617,15 +1607,13 @@ function rsvpmaker_wp_editor($content, $editor_id, $settings = array())
 
 if(function_exists('do_blocks')) //gutenberg world
 
-	printf('<p><textarea rows="10" cols="80" id="%s" name=%s>%s</textarea></p>',$editor_id,$editor_id,$content);
+	printf('<p><textarea rows="10" cols="80" id="%s" name=%s>%s</textarea></p>',esc_attr($editor_id),esc_attr($editor_id),wp_kses_post($content));
 
 else
 
 	wp_editor($content, $editor_id, $settings);
 
 }
-
-
 
 function rsvpmaker_dequeue_script() {
 
@@ -1650,8 +1638,6 @@ function rsvpautog($content) {
 	return $content;
 
 }
-
-
 
 function rsvpmaker_server_block_render(){
 

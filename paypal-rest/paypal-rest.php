@@ -24,7 +24,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
   else
       $paypal_client_id = $paypal_rest_keys['client_id'];
-  $verify = ($rsvp_id) ? '/?paypal_verify=1&rsvp='.$rsvp_id.'&event='.$post->ID : '/?paypal_verify=1';
+  $verify = ($rsvp_id) ? '/?paypal_verify=1&rsvp='.$rsvp_id.'&event='.intval($post->ID) : '/?paypal_verify=1';
   ob_start();
   ?>
   <script

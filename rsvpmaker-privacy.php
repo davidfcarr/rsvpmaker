@@ -224,8 +224,4 @@ function rsvpmaker_plugin_add_privacy_policy_content() {
 
 }
 
-
-
-
-
 ?>

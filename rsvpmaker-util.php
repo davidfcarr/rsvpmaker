@@ -37,7 +37,7 @@ function rsvpmaker_add_timestamps () {
 		date_default_timezone_set($default_tz);
 }
 
-function fix_timezone($timezone = '' ) {
+function rsvpmaker_fix_timezone($timezone = '' ) {
 
 	global $post;
 
@@ -61,7 +61,7 @@ function fix_timezone($timezone = '' ) {
 		date_default_timezone_set($timezone);
 }
 
-function restore_timezone() {
+function rsvpmaker_restore_timezone() {
 
 	global $default_tz;
 
@@ -73,20 +73,20 @@ function rsvpmaker_strtotime($string) {
 
 	$string = str_replace('::',':',$string);
 
-	fix_timezone();
+	rsvpmaker_fix_timezone();
 
 	$t = strtotime($string);
 
-	restore_timezone();
+	rsvpmaker_restore_timezone();
 
 	return $t;
 
 }
 
 function rsvpmaker_mktime($hour=NULL, $minute = NULL, $second = NULL,$month = NULL, $day = NULL, $year = NULL) {
-	fix_timezone();
+	rsvpmaker_fix_timezone();
 	$t = mktime((int) $hour, (int) $minute, (int) $second, (int) $month, (int) $day,(int)$year);
-	restore_timezone();
+	rsvpmaker_restore_timezone();
 	return $t;
 }
 
@@ -141,7 +141,7 @@ function rsvpmaker_short_date($post_id, $and_time = false, $end_time = false) {
 		$and_time = false;
 	if(empty($timerow))
 		return;
-	fix_timezone();
+	rsvpmaker_fix_timezone();
 	$output = $start_date = wp_date($rsvp_options['short_date'], $timerow->ts_start);
 	if($and_time) {
 		$time_format = $rsvp_options['time_format'];
@@ -159,7 +159,7 @@ function rsvpmaker_short_date($post_id, $and_time = false, $end_time = false) {
 			$output .= ' '.$time;
 		}
 	}
-	restore_timezone();
+	rsvpmaker_restore_timezone();
 	return $output;
 }
 
@@ -177,14 +177,14 @@ function rsvpmaker_end_date($post_id, $and_time = false) {
 	}
 	if($timerow->display_type == 'allday')
 		$and_time = false;
-	fix_timezone();
+	rsvpmaker_fix_timezone();
 	$output = wp_date($rsvp_options['long_date'], $timerow->ts_end);
 	if($and_time) {
 		$time_format = $rsvp_options['time_format'];
 		$time = wp_date($time_format, $timerow->ts_end);
 		$output .= ' '.$time;
 	}
-		restore_timezone();
+		rsvpmaker_restore_timezone();
 	return $output;
 }
 
@@ -197,11 +197,11 @@ function rsvpmaker_time_format($post_id, $end_time = false) {
 	$timerow = $wpdb->get_row($sql);
 	if(empty($timerow))
 		return;
-	fix_timezone();
+	rsvpmaker_fix_timezone();
 	$t = ($end_time) ? $timerow->ts_end : $timerow->ts_start;
 	$time_format = $rsvp_options['time_format'];
 	$time = wp_date($time_format, $timerow->ts_start);
-	restore_timezone();
+	rsvpmaker_restore_timezone();
 	return $time;
 }
 
@@ -264,7 +264,7 @@ function get_rsvpmaker_event($post_id)
 	
 	$wpdb->show_errors();
 	
-	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id;
+	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".intval($post_id);
 	return $wpdb->get_row($sql);	
 }
 	
@@ -286,10 +286,10 @@ if(!empty($rsvpdates[$post_id]))
 
 $wpdb->show_errors();
 
-$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id;
+$sql = "SELECT date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".intval($post_id);
 $date = $wpdb->get_var($sql);
 if($date == '0000-00-00 00:00:00') {
-	$wpdb->query("DELETE FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$post_id );
+	$wpdb->query("DELETE FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".intval($post_id) );
 	return;
 }
 return $date;
@@ -371,12 +371,8 @@ printf('<span id="end_time" class="end_time"> <input name="rsvp_sql_end" type="t
 echo '</p>';
 }
 
-
-
 function get_rsvp_dates($post_id, $obj = false)
-
 {
-
 global $wpdb, $rsvpdates;
 
 if(empty($rsvpdates))
@@ -384,11 +380,8 @@ if(empty($rsvpdates))
 	cache_rsvp_dates(50);
 
 if(!empty($rsvpdates[$post_id]) && (count($rsvpdates[$post_id]) == 1) )
-
 {
-
 	foreach($rsvpdates[$post_id] as $index => $datetime)
-
 	{
 
 	$drow['datetime'] = $datetime;
@@ -429,7 +422,7 @@ if(empty($post_id))
 
 $wpdb->show_errors();
 
-$sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".$post_id." AND meta_key='_rsvp_dates' ORDER BY meta_value";
+$sql = "SELECT * FROM ".$wpdb->postmeta." WHERE post_id=".intval($post_id)." AND meta_key='_rsvp_dates' ORDER BY meta_value";
 
 $results = $wpdb->get_results($sql);
 if(empty($results))
@@ -1227,13 +1220,11 @@ foreach($future as $event)
 
 	if(get_post_meta($event->ID,'_rsvp_on',true))
 
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,rsvpmaker_date('F j, Y',rsvpmaker_strtotime($event->datetime)));
+	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",esc_attr($event->ID),esc_html($event->post_title),rsvpmaker_date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 
 	}
 
 $options .= "<optiongroup>"."\n";
-
-
 
 $options .= '<optgroup label="'.__('Recent Events','rsvpmaker').'">'."\n";
 
@@ -1247,7 +1238,7 @@ foreach($past as $event)
 
 	if(get_post_meta($event->ID,'_rsvp_on',true))
 
-	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,rsvpmaker_date('F j, Y',rsvpmaker_strtotime($event->datetime)));
+	$options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,esc_html($event->post_title),rsvpmaker_date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 
 	}
 
@@ -1322,7 +1313,6 @@ function rsvpmaker_has_template ($post_id = 0) {
 	return get_post_meta($post_id,'_meet_recur',true);
 
 }
-
 
 
 function cache_rsvp_dates($limit = 50) {
@@ -1414,7 +1404,6 @@ return $active_options;
 }
 
 
-
 function get_rsvpmaker_stripe_keys_all () {
 
 	$keys = get_option('rsvpmaker_stripe_keys');
@@ -1496,10 +1485,7 @@ function get_rsvpmaker_stripe_keys () {
 	else
 
 		return false;
-
 }
-
-
 
 function get_rspmaker_paypal_rest_keys () {
 
@@ -1535,7 +1521,7 @@ function rsvpmaker_is_post_meta($post_id,$field) {
 
 	global $wpdb;
 
-	return $wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE meta_key ='".$field."' AND post_id=".$post_id);
+	return $wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE meta_key ='".$field."' AND post_id=".intval($post_id));
 
 }
 
@@ -1708,8 +1694,6 @@ function rsvpmaker_data_check() {
 function rsvpmaker_set_defaults_all($display = false) {
 
 	global $rsvp_options, $wpdb;
-
-
 
 	$defaults = array( 
 
@@ -1969,7 +1953,7 @@ if(!isset($_POST['confirm']))
 
 <input type="hidden" name="confirm" value="1" />
 
-<input type="hidden" name="older_than" value="<?php echo $older; ?>" /> 
+<input type="hidden" name="older_than" value="<?php echo esc_attr($older); ?>" /> 
 
 <?php submit_button('Confirm Delete') ?>
 
@@ -2011,7 +1995,7 @@ if(!isset($_POST['confirm']))
 
 		}
 
-		printf('<div>%s %s %s</div>',$deleted,$event->post_title,$event->date);
+		printf('<div>%s %s %s</div>',esc_html($deleted),esc_html($event->post_title),esc_html($event->date));
 
 	}
 
@@ -2035,7 +2019,7 @@ if(!isset($_POST['confirm']))
 
 <input type="hidden" name="confirm" value="1" />
 
-RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo $older; ?>" /> 
+RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo esc_attr($older); ?>" /> 
 
 <?php submit_button('Confirm Delete') ?>
 
@@ -2052,7 +2036,7 @@ if(isset($_POST['confirm'])) {
 else {
 	$sql = "SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE timestamp < '$older' ";
 	$count = $wpdb->get_var($sql);
-	printf('<p style="color: red;">%d RSVPs older than %s </p>',$count,$older);
+	printf('<p style="color: red;">%d RSVPs older than %s </p>',$count,esc_html($older));
 }
 
 
@@ -2096,7 +2080,7 @@ $minus30 = strtotime('30 days ago');
 
 foreach($defaults as $index => $field)
 
-printf('<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>',$index,$field);
+printf('<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>',esc_attr($index),esc_html($field));
 
 ?>
 
@@ -2748,8 +2732,6 @@ function new_template_schedule($post_id,$template,$source = '') {
 	return $new_template_schedule;
 }
 
-
-
 function build_template_schedule($post_id,$dows,$weeks,$hour,$minutes,$duration,$end,$stop) {
 
 		$weekarray = get_week_array();
@@ -2879,7 +2861,7 @@ elseif(isset($_COOKIE['rsvp_for_'.$post->ID]) && !$email_context)
 
 elseif(is_user_logged_in() && !empty($email)) {
 
-	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$email.'" AND event='.$post->ID.' ORDER BY id DESC';
+	$sql = 'SELECT id FROM '.$wpdb->prefix.'rsvpmaker WHERE email LIKE "'.$email.'" AND event='.intval($post->ID).' ORDER BY id DESC';
 
 	$rsvp_id = (int) $wpdb->get_var($sql);	
 
@@ -3353,7 +3335,7 @@ foreach($confs as $arg)
 
 		);
 
-		$args[] = array('parent' => $parent_tag, 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.$post->ID, 'meta' => array('class' => 'rsvpmaker-overwrite-template'));
+		$args[] = array('parent' => $parent_tag, 'title' => __('Update Template Based On Event'), 'id' => 'rsvpmaker-overwrite-template', 'href' => admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template=').$t.'&event='.intval($post->ID), 'meta' => array('class' => 'rsvpmaker-overwrite-template'));
 
 		}
 

@@ -6,8 +6,6 @@ global $rsvp_options;
 
 $newform = true;
 
-
-
 $form = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
 
 <!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
@@ -30,68 +28,39 @@ $form = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guest
 
 <!-- wp:rsvpmaker/formnote /-->';
 
-
-
 if($rsvp_form_post)
-
 	{
-
 	$post = get_post($rsvp_form_post);
-
 	if(!empty($post) && ($post->post_status == 'publish'))
-
 	{
-
 		$rsvp_options['rsvp_form'] = $rsvp_form_post;
-
 		wp_update_post(array('ID' => $rsvp_form_post,'post_title'=>'RSVP Form:Default','post_content'=>$form ));
-
 		$newform = false;	
-
 	}
-
 	}
-
-
 
 if($newform) {
-
 	$rsvp_options['rsvp_form'] = wp_insert_post(array('post_title'=>'RSVP Form:Default','post_content'=>$form,'post_status'=>'publish','post_type'=>'rsvpmaker','post_parent' => 0));
-
 	update_option('RSVPMAKER_Options',$rsvp_options);
-
 	update_post_meta($rsvp_options['rsvp_form'],'_rsvpmaker_special','RSVP Form');
-
 	}
 
 if($future)
-
 {
-
 	$results = get_future_events();
-
 	if($results)
-
 	foreach($results as $post)
-
 	{
-
 		update_post_meta($post->ID,'_rsvp_form',$rsvp_options['rsvp_form']);
-
 	}
-
 }
 
 return $rsvp_options['rsvp_form'];
 
 }
 
-
-
 function customize_rsvp_form () {
-
 global $current_user, $wpdb, $rsvp_options;
-
 if(!empty($_GET['rsvp_form_new'])) {
 	$id = rsvpmaker_get_form_id($_GET['rsvp_form_new']);
 	wp_safe_redirect(admin_url('post.php?post='.$id.'&action=edit'));
@@ -107,9 +76,7 @@ if(!empty($_GET['rsvp_form_switch']) && !empty($_GET['post_id'])) {
 }
 
 if(current_user_can('manage_options') && isset($_GET['upgrade_rsvpform'])) {
-
 	$id = upgrade_rsvpform();
-
 }	
 
 if(isset($_GET['rsvpcz_default']) && isset($_GET['post_id'])) {
@@ -120,27 +87,16 @@ if(isset($_GET['rsvpcz_default']) && isset($_GET['post_id'])) {
 }
 
 if(isset($_GET['rsvpcz']) && isset($_GET['post_id'])) {
-
 	$meta_key = $_GET['rsvpcz'];
-
 	$parent = (int) $_GET['post_id'];
-
 	$title = $_GET['title'].':'.$parent;
-
 	$content = '';
-
 	if(isset($_GET['source'])) {
-
 		$source = (int) $_GET['source'];
-
 		if($source) {
-
 			$old = get_post($source);
-
 			$content = (empty($old->post_content)) ? '' : $old->post_content;
-
 		}
-
 	}
 
 	$new["post_title"] = $title;
@@ -349,8 +305,6 @@ if(isset($_GET['payment_confirmation'])) {
 
 }
 
-
-
 if(isset($_GET['customize_form'])) {
 
 	$parent = (int) $_GET['post_id'];
@@ -379,45 +333,26 @@ if(isset($_GET['customize_form'])) {
 
 	$new["post_content"] = $old->post_content;
 
-	////print_r($new);
-
 	remove_all_filters("content_save_pre"); //don't allow form fields to be filtered out
 
 	$id = wp_insert_post($new);
 
-	//printf('<p>Insert post returned %s',$id);
-
 	if($id)
-
 		{
-
 			update_post_meta($parent,'_rsvp_form',$id);
-
 			update_post_meta($id,'_rsvpmaker_special','RSVP Form');
-
 		}
-
 	}
-
 }
-
-
 
 if(!empty($id)) {
 
 	$destination = admin_url('post.php?action=edit&post=').$id;
-
 	if(!empty($post_id))
-
 		$destination .= '&back='.$post_id;
-
 	header('Location: '.$destination);
-
 	exit();
-
 }
-
-	
 
 }
 
@@ -447,8 +382,6 @@ function rsvp_field_apply_default($content,$slug,$default) {
 
 }
 
-
-
 function rsvp_form_text($atts, $content) {
 
 	global $post;
@@ -470,14 +403,11 @@ function rsvp_form_text($atts, $content) {
 	if(isset($atts["required"]) || isset($atts["require"]))
 
 	{
-
 		$rsvp_required_field[$slug] = $slug;
-
 		$required = 'required';
-
 	}
 
-	$content = sprintf('<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>',$required,$label,$required,$slug,$slug,$slug);
+	$content = sprintf('<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>',esc_attr($required),esc_html($label),esc_attr($required),esc_attr($slug),esc_attr($slug),esc_attr($slug));
 
 	if($slug == 'email')
 
@@ -486,8 +416,6 @@ function rsvp_form_text($atts, $content) {
 	return rsvp_form_field($atts,$content);
 
 }
-
-
 
 function rsvp_form_textarea($atts, $content = '') {
 
@@ -507,13 +435,11 @@ function rsvp_form_textarea($atts, $content = '') {
 
 	$required = '';
 
-	$content = sprintf('<div class="wp-block-rsvpmaker-formtextarea %srsvpblock"><p><label>%s:</label></p><p><textarea rows="%d" class="%s" type="text" name="profile[%s]" id="%s"></textarea></p></div>',$required,$label,$required,$rows,$slug,$slug,$slug);
+	$content = sprintf('<div class="wp-block-rsvpmaker-formtextarea %srsvpblock"><p><label>%s:</label></p><p><textarea rows="%d" class="%s" type="text" name="profile[%s]" id="%s"></textarea></p></div>',esc_attr($required),esc_html($label),esc_attr($required),esc_attr($rows),esc_attr($slug),esc_attr($slug),esc_attr($slug));
 
 	return rsvp_form_field($atts,$content);
 
 }
-
-
 
 function rsvp_form_select($atts, $content = '') {
 
@@ -537,17 +463,13 @@ function rsvp_form_select($atts, $content = '') {
 
 	foreach($atts['choicearray'] as $choice)
 
-		$choices .= sprintf('<option value="%s">%s</option>',$choice,$choice);
+		$choices .= sprintf('<option value="%s">%s</option>',esc_attr($choice),esc_attr($choice));
 
-
-
-	$content = sprintf('<div class="wp-block-rsvpmaker-formselect %srsvpblock"><p><label>%s:</label> <span><select class="%s" name="profile[%s]" id="%s">%s</select></span></p></div>',$required,$label,$slug,$slug,$slug,$choices);
+	$content = sprintf('<div class="wp-block-rsvpmaker-formselect %srsvpblock"><p><label>%s:</label> <span><select class="%s" name="profile[%s]" id="%s">%s</select></span></p></div>',esc_attr($required),esc_html($label),esc_attr($slug),esc_attr($slug),esc_attr($slug),$choices);
 
 	return rsvp_form_field($atts,$content);
 
 }
-
-
 
 function rsvp_form_radio($atts, $content = '') {
 
@@ -567,11 +489,11 @@ function rsvp_form_radio($atts, $content = '') {
 
 	foreach($atts['choicearray'] as $choice)
 
-		$choices .= sprintf('<span class="rsvp-form-radio"><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s"/> %s </span>',$slug,$slug,$slug,$choice,$choice);
+		$choices .= sprintf('<span class="rsvp-form-radio"><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s"/> %s </span>',esc_attr($slug),esc_attr($slug),esc_attr($slug),esc_attr($choice),esc_html($choice));
 
 	$required = '';
 
-	$content = sprintf('<div class="wp-block-rsvpmaker-formradio %srsvpblock"><p><label>%s:</label> %s</p></div>',$required,$label,$choices);
+	$content = sprintf('<div class="wp-block-rsvpmaker-formradio %srsvpblock"><p><label>%s:</label> %s</p></div>',esc_attr($required),esc_html($label),$choices);
 
 	return rsvp_form_field($atts,$content);
 
@@ -598,8 +520,6 @@ function rsvp_form_field($atts, $content = '') {
 	update_post_meta($post->ID,'rsvpform'.$slug,$label);
 
 	global $profile;
-
-	//$profile = array('first' => 'David','last' => 'Carr','meal'=>'Chicken','dessert'=>'pie','email'=>'david@carrcommunications.com');
 
 	global $guestprofile;
 
@@ -631,38 +551,22 @@ function rsvp_form_note ($atts = array()) {
 
 }
 
-
-
 function rsvp_guest_content($content) {
-
 	$content = str_replace(']"','][]"',$content);
-
 	$content = str_replace('"profile','"guest',$content);
-
 	$content = preg_replace('/id="[^"]+"/','',$content);//no ids on guest fields
-
 	$content = str_replace('class="required"','',$content);//no required fields
-
 	return $content;
-
 }
-
-
 
 function rsvp_add_guest_field($content,$slug) {
-
 	global $guestfields;
-
 	$guestfields[$slug] = rsvp_guest_content($content);
-
 }
-
-
 
 function rsvp_form_guests($atts, $content) {
 
 if(is_admin())
-
 	return $content;
 
 $content = '';//ignore content
@@ -675,8 +579,6 @@ $shared = '';
 
 $label = (isset($atts['label'])) ? $atts['label'] : __('Guest','rsvpmaker');
 
-
-
 if(is_array($guestfields))
 
 	foreach($guestfields as $slug => $field)
@@ -684,8 +586,6 @@ if(is_array($guestfields))
 		$shared .= $field;
 
 $template = '<div class="guest_blank" id="first_blank"><p><strong>'.__('Guest','rsvpmaker').' ###</strong></p>'.$shared . $content.'</div>';//fields shared from master form, plus added fields
-
-	
 
 $addmore = (isset($atts['addmore'])) ? $atts['addmore'] : __('Add more guests','rsvpmaker');
 
@@ -704,8 +604,6 @@ $output = '';
 $count = 1; // reserve 0 for host
 
 $max_party = (isset($atts["max_party"])) ? (int) $atts["max_party"] : 0;
-
-
 
 if(isset($master_rsvp) && $master_rsvp)
 
@@ -749,7 +647,7 @@ if($results = $wpdb->get_results($guestsql, ARRAY_A) )
 
 			$output = str_replace('[]','['.$count.']',$output);
 
-			$output .= sprintf('<div><input type="checkbox" name="guestdelete[%s]" value="%s" /> '.__('Delete Guest','rsvpmaker').' %d</div><input type="hidden" name="guest[id][%s]" value="%s">',$row["id"],$row["id"], $count,$count,$row["id"]);
+			$output .= sprintf('<div><input type="checkbox" name="guestdelete[%s]" value="%s" /> '.__('Delete Guest','rsvpmaker').' %d</div><input type="hidden" name="guest[id][%s]" value="%s">',esc_attr($row["id"]),esc_attr($row["id"]), $count,$count,esc_attr($row["id"]));
 
 			$count++;
 

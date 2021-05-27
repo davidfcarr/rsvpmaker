@@ -16,8 +16,6 @@ email_content_minfilters();
 
 if ( have_posts() ) : the_post();
 
-
-
 global $post;
 
 global $custom_fields;
@@ -31,7 +29,6 @@ global $wp_query;
 $email_context = true;
 
 $text = '';
-
 
 
 if(isset($_GET['template'])) {
@@ -52,15 +49,9 @@ $t_index = isset($custom_fields["_email_template"][0]) ? $custom_fields["_email_
 
 $template = $templates[$t_index]["html"];
 
-
-
 $content = do_blocks(do_shortcode($template));
 
-
-
 endif;
-
-
 
 $htmlfooter = '<div id="messagefooter">
 

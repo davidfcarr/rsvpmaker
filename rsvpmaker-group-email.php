@@ -65,7 +65,7 @@ $html = rsvpmaker_relay_init(true);
 
 if($html)
 
-    echo $html;
+    echo wp_kses_post($html);
 
 else
 
@@ -150,7 +150,7 @@ function rsvpmaker_relay_queue() {
                 $wpdb->query($sql);    
             }
             if(rsvpmaker_cronmail_check_duplicate($row->meta_value.$row->post_content)) {
-                $html .= '<div>skipped duplicate to '.$row->meta_value.'</div>';
+                $html .= '<div>skipped duplicate to '.esc_html($row->meta_value).'</div>';
                 continue;
             }
 
@@ -686,7 +686,7 @@ if (sizeof($atturls) > 0) {
 
 if(isset($_GET['nosave'])) {
 
-    echo '<h1>Version to send (not saved)</h2>'.$qpost['post_content'];
+    echo '<h1>Version to send (not saved)</h2>'.wp_kses_post($qpost['post_content']);
 
     return;
 
