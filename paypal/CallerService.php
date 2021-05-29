@@ -58,7 +58,7 @@ function hash_call( $methodName, $nvpStr ) {
 		// moving to display page to display curl errors
 		  $_SESSION['curl_error_no']  = curl_errno( $ch );
 		  $_SESSION['curl_error_msg'] = curl_error( $ch );
-		  $location                   = $_SERVER['REQUEST_URI'] . '?paypal=error&function=callerservice';
+		  $location = sanitize_text_field($_SERVER['REQUEST_URI']) . '?paypal=error&function=callerservice';
 		  header( "Location: $location" );
 		  exit();
 	} else {

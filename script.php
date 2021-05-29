@@ -1,4 +1,7 @@
 <?php
+/*
+* Load JS and Css
+*/
 $scriptversion = '20210526';
 
 function rsvpmaker_rest_array() {
@@ -18,9 +21,9 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	( ( strpos( $_GET['page'], 'rsvp' ) !== false ) || ( strpos( $_GET['page'], 'toast' ) !== false ) ) ) ) ) {
 		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 		wp_enqueue_script( 'jquery-ui-dialog' );
-		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1' );
-		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery' ), $scriptversion );
-		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array(), $scriptversion );
+		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1', true );
+		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery' ), $scriptversion, true );
+		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array(), $scriptversion, true );
 		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	}
 }
@@ -35,7 +38,7 @@ function rsvpmaker_event_scripts() {
 	$myStyleUrl = ( isset( $rsvp_options['custom_css'] ) && $rsvp_options['custom_css'] ) ? $rsvp_options['custom_css'] : plugins_url( 'style.css', __FILE__ );
 	wp_register_style( 'rsvp_style', $myStyleUrl, array(), $scriptversion );
 	wp_enqueue_style( 'rsvp_style' );
-	wp_enqueue_script( 'rsvpmaker_js', plugins_url( 'rsvpmaker.min.js', __FILE__ ), array(), $scriptversion );
+	wp_enqueue_script( 'rsvpmaker_js', plugins_url( 'rsvpmaker.min.js', __FILE__ ), array(), $scriptversion, true );
 	wp_localize_script( 'rsvpmaker_js', 'ajaxurl', admin_url( 'admin-ajax.php' ) );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_json_url', site_url( '/wp-json/rsvpmaker/v1/' ) );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
@@ -44,7 +47,7 @@ function rsvpmaker_event_scripts() {
 			wp_enqueue_script( 'wp-tinymce' );
 		}
 	}
-	wp_enqueue_script( 'rsvpmaker_timezone', plugins_url( 'jstz.min.js', __FILE__ ), array(), $scriptversion );
+	wp_enqueue_script( 'rsvpmaker_timezone', plugins_url( 'jstz.min.js', __FILE__ ), array(), $scriptversion, true );
 } // end event scripts
 
 function rsvpmaker_jquery_inline( $routine, $atts = array() ) {
@@ -120,7 +123,7 @@ function rsvp_form_jquery() {
 	<?php
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
 	if ( ! empty( $hide ) ) {
-		printf( 'var hide = %s;', json_encode( $hide ) );
+		printf( 'var hide = %s;', wp_json_encode( $hide ) );
 		echo "\n";
 		?>
 	
@@ -156,7 +159,7 @@ function rsvp_form_jquery() {
 		event.preventDefault();
 	if(guestcount >= max_guests)
 		{
-		$('#first_blank').append('<p><em><?php _e( 'Guest limit reached', 'rsvpmaker' ); ?></em></p>');
+		$('#first_blank').append('<p><em><?php esc_html_e( 'Guest limit reached', 'rsvpmaker' ); ?></em></p>');
 		return;
 		}
 	var guestline = '<' + 'div class="guest_blank">' +

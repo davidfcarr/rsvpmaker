@@ -834,7 +834,7 @@ function rsvpmaker_upcoming( $atts = array() ) {
 
 <div class="event_author">
 				<?php
-				_e( 'Posted by', 'rsvpmaker' );
+				esc_html_e( 'Posted by', 'rsvpmaker' );
 				echo " $authorlink on ";
 				?>
 <span class="rsvpupdated" datetime="<?php the_modified_date( 'c' ); ?>"><?php the_modified_date(); ?></span></div>
@@ -2166,7 +2166,7 @@ function rsvpmaker_compact( $atts = array() ) {
 
 					}
 				} else {
-					_e( 'Event date is past', 'rsvpmaker' );
+					esc_html_e( 'Event date is past', 'rsvpmaker' );
 				}
 
 	endwhile;
@@ -2225,7 +2225,7 @@ function rsvpmaker_replay_form( $event_id ) {
 		?>
 <p><img src="<?php echo plugins_url( '/captcha/captcha_ttf.php', __FILE__ ); ?>" alt="CAPTCHA image">
 <br />
-		<?php _e( 'Type the hidden security message', 'rsvpmaker' ); ?>:<br />                    
+		<?php esc_html_e( 'Type the hidden security message', 'rsvpmaker' ); ?>:<br />                    
 <input maxlength="10" size="10" name="captcha" type="text" />
 </p>
 
@@ -2247,7 +2247,7 @@ function rsvpmaker_replay_form( $event_id ) {
 	echo '<div id="jqerror"></div><input type="hidden" name="required" id="required" value="' . implode( ',', $rsvp_required_field ) . '" />';
 	?>
 		<p>
-		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php _e( 'Submit', 'rsvpmaker' ); ?>" /> 
+		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
 		</p> 
 <input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo esc_attr( $event_id ); ?>" /><input type="hidden" name="landing_id" value="<?php echo esc_attr( $post->ID ); ?>" /><?php wp_nonce_field( 'rsvp_replay', 'rsvp_replay_nonce' ); ?>
 

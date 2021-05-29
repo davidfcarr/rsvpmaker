@@ -1967,7 +1967,7 @@ function rsvpmaker_cleanup() {
 
 	if ( isset( $_POST['older_than'] ) ) {
 
-		$older = $_POST['older_than'];
+		$older = sanitize_text_field($_POST['older_than']);
 		$regex = '/^\d{4}-\d{2}-\d{2}$/';
 		if ( ! preg_match( $regex, $older ) ) {
 			die( 'invalid date' );
@@ -2027,7 +2027,7 @@ function rsvpmaker_cleanup() {
 
 	if ( isset( $_POST['rsvps_older_than'] ) ) {
 
-		$older = $_POST['rsvps_older_than'];
+		$older = sanitize_text_field($_POST['rsvps_older_than']);
 		$regex = '/^\d{4}-\d{2}-\d{2}$/';
 		if ( ! preg_match( $regex, $older ) ) {
 			die( 'invalid date' );
@@ -2067,33 +2067,33 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 		$minus30 = strtotime( '30 days ago' );
 		?>
 
-<h2><?php _e( 'Remove Past Events from Database', 'rsvpmaker' ); ?></h2>
+<h2><?php esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
 
-		<?php _e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
+		<?php esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
 
 		<?php submit_button( 'Delete' ); ?>
 
 </form>
 
-<h2><?php _e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' ); ?></h2>
+<h2><?php esc_html_e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
 
-		<?php _e( 'Delete RSVP event registrations older than', 'rsvpmaker' ); ?> <input type="date" name="rsvps_older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
+		<?php esc_html_e( 'Delete RSVP event registrations older than', 'rsvpmaker' ); ?> <input type="date" name="rsvps_older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
 
 		<?php submit_button( 'Delete' ); ?>
 
 </form>
 
-<h2><?php _e( 'Apply Defaults', 'rsvpmaker' ); ?></h2>
+<h2><?php esc_html_e( 'Apply Defaults', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
 
-<p><?php _e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' ); ?></p>
+<p><?php esc_html_e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' ); ?></p>
 
-<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php _e( 'All fields', 'rsvpmaker' ); ?></div>
+<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php esc_html_e( 'All fields', 'rsvpmaker' ); ?></div>
 
 		<?php
 
@@ -2803,7 +2803,7 @@ function get_rsvp_email() {
 
 	if ( isset( $_GET['e'] ) ) {
 
-			$email = $_GET['e'];
+			$email = santize_text_field($_GET['e']);
 
 	} elseif ( isset( $_COOKIE[ 'rsvp_for_' . $post->ID ] ) && ! $email_context ) {
 
@@ -3797,14 +3797,6 @@ function rsvpmaker_is_url_local( $url ) {
 	$ip = gethostbyname( $host );
 
 	return ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
-}
-
-function rsvpmaker_sanitize_array( $data ) {
-	return array_map(
-		function( $value ) {
-			return sanitize_text_field( $value ); },
-		$data
-	);
 }
 
 ?>

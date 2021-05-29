@@ -323,7 +323,7 @@ function rsvpmaker_stripe_checkout() {
 
 <form id="payee-form">
 
-<div><input id="stripe-checkout-name" name="name" placeholder="<?php _e( 'Your Name Here', 'rsvpmaker' ); ?>" value="<?php echo esc_attr( $name ); ?>"></div>
+<div><input id="stripe-checkout-name" name="name" placeholder="<?php esc_html_e( 'Your Name Here', 'rsvpmaker' ); ?>" value="<?php echo esc_attr( $name ); ?>"></div>
 
 <div><input id="stripe-checkout-email" name="email" placeholder="email@example.com" value="<?php echo esc_attr( $email ); ?>"></div>
 
@@ -441,7 +441,7 @@ if((name == '') || (email == '')){
 	cardResult.innerHTML = 'Name and email are both required';
 	return;
 }
-cardResult.innerHTML = '<?php _e( 'Please wait', 'rsvpmaker' ); ?>';
+cardResult.innerHTML = '<?php esc_html_e( 'Please wait', 'rsvpmaker' ); ?>';
 cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
   stripe.confirmCardPayment(clientSecret, {
@@ -462,7 +462,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 	cardFields.style = 'display: none';
 	  if (result.paymentIntent.status === 'succeeded') {
 		  console.log(result);
-		cardResult.innerHTML = '<?php _e( 'Recording payment', 'rsvpmaker' ); ?> ...';
+		cardResult.innerHTML = '<?php esc_html_e( 'Recording payment', 'rsvpmaker' ); ?> ...';
 		const form = new FormData(document.getElementById('payee-form'));
 		fetch(successurl, {
   method: 'POST',
@@ -483,11 +483,11 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
 			if(!myJson.name)			
 
-				cardResult.innerHTML = '<?php _e( 'Payment processed, but may not have been recorded correctly', 'rsvpmaker' ); ?>';
+				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed, but may not have been recorded correctly', 'rsvpmaker' ); ?>';
 
 			else
 
-				cardResult.innerHTML = '<?php _e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol; ?>'+myJson.amount+' '+myJson.currency.toUpperCase();
+				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol; ?>'+myJson.amount+' '+myJson.currency.toUpperCase();
 
 		});
 

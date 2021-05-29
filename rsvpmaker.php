@@ -1087,9 +1087,9 @@ function format_cddate( $year, $month, $day, $hours, $minutes ) {
 
 
 
-function update_rsvpmaker_dates( $postID, $dates_array, $durations_array, $end_array = array() ) {
+function update_rsvpmaker_dates( $post_id, $dates_array, $durations_array, $end_array = array() ) {
 
-	$current_dates = get_post_meta( $postID, '_rsvp_dates', false );
+	$current_dates = get_post_meta( $post_id, '_rsvp_dates', false );
 
 	foreach ( $dates_array as $index => $cddate ) {
 
@@ -1099,25 +1099,25 @@ function update_rsvpmaker_dates( $postID, $dates_array, $durations_array, $end_a
 
 		if ( empty( $current_dates ) ) {
 
-			 add_rsvpmaker_date( $postID, $cddate, $duration, $end_time, $index );
+			 add_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
 
 		} elseif ( is_array( $current_dates ) ) {
 
 			if ( empty( $current_dates[ $index ] ) ) {
 
-					add_rsvpmaker_date( $postID, $cddate, $duration, $end_time, $index );
+					add_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
 
-					// rsvpmaker_debug_log("$postID,$cddate,$duration,$end_time",'add date parameters');
+					// rsvpmaker_debug_log("$post_id,$cddate,$duration,$end_time",'add date parameters');
 
 			} else {
 
-				update_rsvpmaker_date( $postID, $cddate, $duration, $end_time, $index );
+				update_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
 
-				// rsvpmaker_debug_log("$postID,$cddate,$duration,$end_time,$index".$current_dates[$index],'update date parameters');
+				// rsvpmaker_debug_log("$post_id,$cddate,$duration,$end_time,$index".$current_dates[$index],'update date parameters');
 
 			}
 		} else {
-			 add_rsvpmaker_date( $postID, $cddate, $duration, $end_time, $index );
+			 add_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
 		}
 
 		$current_dates[] = $cddate;
@@ -1130,7 +1130,7 @@ function update_rsvpmaker_dates( $postID, $dates_array, $durations_array, $end_a
 
 		foreach ( $missing as $cddate ) {
 
-			delete_rsvpmaker_date( $postID, $cddate );
+			delete_rsvpmaker_date( $post_id, $cddate );
 		}
 	}
 
@@ -1138,11 +1138,11 @@ function update_rsvpmaker_dates( $postID, $dates_array, $durations_array, $end_a
 
 
 
-function delete_rsvpmaker_date( $postID, $cddate ) {
+function delete_rsvpmaker_date( $post_id, $cddate ) {
 
-	delete_post_meta( $postID, '_rsvp_dates', $cddate );
+	delete_post_meta( $post_id, '_rsvp_dates', $cddate );
 
-	delete_post_meta( $postID, '_' . $cddate );
+	delete_post_meta( $post_id, '_' . $cddate );
 
 	delete_transient( 'rsvpmakerdates' );
 
@@ -1150,13 +1150,13 @@ function delete_rsvpmaker_date( $postID, $cddate ) {
 
 
 
-function add_rsvpmaker_date( $postID, $cddate, $duration = '', $end_time = '', $index = 0 ) {
+function add_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '', $index = 0 ) {
 
 	$slug = ( $index == 0 ) ? 'firsttime' : $cddate;
 
-	add_post_meta( $postID, '_rsvp_dates', $cddate );
+	add_post_meta( $post_id, '_rsvp_dates', $cddate );
 
-	add_post_meta( $postID, '_' . $slug, $duration );
+	add_post_meta( $post_id, '_' . $slug, $duration );
 
 	if ( empty( $end_time ) ) {
 
@@ -1166,23 +1166,23 @@ function add_rsvpmaker_date( $postID, $cddate, $duration = '', $end_time = '', $
 
 	}
 
-	add_post_meta( $postID, '_end' . $slug, $end_time );
+	add_post_meta( $post_id, '_end' . $slug, $end_time );
 
 }
 
 
 
-function update_rsvpmaker_date( $postID, $cddate, $duration = '', $end_time = '', $index = 0 ) {
+function update_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '', $index = 0 ) {
 
 	$slug = ( $index == 0 ) ? 'firsttime' : $cddate;
 
-	update_post_meta( $postID, '_rsvp_dates', $cddate );
+	update_post_meta( $post_id, '_rsvp_dates', $cddate );
 
-	update_post_meta( $postID, '_' . $slug, $duration );
+	update_post_meta( $post_id, '_' . $slug, $duration );
 
 	if ( ! empty( $end_time ) ) {
 
-		update_post_meta( $postID, '_end' . $slug, $end_time );
+		update_post_meta( $post_id, '_end' . $slug, $end_time );
 	}
 
 	delete_transient( 'rsvpmakerdates' );

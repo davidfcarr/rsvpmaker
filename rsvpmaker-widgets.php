@@ -122,20 +122,20 @@ class CPEventsWidget extends WP_Widget {
 
 		?>
 
-			<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
+			<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
 
-			<p><label for="<?php echo $this->get_field_id( 'limit' ); ?>"><?php _e( 'Number to Show:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'limit' ); ?>" name="<?php echo $this->get_field_name( 'limit' ); ?>" type="text" value="<?php echo esc_attr( $limit ); ?>" /></label></p>
+			<p><label for="<?php echo $this->get_field_id( 'limit' ); ?>"><?php esc_html_e( 'Number to Show:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'limit' ); ?>" name="<?php echo $this->get_field_name( 'limit' ); ?>" type="text" value="<?php echo esc_attr( $limit ); ?>" /></label></p>
 
-			<p><label for="<?php echo $this->get_field_id( 'dateformat' ); ?>"><?php _e( 'Date Format:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'dateformat' ); ?>" name="<?php echo $this->get_field_name( 'dateformat' ); ?>" type="text" value="<?php echo esc_attr( $dateformat ); ?>" /></label> (PHP <a target="_blank" href="http://us2.php.net/manual/en/function.date.php">date</a> format string)</p>
+			<p><label for="<?php echo $this->get_field_id( 'dateformat' ); ?>"><?php esc_html_e( 'Date Format:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'dateformat' ); ?>" name="<?php echo $this->get_field_name( 'dateformat' ); ?>" type="text" value="<?php echo esc_attr( $dateformat ); ?>" /></label> (PHP <a target="_blank" href="http://us2.php.net/manual/en/function.date.php">date</a> format string)</p>
 			
-			<p><label for="<?php echo $this->get_field_id( 'break' ); ?>"><?php _e( 'Date on Separate Line:', 'rsvpmaker' ); ?> <select id="<?php echo $this->get_field_id( 'break' ); ?>" name="<?php echo $this->get_field_name( 'break' ); ?>" ><option value="0" ><?php _e( 'No', 'rsvpmaker' ); ?></option><option value="1" 
+			<p><label for="<?php echo $this->get_field_id( 'break' ); ?>"><?php esc_html_e( 'Date on Separate Line:', 'rsvpmaker' ); ?> <select id="<?php echo $this->get_field_id( 'break' ); ?>" name="<?php echo $this->get_field_name( 'break' ); ?>" ><option value="0" ><?php esc_html_e( 'No', 'rsvpmaker' ); ?></option><option value="1" 
 									  <?php
 										if ( $break ) {
 											echo 'selected="selected"';}
 										?>
-				 ><?php _e( 'Yes', 'rsvpmaker' ); ?></option> </select></label></p>
+				 ><?php esc_html_e( 'Yes', 'rsvpmaker' ); ?></option> </select></label></p>
 
-<p><label for="<?php echo $this->get_field_id( 'event_type' ); ?>"><?php _e( 'Event Type:', 'rsvpmaker' ); ?>
+<p><label for="<?php echo $this->get_field_id( 'event_type' ); ?>"><?php esc_html_e( 'Event Type:', 'rsvpmaker' ); ?>
 
 		<?php
 
@@ -143,7 +143,7 @@ class CPEventsWidget extends WP_Widget {
 
 		?>
 
-<select class="widefat" id="<?php echo $this->get_field_id( 'event_type' ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'event_type' ) ); ?>" ><option value=""><?php _e( 'All', 'rsvpmaker' ); ?></option>
+<select class="widefat" id="<?php echo $this->get_field_id( 'event_type' ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'event_type' ) ); ?>" ><option value=""><?php esc_html_e( 'All', 'rsvpmaker' ); ?></option>
 
 		<?php
 
@@ -291,9 +291,9 @@ class RSVPTypeWidget extends WP_Widget {
 
 		?>
 
-			<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
+			<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
 
-			<p><label for="<?php echo $this->get_field_id( 'limit' ); ?>"><?php _e( 'Number to Show:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'limit' ); ?>" name="<?php echo $this->get_field_name( 'limit' ); ?>" type="text" value="<?php echo esc_attr( $limit ); ?>" /></label></p>
+			<p><label for="<?php echo $this->get_field_id( 'limit' ); ?>"><?php esc_html_e( 'Number to Show:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo $this->get_field_id( 'limit' ); ?>" name="<?php echo $this->get_field_name( 'limit' ); ?>" type="text" value="<?php echo esc_attr( $limit ); ?>" /></label></p>
 
 		<?php
 
@@ -347,7 +347,7 @@ class RSVPMakerByJSON extends WP_Widget {
 						echo $before_title . esc_html( $title ) . $after_title;}
 					?>
 
-<div id="rsvpjsonwidget-<?php echo esc_attr( $slug ); ?>"><?php _e( 'Loading', 'rsvpmaker' ); ?> ...</div>
+<div id="rsvpjsonwidget-<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Loading', 'rsvpmaker' ); ?> ...</div>
 
 <script>
 jQuery(document).ready(function($) {
@@ -408,9 +408,9 @@ var jsonwidget<?php echo esc_attr( $slug ); ?> = new RSVPJsonWidget('rsvpjsonwid
 
 		?>
 
-			<p><label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php _e( 'Title:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
+			<p><label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php esc_html_e( 'Title:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></label></p>
 
-			<p><label for="<?php echo esc_attr( $this->get_field_id( 'url' ) ); ?>"><?php _e( 'JSON URL:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'url' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'url' ) ); ?>" type="text" value="<?php echo esc_attr( $url ); ?>" /></label>
+			<p><label for="<?php echo esc_attr( $this->get_field_id( 'url' ) ); ?>"><?php esc_html_e( 'JSON URL:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'url' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'url' ) ); ?>" type="text" value="<?php echo esc_attr( $url ); ?>" /></label>
 
 			<br />Examples from rsvpmaker.com demo:
 
@@ -418,9 +418,9 @@ var jsonwidget<?php echo esc_attr( $slug ); ?> = new RSVPJsonWidget('rsvpjsonwid
 
 			<br /><a target="_blank" href="https://rsvpmaker.com/wp-json/rsvpmaker/v1/type/featured">events tagged type/featured</a></p>
 
-		  <p><label for="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>"><?php _e( 'Maximum # Displayed:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'limit' ) ); ?>" type="text" value="<?php echo esc_attr( $limit ); ?>" /></label><br /><em>Use 0 for no limit</em></p>
+		  <p><label for="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>"><?php esc_html_e( 'Maximum # Displayed:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'limit' ) ); ?>" type="text" value="<?php echo esc_attr( $limit ); ?>" /></label><br /><em>Use 0 for no limit</em></p>
 
-			<p><label for="<?php echo esc_attr( $this->get_field_id( 'morelink' ) ); ?>"><?php _e( 'URL for more events:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'morelink' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'morelink' ) ); ?>" type="text" value="<?php echo esc_attr( $morelink ); ?>" /></label></p>
+			<p><label for="<?php echo esc_attr( $this->get_field_id( 'morelink' ) ); ?>"><?php esc_html_e( 'URL for more events:', 'rsvpmaker' ); ?> <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'morelink' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'morelink' ) ); ?>" type="text" value="<?php echo esc_attr( $morelink ); ?>" /></label></p>
 		<?php
 	}
 }

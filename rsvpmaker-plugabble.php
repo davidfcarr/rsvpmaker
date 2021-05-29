@@ -88,7 +88,7 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 
 			?>
 
-<p><em><strong><?php _e( 'Event Template', 'rsvpmaker' ); ?>:</strong> <?php _e( 'This form is for entering generic / boilerplate information, not specific details for an event on a specific date. Groups that meet on a monthly basis can post their standard meeting schedule, location, and contact details to make entering the individual events easier. You can also post multiple future meetings using the generic template and update those event listings as needed when the event date grows closer.', 'rsvpmaker' ); ?></em></p>
+<p><em><strong><?php esc_html_e( 'Event Template', 'rsvpmaker' ); ?>:</strong> <?php esc_html_e( 'This form is for entering generic / boilerplate information, not specific details for an event on a specific date. Groups that meet on a monthly basis can post their standard meeting schedule, location, and contact details to make entering the individual events easier. You can also post multiple future meetings using the generic template and update those event listings as needed when the event date grows closer.', 'rsvpmaker' ); ?></em></p>
 
 			<?php
 
@@ -414,7 +414,7 @@ jQuery(function () {
 
 				jQuery('#skedtable td').css('padding', '5px');
 
-				jQuery('#daymsg').html('<em><?php _e( 'choose one or more days of the week', 'rsvpmaker' ); ?></em>');
+				jQuery('#daymsg').html('<em><?php esc_html_e( 'choose one or more days of the week', 'rsvpmaker' ); ?></em>');
 
 			}
 
@@ -442,17 +442,17 @@ jQuery(function () {
 
 
 
-<p><?php _e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="
+<p><?php esc_html_e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="
 			 <?php
 				if ( isset( $template['stop'] ) ) {
 					echo $template['stop'];}
 				?>
 	" placeholder="
 		<?php
-		_e( 'example', 'rsvpmaker' );
+		esc_html_e( 'example', 'rsvpmaker' );
 		echo ': ' . date( 'Y' ) . '-12-31';
 		?>
-" /> <em>(<?php _e( 'format', 'rsvpmaker' ); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
+" /> <em>(<?php esc_html_e( 'format', 'rsvpmaker' ); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
 		<?php
 		$auto = ( ( isset( $_GET['new_template'] ) && ! empty( $rsvp_options['autorenew'] ) ) || get_post_meta( $post->ID, 'rsvpautorenew', true ) );
 		?>
@@ -461,7 +461,7 @@ jQuery(function () {
 		if ( $auto ) {
 			echo 'checked="checked"';}
 		?>
- /> <?php _e( 'Automatically add dates according to this schedule', 'rsvpmaker' ); ?></em></p>
+ /> <?php esc_html_e( 'Automatically add dates according to this schedule', 'rsvpmaker' ); ?></em></p>
 
 		<?php
 
@@ -485,7 +485,7 @@ jQuery(function () {
 
 
 
-function save_rsvp_template_meta( $postID ) {
+function save_rsvp_template_meta( $post_id ) {
 
 	if ( ! isset( $_POST['sked'] ) ) {
 
@@ -500,9 +500,9 @@ function save_rsvp_template_meta( $postID ) {
 
 	global $current_user;
 
-	if ( $parent_id = wp_is_post_revision( $postID ) ) {
+	if ( $parent_id = wp_is_post_revision( $post_id ) ) {
 
-		$postID = $parent_id;
+		$post_id = $parent_id;
 
 	}
 
@@ -521,12 +521,12 @@ function save_rsvp_template_meta( $postID ) {
 	$sked['duration'] = $sked['end_time_type'] = sanitize_text_field( $_POST['end_time_type'] );
 	$sked['end']      = $sked['rsvp_sql_end'] = sanitize_text_field( $_POST['rsvp_sql_end'] );
 
-	new_template_schedule( $postID, $sked );
+	new_template_schedule( $post_id, $sked );
 
 	if ( isset( $_POST['rsvpautorenew'] ) ) {
-		update_post_meta( $postID, 'rsvpautorenew', 1 );
+		update_post_meta( $post_id, 'rsvpautorenew', 1 );
 	} else {
-		delete_post_meta( $postID, 'rsvpautorenew' );
+		delete_post_meta( $post_id, 'rsvpautorenew' );
 	}
 }
 
@@ -649,7 +649,7 @@ function get_confirmation_options( $post_id = 0, $documents = array() ) {
 
 if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
-	function GetRSVPAdminForm( $postID ) {
+	function GetRSVPAdminForm( $post_id ) {
 		global $custom_fields;
 
 		global $post;
@@ -753,7 +753,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 <p>
 
-		<?php _e( 'Collect RSVPs', 'rsvpmaker' ); ?>
+		<?php esc_html_e( 'Collect RSVPs', 'rsvpmaker' ); ?>
 
   <input type="radio" name="setrsvp[on]" id="setrsvpon" value="1" 
 		<?php
@@ -762,14 +762,14 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 		?>
 		 />
 
-		<?php _e( 'YES', 'rsvpmaker' ); ?> <input type="radio" name="setrsvp[on]" id="setrsvpon" value="0" 
+		<?php esc_html_e( 'YES', 'rsvpmaker' ); ?> <input type="radio" name="setrsvp[on]" id="setrsvpon" value="0" 
 				  <?php
 					if ( ! $rsvp_on ) {
 						echo 'checked="checked" ';}
 					?>
 			 />
 
-		<?php _e( 'NO', 'rsvpmaker' ); ?> </p>
+		<?php esc_html_e( 'NO', 'rsvpmaker' ); ?> </p>
 
 <div id="rsvpdetails">
 
@@ -851,21 +851,21 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 		if ( ! isset( $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) || $custom_fields['_rsvp_rsvpmaker_send_confirmation_email'][0] ) {
 			echo ' checked="checked" ';}
 		?>
-	 > <?php _e( 'Send confirmation emails', 'rsvpmaker' ); ?>
+	 > <?php esc_html_e( 'Send confirmation emails', 'rsvpmaker' ); ?>
 
   <input type="checkbox" name="setrsvp[confirmation_after_payment]" id="rsvpmaker_send_confirmation_email" value="1" 
 		<?php
 		if ( ! isset( $custom_fields['_rsvp_confirmation_after_payment'][0] ) || $custom_fields['_rsvp_confirmation_after_payment'][0] ) {
 			echo ' checked="checked" ';}
 		?>
-	 > <?php _e( 'Send confirmation AFTER payment', 'rsvpmaker' ); ?>
+	 > <?php esc_html_e( 'Send confirmation AFTER payment', 'rsvpmaker' ); ?>
 
   <input type="checkbox" name="setrsvp[confirmation_include_event]" id="rsvp_confirmation_include_event"  value="1" 
 		<?php
 		if ( $include_event ) {
 			echo ' checked="checked" ';}
 		?>
-	 > <?php _e( 'Include event listing with confirmation and reminders', 'rsvpmaker' ); ?>
+	 > <?php esc_html_e( 'Include event listing with confirmation and reminders', 'rsvpmaker' ); ?>
 
 		<?php
 		echo get_confirmation_options( $post->ID, get_related_documents() );
@@ -878,7 +878,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 		?>
 
 <br /><br /><strong><?php echo __( 'Special Options', 'rsvpmaker' ); ?></strong>
-<br /><em><?php _e( 'By default, RSVP registration opens when the event is published and ends at the start time of the event. The options below allow you to specify when registration shold open and set an earlier deadline for RSVPs to close (or keep RSVPs open after the start of the event).', 'rsvpmaker' ); ?></em>
+<br /><em><?php esc_html_e( 'By default, RSVP registration opens when the event is published and ends at the start time of the event. The options below allow you to specify when registration shold open and set an earlier deadline for RSVPs to close (or keep RSVPs open after the start of the event).', 'rsvpmaker' ); ?></em>
 
 <table>
 
@@ -1069,7 +1069,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 			$fpost = get_post( $rsvp_form );
 
-			$edit = admin_url( 'post.php?action=edit&post=' . $fpost->ID . '&back=' . $postID );
+			$edit = admin_url( 'post.php?action=edit&post=' . $fpost->ID . '&back=' . $post_id );
 
 			$customize = admin_url( '?post_id=' . $post->ID . '&customize_form=' . $fpost->ID );
 
@@ -1243,7 +1243,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 <div class="priceblock" id="block_<?php echo $i; ?>">
 
-<div class="pricelabel"><?php _e( 'Units', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="unit[
+<div class="pricelabel"><?php esc_html_e( 'Units', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="unit[
 								  <?php
 									if ( isset( $i ) ) {
 										echo $i;}
@@ -1255,7 +1255,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			?>
 	" /></div>
 
-<div class="pricelabel">@ <?php _e( 'Price', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price[
+<div class="pricelabel">@ <?php esc_html_e( 'Price', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price[
 									<?php
 									if ( isset( $i ) ) {
 										echo $i;}
@@ -1272,7 +1272,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			?>
 	</div>
 
-<div class="pricelabel"><?php _e( 'Deadline (optional)', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_deadline[
+<div class="pricelabel"><?php esc_html_e( 'Deadline (optional)', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_deadline[
 								  <?php
 									if ( isset( $i ) ) {
 										echo $i;}
@@ -1284,7 +1284,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			?>
 	" placeholder="<?php echo date( 'Y-m-d 23:59:00' ); ?>" /></div>
 
-	<div class="pricelabel"><?php _e( 'Multiple Admissions', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_multiple[
+	<div class="pricelabel"><?php esc_html_e( 'Multiple Admissions', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_multiple[
 									  <?php
 										if ( isset( $i ) ) {
 											echo $i;}
@@ -1342,7 +1342,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 <div class="priceblock" id="block_<?php echo $i; ?>">
 
-<div class="pricelabel"><?php _e( 'Units', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="unit[
+<div class="pricelabel"><?php esc_html_e( 'Units', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="unit[
 								  <?php
 									if ( isset( $i ) ) {
 										echo $i;}
@@ -1354,7 +1354,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			?>
 	" /></div>
 
-<div class="pricelabel">@ <?php _e( 'Price', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price[
+<div class="pricelabel">@ <?php esc_html_e( 'Price', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price[
 									<?php
 									if ( isset( $i ) ) {
 										echo $i;}
@@ -1371,7 +1371,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			?>
 	</div>
 
-<div class="pricelabel"><?php _e( 'Deadline (optional)', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_deadline[
+<div class="pricelabel"><?php esc_html_e( 'Deadline (optional)', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_deadline[
 								  <?php
 									if ( isset( $i ) ) {
 										echo $i;}
@@ -1383,7 +1383,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			?>
 	" placeholder="<?php echo date( 'Y-m-d 23:59:00' ); ?>" /></div>
 
-	<div class="pricelabel"><?php _e( 'Multiple Admissions', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_multiple[
+	<div class="pricelabel"><?php esc_html_e( 'Multiple Admissions', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="price_multiple[
 									  <?php
 										if ( isset( $i ) ) {
 											echo $i;}
@@ -1423,13 +1423,13 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 		?>
 
-<p><a id="add_blanks" href="#">+ <?php _e( '', 'rsvpmaker' ); ?>More Prices</a></p>
+<p><a id="add_blanks" href="#">+ <?php esc_html_e( '', 'rsvpmaker' ); ?>More Prices</a></p>
 
 	
 
-	<h3><?php _e( 'Coupon Codes', 'rsvpmaker' ); ?></h3>
+	<h3><?php esc_html_e( 'Coupon Codes', 'rsvpmaker' ); ?></h3>
 
-	<p><?php _e( 'Optional: Set one or more codes for a discounted fee or a percent off the total.', 'rsvpmaker' ); ?></p>
+	<p><?php esc_html_e( 'Optional: Set one or more codes for a discounted fee or a percent off the total.', 'rsvpmaker' ); ?></p>
 
 		<?php
 
@@ -1461,7 +1461,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 			?>
 
-	<p><?php _e( 'Coupon Code', 'rsvpmaker' ); ?> <input type="text" name="coupon_code[]" value="<?php echo esc_attr( $coupon_code ); ?>" /> <?php _e( 'Method', 'rsvpmaker' ); ?>: <select name="coupon_method[]"><option value="amount" 
+	<p><?php esc_html_e( 'Coupon Code', 'rsvpmaker' ); ?> <input type="text" name="coupon_code[]" value="<?php echo esc_attr( $coupon_code ); ?>" /> <?php esc_html_e( 'Method', 'rsvpmaker' ); ?>: <select name="coupon_method[]"><option value="amount" 
 				 <?php
 					if ( $coupon_method == 'amount' ) {
 						echo 'selected="selected"';}
@@ -1471,7 +1471,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 			if ( $coupon_method == 'percent' ) {
 					echo 'selected="selected"';}
 			?>
-		 >Percent Off</option></select> <?php _e( 'Discount', 'rsvpmaker' ); ?>: <input type="text" name="coupon_discount[]" value="<?php echo esc_attr( $coupon_discount ); ?>" /> <br /></p>
+		 >Percent Off</option></select> <?php esc_html_e( 'Discount', 'rsvpmaker' ); ?>: <input type="text" name="coupon_discount[]" value="<?php echo esc_attr( $coupon_discount ); ?>" /> <br /></p>
 
 			<?php
 
@@ -1481,7 +1481,7 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 	<div id="morecodes"></div>
 
-<p><a id="add_codes" href="#">+ <?php _e( 'More Codes', 'rsvpmaker' ); ?></a></p>
+<p><a id="add_codes" href="#">+ <?php esc_html_e( 'More Codes', 'rsvpmaker' ); ?></a></p>
 
 <script type="text/javascript">	
 
@@ -1515,7 +1515,7 @@ $('#add_codes').click(function(event){
 
 	event.preventDefault();
 
-var newblank = '<p><?php _e( 'Coupon Code', 'rsvpmaker' ); ?> <input type="text" name="coupon_code[]" value="" /> Method: <select name="coupon_method[]"><option value="amount" selected="selected" >Discounted Fee</option><option value="percent"  >Percent Off</option></select> Discount: <input type="text" name="coupon_discount[]" value="" /> </p>';
+var newblank = '<p><?php esc_html_e( 'Coupon Code', 'rsvpmaker' ); ?> <input type="text" name="coupon_code[]" value="" /> Method: <select name="coupon_method[]"><option value="amount" selected="selected" >Discounted Fee</option><option value="percent"  >Percent Off</option></select> Discount: <input type="text" name="coupon_discount[]" value="" /> </p>';
 
 $('#morecodes').append(newblank);
 
@@ -1636,32 +1636,32 @@ function rsvp_form_setup_form( $rsvp_form ) {
 
 <div id="rsvp-dialog-form" title="Form setup">
 
-  <p><?php _e( 'First Name, Last Name, Email (required)', 'rsvpmaker' ); ?> Display options: <select id="name_email_hidden" name="name_email_hidden">
+  <p><?php esc_html_e( 'First Name, Last Name, Email (required)', 'rsvpmaker' ); ?> Display options: <select id="name_email_hidden" name="name_email_hidden">
 
 	  <option value="email_first" 
 	  <?php
 		if ( $emailfirst ) {
 			echo 'selected="selected"';}
 		?>
-			 ><?php _e( 'email, then name', 'rsvpmaker' ); ?></option>
+			 ><?php esc_html_e( 'email, then name', 'rsvpmaker' ); ?></option>
 
 	  <option value="name_first" 
 	  <?php
 		if ( ! $emailfirst && ! $hidden ) {
 			echo 'selected="selected"';}
 		?>
-			 ><?php _e( 'name, then email', 'rsvpmaker' ); ?></option>
+			 ><?php esc_html_e( 'name, then email', 'rsvpmaker' ); ?></option>
 
 	  <option value="hidden" 
 	  <?php
 		if ( $hidden ) {
 			echo 'selected="selected"';}
 		?>
-			 ><?php _e( 'hidden (use with login required)', 'rsvpmaker' ); ?></option>
+			 ><?php esc_html_e( 'hidden (use with login required)', 'rsvpmaker' ); ?></option>
 
 	  </select>
 
-<br /><?php _e( 'For radio buttons or select fields, use the format Label:option 1, option 2', 'rsvpmaker' ); ?> (<em><?php _e( 'Meal:Steak,Chicken,Vegitarian', 'rsvpmaker' ); ?></em>)</p> 
+<br /><?php esc_html_e( 'For radio buttons or select fields, use the format Label:option 1, option 2', 'rsvpmaker' ); ?> (<em><?php esc_html_e( 'Meal:Steak,Chicken,Vegitarian', 'rsvpmaker' ); ?></em>)</p> 
 
 	<fieldset>
 
@@ -1690,34 +1690,34 @@ function rsvp_form_setup_form( $rsvp_form ) {
 	if ( strpos( $rsvp_form, 'rsvpguests' ) ) {
 		echo 'checked="checked"';}
 	?>
-	 /> <?php _e( 'Include guest form', 'rsvpmaker' ); ?> - <?php _e( 'up to', 'rsvpmaker' ); ?> <input type="text" name="maxguests" id="maxguests" value="<?php echo $mp; ?>" size="2" /> <?php _e( ' guests (enter # or leave blank for no limit)', 'rsvpmaker' ); ?><br /> <input type="checkbox" name="note" id="note" value="1" 
+	 /> <?php esc_html_e( 'Include guest form', 'rsvpmaker' ); ?> - <?php esc_html_e( 'up to', 'rsvpmaker' ); ?> <input type="text" name="maxguests" id="maxguests" value="<?php echo $mp; ?>" size="2" /> <?php esc_html_e( ' guests (enter # or leave blank for no limit)', 'rsvpmaker' ); ?><br /> <input type="checkbox" name="note" id="note" value="1" 
 	<?php
 	if ( strpos( $rsvp_form, 'rsvpnote' ) ) {
 		echo 'checked="checked"';}
 	?>
-	> <?php _e( 'Include notes field', 'rsvpmaker' ); ?> <input type="checkbox" name="emailcheckbox" id="emailcheckbox" value="1" 
+	> <?php esc_html_e( 'Include notes field', 'rsvpmaker' ); ?> <input type="checkbox" name="emailcheckbox" id="emailcheckbox" value="1" 
 	<?php
 	if ( $email_list_ok ) {
 		echo 'checked="checked"';}
 	?>
-	 > <?php _e( 'Include "Add me to email list" checkbox', 'rsvpmaker' ); ?></p>
+	 > <?php esc_html_e( 'Include "Add me to email list" checkbox', 'rsvpmaker' ); ?></p>
 
 <p><input type="checkbox" name="guests" id="guests" value="1" 
 	<?php
 	if ( strpos( $rsvp_form, 'rsvpguests' ) ) {
 		echo 'checked="checked"';}
 	?>
-	 /> <?php _e( 'Include guest form', 'rsvpmaker' ); ?> - <?php _e( 'up to', 'rsvpmaker' ); ?> <input type="text" name="maxguests" id="maxguests" value="<?php echo $mp; ?>" size="2" /> <?php _e( ' guests (enter # or leave blank for no limit)', 'rsvpmaker' ); ?><br /> <input type="checkbox" name="note" id="note" value="1" 
+	 /> <?php esc_html_e( 'Include guest form', 'rsvpmaker' ); ?> - <?php esc_html_e( 'up to', 'rsvpmaker' ); ?> <input type="text" name="maxguests" id="maxguests" value="<?php echo $mp; ?>" size="2" /> <?php esc_html_e( ' guests (enter # or leave blank for no limit)', 'rsvpmaker' ); ?><br /> <input type="checkbox" name="note" id="note" value="1" 
 	<?php
 	if ( strpos( $rsvp_form, 'rsvpnote' ) ) {
 		echo 'checked="checked"';}
 	?>
-	> <?php _e( 'Include notes field', 'rsvpmaker' ); ?> <input type="checkbox" name="emailcheckbox" id="emailcheckbox" value="1" 
+	> <?php esc_html_e( 'Include notes field', 'rsvpmaker' ); ?> <input type="checkbox" name="emailcheckbox" id="emailcheckbox" value="1" 
 	<?php
 	if ( $email_list_ok ) {
 		echo 'checked="checked"';}
 	?>
-	 > <?php _e( 'Include "Add me to email list" checkbox', 'rsvpmaker' ); ?></p>
+	 > <?php esc_html_e( 'Include "Add me to email list" checkbox', 'rsvpmaker' ); ?></p>
 
 	  <!-- Allow form submission with keyboard without duplicating the dialog button -->
 
@@ -3164,7 +3164,7 @@ if ( ! function_exists( 'paypal_error' ) ) {
 
 
 
-<h1><?php _e( 'PayPal Error', 'rsvpmaker' ); ?></h1>
+<h1><?php esc_html_e( 'PayPal Error', 'rsvpmaker' ); ?></h1>
 
 <p>
 
@@ -3182,14 +3182,14 @@ if ( ! function_exists( 'paypal_error' ) ) {
 
 			if ( $paid ) {
 
-				_e( 'Confirmed paid', 'rsvpmaker' );
+				esc_html_e( 'Confirmed paid', 'rsvpmaker' );
 
 				?>
 		: <?php echo $paid; ?><br />
 
 				<?php
 
-				_e( 'Note: You may see this error message after a transaction has already gone through (Paypal is trying to avoid charging you twice).', 'rsvpmaker' );
+				esc_html_e( 'Note: You may see this error message after a transaction has already gone through (Paypal is trying to avoid charging you twice).', 'rsvpmaker' );
 
 				echo "<br /><br />\n";
 
@@ -3209,7 +3209,7 @@ if ( ! function_exists( 'paypal_error' ) ) {
 
    
 
-			<?php _e( 'Error Message', 'rsvpmaker' ); ?>: <?php echo $errorMessage; ?>
+			<?php esc_html_e( 'Error Message', 'rsvpmaker' ); ?>: <?php echo $errorMessage; ?>
 
 	<br />
 
@@ -3230,19 +3230,19 @@ if ( ! function_exists( 'paypal_error' ) ) {
 
 
 
-			<?php _e( 'Ack Code', 'rsvpmaker' ); ?>: <?php echo esc_html( $resArray['ACK'] ); ?>
+			<?php esc_html_e( 'Ack Code', 'rsvpmaker' ); ?>: <?php echo esc_html( $resArray['ACK'] ); ?>
 
 	<br />
 
 	
 
-			<?php _e( 'Correlation ID', 'rsvpmaker' ); ?>: <?php echo esc_html( $resArray['CORRELATIONID'] ); ?>
+			<?php esc_html_e( 'Correlation ID', 'rsvpmaker' ); ?>: <?php echo esc_html( $resArray['CORRELATIONID'] ); ?>
 
 	<br />
 
 	
 
-			<?php _e( 'Version', 'rsvpmaker' ); ?>: <?php echo esc_html( $resArray['VERSION'] ); ?>
+			<?php esc_html_e( 'Version', 'rsvpmaker' ); ?>: <?php echo esc_html( $resArray['VERSION'] ); ?>
 
 	<br />
 
@@ -3264,15 +3264,15 @@ if ( ! function_exists( 'paypal_error' ) ) {
 
 	
 
-				<?php _e( 'Error Number', 'rsvpmaker' ); ?>: <?php echo esc_html( $errorCode ); ?>
+				<?php esc_html_e( 'Error Number', 'rsvpmaker' ); ?>: <?php echo esc_html( $errorCode ); ?>
 
 	<br />
 
-				<?php _e( 'Short Message', 'rsvpmaker' ); ?>: <?php echo esc_html( $shortMessage ); ?>
+				<?php esc_html_e( 'Short Message', 'rsvpmaker' ); ?>: <?php echo esc_html( $shortMessage ); ?>
 
 	<br />
 
-				<?php _e( 'Long Message', 'rsvpmaker' ); ?>: <?php echo esc_html( $longMessage ); ?>
+				<?php esc_html_e( 'Long Message', 'rsvpmaker' ); ?>: <?php echo esc_html( $longMessage ); ?>
 
 	<br />
 
@@ -4046,7 +4046,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 <br />
 
-					<?php _e( 'Type the hidden security message', 'rsvpmaker' ); ?>:<br />                    
+					<?php esc_html_e( 'Type the hidden security message', 'rsvpmaker' ); ?>:<br />                    
 
 <input maxlength="10" size="10" name="captcha" type="text" autocomplete="off" />
 
@@ -4081,7 +4081,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 		<p> 
 
-		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php _e( 'Submit', 'rsvpmaker' ); ?>" /> 
+		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
 
 		</p> 
 
@@ -4220,7 +4220,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 		if ( sizeof( $_GET ) > 2 ) {
 			printf( '<a href="%s">%s</a> - %s %s', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp' ), __( 'RSVP Report', 'rsvpmaker' ), __( 'Details', 'rsvpmaker' ), $param );
 		} else {
-			_e( 'RSVP Report', 'rsvpmaker' );
+			esc_html_e( 'RSVP Report', 'rsvpmaker' );
 		}
 		?>
 		</h2> 
@@ -4518,7 +4518,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 <form action="edit.php" method="get">
 
-				<?php _e( 'Show details for', 'rsvpmaker' ); ?>
+				<?php esc_html_e( 'Show details for', 'rsvpmaker' ); ?>
 
 <input type="hidden" name="page" value="rsvp">
 
@@ -4546,7 +4546,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 </select> events 
 
-<button><?php _e( 'Show', 'rsvpmaker' ); ?></button>
+<button><?php esc_html_e( 'Show', 'rsvpmaker' ); ?></button>
 
 </form>
 
@@ -4603,15 +4603,15 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 			if ( ! empty( $events ) ) {
 
-				foreach ( $events as $postID => $event ) {
+				foreach ( $events as $post_id => $event ) {
 
 					$eventlist .= "<h3>$event</h3>";
 
-					$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE yesno=1 AND event=' . intval( $postID );
+					$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE yesno=1 AND event=' . intval( $post_id );
 
 					if ( $rsvpcount = $wpdb->get_var( $sql ) ) {
 
-						$eventlist .= '<p><a href="' . admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp&event=' . intval( $postID ) . '">' . __( 'RSVP', 'rsvpmaker' ) . ' ' . __( 'Yes', 'rsvpmaker' ) . ': ' . $rsvpcount . '</a></p>';
+						$eventlist .= '<p><a href="' . admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp&event=' . intval( $post_id ) . '">' . __( 'RSVP', 'rsvpmaker' ) . ' ' . __( 'Yes', 'rsvpmaker' ) . ': ' . $rsvpcount . '</a></p>';
 					}
 				}
 			}
@@ -4847,7 +4847,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 <div id="excel" name="excel" style="padding: 10px; border: thin dotted #333; width: 300px;margin-top: 30px;">
 
-<h3><?php _e( 'Data Table / Spreadsheet', 'rsvpmaker' ); ?></h3>
+<h3><?php esc_html_e( 'Data Table / Spreadsheet', 'rsvpmaker' ); ?></h3>
 
 <form method="get" action="edit.php" target="_blank">
 
@@ -4867,7 +4867,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 				?>
 
-<p><button name="//print_rsvp_report" value="1" ><?php _e( 'Print Report', 'rsvpmaker' ); ?></button> <button name="rsvp_csv" value="1" ><?php _e( 'Download CSV', 'rsvpmaker' ); ?></button></p>
+<p><button name="//print_rsvp_report" value="1" ><?php esc_html_e( 'Print Report', 'rsvpmaker' ); ?></button> <button name="rsvp_csv" value="1" ><?php esc_html_e( 'Download CSV', 'rsvpmaker' ); ?></button></p>
 
 				<?php
 
@@ -4881,7 +4881,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 					echo '<br />';
 
-					_e( 'Additional RSVPMaker Excel plugin required for download to Excel function.', 'rsvpmaker' );
+					esc_html_e( 'Additional RSVPMaker Excel plugin required for download to Excel function.', 'rsvpmaker' );
 
 					echo '<a href="https://wordpress.org/plugins/rsvpmaker-excel/">https://wordpress.org/plugins/rsvpmaker-excel/</a>';
 
@@ -4918,7 +4918,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 			?>
 
-<h3><?php _e( 'Edit Entries', 'rsvpmaker' ); ?></h3>
+<h3><?php esc_html_e( 'Edit Entries', 'rsvpmaker' ); ?></h3>
 
 <form action="edit.php" method="get">
 
@@ -4930,19 +4930,19 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 <input type="hidden" name="event" value="<?php echo $_GET['event']; ?>">
 
-<button><?php _e( 'Edit', 'rsvpmaker' ); ?></button>
+<button><?php esc_html_e( 'Edit', 'rsvpmaker' ); ?></button>
 
 </form>
 
 
 
-<h3><?php _e( 'Move Between Events', 'rsvpmaker' ); ?></h3>
+<h3><?php esc_html_e( 'Move Between Events', 'rsvpmaker' ); ?></h3>
 
-<p><?php _e( 'Transfers the individual who registered and any guests registered as part of the same party to another event. Payment status is also transferred.' ); ?></p>
+<p><?php esc_html_e( 'Transfers the individual who registered and any guests registered as part of the same party to another event. Payment status is also transferred.' ); ?></p>
 
 <form action="<?php admin_url( 'edit.php?page=rsvp&post_type=rsvpmaker&event=' . $_GET['event'] ); ?>" method="post">
 
-<p><select name="move_rsvp"><option value=""><?php _e( 'Pick Entry', 'rsvpmaker' ); ?></option><?php echo $options; ?></select>
+<p><select name="move_rsvp"><option value=""><?php esc_html_e( 'Pick Entry', 'rsvpmaker' ); ?></option><?php echo $options; ?></select>
 
 to <select name="move_to">
 
@@ -4965,7 +4965,7 @@ to <select name="move_to">
 
 </select> </p>
 
-<button><?php _e( 'Move', 'rsvpmaker' ); ?></button>
+<button><?php esc_html_e( 'Move', 'rsvpmaker' ); ?></button>
 
 </form>
 
@@ -4981,7 +4981,7 @@ to <select name="move_to">
 
 				?>
 
-<button><?php _e( 'Mark Paid', 'rsvpmaker' ); ?></button>
+<button><?php esc_html_e( 'Mark Paid', 'rsvpmaker' ); ?></button>
 
 </form>
 
@@ -5685,11 +5685,11 @@ if ( ! function_exists( 'rsvp_daily_reminder' ) ) {
 
 			foreach ( $reminders as $reminder ) {
 
-				$postID = $reminder->post_id;
+				$post_id = $reminder->post_id;
 
-				$q = "p=$postID&post_type=rsvpmaker";
+				$q = "p=$post_id&post_type=rsvpmaker";
 
-				echo "Post $postID is scheduled for a reminder $q<br />";
+				echo "Post $post_id is scheduled for a reminder $q<br />";
 
 				global $post;
 
@@ -5721,9 +5721,9 @@ if ( ! function_exists( 'rsvp_daily_reminder' ) ) {
 
 					$event = ob_get_clean();
 
-					$rsvpto = get_post_meta( $postID, '_rsvp_to', true );
+					$rsvpto = get_post_meta( $post_id, '_rsvp_to', true );
 
-					$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$postID AND yesno=1";
+					$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$post_id AND yesno=1";
 
 					$rsvps = $wpdb->get_results( $sql, ARRAY_A );
 
@@ -6502,7 +6502,7 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 
 <h2>
 		<?php
-		_e( 'Event Templates', 'rsvpmaker' );
+		esc_html_e( 'Event Templates', 'rsvpmaker' );
 
 		printf( ' <a href="%s"  class="add-new-h2">%s</a>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1' ), __( 'New Template', 'rsvpmaker' ) );
 
@@ -7358,7 +7358,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 <div style="font-family:Courier, monospace"><input name="recur_check[<?php echo $i; ?>]" type="checkbox" class="update_from_template" value="1">
 
-				<?php _e( 'Month', 'rsvpmaker' ); ?>: 
+				<?php esc_html_e( 'Month', 'rsvpmaker' ); ?>: 
 
 			  <select name="recur_month[<?php echo $i; ?>]"> 
 
@@ -7390,7 +7390,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 			  </select> 
 
-				<?php _e( 'Day', 'rsvpmaker' ); ?> 
+				<?php esc_html_e( 'Day', 'rsvpmaker' ); ?> 
 
 			<select name="recur_day[<?php echo $i; ?>]"> 
 
@@ -7466,7 +7466,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 			</select> 
 
-				<?php _e( 'Year', 'rsvpmaker' ); ?>
+				<?php esc_html_e( 'Year', 'rsvpmaker' ); ?>
 
 			<select name="recur_year[<?php echo $i; ?>]"> 
 
@@ -7575,7 +7575,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 <div style="font-family:Courier, monospace"><input name="recur_check[<?php echo $i; ?>]" type="checkbox" value="1">
 
-				<?php _e( 'Month', 'rsvpmaker' ); ?>: 
+				<?php esc_html_e( 'Month', 'rsvpmaker' ); ?>: 
 
 			  <select name="recur_month[<?php echo $i; ?>]"> 
 
@@ -7607,7 +7607,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 			  </select> 
 
-				<?php _e( 'Day', 'rsvpmaker' ); ?> 
+				<?php esc_html_e( 'Day', 'rsvpmaker' ); ?> 
 
 			<select name="recur_day[<?php echo $i; ?>]"> 
 
@@ -7617,7 +7617,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 				?>
 
-			  <option value=""><?php _e( 'Not Set', 'rsvpmaker' ); ?></option>
+			  <option value=""><?php esc_html_e( 'Not Set', 'rsvpmaker' ); ?></option>
 
 			  <option value="1">1</option> 
 
@@ -7683,7 +7683,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 			</select> 
 
-				<?php _e( 'Year', 'rsvpmaker' ); ?>
+				<?php esc_html_e( 'Year', 'rsvpmaker' ); ?>
 
 			<select name="recur_year[<?php echo $i; ?>]"> 
 
@@ -8072,13 +8072,13 @@ if ( ! function_exists( 'get_additional_editors' ) ) {
 
 if ( ! function_exists( 'save_additional_editor' ) ) {
 
-	function save_additional_editor( $postID ) {
+	function save_additional_editor( $post_id ) {
 
 		if ( ! empty( $_POST['additional_editor'] ) || ! empty( $_POST['remove_editor'] ) ) {
 
-			if ( $parent_id = wp_is_post_revision( $postID ) ) {
+			if ( $parent_id = wp_is_post_revision( $post_id ) ) {
 
-				$postID = $parent_id;
+				$post_id = $parent_id;
 
 			}
 		}
@@ -8089,7 +8089,7 @@ if ( ! function_exists( 'save_additional_editor' ) ) {
 
 			if ( $ed ) {
 
-				add_post_meta( $postID, '_additional_editors', $ed, false );
+				add_post_meta( $post_id, '_additional_editors', $ed, false );
 			}
 		}
 
@@ -8101,7 +8101,7 @@ if ( ! function_exists( 'save_additional_editor' ) ) {
 
 				if ( $remove ) {
 
-					delete_post_meta( $postID, '_additional_editors', $remove );
+					delete_post_meta( $post_id, '_additional_editors', $remove );
 				}
 			}
 		}
@@ -8212,7 +8212,7 @@ if ( ! function_exists( 'additional_editors' ) ) {
 
 		?>
 
-<p><?php _e( 'Add Editor', 'rsvpmaker' ); ?>: <select name="additional_editor" ><option value=""><?php _e( 'Select' ); ?></option><?php echo rsvpmaker_editor_dropdown( $eds ); ?></select></p>
+<p><?php esc_html_e( 'Add Editor', 'rsvpmaker' ); ?>: <select name="additional_editor" ><option value=""><?php esc_html_e( 'Select' ); ?></option><?php echo rsvpmaker_editor_dropdown( $eds ); ?></select></p>
 
 		<?php
 
@@ -8245,7 +8245,7 @@ if ( ! function_exists( 'additional_editors' ) ) {
 
 			}
 		} else {
-			_e( 'None', 'rsvpmaker' );
+			esc_html_e( 'None', 'rsvpmaker' );
 		}
 
 		printf( '<p><a href="%s">' . __( 'Edit Template', 'rsvpmaker' ) . '</a></p>', admin_url( 'post.php?action=edit&post=' . $t ) );
