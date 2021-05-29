@@ -13,7 +13,7 @@ namespace Stripe;
  * @property int $quantity
  * @property string $type
  */
-class OrderItem extends StripeObject
-{
-    const OBJECT_NAME = 'order_item';
+class OrderItem extends StripeObject {
+
+	const OBJECT_NAME = 'order_item';
 }

@@ -21,19 +21,18 @@ namespace Symfony\Component\CssSelector\Node;
  *
  * @internal
  */
-abstract class AbstractNode implements NodeInterface
-{
-    /**
-     * @var string
-     */
-    private $nodeName;
+abstract class AbstractNode implements NodeInterface {
 
-    public function getNodeName(): string
-    {
-        if (null === $this->nodeName) {
-            $this->nodeName = preg_replace('~.*\\\\([^\\\\]+)Node$~', '$1', \get_called_class());
-        }
+	/**
+	 * @var string
+	 */
+	private $nodeName;
 
-        return $this->nodeName;
-    }
+	public function getNodeName(): string {
+		if ( null === $this->nodeName ) {
+			$this->nodeName = preg_replace( '~.*\\\\([^\\\\]+)Node$~', '$1', \get_called_class() );
+		}
+
+		return $this->nodeName;
+	}
 }

@@ -2,6 +2,6 @@
 
 namespace Stripe\Error;
 
-class Permission extends Base
-{
+class Permission extends Base {
+
 }

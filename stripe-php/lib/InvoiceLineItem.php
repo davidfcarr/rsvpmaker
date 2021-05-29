@@ -28,7 +28,7 @@ namespace Stripe;
  * @property string $type A string identifying the type of the source of this line item, either an <code>invoiceitem</code> or a <code>subscription</code>.
  * @property bool $unified_proration For prorations this indicates whether Stripe automatically grouped multiple related debit and credit line items into a single combined line item.
  */
-class InvoiceLineItem extends ApiResource
-{
-    const OBJECT_NAME = 'line_item';
+class InvoiceLineItem extends ApiResource {
+
+	const OBJECT_NAME = 'line_item';
 }

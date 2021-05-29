@@ -5,6 +5,6 @@ namespace Stripe\Error\OAuth;
 /**
  * InvalidClient is raised when authentication fails.
  */
-class InvalidClient extends OAuthBase
-{
+class InvalidClient extends OAuthBase {
+
 }

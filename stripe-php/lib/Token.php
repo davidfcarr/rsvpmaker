@@ -43,15 +43,15 @@ namespace Stripe;
  * @property string $type Type of the token: <code>account</code>, <code>bank_account</code>, <code>card</code>, or <code>pii</code>.
  * @property bool $used Whether this token has already been used (tokens can be used only once).
  */
-class Token extends ApiResource
-{
-    const OBJECT_NAME = 'token';
+class Token extends ApiResource {
 
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
+	const OBJECT_NAME = 'token';
 
-    const TYPE_ACCOUNT = 'account';
-    const TYPE_BANK_ACCOUNT = 'bank_account';
-    const TYPE_CARD = 'card';
-    const TYPE_PII = 'pii';
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+
+	const TYPE_ACCOUNT      = 'account';
+	const TYPE_BANK_ACCOUNT = 'bank_account';
+	const TYPE_CARD         = 'card';
+	const TYPE_PII          = 'pii';
 }

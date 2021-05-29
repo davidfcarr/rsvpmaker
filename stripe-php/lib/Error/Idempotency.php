@@ -2,6 +2,6 @@
 
 namespace Stripe\Error;
 
-class Idempotency extends Base
-{
+class Idempotency extends Base {
+
 }

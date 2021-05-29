@@ -29,94 +29,92 @@ namespace ReCaptcha;
 /**
  * The response returned from the service.
  */
-class Response
-{
-    /**
-     * Success or failure.
-     * @var boolean
-     */
-    private $success = false;
+class Response {
 
-    /**
-     * Error code strings.
-     * @var array
-     */
-    private $errorCodes = array();
+	/**
+	 * Success or failure.
+	 *
+	 * @var boolean
+	 */
+	private $success = false;
 
-    /**
-     * The hostname of the site where the reCAPTCHA was solved.
-     * @var string
-     */
-    private $hostname;
+	/**
+	 * Error code strings.
+	 *
+	 * @var array
+	 */
+	private $errorCodes = array();
 
-    /**
-     * Build the response from the expected JSON returned by the service.
-     *
-     * @param string $json
-     * @return \ReCaptcha\Response
-     */
-    public static function fromJson($json)
-    {
-        $responseData = json_decode($json, true);
+	/**
+	 * The hostname of the site where the reCAPTCHA was solved.
+	 *
+	 * @var string
+	 */
+	private $hostname;
 
-        if (!$responseData) {
-            return new Response(false, array('invalid-json'));
-        }
+	/**
+	 * Build the response from the expected JSON returned by the service.
+	 *
+	 * @param string $json
+	 * @return \ReCaptcha\Response
+	 */
+	public static function fromJson( $json ) {
+		$responseData = json_decode( $json, true );
 
-        $hostname = isset($responseData['hostname']) ? $responseData['hostname'] : null;
+		if ( ! $responseData ) {
+			return new Response( false, array( 'invalid-json' ) );
+		}
 
-        if (isset($responseData['success']) && $responseData['success'] == true) {
-            return new Response(true, array(), $hostname);
-        }
+		$hostname = isset( $responseData['hostname'] ) ? $responseData['hostname'] : null;
 
-        if (isset($responseData['error-codes']) && is_array($responseData['error-codes'])) {
-            return new Response(false, $responseData['error-codes'], $hostname);
-        }
+		if ( isset( $responseData['success'] ) && $responseData['success'] == true ) {
+			return new Response( true, array(), $hostname );
+		}
 
-        return new Response(false, array(), $hostname);
-    }
+		if ( isset( $responseData['error-codes'] ) && is_array( $responseData['error-codes'] ) ) {
+			return new Response( false, $responseData['error-codes'], $hostname );
+		}
 
-    /**
-     * Constructor.
-     *
-     * @param boolean $success
-     * @param array $errorCodes
-     * @param string $hostname
-     */
-    public function __construct($success, array $errorCodes = array(), $hostname = null)
-    {
-        $this->success = $success;
-        $this->errorCodes = $errorCodes;
-        $this->hostname = $hostname;
-    }
+		return new Response( false, array(), $hostname );
+	}
 
-    /**
-     * Is success?
-     *
-     * @return boolean
-     */
-    public function isSuccess()
-    {
-        return $this->success;
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param boolean $success
+	 * @param array   $errorCodes
+	 * @param string  $hostname
+	 */
+	public function __construct( $success, array $errorCodes = array(), $hostname = null ) {
+		$this->success    = $success;
+		$this->errorCodes = $errorCodes;
+		$this->hostname   = $hostname;
+	}
 
-    /**
-     * Get error codes.
-     *
-     * @return array
-     */
-    public function getErrorCodes()
-    {
-        return $this->errorCodes;
-    }
+	/**
+	 * Is success?
+	 *
+	 * @return boolean
+	 */
+	public function isSuccess() {
+		return $this->success;
+	}
 
-    /**
-     * Get hostname.
-     *
-     * @return string
-     */
-    public function getHostname()
-    {
-      return $this->hostname;
-    }
+	/**
+	 * Get error codes.
+	 *
+	 * @return array
+	 */
+	public function getErrorCodes() {
+		return $this->errorCodes;
+	}
+
+	/**
+	 * Get hostname.
+	 *
+	 * @return string
+	 */
+	public function getHostname() {
+		return $this->hostname;
+	}
 }

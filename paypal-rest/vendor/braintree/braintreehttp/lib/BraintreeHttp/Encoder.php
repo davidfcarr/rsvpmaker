@@ -9,93 +9,89 @@ use BraintreeHttp\Serializer\Text;
 
 /**
  * Class Encoder
+ *
  * @package BraintreeHttp
  *
  * Encoding class for serializing and deserializing request/response.
  */
-class Encoder
-{
-    private $serializers = [];
+class Encoder {
 
-    function __construct()
-    {
-        $this->serializers[] = new Json();
-        $this->serializers[] = new Text();
-        $this->serializers[] = new Multipart();
-        $this->serializers[] = new Form();
-    }
+	private $serializers = array();
 
-    public function serializeRequest(HttpRequest $request)
-    {
-        if (!array_key_exists('Content-Type', $request->headers)) {
-            throw new \Exception("HttpRequest does not have Content-Type header set");
-        }
+	function __construct() {
+		$this->serializers[] = new Json();
+		$this->serializers[] = new Text();
+		$this->serializers[] = new Multipart();
+		$this->serializers[] = new Form();
+	}
 
-        $contentType = $request->headers['Content-Type'];
-        /** @var Serializer $serializer */
-        $serializer = $this->serializer($contentType);
+	public function serializeRequest( HttpRequest $request ) {
+		if ( ! array_key_exists( 'Content-Type', $request->headers ) ) {
+			throw new \Exception( 'HttpRequest does not have Content-Type header set' );
+		}
 
-        if (is_null($serializer)) {
-            throw new \Exception(sprintf("Unable to serialize request with Content-Type: %s. Supported encodings are: %s", $contentType, implode(", ", $this->supportedEncodings())));
-        }
+		$contentType = $request->headers['Content-Type'];
+		/** @var Serializer $serializer */
+		$serializer = $this->serializer( $contentType );
 
-        if (!(is_string($request->body) || is_array($request->body))) {
-            throw new \Exception(sprintf("Body must be either string or array"));
-        }
+		if ( is_null( $serializer ) ) {
+			throw new \Exception( sprintf( 'Unable to serialize request with Content-Type: %s. Supported encodings are: %s', $contentType, implode( ', ', $this->supportedEncodings() ) ) );
+		}
 
-        $serialized = $serializer->encode($request);
+		if ( ! ( is_string( $request->body ) || is_array( $request->body ) ) ) {
+			throw new \Exception( sprintf( 'Body must be either string or array' ) );
+		}
 
-        if (array_key_exists("Content-Encoding", $request->headers) && $request->headers["Content-Encoding"] === "gzip") {
-            $serialized = gzencode($serialized);
-        }
+		$serialized = $serializer->encode( $request );
 
-        return $serialized;
-    }
+		if ( array_key_exists( 'Content-Encoding', $request->headers ) && $request->headers['Content-Encoding'] === 'gzip' ) {
+			$serialized = gzencode( $serialized );
+		}
 
-    public function deserializeResponse($responseBody, $headers)
-    {
-        if (!array_key_exists('Content-Type', $headers)) {
-            throw new \Exception("HTTP response does not have Content-Type header set");
-        }
+		return $serialized;
+	}
 
-        $contentType = $headers['Content-Type'];
-        /** @var Serializer $serializer */
-        $serializer = $this->serializer($contentType);
+	public function deserializeResponse( $responseBody, $headers ) {
+		if ( ! array_key_exists( 'Content-Type', $headers ) ) {
+			throw new \Exception( 'HTTP response does not have Content-Type header set' );
+		}
 
-        if (is_null($serializer)) {
-            throw new \Exception(sprintf("Unable to deserialize response with Content-Type: %s. Supported encodings are: %s", $contentType, implode(", ", $this->supportedEncodings())));
-        }
+		$contentType = $headers['Content-Type'];
+		/** @var Serializer $serializer */
+		$serializer = $this->serializer( $contentType );
 
-        if (array_key_exists("Content-Encoding", $headers) && $headers["Content-Encoding"] === "gzip") {
-            $responseBody = gzdecode($responseBody);
-        }
+		if ( is_null( $serializer ) ) {
+			throw new \Exception( sprintf( 'Unable to deserialize response with Content-Type: %s. Supported encodings are: %s', $contentType, implode( ', ', $this->supportedEncodings() ) ) );
+		}
 
-        return $serializer->decode($responseBody);
-    }
+		if ( array_key_exists( 'Content-Encoding', $headers ) && $headers['Content-Encoding'] === 'gzip' ) {
+			$responseBody = gzdecode( $responseBody );
+		}
 
-    private function serializer($contentType)
-    {
-        /** @var Serializer $serializer */
-        foreach ($this->serializers as $serializer) {
-            try {
-                if (preg_match($serializer->contentType(), $contentType) == 1) {
-                    return $serializer;
-                }
-            } catch (\Exception $ex) {
-                throw new \Exception(sprintf("Error while checking content type of %s: %s", get_class($serializer), $ex->getMessage()), $ex->getCode(), $ex);
-            }
-        }
+		return $serializer->decode( $responseBody );
+	}
 
-        return NULL;
-    }
+	private function serializer( $contentType ) {
+		/** @var Serializer $serializer */
+		foreach ( $this->serializers as $serializer ) {
+			try {
+				if ( preg_match( $serializer->contentType(), $contentType ) == 1 ) {
+					return $serializer;
+				}
+			} catch ( \Exception $ex ) {
+				throw new \Exception( sprintf( 'Error while checking content type of %s: %s', get_class( $serializer ), $ex->getMessage() ), $ex->getCode(), $ex );
+			}
+		}
 
-    private function supportedEncodings()
-    {
-        $values = [];
-        /** @var Serializer $serializer */
-        foreach ($this->serializers as $serializer) {
-            $values[] = $serializer->contentType();
-        }
-        return $values;
-    }
+		return null;
+	}
+
+	private function supportedEncodings() {
+		$values = array();
+		/** @var Serializer $serializer */
+		foreach ( $this->serializers as $serializer ) {
+			$values[] = $serializer->contentType();
+		}
+		return $values;
+	}
 }

@@ -18,9 +18,9 @@ namespace Stripe;
  * @property null|int $quantity The quantity of products being purchased.
  * @property \Stripe\StripeObject[] $taxes The taxes applied to the line item.
  */
-class LineItem extends ApiResource
-{
-    const OBJECT_NAME = 'item';
+class LineItem extends ApiResource {
 
-    use ApiOperations\All;
+	const OBJECT_NAME = 'item';
+
+	use ApiOperations\All;
 }

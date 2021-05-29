@@ -42,21 +42,21 @@ namespace Stripe;
  * @property null|int $unit_amount The unit amount in %s to be charged, represented as a whole integer if possible.
  * @property null|string $unit_amount_decimal The unit amount in %s to be charged, represented as a decimal string with at most 12 decimal places.
  */
-class Price extends ApiResource
-{
-    const OBJECT_NAME = 'price';
+class Price extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'price';
 
-    const BILLING_SCHEME_PER_UNIT = 'per_unit';
-    const BILLING_SCHEME_TIERED = 'tiered';
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-    const TIERS_MODE_GRADUATED = 'graduated';
-    const TIERS_MODE_VOLUME = 'volume';
+	const BILLING_SCHEME_PER_UNIT = 'per_unit';
+	const BILLING_SCHEME_TIERED   = 'tiered';
 
-    const TYPE_ONE_TIME = 'one_time';
-    const TYPE_RECURRING = 'recurring';
+	const TIERS_MODE_GRADUATED = 'graduated';
+	const TIERS_MODE_VOLUME    = 'volume';
+
+	const TYPE_ONE_TIME  = 'one_time';
+	const TYPE_RECURRING = 'recurring';
 }

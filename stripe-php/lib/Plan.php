@@ -45,13 +45,13 @@ namespace Stripe;
  * @property null|int $trial_period_days Default number of trial days when subscribing a customer to this plan using <a href="https://stripe.com/docs/api#create_subscription-trial_from_plan"><code>trial_from_plan=true</code></a>.
  * @property string $usage_type Configures how the quantity per period should be determined. Can be either <code>metered</code> or <code>licensed</code>. <code>licensed</code> automatically bills the <code>quantity</code> set when adding it to a subscription. <code>metered</code> aggregates the total usage based on usage records. Defaults to <code>licensed</code>.
  */
-class Plan extends ApiResource
-{
-    const OBJECT_NAME = 'plan';
+class Plan extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Delete;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'plan';
+
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Delete;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 }

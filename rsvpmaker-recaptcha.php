@@ -2,15 +2,13 @@
 
 function rsvpmaker_recaptcha_output() {
 
-global $rsvp_options;
+	global $rsvp_options;
 
-if(!empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
+	if ( ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) ) {
 
-	{
+		?>
 
-?>
-
-<div class="g-recaptcha" data-sitekey="<?php echo esc_attr($rsvp_options["rsvp_recaptcha_site_key"]); ?>"></div>
+<div class="g-recaptcha" data-sitekey="<?php echo esc_attr( $rsvp_options['rsvp_recaptcha_site_key'] ); ?>"></div>
 
 <script type="text/javascript"
 
@@ -18,35 +16,34 @@ if(!empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsv
 
 </script>
 
-<?php	
+		<?php
 
 	}
-
-
 
 }
 
 
 
-function rsvpmaker_recaptcha_check ($siteKey,$secret) {
+function rsvpmaker_recaptcha_check( $siteKey, $secret ) {
 
-require_once 'recaptcha-master/src/autoload.php';
+	require_once 'recaptcha-master/src/autoload.php';
 
-if (!isset($_POST['g-recaptcha-response']))
+	if ( ! isset( $_POST['g-recaptcha-response'] ) ) {
 
-	return false;
+		return false;
+	}
 
-	$recaptcha = new \ReCaptcha\ReCaptcha($secret);
+	$recaptcha = new \ReCaptcha\ReCaptcha( $secret );
 
-    $resp = $recaptcha->verify(sanitize_text_field($_POST['g-recaptcha-response']), $_SERVER['REMOTE_ADDR']);
+	$resp = $recaptcha->verify( sanitize_text_field( $_POST['g-recaptcha-response'] ), $_SERVER['REMOTE_ADDR'] );
 
-	if ($resp->isSuccess())
+	if ( $resp->isSuccess() ) {
 
 		return true;
 
-	else
-
+	} else {
 		return false;
+	}
 
 }
 

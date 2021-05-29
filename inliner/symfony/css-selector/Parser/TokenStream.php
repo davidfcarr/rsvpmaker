@@ -24,148 +24,140 @@ use Symfony\Component\CssSelector\Exception\SyntaxErrorException;
  *
  * @internal
  */
-class TokenStream
-{
-    /**
-     * @var Token[]
-     */
-    private $tokens = [];
+class TokenStream {
 
-    /**
-     * @var Token[]
-     */
-    private $used = [];
+	/**
+	 * @var Token[]
+	 */
+	private $tokens = array();
 
-    /**
-     * @var int
-     */
-    private $cursor = 0;
+	/**
+	 * @var Token[]
+	 */
+	private $used = array();
 
-    /**
-     * @var Token|null
-     */
-    private $peeked;
+	/**
+	 * @var int
+	 */
+	private $cursor = 0;
 
-    /**
-     * @var bool
-     */
-    private $peeking = false;
+	/**
+	 * @var Token|null
+	 */
+	private $peeked;
 
-    /**
-     * Pushes a token.
-     *
-     * @return $this
-     */
-    public function push(Token $token): self
-    {
-        $this->tokens[] = $token;
+	/**
+	 * @var bool
+	 */
+	private $peeking = false;
 
-        return $this;
-    }
+	/**
+	 * Pushes a token.
+	 *
+	 * @return $this
+	 */
+	public function push( Token $token ): self {
+		$this->tokens[] = $token;
 
-    /**
-     * Freezes stream.
-     *
-     * @return $this
-     */
-    public function freeze(): self
-    {
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Returns next token.
-     *
-     * @throws InternalErrorException If there is no more token
-     */
-    public function getNext(): Token
-    {
-        if ($this->peeking) {
-            $this->peeking = false;
-            $this->used[] = $this->peeked;
+	/**
+	 * Freezes stream.
+	 *
+	 * @return $this
+	 */
+	public function freeze(): self {
+		return $this;
+	}
 
-            return $this->peeked;
-        }
+	/**
+	 * Returns next token.
+	 *
+	 * @throws InternalErrorException If there is no more token
+	 */
+	public function getNext(): Token {
+		if ( $this->peeking ) {
+			$this->peeking = false;
+			$this->used[]  = $this->peeked;
 
-        if (!isset($this->tokens[$this->cursor])) {
-            throw new InternalErrorException('Unexpected token stream end.');
-        }
+			return $this->peeked;
+		}
 
-        return $this->tokens[$this->cursor++];
-    }
+		if ( ! isset( $this->tokens[ $this->cursor ] ) ) {
+			throw new InternalErrorException( 'Unexpected token stream end.' );
+		}
 
-    /**
-     * Returns peeked token.
-     */
-    public function getPeek(): Token
-    {
-        if (!$this->peeking) {
-            $this->peeked = $this->getNext();
-            $this->peeking = true;
-        }
+		return $this->tokens[ $this->cursor++ ];
+	}
 
-        return $this->peeked;
-    }
+	/**
+	 * Returns peeked token.
+	 */
+	public function getPeek(): Token {
+		if ( ! $this->peeking ) {
+			$this->peeked  = $this->getNext();
+			$this->peeking = true;
+		}
 
-    /**
-     * Returns used tokens.
-     *
-     * @return Token[]
-     */
-    public function getUsed(): array
-    {
-        return $this->used;
-    }
+		return $this->peeked;
+	}
 
-    /**
-     * Returns nex identifier token.
-     *
-     * @return string The identifier token value
-     *
-     * @throws SyntaxErrorException If next token is not an identifier
-     */
-    public function getNextIdentifier(): string
-    {
-        $next = $this->getNext();
+	/**
+	 * Returns used tokens.
+	 *
+	 * @return Token[]
+	 */
+	public function getUsed(): array {
+		return $this->used;
+	}
 
-        if (!$next->isIdentifier()) {
-            throw SyntaxErrorException::unexpectedToken('identifier', $next);
-        }
+	/**
+	 * Returns nex identifier token.
+	 *
+	 * @return string The identifier token value
+	 *
+	 * @throws SyntaxErrorException If next token is not an identifier
+	 */
+	public function getNextIdentifier(): string {
+		$next = $this->getNext();
 
-        return $next->getValue();
-    }
+		if ( ! $next->isIdentifier() ) {
+			throw SyntaxErrorException::unexpectedToken( 'identifier', $next );
+		}
 
-    /**
-     * Returns nex identifier or star delimiter token.
-     *
-     * @return string|null The identifier token value or null if star found
-     *
-     * @throws SyntaxErrorException If next token is not an identifier or a star delimiter
-     */
-    public function getNextIdentifierOrStar(): ?string
-    {
-        $next = $this->getNext();
+		return $next->getValue();
+	}
 
-        if ($next->isIdentifier()) {
-            return $next->getValue();
-        }
+	/**
+	 * Returns nex identifier or star delimiter token.
+	 *
+	 * @return string|null The identifier token value or null if star found
+	 *
+	 * @throws SyntaxErrorException If next token is not an identifier or a star delimiter
+	 */
+	public function getNextIdentifierOrStar(): ?string {
+		$next = $this->getNext();
 
-        if ($next->isDelimiter(['*'])) {
-            return null;
-        }
+		if ( $next->isIdentifier() ) {
+			return $next->getValue();
+		}
 
-        throw SyntaxErrorException::unexpectedToken('identifier or "*"', $next);
-    }
+		if ( $next->isDelimiter( array( '*' ) ) ) {
+			return null;
+		}
 
-    /**
-     * Skips next whitespace if any.
-     */
-    public function skipWhitespace()
-    {
-        $peek = $this->getPeek();
+		throw SyntaxErrorException::unexpectedToken( 'identifier or "*"', $next );
+	}
 
-        if ($peek->isWhitespace()) {
-            $this->getNext();
-        }
-    }
+	/**
+	 * Skips next whitespace if any.
+	 */
+	public function skipWhitespace() {
+		$peek = $this->getPeek();
+
+		if ( $peek->isWhitespace() ) {
+			$this->getNext();
+		}
+	}
 }

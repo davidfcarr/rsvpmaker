@@ -48,68 +48,67 @@ namespace Stripe;
  * @property null|int $trial_end If the subscription has a trial, the end of that trial.
  * @property null|int $trial_start If the subscription has a trial, the beginning of that trial.
  */
-class Subscription extends ApiResource
-{
-    const OBJECT_NAME = 'subscription';
+class Subscription extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'subscription';
 
-    const PAYMENT_BEHAVIOR_ALLOW_INCOMPLETE = 'allow_incomplete';
-    const PAYMENT_BEHAVIOR_ERROR_IF_INCOMPLETE = 'error_if_incomplete';
-    const PAYMENT_BEHAVIOR_PENDING_IF_INCOMPLETE = 'pending_if_incomplete';
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-    const STATUS_ACTIVE = 'active';
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_INCOMPLETE = 'incomplete';
-    const STATUS_INCOMPLETE_EXPIRED = 'incomplete_expired';
-    const STATUS_PAST_DUE = 'past_due';
-    const STATUS_TRIALING = 'trialing';
-    const STATUS_UNPAID = 'unpaid';
+	const PAYMENT_BEHAVIOR_ALLOW_INCOMPLETE      = 'allow_incomplete';
+	const PAYMENT_BEHAVIOR_ERROR_IF_INCOMPLETE   = 'error_if_incomplete';
+	const PAYMENT_BEHAVIOR_PENDING_IF_INCOMPLETE = 'pending_if_incomplete';
 
-    use ApiOperations\Delete {
-        delete as protected _delete;
-      }
+	const STATUS_ACTIVE             = 'active';
+	const STATUS_CANCELED           = 'canceled';
+	const STATUS_INCOMPLETE         = 'incomplete';
+	const STATUS_INCOMPLETE_EXPIRED = 'incomplete_expired';
+	const STATUS_PAST_DUE           = 'past_due';
+	const STATUS_TRIALING           = 'trialing';
+	const STATUS_UNPAID             = 'unpaid';
 
-    public static function getSavedNestedResources()
-    {
-        static $savedNestedResources = null;
-        if (null === $savedNestedResources) {
-            $savedNestedResources = new Util\Set([
-                'source',
-            ]);
-        }
+	use ApiOperations \Delete {
+		delete as protected _delete;
+	}
 
-        return $savedNestedResources;
-    }
+	public static function getSavedNestedResources() {
+		static $savedNestedResources = null;
+		if ( null === $savedNestedResources ) {
+			$savedNestedResources = new Util\Set(
+				array(
+					'source',
+				)
+			);
+		}
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Subscription the deleted subscription
-     */
-    public function cancel($params = null, $opts = null)
-    {
-        return $this->_delete($params, $opts);
-    }
+		return $savedNestedResources;
+	}
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Subscription the updated subscription
-     */
-    public function deleteDiscount($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/discount';
-        list($response, $opts) = $this->_request('delete', $url, $params, $opts);
-        $this->refreshFrom(['discount' => null], $opts, true);
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Subscription the deleted subscription
+	 */
+	public function cancel( $params = null, $opts = null ) {
+		return $this->_delete( $params, $opts );
+	}
+
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Subscription the updated subscription
+	 */
+	public function deleteDiscount( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/discount';
+		list($response, $opts) = $this->_request( 'delete', $url, $params, $opts );
+		$this->refreshFrom( array( 'discount' => null ), $opts, true );
+	}
 }

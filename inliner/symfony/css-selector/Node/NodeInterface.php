@@ -21,11 +21,11 @@ namespace Symfony\Component\CssSelector\Node;
  *
  * @internal
  */
-interface NodeInterface
-{
-    public function getNodeName(): string;
+interface NodeInterface {
 
-    public function getSpecificity(): Specificity;
+	public function getNodeName(): string;
 
-    public function __toString(): string;
+	public function getSpecificity(): Specificity;
+
+	public function __toString(): string;
 }

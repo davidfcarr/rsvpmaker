@@ -10,125 +10,127 @@ use BraintreeHttp\Serializer\FormPart;
 
 /**
  * Class Multipart
+ *
  * @package BraintreeHttp\Serializer
  *
  * Serializer for multipart.
  */
-class Multipart implements Serializer
-{
-    const LINEFEED = "\r\n";
+class Multipart implements Serializer {
 
-    public function contentType()
-    {
-        return "/^multipart\/.*$/";
-    }
+	const LINEFEED = "\r\n";
 
-    public function encode(HttpRequest $request)
-    {
-        if (!is_array($request->body) || !$this->isAssociative($request->body))
-        {
-            throw new \Exception("HttpRequest body must be an associative array when Content-Type is: " . $request->headers["Content-Type"]);
-        }
+	public function contentType() {
+		return '/^multipart\/.*$/';
+	}
 
-        $boundary = "---------------------" . md5(mt_rand() . microtime());
-        $contentTypeHeader = $request->headers["Content-Type"];
-        $request->headers["Content-Type"] = "{$contentTypeHeader}; boundary={$boundary}";
+	public function encode( HttpRequest $request ) {
+		if ( ! is_array( $request->body ) || ! $this->isAssociative( $request->body ) ) {
+			throw new \Exception( 'HttpRequest body must be an associative array when Content-Type is: ' . $request->headers['Content-Type'] );
+		}
 
-        $value_params = [];
-        $file_params = [];
+		$boundary                         = '---------------------' . md5( mt_rand() . microtime() );
+		$contentTypeHeader                = $request->headers['Content-Type'];
+		$request->headers['Content-Type'] = "{$contentTypeHeader}; boundary={$boundary}";
 
-        $disallow = ["\0", "\"", "\r", "\n"];
+		$value_params = array();
+		$file_params  = array();
 
-        $body = [];
+		$disallow = array( "\0", '"', "\r", "\n" );
 
-        foreach ($request->body as $k => $v) {
-            $k = str_replace($disallow, "_", $k);
-            if (is_resource($v)) {
-                $file_params[] = $this->prepareFilePart($k, $v, $boundary);
-            } else if ($v instanceof FormPart) {
-                $value_params[] = $this->prepareFormPart($k, $v, $boundary);
-            } else {
-                $value_params[] = $this->prepareFormField($k, $v, $boundary);
-            }
-        }
+		$body = array();
 
-        $body = array_merge($value_params, $file_params);
+		foreach ( $request->body as $k => $v ) {
+			$k = str_replace( $disallow, '_', $k );
+			if ( is_resource( $v ) ) {
+				$file_params[] = $this->prepareFilePart( $k, $v, $boundary );
+			} elseif ( $v instanceof FormPart ) {
+				$value_params[] = $this->prepareFormPart( $k, $v, $boundary );
+			} else {
+				$value_params[] = $this->prepareFormField( $k, $v, $boundary );
+			}
+		}
 
-        // add boundary for each parameters
-        array_walk($body, function (&$part) use ($boundary) {
-            $part = "--{$boundary}" . self::LINEFEED . "{$part}";
-        });
+		$body = array_merge( $value_params, $file_params );
 
-        // add final boundary
-        $body[] = "--{$boundary}--";
-        $body[] = "";
+		// add boundary for each parameters
+		array_walk(
+			$body,
+			function ( &$part ) use ( $boundary ) {
+				$part = "--{$boundary}" . self::LINEFEED . "{$part}";
+			}
+		);
 
-        return implode(self::LINEFEED, $body);
-    }
+		// add final boundary
+		$body[] = "--{$boundary}--";
+		$body[] = '';
 
-    public function decode($data)
-    {
-        throw new \Exception("Multipart does not support deserialization");
-    }
+		return implode( self::LINEFEED, $body );
+	}
 
-    private function isAssociative(array $array)
-    {
-        return array_values($array) !== $array;
-    }
+	public function decode( $data ) {
+		throw new \Exception( 'Multipart does not support deserialization' );
+	}
 
-    private function prepareFormField($partName, $value, $boundary)
-    {
-        return implode(self::LINEFEED, [
-            "Content-Disposition: form-data; name=\"{$partName}\"",
-            "",
-            filter_var($value),
-        ]);
-    }
+	private function isAssociative( array $array ) {
+		return array_values( $array ) !== $array;
+	}
 
-    private function prepareFilePart($partName, $file, $boundary)
-    {
-        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-        $filePath = stream_get_meta_data($file)['uri'];
-        $data = file_get_contents($filePath);
-        $mimeType = $fileInfo->buffer($data);
+	private function prepareFormField( $partName, $value, $boundary ) {
+		return implode(
+			self::LINEFEED,
+			array(
+				"Content-Disposition: form-data; name=\"{$partName}\"",
+				'',
+				filter_var( $value ),
+			)
+		);
+	}
 
-        $splitFilePath = explode(DIRECTORY_SEPARATOR, $filePath);
-        $filePath = end($splitFilePath);
-        $disallow = ["\0", "\"", "\r", "\n"];
-        $filePath = str_replace($disallow, "_", $filePath);
-        return implode(self::LINEFEED, [
-            "Content-Disposition: form-data; name=\"{$partName}\"; filename=\"{$filePath}\"",
-            "Content-Type: {$mimeType}",
-            "",
-            $data,
-        ]);
-    }
+	private function prepareFilePart( $partName, $file, $boundary ) {
+		$fileInfo = new finfo( FILEINFO_MIME_TYPE );
+		$filePath = stream_get_meta_data( $file )['uri'];
+		$data     = file_get_contents( $filePath );
+		$mimeType = $fileInfo->buffer( $data );
 
-    private function prepareFormPart($partName, $formPart, $boundary)
-    {
-        $contentDisposition = "Content-Disposition: form-data; name=\"{$partName}\"";
+		$splitFilePath = explode( DIRECTORY_SEPARATOR, $filePath );
+		$filePath      = end( $splitFilePath );
+		$disallow      = array( "\0", '"', "\r", "\n" );
+		$filePath      = str_replace( $disallow, '_', $filePath );
+		return implode(
+			self::LINEFEED,
+			array(
+				"Content-Disposition: form-data; name=\"{$partName}\"; filename=\"{$filePath}\"",
+				"Content-Type: {$mimeType}",
+				'',
+				$data,
+			)
+		);
+	}
 
-        $partHeaders = $formPart->getHeaders();
-        if (array_key_exists("Content-Type", $partHeaders)) {
-            if ($partHeaders["Content-Type"] === "application/json") {
-                $contentDisposition .= "; filename=\"{$partName}.json\"";
-            }
-            $tempRequest = new HttpRequest('/', 'POST');
-            $tempRequest->headers = $partHeaders;
-            $tempRequest->body = $formPart->getValue();
-            $encoder = new Encoder();
-            $partValue = $encoder->serializeRequest($tempRequest);
-        } else {
-            $partValue = $formPart->getValue();
-        }
+	private function prepareFormPart( $partName, $formPart, $boundary ) {
+		$contentDisposition = "Content-Disposition: form-data; name=\"{$partName}\"";
 
-        $finalPartHeaders = [];
-        foreach ($partHeaders as $k => $v) {
-            $finalPartHeaders[] = "{$k}: {$v}";
-        }
+		$partHeaders = $formPart->getHeaders();
+		if ( array_key_exists( 'Content-Type', $partHeaders ) ) {
+			if ( $partHeaders['Content-Type'] === 'application/json' ) {
+				$contentDisposition .= "; filename=\"{$partName}.json\"";
+			}
+			$tempRequest          = new HttpRequest( '/', 'POST' );
+			$tempRequest->headers = $partHeaders;
+			$tempRequest->body    = $formPart->getValue();
+			$encoder              = new Encoder();
+			$partValue            = $encoder->serializeRequest( $tempRequest );
+		} else {
+			$partValue = $formPart->getValue();
+		}
 
-        $body = array_merge([$contentDisposition], $finalPartHeaders, [""], [$partValue]);
+		$finalPartHeaders = array();
+		foreach ( $partHeaders as $k => $v ) {
+			$finalPartHeaders[] = "{$k}: {$v}";
+		}
 
-        return implode(self::LINEFEED, $body);
-    }
+		$body = array_merge( array( $contentDisposition ), $finalPartHeaders, array( '' ), array( $partValue ) );
+
+		return implode( self::LINEFEED, $body );
+	}
 }

@@ -13,7 +13,7 @@ namespace Stripe;
  * @property string $currency Three-letter <a href="https://stripe.com/docs/currencies">ISO code for the currency</a> to which this transaction was converted.
  * @property string $receiver The receiver to which this transaction was sent.
  */
-class BitcoinTransaction extends ApiResource
-{
-    const OBJECT_NAME = 'bitcoin_transaction';
+class BitcoinTransaction extends ApiResource {
+
+	const OBJECT_NAME = 'bitcoin_transaction';
 }

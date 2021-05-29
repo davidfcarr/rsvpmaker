@@ -55,71 +55,68 @@ namespace Stripe;
  * @property null|\Stripe\StripeObject $transfer_data The data with which to automatically create a Transfer when the payment is finalized. See the PaymentIntents <a href="https://stripe.com/docs/payments/connected-accounts">use case for connected accounts</a> for details.
  * @property null|string $transfer_group A string that identifies the resulting payment as part of a group. See the PaymentIntents <a href="https://stripe.com/docs/payments/connected-accounts">use case for connected accounts</a> for details.
  */
-class PaymentIntent extends ApiResource
-{
-    const OBJECT_NAME = 'payment_intent';
+class PaymentIntent extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'payment_intent';
 
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_PROCESSING = 'processing';
-    const STATUS_REQUIRES_ACTION = 'requires_action';
-    const STATUS_REQUIRES_CAPTURE = 'requires_capture';
-    const STATUS_REQUIRES_CONFIRMATION = 'requires_confirmation';
-    const STATUS_REQUIRES_PAYMENT_METHOD = 'requires_payment_method';
-    const STATUS_SUCCEEDED = 'succeeded';
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return PaymentIntent the canceled payment intent
-     */
-    public function cancel($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/cancel';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+	const STATUS_CANCELED                = 'canceled';
+	const STATUS_PROCESSING              = 'processing';
+	const STATUS_REQUIRES_ACTION         = 'requires_action';
+	const STATUS_REQUIRES_CAPTURE        = 'requires_capture';
+	const STATUS_REQUIRES_CONFIRMATION   = 'requires_confirmation';
+	const STATUS_REQUIRES_PAYMENT_METHOD = 'requires_payment_method';
+	const STATUS_SUCCEEDED               = 'succeeded';
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return PaymentIntent the canceled payment intent
+	 */
+	public function cancel( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/cancel';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return PaymentIntent the captured payment intent
-     */
-    public function capture($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/capture';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return PaymentIntent the captured payment intent
+	 */
+	public function capture( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/capture';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return PaymentIntent the confirmed payment intent
-     */
-    public function confirm($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/confirm';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return PaymentIntent the confirmed payment intent
+	 */
+	public function confirm( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/confirm';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }

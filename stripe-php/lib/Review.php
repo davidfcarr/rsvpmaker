@@ -26,41 +26,40 @@ namespace Stripe;
  * @property string $reason The reason the review is currently open or closed. One of <code>rule</code>, <code>manual</code>, <code>approved</code>, <code>refunded</code>, <code>refunded_as_fraud</code>, or <code>disputed</code>.
  * @property null|\Stripe\StripeObject $session Information related to the browsing session of the user who initiated the payment.
  */
-class Review extends ApiResource
-{
-    const OBJECT_NAME = 'review';
+class Review extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Retrieve;
+	const OBJECT_NAME = 'review';
 
-    /**
-     * Possible string representations of the current, the opening or the closure reason of the review.
-     * Not all of these enumeration apply to all of the ´reason´ fields. Please consult the Review object to
-     * determine where these are apply.
-     *
-     * @see https://stripe.com/docs/api/radar/reviews/object
-     */
-    const REASON_APPROVED = 'approved';
-    const REASON_DISPUTED = 'disputed';
-    const REASON_MANUAL = 'manual';
-    const REASON_REFUNDED = 'refunded';
-    const REASON_REFUNDED_AS_FRAUD = 'refunded_as_fraud';
-    const REASON_RULE = 'rule';
+	use ApiOperations\All;
+	use ApiOperations\Retrieve;
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return Review the approved review
-     */
-    public function approve($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/approve';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+	/**
+	 * Possible string representations of the current, the opening or the closure reason of the review.
+	 * Not all of these enumeration apply to all of the ´reason´ fields. Please consult the Review object to
+	 * determine where these are apply.
+	 *
+	 * @see https://stripe.com/docs/api/radar/reviews/object
+	 */
+	const REASON_APPROVED          = 'approved';
+	const REASON_DISPUTED          = 'disputed';
+	const REASON_MANUAL            = 'manual';
+	const REASON_REFUNDED          = 'refunded';
+	const REASON_REFUNDED_AS_FRAUD = 'refunded_as_fraud';
+	const REASON_RULE              = 'rule';
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return Review the approved review
+	 */
+	public function approve( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/approve';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }

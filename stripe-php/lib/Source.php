@@ -52,117 +52,113 @@ namespace Stripe;
  * @property null|string $usage Either <code>reusable</code> or <code>single_use</code>. Whether this source should be reusable or not. Some source types may or may not be reusable by construction, while others may leave the option at creation. If an incompatible value is passed, an error will be returned.
  * @property \Stripe\StripeObject $wechat
  */
-class Source extends ApiResource
-{
-    const OBJECT_NAME = 'source';
+class Source extends ApiResource {
 
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'source';
 
-    const FLOW_CODE_VERIFICATION = 'code_verification';
-    const FLOW_NONE = 'none';
-    const FLOW_RECEIVER = 'receiver';
-    const FLOW_REDIRECT = 'redirect';
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_CHARGEABLE = 'chargeable';
-    const STATUS_CONSUMED = 'consumed';
-    const STATUS_FAILED = 'failed';
-    const STATUS_PENDING = 'pending';
+	const FLOW_CODE_VERIFICATION = 'code_verification';
+	const FLOW_NONE              = 'none';
+	const FLOW_RECEIVER          = 'receiver';
+	const FLOW_REDIRECT          = 'redirect';
 
-    const USAGE_REUSABLE = 'reusable';
-    const USAGE_SINGLE_USE = 'single_use';
+	const STATUS_CANCELED   = 'canceled';
+	const STATUS_CHARGEABLE = 'chargeable';
+	const STATUS_CONSUMED   = 'consumed';
+	const STATUS_FAILED     = 'failed';
+	const STATUS_PENDING    = 'pending';
 
-    use ApiOperations\NestedResource;
+	const USAGE_REUSABLE   = 'reusable';
+	const USAGE_SINGLE_USE = 'single_use';
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\UnexpectedValueException if the source is not attached to a customer
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Source the detached source
-     */
-    public function detach($params = null, $opts = null)
-    {
-        self::_validateParams($params);
+	use ApiOperations\NestedResource;
 
-        $id = $this['id'];
-        if (!$id) {
-            $class = \get_class($this);
-            $msg = "Could not determine which URL to request: {$class} instance "
-             . "has invalid ID: {$id}";
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\UnexpectedValueException if the source is not attached to a customer
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Source the detached source
+	 */
+	public function detach( $params = null, $opts = null ) {
+		self::_validateParams( $params );
 
-            throw new Exception\UnexpectedValueException($msg, null);
-        }
+		$id = $this['id'];
+		if ( ! $id ) {
+			$class = \get_class( $this );
+			$msg   = "Could not determine which URL to request: {$class} instance "
+			 . "has invalid ID: {$id}";
 
-        if ($this['customer']) {
-            $base = Customer::classUrl();
-            $parentExtn = \urlencode(Util\Util::utf8($this['customer']));
-            $extn = \urlencode(Util\Util::utf8($id));
-            $url = "{$base}/{$parentExtn}/sources/{$extn}";
+			throw new Exception\UnexpectedValueException( $msg, null );
+		}
 
-            list($response, $opts) = $this->_request('delete', $url, $params, $opts);
-            $this->refreshFrom($response, $opts);
+		if ( $this['customer'] ) {
+			$base       = Customer::classUrl();
+			$parentExtn = \urlencode( Util\Util::utf8( $this['customer'] ) );
+			$extn       = \urlencode( Util\Util::utf8( $id ) );
+			$url        = "{$base}/{$parentExtn}/sources/{$extn}";
 
-            return $this;
-        }
-        $message = 'This source object does not appear to be currently attached '
-               . 'to a customer object.';
+			list($response, $opts) = $this->_request( 'delete', $url, $params, $opts );
+			$this->refreshFrom( $response, $opts );
 
-        throw new Exception\UnexpectedValueException($message);
-    }
+			return $this;
+		}
+		$message = 'This source object does not appear to be currently attached '
+			   . 'to a customer object.';
 
-    /**
-     * @deprecated sourceTransactions is deprecated. Please use Source::allSourceTransactions instead.
-     *
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Collection the list of source transactions
-     */
-    public function sourceTransactions($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/source_transactions';
-        list($response, $opts) = $this->_request('get', $url, $params, $opts);
-        $obj = \Stripe\Util\Util::convertToStripeObject($response, $opts);
-        $obj->setLastResponse($response);
+		throw new Exception\UnexpectedValueException( $message );
+	}
 
-        return $obj;
-    }
+	/**
+	 * @deprecated sourceTransactions is deprecated. Please use Source::allSourceTransactions instead.
+	 *
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Collection the list of source transactions
+	 */
+	public function sourceTransactions( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/source_transactions';
+		list($response, $opts) = $this->_request( 'get', $url, $params, $opts );
+		$obj                   = \Stripe\Util\Util::convertToStripeObject( $response, $opts );
+		$obj->setLastResponse( $response );
 
-    /**
-     * @param string $id
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Collection the list of source transactions
-     */
-    public static function allSourceTransactions($id, $params = null, $opts = null)
-    {
-        return self::_allNestedResources($id, '/source_transactions', $params, $opts);
-    }
+		return $obj;
+	}
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return Source the verified source
-     */
-    public function verify($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/verify';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+	/**
+	 * @param string            $id
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Collection the list of source transactions
+	 */
+	public static function allSourceTransactions( $id, $params = null, $opts = null ) {
+		return self::_allNestedResources( $id, '/source_transactions', $params, $opts );
+	}
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return Source the verified source
+	 */
+	public function verify( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/verify';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }

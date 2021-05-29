@@ -4,198 +4,191 @@ namespace BraintreeHttp;
 
 /**
  * Class HttpClient
+ *
  * @package BraintreeHttp
  *
  * Client used to make HTTP requests.
  */
-class HttpClient
-{
-    /**
-     * @var Environment
-     */
-    public $environment;
+class HttpClient {
 
-    /**
-     * @var Injector[]
-     */
-    public $injectors = [];
+	/**
+	 * @var Environment
+	 */
+	public $environment;
 
-    /**
-     * @var Encoder
-     */
-    public $encoder;
+	/**
+	 * @var Injector[]
+	 */
+	public $injectors = array();
 
-    /**
-     * HttpClient constructor. Pass the environment you wish to make calls to.
-     *
-     * @param $environment Environment
-     * @see Environment
-     */
-    function __construct(Environment $environment)
-    {
-        $this->environment = $environment;
-        $this->encoder = new Encoder();
-        $this->curlCls = Curl::class;
-    }
+	/**
+	 * @var Encoder
+	 */
+	public $encoder;
 
-    /**
-     * Injectors are blocks that can be used for executing arbitrary pre-flight logic, such as modifying a request or logging data.
-     * Executed in first-in first-out order.
-     *
-     * @param Injector $inj
-     */
-    public function addInjector(Injector $inj)
-    {
-        $this->injectors[] = $inj;
-    }
+	/**
+	 * HttpClient constructor. Pass the environment you wish to make calls to.
+	 *
+	 * @param $environment Environment
+	 * @see Environment
+	 */
+	function __construct( Environment $environment ) {
+		$this->environment = $environment;
+		$this->encoder     = new Encoder();
+		$this->curlCls     = Curl::class;
+	}
 
-    /**
-     * The method that takes an HTTP request, serializes the request, makes a call to given environment, and deserialize response
-     *
-     * @param $httpRequest HttpRequest
-     * @return HttpResponse
-     */
-    public function execute(HttpRequest $httpRequest)
-    {
-        $requestCpy = clone $httpRequest;
-        $curl = new Curl();
+	/**
+	 * Injectors are blocks that can be used for executing arbitrary pre-flight logic, such as modifying a request or logging data.
+	 * Executed in first-in first-out order.
+	 *
+	 * @param Injector $inj
+	 */
+	public function addInjector( Injector $inj ) {
+		$this->injectors[] = $inj;
+	}
 
-        foreach ($this->injectors as $inj) {
-            $inj->inject($requestCpy);
-        }
+	/**
+	 * The method that takes an HTTP request, serializes the request, makes a call to given environment, and deserialize response
+	 *
+	 * @param $httpRequest HttpRequest
+	 * @return HttpResponse
+	 */
+	public function execute( HttpRequest $httpRequest ) {
+		$requestCpy = clone $httpRequest;
+		$curl       = new Curl();
 
-        if (!array_key_exists("User-Agent", $requestCpy->headers)) {
-            $requestCpy->headers["User-Agent"] = $this->userAgent();
-        }
+		foreach ( $this->injectors as $inj ) {
+			$inj->inject( $requestCpy );
+		}
 
-        $url = $this->environment->baseUrl() . $requestCpy->path;
+		if ( ! array_key_exists( 'User-Agent', $requestCpy->headers ) ) {
+			$requestCpy->headers['User-Agent'] = $this->userAgent();
+		}
 
-        $body = "";
-        if (!is_null($requestCpy->body)) {
-            $body = $this->encoder->serializeRequest($requestCpy);
-        }
+		$url = $this->environment->baseUrl() . $requestCpy->path;
 
-        $curl->setOpt(CURLOPT_URL, $url);
-        $curl->setOpt(CURLOPT_CUSTOMREQUEST, $requestCpy->verb);
-        $curl->setOpt(CURLOPT_HTTPHEADER, $this->serializeHeaders($requestCpy->headers));
-        $curl->setOpt(CURLOPT_RETURNTRANSFER, 1);
-        $curl->setOpt(CURLOPT_HEADER, 0);
+		$body = '';
+		if ( ! is_null( $requestCpy->body ) ) {
+			$body = $this->encoder->serializeRequest( $requestCpy );
+		}
 
-        if (!is_null($requestCpy->body)) {
-            $curl->setOpt(CURLOPT_POSTFIELDS, $body);
-        }
+		$curl->setOpt( CURLOPT_URL, $url );
+		$curl->setOpt( CURLOPT_CUSTOMREQUEST, $requestCpy->verb );
+		$curl->setOpt( CURLOPT_HTTPHEADER, $this->serializeHeaders( $requestCpy->headers ) );
+		$curl->setOpt( CURLOPT_RETURNTRANSFER, 1 );
+		$curl->setOpt( CURLOPT_HEADER, 0 );
 
-        if (strpos($this->environment->baseUrl(), "https://") === 0) {
-            $curl->setOpt(CURLOPT_SSL_VERIFYPEER, true);
-            $curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);
-        }
+		if ( ! is_null( $requestCpy->body ) ) {
+			$curl->setOpt( CURLOPT_POSTFIELDS, $body );
+		}
 
-        if ($caCertPath = $this->getCACertFilePath()) {
-            $curl->setOpt(CURLOPT_CAINFO, $caCertPath);
-        }
+		if ( strpos( $this->environment->baseUrl(), 'https://' ) === 0 ) {
+			$curl->setOpt( CURLOPT_SSL_VERIFYPEER, true );
+			$curl->setOpt( CURLOPT_SSL_VERIFYHOST, 2 );
+		}
 
-        $response = $this->parseResponse($curl);
-        $curl->close();
+		if ( $caCertPath = $this->getCACertFilePath() ) {
+			$curl->setOpt( CURLOPT_CAINFO, $caCertPath );
+		}
 
-        return $response;
-    }
+		$response = $this->parseResponse( $curl );
+		$curl->close();
 
-    /**
-     * Returns default user-agent
-     *
-     * @return string
-     */
-    public function userAgent()
-    {
-        return "BraintreeHttp-PHP HTTP/1.1";
-    }
+		return $response;
+	}
 
-    /**
-     * Return the filepath to your custom CA Cert if needed.
-     * @return string
-     */
-    protected function getCACertFilePath()
-    {
-        return null;
-    }
+	/**
+	 * Returns default user-agent
+	 *
+	 * @return string
+	 */
+	public function userAgent() {
+		return 'BraintreeHttp-PHP HTTP/1.1';
+	}
 
-    protected function setCurl(Curl $curl)
-    {
-        $this->curl = $curl;
-    }
+	/**
+	 * Return the filepath to your custom CA Cert if needed.
+	 *
+	 * @return string
+	 */
+	protected function getCACertFilePath() {
+		return null;
+	}
 
-    protected function setEncoder(Encoder $encoder)
-    {
-        $this->encoder = $encoder;
-    }
+	protected function setCurl( Curl $curl ) {
+		$this->curl = $curl;
+	}
 
-    private function serializeHeaders($headers)
-    {
-        $headerArray = [];
-        if ($headers) {
-            foreach ($headers as $key => $val) {
-                $headerArray[] = $key . ": " . $val;
-            }
-        }
+	protected function setEncoder( Encoder $encoder ) {
+		$this->encoder = $encoder;
+	}
 
-        return $headerArray;
-    }
+	private function serializeHeaders( $headers ) {
+		$headerArray = array();
+		if ( $headers ) {
+			foreach ( $headers as $key => $val ) {
+				$headerArray[] = $key . ': ' . $val;
+			}
+		}
 
-    private function parseResponse($curl)
-    {
-        $headers = [];
-        $curl->setOpt(CURLOPT_HEADERFUNCTION,
-            function($curl, $header) use (&$headers)
-            {
-                $len = strlen($header);
+		return $headerArray;
+	}
 
-                $k = "";
-                $v = "";
+	private function parseResponse( $curl ) {
+		$headers = array();
+		$curl->setOpt(
+			CURLOPT_HEADERFUNCTION,
+			function( $curl, $header ) use ( &$headers ) {
+				$len = strlen( $header );
 
-                $this->deserializeHeader($header, $k, $v);
-                $headers[$k] = $v;
+				$k = '';
+				$v = '';
 
-                return $len;
-            });
+				$this->deserializeHeader( $header, $k, $v );
+				$headers[ $k ] = $v;
 
-        $responseData = $curl->exec();
-        $statusCode = $curl->getInfo(CURLINFO_HTTP_CODE);
-        $errorCode = $curl->errNo();
-        $error = $curl->error();
+				return $len;
+			}
+		);
 
-        if ($errorCode > 0) {
-            throw new IOException($error, $errorCode);
-        }
+		$responseData = $curl->exec();
+		$statusCode   = $curl->getInfo( CURLINFO_HTTP_CODE );
+		$errorCode    = $curl->errNo();
+		$error        = $curl->error();
 
-        $body = $responseData;
+		if ( $errorCode > 0 ) {
+			throw new IOException( $error, $errorCode );
+		}
 
-        if ($statusCode >= 200 && $statusCode < 300) {
-            $responseBody = NULL;
+		$body = $responseData;
 
-            if (!empty($body)) {
-                $responseBody = $this->encoder->deserializeResponse($body, $headers);
-            }
+		if ( $statusCode >= 200 && $statusCode < 300 ) {
+			$responseBody = null;
 
-            return new HttpResponse(
-                $errorCode === 0 ? $statusCode : $errorCode,
-                $responseBody,
-                $headers
-            );
-        } else {
-            throw new HttpException($body, $statusCode, $headers);
-        }
-    }
+			if ( ! empty( $body ) ) {
+				$responseBody = $this->encoder->deserializeResponse( $body, $headers );
+			}
 
-    private function deserializeHeader($header, &$key, &$value)
-    {
-        if (strlen($header) > 0) {
-            if (empty($header) || strpos($header, ':') === false) {
-                return NULL;
-            }
+			return new HttpResponse(
+				$errorCode === 0 ? $statusCode : $errorCode,
+				$responseBody,
+				$headers
+			);
+		} else {
+			throw new HttpException( $body, $statusCode, $headers );
+		}
+	}
 
-            list($k, $v) = explode(":", $header);
-            $key = trim($k);
-            $value = trim($v);
-        }
-    }
+	private function deserializeHeader( $header, &$key, &$value ) {
+		if ( strlen( $header ) > 0 ) {
+			if ( empty( $header ) || strpos( $header, ':' ) === false ) {
+				return null;
+			}
+
+			list($k, $v) = explode( ':', $header );
+			$key         = trim( $k );
+			$value       = trim( $v );
+		}
+	}
 }

@@ -21,47 +21,47 @@ namespace Symfony\Component\CssSelector\XPath\Extension;
  *
  * @internal
  */
-interface ExtensionInterface
-{
-    /**
-     * Returns node translators.
-     *
-     * These callables will receive the node as first argument and the translator as second argument.
-     *
-     * @return callable[]
-     */
-    public function getNodeTranslators(): array;
+interface ExtensionInterface {
 
-    /**
-     * Returns combination translators.
-     *
-     * @return callable[]
-     */
-    public function getCombinationTranslators(): array;
+	/**
+	 * Returns node translators.
+	 *
+	 * These callables will receive the node as first argument and the translator as second argument.
+	 *
+	 * @return callable[]
+	 */
+	public function getNodeTranslators(): array;
 
-    /**
-     * Returns function translators.
-     *
-     * @return callable[]
-     */
-    public function getFunctionTranslators(): array;
+	/**
+	 * Returns combination translators.
+	 *
+	 * @return callable[]
+	 */
+	public function getCombinationTranslators(): array;
 
-    /**
-     * Returns pseudo-class translators.
-     *
-     * @return callable[]
-     */
-    public function getPseudoClassTranslators(): array;
+	/**
+	 * Returns function translators.
+	 *
+	 * @return callable[]
+	 */
+	public function getFunctionTranslators(): array;
 
-    /**
-     * Returns attribute operation translators.
-     *
-     * @return callable[]
-     */
-    public function getAttributeMatchingTranslators(): array;
+	/**
+	 * Returns pseudo-class translators.
+	 *
+	 * @return callable[]
+	 */
+	public function getPseudoClassTranslators(): array;
 
-    /**
-     * Returns extension name.
-     */
-    public function getName(): string;
+	/**
+	 * Returns attribute operation translators.
+	 *
+	 * @return callable[]
+	 */
+	public function getAttributeMatchingTranslators(): array;
+
+	/**
+	 * Returns extension name.
+	 */
+	public function getName(): string;
 }

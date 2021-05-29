@@ -4,24 +4,22 @@ namespace PayPalCheckoutSdk\Core;
 
 use BraintreeHttp\HttpClient;
 
-class PayPalHttpClient extends HttpClient
-{
-    private $refreshToken;
-    public $authInjector;
+class PayPalHttpClient extends HttpClient {
 
-    public function __construct(PayPalEnvironment $environment, $refreshToken = NULL)
-    {
-        parent::__construct($environment);
-        $this->refreshToken = $refreshToken;
-        $this->authInjector = new AuthorizationInjector($this, $environment, $refreshToken);
-        $this->addInjector($this->authInjector);
-        $this->addInjector(new GzipInjector());
-        $this->addInjector(new FPTIInstrumentationInjector());
-    }
+	private $refreshToken;
+	public $authInjector;
 
-    public function userAgent()
-    {
-        return UserAgent::getValue();
-    }
+	public function __construct( PayPalEnvironment $environment, $refreshToken = null ) {
+		parent::__construct( $environment );
+		$this->refreshToken = $refreshToken;
+		$this->authInjector = new AuthorizationInjector( $this, $environment, $refreshToken );
+		$this->addInjector( $this->authInjector );
+		$this->addInjector( new GzipInjector() );
+		$this->addInjector( new FPTIInstrumentationInjector() );
+	}
+
+	public function userAgent() {
+		return UserAgent::getValue();
+	}
 }
 

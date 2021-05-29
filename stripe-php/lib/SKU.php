@@ -32,13 +32,13 @@ namespace Stripe;
  * @property string|\Stripe\Product $product The ID of the product this SKU is associated with. The product must be currently active.
  * @property int $updated Time at which the object was last updated. Measured in seconds since the Unix epoch.
  */
-class SKU extends ApiResource
-{
-    const OBJECT_NAME = 'sku';
+class SKU extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Delete;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'sku';
+
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Delete;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 }

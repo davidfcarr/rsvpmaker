@@ -58,19 +58,18 @@ namespace Stripe;
  * @property \Stripe\Service\TransferService $transfers
  * @property \Stripe\Service\WebhookEndpointService $webhookEndpoints
  */
-class StripeClient extends BaseStripeClient
-{
-    /**
-     * @var \Stripe\Service\CoreServiceFactory
-     */
-    private $coreServiceFactory;
+class StripeClient extends BaseStripeClient {
 
-    public function __get($name)
-    {
-        if (null === $this->coreServiceFactory) {
-            $this->coreServiceFactory = new \Stripe\Service\CoreServiceFactory($this);
-        }
+	/**
+	 * @var \Stripe\Service\CoreServiceFactory
+	 */
+	private $coreServiceFactory;
 
-        return $this->coreServiceFactory->__get($name);
-    }
+	public function __get( $name ) {
+		if ( null === $this->coreServiceFactory ) {
+			$this->coreServiceFactory = new \Stripe\Service\CoreServiceFactory( $this );
+		}
+
+		return $this->coreServiceFactory->__get( $name );
+	}
 }

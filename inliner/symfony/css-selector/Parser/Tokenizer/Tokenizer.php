@@ -26,48 +26,46 @@ use Symfony\Component\CssSelector\Parser\TokenStream;
  *
  * @internal
  */
-class Tokenizer
-{
-    /**
-     * @var Handler\HandlerInterface[]
-     */
-    private $handlers;
+class Tokenizer {
 
-    public function __construct()
-    {
-        $patterns = new TokenizerPatterns();
-        $escaping = new TokenizerEscaping($patterns);
+	/**
+	 * @var Handler\HandlerInterface[]
+	 */
+	private $handlers;
 
-        $this->handlers = [
-            new Handler\WhitespaceHandler(),
-            new Handler\IdentifierHandler($patterns, $escaping),
-            new Handler\HashHandler($patterns, $escaping),
-            new Handler\StringHandler($patterns, $escaping),
-            new Handler\NumberHandler($patterns),
-            new Handler\CommentHandler(),
-        ];
-    }
+	public function __construct() {
+		$patterns = new TokenizerPatterns();
+		$escaping = new TokenizerEscaping( $patterns );
 
-    /**
-     * Tokenize selector source code.
-     */
-    public function tokenize(Reader $reader): TokenStream
-    {
-        $stream = new TokenStream();
+		$this->handlers = array(
+			new Handler\WhitespaceHandler(),
+			new Handler\IdentifierHandler( $patterns, $escaping ),
+			new Handler\HashHandler( $patterns, $escaping ),
+			new Handler\StringHandler( $patterns, $escaping ),
+			new Handler\NumberHandler( $patterns ),
+			new Handler\CommentHandler(),
+		);
+	}
 
-        while (!$reader->isEOF()) {
-            foreach ($this->handlers as $handler) {
-                if ($handler->handle($reader, $stream)) {
-                    continue 2;
-                }
-            }
+	/**
+	 * Tokenize selector source code.
+	 */
+	public function tokenize( Reader $reader ): TokenStream {
+		$stream = new TokenStream();
 
-            $stream->push(new Token(Token::TYPE_DELIMITER, $reader->getSubstring(1), $reader->getPosition()));
-            $reader->moveForward(1);
-        }
+		while ( ! $reader->isEOF() ) {
+			foreach ( $this->handlers as $handler ) {
+				if ( $handler->handle( $reader, $stream ) ) {
+					continue 2;
+				}
+			}
 
-        return $stream
-            ->push(new Token(Token::TYPE_FILE_END, null, $reader->getPosition()))
-            ->freeze();
-    }
+			$stream->push( new Token( Token::TYPE_DELIMITER, $reader->getSubstring( 1 ), $reader->getPosition() ) );
+			$reader->moveForward( 1 );
+		}
+
+		return $stream
+			->push( new Token( Token::TYPE_FILE_END, null, $reader->getPosition() ) )
+			->freeze();
+	}
 }

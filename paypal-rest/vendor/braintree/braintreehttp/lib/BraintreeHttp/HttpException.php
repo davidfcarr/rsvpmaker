@@ -2,22 +2,21 @@
 
 namespace BraintreeHttp;
 
-class HttpException extends IOException
-{
-    /**
-     * @var statusCode
-     */
-    public $statusCode;
+class HttpException extends IOException {
 
-    public $headers;
+	/**
+	 * @var statusCode
+	 */
+	public $statusCode;
 
-    /**
-     * @param string $response
-     */
-    public function __construct($message, $statusCode, $headers)
-    {
-        parent::__construct($message);
-        $this->statusCode = $statusCode;
-        $this->headers = $headers;
-    }
+	public $headers;
+
+	/**
+	 * @param string $response
+	 */
+	public function __construct( $message, $statusCode, $headers ) {
+		parent::__construct( $message );
+		$this->statusCode = $statusCode;
+		$this->headers    = $headers;
+	}
 }

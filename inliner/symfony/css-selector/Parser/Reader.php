@@ -21,66 +21,57 @@ namespace Symfony\Component\CssSelector\Parser;
  *
  * @internal
  */
-class Reader
-{
-    private $source;
-    private $length;
-    private $position = 0;
+class Reader {
 
-    public function __construct(string $source)
-    {
-        $this->source = $source;
-        $this->length = \strlen($source);
-    }
+	private $source;
+	private $length;
+	private $position = 0;
 
-    public function isEOF(): bool
-    {
-        return $this->position >= $this->length;
-    }
+	public function __construct( string $source ) {
+		$this->source = $source;
+		$this->length = \strlen( $source );
+	}
 
-    public function getPosition(): int
-    {
-        return $this->position;
-    }
+	public function isEOF(): bool {
+		return $this->position >= $this->length;
+	}
 
-    public function getRemainingLength(): int
-    {
-        return $this->length - $this->position;
-    }
+	public function getPosition(): int {
+		return $this->position;
+	}
 
-    public function getSubstring(int $length, int $offset = 0): string
-    {
-        return substr($this->source, $this->position + $offset, $length);
-    }
+	public function getRemainingLength(): int {
+		return $this->length - $this->position;
+	}
 
-    public function getOffset(string $string)
-    {
-        $position = strpos($this->source, $string, $this->position);
+	public function getSubstring( int $length, int $offset = 0 ): string {
+		return substr( $this->source, $this->position + $offset, $length );
+	}
 
-        return false === $position ? false : $position - $this->position;
-    }
+	public function getOffset( string $string ) {
+		$position = strpos( $this->source, $string, $this->position );
 
-    /**
-     * @return array|false
-     */
-    public function findPattern(string $pattern)
-    {
-        $source = substr($this->source, $this->position);
+		return false === $position ? false : $position - $this->position;
+	}
 
-        if (preg_match($pattern, $source, $matches)) {
-            return $matches;
-        }
+	/**
+	 * @return array|false
+	 */
+	public function findPattern( string $pattern ) {
+		$source = substr( $this->source, $this->position );
 
-        return false;
-    }
+		if ( preg_match( $pattern, $source, $matches ) ) {
+			return $matches;
+		}
 
-    public function moveForward(int $length)
-    {
-        $this->position += $length;
-    }
+		return false;
+	}
 
-    public function moveToEnd()
-    {
-        $this->position = $this->length;
-    }
+	public function moveForward( int $length ) {
+		$this->position += $length;
+	}
+
+	public function moveToEnd() {
+		$this->position = $this->length;
+	}
 }

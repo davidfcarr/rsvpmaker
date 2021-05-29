@@ -17,40 +17,38 @@ namespace Pelago\Emogrifier\Utilities;
  *
  * @author Jake Hotson <jake.github@qzdesign.co.uk>
  */
-class ArrayIntersector
-{
-    /**
-     * the array with which the object was constructed, with all its keys exchanged with their associated values
-     *
-     * @var (int|string)[]
-     */
-    private $invertedArray;
+class ArrayIntersector {
 
-    /**
-     * Constructs the object with the array that will be reused for many intersection computations.
-     *
-     * @param (int|string)[] $array
-     */
-    public function __construct(array $array)
-    {
-        $this->invertedArray = \array_flip($array);
-    }
+	/**
+	 * the array with which the object was constructed, with all its keys exchanged with their associated values
+	 *
+	 * @var (int|string)[]
+	 */
+	private $invertedArray;
 
-    /**
-     * Computes the intersection of `$array` and the array with which this object was constructed.
-     *
-     * @param (int|string)[] $array
-     *
-     * @return (int|string)[] Returns an array containing all of the values in `$array` whose values exist in the array
-     *         with which this object was constructed.  Note that keys are preserved, order is maintained, but
-     *         duplicates are removed.
-     */
-    public function intersectWith(array $array)
-    {
-        $invertedArray = \array_flip($array);
+	/**
+	 * Constructs the object with the array that will be reused for many intersection computations.
+	 *
+	 * @param (int|string)[] $array
+	 */
+	public function __construct( array $array ) {
+		$this->invertedArray = \array_flip( $array );
+	}
 
-        $invertedIntersection = \array_intersect_key($invertedArray, $this->invertedArray);
+	/**
+	 * Computes the intersection of `$array` and the array with which this object was constructed.
+	 *
+	 * @param (int|string)[] $array
+	 *
+	 * @return (int|string)[] Returns an array containing all of the values in `$array` whose values exist in the array
+	 *         with which this object was constructed.  Note that keys are preserved, order is maintained, but
+	 *         duplicates are removed.
+	 */
+	public function intersectWith( array $array ) {
+		$invertedArray = \array_flip( $array );
 
-        return \array_flip($invertedIntersection);
-    }
+		$invertedIntersection = \array_intersect_key( $invertedArray, $this->invertedArray );
+
+		return \array_flip( $invertedIntersection );
+	}
 }

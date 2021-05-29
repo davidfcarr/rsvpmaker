@@ -24,39 +24,36 @@ use Symfony\Component\CssSelector\XPath\Translator;
  *
  * @author Christophe Coevoet <stof@notk.org>
  */
-class CssSelectorConverter
-{
-    private $translator;
+class CssSelectorConverter {
 
-    /**
-     * @param bool $html Whether HTML support should be enabled. Disable it for XML documents
-     */
-    public function __construct(bool $html = true)
-    {
-        $this->translator = new Translator();
+	private $translator;
 
-        if ($html) {
-            $this->translator->registerExtension(new HtmlExtension($this->translator));
-        }
+	/**
+	 * @param bool $html Whether HTML support should be enabled. Disable it for XML documents
+	 */
+	public function __construct( bool $html = true ) {
+		$this->translator = new Translator();
 
-        $this->translator
-            ->registerParserShortcut(new EmptyStringParser())
-            ->registerParserShortcut(new ElementParser())
-            ->registerParserShortcut(new ClassParser())
-            ->registerParserShortcut(new HashParser())
-        ;
-    }
+		if ( $html ) {
+			$this->translator->registerExtension( new HtmlExtension( $this->translator ) );
+		}
 
-    /**
-     * Translates a CSS expression to its XPath equivalent.
-     *
-     * Optionally, a prefix can be added to the resulting XPath
-     * expression with the $prefix parameter.
-     *
-     * @return string
-     */
-    public function toXPath(string $cssExpr, string $prefix = 'descendant-or-self::')
-    {
-        return $this->translator->cssToXPath($cssExpr, $prefix);
-    }
+		$this->translator
+			->registerParserShortcut( new EmptyStringParser() )
+			->registerParserShortcut( new ElementParser() )
+			->registerParserShortcut( new ClassParser() )
+			->registerParserShortcut( new HashParser() );
+	}
+
+	/**
+	 * Translates a CSS expression to its XPath equivalent.
+	 *
+	 * Optionally, a prefix can be added to the resulting XPath
+	 * expression with the $prefix parameter.
+	 *
+	 * @return string
+	 */
+	public function toXPath( string $cssExpr, string $prefix = 'descendant-or-self::' ) {
+		return $this->translator->cssToXPath( $cssExpr, $prefix );
+	}
 }

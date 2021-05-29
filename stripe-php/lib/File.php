@@ -26,55 +26,53 @@ namespace Stripe;
  * @property null|string $type The type of the file returned (e.g., <code>csv</code>, <code>pdf</code>, <code>jpg</code>, or <code>png</code>).
  * @property null|string $url The URL from which the file can be downloaded using your live secret API key.
  */
-class File extends ApiResource
-{
-    const OBJECT_NAME = 'file';
+class File extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Retrieve;
+	const OBJECT_NAME = 'file';
 
-    const PURPOSE_ADDITIONAL_VERIFICATION = 'additional_verification';
-    const PURPOSE_BUSINESS_ICON = 'business_icon';
-    const PURPOSE_BUSINESS_LOGO = 'business_logo';
-    const PURPOSE_CUSTOMER_SIGNATURE = 'customer_signature';
-    const PURPOSE_DISPUTE_EVIDENCE = 'dispute_evidence';
-    const PURPOSE_IDENTITY_DOCUMENT = 'identity_document';
-    const PURPOSE_PCI_DOCUMENT = 'pci_document';
-    const PURPOSE_TAX_DOCUMENT_USER_UPLOAD = 'tax_document_user_upload';
+	use ApiOperations\All;
+	use ApiOperations\Retrieve;
 
-    // This resource can have two different object names. In latter API
-    // versions, only `file` is used, but since stripe-php may be used with
-    // any API version, we need to support deserializing the older
-    // `file_upload` object into the same class.
-    const OBJECT_NAME_ALT = 'file_upload';
+	const PURPOSE_ADDITIONAL_VERIFICATION  = 'additional_verification';
+	const PURPOSE_BUSINESS_ICON            = 'business_icon';
+	const PURPOSE_BUSINESS_LOGO            = 'business_logo';
+	const PURPOSE_CUSTOMER_SIGNATURE       = 'customer_signature';
+	const PURPOSE_DISPUTE_EVIDENCE         = 'dispute_evidence';
+	const PURPOSE_IDENTITY_DOCUMENT        = 'identity_document';
+	const PURPOSE_PCI_DOCUMENT             = 'pci_document';
+	const PURPOSE_TAX_DOCUMENT_USER_UPLOAD = 'tax_document_user_upload';
 
-    use ApiOperations\Create {
-        create as protected _create;
-    }
+	// This resource can have two different object names. In latter API
+	// versions, only `file` is used, but since stripe-php may be used with
+	// any API version, we need to support deserializing the older
+	// `file_upload` object into the same class.
+	const OBJECT_NAME_ALT = 'file_upload';
 
-    public static function classUrl()
-    {
-        return '/v1/files';
-    }
+	use ApiOperations \Create {
+		create as protected _create;
+	}
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\File the created file
-     */
-    public static function create($params = null, $opts = null)
-    {
-        $opts = \Stripe\Util\RequestOptions::parse($opts);
-        if (null === $opts->apiBase) {
-            $opts->apiBase = Stripe::$apiUploadBase;
-        }
-        // Manually flatten params, otherwise curl's multipart encoder will
-        // choke on nested arrays.
-        $flatParams = \array_column(\Stripe\Util\Util::flattenParams($params), 1, 0);
+	public static function classUrl() {
+		return '/v1/files';
+	}
 
-        return static::_create($flatParams, $opts);
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\File the created file
+	 */
+	public static function create( $params = null, $opts = null ) {
+		$opts = \Stripe\Util\RequestOptions::parse( $opts );
+		if ( null === $opts->apiBase ) {
+			$opts->apiBase = Stripe::$apiUploadBase;
+		}
+		// Manually flatten params, otherwise curl's multipart encoder will
+		// choke on nested arrays.
+		$flatParams = \array_column( \Stripe\Util\Util::flattenParams( $params ), 1, 0 );
+
+		return static::_create( $flatParams, $opts );
+	}
 }

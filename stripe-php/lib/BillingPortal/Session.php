@@ -24,9 +24,9 @@ namespace Stripe\BillingPortal;
  * @property string $return_url The URL to which Stripe should send customers when they click on the link to return to your website.
  * @property string $url The short-lived URL of the session giving customers access to the customer portal.
  */
-class Session extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'billing_portal.session';
+class Session extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\Create;
+	const OBJECT_NAME = 'billing_portal.session';
+
+	use \Stripe\ApiOperations\Create;
 }

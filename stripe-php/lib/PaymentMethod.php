@@ -38,46 +38,44 @@ namespace Stripe;
  * @property \Stripe\StripeObject $sepa_debit
  * @property string $type The type of the PaymentMethod. An additional hash is included on the PaymentMethod with a name matching this value. It contains additional information specific to the PaymentMethod type.
  */
-class PaymentMethod extends ApiResource
-{
-    const OBJECT_NAME = 'payment_method';
+class PaymentMethod extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'payment_method';
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return PaymentMethod the attached payment method
-     */
-    public function attach($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/attach';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return PaymentMethod the attached payment method
+	 */
+	public function attach( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/attach';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return PaymentMethod the detached payment method
-     */
-    public function detach($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/detach';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return PaymentMethod the detached payment method
+	 */
+	public function detach( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/detach';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }

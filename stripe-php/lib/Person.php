@@ -37,75 +37,72 @@ namespace Stripe;
  * @property bool $ssn_last_4_provided Whether the last four digits of the person's Social Security number have been provided (U.S. only).
  * @property \Stripe\StripeObject $verification
  */
-class Person extends ApiResource
-{
-    const OBJECT_NAME = 'person';
+class Person extends ApiResource {
 
-    use ApiOperations\Delete;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'person';
 
-    const GENDER_FEMALE = 'female';
-    const GENDER_MALE = 'male';
+	use ApiOperations\Delete;
+	use ApiOperations\Update;
 
-    const POLITICAL_EXPOSURE_EXISTING = 'existing';
-    const POLITICAL_EXPOSURE_NONE = 'none';
+	const GENDER_FEMALE = 'female';
+	const GENDER_MALE   = 'male';
 
-    const VERIFICATION_STATUS_PENDING = 'pending';
-    const VERIFICATION_STATUS_UNVERIFIED = 'unverified';
-    const VERIFICATION_STATUS_VERIFIED = 'verified';
+	const POLITICAL_EXPOSURE_EXISTING = 'existing';
+	const POLITICAL_EXPOSURE_NONE     = 'none';
 
-    /**
-     * @return string the API URL for this Stripe account reversal
-     */
-    public function instanceUrl()
-    {
-        $id = $this['id'];
-        $account = $this['account'];
-        if (!$id) {
-            throw new Exception\UnexpectedValueException(
-                'Could not determine which URL to request: ' .
-                "class instance has invalid ID: {$id}",
-                null
-            );
-        }
-        $id = Util\Util::utf8($id);
-        $account = Util\Util::utf8($account);
+	const VERIFICATION_STATUS_PENDING    = 'pending';
+	const VERIFICATION_STATUS_UNVERIFIED = 'unverified';
+	const VERIFICATION_STATUS_VERIFIED   = 'verified';
 
-        $base = Account::classUrl();
-        $accountExtn = \urlencode($account);
-        $extn = \urlencode($id);
+	/**
+	 * @return string the API URL for this Stripe account reversal
+	 */
+	public function instanceUrl() {
+		$id      = $this['id'];
+		$account = $this['account'];
+		if ( ! $id ) {
+			throw new Exception\UnexpectedValueException(
+				'Could not determine which URL to request: ' .
+				"class instance has invalid ID: {$id}",
+				null
+			);
+		}
+		$id      = Util\Util::utf8( $id );
+		$account = Util\Util::utf8( $account );
 
-        return "{$base}/{$accountExtn}/persons/{$extn}";
-    }
+		$base        = Account::classUrl();
+		$accountExtn = \urlencode( $account );
+		$extn        = \urlencode( $id );
 
-    /**
-     * @param array|string $_id
-     * @param null|array|string $_opts
-     *
-     * @throws \Stripe\Exception\BadMethodCallException
-     */
-    public static function retrieve($_id, $_opts = null)
-    {
-        $msg = 'Persons cannot be retrieved without an account ID. Retrieve ' .
-               "a person using `Account::retrievePerson('account_id', " .
-               "'person_id')`.";
+		return "{$base}/{$accountExtn}/persons/{$extn}";
+	}
 
-        throw new Exception\BadMethodCallException($msg);
-    }
+	/**
+	 * @param array|string      $_id
+	 * @param null|array|string $_opts
+	 *
+	 * @throws \Stripe\Exception\BadMethodCallException
+	 */
+	public static function retrieve( $_id, $_opts = null ) {
+		$msg = 'Persons cannot be retrieved without an account ID. Retrieve ' .
+			   "a person using `Account::retrievePerson('account_id', " .
+			   "'person_id')`.";
 
-    /**
-     * @param string $_id
-     * @param null|array $_params
-     * @param null|array|string $_options
-     *
-     * @throws \Stripe\Exception\BadMethodCallException
-     */
-    public static function update($_id, $_params = null, $_options = null)
-    {
-        $msg = 'Persons cannot be updated without an account ID. Update ' .
-               "a person using `Account::updatePerson('account_id', " .
-               "'person_id', \$updateParams)`.";
+		throw new Exception\BadMethodCallException( $msg );
+	}
 
-        throw new Exception\BadMethodCallException($msg);
-    }
+	/**
+	 * @param string            $_id
+	 * @param null|array        $_params
+	 * @param null|array|string $_options
+	 *
+	 * @throws \Stripe\Exception\BadMethodCallException
+	 */
+	public static function update( $_id, $_params = null, $_options = null ) {
+		$msg = 'Persons cannot be updated without an account ID. Update ' .
+			   "a person using `Account::updatePerson('account_id', " .
+			   "'person_id', \$updateParams)`.";
+
+		throw new Exception\BadMethodCallException( $msg );
+	}
 }

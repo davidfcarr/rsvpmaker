@@ -23,49 +23,43 @@ use Symfony\Component\CssSelector\XPath\XPathExpr;
  *
  * @internal
  */
-class CombinationExtension extends AbstractExtension
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function getCombinationTranslators(): array
-    {
-        return [
-            ' ' => [$this, 'translateDescendant'],
-            '>' => [$this, 'translateChild'],
-            '+' => [$this, 'translateDirectAdjacent'],
-            '~' => [$this, 'translateIndirectAdjacent'],
-        ];
-    }
+class CombinationExtension extends AbstractExtension {
 
-    public function translateDescendant(XPathExpr $xpath, XPathExpr $combinedXpath): XPathExpr
-    {
-        return $xpath->join('/descendant-or-self::*/', $combinedXpath);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getCombinationTranslators(): array {
+		return array(
+			' ' => array( $this, 'translateDescendant' ),
+			'>' => array( $this, 'translateChild' ),
+			'+' => array( $this, 'translateDirectAdjacent' ),
+			'~' => array( $this, 'translateIndirectAdjacent' ),
+		);
+	}
 
-    public function translateChild(XPathExpr $xpath, XPathExpr $combinedXpath): XPathExpr
-    {
-        return $xpath->join('/', $combinedXpath);
-    }
+	public function translateDescendant( XPathExpr $xpath, XPathExpr $combinedXpath ): XPathExpr {
+		return $xpath->join( '/descendant-or-self::*/', $combinedXpath );
+	}
 
-    public function translateDirectAdjacent(XPathExpr $xpath, XPathExpr $combinedXpath): XPathExpr
-    {
-        return $xpath
-            ->join('/following-sibling::', $combinedXpath)
-            ->addNameTest()
-            ->addCondition('position() = 1');
-    }
+	public function translateChild( XPathExpr $xpath, XPathExpr $combinedXpath ): XPathExpr {
+		return $xpath->join( '/', $combinedXpath );
+	}
 
-    public function translateIndirectAdjacent(XPathExpr $xpath, XPathExpr $combinedXpath): XPathExpr
-    {
-        return $xpath->join('/following-sibling::', $combinedXpath);
-    }
+	public function translateDirectAdjacent( XPathExpr $xpath, XPathExpr $combinedXpath ): XPathExpr {
+		return $xpath
+			->join( '/following-sibling::', $combinedXpath )
+			->addNameTest()
+			->addCondition( 'position() = 1' );
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getName(): string
-    {
-        return 'combination';
-    }
+	public function translateIndirectAdjacent( XPathExpr $xpath, XPathExpr $combinedXpath ): XPathExpr {
+		return $xpath->join( '/following-sibling::', $combinedXpath );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getName(): string {
+		return 'combination';
+	}
 }

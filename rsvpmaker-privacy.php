@@ -4,163 +4,149 @@
 
 function register_rsvpmaker_exporter( $exporters ) {
 
-  $exporters['rsvpmaker'] = array(
+	$exporters['rsvpmaker'] = array(
 
-    'exporter_friendly_name' => __( 'RSVPMaker' ),
+		'exporter_friendly_name' => __( 'RSVPMaker' ),
 
-    'callback' => 'rsvpmaker_exporter',
+		'callback'               => 'rsvpmaker_exporter',
 
-  );
+	);
 
-  return $exporters;
+	return $exporters;
 
 }
 
 add_filter(
-
-  'wp_privacy_personal_data_exporters',
-
-  'register_rsvpmaker_exporter',
-
-  10
-
+	'wp_privacy_personal_data_exporters',
+	'register_rsvpmaker_exporter',
+	10
 );
 
 function rsvpmaker_exporter( $email_address, $page = 1 ) {
 
-global $wpdb;
+	global $wpdb;
 
-global $rsvp_options;
+	global $rsvp_options;
 
-$number = 500; // Limit us to avoid timing out
+	$number = 500; // Limit us to avoid timing out
 
-$page = (int) $page;
+	$page = (int) $page;
 
-$start = ($page > 1) ? ($page-1)*500 : 0;
+	$start = ( $page > 1 ) ? ( $page - 1 ) * 500 : 0;
 
- 
+	$export_items = array();
 
-$export_items = array();
+	$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE email LIKE '$email_address' ORDER BY event LIMIT $start, " . ( $number + 5 );
 
+	// get rsvps matching that email
 
+	$results = $wpdb->get_results( $sql, ARRAY_A );
 
-$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE email LIKE '$email_address' ORDER BY event LIMIT $start, " . ($number + 5);
+	$group_id = 'rsvpmaker';
 
-// get rsvps matching that email
+	$group_label = 'RSVPMaker';
 
-$results = $wpdb->get_results($sql, ARRAY_A);
+	if ( is_array( $results ) ) {
 
-$group_id = 'rsvpmaker';
+		foreach ( $results as $index => $rsvprow ) {
 
-$group_label = 'RSVPMaker';
+			if ( $index > $number ) {
 
-  if(is_array($results))
+				break;
+			}
 
-  foreach ($results as $index => $rsvprow ) {
+			$data = array();
 
-	  if($index > $number)
+			$title = get_the_title( $rsvprow['event'] );
 
-		  break;
+			$date = get_rsvp_date( $rsvprow['event'] );
 
-	  $data = array();
+			$profile = rsvp_row_to_profile( $rsvprow );
 
-		$title = get_the_title($rsvprow["event"]);
+			if ( empty( $title ) ) {
 
-	  	$date = get_rsvp_date($rsvprow["event"]);
+				$title = 'Event deleted?';
 
-	  	$profile = rsvp_row_to_profile($rsvprow);
+			} else {
+				$title .= ' (' . date( 'F j, Y', rsvpmaker_strtotime( $date ) ) . ')';
+			}
 
-	  	if(empty($title))
+			$data[] = array(
+				'name'  => 'event_title',
+				'value' => $title,
+			);
 
-			$title = 'Event deleted?';
+			foreach ( $profile as $name => $value ) {
 
-	  	else
+				if ( ! empty( $value ) ) {
 
-			$title .= ' ('.date('F j, Y',rsvpmaker_strtotime($date)).')';
+					$data[] = array(
+						'name'  => $name,
+						'value' => $value,
+					);
+				}
+			}
 
-	    $data[] = array('name' => 'event_title', 'value'=> $title);
+			$export_items[] = array(
 
-			
+				'group_id'    => $group_id,
 
-	  foreach($profile as $name => $value)
+				'group_label' => $group_label,
 
-	  {
+				'item_id'     => 'rsvp-' . $rsvprow['id'],
 
-		  if(!empty($value))
+				'data'        => $data,
 
-		  $data[] = array('name' => $name, 'value' => $value);		  
+			);
 
-	  }
+		}
+	}
 
+	if ( isset( $_GET['export_test'] ) ) {
 
+		echo $sql . '<br />';
 
-      $export_items[] = array(
+		// print_r($results);
 
-        'group_id' => $group_id,
-
-        'group_label' => $group_label,
-
-        'item_id' => 'rsvp-'.$rsvprow['id'],
-
-        'data' => $data,
-
-      );
-
-  
-
-  }
-
-	if(isset($_GET['export_test']))
-
-	{
-
-		echo $sql .'<br />';
-
-		//print_r($results);
-
-		//print_r($export_items);
+		// print_r($export_items);
 
 		die();
 
 	}
 
- 
+	// Tell core if we have more comments to work on still
 
-  // Tell core if we have more comments to work on still
+	$done = count( $results ) < $number;
 
-  $done = count( $results ) < $number;
+	return array(
 
-  return array(
+		'data' => $export_items,
 
-    'data' => $export_items,
+		'done' => $done,
 
-    'done' => $done,
-
-  );
+	);
 
 }
 
 
 
-function rsvpmaker_eraser ($email_address, $page = 1)
-
-{
-
+function rsvpmaker_eraser( $email_address, $page = 1 ) {
 	global $wpdb;
 
-	$sql = 'DELETE FROM '.$wpdb->prefix."rsvpmaker WHERE email='$email_address'";
+	$sql = 'DELETE FROM ' . $wpdb->prefix . "rsvpmaker WHERE email='$email_address'";
 
-	$wpdb->query($sql);
+	$wpdb->query( $sql );
 
-	return array( 'items_removed' => true,
+	return array(
+		'items_removed'  => true,
 
-    'items_retained' => false, // always false in this example
+		'items_retained' => false, // always false in this example
 
-    'messages' => array(), // no messages in this example
+		'messages'       => array(), // no messages in this example
 
-    'done' => true,
+		'done'           => true,
 
-  );
+	);
 
 }
 
@@ -168,60 +154,48 @@ function rsvpmaker_eraser ($email_address, $page = 1)
 
 function register_rsvpmaker_eraser( $erasers ) {
 
-  $erasers['rsvpmaker'] = array(
+	$erasers['rsvpmaker'] = array(
 
-    'eraser_friendly_name' => __( 'RSVPMaker' ),
+		'eraser_friendly_name' => __( 'RSVPMaker' ),
 
-    'callback'             => 'rsvpmaker_eraser',
+		'callback'             => 'rsvpmaker_eraser',
 
-    );
+	);
 
-  return $erasers;
+	return $erasers;
 
 }
 
- 
+
 
 add_filter(
-
-  'wp_privacy_personal_data_erasers',
-
-  'register_rsvpmaker_eraser',
-
-  10
-
+	'wp_privacy_personal_data_erasers',
+	'register_rsvpmaker_eraser',
+	10
 );
 
 
 
 function rsvpmaker_plugin_add_privacy_policy_content() {
 
-    if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+	if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 
-        return;
+		return;
 
-    }
+	}
 
- 
+	$content = sprintf(
+		__(
+			'When you register for an event managed with the RSVPMaker plugin, your name, email, and any other information you choose to supply to a database on the website and associated with that event. RSVPMaker does not collect other technical information such as IP address or location. It does attempt to add cookie files that make it easier for individuals to update their event registrations.',
+			'rsvpmaker'
+		)
+	);
 
-    $content = sprintf(
-
-        __( 'When you register for an event managed with the RSVPMaker plugin, your name, email, and any other information you choose to supply to a database on the website and associated with that event. RSVPMaker does not collect other technical information such as IP address or location. It does attempt to add cookie files that make it easier for individuals to update their event registrations.',
-
-        'rsvpmaker' )
-
-    );
-
- 
-
-    wp_add_privacy_policy_content(
-
-        'RSVPMaker',
-
-        wp_kses_post( wpautop( $content, false ) )
-
-    );
+	wp_add_privacy_policy_content(
+		'RSVPMaker',
+		wp_kses_post( wpautop( $content, false ) )
+	);
 
 }
 
-?>
+

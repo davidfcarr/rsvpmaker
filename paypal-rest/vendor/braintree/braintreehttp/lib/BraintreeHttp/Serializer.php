@@ -4,26 +4,27 @@ namespace BraintreeHttp;
 
 /**
  * Interface Serializer
+ *
  * @package BraintreeHttp
  *
  * Used to implement different serializers for different content types
  */
-interface Serializer
-{
-    /**
-     * @return string Regex that matches the content type it supports.
-     */
-    public function contentType();
+interface Serializer {
 
-    /**
-     * @param HttpRequest $request
-     * @return string representation of your data after being serialized.
-     */
-    public function encode(HttpRequest $request);
+	/**
+	 * @return string Regex that matches the content type it supports.
+	 */
+	public function contentType();
 
-    /**
-     * @param $body
-     * @return mixed object/string representing the de-serialized response body.
-     */
-    public function decode($body);
+	/**
+	 * @param HttpRequest $request
+	 * @return string representation of your data after being serialized.
+	 */
+	public function encode( HttpRequest $request);
+
+	/**
+	 * @param $body
+	 * @return mixed object/string representing the de-serialized response body.
+	 */
+	public function decode( $body);
 }

@@ -35,55 +35,54 @@ namespace Stripe;
  * @property string $status Current status of the payout: <code>paid</code>, <code>pending</code>, <code>in_transit</code>, <code>canceled</code> or <code>failed</code>. A payout is <code>pending</code> until it is submitted to the bank, when it becomes <code>in_transit</code>. The status then changes to <code>paid</code> if the transaction goes through, or to <code>failed</code> or <code>canceled</code> (within 5 business days). Some failed payouts may initially show as <code>paid</code> but then change to <code>failed</code>.
  * @property string $type Can be <code>bank_account</code> or <code>card</code>.
  */
-class Payout extends ApiResource
-{
-    const OBJECT_NAME = 'payout';
+class Payout extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'payout';
 
-    const FAILURE_ACCOUNT_CLOSED = 'account_closed';
-    const FAILURE_ACCOUNT_FROZEN = 'account_frozen';
-    const FAILURE_BANK_ACCOUNT_RESTRICTED = 'bank_account_restricted';
-    const FAILURE_BANK_OWNERSHIP_CHANGED = 'bank_ownership_changed';
-    const FAILURE_COULD_NOT_PROCESS = 'could_not_process';
-    const FAILURE_DEBIT_NOT_AUTHORIZED = 'debit_not_authorized';
-    const FAILURE_DECLINED = 'declined';
-    const FAILURE_INCORRECT_ACCOUNT_HOLDER_NAME = 'incorrect_account_holder_name';
-    const FAILURE_INSUFFICIENT_FUNDS = 'insufficient_funds';
-    const FAILURE_INVALID_ACCOUNT_NUMBER = 'invalid_account_number';
-    const FAILURE_INVALID_CURRENCY = 'invalid_currency';
-    const FAILURE_NO_ACCOUNT = 'no_account';
-    const FAILURE_UNSUPPORTED_CARD = 'unsupported_card';
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-    const METHOD_INSTANT = 'instant';
-    const METHOD_STANDARD = 'standard';
+	const FAILURE_ACCOUNT_CLOSED                = 'account_closed';
+	const FAILURE_ACCOUNT_FROZEN                = 'account_frozen';
+	const FAILURE_BANK_ACCOUNT_RESTRICTED       = 'bank_account_restricted';
+	const FAILURE_BANK_OWNERSHIP_CHANGED        = 'bank_ownership_changed';
+	const FAILURE_COULD_NOT_PROCESS             = 'could_not_process';
+	const FAILURE_DEBIT_NOT_AUTHORIZED          = 'debit_not_authorized';
+	const FAILURE_DECLINED                      = 'declined';
+	const FAILURE_INCORRECT_ACCOUNT_HOLDER_NAME = 'incorrect_account_holder_name';
+	const FAILURE_INSUFFICIENT_FUNDS            = 'insufficient_funds';
+	const FAILURE_INVALID_ACCOUNT_NUMBER        = 'invalid_account_number';
+	const FAILURE_INVALID_CURRENCY              = 'invalid_currency';
+	const FAILURE_NO_ACCOUNT                    = 'no_account';
+	const FAILURE_UNSUPPORTED_CARD              = 'unsupported_card';
 
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_FAILED = 'failed';
-    const STATUS_IN_TRANSIT = 'in_transit';
-    const STATUS_PAID = 'paid';
-    const STATUS_PENDING = 'pending';
+	const METHOD_INSTANT  = 'instant';
+	const METHOD_STANDARD = 'standard';
 
-    const TYPE_BANK_ACCOUNT = 'bank_account';
-    const TYPE_CARD = 'card';
+	const STATUS_CANCELED   = 'canceled';
+	const STATUS_FAILED     = 'failed';
+	const STATUS_IN_TRANSIT = 'in_transit';
+	const STATUS_PAID       = 'paid';
+	const STATUS_PENDING    = 'pending';
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return Payout the canceled payout
-     */
-    public function cancel($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/cancel';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+	const TYPE_BANK_ACCOUNT = 'bank_account';
+	const TYPE_CARD         = 'card';
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return Payout the canceled payout
+	 */
+	public function cancel( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/cancel';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }

@@ -49,36 +49,35 @@ namespace Stripe\Checkout;
  * @property string $success_url The URL the customer will be directed to after the payment or subscription creation is successful.
  * @property null|\Stripe\StripeObject $total_details Tax and discount details for the computed total amount.
  */
-class Session extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'checkout.session';
+class Session extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\All;
-    use \Stripe\ApiOperations\Create;
-    use \Stripe\ApiOperations\NestedResource;
-    use \Stripe\ApiOperations\Retrieve;
+	const OBJECT_NAME = 'checkout.session';
 
-    const BILLING_ADDRESS_COLLECTION_AUTO = 'auto';
-    const BILLING_ADDRESS_COLLECTION_REQUIRED = 'required';
+	use \Stripe\ApiOperations\All;
+	use \Stripe\ApiOperations\Create;
+	use \Stripe\ApiOperations\NestedResource;
+	use \Stripe\ApiOperations\Retrieve;
 
-    const SUBMIT_TYPE_AUTO = 'auto';
-    const SUBMIT_TYPE_BOOK = 'book';
-    const SUBMIT_TYPE_DONATE = 'donate';
-    const SUBMIT_TYPE_PAY = 'pay';
+	const BILLING_ADDRESS_COLLECTION_AUTO     = 'auto';
+	const BILLING_ADDRESS_COLLECTION_REQUIRED = 'required';
 
-    const PATH_LINE_ITEMS = '/line_items';
+	const SUBMIT_TYPE_AUTO   = 'auto';
+	const SUBMIT_TYPE_BOOK   = 'book';
+	const SUBMIT_TYPE_DONATE = 'donate';
+	const SUBMIT_TYPE_PAY    = 'pay';
 
-    /**
-     * @param string $id the ID of the session on which to retrieve the items
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Collection the list of items
-     */
-    public static function allLineItems($id, $params = null, $opts = null)
-    {
-        return self::_allNestedResources($id, static::PATH_LINE_ITEMS, $params, $opts);
-    }
+	const PATH_LINE_ITEMS = '/line_items';
+
+	/**
+	 * @param string            $id the ID of the session on which to retrieve the items
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Collection the list of items
+	 */
+	public static function allLineItems( $id, $params = null, $opts = null ) {
+		return self::_allNestedResources( $id, static::PATH_LINE_ITEMS, $params, $opts );
+	}
 }

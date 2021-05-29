@@ -27,32 +27,30 @@ use Symfony\Component\CssSelector\Parser\TokenStream;
  *
  * @internal
  */
-class HashHandler implements HandlerInterface
-{
-    private $patterns;
-    private $escaping;
+class HashHandler implements HandlerInterface {
 
-    public function __construct(TokenizerPatterns $patterns, TokenizerEscaping $escaping)
-    {
-        $this->patterns = $patterns;
-        $this->escaping = $escaping;
-    }
+	private $patterns;
+	private $escaping;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handle(Reader $reader, TokenStream $stream): bool
-    {
-        $match = $reader->findPattern($this->patterns->getHashPattern());
+	public function __construct( TokenizerPatterns $patterns, TokenizerEscaping $escaping ) {
+		$this->patterns = $patterns;
+		$this->escaping = $escaping;
+	}
 
-        if (!$match) {
-            return false;
-        }
+	/**
+	 * {@inheritdoc}
+	 */
+	public function handle( Reader $reader, TokenStream $stream ): bool {
+		$match = $reader->findPattern( $this->patterns->getHashPattern() );
 
-        $value = $this->escaping->escapeUnicode($match[1]);
-        $stream->push(new Token(Token::TYPE_HASH, $value, $reader->getPosition()));
-        $reader->moveForward(\strlen($match[0]));
+		if ( ! $match ) {
+			return false;
+		}
 
-        return true;
-    }
+		$value = $this->escaping->escapeUnicode( $match[1] );
+		$stream->push( new Token( Token::TYPE_HASH, $value, $reader->getPosition() ) );
+		$reader->moveForward( \strlen( $match[0] ) );
+
+		return true;
+	}
 }

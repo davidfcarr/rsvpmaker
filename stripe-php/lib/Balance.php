@@ -26,19 +26,18 @@ namespace Stripe;
  * @property bool $livemode Has the value <code>true</code> if the object exists in live mode or the value <code>false</code> if the object exists in test mode.
  * @property \Stripe\StripeObject[] $pending Funds that are not yet available in the balance, due to the 7-day rolling pay cycle. The pending balance for each currency, and for each payment type, can be found in the <code>source_types</code> property.
  */
-class Balance extends SingletonApiResource
-{
-    const OBJECT_NAME = 'balance';
+class Balance extends SingletonApiResource {
 
-    /**
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\Balance
-     */
-    public static function retrieve($opts = null)
-    {
-        return self::_singletonRetrieve($opts);
-    }
+	const OBJECT_NAME = 'balance';
+
+	/**
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\Balance
+	 */
+	public static function retrieve( $opts = null ) {
+		return self::_singletonRetrieve( $opts );
+	}
 }

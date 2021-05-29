@@ -31,41 +31,39 @@ namespace Stripe;
  * @property bool $uncaptured_funds This receiver contains uncaptured funds that can be used for a payment or refunded.
  * @property null|bool $used_for_payment Indicate if this source is used for payment.
  */
-class BitcoinReceiver extends ApiResource
-{
-    const OBJECT_NAME = 'bitcoin_receiver';
+class BitcoinReceiver extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Retrieve;
+	const OBJECT_NAME = 'bitcoin_receiver';
 
-    /**
-     * @return string The class URL for this resource. It needs to be special
-     *    cased because it doesn't fit into the standard resource pattern.
-     */
-    public static function classUrl()
-    {
-        return '/v1/bitcoin/receivers';
-    }
+	use ApiOperations\All;
+	use ApiOperations\Retrieve;
 
-    /**
-     * @return string The instance URL for this resource. It needs to be special
-     *    cased because it doesn't fit into the standard resource pattern.
-     */
-    public function instanceUrl()
-    {
-        if ($this['customer']) {
-            $base = Customer::classUrl();
-            $parent = $this['customer'];
-            $path = 'sources';
-            $parentExtn = \urlencode(Util\Util::utf8($parent));
-            $extn = \urlencode(Util\Util::utf8($this['id']));
+	/**
+	 * @return string The class URL for this resource. It needs to be special
+	 *    cased because it doesn't fit into the standard resource pattern.
+	 */
+	public static function classUrl() {
+		return '/v1/bitcoin/receivers';
+	}
 
-            return "{$base}/{$parentExtn}/{$path}/{$extn}";
-        }
+	/**
+	 * @return string The instance URL for this resource. It needs to be special
+	 *    cased because it doesn't fit into the standard resource pattern.
+	 */
+	public function instanceUrl() {
+		if ( $this['customer'] ) {
+			$base       = Customer::classUrl();
+			$parent     = $this['customer'];
+			$path       = 'sources';
+			$parentExtn = \urlencode( Util\Util::utf8( $parent ) );
+			$extn       = \urlencode( Util\Util::utf8( $this['id'] ) );
 
-        $base = BitcoinReceiver::classUrl();
-        $extn = \urlencode(Util\Util::utf8($this['id']));
+			return "{$base}/{$parentExtn}/{$path}/{$extn}";
+		}
 
-        return "{$base}/{$extn}";
-    }
+		$base = self::classUrl();
+		$extn = \urlencode( Util\Util::utf8( $this['id'] ) );
+
+		return "{$base}/{$extn}";
+	}
 }

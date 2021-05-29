@@ -4,36 +4,39 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit95be39379dfa8437d02129bc630b29a5
-{
-    public static $prefixLengthsPsr4 = array (
-        'S' => 
-        array (
-            'Symfony\\Component\\CssSelector\\' => 30,
-        ),
-        'P' => 
-        array (
-            'Pelago\\' => 7,
-        ),
-    );
+class ComposerStaticInit95be39379dfa8437d02129bc630b29a5 {
 
-    public static $prefixDirsPsr4 = array (
-        'Symfony\\Component\\CssSelector\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/css-selector',
-        ),
-        'Pelago\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/pelago/emogrifier/src',
-        ),
-    );
+	public static $prefixLengthsPsr4 = array(
+		'S' =>
+		array(
+			'Symfony\\Component\\CssSelector\\' => 30,
+		),
+		'P' =>
+		array(
+			'Pelago\\' => 7,
+		),
+	);
 
-    public static function getInitializer(ClassLoader $loader)
-    {
-        return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit95be39379dfa8437d02129bc630b29a5::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit95be39379dfa8437d02129bc630b29a5::$prefixDirsPsr4;
+	public static $prefixDirsPsr4 = array(
+		'Symfony\\Component\\CssSelector\\' =>
+		array(
+			0 => __DIR__ . '/..' . '/symfony/css-selector',
+		),
+		'Pelago\\'                          =>
+		array(
+			0 => __DIR__ . '/..' . '/pelago/emogrifier/src',
+		),
+	);
 
-        }, null, ClassLoader::class);
-    }
+	public static function getInitializer( ClassLoader $loader ) {
+		return \Closure::bind(
+			function () use ( $loader ) {
+				$loader->prefixLengthsPsr4 = ComposerStaticInit95be39379dfa8437d02129bc630b29a5::$prefixLengthsPsr4;
+				$loader->prefixDirsPsr4    = ComposerStaticInit95be39379dfa8437d02129bc630b29a5::$prefixDirsPsr4;
+
+			},
+			null,
+			ClassLoader::class
+		);
+	}
 }

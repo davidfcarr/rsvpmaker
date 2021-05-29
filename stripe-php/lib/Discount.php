@@ -12,7 +12,7 @@ namespace Stripe;
  * @property int $start
  * @property string $subscription
  */
-class Discount extends StripeObject
-{
-    const OBJECT_NAME = 'discount';
+class Discount extends StripeObject {
+
+	const OBJECT_NAME = 'discount';
 }

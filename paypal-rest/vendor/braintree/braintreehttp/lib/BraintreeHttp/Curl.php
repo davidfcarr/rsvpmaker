@@ -4,54 +4,47 @@ namespace BraintreeHttp;
 
 /**
  * Class Curl
+ *
  * @package BraintreeHttp
  *
  * Curl wrapper used by HttpClient to make curl requests.
  * @see HttpClient
  */
-class Curl
-{
-    protected $curl;
+class Curl {
 
-    public function __construct($curl = NULL)
-    {
+	protected $curl;
 
-        if (is_null($curl))
-        {
-            $curl = curl_init();
-        }
-        $this->curl = $curl;
-    }
+	public function __construct( $curl = null ) {
 
-    public function setOpt($option, $value)
-    {
-        curl_setopt($this->curl, $option, $value);
-        return $this;
-    }
+		if ( is_null( $curl ) ) {
+			$curl = curl_init();
+		}
+		$this->curl = $curl;
+	}
 
-    public function close()
-    {
-        curl_close($this->curl);
-        return $this;
-    }
+	public function setOpt( $option, $value ) {
+		curl_setopt( $this->curl, $option, $value );
+		return $this;
+	}
 
-    public function exec()
-    {
-        return curl_exec($this->curl);
-    }
+	public function close() {
+		curl_close( $this->curl );
+		return $this;
+	}
 
-    public function errNo()
-    {
-        return curl_errno($this->curl);
-    }
+	public function exec() {
+		return curl_exec( $this->curl );
+	}
 
-    public function getInfo($option)
-    {
-        return curl_getinfo($this->curl, $option);
-    }
+	public function errNo() {
+		return curl_errno( $this->curl );
+	}
 
-    public function error()
-    {
-        return curl_error($this->curl);
-    }
+	public function getInfo( $option ) {
+		return curl_getinfo( $this->curl, $option );
+	}
+
+	public function error() {
+		return curl_error( $this->curl );
+	}
 }

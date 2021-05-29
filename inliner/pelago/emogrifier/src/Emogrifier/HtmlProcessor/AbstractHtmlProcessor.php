@@ -9,305 +9,288 @@ namespace Pelago\Emogrifier\HtmlProcessor;
  *
  * @author Oliver Klee <github@oliverklee.de>
  */
-abstract class AbstractHtmlProcessor
-{
-    /**
-     * @var string
-     */
-    const DEFAULT_DOCUMENT_TYPE = '<!DOCTYPE html>';
+abstract class AbstractHtmlProcessor {
 
-    /**
-     * @var string
-     */
-    const CONTENT_TYPE_META_TAG = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
+	/**
+	 * @var string
+	 */
+	const DEFAULT_DOCUMENT_TYPE = '<!DOCTYPE html>';
 
-    /**
-     * @var string Regular expression part to match tag names that PHP's DOMDocument implementation is not aware are
-     *      self-closing. These are mostly HTML5 elements, but for completeness <command> (obsolete) and <keygen>
-     *      (deprecated) are also included.
-     *
-     * @see https://bugs.php.net/bug.php?id=73175
-     */
-    const PHP_UNRECOGNIZED_VOID_TAGNAME_MATCHER = '(?:command|embed|keygen|source|track|wbr)';
+	/**
+	 * @var string
+	 */
+	const CONTENT_TYPE_META_TAG = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
 
-    /**
-     * @var \DOMDocument
-     */
-    protected $domDocument = null;
+	/**
+	 * @var string Regular expression part to match tag names that PHP's DOMDocument implementation is not aware are
+	 *      self-closing. These are mostly HTML5 elements, but for completeness <command> (obsolete) and <keygen>
+	 *      (deprecated) are also included.
+	 *
+	 * @see https://bugs.php.net/bug.php?id=73175
+	 */
+	const PHP_UNRECOGNIZED_VOID_TAGNAME_MATCHER = '(?:command|embed|keygen|source|track|wbr)';
 
-    /**
-     * @var \DOMXPath
-     */
-    protected $xPath = null;
+	/**
+	 * @var \DOMDocument
+	 */
+	protected $domDocument = null;
 
-    /**
-     * The constructor.
-     *
-     * Please use ::fromHtml instead.
-     */
-    private function __construct()
-    {
-    }
+	/**
+	 * @var \DOMXPath
+	 */
+	protected $xPath = null;
 
-    /**
-     * Builds a new instance from the given HTML.
-     *
-     * @param string $unprocessedHtml raw HTML, must be UTF-encoded, must not be empty
-     *
-     * @return static
-     *
-     * @throws \InvalidArgumentException if $unprocessedHtml is anything other than a non-empty string
-     */
-    public static function fromHtml($unprocessedHtml)
-    {
-        if (!\is_string($unprocessedHtml)) {
-            throw new \InvalidArgumentException('The provided HTML must be a string.', 1515459744);
-        }
-        if ($unprocessedHtml === '') {
-            throw new \InvalidArgumentException('The provided HTML must not be empty.', 1515763647);
-        }
+	/**
+	 * The constructor.
+	 *
+	 * Please use ::fromHtml instead.
+	 */
+	private function __construct() {
+	}
 
-        $instance = new static();
-        $instance->setHtml($unprocessedHtml);
+	/**
+	 * Builds a new instance from the given HTML.
+	 *
+	 * @param string $unprocessedHtml raw HTML, must be UTF-encoded, must not be empty
+	 *
+	 * @return static
+	 *
+	 * @throws \InvalidArgumentException if $unprocessedHtml is anything other than a non-empty string
+	 */
+	public static function fromHtml( $unprocessedHtml ) {
+		if ( ! \is_string( $unprocessedHtml ) ) {
+			throw new \InvalidArgumentException( 'The provided HTML must be a string.', 1515459744 );
+		}
+		if ( $unprocessedHtml === '' ) {
+			throw new \InvalidArgumentException( 'The provided HTML must not be empty.', 1515763647 );
+		}
 
-        return $instance;
-    }
+		$instance = new static();
+		$instance->setHtml( $unprocessedHtml );
 
-    /**
-     * Builds a new instance from the given DOM document.
-     *
-     * @param \DOMDocument $document a DOM document returned by getDomDocument() of another instance
-     *
-     * @return static
-     */
-    public static function fromDomDocument(\DOMDocument $document)
-    {
-        $instance = new static();
-        $instance->setDomDocument($document);
+		return $instance;
+	}
 
-        return $instance;
-    }
+	/**
+	 * Builds a new instance from the given DOM document.
+	 *
+	 * @param \DOMDocument $document a DOM document returned by getDomDocument() of another instance
+	 *
+	 * @return static
+	 */
+	public static function fromDomDocument( \DOMDocument $document ) {
+		$instance = new static();
+		$instance->setDomDocument( $document );
 
-    /**
-     * Sets the HTML to process.
-     *
-     * @param string $html the HTML to process, must be UTF-8-encoded
-     *
-     * @return void
-     */
-    private function setHtml($html)
-    {
-        $this->createUnifiedDomDocument($html);
-    }
+		return $instance;
+	}
 
-    /**
-     * Provides access to the internal DOMDocument representation of the HTML in its current state.
-     *
-     * @return \DOMDocument
-     */
-    public function getDomDocument()
-    {
-        return $this->domDocument;
-    }
+	/**
+	 * Sets the HTML to process.
+	 *
+	 * @param string $html the HTML to process, must be UTF-8-encoded
+	 *
+	 * @return void
+	 */
+	private function setHtml( $html ) {
+		$this->createUnifiedDomDocument( $html );
+	}
 
-    /**
-     * @param \DOMDocument $domDocument
-     *
-     * @return void
-     */
-    private function setDomDocument(\DOMDocument $domDocument)
-    {
-        $this->domDocument = $domDocument;
-        $this->xPath = new \DOMXPath($this->domDocument);
-    }
+	/**
+	 * Provides access to the internal DOMDocument representation of the HTML in its current state.
+	 *
+	 * @return \DOMDocument
+	 */
+	public function getDomDocument() {
+		return $this->domDocument;
+	}
 
-    /**
-     * Renders the normalized and processed HTML.
-     *
-     * @return string
-     */
-    public function render()
-    {
-        $htmlWithPossibleErroneousClosingTags = $this->domDocument->saveHTML();
+	/**
+	 * @param \DOMDocument $domDocument
+	 *
+	 * @return void
+	 */
+	private function setDomDocument( \DOMDocument $domDocument ) {
+		$this->domDocument = $domDocument;
+		$this->xPath       = new \DOMXPath( $this->domDocument );
+	}
 
-        return $this->removeSelfClosingTagsClosingTags($htmlWithPossibleErroneousClosingTags);
-    }
+	/**
+	 * Renders the normalized and processed HTML.
+	 *
+	 * @return string
+	 */
+	public function render() {
+		$htmlWithPossibleErroneousClosingTags = $this->domDocument->saveHTML();
 
-    /**
-     * Renders the content of the BODY element of the normalized and processed HTML.
-     *
-     * @return string
-     */
-    public function renderBodyContent()
-    {
-        $htmlWithPossibleErroneousClosingTags = $this->domDocument->saveHTML($this->getBodyElement());
-        $bodyNodeHtml = $this->removeSelfClosingTagsClosingTags($htmlWithPossibleErroneousClosingTags);
+		return $this->removeSelfClosingTagsClosingTags( $htmlWithPossibleErroneousClosingTags );
+	}
 
-        return \preg_replace('%</?+body(?:\\s[^>]*+)?+>%', '', $bodyNodeHtml);
-    }
+	/**
+	 * Renders the content of the BODY element of the normalized and processed HTML.
+	 *
+	 * @return string
+	 */
+	public function renderBodyContent() {
+		$htmlWithPossibleErroneousClosingTags = $this->domDocument->saveHTML( $this->getBodyElement() );
+		$bodyNodeHtml                         = $this->removeSelfClosingTagsClosingTags( $htmlWithPossibleErroneousClosingTags );
 
-    /**
-     * Eliminates any invalid closing tags for void elements from the given HTML.
-     *
-     * @param string $html
-     *
-     * @return string
-     */
-    private function removeSelfClosingTagsClosingTags($html)
-    {
-        return \preg_replace('%</' . static::PHP_UNRECOGNIZED_VOID_TAGNAME_MATCHER . '>%', '', $html);
-    }
+		return \preg_replace( '%</?+body(?:\\s[^>]*+)?+>%', '', $bodyNodeHtml );
+	}
 
-    /**
-     * Returns the BODY element.
-     *
-     * This method assumes that there always is a BODY element.
-     *
-     * @return \DOMElement
-     */
-    private function getBodyElement()
-    {
-        return $this->domDocument->getElementsByTagName('body')->item(0);
-    }
+	/**
+	 * Eliminates any invalid closing tags for void elements from the given HTML.
+	 *
+	 * @param string $html
+	 *
+	 * @return string
+	 */
+	private function removeSelfClosingTagsClosingTags( $html ) {
+		return \preg_replace( '%</' . static::PHP_UNRECOGNIZED_VOID_TAGNAME_MATCHER . '>%', '', $html );
+	}
 
-    /**
-     * Creates a DOM document from the given HTML and stores it in $this->domDocument.
-     *
-     * The DOM document will always have a BODY element and a document type.
-     *
-     * @param string $html
-     *
-     * @return void
-     */
-    private function createUnifiedDomDocument($html)
-    {
-        $this->createRawDomDocument($html);
-        $this->ensureExistenceOfBodyElement();
-    }
+	/**
+	 * Returns the BODY element.
+	 *
+	 * This method assumes that there always is a BODY element.
+	 *
+	 * @return \DOMElement
+	 */
+	private function getBodyElement() {
+		return $this->domDocument->getElementsByTagName( 'body' )->item( 0 );
+	}
 
-    /**
-     * Creates a DOMDocument instance from the given HTML and stores it in $this->domDocument.
-     *
-     * @param string $html
-     *
-     * @return void
-     */
-    private function createRawDomDocument($html)
-    {
-        $domDocument = new \DOMDocument();
-        $domDocument->strictErrorChecking = false;
-        $domDocument->formatOutput = true;
-        $libXmlState = \libxml_use_internal_errors(true);
-        $domDocument->loadHTML($this->prepareHtmlForDomConversion($html));
-        \libxml_clear_errors();
-        \libxml_use_internal_errors($libXmlState);
+	/**
+	 * Creates a DOM document from the given HTML and stores it in $this->domDocument.
+	 *
+	 * The DOM document will always have a BODY element and a document type.
+	 *
+	 * @param string $html
+	 *
+	 * @return void
+	 */
+	private function createUnifiedDomDocument( $html ) {
+		$this->createRawDomDocument( $html );
+		$this->ensureExistenceOfBodyElement();
+	}
 
-        $this->setDomDocument($domDocument);
-    }
+	/**
+	 * Creates a DOMDocument instance from the given HTML and stores it in $this->domDocument.
+	 *
+	 * @param string $html
+	 *
+	 * @return void
+	 */
+	private function createRawDomDocument( $html ) {
+		$domDocument                      = new \DOMDocument();
+		$domDocument->strictErrorChecking = false;
+		$domDocument->formatOutput        = true;
+		$libXmlState                      = \libxml_use_internal_errors( true );
+		$domDocument->loadHTML( $this->prepareHtmlForDomConversion( $html ) );
+		\libxml_clear_errors();
+		\libxml_use_internal_errors( $libXmlState );
 
-    /**
-     * Returns the HTML with added document type, Content-Type meta tag, and self-closing slashes, if needed,
-     * ensuring that the HTML will be good for creating a DOM document from it.
-     *
-     * @param string $html
-     *
-     * @return string the unified HTML
-     */
-    private function prepareHtmlForDomConversion($html)
-    {
-        $htmlWithSelfClosingSlashes = $this->ensurePhpUnrecognizedSelfClosingTagsAreXml($html);
-        $htmlWithDocumentType = $this->ensureDocumentType($htmlWithSelfClosingSlashes);
+		$this->setDomDocument( $domDocument );
+	}
 
-        return $this->addContentTypeMetaTag($htmlWithDocumentType);
-    }
+	/**
+	 * Returns the HTML with added document type, Content-Type meta tag, and self-closing slashes, if needed,
+	 * ensuring that the HTML will be good for creating a DOM document from it.
+	 *
+	 * @param string $html
+	 *
+	 * @return string the unified HTML
+	 */
+	private function prepareHtmlForDomConversion( $html ) {
+		$htmlWithSelfClosingSlashes = $this->ensurePhpUnrecognizedSelfClosingTagsAreXml( $html );
+		$htmlWithDocumentType       = $this->ensureDocumentType( $htmlWithSelfClosingSlashes );
 
-    /**
-     * Makes sure that the passed HTML has a document type.
-     *
-     * @param string $html
-     *
-     * @return string HTML with document type
-     */
-    private function ensureDocumentType($html)
-    {
-        $hasDocumentType = \stripos($html, '<!DOCTYPE') !== false;
-        if ($hasDocumentType) {
-            return $html;
-        }
+		return $this->addContentTypeMetaTag( $htmlWithDocumentType );
+	}
 
-        return static::DEFAULT_DOCUMENT_TYPE . $html;
-    }
+	/**
+	 * Makes sure that the passed HTML has a document type.
+	 *
+	 * @param string $html
+	 *
+	 * @return string HTML with document type
+	 */
+	private function ensureDocumentType( $html ) {
+		$hasDocumentType = \stripos( $html, '<!DOCTYPE' ) !== false;
+		if ( $hasDocumentType ) {
+			return $html;
+		}
 
-    /**
-     * Adds a Content-Type meta tag for the charset.
-     *
-     * This method also ensures that there is a HEAD element.
-     *
-     * @param string $html
-     *
-     * @return string the HTML with the meta tag added
-     */
-    private function addContentTypeMetaTag($html)
-    {
-        $hasContentTypeMetaTag = \stripos($html, 'Content-Type') !== false;
-        if ($hasContentTypeMetaTag) {
-            return $html;
-        }
+		return static::DEFAULT_DOCUMENT_TYPE . $html;
+	}
 
-        // We are trying to insert the meta tag to the right spot in the DOM.
-        // If we just prepended it to the HTML, we would lose attributes set to the HTML tag.
-        $hasHeadTag = \stripos($html, '<head') !== false;
-        $hasHtmlTag = \stripos($html, '<html') !== false;
+	/**
+	 * Adds a Content-Type meta tag for the charset.
+	 *
+	 * This method also ensures that there is a HEAD element.
+	 *
+	 * @param string $html
+	 *
+	 * @return string the HTML with the meta tag added
+	 */
+	private function addContentTypeMetaTag( $html ) {
+		$hasContentTypeMetaTag = \stripos( $html, 'Content-Type' ) !== false;
+		if ( $hasContentTypeMetaTag ) {
+			return $html;
+		}
 
-        if ($hasHeadTag) {
-            $reworkedHtml = \preg_replace('/<head(.*?)>/i', '<head$1>' . static::CONTENT_TYPE_META_TAG, $html);
-        } elseif ($hasHtmlTag) {
-            $reworkedHtml = \preg_replace(
-                '/<html(.*?)>/i',
-                '<html$1><head>' . static::CONTENT_TYPE_META_TAG . '</head>',
-                $html
-            );
-        } else {
-            $reworkedHtml = static::CONTENT_TYPE_META_TAG . $html;
-        }
+		// We are trying to insert the meta tag to the right spot in the DOM.
+		// If we just prepended it to the HTML, we would lose attributes set to the HTML tag.
+		$hasHeadTag = \stripos( $html, '<head' ) !== false;
+		$hasHtmlTag = \stripos( $html, '<html' ) !== false;
 
-        return $reworkedHtml;
-    }
+		if ( $hasHeadTag ) {
+			$reworkedHtml = \preg_replace( '/<head(.*?)>/i', '<head$1>' . static::CONTENT_TYPE_META_TAG, $html );
+		} elseif ( $hasHtmlTag ) {
+			$reworkedHtml = \preg_replace(
+				'/<html(.*?)>/i',
+				'<html$1><head>' . static::CONTENT_TYPE_META_TAG . '</head>',
+				$html
+			);
+		} else {
+			$reworkedHtml = static::CONTENT_TYPE_META_TAG . $html;
+		}
 
-    /**
-     * Makes sure that any self-closing tags not recognized as such by PHP's DOMDocument implementation have a
-     * self-closing slash.
-     *
-     * @param string $html
-     *
-     * @return string HTML with problematic tags converted.
-     */
-    private function ensurePhpUnrecognizedSelfClosingTagsAreXml($html)
-    {
-        return \preg_replace(
-            '%<' . static::PHP_UNRECOGNIZED_VOID_TAGNAME_MATCHER . '\\b[^>]*+(?<!/)(?=>)%',
-            '$0/',
-            $html
-        );
-    }
+		return $reworkedHtml;
+	}
 
-    /**
-     * Checks that $this->domDocument has a BODY element and adds it if it is missing.
-     *
-     * @return void
-     *
-     * @throws \UnexpectedValueException
-     */
-    private function ensureExistenceOfBodyElement()
-    {
-        if ($this->domDocument->getElementsByTagName('body')->item(0) !== null) {
-            return;
-        }
+	/**
+	 * Makes sure that any self-closing tags not recognized as such by PHP's DOMDocument implementation have a
+	 * self-closing slash.
+	 *
+	 * @param string $html
+	 *
+	 * @return string HTML with problematic tags converted.
+	 */
+	private function ensurePhpUnrecognizedSelfClosingTagsAreXml( $html ) {
+		return \preg_replace(
+			'%<' . static::PHP_UNRECOGNIZED_VOID_TAGNAME_MATCHER . '\\b[^>]*+(?<!/)(?=>)%',
+			'$0/',
+			$html
+		);
+	}
 
-        $htmlElement = $this->domDocument->getElementsByTagName('html')->item(0);
-        if ($htmlElement === null) {
-            throw new \UnexpectedValueException('There is no HTML element although there should be one.', 1569930853);
-        }
-        $htmlElement->appendChild($this->domDocument->createElement('body'));
-    }
+	/**
+	 * Checks that $this->domDocument has a BODY element and adds it if it is missing.
+	 *
+	 * @return void
+	 *
+	 * @throws \UnexpectedValueException
+	 */
+	private function ensureExistenceOfBodyElement() {
+		if ( $this->domDocument->getElementsByTagName( 'body' )->item( 0 ) !== null ) {
+			return;
+		}
+
+		$htmlElement = $this->domDocument->getElementsByTagName( 'html' )->item( 0 );
+		if ( $htmlElement === null ) {
+			throw new \UnexpectedValueException( 'There is no HTML element although there should be one.', 1569930853 );
+		}
+		$htmlElement->appendChild( $this->domDocument->createElement( 'body' ) );
+	}
 }

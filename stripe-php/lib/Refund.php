@@ -29,30 +29,30 @@ namespace Stripe;
  * @property null|string $status Status of the refund. For credit card refunds, this can be <code>pending</code>, <code>succeeded</code>, or <code>failed</code>. For other types of refunds, it can be <code>pending</code>, <code>succeeded</code>, <code>failed</code>, or <code>canceled</code>. Refer to our <a href="https://stripe.com/docs/refunds#failed-refunds">refunds</a> documentation for more details.
  * @property null|string|\Stripe\TransferReversal $transfer_reversal If the accompanying transfer was reversed, the transfer reversal object. Only applicable if the charge was created using the destination parameter.
  */
-class Refund extends ApiResource
-{
-    const OBJECT_NAME = 'refund';
+class Refund extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'refund';
 
-    const FAILURE_REASON_EXPIRED_OR_CANCELED_CARD = 'expired_or_canceled_card';
-    const FAILURE_REASON_LOST_OR_STOLEN_CARD = 'lost_or_stolen_card';
-    const FAILURE_REASON_UNKNOWN = 'unknown';
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-    const REASON_DUPLICATE = 'duplicate';
-    const REASON_FRAUDULENT = 'fraudulent';
-    const REASON_REQUESTED_BY_CUSTOMER = 'requested_by_customer';
+	const FAILURE_REASON_EXPIRED_OR_CANCELED_CARD = 'expired_or_canceled_card';
+	const FAILURE_REASON_LOST_OR_STOLEN_CARD      = 'lost_or_stolen_card';
+	const FAILURE_REASON_UNKNOWN                  = 'unknown';
 
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_FAILED = 'failed';
-    const STATUS_PENDING = 'pending';
-    const STATUS_SUCCEEDED = 'succeeded';
+	const REASON_DUPLICATE             = 'duplicate';
+	const REASON_FRAUDULENT            = 'fraudulent';
+	const REASON_REQUESTED_BY_CUSTOMER = 'requested_by_customer';
 
-    /**
-     * @deprecated use FAILURE_REASON_EXPIRED_OR_CANCELED_CARD instead
-     */
-    const FAILURE_REASON = 'expired_or_canceled_card';
+	const STATUS_CANCELED  = 'canceled';
+	const STATUS_FAILED    = 'failed';
+	const STATUS_PENDING   = 'pending';
+	const STATUS_SUCCEEDED = 'succeeded';
+
+	/**
+	 * @deprecated use FAILURE_REASON_EXPIRED_OR_CANCELED_CARD instead
+	 */
+	const FAILURE_REASON = 'expired_or_canceled_card';
 }

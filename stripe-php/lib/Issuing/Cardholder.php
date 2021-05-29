@@ -28,12 +28,12 @@ namespace Stripe\Issuing;
  * @property string $status Specifies whether to permit authorizations on this cardholder's cards.
  * @property string $type One of <code>individual</code> or <code>company</code>.
  */
-class Cardholder extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'issuing.cardholder';
+class Cardholder extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\All;
-    use \Stripe\ApiOperations\Create;
-    use \Stripe\ApiOperations\Retrieve;
-    use \Stripe\ApiOperations\Update;
+	const OBJECT_NAME = 'issuing.cardholder';
+
+	use \Stripe\ApiOperations\All;
+	use \Stripe\ApiOperations\Create;
+	use \Stripe\ApiOperations\Retrieve;
+	use \Stripe\ApiOperations\Update;
 }

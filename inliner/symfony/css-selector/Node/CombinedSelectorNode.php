@@ -21,49 +21,43 @@ namespace Symfony\Component\CssSelector\Node;
  *
  * @internal
  */
-class CombinedSelectorNode extends AbstractNode
-{
-    private $selector;
-    private $combinator;
-    private $subSelector;
+class CombinedSelectorNode extends AbstractNode {
 
-    public function __construct(NodeInterface $selector, string $combinator, NodeInterface $subSelector)
-    {
-        $this->selector = $selector;
-        $this->combinator = $combinator;
-        $this->subSelector = $subSelector;
-    }
+	private $selector;
+	private $combinator;
+	private $subSelector;
 
-    public function getSelector(): NodeInterface
-    {
-        return $this->selector;
-    }
+	public function __construct( NodeInterface $selector, string $combinator, NodeInterface $subSelector ) {
+		$this->selector    = $selector;
+		$this->combinator  = $combinator;
+		$this->subSelector = $subSelector;
+	}
 
-    public function getCombinator(): string
-    {
-        return $this->combinator;
-    }
+	public function getSelector(): NodeInterface {
+		return $this->selector;
+	}
 
-    public function getSubSelector(): NodeInterface
-    {
-        return $this->subSelector;
-    }
+	public function getCombinator(): string {
+		return $this->combinator;
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getSpecificity(): Specificity
-    {
-        return $this->selector->getSpecificity()->plus($this->subSelector->getSpecificity());
-    }
+	public function getSubSelector(): NodeInterface {
+		return $this->subSelector;
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    public function __toString(): string
-    {
-        $combinator = ' ' === $this->combinator ? '<followed>' : $this->combinator;
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getSpecificity(): Specificity {
+		return $this->selector->getSpecificity()->plus( $this->subSelector->getSpecificity() );
+	}
 
-        return sprintf('%s[%s %s %s]', $this->getNodeName(), $this->selector, $combinator, $this->subSelector);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	public function __toString(): string {
+		$combinator = ' ' === $this->combinator ? '<followed>' : $this->combinator;
+
+		return sprintf( '%s[%s %s %s]', $this->getNodeName(), $this->selector, $combinator, $this->subSelector );
+	}
 }

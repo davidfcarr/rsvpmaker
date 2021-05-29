@@ -14,7 +14,7 @@ namespace Stripe;
  * @property string $currency
  * @property string $type
  */
-class SourceTransaction extends ApiResource
-{
-    const OBJECT_NAME = 'source_transaction';
+class SourceTransaction extends ApiResource {
+
+	const OBJECT_NAME = 'source_transaction';
 }

@@ -36,45 +36,43 @@ namespace Stripe\Issuing;
  * @property \Stripe\StripeObject $verification_data
  * @property null|string $wallet What, if any, digital wallet was used for this authorization. One of <code>apple_pay</code>, <code>google_pay</code>, or <code>samsung_pay</code>.
  */
-class Authorization extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'issuing.authorization';
+class Authorization extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\All;
-    use \Stripe\ApiOperations\Retrieve;
-    use \Stripe\ApiOperations\Update;
+	const OBJECT_NAME = 'issuing.authorization';
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return Authorization the approved authorization
-     */
-    public function approve($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/approve';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+	use \Stripe\ApiOperations\All;
+	use \Stripe\ApiOperations\Retrieve;
+	use \Stripe\ApiOperations\Update;
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return Authorization the approved authorization
+	 */
+	public function approve( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/approve';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return Authorization the declined authorization
-     */
-    public function decline($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/decline';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return Authorization the declined authorization
+	 */
+	public function decline( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/decline';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }

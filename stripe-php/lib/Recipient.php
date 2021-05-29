@@ -32,13 +32,13 @@ namespace Stripe;
  * @property string $type Type of the recipient, one of <code>individual</code> or <code>corporation</code>.
  * @property bool $verified Whether the recipient has been verified. This field is non-standard, and maybe removed in the future
  */
-class Recipient extends ApiResource
-{
-    const OBJECT_NAME = 'recipient';
+class Recipient extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Delete;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'recipient';
+
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Delete;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 }

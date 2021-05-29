@@ -38,16 +38,16 @@ namespace Stripe;
  * @property int $updated Time at which the object was last updated. Measured in seconds since the Unix epoch.
  * @property null|string $url A URL of a publicly-accessible webpage for this product. Only applicable to products of <code>type=good</code>.
  */
-class Product extends ApiResource
-{
-    const OBJECT_NAME = 'product';
+class Product extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Delete;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'product';
 
-    const TYPE_GOOD = 'good';
-    const TYPE_SERVICE = 'service';
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Delete;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
+
+	const TYPE_GOOD    = 'good';
+	const TYPE_SERVICE = 'service';
 }

@@ -23,13 +23,13 @@ namespace Stripe\Radar;
  * @property \Stripe\StripeObject $metadata Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
  * @property string $name The name of the value list.
  */
-class ValueList extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'radar.value_list';
+class ValueList extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\All;
-    use \Stripe\ApiOperations\Create;
-    use \Stripe\ApiOperations\Delete;
-    use \Stripe\ApiOperations\Retrieve;
-    use \Stripe\ApiOperations\Update;
+	const OBJECT_NAME = 'radar.value_list';
+
+	use \Stripe\ApiOperations\All;
+	use \Stripe\ApiOperations\Create;
+	use \Stripe\ApiOperations\Delete;
+	use \Stripe\ApiOperations\Retrieve;
+	use \Stripe\ApiOperations\Update;
 }

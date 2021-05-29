@@ -11,6 +11,6 @@ namespace Pelago\Emogrifier\HtmlProcessor;
  *
  * @author Oliver Klee <github@oliverklee.de>
  */
-class HtmlNormalizer extends AbstractHtmlProcessor
-{
+class HtmlNormalizer extends AbstractHtmlProcessor {
+
 }

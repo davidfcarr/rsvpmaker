@@ -4,39 +4,39 @@ namespace BraintreeHttp;
 
 /**
  * Class HttpRequest
+ *
  * @package BraintreeHttp
  *
  * Request object that holds all the necessary information required by HTTPClient
  *
  * @see HttpClient
  */
-class HttpRequest
-{
-    /**
-     * @var string
-     */
-    public $path;
+class HttpRequest {
 
-    /**
-     * @var array | string
-     */
-    public $body;
+	/**
+	 * @var string
+	 */
+	public $path;
 
-    /**
-     * @var string
-     */
-    public $verb;
+	/**
+	 * @var array | string
+	 */
+	public $body;
 
-    /**
-     * @var array
-     */
-    public $headers;
+	/**
+	 * @var string
+	 */
+	public $verb;
 
-    function __construct($path, $verb)
-    {
-        $this->path = $path;
-        $this->verb = $verb;
-        $this->body = NULL;
-        $this->headers = [];
-    }
+	/**
+	 * @var array
+	 */
+	public $headers;
+
+	function __construct( $path, $verb ) {
+		$this->path    = $path;
+		$this->verb    = $verb;
+		$this->body    = null;
+		$this->headers = array();
+	}
 }

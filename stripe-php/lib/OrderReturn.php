@@ -23,10 +23,10 @@ namespace Stripe;
  * @property null|string|\Stripe\Order $order The order that this return includes items from.
  * @property null|string|\Stripe\Refund $refund The ID of the refund issued for this return.
  */
-class OrderReturn extends ApiResource
-{
-    const OBJECT_NAME = 'order_return';
+class OrderReturn extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Retrieve;
+	const OBJECT_NAME = 'order_return';
+
+	use ApiOperations\All;
+	use ApiOperations\Retrieve;
 }

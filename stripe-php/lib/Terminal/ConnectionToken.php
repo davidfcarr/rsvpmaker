@@ -15,9 +15,9 @@ namespace Stripe\Terminal;
  * @property string $location The id of the location that this connection token is scoped to.
  * @property string $secret Your application should pass this token to the Stripe Terminal SDK.
  */
-class ConnectionToken extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'terminal.connection_token';
+class ConnectionToken extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\Create;
+	const OBJECT_NAME = 'terminal.connection_token';
+
+	use \Stripe\ApiOperations\Create;
 }

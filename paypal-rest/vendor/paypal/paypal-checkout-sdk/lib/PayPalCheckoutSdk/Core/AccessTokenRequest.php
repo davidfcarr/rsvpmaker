@@ -4,24 +4,22 @@ namespace PayPalCheckoutSdk\Core;
 
 use BraintreeHttp\HttpRequest;
 
-class AccessTokenRequest extends HttpRequest
-{
-    public function __construct(PayPalEnvironment $environment, $refreshToken = NULL)
-    {
-        parent::__construct("/v1/oauth2/token", "POST");
-        $this->headers["Authorization"] = "Basic " . $environment->authorizationString();
-        $body = [
-            "grant_type" => "client_credentials"
-        ];
+class AccessTokenRequest extends HttpRequest {
 
-        if (!is_null($refreshToken))
-        {
-            $body["grant_type"] = "refresh_token";
-            $body["refresh_token"] = $refreshToken;
-        }
+	public function __construct( PayPalEnvironment $environment, $refreshToken = null ) {
+		parent::__construct( '/v1/oauth2/token', 'POST' );
+		$this->headers['Authorization'] = 'Basic ' . $environment->authorizationString();
+		$body                           = array(
+			'grant_type' => 'client_credentials',
+		);
 
-        $this->body = $body;
-        $this->headers["Content-Type"] = "application/x-www-form-urlencoded";
-    }
+		if ( ! is_null( $refreshToken ) ) {
+			$body['grant_type']    = 'refresh_token';
+			$body['refresh_token'] = $refreshToken;
+		}
+
+		$this->body                    = $body;
+		$this->headers['Content-Type'] = 'application/x-www-form-urlencoded';
+	}
 }
 

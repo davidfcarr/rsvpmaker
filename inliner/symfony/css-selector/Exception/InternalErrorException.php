@@ -19,6 +19,6 @@ namespace Symfony\Component\CssSelector\Exception;
  *
  * @author Jean-François Simon <jeanfrancois.simon@sensiolabs.com>
  */
-class InternalErrorException extends ParseException
-{
+class InternalErrorException extends ParseException {
+
 }

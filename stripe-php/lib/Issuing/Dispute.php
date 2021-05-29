@@ -20,12 +20,12 @@ namespace Stripe\Issuing;
  * @property bool $livemode Has the value <code>true</code> if the object exists in live mode or the value <code>false</code> if the object exists in test mode.
  * @property string|\Stripe\Issuing\Transaction $transaction The transaction being disputed.
  */
-class Dispute extends \Stripe\ApiResource
-{
-    const OBJECT_NAME = 'issuing.dispute';
+class Dispute extends \Stripe\ApiResource {
 
-    use \Stripe\ApiOperations\All;
-    use \Stripe\ApiOperations\Create;
-    use \Stripe\ApiOperations\Retrieve;
-    use \Stripe\ApiOperations\Update;
+	const OBJECT_NAME = 'issuing.dispute';
+
+	use \Stripe\ApiOperations\All;
+	use \Stripe\ApiOperations\Create;
+	use \Stripe\ApiOperations\Retrieve;
+	use \Stripe\ApiOperations\Update;
 }

@@ -37,45 +37,43 @@ namespace Stripe;
  * @property null|int $updated Time at which the object was last updated. Measured in seconds since the Unix epoch.
  * @property string $upstream_id The user's order ID if it is different from the Stripe order ID.
  */
-class Order extends ApiResource
-{
-    const OBJECT_NAME = 'order';
+class Order extends ApiResource {
 
-    use ApiOperations\All;
-    use ApiOperations\Create;
-    use ApiOperations\Retrieve;
-    use ApiOperations\Update;
+	const OBJECT_NAME = 'order';
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return \Stripe\OrderReturn the newly created return
-     */
-    public function returnOrder($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/returns';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
+	use ApiOperations\All;
+	use ApiOperations\Create;
+	use ApiOperations\Retrieve;
+	use ApiOperations\Update;
 
-        return Util\Util::convertToStripeObject($response, $opts);
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return \Stripe\OrderReturn the newly created return
+	 */
+	public function returnOrder( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/returns';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
 
-    /**
-     * @param null|array $params
-     * @param null|array|string $opts
-     *
-     * @throws \Stripe\Exception\ApiErrorException if the request fails
-     *
-     * @return Order the paid order
-     */
-    public function pay($params = null, $opts = null)
-    {
-        $url = $this->instanceUrl() . '/pay';
-        list($response, $opts) = $this->_request('post', $url, $params, $opts);
-        $this->refreshFrom($response, $opts);
+		return Util\Util::convertToStripeObject( $response, $opts );
+	}
 
-        return $this;
-    }
+	/**
+	 * @param null|array        $params
+	 * @param null|array|string $opts
+	 *
+	 * @throws \Stripe\Exception\ApiErrorException if the request fails
+	 *
+	 * @return Order the paid order
+	 */
+	public function pay( $params = null, $opts = null ) {
+		$url                   = $this->instanceUrl() . '/pay';
+		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
+		$this->refreshFrom( $response, $opts );
+
+		return $this;
+	}
 }
