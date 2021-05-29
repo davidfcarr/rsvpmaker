@@ -491,7 +491,7 @@ $duration = isset($template["duration"]) ? $template["duration"] : '';
 $displayminutes = $displayhour = '';
 
 ?>
-<div><label>Time</label> <input type="time" id="sql-time" name="sked[time]" value="<?php echo $h.":".$minutes; ?>" > </div>
+<div><label>Time</label> <input type="time" id="sql-time" name="sked[time]" value="<?php echo esc_attr($h.":".$minutes); ?>" > </div>
 <div id="template-time-error"></div>
 <?php
 
@@ -1360,7 +1360,7 @@ echo '</div>';
 
 jQuery(document).ready(function($) {
 
-var blankcount = <?php echo $starterblanks; ?>;
+var blankcount = <?php echo esc_attr($starterblanks); ?>;
 
 var lastblank = blankcount - 1;
 
@@ -3465,19 +3465,15 @@ ob_start();
 
 	
 
-		<?php _e('Error Number','rsvpmaker'); ?>: <?php echo  $errorCode ;?>
+		<?php _e('Error Number','rsvpmaker'); ?>: <?php echo  esc_html($errorCode);?>
 
 	<br />
 
-	
-
-		<?php _e('Short Message','rsvpmaker'); ?>: <?php echo  $shortMessage ;?>
+		<?php _e('Short Message','rsvpmaker'); ?>: <?php echo esc_html($shortMessage) ;?>
 
 	<br />
 
-	
-
-		<?php _e('Long Message','rsvpmaker'); ?>: <?php echo  $longMessage ;?>
+		<?php _e('Long Message','rsvpmaker'); ?>: <?php echo  esc_html($longMessage);?>
 
 	<br />
 

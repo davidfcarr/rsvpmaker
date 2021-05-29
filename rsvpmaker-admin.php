@@ -905,7 +905,7 @@ if(isset($options["custom_css"]) && $options["custom_css"])
 $dstyle = plugins_url('style.css',__FILE__);
 ?>
 
-	<br /><em><?php _e('Allows you to override the standard styles from','rsvpmaker'); ?> <br /><a href="<?php echo $dstyle;?>"><?php echo $dstyle;?></a></em>
+	<br /><em><?php _e('Allows you to override the standard styles from','rsvpmaker'); ?> <br /><a href="<?php echo esc_attr($dstyle);?>"><?php echo esc_html($dstyle);?></a></em>
 	<br /><em><?php _e('Probably a better option: use the Customize utility built into WordPress to override the defaults','rsvpmaker'); ?></em>
 <h3><?php _e('Theme Template for Events'); ?></h3>
 <br /><select name="option[rsvp_template]"><?php
@@ -1162,7 +1162,7 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')
 
 </section>
 <section id="notification_email" class="rsvpmaker">
-<form name="notify_options" action="<?php echo $action_url ;?>" method="post">
+<form name="notify_options" action="<?php echo esc_attr($action_url);?>" method="post">
 <?php echo wp_nonce_field('rsvpmaker_settings'); ?>
 <?php do_action('rsvpmaker_email_settings'); ?>
 <p><?php _e('These settings are related to transactional emails, such as registration confirmation messages. If you are using another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults.','rsvpmaker'); ?></p>
@@ -1634,7 +1634,7 @@ $sql = "SELECT ".$wpdb->prefix."rsvpmaker.*, ".$wpdb->prefix."posts.post_title F
 $wpdb->show_errors();
 $results = $wpdb->get_results($sql);
 echo "RSVP RECORDS\n";
-echo $sql . "\n";
+echo esc_html($sql) . "\n";
 //print_r($results);
 
 	}
@@ -1695,7 +1695,7 @@ if(isset($_GET["author"]))
    <input type="submit" value="Show" />
 </form>
 <pre>
-<?php echo $output;?>
+<?php echo wp_kses_post($output);?>
 </pre>
 <?php
 }
@@ -1739,7 +1739,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	
     if( $column_name == 'rsvpmaker_end' ) {
 		$event = get_rsvpmaker_event($post_id);
-		echo $event->enddate;
+		echo esc_html($event->enddate);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
 		$end_type = get_post_meta($post_id,'_firsttime',true);
@@ -1748,7 +1748,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 		else {
 			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
 			if(!empty($options[$end_type]))
-				echo $options[$end_type];//.' ('.$end_type.')';
+				echo esc_html($options[$end_type]);
 		}
 		printf('<input type="hidden" class="end_display_code" value="%s" />',$end_type);
 		$rsvp_on = get_post_meta($post_id,'_rsvp_on',true);

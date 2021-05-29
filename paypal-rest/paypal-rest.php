@@ -49,7 +49,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
           result = 'Verifying transaction by ' + details.payer.name.given_name+'... ';
           document.getElementById("paypal-button-container").innerHTML = result;
           // Call your server to save the transaction
-          return fetch('<?php echo $verify; ?>', {
+          return fetch('<?php echo esc_attr($verify); ?>', {
             method: 'post',
             headers: {
               'content-type': 'application/json'
@@ -73,7 +73,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
           //document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><h2>PayPal</h2>'+myJSon.result.payment_confirmation_message+'</div>';
           if(myJson.statusCode == 200) {
             console.log('Now, check for confirmation message');
-            fetch(rsvpmaker_json_url+'paypalsuccess/<?php echo $post->ID; ?>/<?php echo $rsvp_id; ?>')
+            fetch(rsvpmaker_json_url+'paypalsuccess/<?php echo $post->ID; ?>/<?php echo esc_attr($rsvp_id); ?>')
             .then((response) => {
               return response.json();
             })
