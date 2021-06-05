@@ -233,11 +233,12 @@ jQuery( document ).ready(
 					var signature = $( "#pp_signature" ).val().trim();
 
 					$.post(
-						ajaxurl,
+						rsvpmaker_rest.ajaxurl,
 						{
 							'action': 'rsvpmaker_paypal_config',
 							'user' : user,
 							'password' : password,
+							'timelord' : timelord,
 							'signature' : signature
 						},
 						function(response){

@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.7.7.1
+Version: 8.7.8.1
 */
 
 function get_rsvpversion() {
-	return '8.7.7.1';
+	return '8.7.8.1';
 }
 
 global $wp_version;
@@ -34,11 +34,7 @@ global $rsvp_options;
 
 $rsvp_options = get_option( 'RSVPMAKER_Options' );
 
-
-
 $locale = get_locale();
-
-
 
 function rsvp_options_defaults() {
 
@@ -448,9 +444,6 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'rsvpmaker-widgets.php';
 	include $rsvpmaker_dir . 'rsvpmaker-group-email.php';
 	include $rsvpmaker_dir . 'script.php';
-	if ( ! function_exists( 'do_blocks' ) ) {
-		include $rsvpmaker_dir . 'rsvpmaker/rsvpmaker-classic.php';
-	}
 }
 
 $gateways = get_rsvpmaker_payment_options();
@@ -1010,13 +1003,13 @@ function log_paypal( $message ) {
 
 	$ts = rsvpmaker_date( 'r' );
 
-	$invoice = $_SESSION['invoice'];
+	$invoice = sanitize_text_field($_SESSION['invoice']);
 
 	$message .= "\n<br /><br />Post ID: " . $post->ID;
 
 	$message .= "\n<br /><br />Invoice: " . $invoice;
 
-	$message .= "\n<br />Email: " . $_SESSION['payer_email'];
+	$message .= "\n<br />Email: " . sanitize_text_field($_SESSION['payer_email']);
 
 	$message .= "\n<br />Time: " . $ts;
 
@@ -1321,7 +1314,7 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 
 	}
 
-	$rsvp_id = $_COOKIE[ 'rsvp_for_' . $post->ID ];
+	$rsvp_id = intval($_COOKIE[ 'rsvp_for_' . $post->ID ]);
 
 	global $wpdb;
 

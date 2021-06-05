@@ -91,16 +91,16 @@ function customize_rsvp_form() {
 	}
 
 	if ( isset( $_GET['rsvpcz_default'] ) && isset( $_GET['post_id'] ) ) {
-		$meta_key = $_GET['rsvpcz_default'];
+		$meta_key = santize_text_field($_GET['rsvpcz_default']);
 		$post_id  = (int) $_GET['post_id'];
 		$id       = $rsvp_options[ $meta_key ];
 		update_post_meta( $post_id, '_' . $meta_key, $id );
 	}
 
 	if ( isset( $_GET['rsvpcz'] ) && isset( $_GET['post_id'] ) ) {
-		$meta_key = $_GET['rsvpcz'];
+		$meta_key = sanitize_text_field($_GET['rsvpcz']);
 		$parent   = (int) $_GET['post_id'];
-		$title    = $_GET['title'] . ':' . $parent;
+		$title    = santize_text_field(stripslashes($_GET['title'])) . ':' . $parent;
 		$content  = '';
 		if ( isset( $_GET['source'] ) ) {
 			$source = (int) $_GET['source'];
@@ -181,7 +181,7 @@ function customize_rsvp_form() {
 		}
 	}
 
-	if ( isset( $_POST['create_reminder_for'] ) ) {
+	if ( isset( $_POST['create_reminder_for'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		$parent  = $post_id = (int) $_POST['create_reminder_for'];
 		$event   = get_post( $post_id );
@@ -233,7 +233,7 @@ function customize_rsvp_form() {
 
 			update_post_meta( $id, '_rsvpmaker_special', 'Reminder (' . $hours . ' hours) ' . $subject );
 
-			if ( isset( $_POST['paid_only'] ) ) {
+			if ( isset( $_POST['paid_only'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 				update_post_meta( $id, 'paid_only_confirmation', 1 );
 			}
@@ -709,7 +709,7 @@ function stripe_form_wrapper( $atts, $content ) {
 
 	$vars['description'] = ( isset( $atts['description'] ) ) ? $atts['description'] : 'Online Payment ' . get_bloginfo( 'name' );
 
-	if ( ! empty( $_POST ) ) {
+	if ( ! empty( $_POST )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))  ) {
 
 		$output = '';
 
@@ -773,7 +773,7 @@ function stripe_form_wrapper( $atts, $content ) {
 	}
 
 	$content = sprintf( '<form method="post" action="%s">', $permalink ) . $content;
-
+	$content .= rsvpmaker_nonce('return');
 	$content .= sprintf( '<input type="hidden" name="amount" value="%s" /><button>Submit</button></form>', $amount );
 
 	return $content;

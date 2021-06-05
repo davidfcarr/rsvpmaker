@@ -466,9 +466,5 @@ if ( isset( $_GET['template_preview'] ) ) {
 		$preview = preg_replace( '/<body[^>]*>/', '$0' . '<h1>Email Preview</h1><div style="width: 100%; padding: 5px;"><div style="width:600px;margin-top: 5px;margin-bottom: 5px;">' . rsvpmaker_email_send_ui( $chimp_html, $chimp_text, $rsvp_html, $rsvp_text, $templates, $t_index ) . '</div></div>', $preview );
 
 }
-
+/* cannot be escaped because of embedded form content. Escaping belongs in the functions that create this output variable */
 echo $preview;
-
-
-
-

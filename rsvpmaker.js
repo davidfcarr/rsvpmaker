@@ -3,13 +3,9 @@ jQuery( document ).ready(
 
 		$.ajaxSetup(
 			{
-
 				headers: {
-
 					'X-WP-Nonce': rsvpmaker_rest.nonce,
-
 				}
-
 			}
 		);
 
@@ -157,12 +153,14 @@ jQuery( document ).ready(
 
 					'action': 'rsvpmaker_localstring',
 
-					'localstring': localstring
+					'localstring': localstring,
+
+					'timelord': rsvpmaker_rest.timelord,
 
 				};
 
 				jQuery.post(
-					ajaxurl,
+					rsvpmaker_rest.ajaxurl,
 					data,
 					function(response) {
 
@@ -181,6 +179,7 @@ jQuery( document ).ready(
 				var data = {
 
 					'event': post,
+					'timelord': rsvpmaker_rest.timelord,
 
 				};
 
@@ -297,7 +296,7 @@ jQuery( document ).ready(
 
 		function display_guestlist (post_id) {
 
-			var url = rsvpmaker_json_url + 'guestlist/' + post_id;
+			var url = rsvpmaker_rest.rsvpmaker_json_url + 'guestlist/' + post_id;
 
 			fetch( url )
 
@@ -343,7 +342,7 @@ jQuery( document ).ready(
 
 				guestlist = '';
 
-				display_guestlist( post_id );// ,nonce);
+				display_guestlist( post_id );
 
 			}
 		);

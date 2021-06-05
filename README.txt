@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 5.7.1
-Stable tag: 8.7.7.1
+Tested up to: 5.7.2
+Stable tag: 8.7.8.1
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -61,6 +61,8 @@ Spanish: Andrew Kurtis, [__WebHostingHub__](http://www.webhostinghub.com/)
 Polish: Jarosław Żeliński
 
 Norwegian: Thomas Nybø
+
+Turkish: Göksel UÇAK
 
 Thank you!
 
@@ -117,6 +119,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 8.8 =
+
+* Turkish translation care of Göksel UÇAK
+
 = 8.7.4 =
 
 * Security fix
@@ -141,7 +147,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 = 8.6.8 =
 
 * If timezone conversions are active, they're now displayed automatically if the user's timezone is diff from event local time
-* User can switch to display timezones other than ones reported by con
+* User can switch to display timezones other than ones reported by JavaScript
 
 = 8.6.7 =
 

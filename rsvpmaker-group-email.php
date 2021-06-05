@@ -156,7 +156,7 @@ function rsvpmaker_relay_queue() {
 				continue;
 			}
 
-			$mail['from'] = 'noreply@' . str_replace( 'www.', '', $_SERVER['SERVER_NAME'] );
+			$mail['from'] = 'noreply@' . str_replace( 'www.', '', sanitize_text_field($_SERVER['SERVER_NAME']) );
 
 			$mail['replyto'] = get_post_meta( $row->ID, 'rsvprelay_from', true );
 

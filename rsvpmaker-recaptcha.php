@@ -28,14 +28,14 @@ function rsvpmaker_recaptcha_check( $siteKey, $secret ) {
 
 	require_once 'recaptcha-master/src/autoload.php';
 
-	if ( ! isset( $_POST['g-recaptcha-response'] ) ) {
+	if ( ! isset( $_POST['g-recaptcha-response'] )  || !wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		return false;
 	}
 
 	$recaptcha = new \ReCaptcha\ReCaptcha( $secret );
 
-	$resp = $recaptcha->verify( sanitize_text_field( $_POST['g-recaptcha-response'] ), $_SERVER['REMOTE_ADDR'] );
+	$resp = $recaptcha->verify( sanitize_text_field( $_POST['g-recaptcha-response'] ), sanitize_text_field($_SERVER['REMOTE_ADDR']) );
 
 	if ( $resp->isSuccess() ) {
 

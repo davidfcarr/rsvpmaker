@@ -686,7 +686,7 @@ function rsvpmaker_upcoming( $atts = array() ) {
 
 		print_r( $atts );
 
-		echo $querystring;
+		echo esc_html($querystring);
 
 	}
 
@@ -712,7 +712,7 @@ function rsvpmaker_upcoming( $atts = array() ) {
 
 		$demo .= "<div><strong>Output:</strong></div>\n";
 
-		echo $demo;
+		echo wp_kses_post($demo);
 
 	}
 
@@ -1696,7 +1696,7 @@ END:VCALENDAR
 
 ',
 		$ical_end,
-		$start . '-' . $post->ID . '@' . $_SERVER['SERVER_NAME'],
+		$start . '-' . $post->ID . '@' . sanitize_text_field($_SERVER['SERVER_NAME']),
 		date( 'Ymd\THis\Z' ),
 		$desc,
 		$url,
@@ -1756,7 +1756,7 @@ function rsvp_row_to_profile( $row ) {
 
 function rsvpmaker_type_dateorder( $sql ) {
 
-	echo $sql;
+	echo esc_html($sql);
 
 	return $sql;
 
@@ -1869,7 +1869,7 @@ function ylchat( $atts ) {
 		return;
 	}
 
-	$url = sprintf( 'https://www.youtube.com/live_chat?v=%s&amp;embed_domain=%s', esc_attr( $matches[2] ), esc_attr( $_SERVER['SERVER_NAME'] ) );
+	$url = sprintf( 'https://www.youtube.com/live_chat?v=%s&amp;embed_domain=%s', esc_attr( $matches[2] ), esc_attr( sanitize_text_field($_SERVER['SERVER_NAME']) ) );
 
 	$login_url = 'https://accounts.google.com/ServiceLogin?uilel=3&service=youtube&hl=en&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Ffeature%3Dcomments%26next%3D%252Flive_chat%253Fis_popout%253D1%2526v%253D' . esc_attr( $matches[2] ) . '%26hl%3Den%26action_handle_signin%3Dtrue%26app%3Ddesktop&passive=true';
 
@@ -1970,7 +1970,7 @@ function rsvpmaker_compact_format( $post, $atts = array() ) {
 <p class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name">
 	<?php
 	echo esc_html( get_the_title( $post ) );
-	echo $dateblock;
+	echo wp_kses_post($dateblock);
 	?>
 </span></p>
 
@@ -2148,7 +2148,7 @@ function rsvpmaker_compact( $atts = array() ) {
 <p class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name">
 			<?php
 			the_title();
-			echo $dateblock;
+			echo wp_kses_post($dateblock);
 			?>
 </span></p>
 
@@ -2208,9 +2208,9 @@ function rsvpmaker_replay_form( $event_id ) {
 	}
 	?>
 
-<form id="rsvpform" action="<?php echo $permalink; ?>" method="post">
-
-<input type="hidden" name="replay_rsvp" value="<?php echo $permalink; ?>" />
+<form id="rsvpform" action="<?php echo esc_attr($permalink); ?>" method="post">
+<?php rsvpmaker_nonce();?>
+<input type="hidden" name="replay_rsvp" value="<?php echo esc_attr($permalink); ?>" />
 
 <h3 id="rsvpnow"><?php echo __( 'Please Register', 'rsvpmaker' ); ?></h3> 
 
@@ -2249,7 +2249,7 @@ function rsvpmaker_replay_form( $event_id ) {
 		<p>
 		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
 		</p> 
-<input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo esc_attr( $event_id ); ?>" /><input type="hidden" name="landing_id" value="<?php echo esc_attr( $post->ID ); ?>" /><?php wp_nonce_field( 'rsvp_replay', 'rsvp_replay_nonce' ); ?>
+<input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo esc_attr( $event_id ); ?>" /><input type="hidden" name="landing_id" value="<?php echo esc_attr( $post->ID ); ?>" /><?php rsvpmaker_nonce(); ?>
 
 </form>	
 
@@ -2349,12 +2349,16 @@ function rsvplanding_my_display_callback( $post ) {
 	$checked = ( $on ) ? ' checked="checked" ' : '';
 
 	printf( '<input type="checkbox" name="rsvpmaker_hide_menu" value="1" %s> Hide menu (<em>Turn a full-width page template into a landing page</em>)', $checked );
-	wp_nonce_field( 'rsvpmaker_hide_menu_action', 'rsvpmaker_hide_menu_nonce' );
+	//wp_nonce_field( 'rsvpmaker_hide_menu_action', 'rsvpmaker_hide_menu_nonce' );
+	rsvpmaker_nonce();
 	// Display code/markup goes here. Don't forget to include nonces!
 }
 
 function rsvplanding_save_meta_box( $post_id ) {
-	if ( isset( $_POST['rsvpmaker_hide_menu_nonce'] ) && wp_verify_nonce( $_POST['rsvpmaker_hide_menu_nonce'], 'rsvpmaker_hide_menu_action' ) ) {
+	
+	if ( isset( $_POST['rsvpmaker_hide_menu'] ) ) {
+		if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+			return;	
 		update_post_meta( $post_id, 'rsvpmaker_hide_menu', isset( $_POST['rsvpmaker_hide_menu'] ) );
 	}
 }
@@ -2791,7 +2795,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 		if ( $day != $last ) {
 
-			$output .= sprintf( '<h3 class="rsvpmaker_schedule_date">%s</h3>', $day ) . $timezone;
+			$output .= sprintf( '<h3 class="rsvpmaker_schedule_date">%s</h3>', $day );
 		}
 
 		$last = $day;

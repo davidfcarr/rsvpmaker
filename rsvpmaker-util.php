@@ -1,4 +1,37 @@
 <?php
+add_action('init','rsvpmaker_create_nonce',1);
+
+function rsvpmaker_create_nonce() {
+	global $rsvpmaker_nonce;
+	$rsvpmaker_nonce = array('field' => 'timelord','key' => 'galifrey','value' => wp_create_nonce('galifrey'));
+}
+
+function rsvpmaker_nonce($mode = 'echo'){
+	global $rsvpmaker_nonce;
+	if($mode == 'value')
+		return $rsvpmaker_nonce['value'];
+	if($mode == 'query')
+		return $rsvpmaker_nonce['field'].'='.$rsvpmaker_nonce['value'];
+	$output = sprintf('<input type="hidden" name="%s" class="%s" value="%s" />',esc_attr($rsvpmaker_nonce['field']),esc_attr($rsvpmaker_nonce['field']),esc_attr($rsvpmaker_nonce['value']));
+	if($mode == 'echo')
+		echo $output;
+	else
+		return $output;
+}
+
+/*
+wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))
+if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+	return;
+*/
+function rsvpmaker_nonce_data($mode = 'key'){
+	global $rsvpmaker_nonce;
+	if($mode == 'key')
+		return $rsvpmaker_nonce['key'];
+	if(empty($_REQUEST['timelord']))
+		return false;
+	return sanitize_text_field($_REQUEST['timelord']);
+}
 
 function rsvpmaker_get_timezone_string( $post_id = 0 ) {
 	global $post;
@@ -38,6 +71,11 @@ function rsvpmaker_add_timestamps() {
 	if ( $last_tz != $default_tz ) {
 		date_default_timezone_set( $default_tz );
 	}
+}
+
+// temporary shim for name change
+function fix_timezone () {
+	rsvpmaker_fix_timezone();
 }
 
 function rsvpmaker_fix_timezone( $timezone = '' ) {
@@ -697,11 +735,6 @@ function get_events_by_author( $author, $limit = '', $status = '' ) {
 		$sql .= ' LIMIT 0,' . $limit . ' ';
 	}
 
-	if ( ! empty( $_GET['debug_sql'] ) ) {
-
-		echo $sql;
-	}
-
 	return $wpdb->get_results( $sql );
 
 }
@@ -1008,7 +1041,9 @@ function sync_rsvpmaker_event_dates( $meta_id, $object_id, $meta_key, $meta_valu
 		}
 		$wpdb->query( $sql );
 	}
-	if ( $event && $event->date && $event->enddate && $event->timezone ) {
+	if(empty($event) && !empty($sql)) // if it was added above
+		$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$object_id" );
+	if ( !empty($event) && $event->date && $event->enddate && $event->timezone ) {
 		if ( empty( $post ) ) {
 			$post = get_post( $object_id );
 		}
@@ -1107,11 +1142,6 @@ function get_future_events_by_meta( $kv, $limit = '', $output = OBJECT, $offset_
 		$sql .= ' LIMIT 0,' . $limit . ' ';
 	}
 
-	if ( ! empty( $_GET['debug_sql'] ) ) {
-
-		echo $sql;
-	}
-
 		rsvpmaker_debug_log( $sql, 'meta lookup test' );
 
 		return $wpdb->get_results( $sql, $output );
@@ -1120,7 +1150,7 @@ function get_future_events_by_meta( $kv, $limit = '', $output = OBJECT, $offset_
 function future_events_test() {
 	$events = get_future_events();
 	foreach ( $events as $event ) {
-		echo $event->post_title;
+		echo esc_html($event->post_title);
 	}
 	return var_export( $events, true );
 }
@@ -1145,11 +1175,6 @@ function get_future_dates( $limit ) {
 	if ( ! empty( $limit ) ) {
 
 		$sql .= ' LIMIT 0,' . $limit . ' ';
-	}
-
-	if ( ! empty( $_GET['debug_sql'] ) ) {
-
-		echo $sql;
 	}
 
 		return $wpdb->get_results( $sql );
@@ -1889,8 +1914,6 @@ function rsvpmaker_set_default_field( $index, $display = false ) {
 
 }
 
-
-
 function rsvpmaker_cleanup() {
 
 	global $wpdb;
@@ -1937,17 +1960,17 @@ function rsvpmaker_cleanup() {
 
 	<?php
 
-	if ( isset( $_POST['reset_defaults'] ) ) {
+	if ( isset( $_POST['reset_defaults'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		$result = rsvpmaker_set_defaults_all( true );
 
 		echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events</p></div>';
 
-		echo $result;
+		echo esc_html($result);
 
 	}
 
-	if ( isset( $_POST['default_field'] ) ) {
+	if ( isset( $_POST['default_field'] ) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		$result = '';
 
@@ -1961,7 +1984,7 @@ function rsvpmaker_cleanup() {
 
 		echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events for fields shown below.</p></div>';
 
-		echo $result;
+		echo esc_attr($result);
 
 	}
 
@@ -1982,7 +2005,7 @@ function rsvpmaker_cleanup() {
 <input type="hidden" name="confirm" value="1" />
 
 <input type="hidden" name="older_than" value="<?php echo esc_attr( $older ); ?>" /> 
-
+rsvpmaker_nonce();
 			<?php submit_button( 'Confirm Delete' ); ?>
 
 </form>
@@ -2001,7 +2024,6 @@ function rsvpmaker_cleanup() {
 
 	 WHERE a1.meta_value < '$older' ";
 
-		// echo $sql;
 
 		$results = $wpdb->get_results( $sql );
 
@@ -2011,7 +2033,7 @@ function rsvpmaker_cleanup() {
 
 				$deleted = '';
 
-				if ( isset( $_POST['confirm'] ) ) {
+				if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 					wp_delete_post( $event->ID, true );
 
@@ -2038,7 +2060,7 @@ function rsvpmaker_cleanup() {
 			?>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-
+rsvpmaker_nonce();
 <input type="hidden" name="confirm" value="1" />
 
 RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo esc_attr( $older ); ?>" /> 
@@ -2051,7 +2073,7 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 
 		}
 
-		if ( isset( $_POST['confirm'] ) ) {
+		if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 			$wpdb->query( 'DELETE FROM ' . $wpdb->prefix . "rsvpmaker WHERE timestamp < '$older' " );
 			printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', $older );
 		} else {
@@ -2070,7 +2092,7 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 <h2><?php esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-
+rsvpmaker_nonce();
 		<?php esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
 
 		<?php submit_button( 'Delete' ); ?>
@@ -2080,7 +2102,7 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 <h2><?php esc_html_e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-
+<?php rsvpmaker_nonce(); ?>
 		<?php esc_html_e( 'Delete RSVP event registrations older than', 'rsvpmaker' ); ?> <input type="date" name="rsvps_older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
 
 		<?php submit_button( 'Delete' ); ?>
@@ -2090,6 +2112,7 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 <h2><?php esc_html_e( 'Apply Defaults', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+<?php rsvpmaker_nonce(); ?>
 
 <p><?php esc_html_e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' ); ?></p>
 
@@ -2803,7 +2826,7 @@ function get_rsvp_email() {
 
 	if ( isset( $_GET['e'] ) ) {
 
-			$email = santize_text_field($_GET['e']);
+			$email = sanitize_text_field($_GET['e']);
 
 	} elseif ( isset( $_COOKIE[ 'rsvp_for_' . $post->ID ] ) && ! $email_context ) {
 

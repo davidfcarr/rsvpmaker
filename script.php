@@ -2,19 +2,23 @@
 /*
 * Load JS and Css
 */
-$scriptversion = '20210526';
+$scriptversion = '20210528';
 
 function rsvpmaker_rest_array() {
-	global $post;
+	global $post, $rsvpmaker_nonce;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
 	return array(
 		'post_id'  => $post_id,
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 		'rest_url' => rest_url(),
-	);
+		'ajaxurl', admin_url( 'admin-ajax.php' ),
+		'rsvpmaker_json_url' => site_url( '/wp-json/rsvpmaker/v1/' ),
+		'timelord' => $rsvpmaker_nonce['value'],
+		);
 }
 
 function rsvpmaker_admin_enqueue( $hook ) {
+	rsvpmaker_event_scripts(); // want the front end scripts, too
 	global $post, $scriptversion, $rsvpscript;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
 	if ( ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) ) || ( isset( $_GET['post_type'] ) && ( $_GET['post_type'] == 'rsvpmaker' ) ) || ( ( isset( $_GET['page'] ) &&
@@ -28,21 +32,20 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	}
 }
 
-function rsvpmaker_event_scripts() {
-	global $post, $scriptversion;
+function rsvpmaker_event_scripts($frontend = true) {
+	global $post, $scriptversion,$rsvpmaker_nonce;
 	$scriptversion = time();
 	$post_id       = isset( $post->ID ) ? $post->ID : 0;
 	global $rsvp_options;
 	wp_enqueue_script( 'jquery' );
-	wp_enqueue_script( 'jquery-ui-tooltip' );
+	if($frontend)
+		wp_enqueue_script( 'jquery-ui-tooltip' );
 	$myStyleUrl = ( isset( $rsvp_options['custom_css'] ) && $rsvp_options['custom_css'] ) ? $rsvp_options['custom_css'] : plugins_url( 'style.css', __FILE__ );
 	wp_register_style( 'rsvp_style', $myStyleUrl, array(), $scriptversion );
 	wp_enqueue_style( 'rsvp_style' );
 	wp_enqueue_script( 'rsvpmaker_js', plugins_url( 'rsvpmaker.min.js', __FILE__ ), array(), $scriptversion, true );
-	wp_localize_script( 'rsvpmaker_js', 'ajaxurl', admin_url( 'admin-ajax.php' ) );
-	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_json_url', site_url( '/wp-json/rsvpmaker/v1/' ) );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
-	if ( is_single() ) {
+	if ( $frontend && is_single() ) {
 		if ( strpos( $post->post_content, 'wp:rsvpmaker/submission' ) ) {
 			wp_enqueue_script( 'wp-tinymce' );
 		}
@@ -57,7 +60,7 @@ function rsvpmaker_jquery_inline( $routine, $atts = array() ) {
 jQuery(document).ready(function($) {
 $.ajaxSetup({
 	headers: {
-		'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>',
+		'X-WP-Nonce': '<?php echo esc_attr(wp_create_nonce( 'wp_rest' )); ?>',
 	}
 });
 	<?php
@@ -239,7 +242,7 @@ function rsvpmaker_timezone_footer() {
 		?>
 <script>
 jQuery(document).ready(function($) {
-	$('#timezone_on<?php echo $id; ?>').click();
+	$('#timezone_on<?php echo esc_attr($id); ?>').click();
 });
 </script>
 		<?php

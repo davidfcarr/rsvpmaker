@@ -180,10 +180,10 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 
 	if ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
 
-		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), esc_attr( $idempotency_key ), __( 'Pay with Card' ) );
+		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 
 	} else {
-		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button></form>', $url, esc_attr( $idempotency_key ), __( 'Pay with Card' ) );
+		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	}
 
 	if ( $show ) {
@@ -299,7 +299,7 @@ function rsvpmaker_stripe_checkout() {
 
 			'payment_method_types' => array( 'card' ),
 
-			'statement_descriptor' => substr( 'Paid on ' . $_SERVER['SERVER_NAME'], 0, 21 ),
+			'statement_descriptor' => substr( 'Paid on ' . sanitize_text_field($_SERVER['SERVER_NAME']), 0, 21 ),
 
 		),
 		array( 'idempotency_key' => $idempotency_key )
@@ -356,7 +356,7 @@ function rsvpmaker_stripe_checkout() {
 
 <script>
 
-var stripe = Stripe('<?php echo $public; ?>');
+var stripe = Stripe('<?php echo esc_attr($public); ?>');
 
 var elements = stripe.elements();
 
@@ -487,7 +487,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
 			else
 
-				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+' <?php echo $currency_symbol; ?>'+myJson.amount+' '+myJson.currency.toUpperCase();
+				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+' <?php echo esc_attr($currency_symbol); ?>'+myJson.amount+' '+myJson.currency.toUpperCase();
 
 		});
 
@@ -651,9 +651,10 @@ function rsvpmaker_stripe_report() {
 	<option value="100">100</option> 
 
 	</select>transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
-
+	%s
 	<button>Get</button></form></div>',
-		admin_url( 'edit.php' )
+		admin_url( 'edit.php' ),
+		rsvpmaker_nonce('return')
 	);
 
 	$tx = rsvpmaker_stripe_transactions( 100 );

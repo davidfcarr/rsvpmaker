@@ -102,18 +102,6 @@ function rsvpmaker_exporter( $email_address, $page = 1 ) {
 		}
 	}
 
-	if ( isset( $_GET['export_test'] ) ) {
-
-		echo $sql . '<br />';
-
-		// print_r($results);
-
-		// print_r($export_items);
-
-		die();
-
-	}
-
 	// Tell core if we have more comments to work on still
 
 	$done = count( $results ) < $number;

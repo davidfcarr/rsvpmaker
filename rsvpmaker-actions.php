@@ -40,7 +40,7 @@ add_action( 'manage_posts_extra_tablenav', 'rsvpmaker_sort_message' );
 add_action( 'pre_get_posts', 'rsvpmaker_archive_pages' );
 add_action( 'plugins_loaded', 'rsvpmaker_load_plugin_textdomain' );
 add_action( 'plugins_loaded', 'rsvpmaker_gutenberg_check' );
-add_action( 'rest_api_init', 'rest_api_init_rsvpmaker' );
+//add_action( 'rest_api_init', 'rest_api_init_rsvpmaker' );
 
 add_action( 'rsvp_daily_reminder_event', 'rsvp_daily_reminder' );
 add_action( 'rsvpmaker_cron_email_preview', 'rsvpmaker_cron_email_preview' );
