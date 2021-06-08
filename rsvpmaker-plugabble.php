@@ -1052,7 +1052,7 @@ if ( isset( $remindyear ) ) {
 
 			$customize = admin_url( '?post_id=' . $post->ID . '&customize_form=' . $fpost->ID );
 
-			echo '<h3 id="rsvpform">' . __( 'RSVP Form', 'rsvpmaker' ) . '</h3>';
+			echo '<h3 id="rsvpform-section">' . __( 'RSVP Form', 'rsvpmaker' ) . '</h3>';
 
 			$guest = ( strpos( $fpost->post_content, 'rsvpmaker-guests' ) ) ? 'Yes' : 'No';
 

@@ -1,3 +1,7 @@
+.daily-schedule-event-types {
+    margin-top: 1em;
+}
+
 article.rsvpmaker div.entry-meta {
 	display: none;
 }
@@ -6,13 +10,17 @@ h1.rsvpmaker-entry-title {
 margin-bottom: 0.1em;
 }
 
-form#rsvpmaker_jumpform {
+form.rsvpmaker_jumpform {
 	clear: both;
 	padding-top: 10px;
 	padding-bottom: 10px;
 }
-input.jump {
-	width: 8em;
+input.jumpmonth {
+	width: 3em;
+	display: inline;
+}
+input.jumpyear {
+	width: 5em;
 	display: inline;
 }
 .rsvpmaker_nav {

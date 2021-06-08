@@ -1315,7 +1315,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	// jump form
 
-	$content .= sprintf( '<form id="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="text" name="cm" value="%s" size="4" class="jump" />/<input type="text" name="cy" value="%s" size="4" class="jump" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), esc_attr( $page_id ) );
+	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), esc_attr( $page_id ) );
 
 	$post = $post_backup;
 
@@ -2775,14 +2775,11 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 				$termslugs[] = $term->slug;
 
-				if ( empty( $atts['type'] ) || ( $atts['type'] != $term->slug ) ) {
-
-					$term_links[] = '<a href="' . esc_attr( get_term_link( $term->slug, 'rsvpmaker-type' ) ) . '">' . __( $term->name ) . '</a>';
-				}
+				$term_links[] = '<a href="' . esc_attr( get_term_link( $term->slug, 'rsvpmaker-type' ) ) . '">' . __( $term->name ) . '</a>';
 			}
 		}
 
-		$termline = '<p class="daily-schedule-event-types">' . esc_attr( implode( ', ', $term_links ) ) . '</p>';
+		$termline = '<p class="daily-schedule-event-types">'. wp_kses_post( implode( ', ', $term_links ) ) . '</p>';
 
 		if ( isset( $atts['type'] ) && ! in_array( $atts['type'], $termslugs ) ) {
 
@@ -2806,7 +2803,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 			$end = '';
 		}
 
-		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">' . rsvpmaker_date( $time_format, $t ) . '</span>' . esc_html( $end ) . '</span>';
+		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">' . rsvpmaker_date( $time_format, $t ) . '</span>' .  $end . '</span>';
 
 		$eventcontent .= ' <a href="' . get_permalink( $event->ID ) . '"><span class="rsvpmaker-schedule-title">' . esc_html( $event->post_title ) . '</a></h3>';
 
@@ -2823,27 +2820,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 		}
 
-		$parts = explode( '<!--more-->', $event->post_content );
-
-		$content = do_blocks( $parts[0] );
-
-		if ( ! empty( $parts[1] ) ) {
-
-			$content .= '<p <button id="rsvpmaker-schedule-button' . esc_attr( $event->ID ) . '" class="rsvpmaker-schedule-button">' . __( 'Read more' ) . '</button></p>
-
-			<div id="rsvpmaker-schedule-detail' . esc_attr( $event->ID ) . '" class="rsvpmaker-schedule-detail" >';
-
-			$content .= esc_html( $parts[1] ) . "\n</div>";
-
-			$content = str_replace( '<!-- wp:more -->', '', $content );
-
-			$content = str_replace( '<!-- /wp:more -->', '', $content );
-
-		}
-
-		$eventcontent .= $content;
-
-		// $eventcontent .= get_the_content(__('Read more','rsvpmaker'),false,$event);
+		$eventcontent .= get_the_content('Read More',false,$event);
 
 		$output .= '<div class="rsvpmaker-schedule-item' . $wrapclass . '">' . "\n" . $eventcontent . $termline . "\n" . '</div>';
 

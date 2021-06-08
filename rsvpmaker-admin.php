@@ -3154,7 +3154,7 @@ function future_rsvpmakers_by_template($template_id) {
 function rsvptimes ($time,$fieldname) {
 if(empty($time))
 	$time = '01:00:00';
-printf('%s <input name="%s" value="%s">',__('24 Hour Time'),$fieldname,$time);
+printf('%s <input type="time" name="%s" value="%s">',__('Time'),$fieldname,$time);
 }
 
 function rsvpmaker_add_one () {
