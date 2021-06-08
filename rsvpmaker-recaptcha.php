@@ -22,8 +22,6 @@ function rsvpmaker_recaptcha_output() {
 
 }
 
-
-
 function rsvpmaker_recaptcha_check( $siteKey, $secret ) {
 
 	require_once 'recaptcha-master/src/autoload.php';

@@ -3996,11 +3996,10 @@ if ( ! function_exists( 'event_content' ) ) {
 					do_action( 'rsvpmaker_after_captcha' );
 
 				}
+				global $rsvp_required_field;
+				$rsvp_required_field['email'] = 'email';// at a minimum			
 
 				rsvpmaker_recaptcha_output();
-
-				global $rsvp_required_field;
-
 				if ( isset( $rsvp_options['privacy_confirmation'] ) && ( $rsvp_options['privacy_confirmation'] == '1' ) ) {
 
 					echo '<p><input type="checkbox" name="profile[privacy_consent]" id="privacy_consent" value="1" /> ' . wp_kses_post( $rsvp_options['privacy_confirmation_message'] ) . '</p>';
