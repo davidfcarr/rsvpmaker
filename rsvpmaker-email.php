@@ -882,7 +882,7 @@ if(isset($_POST['scheduled_email'])  && wp_verify_nonce(rsvpmaker_nonce_data('da
 	if(is_array($_POST['scheduled_email']))
 		$scheduled_email = array_map('sanitize_text_field',$_POST['scheduled_email']);
 	else
-		$scheduled_email = sanitize_text_field($_POST['scheduled_email'])
+		$scheduled_email = sanitize_text_field($_POST['scheduled_email']);
 	update_post_meta($post_id,'scheduled_email',$scheduled_email);
 }
 

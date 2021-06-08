@@ -1089,7 +1089,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 			$key = rsvpmaker_date( 'Y-m-d', $t );
 
-			$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="calendar_item ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="calendar_item ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
+			$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
 
 			if ( strpos( $duration_type, '|' ) ) {
 
@@ -1101,7 +1101,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 					$key = date( 'Y-m-d', strtotime( $key . ' +1 day' ) );
 
-					$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="calendar_item ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="calendar_item ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
+					$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
 
 				}
 			}
@@ -2234,15 +2234,13 @@ function rsvpmaker_replay_form( $event_id ) {
 		do_action( 'rsvpmaker_after_captcha' );
 
 	}
+	global $rsvp_required_field;
+	$rsvp_required_field['email'] = 'email';// at a minimum
 
 	if ( function_exists( 'rsvpmaker_recaptcha_output' ) ) {
 
 		rsvpmaker_recaptcha_output();
 	}
-
-	global $rsvp_required_field;
-
-	$rsvp_required_field['email'] = 'email';// at a minimum
 
 	echo '<div id="jqerror"></div><input type="hidden" name="required" id="required" value="' . implode( ',', $rsvp_required_field ) . '" />';
 	?>

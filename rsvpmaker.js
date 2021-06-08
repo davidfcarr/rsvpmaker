@@ -9,31 +9,6 @@ jQuery( document ).ready(
 			}
 		);
 
-		if ($( '.calendar_item' )[0]) {
-			$( '.calendar_item' ).tooltip(
-				{
-					show: null, // show immediately
-					position:{my:"right top", at: "left top" },
-					content: $( this ).html(),
-					hide: { effect: "" },
-					close: function(event, ui){
-						ui.tooltip.hover(
-							function () {
-								$( this ).stop( true ).fadeTo( 400, 1 );
-							},
-							function () {
-								$( this ).fadeOut(
-									"400",
-									function(){
-										$( this ).remove();
-									}
-								)
-							}
-						);
-					}
-				}
-			);
-		}
 		$( '.rsvpmaker-schedule-detail' ).hide();
 		$( '.rsvpmaker-schedule-button' ).click(
 			function( event ) {
@@ -334,7 +309,7 @@ jQuery( document ).ready(
 			);
 
 		}
-
+		
 		$( ".rsvpmaker_show_attendees" ).click(
 			function( event ) {
 
@@ -346,6 +321,7 @@ jQuery( document ).ready(
 
 			}
 		);
+		
 	}
 );
 

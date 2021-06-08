@@ -2,7 +2,7 @@
 /*
 * Load JS and Css
 */
-$scriptversion = '20210528';
+$scriptversion = '2021';
 
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce;
@@ -38,8 +38,6 @@ function rsvpmaker_event_scripts($frontend = true) {
 	$post_id       = isset( $post->ID ) ? $post->ID : 0;
 	global $rsvp_options;
 	wp_enqueue_script( 'jquery' );
-	if($frontend)
-		wp_enqueue_script( 'jquery-ui-tooltip' );
 	$myStyleUrl = ( isset( $rsvp_options['custom_css'] ) && $rsvp_options['custom_css'] ) ? $rsvp_options['custom_css'] : plugins_url( 'style.css', __FILE__ );
 	wp_register_style( 'rsvp_style', $myStyleUrl, array(), $scriptversion );
 	wp_enqueue_style( 'rsvp_style' );
