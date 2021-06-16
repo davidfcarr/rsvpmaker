@@ -667,7 +667,7 @@ function rsvpmaker_relay_get_pop( $list_type = '' ) {
 		// (($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients))
 		if ( $list_type == 'bot' ) {
 			echo "Action call: 'rsvpmaker_autoreply'";
-			do_action( 'rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress, $fromname );
+			do_action( 'rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress, $fromname, $headerinfo->to );
 		}
 
 		if ( in_array( $from, $blocked ) ) {

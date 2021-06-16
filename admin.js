@@ -95,13 +95,11 @@ jQuery( document ).ready(
 			}
 		);
 
-		var activetab = $( '#activetab' ).val();
-		if (activetab) {
+		var active = $( '.nav-tab-active' );
+		if (active) {
+			var activetab = active.attr('href');
 			$( 'section.rsvpmaker' ).hide();
-			$( 'section#' + activetab ).show();
-			$( '.rsvpmaker-nav-tab' ).removeClass( 'nav-tab-active' );
-			$( 'section#' + activetab ).addClass( 'nav-tab-active' );
-			$( '#activetab' ).val( '' );
+			$( 'section' + activetab ).show();
 		}
 
 		$(

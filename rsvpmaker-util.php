@@ -262,8 +262,8 @@ function rsvpmaker_time_format( $post_id, $end_time = false ) {
 }
 
 function rsvpmaker_timestamp_to_time( $t, $add_tz = false ) {
-	global $rsvp_options, $wpdb;
-	if ( ! strpos( $rsvp_options['time_format'], 'T' ) && ( $add_tz || get_post_meta( $post_id, '_add_timezone', true ) ) ) {
+	global $rsvp_options, $wpdb, $post;
+	if ( ! strpos( $rsvp_options['time_format'], 'T' ) && ( $add_tz || get_post_meta( $post->ID, '_add_timezone', true ) ) ) {
 		$rsvp_options['time_format'] .= ' T';
 	}
 	return rsvpmaker_date( $rsvp_options['time_format'], $t );
@@ -3633,7 +3633,7 @@ function mailpoet_rsvpmaker_shortcode( $shortcode, $newsletter, $subscriber, $qu
 	if ( strpos( $shortcode, 'next' ) ) {
 		$content = rsvpmaker_next( $atts );
 	} elseif ( strpos( $shortcode, 'listing' ) ) {
-		$content = event_listing( $atts );
+		$content = rsvpmaker_event_listing( $atts );
 	} elseif ( strpos( $shortcode, 'youtube' ) ) {
 		preg_match( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', $atts['url'], $match );
 		$image   = 'https://img.youtube.com/vi/' . $match[2] . '/mqdefault.jpg';

@@ -595,7 +595,7 @@ echo esc_html($label);
 
 			  if (isset($_POST['submitted'])) {
               		
-                  $newoptions = array_map('sanitize_text_field',stripslashes_deep($_POST["option"]));
+                  $newoptions = stripslashes_deep($_POST["option"]);
                   $newoptions["rsvp_on"] = (isset($_POST["option"]["rsvp_on"]) && $_POST["option"]["rsvp_on"]) ? 1 : 0;
                   $newoptions["confirmation_include_event"] = (isset($_POST["option"]["confirmation_include_event"]) && $_POST["option"]["confirmation_include_event"]) ? 1 : 0;
                   $newoptions['rsvpmaker_send_confirmation_email'] = (isset($_POST["option"]['rsvpmaker_send_confirmation_email']) && $_POST["option"]['rsvpmaker_send_confirmation_email']) ? 1 : 0;
@@ -620,7 +620,7 @@ echo esc_html($label);
 
 				foreach($newoptions as $name => $value) {
 					if($name == 'rsvplink')
-						$options[$name] = wp_kses_post($value);
+						$options[$name] = $value;
 					else
 						$options[$name] = sanitize_text_field($value);
 				}
@@ -1404,7 +1404,7 @@ printf('<div id="editconfirmation"><a href="%s">%s</a></div>',$edit,__('Edit','r
 
 foreach($forms as $label => $form_id) {
 	$fpost = get_post($form_id);
-	if($fpost) {
+	if($fpost && $fpost->post_status != 'trash') {
 		printf('<h3>Form: %s</h3>',$label);
 		echo rsvpmaker_form_summary($fpost);
 		$edit = admin_url('post.php?action=edit&post='.$form_id);

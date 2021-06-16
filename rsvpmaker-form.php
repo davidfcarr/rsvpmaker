@@ -100,7 +100,7 @@ function customize_rsvp_form() {
 	if ( isset( $_GET['rsvpcz'] ) && isset( $_GET['post_id'] ) ) {
 		$meta_key = sanitize_text_field($_GET['rsvpcz']);
 		$parent   = (int) $_GET['post_id'];
-		$title    = santize_text_field(stripslashes($_GET['title'])) . ':' . $parent;
+		$title    = sanitize_text_field(stripslashes($_GET['title'])) . ':' . $parent;
 		$content  = '';
 		if ( isset( $_GET['source'] ) ) {
 			$source = (int) $_GET['source'];

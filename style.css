@@ -79,6 +79,9 @@ width: 25%;
 #rsvpform input[type=text], #rsvpform input[type=email], #rsvpform select {
 max-width: 70%
 }
+#rsvpform input[type=checkbox], #rsvpform input[type=radio]{
+	min-width: auto !important;
+}
 #cpcalendar td, #cpcalendar th {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -224,11 +227,6 @@ p.daily-schedule-event-types {
     display: inline-block;
     min-width: 1.5em;
     text-align: center;
-}
-#rsvpform input[type="checkbox"], #rsvpform input[type="radio"] {
-    width: 1.2em;
-    height: 1.2em;
-    display: inline-block;
 }
 #rsvpform {
     padding-left: 5px;

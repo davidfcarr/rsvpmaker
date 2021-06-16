@@ -3133,4 +3133,13 @@ function rsvpmaker_timezone_converter( $atts ) {
 
 add_shortcode( 'timezone_converter', 'rsvpmaker_timezone_converter' );
 
+function rsvpmaker_404_message ($args) {
+	global $wp_query;
+	if(isset($wp_query->query['rsvpmaker-type'])) {
+		echo '<p><strong>'.__('For an event category lookup, this may simply mean there is no currently scheduled event in this category','rsvpmaker').'</strong></p>';
+	}
+}
+
+add_action('pre_get_search_form','rsvpmaker_404_message');
+
 ?>
