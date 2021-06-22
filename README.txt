@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.7.2
-Stable tag: 8.7.8.6
+Stable tag: 8.8
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -119,7 +119,9 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
-= 8.8 =
+= 8.7.9 =
+
+* Delayed send option for RSVP Mail Utility
 
 * Turkish translation care of Göksel UÇAK
 

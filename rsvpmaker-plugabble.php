@@ -442,17 +442,13 @@ jQuery(function () {
 
 
 
-<p><?php esc_html_e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="
-			 <?php
+<p><?php esc_html_e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="<?php
 				if ( isset( $template['stop'] ) ) {
 					echo esc_attr($template['stop']);}
-				?>
-	" placeholder="
-		<?php
+				?>" placeholder="<?php
 		esc_html_e( 'example', 'rsvpmaker' );
 		echo ': ' . date( 'Y' ) . '-12-31';
-		?>
-" /> <em>(<?php esc_html_e( 'format', 'rsvpmaker' ); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
+		?>" /> <em>(<?php esc_html_e( 'format', 'rsvpmaker' ); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
 		<?php
 		$auto = ( ( isset( $_GET['new_template'] ) && ! empty( $rsvp_options['autorenew'] ) ) || get_post_meta( $post->ID, 'rsvpautorenew', true ) );
 		?>
@@ -484,6 +480,16 @@ jQuery(function () {
 } // end template schedule
 
 
+function rsvpmaker_sanitize_array_vars($array) {
+	foreach($array as $index => $var) {
+		if(is_array($var))
+			$var = array_map('sanitize_text_field',$var);
+		else
+			$var = sanitize_text_field($var);
+		$array[$index] = $var;
+	}
+	return $array;
+}
 
 function save_rsvp_template_meta( $post_id ) {
 
@@ -506,7 +512,7 @@ function save_rsvp_template_meta( $post_id ) {
 
 	}
 
-	$sked = array_map('sanitize_text_field',$_POST['sked']);
+	$sked = array_map('rsvpmaker_sanitize_array_vars',$_POST['sked']);
 
 	if ( $sked['time'] ) {
 			$p               = explode( ':', $sked['time'] );

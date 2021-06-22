@@ -1121,6 +1121,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$months = array( '', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' );
 
 	$cm = ( isset( $_REQUEST['cm'] ) ) ? (int) $_REQUEST['cm'] : (int) rsvpmaker_date( 'm' );
+	$cmpad = ($cm < 10) ? '0'.$cm : $cm;
 
 	$cy = ( isset( $_REQUEST['cy'] ) ) ? (int) $_REQUEST['cy'] : (int) rsvpmaker_date( 'Y' );
 
@@ -1137,11 +1138,11 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$monthafter = $eom + ( DAY_IN_SECONDS * 32 );
 
 	// Link to previous month (but do not link to too early dates)
-	$linktime  = strtotime( $monthname . ' -1 month' );
+	$linktime  = rsvpmaker_strtotime( $cy.'-'.$cmpad.'-01 -1 month' );
 	$prev_link = '<a href="' . esc_attr( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a> &lt;';
 
 	// Link to next month (but do not link to too early dates)
-	$linktime  = strtotime( $monthname . ' +1 month' );
+	$linktime  = rsvpmaker_strtotime( $cy.'-'.$cmpad.'-01 +1 month' );
 	$next_link = '&gt; <a href="' . esc_attr( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a>';
 
 	$linktime     = $bom;

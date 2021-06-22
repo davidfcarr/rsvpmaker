@@ -2,7 +2,7 @@
 /*
 * Load JS and Css
 */
-$scriptversion = '202106.7';
+$scriptversion = '202106.10';
 
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce;
@@ -11,7 +11,7 @@ function rsvpmaker_rest_array() {
 		'post_id'  => $post_id,
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 		'rest_url' => rest_url(),
-		'ajaxurl', admin_url( 'admin-ajax.php' ),
+		'ajaxurl' => admin_url( 'admin-ajax.php' ),
 		'rsvpmaker_json_url' => site_url( '/wp-json/rsvpmaker/v1/' ),
 		'timelord' => $rsvpmaker_nonce['value'],
 		);
@@ -26,9 +26,9 @@ function rsvpmaker_admin_enqueue( $hook ) {
 		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 		wp_enqueue_script( 'jquery-ui-dialog' );
 		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1', true );
-		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery' ), $scriptversion, true );
+		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery', 'rsvpmaker_js' ), $scriptversion, true );
 		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array(), $scriptversion, true );
-		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpmaker_rest', rsvpmaker_rest_array() );
+		//wp_localize_script( 'rsvpmaker_admin_script', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	}
 }
 

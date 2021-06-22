@@ -592,18 +592,24 @@ foreach($results as $row)
 <?php
 	}
 
+	if(isset($_GET['cancel'])) {
+		$args[] = intval($_GET['cancel']);
+		$args[] = intval($_GET['user_id']);
+		$timestamp = intval($_GET['timestamp']);
+		wp_unschedule_event($timestamp,'rsvpmailer_delayed_send',$args);
+	}
 	
     $crons = _get_cron_array();
     if ( empty($crons) )
         esc_html_e('None','rsvpmaker');
 	else
 	{
-	printf('<h3>'.__('Scheduled','rsvpmaker').'?></h3>
-	<table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th></tr></thead><tbody>',__('Title','rsvpmaker'),__('Schedule','rsvpmaker'));
+	printf('<h3>%s</h3>',__('Scheduled','rsvpmaker'));
+	printf('<table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th></tr></thead><tbody>',__('Title','rsvpmaker'),__('Schedule','rsvpmaker'));
     foreach ( $crons as $timestamp => $cron ) {
 		foreach($cron as $hook => $properties)
 			{
-			if($hook == 'rsvpmaker_cron_email')
+			if($hook == 'rsvpmaker_cron_email') {
 				foreach($properties as $key => $property_array)
 					{
 					////print_r($property_array);
@@ -616,6 +622,25 @@ foreach($results as $row)
 						
 						echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
 						echo '</td></tr>';
+						}
+					}
+				}
+				if($hook == 'rsvpmailer_delayed_send') {
+					//wp_schedule_single_event( $t, 'rsvpmailer_delayed_send', array($post->ID, $current_user->ID));
+					foreach($properties as $key => $property_array)
+						{
+						////print_r($property_array);
+						$post_id = $property_array["args"][0];
+						$user_id = $property_array["args"][1];
+						$post = get_post($post_id);
+						if(!empty($post))
+							{
+							printf('<tr><td>%s (%s)<br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>',$post->post_title,__('Delayed Send','rsvpmaker'),admin_url('post.php?post='.$post_id.'&action=edit'),__('Edit Post','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&timestamp='.$timestamp.'&cancel='.$post_id.'&user_id='.$user_id),__('Cancel','rsvpmaker'));
+							$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
+							
+							echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
+							echo '</td></tr>';
+							}
 						}
 					}
 			}
@@ -867,7 +892,7 @@ if(!function_exists('do_blocks'))
 add_meta_box( 'BlastBox', 'RSVPMaker Email Options', 'RSVPMaker_email_notice', 'rsvpemail', 'normal', 'high' );
 }
 
-//add_action('admin_init','save_rsvpemail_data');
+add_action('admin_init','save_rsvpemail_data');
 
 function save_rsvpemail_data() {
 
@@ -912,6 +937,7 @@ if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data(
 			}
 	}
 	if( (isset($_POST["cron_active"]) || !empty($_POST["cron_relative"])) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+		print_r($_POST);
 	$chosen = (int) $_POST["chosen"]; 
 	if(empty($_POST['cronday']))
 	{
@@ -1216,6 +1242,219 @@ $content = str_replace('Update your profile:
 return $content;	
 }
 
+function rsvpmailer_submitted($rsvp_html, $postvars, $post_id, $user_id) {
+	global $unsubscribed;
+	$post = get_post($post_id);
+	if(!empty($postvars["preview"]))
+		{
+		$previewto = trim($postvars["previewto"]);
+		if(is_email($previewto))
+			{
+			echo '<p>Sending preview to '.$previewto.'</p>';
+			$mail["to"] = $previewto;
+			$mail["from"] = (isset($postvars["user_email"]) && is_email($postvars["user_email"]) ) ? $current_user->user_email : $postvars["from_email"];
+			$mail["fromname"] = stripslashes($postvars["from_name"]);
+			$mail["subject"] = stripslashes($postvars["subject"]);
+			$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
+			$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
+			$result = rsvpmailer($mail);
+			echo esc_html($result);
+			add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' (preview) '.rsvpmaker_date('r'));
+			}
+		else
+			echo '<div style="color:red;">Error: '.$previewto.' - '.__('Error, not a single valid email address','rsvpmaker').'</div>';
+			
+		}
+	
+	if(!empty($postvars["attendees"]) && !empty($postvars["event"]) )
+	{
+	$unsub = get_option('rsvpmail_unsubscribed');
+	if(empty($unsub)) $unsub = array();
+	
+	if($postvars["event"] == 'any')
+	{
+	$sql = "SELECT DISTINCT email 
+	FROM  `".$wpdb->prefix."rsvpmaker`";
+	$title = 'one of our previous events';	
+	}
+	else {
+	$event = (int) $postvars["event"];
+	$event_post = get_post($event);
+	$sql = "SELECT * 
+	FROM  `".$wpdb->prefix."rsvpmaker` 
+	WHERE  `event` = ".$event." ORDER BY  `email` ASC";
+	$title = $event_post->post_title;
+	}
+	$results = $wpdb->get_results($sql);
+	if(!empty($results))
+	{
+	echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('event attendees','rsvpmaker').'</p>';
+	foreach($results as $row)
+		{
+		if(in_array(strtolower($row->email),$unsub))
+			{
+				$unsubscribed[] = $row->email;
+				continue;
+			}
+		add_post_meta($post->ID,'rsvprelay_to',$row->email);
+		}
+	}
+	
+	}
+	
+	if(!empty($postvars["rsvps_since"]) && !empty($postvars["since"]) )
+	{
+	$unsub = get_option('rsvpmail_unsubscribed');
+	if(empty($unsub)) $unsub = array();
+	$since = (int) $postvars["since"];
+	$t = rsvpmaker_strtotime('-'.$since.' days');
+	
+	$date = date('Y-m-d',$t);
+	
+	$sql = "SELECT DISTINCT email 
+	FROM  `".$wpdb->prefix."rsvpmaker` WHERE `timestamp` > '$date'";
+	$title = 'one of our previous events';
+	
+	$results = $wpdb->get_results($sql);
+	if(!empty($results))
+	{
+	echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('RSVPs within the last ','rsvpmaker').' '.sanitize_text_field($postvars["since"]).' days</p>';
+	foreach($results as $row)
+		{
+		if(in_array(strtolower($row->email),$unsub))
+			{
+				$unsubscribed[] = $row->email;
+				continue;
+			}
+		add_post_meta($post->ID,'rsvprelay_to',$row->email);
+		}
+	}
+	
+	}	
+	
+	if(!empty($postvars["members"]))
+	{
+	$users = get_users('blog='.get_current_blog_id());
+	printf('<p>Sending to %s website members</p>',sizeof($users));
+	update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
+	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	update_post_meta($post->ID,'rsvprelay_from',$from);
+	update_post_meta($post->ID,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
+	$unsub = get_option('rsvpmail_unsubscribed');
+	if(empty($unsub)) $unsub = array();
+	foreach($users as $user)
+		{
+		if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
+			{
+				$unsubscribed[] = $user->user_email;
+				continue;
+			}
+		add_post_meta($post->ID,'rsvprelay_to',$user->user_email);
+		}
+	}
+	
+	if(!empty($postvars["network_members"]) && user_can('manage_network',$user_id) )
+	{
+	update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
+	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	update_post_meta($post->ID,'rsvprelay_from',$from);
+	update_post_meta($post->ID,'rsvprelay_fromname',sanitize_text_field(stripslashes($postvars["from_name"])));
+	$users = get_users('blog='.get_current_blog_id());
+	printf('<p>Sending to %s website members</p>',sizeof($users));
+	$unsub = get_option('rsvpmail_unsubscribed');
+	if(empty($unsub)) $unsub = array();
+	foreach($users as $user)
+		{
+		if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
+			{
+				$unsubscribed[] = $user->user_email;
+				continue;
+			}
+		update_post_meta($post->ID,'rsvprelay_to',$user->user_email);
+		}
+	}
+	
+	if(!empty($postvars["mailchimp"]) )
+	{
+	$chimp_options = get_option('chimp');
+	$MailChimp = new MailChimpRSVP($chimp_options["chimp-key"]);
+	$listID = sanitize_text_field($postvars["mailchimp_list"]);
+	update_post_meta($post->ID, "_email_list",$listID);
+	$custom_fields["_email_list"][0] = $listID;
+	$segment_opts = array();
+	
+	if(!empty($postvars["mailchimp_exclude_rsvp"]))
+	{
+	$event = (int) $postvars["mailchimp_exclude_rsvp"];	
+	$sql = "SELECT * 
+	FROM  `".$wpdb->prefix."rsvpmaker` 
+	WHERE  `event` = ".$event;
+	$results = $wpdb->get_results($sql);
+	if(is_array($results))
+	foreach($results as $row)
+		$rsvped[] = array('field' => 'EMAIL','condition_type' => 'EmailAddress','op' => 'not','value' => $row->email);
+	if(!empty($rsvped))
+		$segment_opts = array('match' => 'all','conditions' => $rsvped );
+	}
+	
+	$input = array(
+					'type' => 'regular',
+					'recipients'        => array('list_id' => $listID),
+					'segment_opts'        => $segment_opts,
+					'settings' => array('subject_line' => sanitize_text_field(stripslashes($postvars["subject"])),'from_email' => sanitize_text_field($postvars["from_email"]), 'from_name' => sanitize_text_field($postvars["from_name"]), 'reply_to' => sanitize_text_field($postvars["from_email"]))
+	);
+	
+	$campaign = $MailChimp->post("campaigns", $input);
+	if(!$MailChimp->success())
+		{
+		echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
+		return;
+		}
+	if(!empty($campaign["id"]))
+	{
+	$content_result = $MailChimp->put("campaigns/".$campaign["id"].'/content', array(
+	'html' => $chimp_html, 'text' => $chimp_text) );
+	if(!$MailChimp->success())
+		{
+		echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
+		return;
+		}
+	if(empty($postvars["chimp_send_now"]))
+		{
+		echo '<div>'.__('View draft on mailchimp.com','rsvpmaker').'</div>';
+		}
+	else // send now
+		{
+	$send_result = $MailChimp->post("campaigns/".$campaign["id"].'/actions/send');
+	if($MailChimp->success())
+		echo '<div>'.__('Sent MailChimp campaign','rsvpmaker').': '.$campaign["id"].'</div>';
+	else
+		echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
+		}
+	}
+	
+	}
+	
+	if(!empty($postvars))
+		do_action("rsvpmaker_email_send_ui_submit",$postvars, $rsvp_html, $rsvp_text);
+	
+	// $unsubscribed is global, can be modified by action above
+	if(!empty($unsubscribed))
+		printf('<p>%s: %s',__('Skipped unsubscribed emails','rsvpmaker'),implode(', ',$unsubscribed) );
+	
+	//if any messages queued, make sure group email schedule is set
+	if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook'))
+		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+} //end rsvpmailer_submitted
+
+function rsvpmailer_delayed_send($post_id,$user_id) {
+	$postvars = get_post_meta($post_id,'scheduled_send_vars',true);
+	$rsvp_html = get_post_meta($post_id,'scheduled_send_html',true);
+	rsvpmailer_submitted($rsvp_html,$postvars,$post_id,$user_id);
+}
+
+add_action('rsvpmailer_delayed_send','rsvpmailer_delayed_send',10,2);
+
 function rsvpmaker_email_send_ui($chimp_html, $chimp_text, $rsvp_html, $rsvp_text, $templates, $t_index)
 {
 
@@ -1252,206 +1491,22 @@ if(!empty($_POST["subject"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsv
 		}
 	}
 
-if(!empty($_POST["preview"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(!empty($_POST["send_when"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+{
+	$postvars = $_POST;
+	$postvars = array_map('sanitize_text_field',$postvars);
+	$manage_network = current_user_can('manage_network');
+	if('now' == $_POST["send_when"])
+		rsvpmailer_submitted($rsvp_html,$postvars,$post->ID,$current_user->ID);
+	elseif('schedule' == $_POST["send_when"])
 	{
-	$previewto = sanitize_text_field(trim($_POST["previewto"]));
-	if(is_email($previewto))
-		{
-		echo '<p>Sending preview to '.$previewto.'</p>';
-		$mail["to"] = $previewto;
-		$mail["from"] = (isset($_POST["user_email"]) && is_email($_POST["user_email"]) ) ? $current_user->user_email : sanitize_text_field($_POST["from_email"]);
-		$mail["fromname"] = sanitize_text_field(stripslashes($_POST["from_name"]));
-		$mail["subject"] = sanitize_text_field(stripslashes($_POST["subject"]));
-		$mail["html"] = rsvpmaker_personalize_email($rsvp_html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
-		$mail["text"] = rsvpmaker_personalize_email($rsvp_text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
-		$result = rsvpmailer($mail);
-		echo esc_html($result);
-		add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' (preview) '.rsvpmaker_date('r'));
-		}
-	else
-		echo '<div style="color:red;">Error: '.$previewto.' - '.__('Error, not a single valid email address','rsvpmaker').'</div>';
-		
-	}
-
-if(!empty($_POST["attendees"]) && !empty($_POST["event"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-{
-$unsub = get_option('rsvpmail_unsubscribed');
-if(empty($unsub)) $unsub = array();
-
-if($_POST["event"] == 'any')
-{
-$sql = "SELECT DISTINCT email 
-FROM  `".$wpdb->prefix."rsvpmaker`";
-$title = 'one of our previous events';	
-}
-else {
-$event = (int) $_POST["event"];
-$event_post = get_post($event);
-$sql = "SELECT * 
-FROM  `".$wpdb->prefix."rsvpmaker` 
-WHERE  `event` = ".$event." ORDER BY  `email` ASC";
-$title = $event_post->post_title;
-}
-$results = $wpdb->get_results($sql);
-if(!empty($results))
-{
-echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('event attendees','rsvpmaker').'</p>';
-foreach($results as $row)
-	{
-	if(in_array(strtolower($row->email),$unsub))
-		{
-			$unsubscribed[] = $row->email;
-			continue;
-		}
-	add_post_meta($post->ID,'rsvprelay_to',$row->email);
+		update_post_meta($post->ID,'scheduled_send_vars',$postvars);
+		update_post_meta($post->ID,'scheduled_send_html',$rsvp_html);
+		$t = rsvpmaker_strtotime($_POST['send_date'].' '.$_POST['send_time']);
+		wp_schedule_single_event( $t, 'rsvpmailer_delayed_send', array($post->ID, $current_user->ID));
+		printf('<p><em>Scheduling to send at %s</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t));
 	}
 }
-
-}
-
-if(!empty($_POST["rsvps_since"]) && !empty($_POST["since"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-{
-$unsub = get_option('rsvpmail_unsubscribed');
-if(empty($unsub)) $unsub = array();
-$since = (int) $_POST["since"];
-$t = rsvpmaker_strtotime('-'.$since.' days');
-
-$date = date('Y-m-d',$t);
-
-$sql = "SELECT DISTINCT email 
-FROM  `".$wpdb->prefix."rsvpmaker` WHERE `timestamp` > '$date'";
-$title = 'one of our previous events';
-
-$results = $wpdb->get_results($sql);
-if(!empty($results))
-{
-echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('RSVPs within the last ','rsvpmaker').' '.sanitize_text_field($_POST["since"]).' days</p>';
-foreach($results as $row)
-	{
-	if(in_array(strtolower($row->email),$unsub))
-		{
-			$unsubscribed[] = $row->email;
-			continue;
-		}
-	add_post_meta($post->ID,'rsvprelay_to',$row->email);
-	}
-}
-
-}	
-
-if(!empty($_POST["members"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-{
-$users = get_users('blog='.get_current_blog_id());
-printf('<p>Sending to %s website members</p>',sizeof($users));
-update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
-$from = (isset($_POST["user_email"])) ? $current_user->user_email : sanitize_text_field($_POST["from_email"]);
-update_post_meta($post->ID,'rsvprelay_from',$from);
-update_post_meta($post->ID,'rsvprelay_fromname',sanitize_text_field(stripslashes($_POST["from_name"])));
-$unsub = get_option('rsvpmail_unsubscribed');
-if(empty($unsub)) $unsub = array();
-foreach($users as $user)
-	{
-	if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
-		{
-			$unsubscribed[] = $user->user_email;
-			continue;
-		}
-	add_post_meta($post->ID,'rsvprelay_to',$user->user_email);
-	}
-}
-
-if(!empty($_POST["network_members"]) && current_user_can('manage_network') && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-{
-update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
-$from = (isset($_POST["user_email"])) ? $current_user->user_email : sanitize_text_field($_POST["from_email"]);
-update_post_meta($post->ID,'rsvprelay_from',$from);
-update_post_meta($post->ID,'rsvprelay_fromname',sanitize_text_field(stripslashes($_POST["from_name"])));
-$users = get_users('blog='.get_current_blog_id());
-printf('<p>Sending to %s website members</p>',sizeof($users));
-$unsub = get_option('rsvpmail_unsubscribed');
-if(empty($unsub)) $unsub = array();
-foreach($users as $user)
-	{
-	if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
-		{
-			$unsubscribed[] = $user->user_email;
-			continue;
-		}
-	update_post_meta($post->ID,'rsvprelay_to',$user->user_email);
-	}
-}
-
-if(!empty($_POST["mailchimp"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-{
-$MailChimp = new MailChimpRSVP($chimp_options["chimp-key"]);
-$listID = sanitize_text_field($_POST["mailchimp_list"]);
-update_post_meta($post->ID, "_email_list",$listID);
-$custom_fields["_email_list"][0] = $listID;
-
-$segment_opts = array();	
-
-if(!empty($_POST["mailchimp_exclude_rsvp"]))
-{
-$event = (int) $_POST["mailchimp_exclude_rsvp"];	
-$sql = "SELECT * 
-FROM  `".$wpdb->prefix."rsvpmaker` 
-WHERE  `event` = ".$event;
-$results = $wpdb->get_results($sql);
-if(is_array($results))
-foreach($results as $row)
-	$rsvped[] = array('field' => 'EMAIL','condition_type' => 'EmailAddress','op' => 'not','value' => $row->email);
-if(!empty($rsvped))
-	$segment_opts = array('match' => 'all','conditions' => $rsvped );
-}
-
-$input = array(
-                'type' => 'regular',
-                'recipients'        => array('list_id' => $listID),
-                'segment_opts'        => $segment_opts,
-				'settings' => array('subject_line' => sanitize_text_field(stripslashes($_POST["subject"])),'from_email' => sanitize_text_field($_POST["from_email"]), 'from_name' => sanitize_text_field($_POST["from_name"]), 'reply_to' => sanitize_text_field($_POST["from_email"]))
-);
-
-$campaign = $MailChimp->post("campaigns", $input);
-if(!$MailChimp->success())
-	{
-	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
-	return;
-	}
-if(!empty($campaign["id"]))
-{
-$content_result = $MailChimp->put("campaigns/".$campaign["id"].'/content', array(
-'html' => $chimp_html, 'text' => $chimp_text) );
-if(!$MailChimp->success())
-	{
-	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
-	return;
-	}
-if(empty($_POST["chimp_send_now"]))
-	{
-	echo '<div>'.__('View draft on mailchimp.com','rsvpmaker').'</div>';
-	}
-else // send now
-	{
-$send_result = $MailChimp->post("campaigns/".$campaign["id"].'/actions/send');
-if($MailChimp->success())
-	echo '<div>'.__('Sent MailChimp campaign','rsvpmaker').': '.$campaign["id"].'</div>';
-else
-	echo '<div>'.__('MailChimp API error','rsvpmaker').': '.$MailChimp->getLastError().'</div>';
-	}
-}
-
-}
-
-if(!empty($_POST))
-	do_action("rsvpmaker_email_send_ui_submit",$_POST, $rsvp_html, $rsvp_text);
-
-// $unsubscribed is global, can be modified by action above
-if(!empty($unsubscribed))
-	printf('<p>%s: %s',__('Skipped unsubscribed emails','rsvpmaker'),implode(', ',$unsubscribed) );
-
-//if any messages queued, make sure group email schedule is set
-if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook'))
-	wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 
 $permalink = get_permalink($post->ID);
 $edit_link = get_edit_post_link($post->ID);
@@ -1527,7 +1582,7 @@ if(!empty($chimp_options["chimp-key"]))
 $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_list"][0] : $chimp_options["chimp-list"];
 echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 ?>
-</select> <select name="chimp_send_now"><option value="1"><?php esc_html_e('Send now','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php esc_html_e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select></div>
+</select> <select name="chimp_send_now"><option value="1"><?php esc_html_e('Create and Send','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php esc_html_e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select></div>
 <?php if(!empty($rsvp_options['debug']))
 { //only if debug is on, show this feature.
 ?>
@@ -1550,7 +1605,7 @@ echo $events_dropdown;
 <?php
 do_action("rsvpmaker_email_send_ui_options");
 ?>
-<p><input type="submit" name="now" value="<?php esc_html_e('Send Now','rsvpmaker');?>" /></p>
+<p><input type="submit" name="now" value="<?php esc_html_e('Send','rsvpmaker');?>" /> <input type="radio" name="send_when" value="now" checked="checked"> Now <input type="radio" name="send_when" value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"></p>
 </form>
 <p><a href="<?php echo esc_attr($edit_link); ?>"><?php esc_html_e('Edit','rsvpmaker');?></a> - <a href="<?php echo admin_url(); ?>"><?php esc_html_e('Dashboard','rsvpmaker');?></a> - <a href="<?php echo site_url(); ?>"><?php esc_html_e('Visit Site','rsvpmaker');?></a></p>
 <?php

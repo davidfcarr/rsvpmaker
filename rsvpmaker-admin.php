@@ -884,10 +884,10 @@ echo 'm-d-Y = '.rsvpmaker_date('m-d-Y').'<br />';
 <h3><?php esc_html_e('Time Format','rsvpmaker'); ?>:</h3>
 <p>
 <input type="radio" name="option[time_format]" value="g:i A" <?php if( isset($options["time_format"]) && ($options["time_format"] == "g:i A")) echo ' checked="checked"';?> /> 12 hour AM/PM 
-<input type="radio" name="option[time_format]" value="h:i" <?php if( isset($options["time_format"]) && ($options["time_format"] == "h:i")) echo ' checked="checked"';?> /> 24 hour 
+<input type="radio" name="option[time_format]" value="H:i" <?php if( isset($options["time_format"]) && ($options["time_format"] == "H:i")) echo ' checked="checked"';?> /> 24 hour 
 
 <input type="radio" name="option[time_format]" value="g:i A T" <?php if( isset($options["time_format"]) && ($options["time_format"] == "g:i A T")) echo ' checked="checked"';?> /> 12 hour AM/PM (include timezone)
-<input type="radio" name="option[time_format]" value="h:i T" <?php if( isset($options["time_format"]) && ($options["time_format"] == "h:i T")) echo ' checked="checked"';?> /> 24 hour (include timezone)
+<input type="radio" name="option[time_format]" value="H:i T" <?php if( isset($options["time_format"]) && ($options["time_format"] == "H:i T")) echo ' checked="checked"';?> /> 24 hour (include timezone)
 
 <br />
 					<h3><?php esc_html_e('Event Page','rsvpmaker'); ?>:</h3>
@@ -2247,7 +2247,7 @@ $th = (int) $template['hour'];
 $cy = date("Y");
 $cm = date("m");
 
-if(!empty($template["stop"]))
+if(!empty(trim($template["stop"])))
 	{
 	$stopdate = rsvpmaker_strtotime($template["stop"].' 23:59:59');
 	}
@@ -2256,7 +2256,6 @@ if(empty($dows))
 	$dows = array(0 => 0);
 foreach($weeks as $week)
 foreach($dows as $dow) {
-//printf('<p>week %s day %s</p>',$week,$dow);
 $i = 0;
 $startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
 $ts = rsvpmaker_strtotime($startdaytxt);
@@ -2270,6 +2269,8 @@ if($week == 6)
 	$i = 0;
 	if(empty($stopdate))
 		$stopdate = rsvpmaker_strtotime('+6 months');
+	else
+		echo 'stopdate set';
 	if(isset($_GET["start"]))
 		$ts = rsvpmaker_strtotime($_GET["start"]);
 	while($ts < $stopdate)

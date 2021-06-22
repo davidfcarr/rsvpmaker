@@ -81,6 +81,9 @@ max-width: 70%
 }
 #rsvpform input[type=checkbox], #rsvpform input[type=radio]{
 	min-width: auto !important;
+    width: 1.25em !important;
+    height: 1.25em !important;
+    display: inline-block !important;
 }
 #cpcalendar td, #cpcalendar th {
     text-overflow: ellipsis;
