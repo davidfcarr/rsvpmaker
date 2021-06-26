@@ -1188,7 +1188,10 @@ global $wp_query;
 	{
 		if (have_posts())
 		{
-			include(WP_PLUGIN_DIR . '/rsvpmaker/rsvpmaker-email-template.php');
+			if(isset($_GET['test']))
+				include(WP_PLUGIN_DIR . '/rsvpmaker/rsvpmaker-email-template-2021.php');
+			else
+				include(WP_PLUGIN_DIR . '/rsvpmaker/rsvpmaker-email-template.php');
 			die();
 		}
 		else
@@ -1242,8 +1245,8 @@ $content = str_replace('Update your profile:
 return $content;	
 }
 
-function rsvpmailer_submitted($rsvp_html, $postvars, $post_id, $user_id) {
-	global $unsubscribed;
+function rsvpmailer_submitted($rsvp_html,$rsvp_text,$chimp_html,$chimp_text,$postvars,$post_id,$user_id) {
+	global $unsubscribed, $wpdb;
 	$post = get_post($post_id);
 	if(!empty($postvars["preview"]))
 		{
@@ -1450,7 +1453,10 @@ function rsvpmailer_submitted($rsvp_html, $postvars, $post_id, $user_id) {
 function rsvpmailer_delayed_send($post_id,$user_id) {
 	$postvars = get_post_meta($post_id,'scheduled_send_vars',true);
 	$rsvp_html = get_post_meta($post_id,'scheduled_send_html',true);
-	rsvpmailer_submitted($rsvp_html,$postvars,$post_id,$user_id);
+	$rsvp_text = get_post_meta($post->ID,'scheduled_send_text',true);
+	$chimp_html = get_post_meta($post->ID,'scheduled_send_chimp_html',true);
+	$chimp_text = update_post_meta($post->ID,'scheduled_send_chimp_text',true);
+	rsvpmailer_submitted($rsvp_html,$rsvp_text,$chimp_html,$chimp_text,$postvars,$post_id,$user_id);
 }
 
 add_action('rsvpmailer_delayed_send','rsvpmailer_delayed_send',10,2);
@@ -1497,11 +1503,14 @@ if(!empty($_POST["send_when"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 	$postvars = array_map('sanitize_text_field',$postvars);
 	$manage_network = current_user_can('manage_network');
 	if('now' == $_POST["send_when"])
-		rsvpmailer_submitted($rsvp_html,$postvars,$post->ID,$current_user->ID);
+		rsvpmailer_submitted($rsvp_html,$rsvp_text,$chimp_html,$chimp_text,$postvars,$post->ID,$current_user->ID);
 	elseif('schedule' == $_POST["send_when"])
 	{
 		update_post_meta($post->ID,'scheduled_send_vars',$postvars);
 		update_post_meta($post->ID,'scheduled_send_html',$rsvp_html);
+		update_post_meta($post->ID,'scheduled_send_text',$rsvp_text);
+		update_post_meta($post->ID,'scheduled_send_chimp_html',$chimp_html);
+		update_post_meta($post->ID,'scheduled_send_chimp_text',$chimp_text);
 		$t = rsvpmaker_strtotime($_POST['send_date'].' '.$_POST['send_time']);
 		wp_schedule_single_event( $t, 'rsvpmailer_delayed_send', array($post->ID, $current_user->ID));
 		printf('<p><em>Scheduling to send at %s</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t));
@@ -1546,12 +1555,13 @@ if(!isset($_POST))
 	if($mailchimp_sent)
 		printf('</p>%s</p>',implode(', ',$mailchimp_sent));	
 }
-?>
-<form method="get"  action="<?php echo get_permalink($post->ID); ?>">
+/*
 <?php esc_html_e('Email Design Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
 <button><?php esc_html_e('Switch Template','rsvpmaker'); ?></button>
 </form>
-<hr />
+*/
+?>
+<div style="width: 150px; float:right;"><button onclick="hideControls()">Hide Controls</button></div>
 <form method="post" action="<?php echo esc_attr($permalink); ?>">
 <?php rsvpmaker_nonce(); ?>
 <table>
@@ -1564,8 +1574,8 @@ if(!isset($_POST))
 </table>
 <div><input type="checkbox" name="user_email" value="1" checked="checked" /><?php esc_html_e('Except for MailChimp, use the email of the logged in user as from email.','rsvpmaker'); ?></div>
 <p style="clear:both;"><?php esc_html_e('Send','rsvpmaker');?></p>
-<div><input type="checkbox" name="preview" value="1"> <?php esc_html_e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $chimp_options["email-from"]; ?>" /><br />
-<input type="checkbox" name="members" value="1"> <?php esc_html_e('Website members','rsvpmaker');?><br />
+<div><input type="checkbox" name="preview" value="1"> <?php esc_html_e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $chimp_options["email-from"]; ?>" /></div>
+<div><input type="checkbox" name="members" value="1"> <?php esc_html_e('Website members','rsvpmaker');?></div>
 <?php if(is_multisite() && current_user_can('manage_network') && (get_current_blog_id() == 1)) {
 ?>
 <div style="border: thin dotted red;"><strong>Network Administrator Only:</strong><br /> 
@@ -1593,7 +1603,7 @@ echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 echo $events_dropdown;
 ?>
 </select>	
-</div>	
+</div>
 <?php
 } // end if debug
 }
@@ -1608,13 +1618,19 @@ do_action("rsvpmaker_email_send_ui_options");
 <p><input type="submit" name="now" value="<?php esc_html_e('Send','rsvpmaker');?>" /> <input type="radio" name="send_when" value="now" checked="checked"> Now <input type="radio" name="send_when" value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"></p>
 </form>
 <p><a href="<?php echo esc_attr($edit_link); ?>"><?php esc_html_e('Edit','rsvpmaker');?></a> - <a href="<?php echo admin_url(); ?>"><?php esc_html_e('Dashboard','rsvpmaker');?></a> - <a href="<?php echo site_url(); ?>"><?php esc_html_e('Visit Site','rsvpmaker');?></a></p>
+<script>
+function hideControls() {
+var x = document.getElementById("control-wrapper");
+x.style.display = "none";
+}
+</script>
 <?php
 
 $ts = rsvpmaker_next_scheduled($post->ID);
 if($ts)
 	printf('<p><a href="%s">Preview scheduled broadcast</a> for %s',add_query_arg('cronemailpreview',$post->ID,$permalink),esc_html($ts));
 	
-return '<div style="background-color: #FFFFFF; color: #000000;">'.ob_get_clean().'</div>';
+return '<div id="control-wrapper" style="background-color: #FFFFFF; color: #000000;">'.ob_get_clean().'</div>';
 }
 
 function rsvpmaker_included_styles () {
@@ -3268,7 +3284,7 @@ function rsvpmaker_cronmail_check_duplicate($content) {
 	return false;
 }
 
-function rsvpmailer_preview($atts) {
+function rsvpmailer_preview($atts = array()) {
 global $post, $rsvpmaker_tx_content;
 $preview = get_post_meta($post->ID,'_rsvpmailer_preview',true);
 if(empty($preview)) {
@@ -3285,4 +3301,44 @@ return $preview;
 }
 
 add_shortcode('rsvpmailer_preview','rsvpmailer_preview');
-?>
+
+function rsvpmailer_combine_styles($no_theme_styles = false) {
+	global $rsvmailer_css;
+	if(!empty($rsvmailer_css))
+		return $rsvmailer_css;
+	$site_url = site_url();
+	$updir = wp_get_upload_dir()['basedir'];
+	$home_path = preg_replace('/wp-content.+/','',$updir);
+	$wp_styles = wp_styles();
+	$combined = '';
+	foreach($wp_styles->queue as $handle) {
+		//$output .= '<pre>'.var_export($handle,true).'</pre>';
+		$item = $wp_styles->registered[$handle]->src;
+		if($no_theme_styles && strpos($item,'/themes/')) {
+			wp_dequeue_style($handle);
+		}
+		else
+		{
+		$item = $home_path.str_replace($site_url,'',$item);
+		if(strpos($home_path,'\\'))
+			$item = str_replace('/','\\',$item);
+		$item = str_replace("//","/",$item);
+		echo file_get_contents($item);
+		}
+	}
+	/*
+	$combined = rsvpmailer_clean_css($combined);
+	$rsvmailer_css = $updir.'/rsvpemail-style.css';
+	file_put_contents($rsvmailer_css,$combined);
+	return $rsvmailer_css;
+	*/
+}
+
+//remove styles emogrifier chokes on
+function rsvpmailer_clean_css($content) {
+	$pseudo = array(':first-of-type');
+	foreach($pseudo as $bad) {
+		$content = preg_replace('/[\.a-z\-\_]+'.$bad.'[^\}]+}/','',$content);
+	}
+	return $content;
+}

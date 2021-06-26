@@ -1565,7 +1565,7 @@ if ( version_compare( phpversion(), '7.1', '>=' ) ) {
 
 } else {
 
-	function rsvpmaker_inliner( $content ) {
+	function rsvpmaker_inliner( $content, $css = '' ) {
 
 		return $content;
 

@@ -453,7 +453,6 @@ if(isset($_POST["unit"]))
 }
 
 function rsvpmaker_menu_security($label, $slug,$options) {
-
 echo esc_html($label);
 ?>
  <select name="security_option[<?php echo esc_attr($slug); ?>]" id="<?php echo esc_attr($slug); ?>">
@@ -587,10 +586,13 @@ echo esc_html($label);
 			  }	
 			  
 			  if(isset($_POST["security_option"])) {
-				$newoptions = array_map( 'sanitize_text_field', stripslashes_deep($_POST["security_option"] ) );
+				foreach($_POST["security_option"] as $index => $value) {
+					$newoptions[sanitize_text_field($index)] = sanitize_text_field($value);
+				}
 				$newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
-                  update_option($this->db_option, $options);
+                  update_option($this->db_option, $newoptions);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - security.','rsvpmaker').'</p></div>';
+				  //print_r($newoptions);
 			  }	
 
 			  if (isset($_POST['submitted'])) {

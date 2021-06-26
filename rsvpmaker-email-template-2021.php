@@ -6,20 +6,19 @@
  */
 
 $email_context = true;
-
 email_content_minfilters();
-
 //no javascript
 $wp_scripts = wp_scripts();
 foreach ( $wp_scripts->registered as $wp_script ) {
 	wp_deregister_script( $wp_script->handle );
 }
 
-if ( have_posts() ) :
-	the_post();
+ob_start();
+wp_head();
+$head = ob_get_clean();
 
 	global $post;
-
+	global $email_styles;
 	global $custom_fields;
 
 	global $email_context;
@@ -30,30 +29,63 @@ if ( have_posts() ) :
 
 	$email_context = true;
 
-	$text = '';
-
-
-	if ( isset( $_GET['template'] ) ) {
-
-		$t_index = (int) $_GET['template'];
-
-		update_post_meta( $post->ID, '_email_template', $t_index );
-
+	ob_start();
+	?>
+	<!doctype html>
+	<html <?php language_attributes(); ?> >
+	<head>
+	<title>*|MC:SUBJECT|*</title>
+		<meta charset="<?php bloginfo( 'charset' ); ?>" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<?php //wp_head(); ?>
+	<style id="imported">
+<?php
+rsvpmailer_combine_styles(true);
+?>
+</style>
+<?php
+//rsvpmailer_wp_head();
+?>
+<style>
+	#email-content {
+		background-color: #fff !important;
+		color: #000 !important;
+		max-width: 600px;
+		margin-left: auto;
+		margin-right: auto;
+		padding: 10px;
 	}
+	</style>
 
-	$custom_fields = ( isset( $post->ID ) ) ? get_post_custom( $post->ID ) : array();
+	</head>
+	<body class="rsvpmailer">
+	<!-- controls go here -->
+	<article>
+	<div class="entry-content">
+	<div id="email-content">
 
-	$templates = get_rsvpmaker_email_template();
+	<!-- editors note goes here -->
 
-	$t_index = isset( $custom_fields['_email_template'][0] ) ? $custom_fields['_email_template'][0] : 0;
+		<?php
+		//print_r($post);
+		the_post();
+		the_content();
+		?>
 
-	$template = $templates[ $t_index ]['html'];
+	<!-- footer -->
 
-	$content = do_blocks( do_shortcode( $template ) );
+	</div>
+	</div>
+	</article>
+	</body>
+	</html>
+	<?php
+	$content = ob_get_clean();
+	$content = rsvpmailer_clean_css($content);
+	$content = rsvpmaker_inliner( $content );
+	//$content = preg_replace('/<style id="imported">[^<]+<\/style>/is','',$content);
 
-endif;
-
-$htmlfooter = '<div id="messagefooter">
+	$htmlfooter = '<div id="messagefooter">
 
     *|LIST:DESCRIPTION|*<br>
 
@@ -72,8 +104,6 @@ $htmlfooter = '<div id="messagefooter">
 
 
 *|REWARDS|*</div>';
-
-
 
 $chimpfooter_text = '
 
@@ -439,24 +469,16 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 	}
 }
 
-$preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $chimp_html );
-
-
+$preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $content );
+$preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding: 5px; color: #fff; background-color: #000;"> <p>Email Preview: '.$post->post_title.'</p> <div id="email-preview-wrapper" style="max-width: 700px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff;">', $preview );
+$preview = str_replace('</body>','</div></div></body>',$preview);
 
 if ( isset( $_GET['template_preview'] ) ) {
 
 		$preview = rsvpmaker_personalize_email( $preview, 'david@carrcommunications.com', '<div class="rsvpexplain">This message is a demo.</div>' );
 
-		$preview = rsvpmaker_inliner( $preview );
-
-		$preview = preg_replace( '/<body[^>]*>/', '$0' . '<h1>Email Preview</h1>', $preview );
-
 } elseif ( current_user_can( 'publish_rsvpemails' ) ) {
-
-		$preview = rsvpmaker_inliner( $preview );
-
-		$preview = preg_replace( '/<body[^>]*>/', '$0' . '<h1>Email Preview</h1><div style="width: 100%; padding: 5px;"><div style="width:600px;margin-top: 5px;margin-bottom: 5px;">' . rsvpmaker_email_send_ui( $chimp_html, $chimp_text, $rsvp_html, $rsvp_text, $templates, $t_index ) . '</div></div>', $preview );
-
+		$preview = str_replace('<!-- controls go here -->',rsvpmaker_email_send_ui( $chimp_html, $chimp_text, $rsvp_html, $rsvp_text, $templates, $t_index ),$preview);
 }
 /* cannot be escaped because of embedded form content. Escaping belongs in the functions that create this output variable */
 echo $preview;
