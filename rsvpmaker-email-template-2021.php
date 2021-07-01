@@ -40,23 +40,9 @@ $head = ob_get_clean();
 		<?php //wp_head(); ?>
 	<style id="imported">
 <?php
-rsvpmailer_combine_styles(true);
+echo rsvpmaker_included_styles ();
 ?>
 </style>
-<?php
-//rsvpmailer_wp_head();
-?>
-<style>
-	#email-content {
-		background-color: #fff !important;
-		color: #000 !important;
-		max-width: 600px;
-		margin-left: auto;
-		margin-right: auto;
-		padding: 10px;
-	}
-	</style>
-
 	</head>
 	<body class="rsvpmailer">
 	<!-- controls go here -->
@@ -81,7 +67,6 @@ rsvpmailer_combine_styles(true);
 	</html>
 	<?php
 	$content = ob_get_clean();
-	$content = rsvpmailer_clean_css($content);
 	$content = rsvpmaker_inliner( $content );
 	//$content = preg_replace('/<style id="imported">[^<]+<\/style>/is','',$content);
 
@@ -212,7 +197,7 @@ if ( $templatefooter ) {
 
 $rsvp_text = rsvpmaker_text_version( $content, $rsvpfooter_text );
 
-$chimp_html = rsvpmaker_inliner( $chimp_html );
+//$chimp_html = rsvpmaker_inliner( $chimp_html );
 
 $cron = get_post_meta( $post->ID, 'rsvpmaker_cron_email', true );
 

@@ -4,187 +4,19 @@
 
  * The template for displaying eblast previews.
  */
-
+global $post;
+global $email_styles;
+global $custom_fields;
+global $email_context;
+global $chimp_options;
+global $wp_query;
+global $email_context;
 $email_context = true;
 
-email_content_minfilters();
+$html = rsvpmaker_template_inline();
+$text = get_post_meta($post->ID,'_rsvpmail_text',true);
 
-//no javascript
-$wp_scripts = wp_scripts();
-foreach ( $wp_scripts->registered as $wp_script ) {
-	wp_deregister_script( $wp_script->handle );
-}
-
-if ( have_posts() ) :
-	the_post();
-
-	global $post;
-
-	global $custom_fields;
-
-	global $email_context;
-
-	global $chimp_options;
-
-	global $wp_query;
-
-	$email_context = true;
-
-	$text = '';
-
-
-	if ( isset( $_GET['template'] ) ) {
-
-		$t_index = (int) $_GET['template'];
-
-		update_post_meta( $post->ID, '_email_template', $t_index );
-
-	}
-
-	$custom_fields = ( isset( $post->ID ) ) ? get_post_custom( $post->ID ) : array();
-
-	$templates = get_rsvpmaker_email_template();
-
-	$t_index = isset( $custom_fields['_email_template'][0] ) ? $custom_fields['_email_template'][0] : 0;
-
-	$template = $templates[ $t_index ]['html'];
-
-	$content = do_blocks( do_shortcode( $template ) );
-
-endif;
-
-$htmlfooter = '<div id="messagefooter">
-
-    *|LIST:DESCRIPTION|*<br>
-
-    <br>
-
-    <a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
-
-    <br>
-
-    <strong>Our mailing address is:</strong><br>
-
-    *|LIST:ADDRESS|*<br>
-
-    <em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>    
-
-
-
-*|REWARDS|*</div>';
-
-
-
-$chimpfooter_text = '
-
-
-
-==============================================
-
-*|LIST:DESCRIPTION|*
-
-
-
-Forward to a friend:
-
-*|FORWARD|*
-
-
-
-Unsubscribe *|EMAIL|* from this list:
-
-*|UNSUB|*
-
-
-
-Update your profile:
-
-*|UPDATE_PROFILE|*
-
-
-
-Our mailing address is:
-
-*|LIST:ADDRESS|*
-
-Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.';
-
-
-
-$rsvp_htmlfooter = '<div id="messagefooter">
-
-*|LIST:DESCRIPTION|*<br>
-
-<br>
-
-<a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
-
-<br>
-
-<strong>Our mailing address is:</strong><br>
-
-*|LIST:ADDRESS|*<br>
-
-<em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>
-
-*|REWARDS|*</div>';
-
-
-
-$rsvpfooter_text = '
-
-
-
-==============================================
-
-*|LIST:DESCRIPTION|*
-
-
-
-Unsubscribe *|EMAIL|* from this list:
-
-*|UNSUB|*
-
-
-
-Our mailing address is:
-
-*|LIST:ADDRESS|*
-
-Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.';
-
-
-
-$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>', $content );
-
-
-
-global $templatefooter;
-
-if ( strpos( $content, '*|UNSUB|*' ) ) {
-
-	$templatefooter = true;// footer code already added
-}
-
-$chimp_text = rsvpmaker_text_version( $content, $chimpfooter_text );
-
-if ( $templatefooter ) {
-
-	$rsvp_html = $chimp_html = $content;
-
-} else {
-
-	$chimp_html = str_replace( '<!-- footer -->', $htmlfooter, $content );
-
-	$rsvp_html = str_replace( '<!-- footer -->', $rsvp_htmlfooter, $content );
-
-}
-
-$rsvp_text = rsvpmaker_text_version( $content, $rsvpfooter_text );
-
-$chimp_html = rsvpmaker_inliner( $chimp_html );
-
-$cron = get_post_meta( $post->ID, 'rsvpmaker_cron_email', true );
+	$cron = get_post_meta( $post->ID, 'rsvpmaker_cron_email', true );
 
 	$subject = $post->post_title;
 
@@ -223,13 +55,9 @@ if ( $chosen ) {
 			$editorsnote['note'] = wpautop( $editorsnote['note'] );
 		}
 
-		$chimp_html = str_replace( '<!-- editors note goes here -->', '<h2>' . $editorsnote['add_to_head'] . "</h2>\n" . $editorsnote['note'], $chimp_html );
+		$html = str_replace( '<!-- editors note goes here -->', '<h2>' . $editorsnote['add_to_head'] . "</h2>\n" . $editorsnote['note'], $html );
 
-		$rsvp_html = str_replace( '<!-- editors note goes here -->', '<h2>' . $editorsnote['add_to_head'] . "</h2>\n" . $editorsnote['note'], $chimp_html );
-
-		$chimp_text = $editorsnote['add_to_head'] . "\n\n" . strip_tags( $editorsnote['note'] ) . "\n\n" . $chimp_text . "\n\n";
-
-		$rsvp_text = $editorsnote['add_to_head'] . "\n\n" . strip_tags( $editorsnote['note'] ) . "\n\n" . $rsvp_text . "\n\n";
+		$text = $editorsnote['add_to_head'] . "\n\n" . strip_tags( $editorsnote['note'] ) . "\n\n" . $text . "\n\n";
 
 	}
 }
@@ -333,13 +161,14 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 
 		if ( $campaign['id'] ) {
+			$html = str_replace('<!-- mailchimp -->','<a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a><br>',$html);
 
 			$content_result = $MailChimp->put(
 				'campaigns/' . $campaign['id'] . '/content',
 				array(
 
-					'html' => $chimp_html,
-					'text' => $chimp_text,
+					'html' => $html,
+					'text' => $text,
 				)
 			);
 
@@ -382,9 +211,9 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 				$mail['subject'] = $subject;
 
-				$mail['html'] = rsvpmaker_personalize_email( $rsvp_html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
+				$mail['html'] = rsvpmaker_personalize_email( $html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
 
-				$mail['text'] = rsvpmaker_personalize_email( $rsvp_text, $mail['to'], 'This message was sent to you as a member of ' . get_bloginfo( 'name' ) );
+				$mail['text'] = rsvpmaker_personalize_email( $text, $mail['to'], 'This message was sent to you as a member of ' . get_bloginfo( 'name' ) );
 
 				$result = rsvpmailer( $mail );
 
@@ -406,9 +235,9 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 			$mail['subject'] = $subject;
 
-			$mail['html'] = rsvpmaker_personalize_email( $rsvp_html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
+			$mail['html'] = rsvpmaker_personalize_email( $html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
 
-			$mail['text'] = rsvpmaker_personalize_email( $rsvp_text, $mail['to'], 'This message was sent to you as a member of ' . get_bloginfo( 'name' ) );
+			$mail['text'] = rsvpmaker_personalize_email( $text, $mail['to'], 'This message was sent to you as a member of ' . get_bloginfo( 'name' ) );
 
 			$result = rsvpmailer( $mail );
 
@@ -426,9 +255,9 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 			$mail['subject'] = 'PREVIEW:' . $subject;
 
-			$mail['html'] = rsvpmaker_personalize_email( $rsvp_html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
+			$mail['html'] = rsvpmaker_personalize_email( $html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
 
-			$mail['text'] = rsvpmaker_personalize_email( $rsvp_text, $mail['to'], 'This message was sent to you as member of ' . get_bloginfo( 'name' ) );
+			$mail['text'] = rsvpmaker_personalize_email( $text, $mail['to'], 'This message was sent to you as member of ' . get_bloginfo( 'name' ) );
 
 			$result = rsvpmailer( $mail );
 
@@ -439,24 +268,16 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 	}
 }
 
-$preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $chimp_html );
-
-
+$preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $html );
+$preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding: 5px; color: #fff; background-color: #000;"> <p>Email Preview: '.$post->post_title.'</p> <div id="email-preview-wrapper" style="max-width: 700px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff;">', $preview );
+$preview = str_replace('</body>','</div></div></body>',$preview);
 
 if ( isset( $_GET['template_preview'] ) ) {
 
 		$preview = rsvpmaker_personalize_email( $preview, 'david@carrcommunications.com', '<div class="rsvpexplain">This message is a demo.</div>' );
 
-		$preview = rsvpmaker_inliner( $preview );
-
-		$preview = preg_replace( '/<body[^>]*>/', '$0' . '<h1>Email Preview</h1>', $preview );
-
 } elseif ( current_user_can( 'publish_rsvpemails' ) ) {
-
-		$preview = rsvpmaker_inliner( $preview );
-
-		$preview = preg_replace( '/<body[^>]*>/', '$0' . '<h1>Email Preview</h1><div style="width: 100%; padding: 5px;"><div style="width:600px;margin-top: 5px;margin-bottom: 5px;">' . rsvpmaker_email_send_ui( $chimp_html, $chimp_text, $rsvp_html, $rsvp_text, $templates, $t_index ) . '</div></div>', $preview );
-
+		$preview = str_replace('<!-- controls go here -->',rsvpmaker_email_send_ui( $html, $text ),$preview);
 }
 /* cannot be escaped because of embedded form content. Escaping belongs in the functions that create this output variable */
 echo $preview;

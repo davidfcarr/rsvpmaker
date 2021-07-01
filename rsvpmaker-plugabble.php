@@ -3713,35 +3713,23 @@ if ( ! function_exists( 'event_content' ) ) {
 			$now = time();
 
 			$rsvplink = get_rsvp_link( $post->ID, true );
-
-			if ( isset( $deadline ) && ( $now > $deadline ) ) {
-				$content .= '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . rsvpmaker_date( 'r', $deadline ) . ':' . rsvpmaker_date( 'r', $now ) . '</p>';
-			} elseif ( empty( $deadline ) && ( $now > $last_time ) ) {
-
-				if ( ! empty( $custom_fields['_webinar_landing_page_id'][0] ) ) {
-
-					$content .= '<p class="rsvp_status">' . '<a href="' . esc_url_raw( get_permalink( $custom_fields['_webinar_landing_page_id'][0] ) ) . '">' . esc_html( __( 'Watch the replay', 'rsvpmaker' ) ) . '</a></p>';
-
-				} else {
-					$content .= '<p class="rsvp_status">' . esc_html( __( 'Event date is past', 'rsvpmaker' ) ) . '</p>';
-				}
-
-				// $content .= sprintf('<div>%s last time: %s</div>',date('r',$now), rsvpmaker_date('r',$last_time));
-
-			} elseif ( isset( $rsvpstart ) && ( $now < $rsvpstart ) ) {
+			if ( !is_rsvpmaker_deadline_future( $post->ID ) ) {
+				$content .= '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . '</p>';
+			} 
+			elseif ( isset( $rsvpstart ) && ( $now < $rsvpstart ) ) {
 
 				$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs accepted starting: ', 'rsvpmaker' ) . utf8_encode( rsvpmaker_date( $rsvp_options['long_date'] ), $rsvpstart ) ) . '</p>';
 
 			} elseif ( isset( $too_many ) ) {
 
 				$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs are closed', 'rsvpmaker' ) ) . '</p>';
-
 				if ( isset( $rsvpwithdraw ) ) {
 
 					$content .= sprintf( '<h3>%s</h3><form method="post" action="%s">%s<p><button>%s</button></p>%s</form>', esc_html( __( 'To cancel, check the attendee names to be removed', 'rsvpmaker' ) ), esc_url_raw( $rsvplink ), esc_url_raw( $rsvpwithdraw ), __( 'Cancel RSVP', 'rsvpmaker' ), rsvpmaker_nonce('return') );
 
 				}
-			} elseif ( ( $rsvp_on && is_admin() && isset( $_GET['page'] ) && ( $_GET['page'] != 'rsvp' ) ) || ( $rsvp_on && is_email_context() ) || ( $rsvp_on && isset( $_GET['load'] ) ) ) { // when loaded into editor
+			}
+			elseif ( ( $rsvp_on && is_admin() && isset( $_GET['page'] ) && ( $_GET['page'] != 'rsvp' ) ) || ( $rsvp_on && is_email_context() ) || ( $rsvp_on && isset( $_GET['load'] ) ) ) { // when loaded into editor
 
 				$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
 
@@ -4255,6 +4243,8 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 		</div>';
 
+		//printf('<p>%d registered</p>',sizeof($rsvps));
+
 				echo '<p><a href="' . sanitize_text_field($_SERVER['REQUEST_URI']) . '&print_rsvp_report=1&rsvp_print=1&' . rsvpmaker_nonce('query') . '" target="_blank" >Format for printing</a></p>';
 
 				echo '<p><a href="edit.php?post_type=rsvpmaker&page=rsvp&event=' . $eventid . '&paypal_log=1">Show PayPal Log</a></p>';
@@ -4577,6 +4567,8 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 			$fields = array( 'yesno', 'first', 'last', 'email', 'guestof', 'amountpaid' );
 		}
+
+		printf('<p>%d registered</p>',sizeof($results));
 
 		foreach ( $results as $index => $row ) {
 

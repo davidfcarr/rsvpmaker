@@ -176,18 +176,17 @@ function rsvpmaker_relay_queue() {
 			$html .= sprintf( '<p>%s to %s</p>', $row->post_title, $row->meta_value );
 
 			$post = get_post( $row->ID );
-
-			$templates = get_rsvpmaker_email_template();
-
-			// $template = $templates['transactional']["html"];
-
-			$template = $templates[1]['html'];
-
+			$post_id = $row->ID;
+			$mail['html'] = get_post_meta($post_id,'_rsvpmail_html',true); //rsvpmail broadcast
+			if(empty($mail['html']))
+			{
+				$templates = get_rsvpmaker_email_template();
+				$template = $templates[1]['html'];	
+				$mail['html'] = do_blocks( do_shortcode( $template ) );
+			}
 			$message_description = get_post_meta( $row->ID, 'message_description', true );
-
-			$mail['html'] = do_blocks( do_shortcode( $template ) );
-
 			$mail['html'] = rsvpmaker_personalize_email( $mail['html'], $mail['to'], '<div class="rsvpexplain">' . $message_description . '</div>' );
+			$mail['text'] = rsvpmaker_text_version($mail['html']);
 
 			if ( isset( $_GET['debug'] ) ) {
 
@@ -357,7 +356,7 @@ function rsvpmaker_relay_get_pop( $list_type = '' ) {
 
 	if ( empty( $mail ) ) {
 
-		return '<div>no mail connection found for ' . $list_type . '</div>';
+		return '<div>no mail connection found for ' . $list_type .' ! '. $server .' ! '. $user .' ! '. $password . '</div>';
 	}
 
 	$headers = imap_headers( $mail );
@@ -373,7 +372,7 @@ function rsvpmaker_relay_get_pop( $list_type = '' ) {
 
 	if ( $list_type == 'member' ) {
 
-		$members = get_club_members();
+		$members = get_site_members();
 
 		foreach ( $members as $member ) {
 

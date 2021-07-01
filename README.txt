@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 5.7.2
-Stable tag: 8.8.1
+Tested up to: 5.8
+Stable tag: 8.8.2
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 

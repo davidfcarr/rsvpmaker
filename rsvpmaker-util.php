@@ -3822,4 +3822,35 @@ function rsvpmaker_is_url_local( $url ) {
 	return ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
 }
 
-?>
+add_action('after_setup_theme','rsvpmail_editor_style',99999);
+
+function rsvpmail_editor_style() {
+global $editor_styles;
+global $post;
+if(isset($_GET['post']))
+	$post = get_post($_GET['post']);
+
+if(isset($post->post_type) && ($post->post_type = 'rsvpmailer') || strpos($_SERVER['REQUEST_URI'],'post-new.php?post_type=rsvpemail') )
+{
+	rsvpmaker_included_styles();
+	$rsvpmailer_css = 'rsvpemail-editor-style.css';
+	$editor_styles = array($rsvpmailer_css);
+}
+
+}
+
+function get_site_members( $blog_id = 0 ) {
+
+	if ( empty( $blog_id ) ) {
+
+		$blog_id = get_current_blog_id();
+	}
+
+	return get_users(
+		array(
+			'blog_id' => $blog_id,
+			'orderby' => 'display_name',
+		)
+	);
+
+}
