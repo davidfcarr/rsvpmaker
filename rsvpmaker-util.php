@@ -3854,3 +3854,42 @@ function get_site_members( $blog_id = 0 ) {
 	);
 
 }
+
+function rsvpmail_add_problem($email,$code) {
+	global $wpdb;
+	$table = $wpdb->prefix . "rsvpmailer_blocked";
+	$email = trim(strtolower($email));
+	if(! $wpdb->get_var("SELECT code from $table where email='".$email."'") )
+		$wpdb->query("INSERT INTO $table SET email='".$email."',code='".$code."' ");
+	do_action('rsvpmail_add_problme',$email,$code);
+}
+
+function rsvpmail_remove_problem($email) {
+	global $wpdb;
+	$table = $wpdb->prefix . "rsvpmailer_blocked";
+	$email = trim(strtolower($email));
+	$wpdb->query("DELETE from $table where email='".$email."' ");
+	do_action('rsvpmail_remove_problme',$email);
+}
+
+function rsvpmail_problem_init() {
+	global $wpdb;
+	$unsubscribed = get_option('rsvpmail_unsubscribed');
+	if(!empty($unsubscribed) && is_array($unsubscribed)) {
+		foreach($unsubscribed as $email)
+			rsvpmail_add_problem($email,'unsubscribed');
+		delete_option('rsvpmail_unsubscribed');
+	}
+}
+
+function rsvpmail_is_problem($email) {
+	global $wpdb;
+	$table = $wpdb->prefix . "rsvpmailer_blocked";
+	$email = trim(strtolower($email));
+	$sql = "SELECT code from $table where email='".$email."'";
+	$code = $wpdb->get_var($sql);
+	if(empty($code))
+		$code = apply_filters('rsvpmail_is_problem',$code,$email);
+	if($code)
+		return $email.': '.$code;
+}

@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.8.2
+Version: 8.8.4
 */
 
 function get_rsvpversion() {
-	return '8.8.2';
+	return '8.8.4';
 }
 
 global $wp_version;
@@ -722,6 +722,19 @@ function cpevent_activate() {
 
 	dbDelta( $sql );
 
+$sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvpmailer_blocked` (
+`ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+`email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT '',
+`code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT '',
+`timestamp` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (`ID`),
+KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;";
+
+dbDelta( $sql );
+
+rsvpmail_problem_init();
+
 	$sql = 'SELECT slug FROM ' . $wpdb->prefix . 'terms JOIN `' . $wpdb->prefix . 'term_taxonomy` on ' . $wpdb->prefix . 'term_taxonomy.term_id= ' . $wpdb->prefix . "terms.term_id WHERE taxonomy='rsvpmaker-type' AND slug='featured'";
 
 	if ( ! $wpdb->get_var( $sql ) ) {
@@ -744,7 +757,7 @@ function cpevent_activate() {
 
 	$wpdb->query( $sql );
 
-	$rsvp_options['dbversion'] = 17;
+	$rsvp_options['dbversion'] = 18;
 
 	update_option( 'RSVPMAKER_Options', $rsvp_options );
 
@@ -807,44 +820,9 @@ if ( ! empty( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 7 )
 	}
 }
 
-if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 17 ) ) {
-
+if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 18 ) ) {
 	cpevent_activate();
 }
-
-global $wpdb;
-
-$test = $wpdb->get_var( 'SELECT enddate FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE enddate IS NOT NULL' );
-
-if ( ! $test ) {
-
-	rsvpmaker_debug_log( 'cpevent_activate fired' );
-
-	cpevent_activate();
-
-	rsvpmaker_event_dates_table_update( true );
-
-} else {
-
-	rsvpmaker_date_table_errors(); // check for data errors
-
-	rsvpmaker_add_timestamps();
-
-}
-
-
-
-if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 14 ) ) {
-
-	rsvpmaker_upgrade_templates();
-
-	$rsvp_options['dbversion'] = 14;
-
-	update_option( 'RSVPMAKER_Options', $rsvp_options );
-
-}
-
-
 
 function rsvpmaker_deactivate() {
 
@@ -1391,8 +1369,6 @@ function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 
 	rsvpmaker_debug_log( $log );
 
 }
-
-
 
 function rsvpmaker_before_post_display_action() {
 

@@ -16,7 +16,7 @@ function paypal_verify_rest() {
 
 add_action( 'init', 'paypal_verify_rest' );
 
-function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description = '', $rsvp_id = 0 ) {
+function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description = '', $rsvp_id = 0, $key='', $value='' ) {
 
 	global $paypal_rest_keys, $post;
 	if ( $paypal_rest_keys['sandbox'] ) {
@@ -25,6 +25,12 @@ function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description 
 		$paypal_client_id = $paypal_rest_keys['client_id'];
 	}
 	$verify = ( $rsvp_id ) ? '/?paypal_verify=1&rsvp=' . $rsvp_id . '&event=' . intval( $post->ID ) : '/?paypal_verify=1';
+	if(!empty($key) && !empty($value))
+	{
+		$key = sanitize_text_field($key);
+		$value = sanitize_text_field($value);
+		$verify .= '&key='.$key.'&value='.$value;
+	}
 	ob_start();
 	?>
   <script

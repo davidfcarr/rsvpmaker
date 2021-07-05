@@ -4,6 +4,15 @@ use RSVPbyDrewM\MailChimp\MailChimp as MailChimpRSVP;
 $rsvpmaker_message_type = '';
 
 function rsvpmailer($mail) {
+	$problem = rsvpmail_is_problem($mail['to']);
+	if($problem && ($rsvpmailer_rule != 'permit') ) {
+		$mail['html'] = '[content omitted]';
+		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
+		return $mail['to'].' not sent - '.$problem;
+	}
+
+	$mail['html'] = str_replace('*|EMAIL|*',$mail['to'],$mail['html']);
+
 	if(isset($_GET['debug'])){
 		echo 'rsvpmailer ';
 		//print_r($mail);
@@ -17,7 +26,7 @@ function rsvpmailer($mail) {
 		$mail['html'] = do_shortcode($mail['html']);
 		$mail['html'] = rsvpmaker_inliner($mail['html']);
 	}
-	global $post, $rsvp_options, $unsubscribed, $rsvpmaker_message_type;
+	global $post, $rsvp_options, $rsvpmaker_message_type;
 	if(isset($mail['message_type']))
 		$rsvpmaker_message_type = $mail['message_type'];
 
@@ -28,9 +37,6 @@ function rsvpmailer($mail) {
 	}
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
-	if(empty($unsubscribed))
-	$unsubscribed = get_option('rsvpmail_unsubscribed');
-	if(empty($unsubscribed)) $unsubscribed = array();
 
 	$rsvpmailer_rule = apply_filters('rsvpmailer_rule','',$mail['to'], $rsvpmaker_message_type);
 	if($rsvpmailer_rule == 'deny') {
@@ -38,11 +44,6 @@ function rsvpmailer($mail) {
 		$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
 		rsvpmaker_debug_log($mail,$message);
 		return $message;
-	}
-	if(in_array(strtolower($mail['to']),$unsubscribed) && ($rsvpmailer_rule != 'permit') ) {
-		$mail['html'] = '[content omitted]';
-		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
-		return $mail['to'].' sending blocked - unsubscribed list';
 	}
 	
 	if(empty($rsvp_options["from_always"]) && !empty($rsvp_options["smtp_useremail"]))
@@ -1243,7 +1244,7 @@ return $content;
 }
 
 function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
-	global $unsubscribed, $wpdb;
+	global $wpdb;
 	$post = get_post($post_id);
 	if(!empty($postvars["preview"]))
 		{
@@ -1259,7 +1260,10 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 			$mail["text"] = rsvpmaker_personalize_email($text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
 			$result = rsvpmailer($mail);
 			echo esc_html($result);
-			add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' (preview) '.rsvpmaker_date('r'));
+			if(!strpos($result,'unsubscribe') && !strpos($result,'blocked'))
+				add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' (preview) '.rsvpmaker_date('r'));
+			else
+				add_post_meta($post->ID,'rsvpmail_blocked',$result);
 			}
 		else
 			echo '<div style="color:red;">Error: '.$previewto.' - '.__('Error, not a single valid email address','rsvpmaker').'</div>';
@@ -1268,8 +1272,6 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	
 	if(!empty($postvars["attendees"]) && !empty($postvars["event"]) )
 	{
-	$unsub = get_option('rsvpmail_unsubscribed');
-	if(empty($unsub)) $unsub = array();
 	
 	if($postvars["event"] == 'any')
 	{
@@ -1291,9 +1293,9 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('event attendees','rsvpmaker').'</p>';
 	foreach($results as $row)
 		{
-		if(in_array(strtolower($row->email),$unsub))
+		if($problem = rsvpmail_is_problem($row->email))
 			{
-				$unsubscribed[] = $row->email;
+				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
 				continue;
 			}
 		add_post_meta($post->ID,'rsvprelay_to',$row->email);
@@ -1304,8 +1306,6 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	
 	if(!empty($postvars["rsvps_since"]) && !empty($postvars["since"]) )
 	{
-	$unsub = get_option('rsvpmail_unsubscribed');
-	if(empty($unsub)) $unsub = array();
 	$since = (int) $postvars["since"];
 	$t = rsvpmaker_strtotime('-'.$since.' days');
 	
@@ -1321,8 +1321,9 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	echo '<p>'.__('Sending to','rsvpmaker').' '.sizeof($results).' '. __('RSVPs within the last ','rsvpmaker').' '.sanitize_text_field($postvars["since"]).' days</p>';
 	foreach($results as $row)
 		{
-		if(in_array(strtolower($row->email),$unsub))
+		if($problem = rsvpmail_is_problem($row->email))
 			{
+				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
 				$unsubscribed[] = $row->email;
 				continue;
 			}
@@ -1340,13 +1341,12 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
 	update_post_meta($post->ID,'rsvprelay_from',$from);
 	update_post_meta($post->ID,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
-	$unsub = get_option('rsvpmail_unsubscribed');
-	if(empty($unsub)) $unsub = array();
 	foreach($users as $user)
 		{
-		if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
+		if( $problem = rsvpmail_is_problem($user->user_email) )
 			{
 				$unsubscribed[] = $user->user_email;
+				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
 				continue;
 			}
 		add_post_meta($post->ID,'rsvprelay_to',$user->user_email);
@@ -1361,12 +1361,11 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	update_post_meta($post->ID,'rsvprelay_fromname',sanitize_text_field(stripslashes($postvars["from_name"])));
 	$users = get_users('blog='.get_current_blog_id());
 	printf('<p>Sending to %s website members</p>',sizeof($users));
-	$unsub = get_option('rsvpmail_unsubscribed');
-	if(empty($unsub)) $unsub = array();
 	foreach($users as $user)
 		{
-		if(is_array($unsub) && in_array(strtolower($user->user_email),$unsub))
+		if($problem = rsvpmail_is_problem($user->user_email))
 			{
+				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
 				$unsubscribed[] = $user->user_email;
 				continue;
 			}
@@ -1441,7 +1440,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	
 	// $unsubscribed is global, can be modified by action above
 	if(!empty($unsubscribed))
-		printf('<p>%s: %s',__('Skipped unsubscribed emails','rsvpmaker'),implode(', ',$unsubscribed) );
+		printf(__('Skipped %d unsubscribed emails','rsvpmaker'),count($unsubscribed) );
 	
 	//if any messages queued, make sure group email schedule is set
 	if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook'))
@@ -1474,7 +1473,6 @@ global $post;
 global $custom_fields;
 global $wpdb;
 global $current_user;
-global $unsubscribed;
 global $rsvpmaker_cron_context;
 global $rsvp_options;
 if(!empty($rsvpmaker_cron_context))
@@ -1540,16 +1538,19 @@ if($queued) {
 	$queued = get_post_meta($post->ID,'rsvprelay_to');
 	if($queued) {
 		//if more in queue
-		printf('<p>%s emails queued to send (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($queued),$permalink,$permalink.'?show_log');
+		printf('<p>%s emails queued to send (<a href="%s">Refresh</a></p>',sizeof($queued),$permalink);
 		if(isset($_GET['show_log']))
 			printf('</p>%s</p>',implode(', ',$queued));
 	}
 }
 $sent = get_post_meta($post->ID,'rsvpmail_sent');
+$blocked = get_post_meta($post->ID,'rsvpmail_blocked');
 if($sent) {
-	printf('<p>%s emails sent (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($sent),$permalink,$permalink.'?show_log');
-	if(isset($_GET['show_log']))
-		printf('</p>%s</p>',implode(', ',$sent));
+	printf('<p>%s emails sent, %s blocked (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($sent),sizeof($blocked),$permalink,add_query_arg('show_log',1,$permalink));
+	if(isset($_GET['show_log'])){
+		printf('</p>%s</p>',implode('<br>',$sent));
+		printf('</p>%s</p>',implode('<br>',$blocked));
+	}
 }
 if(!isset($_POST))
 {
@@ -1924,28 +1925,52 @@ foreach($results as $row)
 }
 
 function unsubscribed_list () {
+global $wpdb;
+$table = $wpdb->prefix . "rsvpmailer_blocked";
+$action = admin_url('edit.php?post_type=rsvpemail&page=unsubscribed_list');
+if(isset($_POST['remove']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	foreach($_POST['remove'] as $email) {
+		rsvpmail_remove_problem($email);
+	}
+}
 
-printf('<h1>%s</h1><p>%s</p>',__('Unsubscribed List','rsvpmaker'),__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here.','rsvpmaker'));
-	$unsub = get_option('rsvpmail_unsubscribed');
-if(!empty($unsub))
+if(isset($_POST['problems']))
 {
-printf('<form method="post" action="%s"><table><tr><th>Unblock</th><th>Email</th></tr>',admin_url('edit.php?post_type=rsvpemail&page=unsubscribed_list'));
-foreach($unsub as $index => $e)
+	$code = sanitize_text_field($_POST['code']);
+	preg_match_all ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $_POST['problems'], $emails);
+	$emails = $emails[0];
+	foreach($emails as $email)
+		{
+			rsvpmail_add_problem($email,$code);
+			$email = strtolower($email);
+		}
+}
+
+printf('<h1>%s</h1><p>%s</p>',__('Unsubscribed and Blocked','rsvpmaker'),__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
+$sql = "SELECT * FROM $table ORDER BY code, timestamp DESC";
+$results = $wpdb->get_results($sql);
+if(!empty($results))
 {
-	if(isset($_POST['remove']) && in_array($e,$_POST['remove']))
-		unset($unsub[$index]);
-	else
-		printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td></tr>',$e,$e);	
+printf('<form method="post" action="%s"><table><tr><th>Unblock</th><th>Email</th><th>Issue</th></tr>',$action);
+foreach($results as $row)
+{
+	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s</td></tr>',$row->email,$row->email,$row->code);	
 }
 echo '</table><p><input type="submit" value="Submit"></p>'.rsvpmaker_nonce('return').'</form>';
-	
-if(isset($_POST['remove']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-	update_option('rsvpmail_unsubscribed',$unsub);
 }
 
-printf('<h2>Add an Email to Unsubscribed List</h2><form method="get" action="%s" target"_blank"><input name="rsvpmail_unsubscribe" />%s<button>Add</button></form>',site_url(),rsvpmaker_nonce('return'));
+printf('<h2>Add an Email Addresses as Unsubscribed Or Blocked</h2><form method="post" action="%s">
+<p>
+<textarea rows="5" cols="60" name="problems"></textarea>
+<br><em>Separated by spaces of on separate lines</em>
+</p>%s
+<p>
+<input type="radio" name="code" value="unsubscribed" checked="checked"> Unsubscribed
+<input type="radio" name="code" value="blocked"> Blocked
+<button>Add</button></form>',$action,rsvpmaker_nonce('return'));
 
 }
+
 
 function RSVPMaker_chimpshort($atts, $content = NULL ) {
 
@@ -2074,8 +2099,8 @@ function get_rsvpmaker_email_template() {
 global $rsvpmail_templates;
 //$templates = get_option('rsvpmaker_email_template');
 
-$model_templates[0]['slug'] = 'default';
-$model_templates[0]['html'] = '<html>
+$templates[0]['slug'] = 'default';
+$templates[0]['html'] = '<html>
 <head>
 <title>*|MC:SUBJECT|*</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -2090,8 +2115,6 @@ $model_templates[0]['html'] = '<html>
 <div id="content">
 
 <div style="font-size: small; border: thin dotted #999;">Email not displaying correctly? <a href="*|ARCHIVE|*" class="adminText">View it in your browser.</a></div>
-
-<div class="headerBarText"><h1><a href="'.home_url().'">'.get_bloginfo('name').'</a></h1></div>
 
 [rsvpmaker_email_content]
 
@@ -2109,22 +2132,16 @@ $model_templates[0]['html'] = '<html>
 *|REWARDS|*</div>
 </body>
 </html>';
-$model_templates[1]['slug'] = 'transactional';
-$model_templates[1]['html'] = '<html>
+$templates[1]['slug'] = 'transactional';
+$templates[1]['html'] = '<html>
 <head>
 <title>*|MC:SUBJECT|*</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<style>
-#tx-background {background-color: #FFFFFF; padding: 10px; margin-top: 0; max-width: 800px;}
-#tx-content {padding: 5px; background-color: #FFFFFF; margin-left: auto; margin-right: auto; margin-top: 10px; margin-bottom: 10px; padding-bottom: 50px;}
-</style>
 </head>
 <body>
 <div style="display: none">[rsvpmailer_preview]</div>
 <div id="tx-background">
 <div id="tx-content">
-
-<div class="headerBarText"><h1><a href="'.home_url().'">'.get_bloginfo('name').'</a></h1></div>
 
 [rsvpmaker_email_content]
 
@@ -2197,11 +2214,7 @@ $mail["html"] = do_blocks(do_shortcode($template));
 
 $mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>',$mail["html"]);
 
-global $unsub;
-if(empty($unsub))
-	$unsub = get_option('rsvpmail_unsubscribed');
-if(empty($unsub)) $unsub = array();
-	if(in_array(strtolower($mail["to"]),$unsub))
+	if(rsvpmail_is_problem($mail["to"]) )
 		{
 			return;
 		}
@@ -2535,12 +2548,7 @@ if(!is_email($e))
 	echo 'Error: invalid email address';
 else
 	{
-	$unsub = get_option('rsvpmail_unsubscribed');
-	if(empty($unsub))
-		$unsub = array();
-	if(!in_array($e,$unsub))
-		$unsub[] = $e;
-	update_option('rsvpmail_unsubscribed',$unsub);
+	rsvpmail_add_problem($e,'unsubscribed');
 	echo '<p>'.__('Unsubscribed from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
 	$chimp_options = get_option('chimp');
@@ -3253,6 +3261,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		global $wp_query;
 		global $email_context;	
 		$email_context = true;
+		email_content_minfilters();
 		$wp_query_backup = $wp_query;
 		if($query_post_id)
 		{

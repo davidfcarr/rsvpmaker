@@ -1663,6 +1663,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	
     if( $column_name == 'rsvpmaker_end' ) {
 		$event = get_rsvpmaker_event($post_id);
+		if($event)
 		echo esc_html($event->enddate);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {

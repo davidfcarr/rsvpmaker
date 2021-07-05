@@ -180,20 +180,34 @@ function rsvpmaker_relay_queue() {
 			$mail['html'] = get_post_meta($post_id,'_rsvpmail_html',true); //rsvpmail broadcast
 			if(empty($mail['html']))
 			{
-				$templates = get_rsvpmaker_email_template();
-				$template = $templates[1]['html'];	
+				$template = '<html>
+				<head>
+				<title>*|MC:SUBJECT|*</title>
+				<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+				</head>
+				<body>
+				
+				[rsvpmaker_email_content]
+				
+				<div id="messagefooter" style="padding: 5px; background-color: #eee; color: #000;">
+				*|LIST:DESCRIPTION|*<br>
+				<br>
+				<a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
+				</div>
+				
+				</body>
+				</html>';
+				//rsvpmaker_debug_log($template,'group email template');	
 				$mail['html'] = do_blocks( do_shortcode( $template ) );
 			}
+			//rsvpmaker_debug_log($mail['html'],'html from group email');	
 			$message_description = get_post_meta( $row->ID, 'message_description', true );
 			$mail['html'] = rsvpmaker_personalize_email( $mail['html'], $mail['to'], '<div class="rsvpexplain">' . $message_description . '</div>' );
 			$mail['text'] = rsvpmaker_text_version($mail['html']);
 
 			if ( isset( $_GET['debug'] ) ) {
-
 				printf( '<pre>%s</pre>', htmlentities( $template ) );
-
 				printf( '<pre>%s</pre>', htmlentities( $mail['html'] ) );
-
 			}
 
 			rsvpmailer( $mail );
