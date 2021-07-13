@@ -16,21 +16,19 @@ function paypal_verify_rest() {
 
 add_action( 'init', 'paypal_verify_rest' );
 
-function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description = '', $rsvp_id = 0, $key='', $value='' ) {
+function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description = '', $kv = array() ) {
 
-	global $paypal_rest_keys, $post;
+	global $paypal_rest_keys, $post, $current_user;
 	if ( $paypal_rest_keys['sandbox'] ) {
 		$paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
 	} else {
 		$paypal_client_id = $paypal_rest_keys['client_id'];
 	}
-	$verify = ( $rsvp_id ) ? '/?paypal_verify=1&rsvp=' . $rsvp_id . '&event=' . intval( $post->ID ) : '/?paypal_verify=1';
-	if(!empty($key) && !empty($value))
-	{
-		$key = sanitize_text_field($key);
-		$value = sanitize_text_field($value);
-		$verify .= '&key='.$key.'&value='.$value;
-	}
+
+	///$verify = ( $rsvp_id ) ? '/?paypal_verify=1&rsvp=' . $rsvp_id . '&event=' . intval( $post->ID ) : '/?paypal_verify=1';
+	$verify = '/?paypal_verify=1';
+	foreach($kv as $key => $value)
+		$verify .= '&'.$key.'='.$value;
 	ob_start();
 	?>
   <script
@@ -53,9 +51,11 @@ function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description 
 	  onApprove: function(data, actions) {
 		return actions.order.capture().then(function(details) {
 		  result = 'Verifying transaction by ' + details.payer.name.given_name+'... ';
+		  console.log(result);
+		  console.log(data);
 		  document.getElementById("paypal-button-container").innerHTML = result;
 		  // Call your server to save the transaction
-		  return fetch('<?php echo esc_attr( $verify ); ?>', {
+		  return fetch('<?php $verify; ?>', {
 			method: 'post',
 			headers: {
 			  'content-type': 'application/json'
@@ -64,6 +64,7 @@ function rsvpmaker_paypal_button( $amount, $currency_code = 'USD', $description 
 			  orderID: data.orderID
 			})
 		  }).then(function(response) {
+		console.log(response);
 	  return response.json();
 	})
 	.then(function(myJson) {

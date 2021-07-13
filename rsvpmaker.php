@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.8.4
+Version: 8.8.6
 */
 
 function get_rsvpversion() {
-	return '8.8.4';
+	return '8.8.6';
 }
 
 global $wp_version;
@@ -724,12 +724,12 @@ function cpevent_activate() {
 
 $sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvpmailer_blocked` (
 `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-`email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT '',
-`code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT '',
+`email` varchar(100) NOT NULL DEFAULT '',
+`code` varchar(50) NOT NULL DEFAULT '',
 `timestamp` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (`ID`),
 KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;";
+) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
 dbDelta( $sql );
 

@@ -47,12 +47,18 @@ function rsvpmaker_relay_menu_pages() {
 		'rsvpmaker_relay_manual_test',
 		'rsvpmaker_relay_manual_test'
 	);
+	add_submenu_page(
+		$parent_slug,
+		__( 'Group Email Log', 'rsvpmaker' ),
+		__( 'Group Email Log', 'rsvpmaker' ),
+		'manage_options',
+		'rsvpmaker_relay_log',
+		'rsvpmaker_relay_log'
+	);
 
 }
 
 add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
-
-
 
 function rsvpmaker_relay_manual_test() {
 
@@ -122,24 +128,61 @@ function rsvpmaker_relay_queue() {
 	global $wpdb, $post, $page, $pages;
 
 	$rsvpmaker_message_type = 'email_rule_group_email';
-
-	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft') LIMIT 0,40 ";
-
+	//select a message with pending sends
+	$sql = "SELECT ID FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft')";
+	$epost_id = $wpdb->get_var($sql);
+	if(empty($epost_id))
+		return;
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE ID=$epost_id AND meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft') ";
 	$results = $wpdb->get_results( $sql );
-
 	if ( empty( $results ) ) {
-
 		return;
 	}
+	$total_to_send = sizeof($results);
+	$limit = 10;
+	$sent = 0;
 
 	$html = '<p>Results: ' . sizeof( $results ) . '</p>';
 
-	// print_r($results);
+	$mail['message_type'] = 'email_rule_group_email';
+	$mail['override'] = 1;
+	$mail['from'] = get_post_meta( $epost_id, 'rsvprelay_from', true );;
+	$mail['fromname'] = get_post_meta( $epost_id, 'rsvprelay_fromname', true );
+	$message_description = get_post_meta( $epost_id, 'message_description', true );
+	$mail['html'] = get_post_meta($epost_id,'_rsvpmail_html',true); //rsvpmail broadcast
+	rsvpmaker_debug_log($mail['html'],'_rsvpmail_html_for_'.$epost_id);
+	if(empty($mail['html']))
+	{
+		$post = get_post($epost_id);
+		$template = '<html>
+		<head>
+		<title>*|MC:SUBJECT|*</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		</head>
+		<body>
+		
+		[rsvpmaker_email_content]
+		
+		<div id="messagefooter" style="padding: 5px; background-color: #eee; color: #000;">
+		*|LIST:DESCRIPTION|*<br>
+		<br>
+		<a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
+		</div>
+		
+		</body>
+		</html>';
+		//rsvpmaker_debug_log($template,'group email template');	
+		$mail['html'] = do_blocks( do_shortcode( $template ) );
+		rsvpmaker_debug_log($mail,'group_email_from_template');
+	}
+	else
+		rsvpmaker_debug_log($mail,'group_email_from_meta');
 
 	if ( ! empty( $results ) ) {
-
 		foreach ( $results as $row ) {
-
+			if($count == $limit)
+				break;
+			$count++;
 			if ( ! isset( $_GET['nodelete'] ) ) {
 				$sql = "DELETE FROM $wpdb->postmeta WHERE meta_id=" . $row->meta_id;
 				$wpdb->query( $sql );
@@ -148,84 +191,36 @@ function rsvpmaker_relay_queue() {
 				$html .= '<div>skipped duplicate to ' . esc_html( $row->meta_value ) . '</div>';
 				continue;
 			}
-
-			$mail['message_type'] = 'email_rule_group_email';
-
 			if ( empty( $row->post_title ) || empty( $row->post_content ) ) {
-
 				continue;
 			}
-
-			$mail['from'] = 'noreply@' . str_replace( 'www.', '', sanitize_text_field($_SERVER['SERVER_NAME']) );
-
-			$mail['replyto'] = get_post_meta( $row->ID, 'rsvprelay_from', true );
-
-			$mail['fromname'] = get_post_meta( $row->ID, 'rsvprelay_fromname', true );
-
 			if ( ! empty( $attachments ) ) {
-
 				$mail['attachments'] = $attachments;
 			}
-
 			$mail['subject'] = $row->post_title;
-
-			$mail['html'] = $row->post_content;
-
 			$mail['to'] = $row->meta_value;
-
 			$html .= sprintf( '<p>%s to %s</p>', $row->post_title, $row->meta_value );
-
 			$post = get_post( $row->ID );
 			$post_id = $row->ID;
-			$mail['html'] = get_post_meta($post_id,'_rsvpmail_html',true); //rsvpmail broadcast
-			if(empty($mail['html']))
-			{
-				$template = '<html>
-				<head>
-				<title>*|MC:SUBJECT|*</title>
-				<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-				</head>
-				<body>
-				
-				[rsvpmaker_email_content]
-				
-				<div id="messagefooter" style="padding: 5px; background-color: #eee; color: #000;">
-				*|LIST:DESCRIPTION|*<br>
-				<br>
-				<a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
-				</div>
-				
-				</body>
-				</html>';
-				//rsvpmaker_debug_log($template,'group email template');	
-				$mail['html'] = do_blocks( do_shortcode( $template ) );
-			}
 			//rsvpmaker_debug_log($mail['html'],'html from group email');	
-			$message_description = get_post_meta( $row->ID, 'message_description', true );
 			$mail['html'] = rsvpmaker_personalize_email( $mail['html'], $mail['to'], '<div class="rsvpexplain">' . $message_description . '</div>' );
 			$mail['text'] = rsvpmaker_text_version($mail['html']);
-
 			if ( isset( $_GET['debug'] ) ) {
 				printf( '<pre>%s</pre>', htmlentities( $template ) );
 				printf( '<pre>%s</pre>', htmlentities( $mail['html'] ) );
 			}
-
 			rsvpmailer( $mail );
 			add_post_meta( $post->ID, 'rsvpmail_sent', $mail['to'] . ' ' . rsvpmaker_date( 'r' ) );
-
+			sleep(2);
 		}
 		return $html;
 	}
 }
 
 function group_emails_extract( $text ) {
-
 	preg_match_all( "/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $text, $emails );
-
 	$emails = $emails[0];
-
 	$unique = array();
-
 	foreach ( $emails as $email ) {
 
 		$email = strtolower( $email );
@@ -895,4 +890,52 @@ function rsvpmaker_relay_interval( $schedules ) {
 function rsvpmaker_relay_duplicate( $message_id ) {
 	global $wpdb;
 	return $wpdb->get_var( "SELECT post_id FROM $wpdb->postmeta WHERE meta_value='$message_id' " );
+}
+
+function rsvpmaker_qemail ($mail, $recipients) {
+	global $current_user;
+	if(strpos($mail['html'],'<body')) {
+		preg_match('|<bod[^>]+>(.+)</body>|is',$mail['html'],$match);
+		if(!empty($match[1])) {
+			$_html = $mail['html'];
+			$mail['html'] = $match[1];	
+		}
+	}
+	$qpost['post_content'] = $mail['html'];
+	$qpost['post_title'] = $mail['subject'];
+	$qpost['post_type'] = 'rsvpemail';
+	$qpost['post_author'] = $current_user->ID;
+	$qpost['post_status'] = 'draft';
+	$from = $mail['from'];
+	$fromname = $mail['fromname'];
+
+	if(!empty($qpost['post_content']) && !empty($from))  
+		$post_id = wp_insert_post($qpost);
+
+	if($post_id) {
+		//add_post_meta($post_id,'imap_message_id',$headerinfo->message_id);
+		add_post_meta($post_id,'rsvprelay_from',$from);
+		foreach($recipients as $email)
+			add_post_meta($post_id,'rsvprelay_to',$email);
+		//for debugging
+		//add_post_meta($post_id,'imap_body',imap_body($mail,$n));
+		if(empty($fromname))
+			$fromname = $from;
+		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
+		if(!empty($_html))
+			add_post_meta($post_id,'_rsvpmail_html',$_html);
+		$mail['html'] = 'hidden';
+		rsvpmaker_debug_log($mail,'rsvpmaker_qemail_mail_array');
+		rsvpmaker_debug_log($recipients,'rsvpmaker_qemail_recipients_added');
+	}
+	rsvpmaker_debug_log($post_id,'rsvpmaker_qemail_insert_post_result');
+}
+
+function rsvpmaker_relay_log() {
+	global $wpdb;
+	$sql = "SELECT * from $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND meta_key LIKE 'rsvp%' ORDER BY ID DESC, meta_key LIMIT 0,500";
+	$results = $wpdb->get_results($sql);
+	foreach($results as $row) {
+		printf('<p>%s<br><strong>%s</strong> %s</p>',$row->post_title,$row->meta_key,$row->meta_value);
+	}	
 }

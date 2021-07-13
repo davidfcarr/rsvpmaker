@@ -580,7 +580,11 @@ echo esc_html($label);
 
 
 			  if(isset($_POST["enotify_option"])) {
+				  //print_r($_POST["enotify_option"]);
 				$newoptions = array_map( 'sanitize_text_field', stripslashes_deep($_POST["enotify_option"] ) );
+				foreach($newoptions as $name => $value)
+				  $options[$name] = sanitize_text_field($value);
+
                   update_option($this->db_option, $options);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - email server.','rsvpmaker').'</p></div>';
 			  }	
@@ -590,7 +594,9 @@ echo esc_html($label);
 					$newoptions[sanitize_text_field($index)] = sanitize_text_field($value);
 				}
 				$newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
-                  update_option($this->db_option, $newoptions);
+				foreach($newoptions as $name => $value)
+				  $options[$name] = sanitize_text_field($value);
+                update_option($this->db_option, $options);
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - security.','rsvpmaker').'</p></div>';
 				  //print_r($newoptions);
 			  }	

@@ -2,11 +2,13 @@
 
 namespace PayPalCheckoutSdk\Core;
 
-use BraintreeHttp\Injector;
 
-class GzipInjector implements Injector {
+use PayPalHttp\Injector;
 
-	public function inject( $httpRequest ) {
-		$httpRequest->headers['Accept-Encoding'] = 'gzip';
-	}
+class GzipInjector implements Injector
+{
+    public function inject($httpRequest)
+    {
+        $httpRequest->headers["Accept-Encoding"] = "gzip";
+    }
 }

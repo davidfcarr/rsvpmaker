@@ -9,19 +9,21 @@
 
 namespace PayPalCheckoutSdk\Orders;
 
-use BraintreeHttp\HttpRequest;
+use PayPalHttp\HttpRequest;
 
-class OrdersValidateRequest extends HttpRequest {
+class OrdersValidateRequest extends HttpRequest
+{
+    function __construct($orderId)
+    {
+        parent::__construct("/v2/checkout/orders/{order_id}/validate-payment-method?", "POST");
 
-	function __construct( $orderId ) {
-		parent::__construct( '/v2/checkout/orders/{order_id}/validate-payment-method?', 'POST' );
-
-		$this->path                    = str_replace( '{order_id}', urlencode( $orderId ), $this->path );
-		$this->headers['Content-Type'] = 'application/json';
-	}
+        $this->path = str_replace("{order_id}", urlencode($orderId), $this->path);
+        $this->headers["Content-Type"] = "application/json";
+    }
 
 
-	public function payPalClientMetadataId( $payPalClientMetadataId ) {
-		$this->headers['PayPal-Client-Metadata-Id'] = $payPalClientMetadataId;
-	}
+    public function payPalClientMetadataId($payPalClientMetadataId)
+    {
+        $this->headers["PayPal-Client-Metadata-Id"] = $payPalClientMetadataId;
+    }
 }

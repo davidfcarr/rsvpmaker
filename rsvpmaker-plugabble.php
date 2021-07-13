@@ -3560,7 +3560,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 						} elseif ( $gateway == 'PayPal REST API' ) {
 
-							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, $rsvp_id );
+							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
 
 						} elseif ( $gateway == 'PayPal (legacy)' ) {
 

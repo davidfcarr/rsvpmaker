@@ -55,13 +55,6 @@ function rsvpmailer($mail) {
 	if(empty($mail['fromname']))
 		$mail['fromname'] = get_bloginfo('name');
 
-	if(!empty($rsvp_options['from_always']) && ($rsvp_options['from_always'] != $mail['from']))
-	{
-		if(empty($mail['replyto']))
-			$mail['replyto'] = $mail['from'];
-		$mail['from'] = $rsvp_options['from_always'];
-	}
-
 	if(!strpos($mail['fromname'],'(via'))
 		$mail['fromname'] = $mail['fromname'] . ' (via '.$via.')';
 
@@ -86,7 +79,13 @@ function rsvpmailer($mail) {
 	
 	if(function_exists('rsvpmailer_override'))
 		return rsvpmailer_override($mail);
-	
+	if(!empty($rsvp_options['from_always']) && ($rsvp_options['from_always'] != $mail['from']))
+	{
+		if(empty($mail['replyto']))
+			$mail['replyto'] = $mail['from'];
+		$mail['from'] = $rsvp_options['from_always'];
+	}
+		
 	if(!isset($rsvp_options["smtp"]) || empty($rsvp_options["smtp"]))
 		{
 		$to = $mail["to"];
@@ -203,6 +202,12 @@ if(!empty($rsvp_options["smtp_useremail"]))
  $rsvpmail->AddReplyTo($mail["from"], $mail["fromname"]);
 if(!empty($mail["replyto"]))
  $rsvpmail->AddReplyTo($mail["replyto"]);
+
+if(!empty($mail["bcc"]) && is_array($mail["bcc"]))
+{
+	 foreach($mail["bcc"] as $bcc)
+		 $rsvpmail->AddBCC($bcc);
+}
 
  $rsvpmail->Subject = $mail["subject"];
 if($mail["html"])
@@ -1244,7 +1249,11 @@ return $content;
 }
 
 function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
-	global $wpdb;
+	global $wpdb, $current_user;
+	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	printf('<p>from %s</p>',$from);
+	update_post_meta($post_id,'rsvprelay_from',$from);
+	update_post_meta($post_id,'rsvprelay_fromname',$postvars["from_name"]);
 	$post = get_post($post_id);
 	if(!empty($postvars["preview"]))
 		{
@@ -1253,7 +1262,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 			{
 			echo '<p>Sending preview to '.$previewto.'</p>';
 			$mail["to"] = $previewto;
-			$mail["from"] = (isset($postvars["user_email"]) && is_email($postvars["user_email"]) ) ? $current_user->user_email : $postvars["from_email"];
+			$mail["from"] = $from;
 			$mail["fromname"] = stripslashes($postvars["from_name"]);
 			$mail["subject"] = stripslashes($postvars["subject"]);
 			$mail["html"] = rsvpmaker_personalize_email($html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
@@ -1269,6 +1278,12 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 			echo '<div style="color:red;">Error: '.$previewto.' - '.__('Error, not a single valid email address','rsvpmaker').'</div>';
 			
 		}
+
+	if(!empty($postvars['test'])) {
+		echo '<p>queuing test</p>';
+		for($i=70; $i < 75; $i++)
+			add_post_meta($post_id,'rsvprelay_to','test'.$i.'@rsvpmaker.com');
+	}
 	
 	if(!empty($postvars["attendees"]) && !empty($postvars["event"]) )
 	{
@@ -1295,10 +1310,10 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 		{
 		if($problem = rsvpmail_is_problem($row->email))
 			{
-				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
+				add_post_meta($post_id,'rsvpmail_blocked',$problem);
 				continue;
 			}
-		add_post_meta($post->ID,'rsvprelay_to',$row->email);
+		add_post_meta($post_id,'rsvprelay_to',$row->email);
 		}
 	}
 	
@@ -1323,11 +1338,11 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 		{
 		if($problem = rsvpmail_is_problem($row->email))
 			{
-				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
+				add_post_meta($post_id,'rsvpmail_blocked',$problem);
 				$unsubscribed[] = $row->email;
 				continue;
 			}
-		add_post_meta($post->ID,'rsvprelay_to',$row->email);
+		add_post_meta($post_id,'rsvprelay_to',$row->email);
 		}
 	}
 	
@@ -1337,39 +1352,37 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	{
 	$users = get_users('blog='.get_current_blog_id());
 	printf('<p>Sending to %s website members</p>',sizeof($users));
-	update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
+	update_post_meta($post_id,'message_description',__('This message was sent to you as a member of','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
 	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
-	update_post_meta($post->ID,'rsvprelay_from',$from);
-	update_post_meta($post->ID,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
+	update_post_meta($post_id,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
 	foreach($users as $user)
 		{
 		if( $problem = rsvpmail_is_problem($user->user_email) )
 			{
 				$unsubscribed[] = $user->user_email;
-				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
+				add_post_meta($post_id,'rsvpmail_blocked',$problem);
 				continue;
 			}
-		add_post_meta($post->ID,'rsvprelay_to',$user->user_email);
+		add_post_meta($post_id,'rsvprelay_to',$user->user_email);
 		}
 	}
 	
 	if(!empty($postvars["network_members"]) && user_can('manage_network',$user_id) )
 	{
-	update_post_meta($post->ID,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
+	update_post_meta($post_id,'message_description',__('This message was sent to you as a member of ','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
 	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
-	update_post_meta($post->ID,'rsvprelay_from',$from);
-	update_post_meta($post->ID,'rsvprelay_fromname',sanitize_text_field(stripslashes($postvars["from_name"])));
+	update_post_meta($post_id,'rsvprelay_fromname',sanitize_text_field(stripslashes($postvars["from_name"])));
 	$users = get_users('blog='.get_current_blog_id());
 	printf('<p>Sending to %s website members</p>',sizeof($users));
 	foreach($users as $user)
 		{
 		if($problem = rsvpmail_is_problem($user->user_email))
 			{
-				add_post_meta($post->ID,'rsvpmail_blocked',$problem);
+				add_post_meta($post_id,'rsvpmail_blocked',$problem);
 				$unsubscribed[] = $user->user_email;
 				continue;
 			}
-		update_post_meta($post->ID,'rsvprelay_to',$user->user_email);
+		update_post_meta($post_id,'rsvprelay_to',$user->user_email);
 		}
 	}
 	
@@ -1378,7 +1391,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	$chimp_options = get_option('chimp');
 	$MailChimp = new MailChimpRSVP($chimp_options["chimp-key"]);
 	$listID = sanitize_text_field($postvars["mailchimp_list"]);
-	update_post_meta($post->ID, "_email_list",$listID);
+	update_post_meta($post_id, "_email_list",$listID);
 	$custom_fields["_email_list"][0] = $listID;
 	$segment_opts = array();
 	
@@ -1582,6 +1595,7 @@ if(!isset($_POST))
 <br><em>Send yourself a test first to check email formatting. Certain WordPress blocks, such as columns, may not translate to email.</em>
 </div>
 <div><input type="checkbox" name="members" value="1"> <?php esc_html_e('Website members','rsvpmaker');?></div>
+<p><input type="checkbox" name="test" value="1" /> Test</p>
 <?php if(is_multisite() && current_user_can('manage_network') && (get_current_blog_id() == 1)) {
 ?>
 <div style="border: thin dotted red;"><strong>Network Administrator Only:</strong><br /> 
@@ -3318,8 +3332,17 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		<?php
 		$content = ob_get_clean();
 		$content = rsvpmaker_inliner( $content );
-		//$content = preg_replace('/<style.+<\/style>/is','',$content);
-		$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>', $content );
+		$content = preg_replace('/<style.+<\/style>/is','',$content);
+		if(preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?]+)|is',$content,$matches)) {
+			foreach($matches[1] as $youtube_id) {
+				$link = 'https://youtu.be/'.$youtube_id;
+				$img = 'https://img.youtube.com/vi/'.$youtube_id.'/mqdefault.jpg';
+				$html = '<p><a href="'.$link.'">Watch on YouTube: '.$link.'<br /><img src="'.$img.'" width="320" height="180" /></a></p>';
+				$content = preg_replace('|<iframe.+'.$youtube_id.'[^<]+</iframe>|',$html,$content);
+			}
+		}
+		else
+			$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>', $content );
 
 update_post_meta($post->ID,'_rsvpmail_html',$content);
 update_post_meta($post->ID,'_rsvpmail_text',rsvpmaker_text_version($content));

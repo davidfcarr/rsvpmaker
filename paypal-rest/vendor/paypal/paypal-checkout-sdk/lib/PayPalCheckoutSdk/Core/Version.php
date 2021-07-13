@@ -2,7 +2,7 @@
 
 namespace PayPalCheckoutSdk\Core;
 
-class Version {
-
-	const VERSION = '2.0.0-rc2';
+class Version
+{
+    const VERSION = "1.0.1";
 }

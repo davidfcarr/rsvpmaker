@@ -819,13 +819,10 @@ function rsvpmaker_reminders_nudge() {
 
 }
 
-if ( isset( $_GET['tabletest'] ) ) {
-	add_action( 'admin_init', 'rsvpmaker_update_table_continue' );
-}
 add_action( 'rsvpmaker_update_table_continue', 'rsvpmaker_update_table_continue' );
 
 function rsvpmaker_update_table_continue() {
-	rsvpmaker_event_dates_table_update( true );
+	rsvpmaker_event_dates_table_update( );
 }
 
 function rsvpmaker_date_table_errors() {
@@ -855,7 +852,13 @@ function rsvpmaker_date_table_errors() {
 
 function rsvpmaker_event_dates_table_update( $new = false ) {
 	global $wpdb;
-	$last_date = get_option( 'rsvpmaker_update_last_date' );
+	if($new)
+		{
+		$last_date = '';
+		delete_option('rsvpmaker_update_last_date');
+		}
+	else
+		$last_date = get_option( 'rsvpmaker_update_last_date' );
 	$where     = ( $last_date ) ? " AND a1.meta_value <= '" . $last_date . "'" : '';
 	$sql       = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime
 	 FROM " . $wpdb->posts . '
@@ -1960,6 +1963,14 @@ function rsvpmaker_cleanup() {
 
 	<?php
 
+
+if ( isset( $_POST['rsvpmaker_database_check'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	cpevent_activate();
+	echo '<div class="notice notice-success"><p>Checking that RSVPMaker database tables are properly initialized</p></div>';
+	rsvpmaker_event_dates_table_update(true);
+	echo '<div class="notice notice-success"><p>Checking that '.$wpdb->prefix.'resvpmaker_event table is complete</p></div>';
+}
+
 	if ( isset( $_POST['reset_defaults'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		$result = rsvpmaker_set_defaults_all( true );
@@ -1976,7 +1987,7 @@ function rsvpmaker_cleanup() {
 
 		foreach ( $_POST['default_field'] as $field ) {
 
-			$field = sanitize_text( $field );
+			$field = sanitize_text_field( $field );
 
 			$result .= rsvpmaker_set_default_field( $field, true );
 
@@ -2092,8 +2103,8 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 <h2><?php esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' ); ?></h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-rsvpmaker_nonce();
-		<?php esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
+<?php rsvpmaker_nonce();
+esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
 
 		<?php submit_button( 'Delete' ); ?>
 
@@ -2130,6 +2141,25 @@ rsvpmaker_nonce();
 		<?php submit_button( 'Reset' ); ?>
 
 </form>
+
+<h2>Check RSVPMaker Database Tables</h2>
+
+<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+<?php rsvpmaker_nonce();
+?> <input type="hidden" name="rsvpmaker_database_check" value="1" /> 
+		<?php submit_button( 'Check Now' ); ?>
+</form>
+<?php
+	$tables = $wpdb->get_results('SHOW TABLES');
+	foreach ($tables as $mytable)
+	{
+		foreach ($mytable as $t) 
+		{       
+			if(strpos($t,'rsvp') !== false)
+			echo $t . "<br>";
+		}
+	}
+?>
 
 <script>
 
@@ -3886,7 +3916,7 @@ function rsvpmail_is_problem($email) {
 	global $wpdb;
 	$table = $wpdb->prefix . "rsvpmailer_blocked";
 	$email = trim(strtolower($email));
-	$sql = "SELECT code from $table where email='".$email."'";
+	$sql = "SELECT code from $table where email='".$email."' AND (code='unsubscribed' OR code LIKE 'blocke%')";
 	$code = $wpdb->get_var($sql);
 	if(empty($code))
 		$code = apply_filters('rsvpmail_is_problem',$code,$email);
