@@ -374,8 +374,6 @@ function rsvpmaker_where( $where ) {
 
 }
 
-
-
 function rsvpmaker_where_afternow( $where ) {
 
 	global $offset_hours;
@@ -401,7 +399,6 @@ function rsvpmaker_orderby( $orderby ) {
 // if listing past dates
 
 function rsvpmaker_where_past( $where ) {
-
 	global $startday;
 
 	if ( isset( $_REQUEST['cm'] ) ) {
@@ -429,10 +426,7 @@ function rsvpmaker_where_past( $where ) {
 	} else {
 		return $where . ' AND rsvpdates.date < CURDATE( )';
 	}
-
 }
-
-
 
 function rsvpmaker_orderby_past( $orderby ) {
 
@@ -627,7 +621,7 @@ function rsvpmaker_query_debug( $query ) {
 
 	if ( strpos( $query, 'rsvpmaker' ) ) {
 
-		rsvpmaker_debug_log( $query, 'rsvpmaker_upcoming_query' );
+		rsvpmaker_debug_log( $query, 'log all rsvpmaker queries' );
 	}
 
 	return $query;

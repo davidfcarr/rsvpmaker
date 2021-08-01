@@ -839,8 +839,6 @@ function rsvpmaker_get_forms() {
 			$forms['simple']      = wp_insert_post( $data );
 			update_post_meta( $forms['simple'], '_rsvpmaker_special', 'RSVP Form' );
 		}
-		// if($post_id)
-			// get_post_meta($post_id,'_rsvp_form',$forms['webinar']);
 		update_option( 'rsvpmaker_forms', $forms );
 	}
 	return $forms;

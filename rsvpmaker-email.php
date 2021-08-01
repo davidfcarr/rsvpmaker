@@ -3,33 +3,7 @@ use RSVPbyDrewM\MailChimp\MailChimp as MailChimpRSVP;
 
 $rsvpmaker_message_type = '';
 
-function rsvpmailer($mail) {
-	$problem = rsvpmail_is_problem($mail['to']);
-	if($problem && ($rsvpmailer_rule != 'permit') ) {
-		$mail['html'] = '[content omitted]';
-		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
-		return $mail['to'].' not sent - '.$problem;
-	}
-
-	$mail['html'] = str_replace('*|EMAIL|*',$mail['to'],$mail['html']);
-
-	if(isset($_GET['debug'])){
-		echo 'rsvpmailer ';
-		//print_r($mail);
-	}
-
-	if(isset($mail['subject']))
-		$mail['subject'] = do_shortcode($mail['subject']);
-
-	if(isset($mail['html']))
-	{
-		$mail['html'] = do_shortcode($mail['html']);
-		$mail['html'] = rsvpmaker_inliner($mail['html']);
-	}
-	global $post, $rsvp_options, $rsvpmaker_message_type;
-	if(isset($mail['message_type']))
-		$rsvpmaker_message_type = $mail['message_type'];
-
+function rsvpmailer($mail, $description = '') {
 	if(defined('RSVPMAILOFF'))
 	{
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
@@ -37,6 +11,29 @@ function rsvpmailer($mail) {
 	}
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
+	$problem = rsvpmail_is_problem($mail['to']);
+	if($problem && ($rsvpmailer_rule != 'permit') ) {
+		$mail['html'] = '[content omitted]';
+		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
+		return $mail['to'].' not sent - '.$problem;
+	}
+
+	$mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail['to'],$description);
+	if(isset($mail['text']))
+		$mail['text'] = rsvpmaker_personalize_email($mail['text'],$mail['to'],$description);
+	if(isset($mail['html']) && strpos($mail['html'],'<style'))
+		$mail['html'] = rsvpmaker_inliner( $mail['html'] );
+
+	if(isset($mail['subject']))
+		$mail['subject'] = do_shortcode($mail['subject']);
+
+	if(isset($mail['html']))
+	{
+		$mail['html'] = do_shortcode($mail['html']);
+	}
+	global $post, $rsvp_options, $rsvpmaker_message_type;
+	if(isset($mail['message_type']))
+		$rsvpmaker_message_type = $mail['message_type'];
 
 	$rsvpmailer_rule = apply_filters('rsvpmailer_rule','',$mail['to'], $rsvpmaker_message_type);
 	if($rsvpmailer_rule == 'deny') {
@@ -170,6 +167,7 @@ function rsvpmailer($mail) {
 	
  $rsvpmail->Username= (!empty($rsvp_options["smtp_username"]) ) ? $rsvp_options["smtp_username"] : '';
  $rsvpmail->Password= (!empty($rsvp_options["smtp_password"]) ) ? $rsvp_options["smtp_password"] : '';
+ $rsvpmail->CharSet = 'UTF-8';
  $rsvpmail->AddAddress($mail["to"]);
  if(isset($mail["cc"]) )
 	 $rsvpmail->AddCC($mail["cc"]);
@@ -1064,7 +1062,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				}
 				else
 					$content .= $post->post_content;
-				if(($post->post_type == 'rsvpmaker') && get_post_meta($post->ID,'_rsvp_on',true))
+				if(($post->post_type == 'rsvpmaker') && get_rsvpmaker_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
 					$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
@@ -1228,28 +1226,35 @@ return $text;
 
 function rsvpmaker_personalize_email($content,$to,$description = '') {
 $chimp_options = get_option('chimp');
-if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] = '[not set in RSVPMaker Mailing List settings]';
+if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] = apply_filters('rsvpmaker_mailing_address','[not set in RSVPMaker Mailing List settings]');
 global $post;
-$content = str_replace('*|EMAIL|*',$to,$content);
-$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe='.$to),$content);
-$content = str_replace('*|REWARDS|*','',$content);
-$content = str_replace('*|LIST:DESCRIPTION|*',$description,$content);
-$content = str_replace('*|LIST:ADDRESS|*',$chimp_options['mailing_address'],$content);
-$content = str_replace('*|HTML:LIST_ADDRESS_HTML|*',$chimp_options['mailing_address'],$content);
-$content = str_replace('*|LIST:COMPANY|*',$chimp_options['company'],$content);
-$content = str_replace('*|CURRENT_YEAR|*',date('Y'),$content);
-$content = str_replace('*|ARCHIVE|*',get_permalink($post->ID),$content);
-$content = str_replace('<a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>','',$content);
-$content = str_replace('Forward to a friend:
-*|FORWARD|*','',$content);
-$content = str_replace('Update your profile:
-*|UPDATE_PROFILE|*','',$content);
-$content = preg_replace('/\*\|.+\|\*/','',$content); // not recognized, get rid of it.
+$content = preg_replace('/\*.{1,4}EMAIL.{1,4}\*/',$to,$content);
+$content = preg_replace('/\*.{1,4}UNSUB.{1,4}\*/',site_url('?rsvpmail_unsubscribe='.$to),$content);
+$content = preg_replace('/\*.{1,4}REWARDS.{1,4}\*/','',$content);
+$content = preg_replace('/\*.{1,4}LIST:DESCRIPTION.{1,4}\*/',$description,$content);
+$content = preg_replace('/\*.{1,4}LIST:ADDRESS.{1,4}\*/',$chimp_options['mailing_address'],$content);
+$content = preg_replace('/\*.{1,4}HTML:LIST_ADDRESS_HTML.{1,4}\*/',$chimp_options['mailing_address'],$content);
+$content = preg_replace('/\*.{1,4}LIST:COMPANY.{1,4}\*/',$chimp_options['company'],$content);
+$content = preg_replace('/\*.{1,4}CURRENT_YEAR.{1,4}\*/',date('Y'),$content);
+$content = preg_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
+$content = preg_replace('/<a .+FORWARD.+/','',$content);
+$content = preg_replace('/\*.+\*/','',$content); // not recognized, get rid of it.
 return $content;	
+}
+
+add_shortcode('rsvpmaker_personalize_email_test','rsvpmaker_personalize_email_test');
+
+function rsvpmaker_personalize_email_test () {
+	$content = '<p>A sorry state of *|EMAIL|* other *%CEMAILxy* stuff *|LIST:DESCRIPTION|*</p>';
+	$to = 'mew@here.com';
+	$description = 'This is a test';
+	return rsvpmaker_personalize_email($content,$to,$description = '');
+
 }
 
 function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	global $wpdb, $current_user;
+	$mail['html'] = $html;
 	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
 	printf('<p>from %s</p>',$from);
 	update_post_meta($post_id,'rsvprelay_from',$from);
@@ -1265,9 +1270,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 			$mail["from"] = $from;
 			$mail["fromname"] = stripslashes($postvars["from_name"]);
 			$mail["subject"] = stripslashes($postvars["subject"]);
-			$mail["html"] = rsvpmaker_personalize_email($html,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
-			$mail["text"] = rsvpmaker_personalize_email($text,$mail["to"],__('You were sent this message as a preview','rsvpmaker'));
-			$result = rsvpmailer($mail);
+			$result = rsvpmailer($mail,__('You were sent this message as a preview','rsvpmaker'));
 			echo esc_html($result);
 			if(!strpos($result,'unsubscribe') && !strpos($result,'blocked'))
 				add_post_meta($post->ID,'rsvpmail_sent',$mail['to'].' (preview) '.rsvpmaker_date('r'));
@@ -2232,9 +2235,7 @@ $mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https
 		{
 			return;
 		}
-	$mail["html"] = rsvpmaker_personalize_email($mail["html"],$mail["to"],__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title.'</div>');
-	$mail["text"] = rsvpmaker_personalize_email($text,$mail["to"],__('This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title);
-	rsvpmailer($mail);
+	rsvpmailer($mail,__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title.'</div>' );
 }
 
 function rsvpmaker_email_content ($atts, $content) {
@@ -2335,7 +2336,7 @@ function event_to_embed($post_id, $event_post = NULL, $context = '') {
 <!-- /wp:paragraph -->',$dateblock).$tmlogin;			
 		}
 		$event_embed["content"] .= do_blocks(do_shortcode($event_post->post_content));
-		if(get_post_meta($post_id,'_rsvp_on',true))
+		if(get_rsvpmaker_meta($post_id,'_rsvp_on',true))
 		{
 		if(get_post_meta($post_id,'_rsvp_count',true))
 			$event_embed["content"] .= rsvpcount($post_id);
@@ -3018,7 +3019,7 @@ function rsvpmailer_template_preview() {
 function event_title_link () {
 	global $post, $rsvp_options;
 	$time_format = $rsvp_options["time_format"];
-	$add_timezone = get_post_meta($post->ID,'_add_timezone',true);	
+	$add_timezone = get_rsvpmaker_meta($post->ID,'_add_timezone',true);	
 	if(!strpos($time_format,'T') && $add_timezone )
 		{
 		$time_format .= ' T';
@@ -3331,7 +3332,6 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		</html>
 		<?php
 		$content = ob_get_clean();
-		$content = rsvpmaker_inliner( $content );
 		$content = preg_replace('/<style.+<\/style>/is','',$content);
 		if(preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?]+)|is',$content,$matches)) {
 			foreach($matches[1] as $youtube_id) {

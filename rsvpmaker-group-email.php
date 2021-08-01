@@ -177,7 +177,7 @@ function rsvpmaker_relay_queue() {
 	}
 	else
 		rsvpmaker_debug_log($mail,'group_email_from_meta');
-
+	$count = 0;
 	if ( ! empty( $results ) ) {
 		foreach ( $results as $row ) {
 			if($count == $limit)
@@ -202,14 +202,11 @@ function rsvpmaker_relay_queue() {
 			$html .= sprintf( '<p>%s to %s</p>', $row->post_title, $row->meta_value );
 			$post = get_post( $row->ID );
 			$post_id = $row->ID;
-			//rsvpmaker_debug_log($mail['html'],'html from group email');	
-			$mail['html'] = rsvpmaker_personalize_email( $mail['html'], $mail['to'], '<div class="rsvpexplain">' . $message_description . '</div>' );
-			$mail['text'] = rsvpmaker_text_version($mail['html']);
 			if ( isset( $_GET['debug'] ) ) {
 				printf( '<pre>%s</pre>', htmlentities( $template ) );
 				printf( '<pre>%s</pre>', htmlentities( $mail['html'] ) );
 			}
-			rsvpmailer( $mail );
+			rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
 			add_post_meta( $post->ID, 'rsvpmail_sent', $mail['to'] . ' ' . rsvpmaker_date( 'r' ) );
 			sleep(2);
 		}

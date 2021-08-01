@@ -13,7 +13,7 @@ global $wp_query;
 global $email_context;
 $email_context = true;
 
-$html = rsvpmaker_template_inline();
+$mail['html'] = $html = rsvpmaker_template_inline();
 $text = get_post_meta($post->ID,'_rsvpmail_text',true);
 
 	$cron = get_post_meta( $post->ID, 'rsvpmaker_cron_email', true );
@@ -211,11 +211,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 				$mail['subject'] = $subject;
 
-				$mail['html'] = rsvpmaker_personalize_email( $html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
-
-				$mail['text'] = rsvpmaker_personalize_email( $text, $mail['to'], 'This message was sent to you as a member of ' . get_bloginfo( 'name' ) );
-
-				$result = rsvpmailer( $mail );
+				$result = rsvpmailer( $mail, '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
 
 				// print_r($result);
 
@@ -235,11 +231,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 			$mail['subject'] = $subject;
 
-			$mail['html'] = rsvpmaker_personalize_email( $html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
-
-			$mail['text'] = rsvpmaker_personalize_email( $text, $mail['to'], 'This message was sent to you as a member of ' . get_bloginfo( 'name' ) );
-
-			$result = rsvpmailer( $mail );
+			$result = rsvpmailer( $mail, '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
 
 			// print_r($result);
 
@@ -255,13 +247,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 			$mail['subject'] = 'PREVIEW:' . $subject;
 
-			$mail['html'] = rsvpmaker_personalize_email( $html, $mail['to'], '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
-
-			$mail['text'] = rsvpmaker_personalize_email( $text, $mail['to'], 'This message was sent to you as member of ' . get_bloginfo( 'name' ) );
-
-			$result = rsvpmailer( $mail );
-
-			// print_r($result);
+			$result = rsvpmailer( $mail, '<div class="rsvpexplain">This message was sent to you as a member of ' . get_bloginfo( 'name' ) . '</div>' );
 
 			update_option( 'rsvpmaker_cron_preview_result', $result . ': ' . var_export( $mail, true ) );
 

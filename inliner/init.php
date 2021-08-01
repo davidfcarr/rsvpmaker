@@ -17,5 +17,6 @@ function rsvpmaker_inliner( $content, $css = '' ) {
 		echo '<p>Applying '.$css.'</p>';
 		$content = CssInliner::fromHtml( $content )->inlineCss($css)->render();
 	}
+	$content = preg_replace('/<style.+style>/is','',$content);
 	return $content;
 }

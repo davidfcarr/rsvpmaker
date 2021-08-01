@@ -157,7 +157,7 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 
 			echo "\n<div class=\"event_dates\"> \n";
 
-			$t = rsvpmaker_date( $row['datetime'] );
+			$t = get_rsvp_event_time($post->ID);
 
 			if ( $rsvp_options['long_date'] ) {
 				echo utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
@@ -2568,8 +2568,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 					$cleanmessage .= 'Note: ' . stripslashes( $_POST['note'] );
 				}
-
-				update_post_meta( $post->ID, '_rsvp_' . $rsvp['email'], $cleanmessage );
 
 				$include_event = get_post_meta( $post->ID, '_rsvp_confirmation_include_event', true );
 
@@ -5179,8 +5177,6 @@ function admin_edit_rsvp( $id, $event ) {
 
 }
 
-
-
 if ( ! function_exists( 'rsvp_print' ) ) {
 
 	function rsvp_print() {
@@ -5189,7 +5185,14 @@ if ( ! function_exists( 'rsvp_print' ) ) {
 
 			if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 				die("Security error");
-
+			if ( 'word' == $_GET['rsvp_print'] ) {
+				global $post;
+				$fname = (empty($post->post_name)) ? time() : $post->post_name;
+				$fname = apply_filters('rsvp_print_to_word',$fname);
+				header( 'Content-Type: application/msword' );
+				header( 'Content-disposition: attachment; filename=' . $fname . '.doc' );
+			}
+				
 			$slug = sanitize_text_field($_GET['page']);
 
 			$hookname = get_plugin_page_hookname( $slug, '' );
@@ -7663,7 +7666,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 </fieldset>
 
-<input type="submit" value="' . __( 'Update Checked', 'rsvpmaker' ) .rsvpmaker_nonce('return'). '" /></form>' . '<p>' . __( 'Update function copies title and content of current template, replacing the existing content of checked posts.', 'rsvpmaker' ) . '</p>';
+<input type="submit" value="' . __( 'Update Checked', 'rsvpmaker' ) .'" />'.rsvpmaker_nonce('return').'</form>' . '<p>' . __( 'Update function copies title and content of current template, replacing the existing content of checked posts.', 'rsvpmaker' ) . '</p>';
 
 		}
 

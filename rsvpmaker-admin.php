@@ -335,7 +335,7 @@ else
 
 if(isset($_POST["deadyear"]) && isset($_POST["deadmonth"]) && isset($_POST["deadday"]))
 	{
-	if(empty($_POST["deadday"]))
+	if(empty(trim($_POST["deadday"])))
 		$setrsvp["deadline"] = '';
 	else
 		$setrsvp["deadline"] = rsvpmaker_strtotime(sanitize_text_field($_POST["deadyear"]).'-'.sanitize_text_field($_POST["deadmonth"]).'-'.sanitize_text_field($_POST["deadday"]).' '.sanitize_text_field($_POST["deadtime"]));
@@ -343,14 +343,11 @@ if(isset($_POST["deadyear"]) && isset($_POST["deadmonth"]) && isset($_POST["dead
 
 if(isset($_POST["startyear"]) && isset($_POST["startmonth"]) && isset($_POST["startday"]))
 	{
-	if(empty($_POST["startday"]))
+	if(empty(trim($_POST["startday"])))
 		$setrsvp["start"] = '';
 	else
 		$setrsvp["start"] = rsvpmaker_strtotime(sanitize_text_field($_POST["startyear"].'-'.$_POST["startmonth"].'-'.$_POST["startday"].' '.$_POST["starttime"]));
 	}
-//legacy
-if(isset($_POST["remindyear"]) && isset($_POST["remindmonth"]) && isset($_POST["remindday"]))
-	$setrsvp["reminder"] = rsvpmaker_date('Y-m-d H:i:s',rsvpmaker_strtotime(sanitize_text_field($_POST["remindyear"].'-'.$_POST["remindmonth"].'-'.$_POST["remindday"].' '.$_POST["remindtime"])));
 
 foreach($setrsvp as $name => $value)
 	{
@@ -1673,7 +1670,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 		echo esc_html($event->enddate);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
-		$end_type = get_post_meta($post_id,'_firsttime',true);
+		$end_type = get_rsvpmaker_meta($post_id,'_firsttime');
 		if(empty($end_type))
 			echo 'End Time Not Shown';
 		else {
@@ -1682,9 +1679,9 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 				echo esc_html($options[$end_type]);
 		}
 		printf('<input type="hidden" class="end_display_code" value="%s" />',$end_type);
-		$rsvp_on = get_post_meta($post_id,'_rsvp_on',true);
-		$convert_timezone = get_post_meta($post_id,'_convert_timezone',true);
-		$add_timezone = get_post_meta($post_id,'_add_timezone',true);
+		$rsvp_on = get_rsvpmaker_meta($post_id,'_rsvp_on');
+		$convert_timezone = get_rsvpmaker_meta($post_id,'_convert_timezone',true);
+		$add_timezone = get_rsvpmaker_meta($post_id,'_add_timezone',true);
 		if(!empty($rsvp_on))
 			echo '<br />RSVP On';
 		if(!empty($add_timezone))
@@ -1696,7 +1693,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 
 $datetime = get_rsvp_date($post_id);
 $template = get_template_sked($post_id);
-$rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
+$rsvpmaker_special = get_rsvpmaker_meta($post_id,'_rsvpmaker_special',true);
 
 $s = $dateline = '';
 
@@ -1919,7 +1916,7 @@ if($manualcheck) {
 		$dateparts = preg_split('/[-: ]/',$row->meta_value);
 		$corrupt .= sprintf('<div><label style="display: inline-block; width: 200px;">%s</label> <input type="text" name="fixrsvpyear[%d]" value="%s" size="4" >-<input type="text" name="fixrsvpmonth[%d]" value="%s" size="2" >-<input type="text" name="fixrsvpday[%d]" value="%s" size="2" > <input type="text" name="fixrsvphour[%d]" value="%s"  size="2" >:<input type="text" name="fixrsvpminutes[%d]" value="%s" size="2" >:00 %s</div>',$row->post_title, $row->ID, $dateparts[0], $row->ID,  (empty($dateparts[1])) ? '' : $dateparts[1], $row->ID,  (empty($dateparts[2])) ? '' : $dateparts[2], $row->ID,  (empty($dateparts[3])) ? '' : $dateparts[3], $row->ID, (empty($dateparts[4])) ? '' : $dateparts[4], $row->meta_value);
 		}
-	printf('<div class="notice notice-error"><h3>%s</h3><p>%s</p><form method="post" action="%s">%s<p><button>Repair</button></p></form></div>',__('Date Variables Corrupted','rsvpmaker'),__('A correct date would be in the format YEAR-MONTH-DAY HOUR:MINUTES:SECONDS or 2030-01-01 19:30:00 for January 1, 2030 at 7:30 pm','rsvpmaker'),admin_url(),$corrupt );
+	printf('<div class="notice notice-error"><h3>%s</h3><p>%s</p><form method="post" action="%s">%s<p><button>Repair</button></p>%s</form></div>',__('Date Variables Corrupted','rsvpmaker'),__('A correct date would be in the format YEAR-MONTH-DAY HOUR:MINUTES:SECONDS or 2030-01-01 19:30:00 for January 1, 2030 at 7:30 pm','rsvpmaker'),admin_url(),$corrupt,rsvpmaker_nonce('return') );
 	}	
 }
 
@@ -2008,34 +2005,14 @@ if(!empty($basic_options)) {
 	<p><input type="submit" name="submit" id="submit" class="button button-primary" value="%s"></p>
 	<input type="hidden" name="rsvpmaker_essentials" value="1">
 	%s</form>',__('RSVPMaker Essential Settings','rsvpmaker'),site_url(sanitize_text_field($_SERVER['REQUEST_URI'])),$basic_options,__('Save Changes','rsvpmaker'),rsvpmaker_nonce('return'));
-	rsvpmaker_admin_notice_format($message, 'rsvp_timezone', $cleared, $type='warning');
+	$notice[] = rsvpmaker_admin_notice_format($message, 'rsvp_timezone', $cleared, $type='warning');
 }
 
 $ver = phpversion();
 if (version_compare($ver, '7.1', '<') && (!isset($_GET['page']) || ($_GET['page'] != 'rsvpmaker_email_template') ) ){
 	$message = sprintf('<p>The Emogrifier CSS inliner library, which is included to improve formatting of HTML email, relies on PHP features introduced in version 7.1 -- and is disabled because your site is on %s</p>',$ver);
-	rsvpmaker_admin_notice_format($message, 'Emogrifier', $cleared, $type='warning');
+	$notice[] = rsvpmaker_admin_notice_format($message, 'Emogrifier', $cleared, $type='warning');
 }
-
-if(isset($_GET['rsvpmaker_tx_template_update_notice']))
-	delete_option('rsvpmaker_tx_template_update_notice',1);
-elseif(current_user_can('manage_options') && get_option('rsvpmaker_tx_template_update_notice'))
-	{
-		echo '<div class="notice notice-info"><p>'.__('Your templates for email broadcasts and confirmations have been updated.','rsvpmaker').' <a href="'.admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template&rsvpmaker_tx_template_update_notice=1').'">'.__("Verify/approve changes",'rsvpmaker').'</a></p></div>';
-	}
-
-if(function_exists('do_blocks') && !class_exists('Classic_Editor'))
-	{
-		$formup = true;
-		if(is_numeric($rsvp_options['rsvp_form']))
-		{
-			$form = get_post($rsvp_options['rsvp_form']);
-			if($form || strpos($form->post_content,'rsvpmaker/formfield'))
-				$formup = false; // form looks okay
-		}
-		if($formup)
-			echo '<div class="notice notice-info"><p>'.__('A new RSVP / registration form is available that is easier to customize','rsvpmaker').' <a href="'.admin_url('?upgrade_rsvpform=1').'">'.__("Upgrade?",'rsvpmaker').'</a><p></p>'.__('Note: if you previously customized the form, you will need to redo your custotomizations for the new format.').'.</p></div>';
-	}
 
 if(isset($_GET['update_messages']) && isset($_GET['t']))
 {
@@ -2046,31 +2023,25 @@ delete_post_meta((int) $_GET['t'],'update_messages');
 if(isset($post->post_type) && ($post->post_type == 'rsvpmaker') ) {
 if($landing = get_post_meta($post->ID,'_webinar_landing_page_id',true))
 	{
-	echo '<div class="notice notice-info"><p>'.__('Edit the','rsvpmaker').' <a href="'.admin_url('post.php?action=edit&post='.$landing).'">'.__("webinar landing page",'rsvpmaker').'</a> '.__('associated with this event').'.</p>';
-	echo '<p>';
-	esc_html_e('Related messages:','rsvpmaker');
-	printf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post->ID,__('Confirmation','rsvpmaker'));
-	echo rsvpmaker_reminders_list($post->ID);
-	echo '</p></div>';
+	$message = '<div class="notice notice-info"><p>'.__('Edit the','rsvpmaker').' <a href="'.admin_url('post.php?action=edit&post='.$landing).'">'.__("webinar landing page",'rsvpmaker').'</a> '.__('associated with this event').'.</p>';
+	$message .= '<p>';
+	$message .= __('Related messages:','rsvpmaker');
+	$message .= sprintf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post->ID,__('Confirmation','rsvpmaker'));
+	$message .= rsvpmaker_reminders_list($post->ID);
+	$message .=  '</p></div>';
+	$notice[] = rsvpmaker_admin_notice_format($message, 'Landing page', $cleared, $type='notice');
 	}
 if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 	{
-	echo '<div class="notice notice-info"><p>'.__('Edit the','rsvpmaker').' <a href="'.admin_url('post.php?action=edit&post='.$event).'">'.__("webinar event post",'rsvpmaker').'</a> '.__('associated with this landing page').'.</p>';
-	echo '<p>';
-	esc_html_e('Related messages:','rsvpmaker');
-	printf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$event,__('Confirmation','rsvpmaker'));	
-	echo rsvpmaker_reminders_list($event);
-	echo '</p></div>';
+	$message = '<div class="notice notice-info"><p>'.__('Edit the','rsvpmaker').' <a href="'.admin_url('post.php?action=edit&post='.$event).'">'.__("webinar event post",'rsvpmaker').'</a> '.__('associated with this landing page').'.</p>';
+	$message .=  '<p>';
+	$message .=  __('Related messages:','rsvpmaker');
+	$message .=  sprintf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$event,__('Confirmation','rsvpmaker'));	
+	$message .=  rsvpmaker_reminders_list($event);
+	$message .=  '</p></div>';
+	$notice[] = rsvpmaker_admin_notice_format($message, 'Webinar event', $cleared, $type='notice');
 	}
 }
-
-if(current_user_can('manage_options') && function_exists('my_chimpblasts_menu'))
-	echo '<div class="notice notice-warning"><p>'.__('ChimpBlast has been replaced by the RSVP Mailer function of RSVPMaker and should be uninstalled','rsvpmaker').'</p></div>';
-
-	if(isset($_GET["update"]) && ($_GET["update"] == "eventslug"))
-	{
-	$wpdb->query("UPDATE $wpdb->posts SET post_type='rsvpmaker' WHERE post_type='event' OR post_type='rsvp-event' ");
-	}
 	
 	if(isset($_GET["smtptest"]))
 		{
@@ -2089,6 +2060,17 @@ if(current_user_can('manage_options') && function_exists('my_chimpblasts_menu'))
 		upgrade_rsvpform (true, $target);
 		echo '<div class="updated" ><p>'."<strong>".__('RSVP Form Updated (default and future events)','rsvpmaker').'</strong></p></div>';
 		}
+	if(!empty($notice))
+	{
+		if(isset($_GET['show_rsvpmaker_notices']))
+			echo implode("\n",$notice);
+		else {
+			$size = sizeof($notice);
+			$message = __('RSVPMaker notices for administrator','rsvpmaker').': '.$size;
+			$message .= sprintf(' - <a href="%s">%s</a>',admin_url('?show_rsvpmaker_notices=1'),__('Display','rsvpmaker'));
+			echo rsvpmaker_admin_notice_format($message, 'RSVPMaker', $cleared, $type='info');	
+		}
+	}
 ?>
 <script>
 jQuery(document).ready(function( $ ) {
@@ -2165,7 +2147,7 @@ else
 	add_filter('posts_where', 'rsvpmaker_where',99 );
 	add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
 	}
-add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
+//add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
 }
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
 
@@ -2226,7 +2208,7 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 	elseif($week == '6')
 		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 	else
-	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.date('F',$t).' '.date('Y',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 }
 
 function rsvpmaker_get_projected($template) {
@@ -2304,7 +2286,6 @@ else {
 		{
 		$firstdaytxt = rsvpmaker_projected_datestring($dow,0,$template,$tcount);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
 		$ts = rsvpmaker_strtotime($firstdaytxt);
-		//printf('<div>%s %s</div>',$firstdaytxt,rsvpmaker_date('r',$ts));
 		$projected[$ts] = $ts;
 		$i++;
 		if($i > 10)
@@ -2314,24 +2295,23 @@ else {
 	else
 		{
 			$i = 0;
-			for($ts; $ts < $stopdate; $ts+= MONTH_IN_SECONDS )
+			$ts = time();
+			$startmonth = date('F Y',$ts);
+			for($i = 0; $i < 50; $i++) //($ts; $ts < $stopdate; $ts+= MONTH_IN_SECONDS )
 			{
+				$ts = strtotime($startmonth." + $i month");
 				$datetext = rsvpmaker_projected_datestring($dow,$week,$template,$ts);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
-				//printf('<div>%s</div>',$datetext);
-				//$datetext =  "$wtext ".$firstdaytxt.' '.date('F',$ts);
-				//rsvpmaker_debug_log($datetext,'datetext string in projected dates');
+
 				$ts = rsvpmaker_strtotime($datetext);
 				if(!$ts)
 				{
 					echo 'Error parsing date string '.$datetext;
 					return;
 				}
-				if(isset($stopdate) && $ts > $stopdate)
+				if(isset($stopdate) && $ts > $stopdate) {
 					break;
+				}
 				$projected[$ts] = $ts;
-				$i++;
-				if($i > 10)
-					break;
 				}
 		}
 	}
@@ -2741,7 +2721,7 @@ if($post_id && $hours)
 	}
 	else
 	{
-		$start_time = rsvpmaker_strtotime( get_rsvp_date($post_id) );
+		$start_time = get_rsvp_event_time($post_id);
 		rsvpmaker_reminder_cron($hours, $start_time, $post_id);
 	}
 		
@@ -2796,7 +2776,7 @@ else {
 		$reminder_copy .= sprintf('<option value="%d">%s %s</option>',$reminder->ID,$type,$hours);
 		$delete_reminder_options .= sprintf('<option value="%s">%s %s</option>',esc_attr($post_id.':'.$row->meta_key),esc_html($type),esc_html($hours));
 		printf('<h2>%s (%s hours)</h2><h3>%s</h3>%s',esc_html($type),esc_html($hours),esc_html($reminder->post_title),wp_kses_post($reminder->post_content));
-		$parent = $reminder->post_parent;//get_post_meta($reminder->ID,'_rsvpmaker_parent',true);
+		$parent = $reminder->post_parent;
 		if($parent != $post_id)
 			printf('<p>%s<br /><a href="%s">%s</a></p>',__('This is the standard reminder from the event template','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id.'&hours='.$hours.'&was='. $reminder->ID),__('Customize for this event','rsvpmaker'));
 		foreach($documents as $d) {
@@ -3276,7 +3256,7 @@ function rsvpmaker_admin_notice_format($message, $slug, $cleared, $type='info')
 {
 if(in_array($slug,$cleared))
 	return;
-printf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notice="%s">
+return sprintf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notice="%s">
 <p>%s</p>
 </div>',esc_attr($type),esc_attr($slug),$message);
 }
@@ -3497,7 +3477,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				$duration = (empty($template["duration"])) ? '' : $template["duration"];
 				$end_time = (empty($template['end'])) ? '' : $template['end'];
-				$cddate = get_post_meta($target_id,'_rsvp_dates',true);
+				$cddate = get_rsvpmaker_meta($target_id,'_rsvp_dates',true);
 				if(!empty($cddate))
 					{
 					$parts = explode(' ',$cddate);
@@ -3609,7 +3589,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 		}
 	else
 		{
-			$cddate = sanitize_text_field($_POST["nomeeting"]);
+			$cddate = sanitize_text_field($_POST["nomeeting"]).' 00:00:00';
 			$my_post['post_name'] = $my_post['post_title'] . '-' .$cddate;
 
 // Insert the post into the database
@@ -3718,10 +3698,10 @@ if(empty($post_id))
 	$rsvp_timezone = '';
 }
 else {
-	$icons = get_post_meta($post_id,"_calendar_icons",true);
-	$add_timezone = get_post_meta($post_id,"_add_timezone",true);
-	$convert_timezone = get_post_meta($post_id,"_convert_timezone",true);
-	$rsvp_timezone = get_post_meta($post_id,"_rsvp_timezone_string",true);	
+	$icons = get_rsvpmaker_meta($post_id,"_calendar_icons",true);
+	$add_timezone = get_rsvpmaker_meta($post_id,"_add_timezone",true);
+	$convert_timezone = get_rsvpmaker_meta($post_id,"_convert_timezone",true);
+	$rsvp_timezone = get_rsvpmaker_meta($post_id,"_rsvp_timezone_string",true);	
 }
 if(isset($_GET['page']) && ( ($_GET['page'] == 'rsvpmaker_details') ) )
 {
@@ -5492,8 +5472,8 @@ switch( $column_name ) :
 
 		}
 		case 'rsvpmaker_end': {
-			$end_type = get_post_meta($post->ID,'_firsttime',true);
-			$end = get_post_meta($post->ID,'_endfirsttime',true);
+			$end_type = get_rsvpmaker_meta($post->ID,'_firsttime',true);
+			$end = get_rsvpmaker_meta($post->ID,'_endfirsttime',true);
 			echo '<label class="alignleft">
 			<span class="title">End Time</span>
 			<span class="input-text-wrap"><input type="time" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
@@ -5504,8 +5484,8 @@ switch( $column_name ) :
 
 		}
 		case 'rsvpmaker_display': {
-			$end_type = get_post_meta($post->ID,'_firsttime',true);
-			$end = get_post_meta($post->ID,'_endfirsttime',true);
+			$end_type = get_rsvpmaker_meta($post->ID,'_firsttime',true);
+			$end = get_rsvpmaker_meta($post->ID,'_endfirsttime',true);
 			//if(!empty($end_type) && (strpos($end,':') > 0))
 			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
 			echo '<label class="alignleft">

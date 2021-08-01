@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.8.6
+Version: 8.8.8
 */
 
 function get_rsvpversion() {
-	return '8.8.6';
+	return '8.8.8';
 }
 
 global $wp_version;
@@ -20,7 +20,6 @@ global $default_tz;
 $default_tz = date_default_timezone_get();
 
 if ( version_compare( $wp_version, '3.0', '<' ) ) {
-
 	exit( __( 'RSVPmaker plugin requires WordPress 3.0 or greater', 'rsvpmaker' ) );
 }
 
@@ -613,12 +612,7 @@ function rsvpmaker_create_post_type() {
 
 }
 
-
-
 // make sure new rules will be generated for custom post type - flush for admin but not for regular site visitors
-
-
-
 function cpevent_activate() {
 
 	global $wpdb;
@@ -628,39 +622,22 @@ function cpevent_activate() {
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 	$sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvpmaker` (
-
   `id` int(11) NOT NULL auto_increment,
-
   `email` varchar(255)   CHARACTER SET utf8 COLLATE utf8_general_ci  default NULL,
-
   `yesno` tinyint(4) NOT NULL default '0',
-
   `first` varchar(255)  CHARACTER SET utf8 COLLATE utf8_general_ci  NOT NULL default '',
-
   `last` varchar(255)  CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default '',
-
   `details` text  CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-
   `event` int(11) NOT NULL default '0',
-
   `owed` float(6,2) NOT NULL default '0.00',
-
   `amountpaid` float(6,2) NOT NULL default '0.00',
-
   `master_rsvp` int(11) NOT NULL default '0',
-
   `guestof` varchar(255)   CHARACTER SET utf8 COLLATE utf8_general_ci  default NULL,
-
   `note` text   CHARACTER SET  utf8 COLLATE utf8_general_ci NOT NULL,
-
   `participants` INT NOT NULL DEFAULT '0',
-
   `user_id` INT NOT NULL DEFAULT '0',
-
   `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-
   PRIMARY KEY  (`id`)
-
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 
 	dbDelta( $sql );
@@ -757,70 +734,16 @@ rsvpmail_problem_init();
 
 	$wpdb->query( $sql );
 
-	$rsvp_options['dbversion'] = 18;
+	$rsvp_options['dbversion'] = 19;
 
 	update_option( 'RSVPMAKER_Options', $rsvp_options );
 
 }
 
-
-
 register_activation_hook( __FILE__, 'cpevent_activate' );
 
-
-
 // upgrade database if necessary
-
-if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 4 ) ) {
-
-	// correct character encoding error in early releases
-
-	global $wpdb;
-
-	$wpdb->query( "ALTER TABLE `wp_rsvpmaker` CHANGE `first` `first` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" );
-
-	$wpdb->query( "ALTER TABLE `wp_rsvpmaker` CHANGE `last` `last` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" );
-
-	$wpdb->query( "ALTER TABLE `wp_rsvpmaker` CHANGE `email` `email` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" );
-
-	$wpdb->query( "ALTER TABLE `wp_rsvpmaker` CHANGE `guestof` `guestof` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" );
-
-	$wpdb->query( 'ALTER TABLE `wp_rsvpmaker` CHANGE `details` `details` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ' );
-
-	$wpdb->query( 'ALTER TABLE `wp_rsvpmaker` CHANGE `note` `note` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ' );
-
-}
-
-if ( ! empty( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 6 ) ) {
-
-	convert_date_meta();
-
-}
-
-if ( ! empty( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 7 ) ) {
-
-	global $wpdb;
-
-	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='_rsvpmaker_parent'";
-
-	$results = $wpdb->get_results( $sql );
-
-	if ( $results ) {
-
-		foreach ( $results as $row ) {
-
-			wp_update_post(
-				array(
-					'ID'          => $row->post_id,
-					'post_parent' => $row->meta_value,
-				)
-			);
-
-		}
-	}
-}
-
-if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 18 ) ) {
+if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 19 ) ) {
 	cpevent_activate();
 }
 
@@ -1060,7 +983,7 @@ function format_cddate( $year, $month, $day, $hours, $minutes ) {
 
 function update_rsvpmaker_dates( $post_id, $dates_array, $durations_array, $end_array = array() ) {
 
-	$current_dates = get_post_meta( $post_id, '_rsvp_dates', false );
+	$current_dates = get_rsvpmaker_meta( $post_id, '_rsvp_dates', false );
 
 	foreach ( $dates_array as $index => $cddate ) {
 
@@ -1429,23 +1352,6 @@ function add_rsvpmaker_roles() {
 	}
 
 }
-
-
-
-function get_rsvpmaker_meta( $post_id, $label, $prefix = '_' ) {
-	global $rsvp_options;
-
-	$meta = get_post_meta( $post_id, $prefix . $label, true );
-
-	if ( ( $meta == '' ) && isset( $rsvp_options[ $label ] ) ) {
-
-		$meta = $rsvp_options[ $label ];
-	}
-
-	return $meta;
-
-}
-
 
 
 function rsvpmaker_wp_editor( $content, $editor_id, $settings = array() ) {
