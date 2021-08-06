@@ -4,31 +4,31 @@ namespace BraintreeHttp;
 
 /**
  * Class HttpResponse
- *
  * @package BraintreeHttp
  *
  * Object that holds your response details
  */
-class HttpResponse {
+class HttpResponse
+{
+    /**
+     * @var integer
+     */
+    public $statusCode;
 
-	/**
-	 * @var integer
-	 */
-	public $statusCode;
+    /**
+     * @var array | string
+     */
+    public $result;
 
-	/**
-	 * @var array | string
-	 */
-	public $result;
+    /**
+     * @var array
+     */
+    public $headers;
 
-	/**
-	 * @var array
-	 */
-	public $headers;
-
-	public function __construct( $statusCode, $body, $headers ) {
-		$this->statusCode = $statusCode;
-		$this->headers    = $headers;
-		$this->result     = $body;
-	}
+    public function __construct($statusCode, $body, $headers)
+    {
+        $this->statusCode = $statusCode;
+        $this->headers = $headers;
+        $this->result = $body;
+    }
 }

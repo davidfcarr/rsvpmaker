@@ -4,17 +4,16 @@ namespace BraintreeHttp;
 
 /**
  * Interface Injector
- *
  * @package BraintreeHttp
  *
  * Interface that can be implemented to apply injectors to Http client.
  *
  * @see HttpClient
  */
-interface Injector {
-
-	/**
-	 * @param $httpRequest HttpRequest
-	 */
-	public function inject( $httpRequest);
+interface Injector
+{
+    /**
+     * @param $httpRequest HttpRequest
+     */
+    public function inject($httpRequest);
 }

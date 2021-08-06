@@ -221,65 +221,6 @@ jQuery( document ).ready(
 			}
 		);
 
-		$(
-			function() {
-				var ppdialog;
-
-				function savePayPalConfig () {
-					var user      = $( "#pp_user" ).val().trim();
-					var password  = $( "#pp_password" ).val().trim();
-					var signature = $( "#pp_signature" ).val().trim();
-
-					$.post(
-						rsvpmaker_rest.ajaxurl,
-						{
-							'action': 'rsvpmaker_paypal_config',
-							'user' : user,
-							'password' : password,
-							'timelord' : timelord,
-							'signature' : signature
-						},
-						function(response){
-							$( "#paypal_config" ).val( response );
-						}
-					);
-
-					ppdialog.dialog( "close" );
-					return;
-				}
-				ppdialog = $( "#pp-dialog-form" ).dialog(
-					{
-						autoOpen: false,
-						height: 300,
-						width: 350,
-						modal: true,
-						buttons: {
-							"Save": savePayPalConfig,
-							Cancel: function() {
-								ppdialog.dialog( "close" );
-							}
-						}
-					}
-				);
-
-				ppform = ppdialog.find( "form" ).on(
-					"submit",
-					function( event ) {
-						event.preventDefault();
-						savePayPalConfig();
-					}
-				);
-
-				$( "#paypal_setup" ).button().on(
-					"click",
-					function(event) {
-						event.preventDefault();
-						ppdialog.dialog( "open" );
-					}
-				);
-			}
-		);
-
 		$( "#multireminder #checkall" ).click(
 			function(){
 				$( '#multireminder input:checkbox' ).not( this ).prop( 'checked', this.checked );

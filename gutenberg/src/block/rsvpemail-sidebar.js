@@ -13,7 +13,7 @@ let type = wp.data.select( 'core/editor' ).getCurrentPostType();
 </div>
 );
 }
-if(rsvpmaker_type == 'rsvpemail')
+if(rsvpmaker.post_type == 'rsvpemail')
 wp.plugins.registerPlugin( 'rsvpmailer-sidebar-plugin', {
 	render: RSVPEmailSidebarPlugin,
 } );

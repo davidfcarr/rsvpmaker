@@ -4,47 +4,44 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInite1782b9de355acb6ca63d89a2ca20fca {
+class ComposerStaticInite1782b9de355acb6ca63d89a2ca20fca
+{
+    public static $prefixLengthsPsr4 = array (
+        'S' => 
+        array (
+            'Sample\\' => 7,
+        ),
+        'P' => 
+        array (
+            'PayPalCheckoutSdk\\' => 18,
+        ),
+        'B' => 
+        array (
+            'BraintreeHttp\\' => 14,
+        ),
+    );
 
-	public static $prefixLengthsPsr4 = array(
-		'S' =>
-		array(
-			'Sample\\' => 7,
-		),
-		'P' =>
-		array(
-			'PayPalCheckoutSdk\\' => 18,
-		),
-		'B' =>
-		array(
-			'BraintreeHttp\\' => 14,
-		),
-	);
+    public static $prefixDirsPsr4 = array (
+        'Sample\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/paypal/paypal-checkout-sdk/samples',
+        ),
+        'PayPalCheckoutSdk\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/paypal/paypal-checkout-sdk/lib/PayPalCheckoutSdk',
+        ),
+        'BraintreeHttp\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/braintree/braintreehttp/lib/BraintreeHttp',
+        ),
+    );
 
-	public static $prefixDirsPsr4 = array(
-		'Sample\\'            =>
-		array(
-			0 => __DIR__ . '/..' . '/paypal/paypal-checkout-sdk/samples',
-		),
-		'PayPalCheckoutSdk\\' =>
-		array(
-			0 => __DIR__ . '/..' . '/paypal/paypal-checkout-sdk/lib/PayPalCheckoutSdk',
-		),
-		'BraintreeHttp\\'     =>
-		array(
-			0 => __DIR__ . '/..' . '/braintree/braintreehttp/lib/BraintreeHttp',
-		),
-	);
+    public static function getInitializer(ClassLoader $loader)
+    {
+        return \Closure::bind(function () use ($loader) {
+            $loader->prefixLengthsPsr4 = ComposerStaticInite1782b9de355acb6ca63d89a2ca20fca::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInite1782b9de355acb6ca63d89a2ca20fca::$prefixDirsPsr4;
 
-	public static function getInitializer( ClassLoader $loader ) {
-		return \Closure::bind(
-			function () use ( $loader ) {
-				$loader->prefixLengthsPsr4 = ComposerStaticInite1782b9de355acb6ca63d89a2ca20fca::$prefixLengthsPsr4;
-				$loader->prefixDirsPsr4    = ComposerStaticInite1782b9de355acb6ca63d89a2ca20fca::$prefixDirsPsr4;
-
-			},
-			null,
-			ClassLoader::class
-		);
-	}
+        }, null, ClassLoader::class);
+    }
 }

@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.8
-Stable tag: 8.8.9
+Stable tag: 8.9.1
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -118,6 +118,17 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 8.9.1 =
+
+* Updates to PayPal integration
+* Option to show both Stripe and PayPal buttons - toggle on in Stripe block
+* Separate PayPal payment block
+
+= 8.9 =
+
+* Updated translation POT file
+* Updated French translation with content from https://translate.wordpress.org/projects/wp-plugins/rsvpmaker
 
 = 8.8.9 =
 

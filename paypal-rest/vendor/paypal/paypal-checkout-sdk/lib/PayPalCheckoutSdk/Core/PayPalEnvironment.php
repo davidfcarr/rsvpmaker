@@ -2,7 +2,7 @@
 
 namespace PayPalCheckoutSdk\Core;
 
-use PayPalHttp\Environment;
+use BraintreeHttp\Environment;
 
 abstract class PayPalEnvironment implements Environment
 {

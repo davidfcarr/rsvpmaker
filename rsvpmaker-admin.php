@@ -527,6 +527,9 @@ echo esc_html($label);
 				  $options[$name] = sanitize_text_field($value);
 				  
                   update_option($this->db_option, $options);
+
+				if(isset($_POST['payment_gateway']))
+
 				  if(isset($_POST['rsvpmaker_stripe_keys']))
 				  {
 					//don't overwrite keys that are not displayed
@@ -571,8 +574,7 @@ echo esc_html($label);
 				  
 				  $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
 
-
-                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').'</p>'.default_gateway_check( get_rsvpmaker_payment_gateway () ).'</div>';				  
+                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php').'">',__('Reload','rsvpmaker').'</a></p>'.default_gateway_check( get_rsvpmaker_payment_gateway () ).'</div>';
 			  }	
 
 
@@ -1050,7 +1052,7 @@ $checkboxes = (empty($paypal_rest_keys['sandbox'])) ? '<input type="radio" name=
 if(!empty($paypal_rest_keys['client_id']) && !empty($paypal_rest_keys['client_secret']))
 {
 ?>
-<div id="paypal_production"><?php esc_html_e('Production keys set','rsvpmaker'); ?> <p><button id="reset_paypal_production"><?php esc_html_e('Reset','rsvpmaker'); ?></button></p></div>
+<div id="paypal_production"><?php esc_html_e('Production keys set','rsvpmaker'); echo ' '.rsvpmaker_paypal_test_connection(); ?> <p><button id="reset_paypal_production"><?php esc_html_e('Reset PayPal','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
@@ -1065,7 +1067,7 @@ else
 if(!empty($paypal_rest_keys['sandbox_client_id']) && !empty($paypal_rest_keys['sandbox_client_secret']))
 {
 ?>
-<div id="paypal_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); ?> <p><button id="reset_paypal_sandbox"><?php esc_html_e('Reset','rsvpmaker'); ?></button></p></div>
+<div id="paypal_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); echo ' '.rsvpmaker_paypal_test_connection('sandbox'); ?> <p><button id="reset_paypal_sandbox"><?php esc_html_e('Reset PayPal Sandbox','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else {
@@ -1089,7 +1091,7 @@ $checkboxes = ($stripe_keys['mode'] == 'production') ? '<input type="radio" name
 if(!empty($stripe_keys['pk']) && !empty($stripe_keys['sk']))
 {
 ?>
-<div id="stripe_production"><?php esc_html_e('Production keys set','rsvpmaker'); ?> <p><button id="reset_stripe_production"><?php esc_html_e('Reset','rsvpmaker'); ?></button></p></div>
+<div id="stripe_production"><?php esc_html_e('Production keys set','rsvpmaker'); echo rsvpmaker_stripe_validate($stripe_keys['pk'], $stripe_keys['sk']); ?> <p><button id="reset_stripe_production"><?php esc_html_e('Reset Stripe','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
@@ -1104,7 +1106,7 @@ else
 if(!empty($stripe_keys['sandbox_pk']) && !empty($stripe_keys['sandbox_sk']))
 {
 ?>
-<div id="stripe_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); ?> <p><button id="reset_stripe_sandbox"><?php esc_html_e('Reset','rsvpmaker'); ?></button></p></div>
+<div id="stripe_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); echo rsvpmaker_stripe_validate($stripe_keys['sandbox_pk'], $stripe_keys['sandbox_sk']); ?> <p><button id="reset_stripe_sandbox"><?php esc_html_e('Reset Stripe Sandbox','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
@@ -1128,35 +1130,8 @@ if (class_exists('Stripe_Checkout_Functions'))
 	echo '<div><em>'.__('Note: RSVPMaker now includes its own independent support for Stripe. You can enter the API keys below.').'</em></div>';
 	}
 
-if(!empty($options["paypal_config"]) )
-{
 ?>
-<h3>Legacy <?php esc_html_e('PayPal Configuration File','rsvpmaker'); ?>:</h3>
-<p>This is the older NVP API RSVPMaker originally integrated with.</p>
-	<div>  <input type="text" name="payment_option[paypal_config]" id="paypal_config" value="<?php if(isset($options["paypal_config"]) ) echo esc_attr($options["paypal_config"]);?>" size="80" /><button id="paypal_setup"><?php esc_html_e('PayPal Setup','rsvpmaker'); ?></button>
-<?php
-if( !empty($options["paypal_config"]) )
-{
-$config = $options["paypal_config"];
-
-if(isset($config) && file_exists($config) ) {
-	echo ' <span style="color: green;">'.__('OK','rsvpmaker').'</span>';
-}
-else
-	echo ' <span style="color: red;">'.__('error: file not found','rsvpmaker').'</span>';
-}
-?>	
-    <br /><em><?php esc_html_e('The PayPal setup button will help you create a configuration file containing your API credentials. See documentation.','rsvpmaker'); echo ': <a href="http://rsvpmaker.com/blog/category/paypal/">http://rsvpmaker.com/blog/category/paypal/</a>'; ?>
-		</em></div>
-<div id="pp-dialog-form">
-<?php esc_html_e('User','rsvpmaker');?>:<br /><input type="text" id="pp_user" name="user">
-<br /><?php esc_html_e('Password','rsvpmaker')?>:<br /><input type="text" id="pp_password" name="password">
-<br /><?php esc_html_e('Signature','rsvpmaker');?>:<br /><input type="text" id="pp_signature" name="signature">
-</div>
-<?php
-}//end if legacy paypal active
-?>
-<p><?php esc_html_e('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
+<p><?php echo __('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
 
 <?php
 if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')

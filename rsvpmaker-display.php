@@ -1,7 +1,5 @@
 <?php
 
-
-
 if ( ! wp_is_json_request() ) {
 
 	add_shortcode( 'rsvpautorenew_test', 'rsvpautorenew_test' );
@@ -2798,9 +2796,9 @@ function rsvpmaker_daily_schedule( $atts ) {
 			$end = '';
 		}
 
-		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">' . rsvpmaker_date( $time_format, $t ) . '</span>' .  $end . '</span>';
+		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">' . rsvpmaker_date( $time_format, $t ) . '</span>' .  $end;
 
-		$eventcontent .= ' <a href="' . get_permalink( $event->ID ) . '"><span class="rsvpmaker-schedule-title">' . esc_html( $event->post_title ) . '</a></h3>';
+		$eventcontent .= ' <span class="rsvpmaker-schedule-title"><a href="' . get_permalink( $event->ID ) . '">' . esc_html( $event->post_title ) . '</a></span></h3>';
 
 		if ( ! empty( $atts['convert_tz'] ) ) {
 

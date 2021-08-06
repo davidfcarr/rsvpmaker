@@ -110,7 +110,6 @@ if ( isset( $rsvp_options['dashboard'] ) && ! empty( $rsvp_options['dashboard'] 
 add_action( 'wp_ajax_rsvpmaker_date', 'ajax_rsvpmaker_date_handler' );
 add_action( 'wp_ajax_rsvpmaker_meta', 'ajax_rsvpmaker_meta_handler' );
 add_action( 'wp_ajax_rsvpmaker_dateformat', 'ajax_rsvpmaker_dateformat_handler' );
-add_action( 'wp_ajax_rsvpmaker_paypal_config', 'rsvpmaker_paypal_config_ajax' );
 add_action( 'wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
 add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 
@@ -136,9 +135,6 @@ function rsvpmaker_init_router() {
 	add_rsvpmaker_roles();
 	rsvpmaker_create_post_type();
 	create_rsvpemail_post_type();
-	if ( isset( $_REQUEST['paymentAmount'] ) ) {
-		paypal_start();
-	}
 	if ( isset( $_GET['rsvpmaker_cron_email_preview'] ) ) {
 		previewtest();// email preview
 	}

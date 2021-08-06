@@ -41,7 +41,7 @@ function rsvpmaker_block_category( $categories, $post ) {
 
 add_action( 'init', function(){
 
-add_filter( 'block_categories', 'rsvpmaker_block_category', 10, 2);
+add_filter( 'block_categories_all', 'rsvpmaker_block_category', 10, 2);
 
 $args = array(
 		'object_subtype' => 'rsvpmaker',
@@ -173,8 +173,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		true // Enqueue the script in the footer.
 	);
 
-	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_type', $post->post_type);
-	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_json_url', site_url('/wp-json/rsvpmaker/v1/'));
+	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker', array('post_type' => $post->post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
 	if($post->post_type == 'rsvpemail')
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'related_documents', get_related_documents ($post->ID,'rsvpemail'));
 
@@ -285,8 +284,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 	{
 		$related_documents = get_related_documents ();
 		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');
-		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',
-        array(
+		$args = array(
 			'projected_label' => $projected_label,'projected_url' => $projected_url,
 			'template_label' => $template_label,
 			'template_url' => $template_url,
@@ -318,16 +316,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'edit_payment_confirmation' => $edit_payment_confirmation,
 			'related_document_links' => $related_documents,
 			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
-			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'),
-			)
-	);
-
-	}
-
-	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker')) {
-		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpemail_scheduling',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post_id)
-    );
-
+			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'));
+		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',$args);
 	}
 				
 		}
@@ -339,7 +329,6 @@ function rsvpmaker_block_cgb_editor_assets() {
 		array( 'wp-edit-blocks' ), // Dependency to include the CSS after it.
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.editor.build.css' )
 	);
-
 } // End function rsvpmaker_block_cgb_editor_assets().
 
 // Hook: Editor assets.

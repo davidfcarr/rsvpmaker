@@ -522,7 +522,7 @@ class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
 
 		$namespace = 'rsvpmaker/v1';
 
-		$path = 'paypalsuccess/(?P<post_id>.+)/(?P<rsvp_id>.+)';
+		$path = 'paypalsuccess/(?P<post_id>.+)/(?P<tracking>.+)';
 
 		register_rest_route(
 			$namespace,
@@ -569,10 +569,15 @@ class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
 				$message_post->post_content = '<p>' . __( 'Thank you for your payment', 'rsvpmaker' ) . '</p>';
 			}
 
+			$vars = get_post_meta_by_id( intval($request['tracking']) );
+
 			$vars['payment_confirmation_message'] = do_blocks( $message_post->post_content );
 
-			rsvp_confirmation_after_payment( $request['rsvp_id'] );
-
+			if(isset($atts['rsvp_id'])) //rsvp_id
+				rsvp_confirmation_after_payment( $atts['rsvp_id'] );
+			else
+				do_action('rsvpmaker_paypal_confirmation_tracking',$atts);
+			
 		}
 
 		return new WP_REST_Response( $vars, 200 );

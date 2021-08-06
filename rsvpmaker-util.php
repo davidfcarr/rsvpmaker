@@ -82,10 +82,10 @@ function get_past_rsvp_event_times( ) {
 	$rsvp_past_event_timestamps = get_transient('rsvp_past_event_timestamps');	
 	if(empty($rsvp_event_timestamps)) {
 		$event_table = get_rsvpmaker_event_table();
-		$sql = "SELECT event FROM $event_table WHERE date <= NOW() ORDER BY date";
+		$sql = "SELECT * FROM $event_table WHERE date <= NOW() ORDER BY date";
 		$results = $wpdb->get_results($sql);
 		foreach($results as $row)
-			$rsvp_past_event_timestamps[$row->event] = $ts_start;
+			$rsvp_past_event_timestamps[$row->event] = $row->ts_start;
 		set_transient('rsvp_past_event_timestamps',$rsvp_past_event_timestamps);	
 	}	
 	return $rsvp_past_event_timestamps;
@@ -381,6 +381,12 @@ function rsvpmaker_date( $date_format = '', $t = null ) {
 
 	$output = wp_date( $date_format, $t, $tz );
 	return $output;// . "($date_format)";
+}
+
+function rsvpmaker_prettydate($t, $type = 'long_date') {
+	global $rsvp_options;
+	$format = (isset($rsvp_options[$type])) ? $rsvp_options[$type] : $rsvp_options['long_date'];
+	return rsvpmaker_date($format,intval($t));
 }
 
 function rsvpmaker_date_test() {
@@ -1500,7 +1506,7 @@ function get_rsvpmaker_payment_gateway() {
 
 	if ( ! empty( $post->ID ) ) {
 
-		$choice = get_post_meta( $post->ID, 'payment_gateway', true );
+		$choice = (isset($_POST['payment_option']) && isset($_POST['payment_option']['payment_gateway'])) ? sanitize_text_field($_POST['payment_option']['payment_gateway']) : get_post_meta( $post->ID, 'payment_gateway', true );
 
 		if ( $choice ) {
 
@@ -1531,12 +1537,7 @@ function get_rsvpmaker_payment_options() {
 
 	global $rsvp_options;
 
-	$active_options = array( 'Cash or Custom', 'PayPal REST API', 'Stripe' );
-
-	if ( ! empty( $rsvp_options['paypal_config'] ) ) {
-
-		$active_options[] = 'PayPal (legacy)';
-	}
+	$active_options = array( 'Cash or Custom', 'PayPal REST API', 'Stripe','Both Stripe and PayPal' );
 
 	if ( class_exists( 'Stripe_Checkout_Functions' ) && ! empty( $rsvp_options['stripe'] ) ) {
 
@@ -4081,4 +4082,33 @@ function rsvpmaker_atts($post_id, $event = NULL) {
 		$atts['event'] = ($event) ? $event : get_rsvpmaker_event( $post_id );
 	}
 	return $atts;
+}
+
+//for integration with WP PayPal plugin
+add_action('wp_paypal_ipn_processed','rsvpmaker_wp_paypal_ipn_processed');
+function rsvpmaker_wp_paypal_ipn_processed($response) {
+	rsvpmaker_debug_log($response,'paypal ipn');
+}
+/* forminator integration
+* do_action( 'forminator_custom_form_after_paypal_charge', $custom_form, $field, $paypal_entry_data, $submitted_data, $field_data_array );
+do_action( 'forminator_custom_form_after_stripe_charge', $custom_form, $field, $stripe_entry_data, $submitted_data, $field_data_array );
+
+*/
+add_action('forminator_custom_form_after_paypal_charge','rsvpmaker_forminator_custom_form_after_paypal_charge');
+add_action('forminator_custom_form_after_stripe_charge','rsvpmaker_forminator_custom_form_after_paypal_charge');
+
+function rsvpmaker_forminator_custom_form_after_paypal_charge($custom_form, $field, $api_entry_data, $submitted_data, $field_data_array) {
+rsvpmaker_debug_log($custom_form,'forminator pp custom form');
+rsvpmaker_debug_log($field,'forminator pp field');
+rsvpmaker_debug_log($api_entry_data,'forminator pp entry data');
+rsvpmaker_debug_log($submitted_data,'forminator pp submitted data');
+rsvpmaker_debug_log($field_data_array,'forminator pp field data array');
+}
+
+function rsvpmaker_forminator_custom_form_after_stripe_charge($custom_form, $field, $api_entry_data, $submitted_data, $field_data_array) {
+	rsvpmaker_debug_log($custom_form,'forminator stripe custom form');
+	rsvpmaker_debug_log($field,'forminator stripe field');
+	rsvpmaker_debug_log($api_entry_data,'forminator stripe entry data');
+	rsvpmaker_debug_log($submitted_data,'forminator stripe submitted data');
+	rsvpmaker_debug_log($field_data_array,'forminator stripe field data array');
 }

@@ -29,7 +29,6 @@ function rsvpmaker_to_stripe( $rsvp ) {
 			$vars[ $index ] = $value;
 		}
 	}
-
 	// transform
 
 	return rsvpmaker_stripe_form( $vars );
@@ -54,6 +53,8 @@ function rsvpmaker_stripecharge( $atts ) {
 	$vars['description'] = ( ! empty( $atts['description'] ) ) ? $atts['description'] : __( 'charge from', 'rsvpmaker' ) . ' ' . get_bloginfo( 'name' );
 
 	$vars['paymentType'] = $paymentType = ( empty( $atts['paymentType'] ) ) ? 'once' : $atts['paymentType'];
+
+	$vars['paypal'] = (empty($atts['paypal'])) ? 0 : $atts['paypal'];
 
 	$show = ( ! empty( $atts['showdescription'] ) && ( $atts['showdescription'] == 'yes' ) ) ? true : false;
 
@@ -104,11 +105,9 @@ function rsvpmaker_stripecharge( $atts ) {
 
 $rsvpmaker_stripe_form = '';
 
-
-
 function rsvpmaker_stripe_form( $vars, $show = false ) {
 
-	rsvpmaker_debug_log( 'rsvpmaker_stripe_form' );
+	rsvpmaker_debug_log( $vars, 'rsvpmaker_stripe_form' );
 
 	global $post, $rsvp_options, $current_user, $button, $rsvpmaker_stripe_form, $wpdb;
 	if ( ! $show ) {
@@ -131,8 +130,6 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	[rsvpmaker_stripe_checkout]
 
 	<!-- /wp:shortcode -->
-
-
 
 	<!-- wp:paragraph -->
 
@@ -177,8 +174,10 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	update_option( $idempotency_key, $vars );
 
 	$url = get_permalink( $rsvpmaker_stripe_checkout_page_id );
-
-	if ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
+	$keys = get_rsvpmaker_stripe_keys();
+	if(empty($keys['pk']))
+		;//if Stripe not enabled
+	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
 
 		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 
@@ -186,15 +185,64 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	}
 
+	if(!empty($vars['paypal'])) {
+		$output .= '<p>'. __('Credit card processing by Stripe','rsvpmaker').'</p>'.rsvpmaker_paypay_button_embed($vars);
+	}
+
 	if ( $show ) {
 
 		$output .= sprintf( '<p>%s%s %s<br />%s</p>', $currency_symbol, esc_html( $vars['amount'] ), esc_html( $rsvp_options['paypal_currency'] ), esc_html( $vars['description'] ) );
 	}
 
-	$rsvpmaker_stripe_form = $output;
-
 	return $output;
 
+}
+
+function rsvpmaker_stripe_validate($public, $secret) {
+	require_once 'stripe-php/init.php';
+	try {
+		$stripe = new \Stripe\StripeClient($secret);
+	} catch (\Stripe\Exception\InvalidRequestException $e) {
+		$output =  'Status is:' . $e->getHttpStatus() . '\n';
+		$output .= 'Type is:' . $e->getError()->type . '\n';
+		$output .= 'Code is:' . $e->getError()->code . '\n';
+		// param is '' in this case
+		$output .=  'Param is:' . $e->getError()->param . '\n';
+		$output .=   'Message is:' . $e->getError()->message . '\n';
+		rsvpmaker_debug_log($output,'stripe error details');
+		return '<span style="color:red">'.$e->getError()->message.'</span>';
+	  } catch (\Stripe\Exception\AuthenticationException $e) {
+		$output =  'Status is:' . $e->getHttpStatus() . '\n';
+		$output .= 'Type is:' . $e->getError()->type . '\n';
+		$output .= 'Code is:' . $e->getError()->code . '\n';
+		// param is '' in this case
+		$output .=  'Param is:' . $e->getError()->param . '\n';
+		$output .=   'Message is:' . $e->getError()->message . '\n';
+		rsvpmaker_debug_log($output,'stripe error details');
+		return '<span style="color:red">'.$e->getError()->message.'</span>';
+	  } catch (\Stripe\Exception\ApiConnectionException $e) {
+		$output =  'Status is:' . $e->getHttpStatus() . '\n';
+		$output .= 'Type is:' . $e->getError()->type . '\n';
+		$output .= 'Code is:' . $e->getError()->code . '\n';
+		// param is '' in this case
+		$output .=  'Param is:' . $e->getError()->param . '\n';
+		$output .=   'Message is:' . $e->getError()->message . '\n';
+		rsvpmaker_debug_log($output,'stripe error details');
+		return '<span style="color:red">'.$e->getError()->message.'</span>';
+	  } catch (\Stripe\Exception\ApiErrorException $e) {
+		$output =  'Status is:' . $e->getHttpStatus() . '\n';
+		$output .= 'Type is:' . $e->getError()->type . '\n';
+		$output .= 'Code is:' . $e->getError()->code . '\n';
+		// param is '' in this case
+		$output .=  'Param is:' . $e->getError()->param . '\n';
+		$output .=   'Message is:' . $e->getError()->message . '\n';
+		rsvpmaker_debug_log($output,'stripe error details');
+		return '<span style="color:red">'.$e->getError()->message.'</span>';
+	  } catch (Exception $e) {
+		return '<span style="color:red">Error'.var_export($e,true).'</span>';// Something else happened, completely unrelated to Stripe
+	  }
+	  //nothing blew up!
+	  return ' <span style="color: green;">'.__('Connected','rsvpmaker').'</span>';
 }
 
 function rsvpmaker_stripe_checkout() {
@@ -948,5 +996,3 @@ function rsvpmaker_stripe_transactions() {
 		);
 	}
 }
-
-?>

@@ -2,7 +2,7 @@
 
 namespace PayPalCheckoutSdk\Core;
 
-use PayPalHttp\HttpRequest;
+use BraintreeHttp\HttpRequest;
 
 class RefreshTokenRequest extends HttpRequest
 {
