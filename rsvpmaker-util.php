@@ -3193,8 +3193,10 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 			$type = ( $hours > 0 ) ? 'FOLLOW UP' : 'REMINDER';
 
 			$reminder = rsvp_get_reminder( $post_id, $hours );
+			if(empty($reminder->ID))
+				continue;
 
-			$parent = $reminder->post_parent;
+			$parent = (isset($reminder->post_parent)) ? $reminder->post_parent : 0;
 
 			$label = ( $parent != $post_id ) ? ' (from Template)' : '';
 

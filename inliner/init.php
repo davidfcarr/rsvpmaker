@@ -3,7 +3,7 @@
 require_once 'autoload.php';
 use Pelago\Emogrifier\CssInliner;
 
-function rsvpmaker_inliner( $content, $css = '' ) {
+function rsvpmaker_inliner( $content ) {
 	if ( ! strpos( $content, '>' ) ) { // if there is no html
 		return $content;
 	}
@@ -11,12 +11,6 @@ function rsvpmaker_inliner( $content, $css = '' ) {
 	if ( strpos( $content, 'a.rsvplink' ) && strpos( $content, 'class="rsvplink"' ) ) {
 		$content = preg_replace( '/<a style="[^"]+" class="rsvplink"/', '<a class="rsvplink"', $content );
 	}
-	if(empty($css))
-		$content = CssInliner::fromHtml( $content )->inlineCss()->render();
-	else{
-		echo '<p>Applying '.$css.'</p>';
-		$content = CssInliner::fromHtml( $content )->inlineCss($css)->render();
-	}
-	$content = preg_replace('/<style.+style>/is','',$content);
+	$content = CssInliner::fromHtml( $content )->inlineCss()->render();
 	return $content;
 }

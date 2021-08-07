@@ -202,6 +202,7 @@ function rsvpmaker_stripe_validate($public, $secret) {
 	require_once 'stripe-php/init.php';
 	try {
 		$stripe = new \Stripe\StripeClient($secret);
+		$history = $stripe->balanceTransactions->all( array( 'limit' => 10 ) );
 	} catch (\Stripe\Exception\InvalidRequestException $e) {
 		$output =  'Status is:' . $e->getHttpStatus() . '\n';
 		$output .= 'Type is:' . $e->getError()->type . '\n';
@@ -242,7 +243,7 @@ function rsvpmaker_stripe_validate($public, $secret) {
 		return '<span style="color:red">Error'.var_export($e,true).'</span>';// Something else happened, completely unrelated to Stripe
 	  }
 	  //nothing blew up!
-	  return ' <span style="color: green;">'.__('Connected','rsvpmaker').'</span>';
+	  return ' <span style="color: green; font-weight: bold;">'.__('Connected','rsvpmaker').'</span>';
 }
 
 function rsvpmaker_stripe_checkout() {
