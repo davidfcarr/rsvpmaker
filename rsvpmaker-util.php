@@ -29,12 +29,24 @@ function get_rsvpmaker_event( $post_id ) {
 		return;
 	}
 	$rsvp_meta_cache = get_rsvp_meta_cache();
-	if(!empty($rsvp_meta_cache[$post_id]['event']))
-		return $rsvp_meta_cache[$post_id]['event'];
+	//if(!empty($rsvp_meta_cache[$post_id]['event']))
+		//return $rsvp_meta_cache[$post_id]['event'];
 	global $wpdb, $rsvpdates;
 	$wpdb->show_errors();
 	$sql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id );
 	$row = $wpdb->get_row( $sql );
+	if(empty($row->ts_start) && !empty($row->date))
+		{
+			$row->ts_start = rsvpmaker_strtotime($row->date);
+			$sql = 'UPDATE '.$wpdb->prefix . "rsvpmaker_event SET ts_start=$row->ts_start WHERE event=" . intval( $post_id );
+			$wpdb->query($sql);
+		}
+	if(empty($row->ts_end) && !empty($row->enddate))
+		{
+			$row->ts_end = rsvpmaker_strtotime($row->enddate);
+			$sql = 'UPDATE '.$wpdb->prefix . "rsvpmaker_event SET ts_end=$row->ts_end WHERE event=" . intval( $post_id );
+			$wpdb->query($sql);
+		}
 	return $row;
 }
 
@@ -138,6 +150,7 @@ function rsvpmaker_get_timezone_string( $post_id = 0 ) {
 	return $timezone;
 }
 
+add_action('rsvpmaker_add_timestamps','rsvpmaker_add_timestamps');
 function rsvpmaker_add_timestamps() {
 	global $default_tz,$wpdb;
 	$last_tz = '';
@@ -1018,8 +1031,6 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 		$sql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE date > CURDATE() ORDER BY date LIMIT 0,100';
 	}
 	$list = $wpdb->get_results( $sql );
-	// rsvpmaker_debug_log($sql,'consistency check');
-	// rsvpmaker_debug_log($list,'consistency check');
 	if ( $list ) {
 		foreach ( $list as $event ) {
 			$timezone = rsvpmaker_get_timezone_string( $event->event );
@@ -1052,6 +1063,12 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 				rsvpmaker_debug_log( $sql, 'consistency check enddate' );
 				$wpdb->query( $sql );
 			}
+			if(empty($event->post_title)) 
+			{
+				$post = get_post($event->event);
+				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET post_title=%s', $post->post_title, $event->event );
+				$wpdb->query($sql);
+			}
 		}
 	}
 	if ( $last_tz != $default_tz ) {
@@ -1067,9 +1084,8 @@ function sync_rsvpmaker_event_dates( $meta_id, $object_id, $meta_key, $meta_valu
 	if ( in_array( $meta_key, $keys ))
 		delete_transient('rsvp_meta_cache');
 	
-	if ( in_array( $meta_key, $keys ) && ! wp_next_scheduled( 'rsvpmaker_consistency_check', array( $object_id ) ) ) {
-		wp_schedule_single_event( time() + 5, 'rsvpmaker_consistency_check', array( $object_id ) );
-		wp_schedule_single_event( time() + 3600, 'rsvpmaker_consistency_check' ); // scan upcoming events for issues
+	if ( ! wp_next_scheduled( 'rsvpmaker_consistency_check' ) ) {
+		wp_schedule_single_event( time() + 5, 'rsvpmaker_consistency_check' ); // scan upcoming events for issues
 	}
 	if ( $meta_key == '_endfirsttime' ) {
 		$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$object_id" );
