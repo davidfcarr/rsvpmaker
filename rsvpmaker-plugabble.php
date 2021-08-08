@@ -5035,6 +5035,7 @@ if ( ! function_exists( 'rsvp_daily_reminder' ) ) {
 		rsvpautorenew_test(); // also check for templates that autorenew
 		cleanup_rsvpmaker_child_documents(); // delete form and confirmation messages
 		rsvpmaker_reminders_nudge(); // make sure events with reminders set are in cron
+		rsvpmaker_consistency_check();
 
 		global $wpdb;
 
