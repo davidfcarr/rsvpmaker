@@ -1308,7 +1308,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	// jump form
 
-	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), esc_attr( $page_id ) );
+	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), $page_id );
 
 	$post = $post_backup;
 
@@ -2548,6 +2548,12 @@ function rsvpmaker_format_event_dates( $post_id ) {
 	}
 
 	$eventrow = get_rsvpmaker_event( $post_id );
+	$sked = get_template_sked( $post->ID );
+	if(empty($eventrow)){
+		if(!empty($sked))
+			return '<p>Event Template</p>';
+		return;// don't do for non dated events
+	}
 
 	$custom_fields = get_post_custom( $post_id );
 
@@ -2564,8 +2570,6 @@ function rsvpmaker_format_event_dates( $post_id ) {
 	$permalink = get_permalink( $post_id );
 
 	$dateblock = '<div class="dateblock">';
-
-	$sked = get_template_sked( $post->ID );
 
 	if ( isset( $_GET['debug'] ) ) {
 
@@ -2584,13 +2588,13 @@ function rsvpmaker_format_event_dates( $post_id ) {
 			$t = (int) $eventrow->ts_start;
 		}
 
-		$endt = (int) $eventrow->ts_end;
+		$endt = (isset($eventrow->ts_end)) ? (int) $eventrow->ts_end : '';
 
 		$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
 		$dateblock .= utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
 
-		$dur = $eventrow->display_type;
+		$dur = (isset($eventrow->display_type)) ? $eventrow->display_type : '';
 
 		if ( $dur == 'set' ) {
 

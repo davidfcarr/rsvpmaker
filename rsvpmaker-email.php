@@ -1224,10 +1224,12 @@ $text .= $chimpfooter_text;
 return $text;
 }
 
-function rsvpmaker_personalize_email($content,$to,$description = '') {
+function rsvpmaker_personalize_email($content,$to,$description = '', $post_id = 0) {
 $chimp_options = get_option('chimp');
 if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] = apply_filters('rsvpmaker_mailing_address','[not set in RSVPMaker Mailing List settings]');
 global $post;
+if($post_id)
+	$post = get_post($post_id);
 $content = preg_replace('/\*.{1,4}EMAIL.{1,4}\*/',$to,$content);
 $content = preg_replace('/\*.{1,4}UNSUB.{1,4}\*/',site_url('?rsvpmail_unsubscribe='.$to),$content);
 $content = preg_replace('/\*.{1,4}REWARDS.{1,4}\*/','',$content);
@@ -1236,6 +1238,7 @@ $content = preg_replace('/\*.{1,4}LIST:ADDRESS.{1,4}\*/',$chimp_options['mailing
 $content = preg_replace('/\*.{1,4}HTML:LIST_ADDRESS_HTML.{1,4}\*/',$chimp_options['mailing_address'],$content);
 $content = preg_replace('/\*.{1,4}LIST:COMPANY.{1,4}\*/',$chimp_options['company'],$content);
 $content = preg_replace('/\*.{1,4}CURRENT_YEAR.{1,4}\*/',date('Y'),$content);
+if(isset($post->ID))
 $content = preg_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
 $content = preg_replace('/<a .+FORWARD.+/','',$content);
 $content = preg_replace('/\*.+\*/','',$content); // not recognized, get rid of it.

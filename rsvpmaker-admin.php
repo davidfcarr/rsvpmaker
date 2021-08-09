@@ -1040,7 +1040,7 @@ echo default_gateway_check($chosen_gateway);
 </div>
 
 <h3>PayPal (REST API)</h3>
-<p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?>Keys may be obtained from <a target="_blank" href="https://developer.paypal.com/developer/applications/create">developer.paypal.com/developer/applications/create</a></p>
+<p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://developer.paypal.com/developer/applications/create">developer.paypal.com/developer/applications/create</a></p>
 <?php
 $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
 if(empty($paypal_rest_keys))
@@ -1082,6 +1082,7 @@ else {
 <p>Operating Mode: <?php echo $checkboxes; ?></p>
 
 <h3>Stripe</h3>
+<p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://dashboard.stripe.com/apikeys">dashboard.stripe.com/apikeys</a></p>
 <?php 
 $stripe_keys = get_rsvpmaker_stripe_keys_all (); 
 $checkboxes = ($stripe_keys['mode'] == 'production') ? '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" checked="checked" /> Production' : '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox"  checked="checked" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" /> Production';
@@ -3544,6 +3545,8 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 				{
 				$end_time = (empty($template['end'])) ? '' : $template['end'];	
 				update_rsvpmaker_date($post_id,$cddate,$duration,$end_time);
+				$timezone = rsvpmaker_get_timezone_string($t);
+				rsvpmaker_add_event_row ($post_id, $cddate, $end_time, $duration,$timezone,$my_post['post_title']);
 				if($my_post["post_status"] == 'publish')
 					$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';
 				else
@@ -4838,7 +4841,7 @@ if(!empty($_POST["rsvpmaker_new_post"])  && wp_verify_nonce(rsvpmaker_nonce_data
 		}
 		$post_id = wp_insert_post($content);
 		if($post_id)
-		{
+		{		
 		if($t) {
 			add_post_meta($post_id,'_meet_recur',$t);
 			rsvpmaker_copy_metadata($t, $post_id);
@@ -4852,6 +4855,11 @@ if(!empty($_POST["rsvpmaker_new_post"])  && wp_verify_nonce(rsvpmaker_nonce_data
 			update_post_meta($post_id,'_rsvp_timezone_string', sanitize_text_field($_POST['timezone_string']));
 		
 		rsvpmaker_save_calendar_data($post_id);
+		$date = sanitize_text_field($_POST['rsvp_sql_date']);
+		$end = sanitize_text_field($_POST['rsvp_sql_end']);
+		$display_type = sanitize_text_field($_POST['end_time_type']);
+		$timezone = sanitize_text_field($_POST['timezone_string']);
+		rsvpmaker_add_event_row($post_id,$date,$end,$display_type,$timezone);
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
 		if($ajax)
 			return $editurl;
@@ -5515,27 +5523,23 @@ function rsvpmaker_quick_edit_save( $post_id ){
 		return;
 
 	if ( isset( $_POST['event_dates'] ) ) {
-		if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['event_dates']))
-			update_post_meta( $post_id, '_rsvp_dates', sanitize_text_field($_POST['event_dates']) );
+		if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['event_dates'])) {
+			$date = sanitize_text_field($_POST['event_dates']);
+			update_post_meta( $post_id, '_rsvp_dates', $date );
+		}
 		else
 			return;
 	}
-	if ( isset( $_POST['quick_time_display'] ) ) {
+	if ( isset( $_POST['end_time'] ) ) {
+		if(preg_match('/^\d{2}:\d{2}$/',$_POST['end_time'])) {
+		 $end = sanitize_text_field($_POST['end_time']);
+		 update_post_meta( $post_id, '_endfirsttime', $end );
+		} 
+	}
+	 if ( isset( $_POST['quick_time_display'] ) ) {
 		update_post_meta( $post_id, '_firsttime', sanitize_text_field($_POST['quick_time_display']) );
-		if(strpos($_POST['quick_time_display'],'|') > 0)
-			{
-				$parts = explode('|',$_POST['quick_time_display']);
-				$t = rsvpmaker_strtotime($_POST['event_dates'].' +'. (int) $parts[1].' days');
-				$enddate = rsvpmaker_date('Y-m-d',$t);
-				$enddatetime = rsvpmaker_date('Y-m-d H:i:s',$t);
-			}
-   }
-   if ( isset( $_POST['end_time'] ) ) {
-	   if(preg_match('/^\d{2}:\d{2}$/',$_POST['end_time'])) 
-		update_post_meta( $post_id, '_endfirsttime', sanitize_text_field($_POST['end_time']) );
-		if($enddate) {
-			update_post_meta($post_id,'_rsvp_end_date',$enddate.' '.sanitize_text_field($_POST['end_time']));
-		}
+		$display_type = sanitize_text_field($_POST['quick_time_display']);
+		$enddatetime = rsvpmaker_make_end_date ($date,$display_type,$end);
+		update_post_meta($post_id,'_rsvp_end_date',$enddatetime);
    	}
-
 }

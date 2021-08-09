@@ -175,7 +175,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 
 	$url = get_permalink( $rsvpmaker_stripe_checkout_page_id );
 	$keys = get_rsvpmaker_stripe_keys();
-	if(empty($keys['pk']))
+	if(empty($keys['pk']) && $keys['sandbox_pk'])
 		;//if Stripe not enabled
 	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
 
