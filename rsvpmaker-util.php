@@ -939,26 +939,6 @@ function rsvpmaker_update_table_continue() {
 	rsvpmaker_event_dates_table_update( );
 }
 
-function rsvpmaker_date_table_errors() {
-	global $wpdb;
-	$eventtable = $wpdb->prefix . 'rsvpmaker_event';
-	$errors     = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE enddate IS NULL OR enddate='0000-00-00 00:00:00' " );
-	if ( $errors ) {
-		foreach ( $errors as $row ) {
-			$post = get_post( $row->event );
-			if ( ! $post ) {
-				$wpdb->query( "DELETE FROM $eventtable WHERE event =" . $row->event );
-				continue;
-			}
-			$date = $row->date;
-			$type = $row->type;
-			$end = get_post_meta($row->event,'_endfirsttime',true);
-			$enddatetime = rsvpmaker_make_end_date ($date,$type,$end);
-			$wpdb->query( "UPDATE $eventtable SET enddate='$enddatetime' WHERE event=$row->event " );
-		}
-	}
-}
-
 function rsvpmaker_event_dates_table_update( $new = false ) {
 	global $wpdb;
 	if($new)
@@ -1103,15 +1083,8 @@ function rsvpmaker_update_event_row ($post_id) {
 	$timezone = rsvpmaker_get_timezone_string( $post_id );
 	date_default_timezone_set( $timezone );
 	$ts_start = strtotime($date);
-	if ( strpos( $type, '|' ) ) {
-		$p           = explode( '|', $type );
-		$enddate = date( 'Y-m-d ', strtotime( $date . ' +' . $p[1] . ' days' ) );
-	} else {
-		$enddate = preg_replace( '/\d{2}:\d{2}:\d{2}/', '', $date );
-	}
-	$enddate .= $end . ':00';
+	$enddate = rsvpmaker_end_date($date,$type,$end);
 	$ts_end = strtotime($enddate);
-
 	$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$post_id" );
 	if($event)
 		$sql = $wpdb->prepare("UPDATE $event_table SET post_title=%s, display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d ",$post->post_title,$type,$date,$enddate,$ts_start,$ts_end,$timezone,$post_id);
@@ -1119,7 +1092,7 @@ function rsvpmaker_update_event_row ($post_id) {
 		$sql = $wpdb->prepare("INSERT INTO $event_table SET post_title=%s, display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s, event=%d",$post->post_title,$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
 	rsvpmaker_debug_log($sql,'update event row');
 	$wpdb->query($sql);
-	return (object) array('post_title'=> $post->post_title,'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
+	return (object) array('event' => $post_id, 'post_title'=> $post->post_title,'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 }
 
 function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', $post_title = '') {
@@ -1136,7 +1109,7 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 		$sql .= ", post_title='".addslashes($post_title)."'";
 	rsvpmaker_debug_log($sql,'add event row');
 	$wpdb->query($sql);
-	return (object) array('display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
+	return (object) array('event' => $post_id, 'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 }
 
 function sync_rsvpmaker_event_dates( $meta_id, $object_id, $meta_key, $meta_value ) {
@@ -4110,7 +4083,7 @@ function rsvpmaker_forminator_custom_form_after_stripe_charge($custom_form, $fie
 	rsvpmaker_debug_log($field_data_array,'forminator stripe field data array');
 }
 
-function rsvpmaker_make_end_date ($date,$display_type='',$end='') {
+function rsvpmaker_make_end_date ($date,$type='',$end='') {
 	if ( strpos( $type, '|' ) ) {
 		$p           = explode( '|', $type );
 		$enddate = date( 'Y-m-d ', strtotime( $date . ' +' . ($p[1] - 1) . ' days' ) );
@@ -4121,5 +4094,7 @@ function rsvpmaker_make_end_date ($date,$display_type='',$end='') {
 		$ts_start = strtotime($date);
 		$end = date('H:i', $ts_start+3600);
 	}
-	return $enddate .' '.$end.':00';
+	$enddate = $enddate .' '.$end.':00';
+	rsvpmaker_debug_log("$date / $type / $end / $enddate","date / type / end / enddate");
+	return $enddate;
 }

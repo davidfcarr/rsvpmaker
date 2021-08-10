@@ -4539,7 +4539,7 @@ function rsvpmaker_quick_post() {
 		}
 		add_post_meta($post_id,'_firsttime',$end_type);
 		add_post_meta($post_id,'_endfirsttime',$end_time);
-
+		rsvpmaker_add_event_row($post_id,$datetime,$end_time,$end_type);
 		if(!empty($types)) {
 			wp_set_object_terms( $post_id, $types, 'rsvpmaker-type' );
 		}
@@ -4632,7 +4632,7 @@ function rsvpmaker_quick_ui() {
 	<p>
 	<?php esc_html_e('Collect RSVPs','rsvpmaker');?>
 	  <input type="radio" name="rsvp_on" id="setrsvpon" value="1" <?php if( !empty($rsvp_options['rsvp_on']) ) echo 'checked="checked" ';?> />
-	<?php esc_html_e('YES','rsvpmaker');?> <input type="radio" name="rsvp_on" id="setrsvpon" value="0" <?php if( !$rsvp_on ) echo 'checked="checked" ';?> />
+	<?php esc_html_e('YES','rsvpmaker');?> <input type="radio" name="rsvp_on" id="setrsvpon" value="0" <?php if( empty($rsvp_options['rsvp_on']) ) echo 'checked="checked" ';?> />
 	<?php esc_html_e('NO','rsvpmaker');?> </p>
 	<p><input type="checkbox" name="calendar_icons" value="1" <?php if($rsvp_options["calendar_icons"]) echo ' checked="checked" ';?> /> <?php esc_html_e('Show Add to Google / Download to Outlook (iCal) icons','rsvpmaker'); ?> 
 	<br />
