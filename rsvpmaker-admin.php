@@ -998,8 +998,8 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 <section id="payments" class="rsvpmaker">
 <form name="rsvpmaker_payment_options" action="<?php echo esc_attr($action_url);?>" method="post">
 <?php rsvpmaker_nonce(); ?>
-
-<p>If you wish to collect online payments for an event, please set up API access to the payment gateway of your choice.</p>
+<h1>Online Payments</h1>
+<p>If you wish to collect online payments, please set up API access to the payment gateway of your choice.</p>
 <?php do_action('rsvpmaker_payment_settings'); ?>
 <h3><?php esc_html_e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
 <div>
@@ -1127,7 +1127,6 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')
 <input type="hidden" id="activetab" value="payments" />
 <?php	
 }
-
 $gateways = get_rsvpmaker_payment_options ();
 $chosen_gateway = get_rsvpmaker_payment_gateway ();
 $o = '';
