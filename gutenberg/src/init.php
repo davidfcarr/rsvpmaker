@@ -172,14 +172,14 @@ function rsvpmaker_block_cgb_editor_assets() {
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.build.js' ), // Version: filemtime — Gets file modification time.
 		true // Enqueue the script in the footer.
 	);
-
-	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker', array('post_type' => $post->post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
-	if($post->post_type == 'rsvpemail')
-	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'related_documents', get_related_documents ($post->ID,'rsvpemail'));
+	$post_type = (isset($post->post_type)) ? $post->post_type: '';
+	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
+	if($post_type == 'rsvpemail')
+		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'related_documents', get_related_documents ($post->ID,'rsvpemail'));
 
 	global $post, $rsvp_options, $current_user;
 	$template_id = 0;
-	if(is_admin() && ($post->post_type == 'rsvpmaker') && isset($_GET['action']) && $_GET['action'] == 'edit')
+	if(is_admin() && ($post_type == 'rsvpmaker') && isset($_GET['action']) && $_GET['action'] == 'edit')
 		{
 		$projected_label = '';
 		$projected_url = '';
@@ -280,7 +280,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$confirmation_email_templates[] = array('label' => $template['slug'], 'value' => $index);
 	}
 
-	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
+	if($post_type == 'rsvpmaker')
 	{
 		$related_documents = get_related_documents ();
 		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');

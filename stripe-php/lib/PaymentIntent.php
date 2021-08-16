@@ -100,7 +100,8 @@ class PaymentIntent extends ApiResource {
 		$url                   = $this->instanceUrl() . '/capture';
 		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
 		$this->refreshFrom( $response, $opts );
-
+		rsvpmaker_debug_log($response,'stripe capture response');
+		rsvpmaker_debug_log($opts,'stripe capture opts');
 		return $this;
 	}
 
@@ -116,7 +117,8 @@ class PaymentIntent extends ApiResource {
 		$url                   = $this->instanceUrl() . '/confirm';
 		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
 		$this->refreshFrom( $response, $opts );
-
+		rsvpmaker_debug_log($response,'stripe confirm response');
+		rsvpmaker_debug_log($opts,'stripe confirm opts');
 		return $this;
 	}
 }

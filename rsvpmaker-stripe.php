@@ -1,5 +1,4 @@
 <?php
-
 function rsvpmaker_to_stripe( $rsvp ) {
 
 	rsvpmaker_debug_log( 'rsvpmaker_to_stripe' );
@@ -607,8 +606,6 @@ function stripe_log_by_email( $email, $months = 0 ) {
 
 }
 
-
-
 function rsvpmaker_stripe_payment_log( $vars, $confkey ) {
 	global $post, $current_user, $wpdb;
 	$vars['timestamp'] = rsvpmaker_date( 'r' );
@@ -616,7 +613,7 @@ function rsvpmaker_stripe_payment_log( $vars, $confkey ) {
 		rsvpmaker_stripe_notify( $vars );
 	}
 	$rsvpmaker_stripe_checkout_page_id = get_option( 'rsvpmaker_stripe_checkout_page_id' );
-	add_post_meta( $rsvpmaker_stripe_checkout_page_id, 'rsvpmaker_stripe_payment', $vars );
+	$meta_id = add_post_meta( $rsvpmaker_stripe_checkout_page_id, 'rsvpmaker_stripe_payment', $vars );
 	do_action( 'rsvpmaker_stripe_payment', $vars );
 	wp_schedule_single_event( time() + 300, 'stripe_balance_history_cron' ); // update stripe history table in 5 minutes
 }
@@ -675,36 +672,37 @@ function rsvpmaker_stripe_report() {
 
 	global $wpdb;
 
-	echo '<h1>Stripe Charges</h1>';
+	echo '<h1>Stripe and PayPal Charges</h1>';
 
 	if ( isset( $_GET['history'] ) ) {
-
 		stripe_balance_history( (int) $_GET['history'] );
 	}
-
-	printf(
-		'<div style="padding: 5px; border: thin dotted #000;"><h3>Retrieve Transactions from Stripe Service</h3>
-
-	<p>Includes fees, refunds, and payouts</p>
-
-	<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_stripe_report" />
-
-	Up to <select name="history">
-
-	<option value="10">10</option>
-
-	<option value="20" selected="selected">20</option>
-
-	<option value="50">50</option> 
-
-	<option value="100">100</option> 
-
-	</select>transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
-	%s
-	<button>Get</button></form></div>',
-		admin_url( 'edit.php' ),
-		rsvpmaker_nonce('return')
-	);
+	$keys = get_rsvpmaker_stripe_keys();
+	if ( !empty( $keys ) && isset( $keys['pk'] ) ) {
+		printf(
+			'<div style="padding: 5px; border: thin dotted #000;"><h3>Retrieve Transactions from Stripe Service</h3>
+	
+		<p>Includes fees, refunds, and payouts</p>
+	
+		<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_stripe_report" />
+	
+		Up to <select name="history">
+	
+		<option value="10">10</option>
+	
+		<option value="20" selected="selected">20</option>
+	
+		<option value="50">50</option> 
+	
+		<option value="100">100</option> 
+	
+		</select>transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
+		%s
+		<button>Get</button></form></div>',
+			admin_url( 'edit.php' ),
+			rsvpmaker_nonce('return')
+		);
+	}
 
 	$tx = rsvpmaker_stripe_transactions( 100 );
 	echo wp_kses_post( $tx['content'] );
@@ -712,19 +710,6 @@ function rsvpmaker_stripe_report() {
 	<p>Formatted for copy-paste into Excel or other spreadsheet program
 	<br />
 	<textarea rows="20" style="width: 100%">' . $tx['export'] . '</textarea></p>';
-
-}
-
-add_action( 'admin_menu', 'rsvpmaker_stripe_report_menu', 99 );
-
-function rsvpmaker_stripe_report_menu() {
-
-	if ( empty( get_option( 'rsvpmaker_stripe_keys' ) ) ) {
-
-		return;
-	}
-
-	add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Stripe Report', 'rsvpmaker' ), __( 'RSVPMaker Stripe Report', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
 
 }
 
@@ -743,12 +728,8 @@ function stripe_latest_logged() {
 
 function rsvpmaker_stripe_transactions_list( $limit = 50, $where = '' ) {
 	global $wpdb;
-	$keys = get_rsvpmaker_stripe_keys();
-	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
-		return;
-	}
 	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
-	return $wpdb->get_results( "SELECT *, format((amount - fee),2) as yield FROM $stripetable $where ORDER BY date DESC LIMIT 0, $limit " );
+	return $wpdb->get_results( "SELECT name,email,description,date,status,transaction_id,amount,fee, format((amount - fee),2) as yield FROM $stripetable $where ORDER BY date DESC LIMIT 0, $limit " );
 }
 
 function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
@@ -767,8 +748,6 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 	$where       = ( $start_date ) ? " AND date > '$start_date' " : '';
 	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
 	$sql         = "SELECT * FROM $stripetable WHERE user_id=$user_id $where ORDER BY date DESC";
-	// if(isset($_GET['debug']))
-		// printf('<p>latest tx %s</p>',$sql);
 	return $wpdb->get_row( $sql );
 }
 
@@ -788,28 +767,6 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 	$secret = $keys['sk'];
 
 	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
-	$setup       = get_option( 'rsvpmaker_money_table' );
-	if ( ! $setup ) {
-		$wpdb->query(
-			"CREATE TABLE IF NOT EXISTS `$stripetable` (
-		`id` int(11) NOT NULL AUTO_INCREMENT,
-		`name` varchar(255) NOT NULL,
-		`email` varchar(255) NOT NULL,
-		`description` varchar(255) NOT NULL,
-		`date` datetime NOT NULL,
-		`status` varchar(255) NOT NULL,
-		`transaction_id` varchar(255) NOT NULL,
-		`user_id` int(11) NOT NULL DEFAULT '0',
-		`metadata` text NOT NULL,
-		`amount` float NOT NULL,
-		`fee` float NOT NULL,
-		PRIMARY KEY (`id`)
-	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-	  
-	"
-		);
-		update_option( 'rsvpmaker_money_table', true );
-	}
 
 	rsvpmaker_debug_log( 'call to stripe_balance_history' );
 
@@ -829,13 +786,9 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 	$charges = $stripe->charges->all( array( 'limit' => $limit * 5 ) );
 
 	foreach ( $charges->data as $charge ) {
-
 		$names[ $charge->balance_transaction ]        = $charge->billing_details->name;
 		$emails[ $charge->balance_transaction ]       = $charge->billing_details->email;
 		$descriptions[ $charge->balance_transaction ] = $charge->description;
-		if ( isset( $_GET['charge_detail'] ) ) {
-			printf( '<pre>%s</pre><br />', var_export( $charge, true ) );
-		}
 	}
 
 	if ( isset( $_GET['date'] ) ) {
@@ -875,7 +828,7 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 		// echo '<div>check: '.$sql.'<br />'.$check.'</div>';
 		if ( ! $check ) {
 			$sql = $wpdb->prepare(
-				"INSERT INTO $stripetable SET name=%s,email=%s,description=%s,amount=%s,fee=%s,date=%s,status='stripe_transaction',transaction_id=%s, user_id=%d",
+				"INSERT INTO $stripetable SET name=%s,email=%s,description=%s,amount=%s,fee=%s,date=%s,status='Stripe',transaction_id=%s, user_id=%d",
 				$name,
 				$email,
 				$description,
@@ -944,10 +897,6 @@ function rsvpmaker_stripe_transactions() {
 	$transactions = rsvpmaker_stripe_transactions_list();
 	if ( $transactions ) {
 		$transaction = (array) $transactions[0];
-		unset( $transaction['id'] );
-		unset( $transaction['status'] );
-		unset( $transaction['metadata'] );
-		$transaction['yield'] = 0;// just the label
 		$th                   = '<tr>';
 		$td                   = '';
 		foreach ( $transaction as $column => $value ) {
@@ -962,9 +911,6 @@ function rsvpmaker_stripe_transactions() {
 			$line        = '';
 			$td         .= '<tr>';
 			$transaction = (array) $transaction;
-			unset( $transaction['id'] );
-			unset( $transaction['status'] );
-			unset( $transaction['metadata'] );
 			/*
 			for future use
 			if(!empty($transaction['metadata']) ) {
@@ -974,9 +920,6 @@ function rsvpmaker_stripe_transactions() {
 			}
 			*/
 			foreach ( $transaction as $column => $value ) {
-				if ( ( $column == 'id' ) || ( $column == 'metadata' ) || ( $column == 'status' ) ) {
-					continue;
-				}
 				$td .= '<td>' . esc_html( $value ) . '</td>';
 				if ( strpos( $value, '"' ) ) {
 					$value = str_replace( '"', '\"', $value );
@@ -992,7 +935,7 @@ function rsvpmaker_stripe_transactions() {
 		krsort( $lines );
 		$export .= implode( "\n", $lines );
 		return array(
-			'content' => '<h3>50 Most Recent Stripe Transactions</h3><table>' . $th . $td . '</table>',
+			'content' => '<h3>50 Most Recent Payments</h3><table>' . $th . $td . '</table>',
 			'export'  => $export,
 		);
 	}

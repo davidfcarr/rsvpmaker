@@ -3176,7 +3176,6 @@ if ( ! function_exists( 'event_content' ) ) {
 			} elseif ( $rsvp_on && ( is_single() || is_admin() || $formonly ) ) {
 
 				ob_start();
-
 				echo '<div id="rsvpsection">';
 				?>
 

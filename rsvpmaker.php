@@ -7,13 +7,12 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 8.9.4
+Version: 8.9.8
 */
 
 function get_rsvpversion() {
-	return '8.9.4';
+	return '8.9.8';
 }
-
 global $wp_version;
 global $default_tz;
 
@@ -422,7 +421,7 @@ function get_rsvpmaker_custom( $post_id ) {
 rsvpmaker_includes();
 function rsvpmaker_includes() {
 	$plugins_dir   = plugin_dir_path( __DIR__ );
-	$rsvpmaker_dir = plugin_dir_path( __FILE__ );
+	$rsvpmaker_dir = trailingslashit(plugin_dir_path( __FILE__ ));
 
 	if ( file_exists( $plugins_dir . 'rsvpmaker-custom.php' ) ) {
 		include_once $plugins_dir . 'rsvpmaker-custom.php';
@@ -441,12 +440,11 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'rsvpmaker-widgets.php';
 	include $rsvpmaker_dir . 'rsvpmaker-group-email.php';
 	include $rsvpmaker_dir . 'script.php';
+	include $rsvpmaker_dir . 'rsvpmaker-money.php';
+	//include $rsvpmaker_dir . 'rsvpmaker-stripe.php';
+	//require $rsvpmaker_dir . 'paypal-rest/paypal-rest.php';
 }
-
 $gateways = get_rsvpmaker_payment_options();
-
-
-
 if ( in_array( 'Stripe', $gateways ) ) {
 
 	require WP_PLUGIN_DIR . '/rsvpmaker/rsvpmaker-stripe.php';
@@ -455,9 +453,7 @@ if ( in_array( 'Stripe', $gateways ) ) {
 if ( in_array( 'PayPal REST API', $gateways ) ) {
 
 	require WP_PLUGIN_DIR . '/rsvpmaker/paypal-rest/paypal-rest.php';
-}
-
-
+}	
 
 function rsvpmaker_gutenberg_check() {
 
@@ -1254,8 +1250,6 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 
 }
 
-
-
 function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 ) {
 
 	global $wpdb;
@@ -1434,4 +1428,3 @@ function rsvpmaker_server_block_render() {
 	register_block_type( 'rsvpmaker/next-events', array( 'render_callback' => 'rsvpmaker_next_rsvps' ) );
 
 }
-

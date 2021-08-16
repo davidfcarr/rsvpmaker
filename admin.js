@@ -634,5 +634,31 @@ jQuery( document ).ready(
 
 		quick_template_time();
 
+if($('#stripe_on') !== undefined) {
+var stripe_on = ('1' == $('#stripe_on').val());
+var paypal_on = ('1' == $('#spaypal_on').val());
+console.log('stripe '+ stripe_on);
+console.log('paypal '+ paypal_on);
+}
+$('.paypal_keys').change( function() {
+	paypal_on = true;
+	if(stripe_on && paypal_on)
+		$('#payment_gateway').val('Both Stripe and PayPal');
+	else {
+		$('#payment_gateway').val('PayPal REST API');
 	}
-);
+});
+
+
+$('.stripe_keys').change( function() {
+	stripe_on = true;
+	if(stripe_on && paypal_on)
+		$('#payment_gateway').val('Both Stripe and PayPal');
+	else {
+		$('#payment_gateway').val('Stripe');
+	}
+});
+	
+	
+});
+

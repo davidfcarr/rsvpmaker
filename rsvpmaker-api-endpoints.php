@@ -2,10 +2,7 @@
 
 /*
 RSVPMaker API Endpoints
-
 */
-
-
 
 class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 
@@ -507,14 +504,12 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 		rsvpmaker_stripe_payment_log( $vars, $key );
 
 		delete_option( $request['txkey'] );
-
+        wp_schedule_single_event( time() + 30, 'rsvpmaker_after_payment',array('stripe'));
 		return new WP_REST_Response( $vars, 200 );
 
 	}
 
 }
-
-
 
 class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
 
@@ -572,17 +567,13 @@ class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
 			$vars['payment_confirmation_message'] = do_blocks( $message_post->post_content );
 
 			if(!empty($vars['rsvp_id'])) //rsvp_id
-				rsvp_confirmation_after_payment( $atts['rsvp_id'] );
+				rsvp_confirmation_after_payment( $vars['rsvp_id'] );
 		}
-		do_action('rsvpmaker_paypal_confirmation_tracking',$vars);			
 
 		return new WP_REST_Response( $vars, 200 );
 
 	}
-
 }
-
-
 
 class RSVP_Export extends WP_REST_Controller {
 

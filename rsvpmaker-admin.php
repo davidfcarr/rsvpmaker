@@ -1,6 +1,6 @@
 <?php
 /*
-* Backend functions 
+* Backend functions
 */
 function rsvpmaker_date_slug($data) {
 	if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
@@ -531,43 +531,43 @@ echo esc_html($label);
 				  if(isset($_POST['rsvpmaker_stripe_keys']))
 				  {
 					//don't overwrite keys that are not displayed
-					$keys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_stripe_keys']);
+					$stripe_keys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_stripe_keys']);
 
-					if(!isset($keys['sk']) || !isset($keys['sandbox_pk']))
+					if(!isset($stripe_keys['sk']) || !isset($stripe_keys['sandbox_pk']))
 					{
 						$prev = get_option('rsvpmaker_stripe_keys');
-						if(!isset($keys['sk']))
+						if(!isset($stripe_keys['sk']))
 							{
-								$keys['sk'] = $prev['sk'];
-								$keys['pk'] = $prev['pk'];
+								$stripe_keys['sk'] = $prev['sk'];
+								$stripe_keys['pk'] = $prev['pk'];
 							}
-						if(!isset($keys['sandbox_sk']))
+						if(!isset($stripe_keys['sandbox_sk']))
 						{
-							$keys['sandbox_sk'] = $prev['sandbox_sk'];
-							$keys['sandbox_pk'] = $prev['sandbox_pk'];
+							$stripe_keys['sandbox_sk'] = $prev['sandbox_sk'];
+							$stripe_keys['sandbox_pk'] = $prev['sandbox_pk'];
 						}
 					}
-					update_option('rsvpmaker_stripe_keys',$keys);
+					update_option('rsvpmaker_stripe_keys',$stripe_keys);
 				  }
 				if(isset($_POST['rsvpmaker_paypal_rest_keys']))
 				{
-					$keys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_paypal_rest_keys']);
+					$pkeys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_paypal_rest_keys']);
 
-					if(!isset($keys['client_id']) || !isset($keys['sandbox_client_id']))
+					if(!isset($pkeys['client_id']) || !isset($keys['sandbox_client_id']))
 					{
 						$prev = get_option('rsvpmaker_paypal_rest_keys');
-						if(!isset($keys['client_id']))
+						if(!isset($pkeys['client_id']))
 							{
-								$keys['client_id'] = $prev['client_id'];
-								$keys['client_secret'] = $prev['client_secret'];
+								$pkeys['client_id'] = $prev['client_id'];
+								$pkeys['client_secret'] = $prev['client_secret'];
 							}
-						if(!isset($keys['sandbox_client_id']))
+						if(!isset($pkeys['sandbox_client_id']))
 						{
-							$keys['sandbox_client_id'] = $prev['sandbox_client_id'];
-							$keys['sandbox_client_secret'] = $prev['sandbox_client_secret'];
+							$pkeys['sandbox_client_id'] = $prev['sandbox_client_id'];
+							$pkeys['sandbox_client_secret'] = $prev['sandbox_client_secret'];
 					}
 					}
-				update_option('rsvpmaker_paypal_rest_keys',$keys);
+				update_option('rsvpmaker_paypal_rest_keys',$pkeys);
 				}
 				  
 				  $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
@@ -1001,22 +1001,6 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 
 <p>If you wish to collect online payments for an event, please set up API access to the payment gateway of your choice.</p>
 <?php do_action('rsvpmaker_payment_settings'); ?>
-<?php
-$gateways = get_rsvpmaker_payment_options ();
-$chosen_gateway = get_rsvpmaker_payment_gateway ();
-$o = '';
-foreach($gateways as $gateway)
-	{
-		$s = ($chosen_gateway == $gateway) ? ' selected="selected" ' : '';
-		$o .= sprintf('<option %s value="%s">%s</option>',$s,$gateway,$gateway);
-	}
-?>
-<h3><?php esc_html_e('Preferred Payment Gateway','rsvpmaker');?></h3>
-<p><select name="payment_option[payment_gateway]"><?php echo $o; ?></select></p>
-<?php
-echo default_gateway_check($chosen_gateway);
-?>
-<p><em><?php esc_html_e('If you have set up more than one, specify the one to be used by default.','rsvpmaker');?></em></p>
 <h3><?php esc_html_e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
 <div>
 <input type="radio" name="payment_option[paypal_invoiceno]" value ="1" <?php if($options["paypal_invoiceno"]) echo ' checked="checked" ' ?> /> Yes
@@ -1042,41 +1026,43 @@ echo default_gateway_check($chosen_gateway);
 <h3>PayPal (REST API)</h3>
 <p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://developer.paypal.com/developer/applications/create">developer.paypal.com/developer/applications/create</a></p>
 <?php
+$test_keys = sprintf(' <a href="%s">%s</a> ',admin_url('options-general.php?page=rsvpmaker-admin.php&payment_key_test=1'),__('Test Keys','rsvpmaker'));
+$pp_on = false;
 $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
 if(empty($paypal_rest_keys))
 	$paypal_rest_keys = array('client_id' => '','client_secret' => '','sandbox_client_id' => '','sandbox_client_secret' => '');
 $checkboxes = (empty($paypal_rest_keys['sandbox'])) ? '<input type="radio" name="rsvpmaker_paypal_rest_keys[sandbox]" value="1" /> Sandbox <input type="radio" name="rsvpmaker_paypal_rest_keys[sandbox]" value="0" checked="checked" /> Production' : '<input type="radio" name="rsvpmaker_paypal_rest_keys[sandbox]" value="1"  checked="checked" /> Sandbox <input type="radio" name="rsvpmaker_paypal_rest_keys[sandbox]" value="0" /> Production';
 if(!empty($paypal_rest_keys['client_id']) && !empty($paypal_rest_keys['client_secret']))
 {
+	$pp_on = true;
 ?>
-<div id="paypal_production"><?php esc_html_e('Production keys set','rsvpmaker'); echo ' '.rsvpmaker_paypal_test_connection(); ?> <p><button id="reset_paypal_production"><?php esc_html_e('Reset PayPal','rsvpmaker'); ?></button></p></div>
+<div id="paypal_production"><?php esc_html_e('Production keys set','rsvpmaker'); echo ' '.  $test_keys; ?> <p><button id="reset_paypal_production"><?php esc_html_e('Reset PayPal','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
 {
 ?>
 <p>Client ID (Production):<br />
-<input name="rsvpmaker_paypal_rest_keys[client_id]" value="<?php echo esc_attr($paypal_rest_keys['client_id']); ?>"></p>
+<input name="rsvpmaker_paypal_rest_keys[client_id]"  class="paypal_keys" value="<?php echo esc_attr($paypal_rest_keys['client_id']); ?>"></p>
 <p>Client Secret (Production):<br />
-<input name="rsvpmaker_paypal_rest_keys[client_secret]" value="<?php echo esc_attr($paypal_rest_keys['client_secret']); ?>"></p>
+<input name="rsvpmaker_paypal_rest_keys[client_secret]" class="paypal_keys"  value="<?php echo esc_attr($paypal_rest_keys['client_secret']); ?>"></p>
 <?php
 }
 if(!empty($paypal_rest_keys['sandbox_client_id']) && !empty($paypal_rest_keys['sandbox_client_secret']))
 {
+	$pp_on = true;
 ?>
-<div id="paypal_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); echo ' '.rsvpmaker_paypal_test_connection('sandbox'); ?> <p><button id="reset_paypal_sandbox"><?php esc_html_e('Reset PayPal Sandbox','rsvpmaker'); ?></button></p></div>
+<div id="paypal_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); echo ' '.$test_keys; ?> <p><button id="reset_paypal_sandbox"><?php esc_html_e('Reset PayPal Sandbox','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else {
 ?>
 <p>Client ID (Sandbox):<br />
-<input name="rsvpmaker_paypal_rest_keys[sandbox_client_id]" value="<?php echo esc_attr($paypal_rest_keys['sandbox_client_id']); ?>"></p>
+<input name="rsvpmaker_paypal_rest_keys[sandbox_client_id]"  class="paypal_keys" value="<?php echo esc_attr($paypal_rest_keys['sandbox_client_id']); ?>"></p>
 <p>Client Secret (Sandbox):<br />
-<input name="rsvpmaker_paypal_rest_keys[sandbox_client_secret]" value="<?php echo esc_attr($paypal_rest_keys['sandbox_client_secret']); ?>"></p>
+<input name="rsvpmaker_paypal_rest_keys[sandbox_client_secret]"  class="paypal_keys" value="<?php echo esc_attr($paypal_rest_keys['sandbox_client_secret']); ?>"></p>
 <?php
 }
-
-////print_r($paypal_rest_keys);
 
 ?>
 <p>Operating Mode: <?php echo $checkboxes; ?></p>
@@ -1084,36 +1070,39 @@ else {
 <h3>Stripe</h3>
 <p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://dashboard.stripe.com/apikeys">dashboard.stripe.com/apikeys</a></p>
 <?php 
+$stripe_on = false;
 $stripe_keys = get_rsvpmaker_stripe_keys_all (); 
 $checkboxes = ($stripe_keys['mode'] == 'production') ? '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" checked="checked" /> Production' : '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox"  checked="checked" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" /> Production';
 if(!empty($stripe_keys['pk']) && !empty($stripe_keys['sk']))
 {
+$stripe_on = true;
 ?>
-<div id="stripe_production"><?php esc_html_e('Production keys set','rsvpmaker'); echo ' '.rsvpmaker_stripe_validate($stripe_keys['pk'], $stripe_keys['sk']); ?> <p><button id="reset_stripe_production"><?php esc_html_e('Reset Stripe','rsvpmaker'); ?></button></p></div>
+<div id="stripe_production"><?php esc_html_e('Production keys set','rsvpmaker'); echo ' '.$test_keys; ?> <p><button id="reset_stripe_production"><?php esc_html_e('Reset Stripe','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
 {
 ?>
 <p>Publishable Key (Production):<br />
-	<input name="rsvpmaker_stripe_keys[pk]" value="<?php echo esc_attr($stripe_keys['pk']); ?>"></p>
+	<input name="rsvpmaker_stripe_keys[pk]"  class="stripe_keys" value="<?php echo esc_attr($stripe_keys['pk']); ?>"></p>
 <p>Secret Key (Production):<br />
-	<input name="rsvpmaker_stripe_keys[sk]" value="<?php echo esc_attr($stripe_keys['sk']);  ?>"></p>
+	<input name="rsvpmaker_stripe_keys[sk]"  class="stripe_keys" value="<?php echo esc_attr($stripe_keys['sk']);  ?>"></p>
 <?php	
 }
 if(!empty($stripe_keys['sandbox_pk']) && !empty($stripe_keys['sandbox_sk']))
 {
+$stripe_on =true;
 ?>
-<div id="stripe_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); echo ' '.rsvpmaker_stripe_validate($stripe_keys['sandbox_pk'], $stripe_keys['sandbox_sk']); ?> <p><button id="reset_stripe_sandbox"><?php esc_html_e('Reset Stripe Sandbox','rsvpmaker'); ?></button></p></div>
+<div id="stripe_sandbox"><?php esc_html_e('Sandbox keys set','rsvpmaker'); echo ' '.$test_keys; ?> <p><button id="reset_stripe_sandbox"><?php esc_html_e('Reset Stripe Sandbox','rsvpmaker'); ?></button></p></div>
 <?php
 }
 else
 {
 ?>
 <p>Publishable Key (Sandbox):<br />
-<input name="rsvpmaker_stripe_keys[sandbox_pk]" value="<?php echo esc_attr($stripe_keys['sandbox_pk']); ?>"></p>
+<input name="rsvpmaker_stripe_keys[sandbox_pk]"  class="stripe_keys" value="<?php echo esc_attr($stripe_keys['sandbox_pk']); ?>"></p>
 <p>Secret Key (Sandbox):<br />
-<input name="rsvpmaker_stripe_keys[sandbox_sk]" value="<?php echo esc_attr($stripe_keys['sandbox_sk']);  ?>"></p>
+<input name="rsvpmaker_stripe_keys[sandbox_sk]" class="stripe_keys" value="<?php echo esc_attr($stripe_keys['sandbox_sk']);  ?>"></p>
 <?php
 }
 ?>
@@ -1138,7 +1127,25 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')
 <input type="hidden" id="activetab" value="payments" />
 <?php	
 }
+
+$gateways = get_rsvpmaker_payment_options ();
+$chosen_gateway = get_rsvpmaker_payment_gateway ();
+$o = '';
+foreach($gateways as $gateway)
+	{
+		$s = ($chosen_gateway == $gateway) ? ' selected="selected" ' : '';
+		$o .= sprintf('<option %s value="%s">%s</option>',$s,$gateway,$gateway);
+	}
 ?>
+<input type="hidden" id="paypal_on" value="<?php echo $pp_on; ?>">
+<input  type="hidden"  id="stripe_on" value="<?php echo $stripe_on; ?>">
+<h3><?php esc_html_e('Preferred Payment Gateway','rsvpmaker');?></h3>
+<p><select id="payment_gateway" name="payment_option[payment_gateway]"><?php echo $o; ?></select></p>
+<?php
+echo default_gateway_check($chosen_gateway);
+?>
+<p><em><?php esc_html_e('If you have set up more than one, specify the one to be used by default.','rsvpmaker');?></em></p>
+
 <input type="hidden" name="tab" value="payments">
 
 <div class="submit"><input type="submit" name="Submit" value="<?php esc_html_e('Update','rsvpmaker'); ?>" /></div>
@@ -1622,6 +1629,7 @@ add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events (without a 
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'edit_rsvpmakers', "rsvp_reminders", "rsvp_reminders" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
+add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Payments', 'rsvpmaker' ), __( 'RSVPMaker Payments', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
 

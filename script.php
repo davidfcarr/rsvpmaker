@@ -2,7 +2,7 @@
 /*
 * Load JS and Css
 */
-$scriptversion = '202106.10';
+$scriptversion = '202108.1';
 
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce;

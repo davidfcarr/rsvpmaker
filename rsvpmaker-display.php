@@ -1,5 +1,4 @@
 <?php
-
 if ( ! wp_is_json_request() ) {
 
 	add_shortcode( 'rsvpautorenew_test', 'rsvpautorenew_test' );
@@ -2588,7 +2587,7 @@ function rsvpmaker_format_event_dates( $post_id ) {
 			$t = (int) $eventrow->ts_start;
 		}
 
-		$endt = (isset($eventrow->ts_end)) ? (int) $eventrow->ts_end : '';
+		$endt = (isset($eventrow->ts_end)) ? (int) $eventrow->ts_end : 0;
 
 		$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
@@ -2596,7 +2595,7 @@ function rsvpmaker_format_event_dates( $post_id ) {
 
 		$dur = (isset($eventrow->display_type)) ? $eventrow->display_type : '';
 
-		if ( $dur == 'set' ) {
+		if ( $dur == 'set' && $endt ) {
 
 			$dateblock .= '<span class="time"> ' . rsvpmaker_timestamp_to_time( $t );
 

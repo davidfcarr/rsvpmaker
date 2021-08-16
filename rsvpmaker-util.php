@@ -1,4 +1,7 @@
 <?php
+/*
+utilities
+*/
 add_action('init','rsvpmaker_create_nonce',1);
 
 function get_rsvpmaker_event_table() {
@@ -327,32 +330,16 @@ function rsvpmaker_short_date( $post_id, $and_time = false, $end_time = false ) 
 	return $output;
 }
 
-function rsvpmaker_end_date( $post_id, $and_time = false ) {
+function rsvpmaker_end_date( $datetime, $type, $end_time ) {
 	global $rsvp_options, $wpdb;
-	if ( ! strpos( $rsvp_options['time_format'], 'T' ) && get_rsvpmaker_meta( $post_id, '_add_timezone', true ) ) {
-		$rsvp_options['time_format'] .= ' T';
+	$p = explode(' ',$datetime);
+	$date = $p[0];
+	if(strpos($type,'|')) {
+		$multi = explode('|',$type);
+		$add = $multi[1] - 1;
+		$date = rsvpmaker_date('Y-m-d',rsvpmaker_strtotime("$date +$add days"));
 	}
-	$event_table = $wpdb->prefix . 'rsvpdate_shortcode';
-	$sql         = "SELECT * FROM $event_table where event=$post_id";
-	$timerow     = $wpdb->get_row( $sql );
-	if ( empty( $timerow ) ) {
-		return;
-	}
-	if ( ! $timerow->display_type || ( $timerow->display_type == 'allday' ) ) {
-		$end_time = false;
-	}
-	if ( $timerow->display_type == 'allday' ) {
-		$and_time = false;
-	}
-	rsvpmaker_fix_timezone();
-	$output = wp_date( $rsvp_options['long_date'], $timerow->ts_end );
-	if ( $and_time ) {
-		$time_format = $rsvp_options['time_format'];
-		$time        = wp_date( $time_format, $timerow->ts_end );
-		$output     .= ' ' . $time;
-	}
-		rsvpmaker_restore_timezone();
-	return $output;
+	return $date . ' '.$end_time; 
 }
 
 function rsvpmaker_time_format( $post_id, $end_time = false ) {
@@ -704,13 +691,14 @@ function get_events_rsvp_on( $limit = 0 ) {
 
 }
 
+
 function is_rsvpmaker_deadline_future( $post_id ) {
-	return true;
 	$deadline = (int) get_post_meta( $post_id, '_rsvp_deadline', true );
 	$event    = get_rsvpmaker_event( $post_id );
 	$start = (int) $event->ts_start;
+	$end = (int) $event->ts_end;
 	if ( ! $deadline  ) {
-		$deadline = (int) $event->ts_end;
+		$deadline = $end;
 	}
 	elseif($deadline < $start) {
 		$diff = $start - $deadline;
@@ -719,6 +707,7 @@ function is_rsvpmaker_deadline_future( $post_id ) {
 			$deadline = (int) $event->ts_end;
 		} 
 	}
+	rsvpmaker_debug_log($deadline .':'. rsvpmaker_date('r',$deadline),'deadline');
 	return $deadline > time();
 }
 
@@ -1070,7 +1059,7 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 
 add_action('rsvpmaker_update_event_row','rsvpmaker_update_event_row');
 function rsvpmaker_update_event_row ($post_id) {
-	global $wpdb, $post;
+	global $wpdb, $post, $rsvp_options;
 	$event_table = $wpdb->prefix . 'rsvpmaker_event';
 	$date = get_post_meta($post_id,'_rsvp_dates',true);
 	if(empty($date))
@@ -1080,11 +1069,11 @@ function rsvpmaker_update_event_row ($post_id) {
 	$type = get_post_meta($post_id,'_firsttime',true);
 	$date = get_post_meta($post_id,'_rsvp_dates',true);
 	$end = get_post_meta($post_id,'_endfirsttime',true);
-	$timezone = rsvpmaker_get_timezone_string( $post_id );
-	date_default_timezone_set( $timezone );
-	$ts_start = strtotime($date);
+	$ts_start = rsvpmaker_strtotime($date);
 	$enddate = rsvpmaker_end_date($date,$type,$end);
-	$ts_end = strtotime($enddate);
+	$ts_end = rsvpmaker_strtotime($enddate);
+	rsvpmaker_debug_log($enddate,'enddate');
+	rsvpmaker_debug_log(rsvpmaker_date($rsvp_options['rime_format'],$ts_end),'date from ts end');
 	$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$post_id" );
 	if($event)
 		$sql = $wpdb->prepare("UPDATE $event_table SET post_title=%s, display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d ",$post->post_title,$type,$date,$enddate,$ts_start,$ts_end,$timezone,$post_id);
@@ -1506,8 +1495,6 @@ function get_rsvpmaker_payment_gateway() {
 	return $active_options[0]; // if no default specified, grab the first one on the list (Cash or Custom if no others set up)
 
 }
-
-
 
 function get_rsvpmaker_payment_options() {
 

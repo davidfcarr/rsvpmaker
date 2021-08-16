@@ -6,9 +6,6 @@ use PayPalCheckoutSdk\Core\ProductionEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use BraintreeHttp\HttpException;
 
-ini_set('error_reporting', E_ALL); // or error_reporting(E_ALL);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
 $paypal_rest_keys = get_rspmaker_paypal_rest_keys();
 
 function rsvpmaker_paypal_test_connection($type = 'live') {
@@ -64,6 +61,7 @@ function paypal_verify_rest () {
         $pporder = new RSVPMakerGetOrder;
         rsvpmaker_debug_log($pporder,'paypal pp order object');
         $pporder->getOrder($order_id);
+        do_action('rsvpmaker_paypal_confirmation_tracking',$data);
         die();
     }
 }
@@ -82,7 +80,9 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
   else
       $paypal_client_id = $paypal_rest_keys['client_id'];
-  $verify = ($rsvp_id) ? '/?paypal_verify=1&rsvp='.$rsvp_id.'&event='.$post->ID : '/?paypal_verify=1';
+  $verify = '/?paypal_verify=1'; //($rsvp_id) ? '/?paypal_verify=1&rsvp='.$rsvp_id.'&event='.$post->ID : 
+  foreach($vars as $key => $value)
+    $verify .= '&'.$key.'='.$value;
   $vars['amount'] = $amount;
   $vars['description'] = $description;
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
