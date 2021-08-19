@@ -3318,6 +3318,14 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 				'meta'   => array( 'class' => 'rsvpmaker-edit-template' ),
 			);
 
+			$args [] = array(
+				'parent' => $parent_tag,
+				'id'     => 'rsvpmaker-switch-template',
+				'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target='.$post->ID.'#applytemplate' ),
+				'title'  => __( 'Switch Template', 'rsvpmaker' ),
+				'meta'   => array( 'class' => 'rsvpmaker-switch-template' ),
+			);
+
 			$args[] = array(
 
 				'parent' => $parent_tag,

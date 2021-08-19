@@ -996,6 +996,7 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 	</form>
 </section>
 <section id="payments" class="rsvpmaker">
+<?php do_action('rsvpmaker_payments_setting_top'); ?>
 <form name="rsvpmaker_payment_options" action="<?php echo esc_attr($action_url);?>" method="post">
 <?php rsvpmaker_nonce(); ?>
 <h1>Online Payments</h1>
@@ -1024,7 +1025,7 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 </div>
 
 <h3>PayPal (REST API)</h3>
-<p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://developer.paypal.com/developer/applications/create">developer.paypal.com/developer/applications/create</a></p>
+<p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://developer.paypal.com/developer/applications">developer.paypal.com/developer/applications/</a></p>
 <?php
 $test_keys = sprintf(' <a href="%s">%s</a> ',admin_url('options-general.php?page=rsvpmaker-admin.php&payment_key_test=1'),__('Test Keys','rsvpmaker'));
 $pp_on = false;
