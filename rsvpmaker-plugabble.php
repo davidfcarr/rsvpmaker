@@ -5936,33 +5936,32 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 
 			printf( '<div class="updated notice notice-success">Applied "%s" template: <a href="%s">View</a> | <a href="%s">Edit</a></div>', $opost->post_title, get_permalink( $overridden ), admin_url( 'post.php?action=edit&post=' . $overridden ) );
 
-			$sql = "select * from $wpdb->postmeta WHERE post_id=" . $override;
+			if(isset($_POST['copymeta']))
+			{
+				foreach($_POST['copymeta'] as $key)
+				{
+					$key = sanitize_text_field($key);
+					if(empty($keysql))
+						$keysql = '';
+					else
+						$keysql .= ' OR ';
+					$keysql .= "  meta_key LIKE '$key%' ";//match multiple reminder messages
+				}
 
-			$results = $wpdb->get_results( $sql );
-
-			$docopy = array(
-				'_add_timezone',
-				'_convert_timezone',
-				'_calendar_icons
-
-',
-				'tm_sidebar',
-				'sidebar_officers',
-			);
-
-			if ( is_array( $results ) ) {
-
-				foreach ( $results as $row ) {
-
-					if ( ( strpos( $row->meta_key, 'rsvp' ) && ( $row->meta_key != '_rsvp_dates' ) ) || ( in_array( $row->meta_key, $docopy ) ) ) {
-
-						update_post_meta( $overridden, $row->meta_key, $row->meta_value );
-
-						$copied[] = $row->meta_key;
-
+				$sql = "select * from $wpdb->postmeta WHERE post_id=" . $override ." AND ($keysql) ";
+				echo $sql;
+				$results = $wpdb->get_results( $sql );
+	
+				if ( is_array( $results ) ) {
+	
+					foreach ( $results as $row ) {	
+							update_post_meta( $overridden, $row->meta_key, $row->meta_value );
+							$copied[] = $row->meta_key;
 					}
 				}
+
 			}
+
 
 			if ( ! empty( $copied ) ) {
 
@@ -6314,9 +6313,26 @@ ORDER BY meta_value LIMIT 0,100";
 				}
 
 				$action = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' );
-
-				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to <select name="overridden">%s</select></p>', $action, $current_template . $template_options, $event_options . $template_override );
-
+	
+				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to <select name="overridden">%s</select></p><p>Copy settings:</p>', $action, $current_template . $template_options, $event_options . $template_override );
+				printf('<div><input type="checkbox" value="_add_timezone" name="copymeta[]">  %s</div>',__('Show Timezone','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_convert_timezone" name="copymeta[]">  %s</div>',__('Convert Timezone','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_calendar_icons" name="copymeta[]">  %s</div>',__('Show Calendar Icons','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_on" name="copymeta[]">  %s</div>',__('Collect RSVPs on/off','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_instructions" name="copymeta[]">  %s</div>',__('RSVP Instructions','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_to" name="copymeta[]">  %s</div>',__('Email for RSVP Notifications','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_rsvpmaker_send_confirmation_email" name="copymeta[]">  %s</div>',__('Send Confirmation Email on/off','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_confirm" name="copymeta[]">  %s</div>',__('Confirmation Email Message','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_confirmation_include_event" name="copymeta[]">  %s</div>',__('Include Event Details in Confirmation','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_confirmation_after_payment" name="copymeta[]">  %s</div>',__('Send Confirmation After Payment on/off','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_reminder_" name="copymeta[]">  %s</div>',__('Reminder Email Messages','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_timezone_string" name="copymeta[]">  %s</div>',__('Timezone','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_count" name="copymeta[]">  %s</div>',__('Show RSVP Count Publicly','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_show_attendees" name="copymeta[]">  %s</div>',__('Show Attendees Publicly','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_login_required" name="copymeta[]">  %s</div>',__('Login Required','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_max" name="copymeta[]">  %s</div>',__('Maximum Number of Attendees','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_per" name="copymeta[]">  %s</div>',__('Pricing','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_count_party" name="copymeta[]">  %s</div>',__('Count Members of Party for Event Pricing','rsvpmaker'));
 				submit_button();
 				rsvpmaker_nonce();
 				echo '</form>';

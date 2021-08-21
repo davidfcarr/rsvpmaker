@@ -1066,6 +1066,7 @@ function rsvpmaker_update_event_row ($post_id) {
 		return;//don't mess with non dated events
 	delete_transient('rsvp_meta_cache');
 	$post = get_post($post_id);
+	$timezone = rsvpmaker_get_timezone_string($post_id);
 	$type = get_post_meta($post_id,'_firsttime',true);
 	$date = get_post_meta($post_id,'_rsvp_dates',true);
 	$end = get_post_meta($post_id,'_endfirsttime',true);

@@ -702,7 +702,14 @@ if(isset($_POST['timezone_string']))
 
     <div id='sections' class="rsvpmaker">
     <section id="calendar" class="rsvpmaker">
-
+	<?php
+if(!isset($_REQUEST['tab']))
+{
+?>
+<input type="hidden" id="activetab" value="calendar" />
+<?php	
+}
+?>
 <div style="float: right;">
 <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
 <input type="hidden" name="cmd" value="_s-xclick">
