@@ -5910,7 +5910,7 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 
 			$target = get_post( $overridden );
 
-			$sk = get_template_sked( $overriden );
+			$sk = get_template_sked( $overridden );
 
 			if ( $sk ) {
 

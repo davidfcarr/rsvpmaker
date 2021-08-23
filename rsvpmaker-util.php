@@ -1047,7 +1047,7 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 			if(empty($event->post_title)) 
 			{
 				$post = get_post($event->event);
-				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET post_title=%s', $post->post_title, $event->event );
+				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET post_title=%s WHERE event=%d', $post->post_title, $event->event );
 				$wpdb->query($sql);
 			}
 		}
