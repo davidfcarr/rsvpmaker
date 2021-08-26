@@ -234,30 +234,66 @@ jQuery( document ).ready(
 			}
 		);
 
-		$( '.end_time' ).hide();
-
-		$( '.end_time_type' ).each(
-			function() {
-				var type   = $( this ).val();
-				var target = $( this ).attr( 'id' ).replace( 'end_time_type','end_time' );
-				if ((type == 'set') || (type.search( 'ulti' ) > 0)) {
-					$( '#' + target ).show();
-				}
-			}
-		);
-
 		$( '.end_time_type' ).change(
 			function() {
 				var type   = $( this ).val();
-				var target = $( this ).attr( 'id' ).replace( 'end_time_type','end_time' );
 				if ((type == 'set') || (type.search( 'ulti' ) > 0)) {
-					default_end_time( target );
-					$( '#' + target ).show();
+					$( '#endtimespan').show();
 				} else {
-					$( '#' + target ).hide();
+					$( '#endtimespan').hide();
 				}
 			}
 		);
+
+		$('#newrsvptime').change(function() {
+			var time = $( this ).val();
+			var date = new Date('2000-01-01T'+time);
+			date.setTime(date.getTime()+(60*60*1000));
+			$('#rsvpendtime').val(date.toLocaleTimeString('en-GB'));
+		});
+		
+		$('.quick-rsvp-date').change( function() {
+			let datetext = $(this).val();
+			let count = parseInt($(this).attr('count'));
+			console.log(datetext);
+			console.log(count);
+			$('.quick-rsvp-date').each(
+				function (i) {
+					if(i > count)
+					$(this).val(datetext);
+				}
+			);
+		});
+
+		$('.quick-rsvp-time').change( function() {
+			let timetext = $(this).val();
+			let count = parseInt($(this).attr('count'));
+			console.log('start:'+timetext);
+			console.log(count);
+			var date = new Date('2000-01-01T'+timetext);
+			date.setTime(date.getTime()+(60*60*1000));
+			console.log(date);
+			$('#quick-rsvp-time-end-'+count).val(date.toLocaleTimeString('en-GB'));
+			$('.quick-rsvp-time').each(
+				function(i) {
+					if(i > count)
+					{
+						$('#quick-rsvp-time-'+i).val(date.toLocaleTimeString('en-GB'));
+						date.setTime(date.getTime()+(60*60*1000));
+						$('#quick-rsvp-time-end-'+i).val(date.toLocaleTimeString('en-GB'));
+					}
+				}
+			);
+		});
+
+		$('.quick-rsvp-time-end').change( function() {
+			let timetext = $(this).val();
+			let count = parseInt($(this).attr('count'));
+			console.log(timetext);
+			console.log(count);
+			count++;
+			$('#quick-rsvp-time-'+count).val(timetext);
+		});
 
 		function default_end_time(target) {
 			var end_id         = target.replace( 'end_time','sql-end' );

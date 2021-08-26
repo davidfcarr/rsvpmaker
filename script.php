@@ -2,7 +2,7 @@
 /*
 * Load JS and Css
 */
-$scriptversion = '202108.3';
+$scriptversion = '202108.14';
 
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce;
@@ -42,11 +42,7 @@ function rsvpmaker_event_scripts($frontend = true) {
 	wp_enqueue_style( 'rsvp_style' );
 	wp_enqueue_script( 'rsvpmaker_js', plugins_url( 'rsvpmaker.min.js', __FILE__ ), array(), $scriptversion, true );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
-	if ( $frontend && is_single() ) {
-		if ( strpos( $post->post_content, 'wp:rsvpmaker/submission' ) ) {
-			wp_enqueue_script( 'wp-tinymce' );
-		}
-	}
+	wp_enqueue_script( 'wp-tinymce' );
 	wp_enqueue_script( 'rsvpmaker_timezone', plugins_url( 'jstz.min.js', __FILE__ ), array(), $scriptversion, true );
 } // end event scripts
 

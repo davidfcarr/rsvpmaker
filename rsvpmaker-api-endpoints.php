@@ -98,7 +98,7 @@ class RSVPMaker_Types_Controller extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 
-		$types = get_terms( 'rsvpmaker-type' );
+		$types = get_terms( array('taxonomy' =>'rsvpmaker-type','hide_empty' => false) );
 
 		return new WP_REST_Response( $types, 200 );
 

@@ -42,6 +42,8 @@ function get_rsvpmaker_event( $post_id ) {
 	$row = $wpdb->get_row( $sql );
 	if(empty($row))
 		return rsvpmaker_update_event_row($post_id);
+	if(($row->ts_start > $row->ts_end) || ('0000-00-00 00:00:00' == $row->enddate) ) 
+		return rsvpmaker_update_event_row($post_id);
 	if(is_single())
 	{
 		if(empty($row->ts_start) && !empty($row->date))
@@ -509,25 +511,40 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 	}
 
 	echo '</select>';
-	if ( empty( $end_time ) && ! empty( $start_time ) ) {
-		$t = rsvpmaker_strtotime( $start_time . ' +1 hour' );
-	} else {
-		if ( empty( $end_time ) ) {
-
-			$start_time = $rsvp_options['defaulthour'] . ':' . $rsvp_options['defaultmin'];
-			$t          = rsvpmaker_strtotime( $start_time . ' +1 hour' );
-		} else {
-			$t = rsvpmaker_strtotime( '2020-01-01 ' . $end_time );
-		}
-	}
-
-	printf(
-		'<span id="end_time" class="end_time"> <input name="rsvp_sql_end" type="time" class="sql-end" id="sql-end" size="5" value="%s">
-<span id="end_time_error"></span> </span>',
-		rsvpmaker_date( 'H:i', $t )
-	);
 	echo '</p>';
 }
+
+function rsvpmaker_duration_select_2021( $duration_type ) {
+
+	echo '<p><label>' . __( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
+	?>
+<option value=""><?php echo __( 'Not set (optional)', 'rsvpmaker' ); ?></option>
+
+<option value="set" 
+	<?php
+	if ( $duration_type == 'set' ) {
+		echo ' selected="selected" ';}
+	?>
+ ><?php echo __( 'Set end time', 'rsvpmaker' ); ?></option>
+
+<option value="allday" 
+	<?php
+	if ( $duration_type == 'allday' ) {
+		echo ' selected="selected" ';}
+	?>
+><?php echo __( 'All day/time not shown', 'rsvpmaker' ); ?></option>
+
+	<?php
+	for ( $i = 2; $i < 8; $i++ ) {
+		$multi = 'multi|' . $i;
+		$s     = ( $duration_type == $multi ) ? ' selected="selected" ' : '';
+		printf( '<option value="%s" %s>%s</option>', $multi, $s, $i . ' ' . __( 'days/time not shown', 'rsvpmaker' ) );
+	}
+
+	echo '</select>';
+	echo '</p>';
+}
+
 
 function get_rsvp_dates( $post_id, $obj = false ) {
 	global $wpdb, $rsvpdates;
@@ -4090,7 +4107,7 @@ function rsvpmaker_make_end_date ($date,$type='',$end='') {
 		$ts_start = strtotime($date);
 		$end = date('H:i', $ts_start+3600);
 	}
-	$enddate = $enddate .' '.$end.':00';
+	$enddate = $enddate .' '.$end;
 	rsvpmaker_debug_log("$date / $type / $end / $enddate","date / type / end / enddate");
 	return $enddate;
 }

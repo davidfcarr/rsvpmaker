@@ -136,34 +136,19 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 				__( 'Apply Template', 'rsvpmaker' )
 			);
 		}
+		
+		$event = get_rsvpmaker_event( $post->ID );
 
-		if ( isset( $post->ID ) ) {
-
-			$results = get_rsvp_dates( $post->ID );
-
-		} else {
-			$results = false;
-		}
-
-		$start = 0;
-
-		if ( $results ) {
-			$row   = $results[0];
-			$count = sizeof( $results );
-			if ( $count > 1 ) {
-				$row['duration'] = 'multi|' . $count;
-			}
-			$index = 0;
-
+		if ( $event ) {
+			$t = intval($event->ts_start);
+			$end = intval($event->ts_end);
 			echo "\n<div class=\"event_dates\"> \n";
-
-			$t = get_rsvp_event_time($post->ID);
 
 			if ( $rsvp_options['long_date'] ) {
 				echo utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
 			}
 
-			$dur = $row['duration'];
+			$dur = $event->display_type;
 
 			if ( ( $dur != 'allday' ) && ! strpos( $dur, '|' ) ) {
 
@@ -171,17 +156,12 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 
 			} elseif ( ( $dur == 'set' ) && $row['end_time'] ) {
 
-				echo ' to ' . rsvpmaker_date( $rsvp_options['time_format'], rsvpmaker_strtotime( $row['end_time'] ) );
+				echo ' to ' . rsvpmaker_date( $rsvp_options['time_format'], $end );
 			}
-
-			echo sprintf( ' <input type="checkbox" name="delete_date[]" value="%s" /> %s<br />', esc_attr( $row['datetime'] ), __( 'Delete', 'rsvpmaker' ) );
-
-			rsvpmaker_date_option( $row, $index, date( 'Y-m-d', $t ) );
+			rsvpmaker_date_option_event( $t, $end, $dur );
 
 			echo "</div>\n";
-
-			$start = $index + 1;
-
+			return;
 		} else {
 
 			echo '<p><em>' . __( 'You can enter dates and times in either text format or the numeric/database format.', 'rsvpmaker' ) . '</em> </p>';
