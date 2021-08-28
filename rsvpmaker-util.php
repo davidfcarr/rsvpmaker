@@ -133,11 +133,10 @@ function rsvpmaker_nonce($mode = 'echo'){
 		return $output;
 }
 
-/*
-wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))
-if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
-	return;
-*/
+function rsvpmaker_verify_nonce() {
+	return wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'));
+}
+
 function rsvpmaker_nonce_data($mode = 'key'){
 	global $rsvpmaker_nonce;
 	if($mode == 'key')

@@ -50,7 +50,7 @@ class RSVPMakerGetOrder
             $payment_message_id = get_post_meta($event,'payment_confirmation_message',true);
         $response->result->payment_confirmation_message = $payment_message_id;//(empty($payment_message_post) || eseller_receivable_breakdownmpty($payment_message_post->post_content)) ? '' : do_blocks($payment_message_post->post_content);
         echo json_encode($response); // also log this?
-        wp_schedule_single_event( time() + 30, 'rsvpmaker_after_payment',array('paypal'));
+        wp_schedule_single_event( time() + 30, 'rsvpmaker_after_payment',array('paypal',$atts['amount'],$atts['description']));
         }
     }
 }

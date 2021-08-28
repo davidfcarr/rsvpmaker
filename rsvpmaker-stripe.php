@@ -177,7 +177,8 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	if(empty($keys['pk']) && $keys['sandbox_pk'])
 		;//if Stripe not enabled
 	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
-
+		if(isset($_GET['amount']))
+			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
 		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 
 	} else {
@@ -189,7 +190,8 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	}
 
 	if ( $show ) {
-
+		if(isset($_GET['amount']))
+			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
 		$output .= sprintf( '<p>%s%s %s<br />%s</p>', $currency_symbol, esc_html( $vars['amount'] ), esc_html( $rsvp_options['paypal_currency'] ), esc_html( $vars['description'] ) );
 	}
 

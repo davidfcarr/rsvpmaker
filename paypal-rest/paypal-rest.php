@@ -169,6 +169,14 @@ function rsvpmaker_paypay_button_embed($atts) {
 //rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) )
 global $rsvp_options;
 global $paypal_rest_keys, $post;
+if ( isset( $atts['paymentType'] ) && ( $atts['paymentType'] == 'donation' ) ) {
+  if(isset($_GET['amount']))
+    {
+        $atts['amount'] = sanitize_text_field($_GET['amount']);
+    }
+  else
+    return sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value=""><br><button class="stripebutton">%s</button>%s</form>', get_permalink(), __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $rsvp_options['paypal_currency'] ) ), __( 'Pay with PayPal' ), rsvpmaker_nonce('return') );
+}
 if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id']))
   return;
 if(empty($atts['amount']) || !is_numeric($atts['amount']))
