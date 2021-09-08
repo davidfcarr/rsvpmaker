@@ -5203,33 +5203,22 @@ $('#time').change(function() {
 
 function rsvpmaker_submission_post() {
 	global $rsvp_options, $post;
+
 	if(isset($_POST['rsvpmaker_submission_post']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 	{
 		$permalink = sanitize_text_field($_POST['rsvpmaker_submission_post']);
 		$author = isset($rsvp_options['submission_author']) ? $rsvp_options['submission_author'] : 1;
-		$title = sanitize_text_field($_POST['event_title']);
-		$day = (int) $_POST['day'];
-		$year = (int) $_POST['year'];
-		$month = (int) $_POST['month'];
-		$hour = (int) $_POST['hour'];
-		$minutes = (int) $_POST['minutes'];
-		$endhour = (int) $_POST['endhour'];
-		$endminutes = (int) $_POST['endminutes'];
+		$title = sanitize_text_field(stripslashes($_POST['event_title']));
+		$datetime = sanitize_text_field($_POST['date']) .' '.sanitize_text_field($_POST['time']);
+		$t = rsvpmaker_strtotime($datetime);
+		$endtime = sanitize_text_field($_POST['endtime']);
 		$contact = sanitize_text_field(stripslashes($_POST['rsvpmaker_submission_contact']));
 		$email = sanitize_text_field($_POST['rsvpmaker_submission_email']);
 		$description = sanitize_textarea_field(stripslashes($_POST['rsvpmaker_submission_description']));
 		$description = strip_tags($description,'<strong><em><a><b><i>');
 		$description = wp_kses_post(rsvpautog($description));
-		$nowmonth = (int) date('m');
-		$nowyear = (int) date('Y');
-		$nowday = (int) date('j');
-		if($year < $nowyear) {
+		if($t < time()) {
 			return; //ignore dates from the past. common spam pattern. no error message to give them cues	
-		}
-		if(($month == $nowmonth) && ($day == $nowday) && ($year == $nowyear) ) {
-			$r = add_query_arg('submission_error','You must pick a future date',$permalink).'#results';
-			wp_redirect($r);
-			exit();
 		}
 
 		if(!is_admin() && !empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
@@ -5244,26 +5233,10 @@ function rsvpmaker_submission_post() {
 		$to = sanitize_text_field($_POST['to']);
 		if(!is_email($to))
 			$to = $rsvp_options['rsvp_to'];
-		$cddate = $year.'-';
-		if($month < 10)
-			$cddate .= '0';
-		$cddate .= $month.'-';
-		if($day < 10)
-			$cddate .= '0';
-		$cddate .= $day.' ';
-		if($hour < 10)
-			$cddate .= '0';
-		$cddate .= $hour.':';
-		if($minutes < 10)
-			$cddate .= '0';
-		$cddate .= $minutes.':00';
-		if(strtotime($cddate) < time()) {
-			return; //ignore dates from the past. common spam pattern	
-		}
 		if(empty($title))
 			$missing[] = 'event title';
-		if(empty($day))
-			$missing[] = 'day of event';
+		if(empty($datetime))
+			$missing[] = 'date of event';
 		if(empty($description))
 			$missing[] = 'description';
 		if(empty($contact))
@@ -5290,9 +5263,7 @@ function rsvpmaker_submission_post() {
 		$data['post_type'] = 'rsvpmaker';
 		$post_id = wp_insert_post($data);
 
-		$end_time = $endhour.':'.$endminutes;
-
-		add_rsvpmaker_date($post_id,$cddate,'set',$end_time);
+		add_rsvpmaker_date($post_id,$datetime,'set',$endtime );
 		if(!empty($_POST['timezone_string']) )
 		{
 			add_post_meta($post_id,"_add_timezone",true);

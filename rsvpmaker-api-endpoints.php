@@ -1055,7 +1055,7 @@ class RSVPMaker_Notification_Templates extends WP_REST_Controller {
 	}
 
 	public function get_items_permissions_check( $request ) {
-		return (current_user_can( 'edit_others_rsvpemails' ) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) );
+		return rsvpmaker_verify_nonce();
 	}
 
 	public function get_items( $request ) {
@@ -1063,8 +1063,8 @@ class RSVPMaker_Notification_Templates extends WP_REST_Controller {
 		if ( isset( $_POST['ntemp'] ) ) {
 			$ntemp = $_POST['ntemp'];
 			foreach($ntemp as $index => $data) {
-				$ntemp[$index]['subject'] = sanitize_text_field($ntemp['subject']);
-				$ntemp[$index]['body'] = wp_kses_post($ntemp['body']);
+				$ntemp[$index]['subject'] = sanitize_text_field($ntemp[$index]['subject']);
+				$ntemp[$index]['body'] = wp_kses_post($ntemp[$index]['body']);
 			}
 			if ( ! empty( $_POST['newtemplate']['subject'] ) && ! empty( $_POST['newtemplate_label'] ) ) {
 				$index = sanitize_text_field($_POST['newtemplate_label']);
