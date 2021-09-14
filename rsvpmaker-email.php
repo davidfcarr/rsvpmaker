@@ -1230,16 +1230,16 @@ if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] =
 global $post;
 if($post_id)
 	$post = get_post($post_id);
-$content = preg_replace('/\*.{1,4}EMAIL.{1,4}\*/',$to,$content);
-$content = preg_replace('/\*.{1,4}UNSUB.{1,4}\*/',site_url('?rsvpmail_unsubscribe='.$to),$content);
-$content = preg_replace('/\*.{1,4}REWARDS.{1,4}\*/','',$content);
-$content = preg_replace('/\*.{1,4}LIST:DESCRIPTION.{1,4}\*/',$description,$content);
-$content = preg_replace('/\*.{1,4}LIST:ADDRESS.{1,4}\*/',$chimp_options['mailing_address'],$content);
-$content = preg_replace('/\*.{1,4}HTML:LIST_ADDRESS_HTML.{1,4}\*/',$chimp_options['mailing_address'],$content);
-$content = preg_replace('/\*.{1,4}LIST:COMPANY.{1,4}\*/',$chimp_options['company'],$content);
-$content = preg_replace('/\*.{1,4}CURRENT_YEAR.{1,4}\*/',date('Y'),$content);
+$content = preg_replace('/\*\|EMAIL\|\*/',$to,$content);
+$content = preg_replace('/\*\|UNSUB\|\*/',site_url('?rsvpmail_unsubscribe='.$to),$content);
+$content = preg_replace('/\*\|REWARDS\|\*/','',$content);
+$content = preg_replace('/\*\|LIST:DESCRIPTION\|\*/',$description,$content);
+$content = preg_replace('/\*\|LIST:ADDRESS\|\*/',$chimp_options['mailing_address'],$content);
+$content = preg_replace('/\*\|HTML:LIST_ADDRESS_HTML\|\*/',$chimp_options['mailing_address'],$content);
+$content = preg_replace('/\*\|LIST:COMPANY\|\*/',$chimp_options['company'],$content);
+$content = preg_replace('/\*\|CURRENT_YEAR\|\*/',date('Y'),$content);
 if(isset($post->ID))
-$content = preg_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
+$content = preg_replace('/\*\|ARCHIVE\|\*/',get_permalink($post->ID),$content);
 $content = preg_replace('/<a .+FORWARD.+/','',$content);
 $content = preg_replace('/\*.+\*/','',$content); // not recognized, get rid of it.
 return $content;	
