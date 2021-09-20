@@ -4110,3 +4110,39 @@ function rsvpmaker_make_end_date ($date,$type='',$end='') {
 	rsvpmaker_debug_log("$date / $type / $end / $enddate","date / type / end / enddate");
 	return $enddate;
 }
+
+add_filter( 'wp_nav_menu', 'wp_nav_menu_rsvpmaker', 10, 2 );
+
+function wp_nav_menu_rsvpmaker( $menu_html, $menu_args ) {
+global $rsvp_options;
+	if ( strpos( $menu_html, '#rsvp-' )) {
+		preg_match_all('/<li.+#rsvp-([^"]+).+<\/li>/',$menu_html,$match);
+		rsvpmaker_debug_log($match[1]);
+		foreach($match[1] as $index => $type) {
+			global $rsvp_options;
+			if('all' != $type)
+				$atts = array('type' => $type);
+			else
+				$atts = array();
+			$events = rsvpmaker_upcoming_data( $atts );
+		
+			$date_format = $rsvp_options['short_date'];
+		
+			$listings = '';
+		
+			if ( is_array( $events ) ) {
+		
+				foreach ( $events as $event ) {
+					$t = ( $event->ts_start ) ? (int) $event->ts_start : rsvpmaker_strtotime( $event->datetime );
+		
+					$dateline = rsvpmaker_date( $date_format, $t ); // rsvpmaker_long_date($event->ID, isset($atts['time']), false);
+		
+					$listings .= sprintf( '<li><a href="%s">%s - %s</a></li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( $event->post_title ), $dateline );
+			
+				}
+			$menu_html = str_replace($match[0][$index],$listings,$menu_html);
+			}	
+		}
+	}
+	return $menu_html;
+}
