@@ -3384,13 +3384,13 @@ function add_rsvpmaker_from_template($t, $template, $date) {
 			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$date );
   			if($post_id = wp_insert_post( $my_post ) )
 				{
-				add_rsvpmaker_date($post_id,$date,$duration);
-				
+				add_rsvpmaker_date($post_id,$date,$duration);				
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
 				update_post_meta($post_id,"_updated_from_template",$ts);
-				}
-		rsvpmaker_copy_metadata($t, $post_id);
+				rsvpmaker_copy_metadata($t, $post_id);
+				rsvpmaker_update_event_row($post_id);
+			}
 }
 
 function rsvpautorenew_test () {
@@ -3568,7 +3568,7 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
 				update_post_meta($post_id,"_updated_from_template",$ts);
 				rsvpmaker_copy_metadata($t, $post_id);
-				
+				rsvpmaker_update_event_row($post_id);
 				}
 		
 		}
@@ -3604,6 +3604,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 				add_rsvpmaker_date($post_id,$cddate,'allday');
 				$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';	
 				add_post_meta($post_id,'_meet_recur',$t,true);
+				rsvpmaker_update_event_row($post_id);
 				}
 		}		
 }

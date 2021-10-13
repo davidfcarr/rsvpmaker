@@ -9,6 +9,20 @@ function get_rsvpmaker_event_table() {
 	return $wpdb->prefix . 'rsvpmaker_event';
 }
 
+add_action('admin_init','rsvpmaker_check_missing');
+function rsvpmaker_check_missing () {
+	global $wpdb;
+	$event_table = get_rsvpmaker_event_table();
+	$sql = "SELECT post_id from $wpdb->postmeta LEFT JOIN $event_table ON $wpdb->postmeta.post_id=$event_table.event WHERE meta_key='_rsvp_dates' AND event IS NULL";
+	$results = $wpdb->get_results($sql);
+	rsvpmaker_debug_log($sql,'fix missing dates in event table sql');
+	if($results) {
+		rsvpmaker_debug_log($results,'fix missing dates in event table');
+		foreach($results as $row)
+			rsvpmaker_update_event_row($row->post_id);	
+	}
+}
+
 function rsvpmaker_future_event_titles( $refresh = false ) {
 	global $wpdb;
 	$rsvpmaker_future_event_titles = get_transient('rsvpmaker_future_event_titles');	
@@ -1089,8 +1103,6 @@ function rsvpmaker_update_event_row ($post_id) {
 	$ts_start = rsvpmaker_strtotime($date);
 	$enddate = rsvpmaker_end_date($date,$type,$end);
 	$ts_end = rsvpmaker_strtotime($enddate);
-	rsvpmaker_debug_log($enddate,'enddate');
-	rsvpmaker_debug_log(rsvpmaker_date($rsvp_options['rime_format'],$ts_end),'date from ts end');
 	$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$post_id" );
 	if($event)
 		$sql = $wpdb->prepare("UPDATE $event_table SET post_title=%s, display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d ",$post->post_title,$type,$date,$enddate,$ts_start,$ts_end,$timezone,$post_id);

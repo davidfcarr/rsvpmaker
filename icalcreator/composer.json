@@ -1,0 +1,61 @@
+{
+    "name": "kigkonsult/icalcreator",
+    "type": "library",
+    "description": "iCalcreator is the PHP implementation of rfc2445/rfc5545, management of calendar information",
+    "keywords": [
+        "rfc2445",
+        "rfc5545",
+        "rfc6321",
+        "rfc7986",
+        "management",
+        "calendar",
+        "vCalendar",
+        "event",
+        "todo",
+        "alarm",
+        "vevent",
+        "vtodo",
+        "vjournal",
+        "vfreebusy",
+        "valarm",
+        "vtimezone",
+        "standard",
+        "daylight"
+    ],
+    "license": "LGPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Kjell-Inge Gustafsson",
+            "email": "ical@kigkonsult.se"
+        }
+    ],
+    "funding": [
+        {
+            "type": "other",
+            "url": "https://paypal.me/kigkonsult"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/iCalcreator/iCalcreator/issues"
+    },
+    "autoload": {
+        "files": ["autoload.php"],
+        "psr-4": { "Kigkonsult\\Icalcreator\\": ["src/", "src/Util/", "src/Traits/"] }
+    },
+    "require": {
+        "php": ">=7.0",
+        "ext-simplexml": "*",
+        "ext-openssl": "*",
+        "ext-zlib": "*"
+    },
+    "require-dev": {
+        "phpcompatibility/php-compatibility": ">=9.3.5",
+        "phpstan/phpstan": ">=0.9.3",
+        "phpunit/phpunit": ">=6.5.13",
+        "squizlabs/php_codesniffer": ">=3.5.5"
+    },
+    "scripts": {
+        "post-install-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility",
+        "post-update-cmd" : "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility"
+    }
+}

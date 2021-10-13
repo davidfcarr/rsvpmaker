@@ -1,0 +1,133 @@
+
+iCalcreator 2.29.18 releaseNotes
+
+v2.29.1   Removal of all set-methods date(time)/interval ARRAY arguments
+          as well as get-methods return date(time)/interval ARRAY formats
+          DTSTART, DTEND, DUE, RECURRENCE_ID
+          CREATED, COMPLETED, DTSTAMP, LAST_MODIFIED
+
+v2.29.2   Removal of all set-methods DateInterval ARRAY arguments
+          as well as get-methods return DateInterval ARRAY formats
+          REFRESH_INTERVAL, DURATION, TRIGGER
+          RDATE, EXDATE
+          FREEBUSY, RRULE, EXRULE
+
+v2.29.3   Rewrite of Vcalendar::parse()
+          only string|array input allowed, file/url parse removed
+
+v2.29.4 Removal of deprecated methods
+          Vcalendar::saveCalendar()
+          Vcalendar::useCachedCalendar()
+
+          Vcalendar::deleteProperty()
+          Vcalendar::setProperty()
+          Vcalendar::addComponent()
+
+          CalendarComponent::deleteProperty()
+          CalendarComponent::getProperty()
+          CalendarComponent::setProperty()
+
+          VetComponent::newComponent()
+          VTimezone::newComponent()
+
+          IcalXMLFactory::XMLfile2iCal()
+          IcalXMLFactory::XMLstr2iCal()
+
+          Removal of deprecated config/keys
+          DELIMITER, DIRECTORY, FILENAME, DIRFILE, FILESIZE, FILEINFO
+
+          All keys and (fixed) property values as constants available in IcalInterface
+
+v2.29.5   Implement rfc7986
+          new properties; COLOR, NAME, CONFERENCE, IMAGE, REFRESH-INTERVAL, SOURCE
+          allow calendar-properties; UID, LAST-MODIFIED, URL, REFRESH-INTERVAL, SOURCE,
+                                     COLOR, NAME, DESCRIPTION, CATEGORIES, IMAGE
+          replace rfc5545 (date+unique_id) UID by rfc7986 guid UID
+
+v2.29.6   alter RRULE/EXRULE to single occurence
+
+v2.29.7   Allow iana-token (Other IANA-registered type) property PARAMETER names
+          For ACTION and CLASS, iana-token / x-name VALUES are allowed
+          However, IANA Properties still not supported
+
+v2.29.8   Vcalendar::sort() order adjustment
+
+v2.29.9   Conformed method names for Last-Modified, Request-Status, Related-to
+
+v2.29.10  fix other (Ms) timezones conversion to PHP timezones (ie map on offset)
+          in RegulateTimezoneFactory, to be used before Vcalendar::parse
+
+v2.29.11  code reworks: StringFactory, SortFactory, CalAddressFactory, *Traits etc
+
+v2.29.12  Vtimezone::populate() moved to Util/VtimezonePopulateFactory::process()
+
+v2.29.13  CATEGORIES, RESOURCES no longer accepts array input
+
+v2.29.14  String asserts in set-methods for TEXT Valuetype properties
+
+v2.29.15  Vcalendar::returnCalendar() new fileName arg
+
+v2.29.16  Methods with DateTime arg now accepts DateTimeInterface
+
+v2.29.17  assert for method exists
+
+v2.29.18  xml header update
+
+v2.29.20  PHP 7.4 compability (Util/DateIntervalFactory, Util/StringFactory)
+
+v2.29.21  more 2.29.16 (DateTimeFactory, RecurFactory)
+v2.29.22  Issue #88, code style, PHP 7+ compability
+v2.29.23  StringFactory needle/haystack functions
+
+v2.29.24  Issue #87, RecurFactory split in 2, reworked
+          more recur improved select base methods
+
+v2.29.25 bug RecurFactory::setRexRule() + RecurFactory2::assertRecur() rules
+
+
+v2.29.26 bug RecurFactory, BYDAY
+
+v2.20.27 docs: setCategories/setResources don't accepts array parameter
+         setRrule(/setExrule) allows only one in component
+
+v2.29.28 bug RecurFactory2::recurWeekly2()
+
+v2.29.29 bug StringFactory::size75(), max rowlength
+
+
+v2.29.30 Issue #89 URL adapt, strip of value opt (urlencoded) prefix/suffix '<>'
+         (IcalXMLFactory) SOURCE value-type conform
+
+v2.29.30b More issue #89 URL adapt, parse parameter
+
+
+
+v3.30.2 #89, URL (TZURL/SOURCE) for rfc (prescribed) property value,
+        parameter VALUE type URI removed, parse adapt
+        ParameterFactory::ifExistRemove()
+        StringFactory::splitContent()
+        StringFactory::colonIsPrefixedByProtocol()
+        HttpFcatory::urlSet()
+        URLTrait::setUrl() (also TZURL/SOURCE traits)
+
+
+v3.30.3 #89, URL (TZURL/SOURCE) value prefix (protocol)
+        StringFactory::splitContent() / checkFixUriValue()
+        HttpFcatory::urlSet()
+        IcalXMLFactory::addXMLchildUri() / XMLgetProps()
+
+
+v3.39   3.4 release candidate
+        PHP 7 (PHPStan/strict types)
+        iCalBase static methodName methods moved to StringFactory
+        iCalBase Component multi-prop methods moved to CalendarComponent
+        CalAddressFactory::getCalAddresses() arg inclParams removed
+        TRIGGERtrait : setTrigger() bug fix
+        ATTENDEE/ORGANIZER (CalAddressFactory)
+          value MAILTO prefix
+          parameter EMAIL etc logic upd
+        IcalvCard::iCal2vCards() arg bug
+
+
+v3.39.1 github issue #91, empty config unique_id
+        IcalBase, Vcalendar, PRODIDtrait, VcalendarTest, MiscTest

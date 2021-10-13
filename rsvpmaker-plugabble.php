@@ -2596,8 +2596,6 @@ if ( ! function_exists( 'rsvp_notifications' ) ) {
 
 	function rsvp_notifications( $rsvp, $rsvp_to, $subject, $message, $rsvp_confirm = '' ) {
 
-		include 'rsvpmaker-ical.php';
-
 		global $post;
 
 		$message = wpautop( $message );
@@ -7799,5 +7797,3 @@ function rsvpmaker_check_coupon_code( $price ) {
 	return $price;
 
 }
-
-?>

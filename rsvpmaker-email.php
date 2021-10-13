@@ -3,6 +3,10 @@ use RSVPbyDrewM\MailChimp\MailChimp as MailChimpRSVP;
 
 $rsvpmaker_message_type = '';
 
+function rsvpmaker_no_lazyload_email ($status) {
+	return false;
+}
+
 function rsvpmailer($mail, $description = '') {
 	if(defined('RSVPMAILOFF'))
 	{
@@ -227,8 +231,11 @@ if($mail["html"])
 			$rsvpmail->WordWrap = 150;
 		}
 
-	if(isset($mail["ical"]))
-		$rsvpmail->Ical = $mail["ical"];
+	if(isset($mail["ical"])) {
+		//$rsvpmail->Ical = $mail["ical"];
+		$rsvpmail->addStringAttachment($mail["ical"],'ical.ics','quoted-printable','text/calendar');
+		rsvpmaker_debug_log($mail["ical"],'addStringAttachment');
+	}
 	
 	try {
 		$rsvpmail->Send();
@@ -239,6 +246,31 @@ if($mail["html"])
 	}
 	return $rsvpmail->ErrorInfo;
 }
+
+function ical_as_attachment () {
+	$mail['ical'] = "BEGIN:VCALENDAR
+VERSION:2.0
+PRODID://Drupal iCal API//EN
+BEGIN:VEVENT
+UID:http://www.icalmaker.com/event/d8fefcc9-a576-4432-8b20-40e90889affd
+DTSTAMP:20170203T045941Z
+DTSTART:20170214T060000Z
+DTEND:20170214T100000Z
+SUMMARY:Party in Daawat
+LOCATION:Hotel Daawat, Ground Floor, Phase 5, Sector 59, Near Post Office, Mohali 160059.
+DESCRIPTION:Dinner
+END:VEVENT
+END:VCALENDAR";
+$mail['to'] = 'david@carrcommunications.com';
+$mail['from'] = 'david@rsvpmaker.com';
+$mail['subject'] = 'Ical for Google test';
+$mail['html'] = '<p>Damn PHPMailer</p>';
+if(isset($_GET['test']))
+echo rsvpmailer($mail);
+return var_export($mail,true);
+}
+
+add_shortcode('ical_as_attachment','ical_as_attachment');
 
 
   // Avoid name collisions.
@@ -1577,12 +1609,11 @@ if(!isset($_POST))
 	if($mailchimp_sent)
 		printf('</p>%s</p>',implode(', ',$mailchimp_sent));	
 }
-/*
-<?php esc_html_e('Email Design Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
-<button><?php esc_html_e('Switch Template','rsvpmaker'); ?></button>
-</form>
-*/
 ?>
+<style>
+	/* only included in preview */
+	#email-content {background-color: #FFF; color: #000; max-width: 700px; padding: 15px; margin-left:auto; margin-right: auto;}
+</style>
 <p><a href="<?php echo esc_attr($edit_link); ?>"><?php esc_html_e('Edit','rsvpmaker');?></a> - <a href="<?php echo admin_url('post-new.php?post_type=rsvpemail'); ?>">New Email</a> - <a href="<?php echo admin_url(); ?>"><?php esc_html_e('Dashboard','rsvpmaker');?></a> - <a href="<?php echo site_url(); ?>"><?php esc_html_e('Visit Site','rsvpmaker');?></a></p>
 <div style="width: 150px; float:right;"><button onclick="hideControls()">Hide Controls</button></div>
 <form method="post" action="<?php echo esc_attr($permalink); ?>">
@@ -2734,7 +2765,6 @@ return '<p class="signed_up">'.$output.'</p>';
 function rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata) {
 global $post;
 global $rsvp_options;
-include 'rsvpmaker-ical.php';
 
 $templates = get_rsvpmaker_notification_templates();
 
@@ -2827,7 +2857,7 @@ rsvpmaker_tx_email($post, $mail);
 }
 
 function rsvp_confirmation_after_payment ($rsvp_id) {
-	include 'rsvpmaker-ical.php';
+	
 	global $post;
 	global $rsvp_options;
 	global $wpdb;
@@ -2935,8 +2965,7 @@ else
 function email_content_minfilters() {
 	global $wp_filter, $post, $email_context;
 	$log = '';
-		$corefilters = array('convert_chars','wpautop','wptexturize','event_content','
-		wp_make_content_images_responsive');
+		$corefilters = array('convert_chars','wpautop','wptexturize','event_content','wp_make_content_images_responsive','lazyload_is_enabled');
 		foreach($wp_filter["the_content"] as $priority => $filters)
 			foreach($filters as $name => $details)
 				{
@@ -3314,6 +3343,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 	
 			<?php
 			//print_r($post);
+			add_filter( 'wp_lazy_loading_enabled', '__return_false' );
 			the_post();
 			the_content();
 			?>
@@ -3336,6 +3366,8 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		<?php
 		$content = ob_get_clean();
 		$content = preg_replace('/<style.+<\/style>/is','',$content);
+		$content = preg_replace('/<img src="[^>]+lazy-image"[^>]+>/','',$content); // prevent jetpack lazy image
+		$content = preg_replace('/<\/{0,1}noscript>/','',$content); // prevent jetpack lazy image
 		if(preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?]+)|is',$content,$matches)) {
 			foreach($matches[1] as $youtube_id) {
 				$link = 'https://youtu.be/'.$youtube_id;
