@@ -13,6 +13,7 @@ Version: 9.0.7
 function get_rsvpversion() {
 	return '9.0.7';
 }
+
 global $wp_version;
 global $default_tz;
 

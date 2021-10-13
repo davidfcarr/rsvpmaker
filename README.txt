@@ -121,7 +121,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 = 9.0.7 =
 
-* Additional checks to sync rsvp_dates meta tag with rsvpmaker_event table
+* Additional checks to sync rsvp_dates meta tag with rsvpmaker_event table 
 
 = 9.0.6 =
 

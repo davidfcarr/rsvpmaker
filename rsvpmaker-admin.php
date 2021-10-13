@@ -3613,6 +3613,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 	die();
 }
 
+
 function rsvpmaker_copy_metadata($source_id, $target_id) {
 global $wpdb;
 $log = '';

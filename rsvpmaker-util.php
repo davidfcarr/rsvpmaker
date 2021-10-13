@@ -10,6 +10,7 @@ function get_rsvpmaker_event_table() {
 }
 
 add_action('admin_init','rsvpmaker_check_missing');
+
 function rsvpmaker_check_missing () {
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
