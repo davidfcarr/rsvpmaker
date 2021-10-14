@@ -2596,7 +2596,7 @@ if ( ! function_exists( 'rsvp_notifications' ) ) {
 
 	function rsvp_notifications( $rsvp, $rsvp_to, $subject, $message, $rsvp_confirm = '' ) {
 
-		include 'rsvpmaker-ical.php';
+		include_once 'rsvpmaker-ical.php';
 
 		global $post;
 

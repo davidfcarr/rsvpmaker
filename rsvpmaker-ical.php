@@ -1,7 +1,6 @@
 <?php
 
 function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
-
 	global $post;
 
 	global $rsvp_options;
