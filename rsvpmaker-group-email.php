@@ -837,6 +837,8 @@ function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $ur
 		printf( '<p>File characteristics: %s %s %s</p>', $ContentType, $strFileName, $fileSize );
 	}
 
+	$strFileName = preg_replace('/[^\.a-zA-Z0-9]/','_',$strFileName);
+
 	$writepath = $path . $strFileName;
 
 	$url = $urlpath . $strFileName;

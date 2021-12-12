@@ -2254,7 +2254,9 @@ foreach($dows as $dow) {
 $i = 0;
 $startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
 $ts = rsvpmaker_strtotime($startdaytxt);
-rsvpmaker_debug_log($startdaytxt,'startdaytext top');
+//rsvpmaker_debug_log($startdaytxt,'startdaytext top');
+//rsvpmaker_debug_log(rsvpmaker_date('r',$ts),'startday date');
+printf('<p>%s %s %s</p>',$startdaytxt,rsvpmaker_date('r',$ts),$ts);
 if(!$ts) {
 	echo 'Error parsing '.$startdaytxt;
 	return;
@@ -3349,7 +3351,7 @@ if(($ts < current_time('timestamp')))
 	continue; // omit dates past
 if(isset($fts) && $ts <= $fts)
 	continue;
-$date = date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
+$date = rsvpmaker_date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
 //printf('<div>Add %s</div>',$date);
 add_rsvpmaker_from_template($template_id, $sked, $date);
 } // end for loop

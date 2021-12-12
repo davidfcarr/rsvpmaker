@@ -820,10 +820,11 @@ function rsvpmaker_set_template_defaults( $post_id ) {
 	update_post_meta( $post_id, '_sked_duration', '' );
 }
 
-function rsvpmaker_get_templates( $criteria = '' ) {
+function rsvpmaker_get_templates( $criteria = '', $include_drafts = false ) {
 	global $wpdb;
 	$templates = array();
-	$sql       = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND post_status='publish' GROUP BY $wpdb->posts.ID ORDER BY post_title" . $criteria;
+	$status_sql = ($include_drafts) ? "(post_status='publish' OR post_status='draft')" : "post_status='publish'";
+	$sql       = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND $status_sql $criteria GROUP BY $wpdb->posts.ID ORDER BY post_title";
 	$results   = $wpdb->get_results( $sql );
 	foreach ( $results as $template ) {
 		$templates[ $template->ID ] = $template;

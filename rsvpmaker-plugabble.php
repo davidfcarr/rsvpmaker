@@ -6131,13 +6131,16 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 
 		}
 
-		$results = rsvpmaker_get_templates();
+		$results = rsvpmaker_get_templates('',true);
 
 		if ( $results ) {
 
 			printf( '<h3>Templates</h3><table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr></thead><tbody>', __( 'Title', 'rsvpmaker' ), __( 'Schedule', 'rsvpmaker' ), __( 'Projected Dates', 'rsvpmaker' ), __( 'Event', 'rsvpmaker' ) );
 
 			foreach ( $results as $post ) {
+
+				if($post->post_status == 'draft')
+					$post->post_title .= ' (draft)';
 
 				if ( isset( $_GET['apply_current'] ) && ( $post->ID == $_GET['apply_current'] ) ) {
 
@@ -6557,7 +6560,12 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 			}
 		}
 
-		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><a href="%s">%s</a></blockquote>', __( 'Template', 'rsvpmaker' ), esc_html( $post->post_title ), esc_html( $schedule ), admin_url( 'post.php?action=edit&post=' . $t ), __( 'Edit Template', 'rsvpmaker' ) );
+		if(!empty($template['stop']))
+		{
+			$schedule .= ' - stop date set for '.$template['stop'] .' (<a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$t).'">Options</a>)';
+		}
+
+		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><a href="%s">%s</a></blockquote>', __( 'Template', 'rsvpmaker' ), esc_html( $post->post_title ), $schedule, admin_url( 'post.php?action=edit&post=' . $t ), __( 'Edit Template', 'rsvpmaker' ) );
 
 		$hour = (int) $template['hour'];
 
@@ -6685,6 +6693,8 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 		// print_r($template);
 
 		$projected = rsvpmaker_get_projected( $template );
+		if(isset($_GET['debug']))
+		print_r($projected);
 		if ( $projected && is_array( $projected ) ) {
 			foreach ( $projected as $i => $ts ) {
 				ob_start();

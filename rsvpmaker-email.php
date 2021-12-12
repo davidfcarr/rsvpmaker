@@ -11,7 +11,10 @@ function rsvpmailer($mail, $description = '') {
 	}
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
-	$problem = rsvpmail_is_problem($mail['to']);
+	if(empty($mail['skip_check']))
+		$problem = rsvpmail_is_problem($mail['to']);
+	else
+		$problem = false;
 	if($problem && ($rsvpmailer_rule != 'permit') ) {
 		$mail['html'] = '[content omitted]';
 		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
