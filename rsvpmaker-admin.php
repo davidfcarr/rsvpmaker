@@ -2210,9 +2210,9 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 	if($week == '0')
 		return rsvpmaker_date('Y-m',$t).'-01 '.$template['hour'].':'.$template['minutes'].':00';
 	elseif($week == '6')
-		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.rsvpmaker_date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 	else
-	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.date('F',$t).' '.date('Y',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.rsvpmaker_date('F',$t).' '.rsvpmaker_date('Y',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 }
 
 function rsvpmaker_get_projected($template) {
@@ -2254,9 +2254,6 @@ foreach($dows as $dow) {
 $i = 0;
 $startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
 $ts = rsvpmaker_strtotime($startdaytxt);
-//rsvpmaker_debug_log($startdaytxt,'startdaytext top');
-//rsvpmaker_debug_log(rsvpmaker_date('r',$ts),'startday date');
-printf('<p>%s %s %s</p>',$startdaytxt,rsvpmaker_date('r',$ts),$ts);
 if(!$ts) {
 	echo 'Error parsing '.$startdaytxt;
 	return;
@@ -2302,7 +2299,7 @@ else {
 		{
 			$i = 0;
 			$ts = time();
-			$startmonth = date('F Y',$ts);
+			$startmonth = rsvpmaker_date('F Y',$ts);
 			for($i = 0; $i < 50; $i++) //($ts; $ts < $stopdate; $ts+= MONTH_IN_SECONDS )
 			{
 				$ts = strtotime($startmonth." + $i month");
@@ -2976,7 +2973,7 @@ ORDER BY meta_value";
 	$row[] = "{text: 'Next Event - RSVP On', value: 'nextrsvp'}";
 	if($results)
 	foreach ($results as $r)
-	 	$row[] = sprintf("{text: '%s', value: '%d'}",addslashes($r->post_title).' '.date('r',rsvpmaker_strtotime($r->datetime)),$r->ID);   
+	 	$row[] = sprintf("{text: '%s', value: '%d'}",addslashes($r->post_title).' '.rsvpmaker_date('r',rsvpmaker_strtotime($r->datetime)),$r->ID);   
 
 $terms = get_terms('rsvpmaker-type', array('hide_empty' => false));
 $t[] = "{text: 'Any', value: ''}";
@@ -3186,7 +3183,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 				if(!empty($dpart[1]))
 					$dtext .= ' +'.$dpart[1].' minutes';
 				$dt = rsvpmaker_strtotime($dtext);
-				$duration = date('Y-m-d H:i:s',$dt);
+				$duration = rsvpmaker_date('Y-m-d H:i:s',$dt);
 				}
 			else
 				$duration = $template["duration"];
@@ -5147,7 +5144,8 @@ else {
 	$endhour = 13;
 	$minutes = 0;
 	$months = array('January','February','March','April','May','June','July','August','September','October','November','December');
-printf('<input type="hidden" name="pagelink" value="%s"',get_permalink());
+printf('<input type="hidden" name="pagelink" value="%s">',get_permalink());
+rsvphoney_ui();
 ?>	
 <h2>Event Title: <input name="event_title"></h2>
 	<div id="date"><label><?php echo __('Date','rsvpmaker');?></label> <input type="date" name="date">

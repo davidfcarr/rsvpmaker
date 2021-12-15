@@ -2036,6 +2036,8 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				die( 'Event ID not set' );
 			}
+			if(!get_post_meta($event,'_rsvp_on'))
+				return;
 
 			// page hasn't loaded yet, so retrieve post variables based on event
 
@@ -3209,6 +3211,8 @@ if ( ! function_exists( 'event_content' ) ) {
 				} else {
 					echo '<input name="yesno" type="hidden" value="1" />';
 				}
+
+				rsvphoney_ui();
 
 				if ( $dur && ( $slotlength = ! empty( $custom_fields['_rsvp_timeslots'][0] ) ) ) {
 
@@ -6660,7 +6664,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 				$schedoptions = sprintf( ' (<a href="%s">Options</a>)', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=' ) . $sched->ID );
 
-				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $timechange, $edit, $sched->postID, $d, date( 'F d, Y', $thistime ), get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft . $schedoptions );
+				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $timechange, $edit, $sched->postID, $d, rsvpmaker_date( 'F d, Y', $thistime ), get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft . $schedoptions );
 
 				$template_update = get_post_meta( $sched->postID, '_updated_from_template', true );
 

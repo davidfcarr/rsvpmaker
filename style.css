@@ -1,7 +1,10 @@
 .daily-schedule-event-types {
     margin-top: 1em;
 }
-
+.rsvploginrequired {
+    position: absolute;
+    left: -1492px;
+}
 article.rsvpmaker div.entry-meta {
 	display: none;
 }
