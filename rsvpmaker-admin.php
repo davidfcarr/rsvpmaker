@@ -3325,14 +3325,19 @@ function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
     return $caps;
 }
 
-function auto_renew_project ($template_id) {
+function auto_renew_project ($template_id, $notify = true) {
+global $rsvp_options;
 
 $sofar = get_events_by_template($template_id);
+$fts = 0;
 if(!empty($sofar))
 {
 	$farthest = array_pop($sofar);
+	rsvpmaker_debug_log($farthest,'farthest future event');
 	$fts = rsvpmaker_strtotime($farthest->datetime);
 }
+if($fts > (time() + (2 * MONTH_IN_SECONDS)) )
+	return; // cancel if more than 2 months worth of events in system
 $sked = get_template_sked($template_id);
 $hour = str_pad($sked['hour'],2,'0',STR_PAD_LEFT);
 $minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
@@ -3340,7 +3345,9 @@ $minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
 //printf('<pre>%s</pre>',var_export($sked,true));
 if(!isset($sked["week"]))
 	return;
+$added = ($fts) ? sprintf('<p>In addition to previously published dates ending %s</p>',rsvpmaker_date($rsvp_options['long_date'],$fts))."\n" : '';
 $projected = rsvpmaker_get_projected($sked);
+rsvpmaker_debug_log($projected,'projected dates');
 if($projected)
 foreach($projected as $i => $ts)
 {
@@ -3348,18 +3355,29 @@ if(($ts < current_time('timestamp')))
 	continue; // omit dates past
 if(isset($fts) && $ts <= $fts)
 	continue;
+rsvpmaker_debug_log($ts.' > '.$fts,'passed tests');
+$post = get_post($template_id);
 $date = rsvpmaker_date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
-//printf('<div>Add %s</div>',$date);
-add_rsvpmaker_from_template($template_id, $sked, $date);
+$added .= add_rsvpmaker_from_template($post, $sked, $date, $ts);
 } // end for loop
 
+if($notify && !empty($added))
+	{
+		$admin = get_option('admin_email');
+		$mail['subject'] = __('Dates added for '.$post->post_title,'rsvpmaker');
+		$mail['html'] = "<p>Dates added according to recurring event schedule.</p>\n".$added;
+		$mail['to'] = $admin;
+		$mail['from'] = $admin;
+		$mail['fromname'] = get_bloginfo('name');
+		rsvpmailer($mail);
+	}
 }
 
-function add_rsvpmaker_from_template($t, $template, $date) {
-	global $wpdb;
-	$post = get_post($t);
+function add_rsvpmaker_from_template($post, $template, $date, $ts) {
+	global $wpdb, $rsvp_options;
 	if($post->post_status != 'publish')
 		return;
+	$t = $post->ID;
 	$my_post['post_title'] = $post->post_title;
 	$my_post['post_content'] = $post->post_content;
 	$my_post['post_status'] = 'publish';
@@ -3379,17 +3397,21 @@ function add_rsvpmaker_from_template($t, $template, $date) {
 				}
 			else
 				$duration = (isset($template["duration"])) ? $template["duration"] : '';
-			
 			$my_post['post_name'] = sanitize_title($my_post['post_title'] . '-' .$date );
-  			if($post_id = wp_insert_post( $my_post ) )
+  			$added = '';
+			if($post_id = wp_insert_post( $my_post ) )
 				{
+				$prettydate = rsvpmaker_date($rsvp_options['long_date'],$ts);
+				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> </p>',$prettydate,get_permalink($post_id),__('View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),__('Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),__('Trash','rsvpmaker'));
+				rsvpmaker_debug_log($added,'add event from template');
 				add_rsvpmaker_date($post_id,$date,$duration);				
 				add_post_meta($post_id,'_meet_recur',$t,true);
-				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
-				update_post_meta($post_id,"_updated_from_template",$ts);
+				$upts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
+				update_post_meta($post_id,"_updated_from_template",$upts);
 				rsvpmaker_copy_metadata($t, $post_id);
 				rsvpmaker_update_event_row($post_id);
 			}
+	return $added;
 }
 
 function rsvpautorenew_test () {
@@ -4291,6 +4313,11 @@ echo $styles; ?>
 <h1 id="headline"><?php esc_html_e('RSVP / Event Options','rsvpmaker'); ?></h1>
 <div id="rsvpmaker_details_status"></div>
 <?php
+
+if(isset($_GET['trash']) && isset($_GET['post_id'])) {
+	wp_trash_post(intval($_GET['post_id']));
+	echo '<div class="notice notice-info"><p>'.__('Event post moved to','rsvpmaker').' <a href="'.admin_url('edit.php?post_status=trash&post_type=rsvpmaker').'">Trash</a></p></div>';
+}
 
 echo rsvpmaker_details_post();
 

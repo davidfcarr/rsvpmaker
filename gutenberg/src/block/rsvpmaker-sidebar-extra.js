@@ -192,6 +192,11 @@ const PluginRSVPMaker = () => {
 			</div>	
 )}
 <p><MetaFormToggle
+label="Auto Add Dates" 
+metaKey="rsvpautorenew"
+help="Automatically add dates according to this schedule"
+/></p>
+<p><MetaFormToggle
 label="Collect RSVPs" 
 metaKey="_rsvp_on"/></p>
 </PanelBody>

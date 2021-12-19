@@ -207,6 +207,11 @@ if(rsvpmaker_ajax.special)
 			<MetaEndDateControl type="template" statusKey="_sked_duration" timeKey="_sked_end" />
 			</div>	
 )}
+<p><MetaFormToggle
+label="Auto Add Dates" 
+metaKey="rsvpautorenew"
+help="Automatically add dates according to this schedule"
+/></p>
 <MetaFormToggle
 label={__('Collect RSVPs','rsvpmaker')} 
 metaKey="_rsvp_on"/>

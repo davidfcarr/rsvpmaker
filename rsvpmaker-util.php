@@ -4161,13 +4161,13 @@ global $rsvp_options;
 }
 
 function rsvphoney_ui($return = false) {
-	$html = '<div class="rsvploginrequired"><p><label>Login</label> <input name="rsvp_login" /></p><p><label>Password</label> <input name="rsvp_pass" /></p></div>';
+	$html = '<div class="rsvploginrequired" aria-hidden="true"><p><label>Login</label> <input name="rsvp_login" /></p><p><label>Password</label> <input name="rsvp_pass" /></p><p></p></div>';
 	if($return)
 		return $html;
 	echo $html;
 }
 add_action('init','rsvphoney_login',1);
 function rsvphoney_login() {
-	if(isset($_POST['rsvp_login']) || isset($_POST['rsvp_pass']))
+	if(!empty($_POST['rsvp_login']) || !empty($_POST['rsvp_pass']))
 		rsvphoney_login_now();
 }

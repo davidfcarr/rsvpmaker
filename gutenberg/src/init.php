@@ -103,8 +103,9 @@ $args = array(
 		}
 	);
 	foreach($template_fields as $field)
-		register_meta( 'post', $field, $args );
+		register_meta( 'post', $field, $args );	
 	register_meta( 'post', '_rsvp_on', $args );
+	register_meta( 'post', 'rsvpautorenew', $args );
 	register_meta( 'post', '_add_timezone', $args );
 	register_meta( 'post', '_convert_timezone', $args ); 
 	register_meta( 'post', '_calendar_icons', $args );
