@@ -189,13 +189,13 @@ const PluginRSVPMaker = () => {
 					] }
 				/>
 				<MetaEndDateControl type="template" statusKey="_sked_duration" timeKey="_sked_end" />
-			</div>	
-)}
 <p><MetaFormToggle
 label="Auto Add Dates" 
 metaKey="rsvpautorenew"
 help="Automatically add dates according to this schedule"
 /></p>
+			</div>	
+)}
 <p><MetaFormToggle
 label="Collect RSVPs" 
 metaKey="_rsvp_on"/></p>

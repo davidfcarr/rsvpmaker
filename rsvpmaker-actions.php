@@ -58,7 +58,7 @@ add_action( 'sc_after_charge', 'rsvpmaker_sc_after_charge' );
 add_action( 'template_redirect', 'rsvpemail_template_redirect' );
 
 add_action('post_updated', function($post_id, $post_after, $post_before) {
-if(($post_after->post_title != $post_before->post_title) && ($post_after->post_type == 'rsvpmaker') )
+if($post_after->post_type == 'rsvpmaker')
 rsvpmaker_update_event_row ($post_id);
 },10,3);
 
