@@ -2711,7 +2711,7 @@ function rsvpmaker_form( $atts = array(), $form_content = '' ) {
 	} elseif ( ! empty( $atts['post_id'] ) ) {
 		$post = get_post( $atts['post_id'] );
 	}
-	if ( $post->ID ) {
+	if ( isset($post->ID) ) {
 		$output = event_content( $form_content, true ) . rsvp_form_jquery();
 	}
 	$post = $backup;

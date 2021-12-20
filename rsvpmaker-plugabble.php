@@ -2433,7 +2433,8 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				}
 			}
 
-			$guestof = $rsvp['first'] . ' ' . $rsvp['last'];
+			$guestof = (empty($rsvp['first'])) ? '' : $rsvp['first'] . ' ';
+			$guestof .=  (empty($rsvp['last'])) ? '' : $rsvp['last'];
 
 			if ( isset( $_POST['guest']['first'] ) ) {
 
@@ -2480,7 +2481,8 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 							$newrow[ $index ][ $field ] = $value;
 							if ( ( $field != 'first' ) && ( $field != 'last' ) && ( $field != 'id' ) ) {
 								$guest_text[ $index ] .= sprintf( "%s: %s\n", $field, $value );
-								$guest_list[ $index ] = sprintf( '%s %s', $first, sanitize_text_field($_POST['guest']['last'][ $index ]) );
+								$guestlast = (empty($_POST['guest']['last'][ $index ])) ? '' : sanitize_text_field($_POST['guest']['last'][ $index ]);
+								$guest_list[ $index ] = sprintf( '%s %s', $first, $guestlast );
 							}
 						}
 					}
