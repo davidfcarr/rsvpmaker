@@ -3030,8 +3030,7 @@ function event_title_link () {
 		{
 		$time_format .= ' T';
 		}
-	$datestring = get_rsvp_date($post->ID);	
-	$t = rsvpmaker_strtotime($datestring);
+	$t = get_rsvpmaker_timestamp($post->ID);
 	$display_date = utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$time_format,$t));
 	$permalink = get_permalink($post->ID);
 	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink,esc_html($post->post_title),esc_html($display_date));
@@ -3069,7 +3068,7 @@ function rsvpdate_shortcode($atts = array()) {
 function rsvpdatetime_shortcode($atts) {
 	global $post, $rsvp_options;
 	$format = empty($atts['format']) ? $rsvp_options['long_date'].' '.$rsvp_options['time_format'] : $atts['format'];
-	$t = rsvpmaker_strtotime(get_rsvp_date($post->ID));
+	$t = get_rsvpmaker_timestamp($post->ID);
 	return rsvpmaker_date($format,$t);
 }
 

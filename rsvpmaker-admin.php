@@ -3697,8 +3697,7 @@ wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
 }
 
 function rsvpmaker_deadline_from_template($target_id,$deadlinedays,$deadlinehours) {
-	$date = get_rsvp_date($target_id);
-	$t = rsvpmaker_strtotime($date);
+	$t = get_rsvpmaker_timestamp($target_id);
 	if(!empty($deadlinedays))
 		$t -= ($deadlinedays * 60 * 60 * 24);
 	if(!empty($deadlinehours))
@@ -3706,8 +3705,7 @@ function rsvpmaker_deadline_from_template($target_id,$deadlinedays,$deadlinehour
 	update_post_meta($target_id,'_rsvp_deadline',$t);
 }
 function rsvpmaker_reg_from_template($target_id,$days,$hours) {
-	$date = get_rsvp_date($target_id);
-	$t = rsvpmaker_strtotime($date);
+	$t = get_rsvpmaker_timestamp($target_id);
 	if(!empty($days))
 		$t -= ($days * 60 * 60 * 24);
 	if(!empty($hours))
@@ -5157,8 +5155,7 @@ if($submitted_at < $expired)
 }
 else {
 	echo '<p>Preview</p><div style="border: thin dotted #111; padding: 10px; margin: 10px;">';
-	$date = get_rsvp_date($post_id);
-	$t = rsvpmaker_strtotime($date);
+	$t = get_rsvpmaker_timestamp($post_id);
 	$date = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t);
 	printf('<h3>%s</h3><h3>%s</h3>%s',esc_html($post->post_title),esc_html($date),wp_kses_post($post->post_content));	
 	echo '</div>';

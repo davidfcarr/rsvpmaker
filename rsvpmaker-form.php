@@ -250,8 +250,7 @@ function customize_rsvp_form() {
 
 			} else {
 
-				$start_time = rsvpmaker_strtotime( get_rsvp_date( $post_id ) );
-
+				$start_time = get_rsvpmaker_timestamp($post_id);
 				rsvpmaker_reminder_cron( $hours, $start_time, $post_id );
 
 			}

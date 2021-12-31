@@ -262,8 +262,6 @@ function rsvpmaker_select( $select ) {
 
 }
 
-
-
 function rsvpmaker_join( $join ) {
 
 	global $wpdb;
@@ -310,10 +308,7 @@ function rsvpmaker_where_schedule( $where ) {
 function rsvpmaker_where( $where ) {
 
 	global $startday;
-
 	global $datelimit;
-
-	// $where .= " AND rsvpdates.meta_key='_rsvp_dates' ";
 
 	if ( isset( $_REQUEST['cm'] ) ) {
 
@@ -357,14 +352,14 @@ function rsvpmaker_where( $where ) {
 		return $where;
 
 	} else {
+		$curdate = rsvpmaker_date('Y-m-d');
 
-		$where .= ' AND ( ( rsvpdates.date > CURDATE( ) OR rsvpdates.enddate > CURDATE() ) )';
+		$where .= " AND ( ( rsvpdates.date > '$curdate' OR rsvpdates.enddate > '$curdate' ) )";
 
 		if ( ! empty( $datelimit ) ) {
 
-			$where .= " AND ( ( rsvpdates.date < DATE_ADD(CURDATE( ),INTERVAL $datelimit)) OR ( rsvpdates.enddate < DATE_ADD(CURDATE( ),INTERVAL $datelimit)) ) ";
+			$where .= " AND ( ( rsvpdates.date < DATE_ADD('$curdate',INTERVAL $datelimit)) OR ( rsvpdates.enddate < DATE_ADD('$curdate',INTERVAL $datelimit)) ) ";
 		}
-
 		return $where;
 
 	}

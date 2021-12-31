@@ -41,6 +41,13 @@ function rsvpmaker_future_event_titles( $refresh = false ) {
 	return $rsvpmaker_future_event_titles;
 }
 
+if(!function_exists('get_rsvpmaker_timestamp')) {
+	function get_rsvpmaker_timestamp( $post_id ) {
+		$event = get_rsvpmaker_event($post_id);
+		return intval($event->ts);
+	}	
+}
+
 function get_rsvpmaker_event( $post_id ) {
 	if ( empty( $post_id ) ) {
 		return;

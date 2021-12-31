@@ -137,9 +137,11 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 			);
 		}
 		
+		if(isset($post->ID))
 		$event = get_rsvpmaker_event( $post->ID );
+		$start = 0;
 
-		if ( $event ) {
+		if ( !empty($event) ) {
 			$t = intval($event->ts_start);
 			$end = intval($event->ts_end);
 			echo "\n<div class=\"event_dates\"> \n";
@@ -2440,8 +2442,8 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				foreach ( $_POST['guest']['first'] as $index => $first ) {
 
-					if ( ! empty( $first ) || ! empty( $_POST['guest']['last'][ $index ] ) ) {
-						$last = sanitize_text_field($_POST['guest']['last'][ $index ]);
+					$last = ( empty( $_POST['guest']['last']) || !empty($_POST['guest']['last'][ $index ]) ) ? '' : sanitize_text_field($_POST['guest']['last'][ $index ]);
+					if ( ! empty( $first ) ) {
 						$guest_sql[ $index ] = $wpdb->prepare( ' SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s', $event, $yesno, $rsvp_id, $guestof, $first, $last );
 						$guest_text[ $index ] = sprintf( "Guest: %s %s\n", $first, $last );
 						$guest_list[ $index ] = sprintf( '%s %s', $first, $last );
