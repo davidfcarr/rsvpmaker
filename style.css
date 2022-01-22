@@ -179,16 +179,17 @@ margin-top: 20px;
 	font-weight: bold;
 	font-size: large;
 }
-#stripe-checkout-form {
+#stripe-checkout-form, #card-result {
 	background-color: #FFFFFF;
+	color: #222;
 	padding: 10px;
 }
 #card-element {
 	margin-bottom: 10px;
 }
 .stripebutton {
-  background-color: #1275ff;;
-  border: none;
+  background-color: #1275ff;
+  border: thin solid #1275ff;
   color: white;
   padding: 10px;
   text-align: center;

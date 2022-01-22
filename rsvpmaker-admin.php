@@ -3420,7 +3420,7 @@ global $rsvp_options;
 	global $wpdb;
 	$wpdb->show_errors();
 
-	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' AND $wpdb->posts.post_status='publish' ";
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' AND meta_value=1 AND $wpdb->posts.post_status='publish' ";
 	$results = $wpdb->get_results($sql);
 	if(is_array($results))
 	foreach($results as $row)

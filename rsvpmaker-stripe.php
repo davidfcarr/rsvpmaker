@@ -721,7 +721,7 @@ function stripe_latest_logged() {
 	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
 		return;
 	}
-	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
+	$stripetable = rsvpmaker_money_table();
 	if ( ! $wpdb->get_results( "show tables like '$stripetable' " ) ) {
 		stripe_balance_history( 200, false );
 	}
@@ -730,13 +730,13 @@ function stripe_latest_logged() {
 
 function rsvpmaker_stripe_transactions_list( $limit = 50, $where = '' ) {
 	global $wpdb;
-	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
+	$stripetable = rsvpmaker_money_table();
 	return $wpdb->get_results( "SELECT name,email,description,date,status,transaction_id,amount,fee, format((amount - fee),2) as yield FROM $stripetable $where ORDER BY date DESC LIMIT 0, $limit " );
 }
 
 function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
 	global $wpdb;
-	$stripetable = $wpdb->prefix . 'rsvpmaker_money'; // rsvpmaker_stripe_transactions_no_user
+	$stripetable = rsvpmaker_money_table();
 	$where       = ( $recent ) ? ' AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ' : '';
 	return $wpdb->get_results( "SELECT * FROM $stripetable WHERE user_id=0 $where ORDER BY date DESC" );
 }
@@ -748,7 +748,7 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 		return;
 	}
 	$where       = ( $start_date ) ? " AND date > '$start_date' " : '';
-	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
+	$stripetable  = rsvpmaker_money_table();
 	$sql         = "SELECT * FROM $stripetable WHERE user_id=$user_id $where ORDER BY date DESC";
 	return $wpdb->get_row( $sql );
 }
@@ -768,7 +768,7 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 	$public = $keys['pk'];
 	$secret = $keys['sk'];
 
-	$stripetable = $wpdb->prefix . 'rsvpmaker_money';
+	$stripetable = rsvpmaker_money_table();
 
 	rsvpmaker_debug_log( 'call to stripe_balance_history' );
 

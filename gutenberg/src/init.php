@@ -194,7 +194,10 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$chosen_gateway = get_rsvpmaker_payment_gateway ();
 		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.$post->ID);
 		$sked = get_template_sked($post->ID);
-		$rsvpmaker_special = get_rsvpmaker_meta($post->ID,'_rsvpmaker_special',true);
+		if(strpos($post->post_content,'wp:rsvpmaker/formfield'))
+			$rsvpmaker_special = 'RSVP Form';
+		else
+			$rsvpmaker_special = get_rsvpmaker_meta($post->ID,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
 			$top_message = $rsvpmaker_special;
 		$top_message = apply_filters('rsvpmaker_ajax_top_message',$top_message);

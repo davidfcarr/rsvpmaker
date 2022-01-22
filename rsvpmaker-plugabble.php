@@ -6225,6 +6225,9 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 					}
 				}
 
+				if(get_post_meta( $post->ID, 'rsvpautorenew', true ) )
+					$s .= '<br><strong>'.__('Set to automatically add dates','rsvpmaker').'</strong>';
+
 				$eds = get_additional_editors( $post->ID );
 
 				if ( ( $post->post_author == $current_user->ID ) || in_array( $current_user->ID, $eds ) || current_user_can( 'edit_post', $post->ID ) ) {
