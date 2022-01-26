@@ -844,46 +844,20 @@ function convert_date_meta() {
 	// rsvpmaker_duplicate_dates();
 }
 
-function rsvpmaker_template_order( $templates = '' ) {
-	if(function_exists('locate_block_template'))
-		return $templates;
+add_filter('single_template_hierarchy','rsvpmaker_single_template_hierarchy');
+function rsvpmaker_single_template_hierarchy($templates) {
 	global $post;
-
-	if ( $post->post_type != 'rsvpmaker' ) {
-
-		return $templates;
+	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
+	{
+		$index = array_search('single.php',$templates);
+		if($index) {
+			// prefer the page template, doesn't emphasize date posted as much in most themes
+			$templates[$index] = 'page.php';
+			$templates[] = 'single.php';
+		}
 	}
-
-	global $rsvp_options;
-
-	if ( ! is_array( $templates ) && strpos( $templates, 'rsvpmaker' ) ) {
-
-		return $templates;
-	}
-
-	if ( empty( $rsvp_options['rsvp_template'] ) ) {
-
-		$choices = array( 'single-rsvpmaker.php' );
-
-	} else {
-		$choices = array( 'single-rsvpmaker.php', $rsvp_options['rsvp_template'] );
-	}
-
-	if ( ! in_array( 'page.php', $choices ) ) {
-
-		$choices[] = 'page.php';
-	}
-
-	$choices[] = 'single.php';
-
-	$choices[] = 'index.php';
-
-	$templates = locate_template( $choices, false );
-
 	return $templates;
 }
-
-add_filter( 'single_template', 'rsvpmaker_template_order', 99 );
 
 function log_paypal( $message ) {
 
