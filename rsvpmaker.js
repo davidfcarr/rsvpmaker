@@ -179,6 +179,8 @@ jQuery( document ).ready(
 					var format          = $( this ).attr( 'format' );
 					var post_id         = $( this ).attr( 'post_id' );
 					var server_timezone = $( this ).attr( 'server_timezone' );
+					var timezone_abbrev = $( this ).attr( 'timezone_abbrev' );
+					console.log(timezone_abbrev);
 					var select          = {};
 					var fluxbutton      = {};
 					if (check && (tzstring == server_timezone)) {
@@ -205,6 +207,7 @@ jQuery( document ).ready(
 						'tzstring' : tzstring,
 						'format' : format,
 						'post_id' : post_id,
+						'timezone_abbrev' : timezone_abbrev,
 					};
 					console.log( data );
 					jQuery.post(
@@ -245,6 +248,7 @@ jQuery( document ).ready(
 		var tz       = jstz.determine();
 		var tzstring = tz.name();
 		flux_capacitor( tzstring );
+
 		var guestlist = '';
 		function format_guestlist(guest) {
 

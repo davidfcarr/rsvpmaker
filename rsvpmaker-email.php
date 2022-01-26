@@ -1580,12 +1580,17 @@ if(!isset($_POST))
 	if($mailchimp_sent)
 		printf('</p>%s</p>',implode(', ',$mailchimp_sent));	
 }
-/*
-<?php esc_html_e('Email Design Template','rsvpmaker'); ?>: <select name="template"><?php echo $o; ?></select>
-<button><?php esc_html_e('Switch Template','rsvpmaker'); ?></button>
-</form>
-*/
 ?>
+<style>
+	#email-content {
+		width: 650px;
+		margin-left:auto;
+		margin-right: auto;
+		background-color: #fff;
+		color: #000;
+		padding: 10px;
+	}
+</style>
 <p><a href="<?php echo esc_attr($edit_link); ?>"><?php esc_html_e('Edit','rsvpmaker');?></a> - <a href="<?php echo admin_url('post-new.php?post_type=rsvpemail'); ?>">New Email</a> - <a href="<?php echo admin_url(); ?>"><?php esc_html_e('Dashboard','rsvpmaker');?></a> - <a href="<?php echo site_url(); ?>"><?php esc_html_e('Visit Site','rsvpmaker');?></a></p>
 <div style="width: 150px; float:right;"><button onclick="hideControls()">Hide Controls</button></div>
 <form method="post" action="<?php echo esc_attr($permalink); ?>">

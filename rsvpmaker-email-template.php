@@ -253,6 +253,8 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 	}
 }
+$html = preg_replace('/<img [^>]+srcset[^>]+>/','',$html);
+$html = preg_replace('/<\/{0,1}noscript>/','',$html);
 
 $preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $html );
 $preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding: 5px; color: #fff; background-color: #000;"> <p>Email Preview: '.$post->post_title.'</p> <div id="email-preview-wrapper" style="max-width: 700px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff;">', $preview );

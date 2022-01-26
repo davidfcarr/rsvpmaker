@@ -2151,14 +2151,12 @@ else
 	add_filter('posts_where', 'rsvpmaker_where',99 );
 	add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
 	}
-//add_filter('posts_distinct', 'rsvpmaker_distinct',99 );
 }
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
 
 function rsvpmaker_admin_months_dropdown($bool, $post_type) {
 return ($post_type == 'rsvpmaker');
 }
-//apply_filters( 'disable_months_dropdown', false, $post_type )
 
 add_filter( 'disable_months_dropdown', 'rsvpmaker_admin_months_dropdown',10,2 );
 

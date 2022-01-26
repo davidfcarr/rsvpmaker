@@ -90,8 +90,6 @@ function rsvpmaker_event_content_anchor( $content ) {
 
 add_filter( 'the_content', 'event_content', 5 );
 
-
-
 function event_js( $content ) {
 
 	global $post;
@@ -498,8 +496,6 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		'post_status' => 'publish',
 		'paged'       => $paged,
 	);
-
-	// $querystring = "post_type=rsvpmaker&post_status=publish&paged=$paged";
 
 	if ( ! empty( $atts['author'] ) ) {
 
@@ -1800,8 +1796,6 @@ function rsvpmaker_archive_pages( $query ) {
 
 }
 
-
-
 function get_rsvpmaker_archive_link( $page = 1 ) {
 
 	$link = get_post_type_archive_link( 'rsvpmaker' );
@@ -2319,8 +2313,6 @@ function rsvpmaker_hide_menu( $menu ) {
 
 }
 
-// if(!is_admin())
-
 add_filter( 'wp_nav_menu', 'rsvpmaker_hide_menu' );
 
 function rsvplanding_register_meta_boxes() {
@@ -2627,6 +2619,8 @@ function rsvpmaker_format_event_dates( $post_id ) {
 					$atts['end'] = $eventrow->enddate;
 				}
 
+				$atts['abbrev'] = rsvpmaker_date('T',$t);
+
 				$tzbutton = rsvpmaker_timezone_converter( $atts );
 
 			}
@@ -2684,7 +2678,7 @@ add_filter( 'the_time', 'rsvpmaker_hide_time_posted', 20 );
 
 function rsvpmaker_get_the_archive_title( $title ) {
 	global $post;
-	if ( $post->post_type == 'rsvpmaker' ) {
+	if ( isset($post->post_type) && ($post->post_type == 'rsvpmaker') ) {
 		if ( is_single() ) {
 			return '';
 		} else {
@@ -3114,12 +3108,13 @@ function rsvpmaker_timezone_converter( $atts ) {
 	if ( ! isset( $atts['time'] ) ) {
 		return;
 	}
+	$abbrev = (isset($atts['abbrev'])) ? $atts['abbrev'] : '';
 	$server_timezone = rsvpmaker_get_timezone_string();
 	$time            = $atts['time'];
 	$id              = 'convert' . strtotime( $time ) . rand();
 	$end             = ( isset( $atts['end'] ) ) ? $atts['end'] : '';
 	$format          = ( isset( $atts['format'] ) ) ? $atts['format'] : '';
-	return sprintf( '<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d"></div>', esc_attr( $id ), esc_attr( $time ), esc_attr( $end ), esc_attr( $format ), esc_attr( $server_timezone ), esc_attr( $post_id ) );
+	return sprintf( '<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d" timezone_abbrev="%s"></div>', esc_attr( $id ), esc_attr( $time ), esc_attr( $end ), esc_attr( $format ), esc_attr( $server_timezone ), esc_attr( $post_id ), esc_attr($abbrev) );
 }
 
 add_shortcode( 'timezone_converter', 'rsvpmaker_timezone_converter' );

@@ -1265,38 +1265,38 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 		$end    = sanitize_text_field( $_POST['end'] );
 		$tz     = sanitize_text_field( $_POST['tzstring'] );
 		$format = sanitize_text_field( $_POST['format'] );
+		$timezone_abbrev = sanitize_text_field($_POST['timezone_abbrev']);
 		$post   = get_post( $_POST['post_id'] );
 		$time   = rsvpmaker_strtotime( $time );
-		if ( $end ) {
-			$end = rsvpmaker_strtotime( $end );
-		}
-		date_default_timezone_set( $tz );
-		// strip off year
-		$rsvp_options['long_date'] = str_replace( ', %Y', '', $rsvp_options['long_date'] );
-		$times['content']          = 'Or: ';
-		if ( $format == 'time' ) {
-			$times['content'] .= date( $rsvp_option['time_format'], $time );
+		$s3 = rsvpmaker_date( 'T', $time );
+		if($timezone_abbrev == $s3)
+			$times ['content'] = ''; // if city code is different but tz code is same
+		else {
 			if ( $end ) {
-				$times['content'] .= ' to ' . date( 'g:i A T', $end );
+				$end = rsvpmaker_strtotime( $end );
 			}
-		} else {
-			$times['content'] .= $day1 = date( $rsvp_options['long_date'], $time );
-			$times['content'] .= ' ' . date( 'g:i A T', $time );
-			if ( $end ) {
-				$times['content'] .= ' to ';
-				$day2              = date( $rsvp_options['long_date'], $end );
-				if ( $day2 != $day1 ) {
-					$times['content'] .= $day2 . ' ';
+			date_default_timezone_set( $tz );
+			// strip off year
+			$rsvp_options['long_date'] = str_replace( ', %Y', '', $rsvp_options['long_date'] );
+			$times['content']          = 'Or: ';
+			if ( $format == 'time' ) {
+				$times['content'] .= date( $rsvp_option['time_format'], $time );
+				if ( $end ) {
+					$times['content'] .= ' to ' . date( 'g:i A T', $end );
 				}
-				$times['content'] .= date( 'g:i A T', $end );
-			}
+			} else {
+				$times['content'] .= $day1 = date( $rsvp_options['long_date'], $time );
+				$times['content'] .= ' ' . date( 'g:i A T', $time );
+				if ( $end ) {
+					$times['content'] .= ' to ';
+					$day2              = date( $rsvp_options['long_date'], $end );
+					if ( $day2 != $day1 ) {
+						$times['content'] .= $day2 . ' ';
+					}
+					$times['content'] .= date( 'g:i A T', $end );
+				}
+			}	
 		}
-		$tz3 = date( 'T' );
-		rsvpmaker_fix_timezone();// WordPress locale setting
-		$s3 = date( 'T' );
-		rsvpmaker_restore_timezone();
-		// if($tz3 == $s3) // if same 3 letter tz (even if not same locale)
-		// $times['content'] = '';
 		$times['tzoptions'] = wp_timezone_choice( $tz );
 		return new WP_REST_Response( $times, 200 );
 	}

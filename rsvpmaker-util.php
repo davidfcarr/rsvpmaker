@@ -44,7 +44,7 @@ function rsvpmaker_future_event_titles( $refresh = false ) {
 if(!function_exists('get_rsvpmaker_timestamp')) {
 	function get_rsvpmaker_timestamp( $post_id ) {
 		$event = get_rsvpmaker_event($post_id);
-		return intval($event->ts);
+		return intval($event->ts_start);
 	}	
 }
 
@@ -2633,11 +2633,7 @@ function update_rsvp_post_metadata( $check, $post_id, $meta_key, $meta_value ) {
 
 }
 
-
-
 add_filter( 'update_post_metadata', 'update_rsvp_post_metadata', 10, 4 );
-
-
 
 function rsvpmaker_check_privacy_page() {
 

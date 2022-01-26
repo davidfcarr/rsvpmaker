@@ -8,7 +8,7 @@ const { registerBlockType } = wp.blocks;
 const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { Component } = wp.element;
-const { InspectorControls } = wp.editor;
+const { InspectorControls } = wp.blockEditor;
 const { PanelBody, DateTimePicker, SelectControl, ToggleControl, TextControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
 const rsvptypes = [{value: '', label: 'None selected (optional)'}];
