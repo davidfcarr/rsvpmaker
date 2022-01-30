@@ -255,7 +255,6 @@ function rsvpmaker_block_cgb_editor_assets() {
 	if(empty($form_id))
 		$form_id = (int) $rsvp_options['rsvp_form'];
 	$fpost = get_post($form_id);
-	//rsvpmaker_debug_log($form_id);
 	$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$post->ID);
 	$form_customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
 	$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
@@ -287,7 +286,6 @@ function rsvpmaker_block_cgb_editor_assets() {
 	if($post_type == 'rsvpmaker')
 	{
 		$related_documents = get_related_documents ();
-		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');
 		$args = array(
 			'projected_label' => $projected_label,'projected_url' => $projected_url,
 			'template_label' => $template_label,

@@ -1,8 +1,6 @@
 <?php
 function rsvpmaker_to_stripe( $rsvp ) {
 
-	rsvpmaker_debug_log( 'rsvpmaker_to_stripe' );
-
 	global $post;
 
 	$vars['description'] = $post->post_title;
@@ -39,8 +37,6 @@ function rsvpmaker_to_stripe( $rsvp ) {
 // called from Gutenberg init
 
 function rsvpmaker_stripecharge( $atts ) {
-
-	rsvpmaker_debug_log( 'rsvpmaker_stripecharge' );
 
 	if ( is_admin() || wp_is_json_request() ) {
 
@@ -179,8 +175,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
 		if(isset($_GET['amount']))
 			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
-		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
-
+		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br />%s<br /><textarea name="stripenote" cols="80" rows="2"></textarea><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), __('Note','rsvpmaker'), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	} else {
 		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	}
@@ -280,6 +275,11 @@ function rsvpmaker_stripe_checkout() {
 
 	}
 
+	if(!empty($_GET['stripenote']))
+		$vars['note'] = sanitize_text_field($_GET['stripenote']);
+
+	update_option( $idempotency_key, $vars );
+	
 	require_once 'stripe-php/init.php';
 
 	$keys = get_rsvpmaker_stripe_keys();

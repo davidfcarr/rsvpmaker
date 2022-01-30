@@ -86,7 +86,6 @@ function rsvpmaker_save_calendar_data($post_id) {
 		wp_clear_scheduled_hook( 'rsvpmaker_create_update_reminder', $args );
 		wp_schedule_single_event( strtotime('+2 hours'), 'rsvpmaker_create_update_reminder', $args);
 	}
-	rsvpmaker_debug_log($_POST,'post in rsvpmaker_save_calendar_data');
 	if(!empty($_POST['newrsvpdate'])) {
 		update_post_meta($post_id,'_rsvp_dates',sanitize_text_field($_POST['newrsvpdate'].' '.$_POST['newrsvptime']));
 	}
@@ -3331,7 +3330,6 @@ $fts = 0;
 if(!empty($sofar))
 {
 	$farthest = array_pop($sofar);
-	rsvpmaker_debug_log($farthest,'farthest future event');
 	$fts = rsvpmaker_strtotime($farthest->datetime);
 }
 if($fts > (time() + (2 * MONTH_IN_SECONDS)) )
@@ -3345,7 +3343,6 @@ if(!isset($sked["week"]))
 	return;
 $added = ($fts) ? sprintf('<p>In addition to previously published dates ending %s</p>',rsvpmaker_date($rsvp_options['long_date'],$fts))."\n" : '';
 $projected = rsvpmaker_get_projected($sked);
-rsvpmaker_debug_log($projected,'projected dates');
 if($projected)
 foreach($projected as $i => $ts)
 {
@@ -3353,7 +3350,6 @@ if(($ts < current_time('timestamp')))
 	continue; // omit dates past
 if(isset($fts) && $ts <= $fts)
 	continue;
-rsvpmaker_debug_log($ts.' > '.$fts,'passed tests');
 $post = get_post($template_id);
 $date = rsvpmaker_date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
 $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts);
@@ -3401,7 +3397,6 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts) {
 				{
 				$prettydate = rsvpmaker_date($rsvp_options['long_date'],$ts);
 				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> </p>',$prettydate,get_permalink($post_id),__('View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),__('Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),__('Trash','rsvpmaker'));
-				rsvpmaker_debug_log($added,'add event from template');
 				add_rsvpmaker_date($post_id,$date,$duration);				
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$upts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
@@ -4889,9 +4884,6 @@ if(!empty($_POST["rsvpmaker_new_post"])  && wp_verify_nonce(rsvpmaker_nonce_data
 		rsvpmaker_save_calendar_data($post_id);
 		$date = sanitize_text_field($_POST['newrsvpdate'].' '.$_POST['newrsvptime']);
 		$end = sanitize_text_field($_POST['rsvpendtime']);
-		rsvpmaker_debug_log($_POST,'new event');
-		rsvpmaker_debug_log($date,'new event date');
-		rsvpmaker_debug_log($end,'new event end date');
 		$display_type = sanitize_text_field($_POST['end_time_type']);
 		$timezone = sanitize_text_field($_POST['timezone_string']);
 		rsvpmaker_add_event_row($post_id,$date,$end,$display_type,$timezone);

@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 5.9
-Stable tag: 9.2
+Stable tag: 9.2.1
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -118,6 +118,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.2.1 =
+
+* When you activate a full-site editing block theme (or activate RSVPMaker on a site that has it active), the plugin will now create a template based on the single post template tweaked to remove the post date (which can be confusing when emphasized over the event date) and post author fields.
 
 = 9.2 =
 

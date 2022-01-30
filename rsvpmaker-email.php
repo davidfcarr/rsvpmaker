@@ -42,7 +42,6 @@ function rsvpmailer($mail, $description = '') {
 	if($rsvpmailer_rule == 'deny') {
 		$mail['html'] = '[content omitted]';
 		$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
-		rsvpmaker_debug_log($mail,$message);
 		return $message;
 	}
 	
@@ -2852,7 +2851,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 		$rsvpdata['guests'] = implode(', ',$guestarr);
 	}
 
-	rsvpmaker_debug_log($rsvpdata,'rsvp_confirmation_after_payment');
+	//rsvpmaker_debug_log($rsvpdata,'rsvp_confirmation_after_payment');
 		
 	$details = '';
 	foreach($rsvpdata as $label => $value)

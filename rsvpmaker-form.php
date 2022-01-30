@@ -774,12 +774,8 @@ function stripe_form_wrapper( $atts, $content ) {
 	$content = sprintf( '<form method="post" action="%s">', $permalink ) . $content;
 	$content .= rsvpmaker_nonce('return');
 	$content .= sprintf( '<input type="hidden" name="amount" value="%s" /><button>Submit</button></form>', $amount );
-
 	return $content;
-
 }
-
-
 
 function remove_save_content_filters() {
 

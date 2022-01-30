@@ -150,7 +150,7 @@ function rsvpmaker_relay_queue() {
 	$mail['fromname'] = get_post_meta( $epost_id, 'rsvprelay_fromname', true );
 	$message_description = get_post_meta( $epost_id, 'message_description', true );
 	$mail['html'] = get_post_meta($epost_id,'_rsvpmail_html',true); //rsvpmail broadcast
-	rsvpmaker_debug_log($mail['html'],'_rsvpmail_html_for_'.$epost_id);
+	//rsvpmaker_debug_log($mail['html'],'_rsvpmail_html_for_'.$epost_id);
 	if(empty($mail['html']))
 	{
 		$post = get_post($epost_id);
@@ -171,7 +171,6 @@ function rsvpmaker_relay_queue() {
 		
 		</body>
 		</html>';
-		//rsvpmaker_debug_log($template,'group email template');	
 		$mail['html'] = do_blocks( do_shortcode( $template ) );
 		rsvpmaker_debug_log($mail,'group_email_from_template');
 	}

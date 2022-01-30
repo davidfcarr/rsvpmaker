@@ -319,7 +319,7 @@ jQuery( document ).ready(
 		$( '#reset_stripe_production' ).click(
 			function(event) {
 				event.preventDefault();
-				$( '#stripe_production' ).html( '<p>Publishable Key (Production):<br /><input name="rsvpmaker_stripe_keys[pk]" value=""></p><p>Secret Key (Production):<br /><input name="rsvpmaker_stripe_keys[sk]" value=""></p>' );
+				$( '#stripe_production' ).html( '<p>Publishable Key (Production):<br /><input name="_keys[pk]" value=""></p><p>Secret Key (Production):<br /><input name="rsvpmaker_stripe_keys[sk]" value=""></p>' );
 			}
 		);
 

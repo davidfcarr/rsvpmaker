@@ -1902,7 +1902,6 @@ if ( ! function_exists( 'save_replay_rsvp' ) ) {
 
 				if ( empty( $wpdb->get_var( $sql ) ) ) {
 					$sql = $wpdb->prepare( 'INSERT INTO  ' . $wpdb->prefix . 'rsvpmaker_event SET event=%d, post_title=%s, date=%s', $event, $post->post_title, get_rsvp_date( $event ) );
-					rsvpmaker_debug_log( $sql, 'replay rsvpmaker_event' );
 					$wpdb->query( $sql );
 				}
 			}
@@ -2377,7 +2376,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 					if ( empty( $wpdb->get_var( $sql ) ) ) {
 
 						$sql = $wpdb->prepare( 'INSERT INTO  ' . $wpdb->prefix . 'rsvpmaker_event SET event=%d, post_title=%s, date=%s', $event, $post->post_title, get_rsvp_date( $event ) );
-						rsvpmaker_debug_log( $sql, 'save_rsvp rsvpmaker_event' );
+						//rsvpmaker_debug_log( $sql, 'save_rsvp rsvpmaker_event' );
 						$wpdb->query( $sql );
 
 					}
