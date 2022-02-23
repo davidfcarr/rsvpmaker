@@ -2207,7 +2207,7 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 	if($week == '0')
 		return rsvpmaker_date('Y-m',$t).'-01 '.$template['hour'].':'.$template['minutes'].':00';
 	elseif($week == '6')
-		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.rsvpmaker_date('F',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.rsvpmaker_date('Y-m',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 	else
 	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.rsvpmaker_date('F',$t).' '.rsvpmaker_date('Y',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 }

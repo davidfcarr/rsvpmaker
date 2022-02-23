@@ -463,6 +463,8 @@ jQuery(function () {
 
 
 function rsvpmaker_sanitize_array_vars($array) {
+	if(!is_array($array))
+		return false;
 	foreach($array as $index => $var) {
 		if(is_array($var))
 			$var = array_map('sanitize_text_field',$var);

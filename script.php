@@ -18,6 +18,8 @@ function rsvpmaker_rest_array() {
 }
 
 function rsvpmaker_admin_enqueue( $hook ) {
+	if(is_network_admin())
+		return;
 	rsvpmaker_event_scripts(); // want the front end scripts, too
 	global $post, $scriptversion, $rsvpscript;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;

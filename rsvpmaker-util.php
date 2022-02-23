@@ -160,7 +160,7 @@ function rsvpmaker_verify_nonce() {
 
 function rsvpmaker_nonce_data($mode = 'key'){
 	global $rsvpmaker_nonce;
-	if($mode == 'key')
+	if(($mode == 'key') && isset($rsvpmaker_nonce['key']))
 		return $rsvpmaker_nonce['key'];
 	if(empty($_REQUEST['timelord']))
 		return false;
