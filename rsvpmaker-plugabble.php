@@ -3526,6 +3526,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 	function rsvp_report() {
 
 		global $wpdb, $post, $rsvp_options;
+		$daily_count = [];
 
 		$wpdb->show_errors();
 
@@ -4094,6 +4095,11 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 			$t = rsvpmaker_strtotime( $row['timestamp'] );
 
 			echo 'posted: ' . rsvpmaker_date( $rsvp_options['short_date'], $t );
+			
+			if(isset($daily_count[rsvpmaker_date( 'Y-m-d', $t )]))
+				$daily_count[rsvpmaker_date( 'Y-m-d', $t )]++;
+			else
+				$daily_count[rsvpmaker_date( 'Y-m-d', $t )] = 1;
 
 			echo '</p>';
 
@@ -4155,6 +4161,14 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 		if ( $members && $nonmembers ) {
 
 			printf( '<p>Responses from %d members with user accounts and %d nonmembers.</p>', $members, $nonmembers );
+		}
+
+		if(!empty($daily_count))
+		{
+			echo '<h3>RSVPs Per Day</h3>';
+			foreach($daily_count as $day => $count) {
+				printf('<p>%s: %s</p>',$day, $count);
+			}
 		}
 
 		if ( empty( $_GET['event'] ) ) {

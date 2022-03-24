@@ -1356,6 +1356,27 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	
 	}	
 	
+	if(!empty($postvars['custom_list'])) {
+		preg_match_all ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", sanitize_textarea_field($postvars['custom_list']), $emails);
+		if(!empty($emails[0]))
+		{
+			printf('<p>Sending to %s recipients (custom list)</p>',sizeof($emails[0]));
+			update_post_meta($post_id,'message_description',__('This message was sent from','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']));
+			$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+			update_post_meta($post_id,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
+			foreach($emails[0] as $email)
+				{
+				if( $problem = rsvpmail_is_problem($email) )
+					{
+						$unsubscribed[] = $email;
+						add_post_meta($post_id,'rsvpmail_blocked',$problem);
+						continue;
+					}
+				add_post_meta($post_id,'rsvprelay_to',$email);
+				}					
+		}
+	}
+
 	if(!empty($postvars["members"]))
 	{
 	$users = get_users('blog='.get_current_blog_id());
@@ -1607,7 +1628,8 @@ if(!isset($_POST))
 <div><input type="checkbox" name="preview" value="1"> <?php esc_html_e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $chimp_options["email-from"]; ?>" />
 <br><em>Send yourself a test first to check email formatting. Certain WordPress blocks, such as columns, may not translate to email.</em>
 </div>
-<div><input type="checkbox" name="members" value="1"> <?php esc_html_e('Website members','rsvpmaker');?></div>
+<div><input type="checkbox" name="members" value="1" <?php if(isset($_GET['list']) && ($_GET['list'] == 'members') ) echo 'checked="checked"'; ?> > <?php esc_html_e('Website members','rsvpmaker');?></div>
+<div><?php esc_html_e('Custom List','rsvpmaker');?><br /><textarea name="custom_list" rows="3" cols="80"></textarea></div>
 <p><input type="checkbox" name="test" value="1" /> Test</p>
 <?php if(is_multisite() && current_user_can('manage_network') && (get_current_blog_id() == 1)) {
 ?>

@@ -4553,7 +4553,7 @@ function rsvpmaker_quick_post() {
 	foreach($_POST["quicktitle"] as $index => $title) {
 		if(!empty($title)) {
 		$datetime = trim(sanitize_text_field($_POST["quick_rsvp_date"][$index].' '.$_POST["quick_rsvp_time"][$index]));
-		if(!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$datetime)) {
+		if(!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/',$datetime)) {
 			echo 'invalid time'.$datetime;
 			continue;
 		}
