@@ -2724,7 +2724,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 	$wp_query = rsvpmaker_upcoming_query( $atts );
 
 	// $future = $wp_query->get_posts();
-
+	$count = 0;
 	while ( have_posts() ) :
 		the_post();
 		$event       = $post;
@@ -2800,6 +2800,9 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 				$atts['end'] = $event->enddate;
 			}
+			if($count)
+				$atts['nofluxbutton'] = 1;
+			$count++;
 
 			$eventcontent .= rsvpmaker_timezone_converter( $atts );
 
@@ -3114,7 +3117,8 @@ function rsvpmaker_timezone_converter( $atts ) {
 	$id              = 'convert' . strtotime( $time ) . rand();
 	$end             = ( isset( $atts['end'] ) ) ? $atts['end'] : '';
 	$format          = ( isset( $atts['format'] ) ) ? $atts['format'] : '';
-	return sprintf( '<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d" timezone_abbrev="%s"></div>', esc_attr( $id ), esc_attr( $time ), esc_attr( $end ), esc_attr( $format ), esc_attr( $server_timezone ), esc_attr( $post_id ), esc_attr($abbrev) );
+	$nofluxbutton = (isset($atts['nofluxbutton'])) ? ' nofluxbutton="1" ' : '';
+	return sprintf( '<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d" timezone_abbrev="%s" %s></div>', esc_attr( $id ), esc_attr( $time ), esc_attr( $end ), esc_attr( $format ), esc_attr( $server_timezone ), esc_attr( $post_id ), esc_attr($abbrev), $nofluxbutton );
 }
 
 add_shortcode( 'timezone_converter', 'rsvpmaker_timezone_converter' );

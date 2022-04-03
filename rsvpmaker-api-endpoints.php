@@ -1302,6 +1302,60 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 	}
 }
 
+class RSVPMaker_Daily extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'daily/(?P<event>[0-9a-z]+)';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => 'GET',
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb;
+		$sql = $wpdb->prepare("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=%d ORDER BY timestamp",$request['event']);
+		$results = $wpdb->get_results($sql);
+		$daily_count = [];
+		$count = 0;
+		$wasdate = '';
+		$count = 0;
+		foreach($results as $row) {
+			$date = rsvpmaker_date('Y-m-d',rsvpmaker_strtotime($row->timestamp));
+			if(isset($daily_count[$date]))
+			$daily_count[$date]++;
+			else
+			$daily_count[$date] = 1;
+		}
+		$return_array = [];
+		foreach($daily_count as $date => $count) {
+			$return_array[] = array('date' => $date, 'count' => $count);
+		}
+		return new WP_REST_Response( $return_array, 200 );
+	}
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -1375,5 +1429,7 @@ add_action(
 		$tzevents->register_routes();
 		$flux = new RSVPMaker_Flux_Capacitor();
 		$flux->register_routes();
+		$daily = new RSVPMaker_Daily();
+		$daily->register_routes();
 	}
 );

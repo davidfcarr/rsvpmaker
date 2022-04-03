@@ -2,7 +2,6 @@
 
 /*
 Group Email Functions
-
 */
 
 function rsvpmaker_relay_active_lists() {
@@ -209,6 +208,9 @@ function rsvpmaker_relay_queue() {
 			add_post_meta( $post->ID, 'rsvpmail_sent', $mail['to'] . ' ' . rsvpmaker_date( 'r' ) );
 			sleep(2);
 		}
+		//delete old transients used to prevent duplicate sends
+		$sql = "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_cronemail%' AND (option_value < ".(time() - DAY_IN_SECONDS) ." OR option_value LIKE '%@%' )";
+		$wpdb->query($sql);
 		return $html;
 	}
 }
@@ -892,6 +894,8 @@ function rsvpmaker_relay_duplicate( $message_id ) {
 
 function rsvpmaker_qemail ($mail, $recipients) {
 	global $current_user;
+	if(is_multisite()) // send through root blog
+		switch_to_blog(1);
 	if(strpos($mail['html'],'<body')) {
 		preg_match('|<bod[^>]+>(.+)</body>|is',$mail['html'],$match);
 		if(!empty($match[1])) {
@@ -927,6 +931,8 @@ function rsvpmaker_qemail ($mail, $recipients) {
 		rsvpmaker_debug_log($recipients,'rsvpmaker_qemail_recipients_added');
 	}
 	rsvpmaker_debug_log($post_id,'rsvpmaker_qemail_insert_post_result');
+	if(is_multisite())
+		restore_current_blog();
 }
 
 function rsvpmaker_relay_log() {

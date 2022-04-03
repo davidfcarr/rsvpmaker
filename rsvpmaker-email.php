@@ -3103,7 +3103,7 @@ function rsvpmaker_cronmail_check_duplicate($content) {
 	$found = get_transient($key);
 	if($found)
 		return true;
-	set_transient($key,$content);
+	set_transient($key,time()); // used to set content
 	return false;
 }
 

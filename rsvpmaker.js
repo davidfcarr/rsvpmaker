@@ -180,10 +180,14 @@ jQuery( document ).ready(
 					var post_id         = $( this ).attr( 'post_id' );
 					var server_timezone = $( this ).attr( 'server_timezone' );
 					var timezone_abbrev = $( this ).attr( 'timezone_abbrev' );
+					var nofluxbutton = $( this ).attr( 'nofluxbutton' );
+					console.log('post '+id+' noflux '+nofluxbutton);
 					console.log(timezone_abbrev);
 					var select          = {};
 					var fluxbutton      = {};
 					if (check && (tzstring == server_timezone)) {
+								if(nofluxbutton)
+									return;
 								 $( this ).css( 'display','inline-block' );
 								 fluxbutton[id]                = document.createElement( "A" );
 								 fluxbutton[id].innerHTML      = 'Show in My Timezone';
