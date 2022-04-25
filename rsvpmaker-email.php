@@ -2790,7 +2790,7 @@ foreach($rsvpdata as $field => $value)
 $send_confirmation = get_post_meta($post->ID,'_rsvp_rsvpmaker_send_confirmation_email',true);
 $confirm_on_payment = get_post_meta($post->ID,'_rsvp_confirmation_after_payment',true);
 
-if(($send_confirmation ||!is_numeric($send_confirmation)) && empty($confirm_on_payment) )//if it hasn't been set to 0, send it
+if(($send_confirmation ||!is_numeric($send_confirmation)) && $rsvpdata['yesno'] && empty($confirm_on_payment) )//if it hasn't been set to 0, send it
 {
 $confirmation_subject = $templates['confirmation']['subject']; 
 foreach($rsvpdata as $field => $value)

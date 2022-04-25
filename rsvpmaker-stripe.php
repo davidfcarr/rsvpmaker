@@ -43,7 +43,7 @@ function rsvpmaker_stripecharge( $atts ) {
 		return;
 	}
 
-	global $current_user;
+	global $current_user, $rsvp_options;
 
 	$vars['description'] = ( ! empty( $atts['description'] ) ) ? $atts['description'] : __( 'charge from', 'rsvpmaker' ) . ' ' . get_bloginfo( 'name' );
 
@@ -101,6 +101,7 @@ function rsvpmaker_stripecharge( $atts ) {
 $rsvpmaker_stripe_form = '';
 
 function rsvpmaker_stripe_form( $vars, $show = false ) {
+	global $rsvp_options;
 
 	rsvpmaker_debug_log( $vars, 'rsvpmaker_stripe_form' );
 
@@ -175,7 +176,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
 		if(isset($_GET['amount']))
 			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
-		$output = sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value="%s"><br />%s<br /><textarea name="stripenote" cols="80" rows="2"></textarea><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_attr( $vars['amount'] ), __('Note','rsvpmaker'), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
+		$output = sprintf( '<form action="%s" method="get">%s (%s, %s %s): <input type="text" name="amount" value="%s"><br />%s<br /><textarea name="stripenote" cols="80" rows="2"></textarea><br /><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), __('minimum','rsvpmaker'), $rsvp_options['payment_minimum'], esc_attr( $vars['amount'] ), __('Note','rsvpmaker'), esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	} else {
 		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	}
@@ -248,6 +249,8 @@ function rsvpmaker_stripe_checkout() {
 
 	global $post, $rsvp_options, $current_user;
 
+	$keys = get_rsvpmaker_stripe_keys();
+
 	if ( empty( $_GET['txid'] ) ) {
 
 		return;
@@ -275,14 +278,17 @@ function rsvpmaker_stripe_checkout() {
 
 	}
 
+	if($vars['amount'] < $rsvp_options['payment_minimum']) {
+		do_action('rsvpmaker_possible_card_testing',$vars);
+		return '<p>Transactions of less than '.$rsvp_options['payment_minimum'].' not accepted.</p>';
+	}
+
 	if(!empty($_GET['stripenote']))
 		$vars['note'] = sanitize_text_field($_GET['stripenote']);
 
 	update_option( $idempotency_key, $vars );
 	
 	require_once 'stripe-php/init.php';
-
-	$keys = get_rsvpmaker_stripe_keys();
 
 	if ( ! empty( $vars['email'] ) ) {
 

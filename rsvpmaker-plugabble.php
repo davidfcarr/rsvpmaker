@@ -2573,13 +2573,13 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				// $rsvpdata["rsvptitle"] = $post->post_title;
 
 				$rsvpdata['rsvpyesno'] = $answer;
-
+				$rsvpdata['yesno'] = $yesno;
 				$rsvpdata['rsvpdate'] = $date;
 
 				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID );
 
 				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'], str_replace( '*|EMAIL|*', $rsvp['email'] . '&update=' . $rsvp_id, $rsvp_options['rsvplink'] ) );
-
+				
 				rsvp_notifications_via_template( $rsvp, $rsvp_to, $rsvpdata );
 
 				// rsvp_notifications ($rsvp,$rsvp_to,$subject,$cleanmessage,$rsvp_confirm);

@@ -46,13 +46,14 @@ function rsvpmaker_relay_menu_pages() {
 		'rsvpmaker_relay_manual_test',
 		'rsvpmaker_relay_manual_test'
 	);
+
 	add_submenu_page(
 		$parent_slug,
 		__( 'Group Email Log', 'rsvpmaker' ),
 		__( 'Group Email Log', 'rsvpmaker' ),
 		'manage_options',
-		'rsvpmaker_relay_log',
-		'rsvpmaker_relay_log'
+		'rsvpmaker_relay_queue_monitor',
+		'rsvpmaker_relay_queue_monitor'
 	);
 
 }
@@ -935,11 +936,32 @@ function rsvpmaker_qemail ($mail, $recipients) {
 		restore_current_blog();
 }
 
-function rsvpmaker_relay_log() {
+function rsvpmaker_relay_queue_monitor () {
+	do_action('rsvpmaker_relay_queue_monitor');
 	global $wpdb;
-	$sql = "SELECT * from $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND meta_key LIKE 'rsvp%' ORDER BY ID DESC, meta_key LIMIT 0,500";
+	$sql = "SELECT ID, post_title, wpt_postmeta.meta_key, wpt_postmeta.meta_value FROM `wpt_posts` JOIN wpt_postmeta on wpt_posts.ID = wpt_postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish') AND meta_key='rsvprelay_to' ORDER BY ID DESC";
 	$results = $wpdb->get_results($sql);
-	foreach($results as $row) {
-		printf('<p>%s<br><strong>%s</strong> %s</p>',$row->post_title,$row->meta_key,$row->meta_value);
-	}	
+	$was = 0;
+	echo '<h1>In Queue</h2>';
+	if(empty($results))
+		echo '<p>none</p>';
+	else
+	foreach($results as $row)
+	{
+		if($row->ID != $was)
+			printf('<h2>%s</h2>',$row->post_title);
+		printf('<p>%s %s</p>',$row->meta_key, $row->meta_value);
+		$was = $row->ID;
+	}
+	echo '<h1>Sent (200 Latest)</h2>';
+	$sql = "SELECT ID, post_title, wpt_postmeta.meta_key, wpt_postmeta.meta_value FROM `wpt_posts` JOIN wpt_postmeta on wpt_posts.ID = wpt_postmeta.post_id WHERE post_type='rsvpemail' AND meta_key='rsvpmail_sent' ORDER BY ID DESC LIMIT 0, 200";
+	$results = $wpdb->get_results($sql);
+	$was = 0;
+	foreach($results as $row)
+	{
+		if($row->ID != $was)
+			printf('<h2>%s</h2>',$row->post_title);
+		printf('<p>%s %s</p>',$row->meta_key, $row->meta_value);
+		$was = $row->ID;
+	}
 }

@@ -1027,6 +1027,10 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 </select>    
 </div>
 
+<h3><?php esc_html_e('Minimum Amount','rsvpmaker'); ?>:</h3>
+<div><input type="text" name="payment_option[payment_minimum]" value="<?php if(isset($options["payment_minimum"])) {echo esc_attr($options["payment_minimum"]);} else echo '5.00';?>" size="5" /> <br /><em><?php _e('Prevents fraudulent uses such as $1 donations to test stolen cards','rsvpmaker'); ?></em>
+</div>
+
 <h3>PayPal (REST API)</h3>
 <p><?php esc_html_e('Keys may be obtained from','rsvpmaker'); ?> <a target="_blank" href="https://developer.paypal.com/developer/applications">developer.paypal.com/developer/applications/</a></p>
 <?php
@@ -5121,6 +5125,9 @@ style_formats: [
 	{ title: 'Italic', format: 'italic' },
 ]},]},
 toolbar: 'bold italic link',
+relative_urls: false,
+remove_script_host : false,
+document_base_url : "'.site_url().'/",
 });	
 </script>
 <?php

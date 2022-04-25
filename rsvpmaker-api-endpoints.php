@@ -385,7 +385,7 @@ class RSVPMaker_Sked_Controller extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 
-		$sked = get_template_sked( $request['post_id'] );
+		$sked = get_template_sked( intval($request['post_id']) );
 
 		return new WP_REST_Response( $sked, 200 );
 
