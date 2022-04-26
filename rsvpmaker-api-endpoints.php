@@ -435,7 +435,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 		global $wpdb;
 
-		$base = get_option( $request['txkey'] );
+		$base = get_option( sanitize_text_field($request['txkey']) );
 
 		$key = 'conf:' . time();
 
@@ -450,7 +450,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 				if ( empty( $vars[ $name ] ) ) {
 
-					$vars[ $name ] = $value;
+					$vars[ $name ] = sanitize_text_field($value);
 				}
 			}
 		}
@@ -459,9 +459,9 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 		if ( ! empty( $vars['rsvp_id'] ) ) {
 
-			$rsvp_id = $vars['rsvp_id'];
+			$rsvp_id = intval($vars['rsvp_id']);
 
-			$rsvp_post_id = $vars['rsvp_post_id'];
+			$rsvp_post_id = intval($vars['rsvp_post_id']);
 
 			$paid = $vars['amount'];
 
