@@ -4202,3 +4202,66 @@ function rsvpmaker_single_block_template() {
 		wp_add_object_terms($post_id,$theme,'wp_theme');
 	}
 }
+
+add_action('admin_init','rsvpmaker_number_events_post',1);
+function rsvpmaker_number_events_post() {
+	if(!isset($_POST['start_number']))
+		{
+			//echo 'start number not set';
+			return;
+		}
+	$t = intval($_GET['t']);
+	$start_number = intval($_POST['start_number']);
+	$starting_with = intval($_POST['starting_with']);
+	$on = ($starting_with == 0);
+	$events = get_events_by_template($t);
+	if($events) {
+		foreach($events as $event) {
+			if($event->ID == $starting_with)
+				$on = true;
+			if($on) {
+				update_post_meta($event->ID,'rsvpeventnumber',$start_number);
+				$start_number++;
+				}
+			}
+		}
+	update_post_meta($t,'rsvpeventnumber_top',$start_number);
+}
+
+function rsvpmaker_number_events_ui($t) {
+	$top_number = 0;
+	$events = get_events_by_template($t);
+	$defaultoption = '<option value="0">Next Event</option>';
+	$options = '';
+	if($events) {
+		$isset = get_post_meta($events[0]->ID,'rsvpeventnumber',true);
+		if(!$isset)
+			$isset = 1;
+		foreach($events as $event) {
+			$top_number = (int) get_post_meta($event->ID,'rsvpeventnumber',true);
+			$current = ($top_number) ? '(currently #'.$top_number.')' : '';
+			$options .= sprintf('<option value="%d">%s %s %s</option>', $event->ID, $event->post_title, $event->datetime, $current);
+			/*
+			if($isset && $top_number) {
+				$defaultoption = sprintf('<option value="%d" selected="selected">%s (currently #%d)</option>',$event->ID, $event->datetime,$top_number);
+			}
+			*/
+		}
+	}
+	?>
+	<h3>Number Events</h3>
+	<p><em>This feature is for sequential numbering of events, for example class sessions or meetings since a Toastmasters club was chartered.</em></p>
+	<p>To use it, use the form below to set the number of the next event or a selected upcoming event.</p>
+	<p>Include the shortcode (placeholder) <code>[rsvpmaker_numbered]</code> with the square brackets included in the text of your event template document, as part of a paragraph or heading (but not the main post title). When you go through the Create / Update routine, that code will then be copied to the event posts for specific dates, each of which will have an event number set. When displayed on the website, that code will be replaced with the event number.</p>
+	<?php	
+	printf('<form method="post" action="%s"><p>Starting number <input type="number" name="start_number" value="%d"><p>Starting with <select name="starting_with">%s</select></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t), $isset, $defaultoption.$options);
+	submit_button('Add Numbering');
+	echo '</form>';
+}
+
+function rsvpmaker_numbered () {
+	global $post;
+	return get_post_meta($post->ID,'rsvpeventnumber',true);
+}
+
+add_shortcode('rsvpmaker_numbered','rsvpmaker_numbered');

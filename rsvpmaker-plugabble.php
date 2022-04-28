@@ -7221,6 +7221,7 @@ jQuery(function () {
 </script>
 
 ";
+	rsvpmaker_number_events_ui($t);
 
 	}
 } // end function_exists

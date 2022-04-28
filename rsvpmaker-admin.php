@@ -3538,6 +3538,8 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 	$my_post['post_status'] = (($_POST['newstatus'] == 'publish') && current_user_can('publish_rsvpmakers')) ? 'publish' : 'draft';
 	$my_post['post_author'] = $current_user->ID;
 	$my_post['post_type'] = 'rsvpmaker';
+	$topnumber = (int) get_post_meta($post->ID,'rsvpeventnumber_top',true);
+	$update_messages .= sprintf('<p>Top # from template %d</p>',$topnumber);
 
 	foreach($_POST["recur_check"] as $index => $on)
 		{
@@ -3587,9 +3589,16 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 				update_post_meta($post_id,"_updated_from_template",$ts);
 				rsvpmaker_copy_metadata($t, $post_id);
 				rsvpmaker_update_event_row($post_id);
+				if($topnumber) {
+					update_post_meta($post_id,'rsvpeventnumber',$topnumber);
+					$update_messages .= sprintf('<div>post_id %s top %d</div>',$post_id,$topnumber);
+					$topnumber++;
+				}
+
 				}
 		
 		}
+		update_post_meta($post->ID,'rsvpeventnumber_top',$topnumber);
 }
 
 if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))  )
