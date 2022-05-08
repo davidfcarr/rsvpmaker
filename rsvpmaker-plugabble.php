@@ -3137,7 +3137,7 @@ if ( ! function_exists( 'event_content' ) ) {
 			} 
 			elseif ( isset( $rsvpstart ) && ( $now < $rsvpstart ) ) {
 
-				$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs accepted starting: ', 'rsvpmaker' ) . utf8_encode( rsvpmaker_date( $rsvp_options['long_date'] ), $rsvpstart ) ) . '</p>';
+				$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs accepted starting: ', 'rsvpmaker' ) . utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $rsvpstart  ) ) ) . '</p>';
 
 			} elseif ( isset( $too_many ) ) {
 

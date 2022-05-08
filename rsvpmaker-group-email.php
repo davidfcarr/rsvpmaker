@@ -868,7 +868,7 @@ function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $ur
 
 add_filter( 'cron_schedules', 'rsvpmaker_relay_interval' );
 
-function rsvpmaker_relay_interval( $schedules ) {
+function rsvpmaker_relay_interval( $schedules = array() ) {
 
 	$schedules['minute'] = array(
 

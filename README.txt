@@ -119,6 +119,12 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 9.2.9 =
+
+* Tested with WordPress 6.0.
+* Improvements to PayPal integration
+* First guest blank no longer displayed until user clicks "Add more guests." Seems to avoid some confusion where people were adding their own name twice.
+
 = 9.2.8 =
 
 * Fix for adding date, other variables to email footer on confirmation messages

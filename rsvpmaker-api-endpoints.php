@@ -549,7 +549,7 @@ class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		if(isset($request['tracking']))
-			$vars = get_post_meta_by_id( intval($request['tracking']) );
+			$vars = get_metadata_by_mid('post',intval($request['tracking']));
 		if(empty($vars))
 			$vars = array();
 
@@ -569,6 +569,8 @@ class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
 			if(!empty($vars['rsvp_id'])) //rsvp_id
 				rsvp_confirmation_after_payment( $vars['rsvp_id'] );
 		}
+
+		do_action('rsvpmaker_confirmed_paypal_payment', $vars);
 
 		return new WP_REST_Response( $vars, 200 );
 

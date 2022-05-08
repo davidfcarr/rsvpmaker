@@ -4085,11 +4085,6 @@ add_action('wp_paypal_ipn_processed','rsvpmaker_wp_paypal_ipn_processed');
 function rsvpmaker_wp_paypal_ipn_processed($response) {
 	rsvpmaker_debug_log($response,'paypal ipn');
 }
-/* forminator integration
-* do_action( 'forminator_custom_form_after_paypal_charge', $custom_form, $field, $paypal_entry_data, $submitted_data, $field_data_array );
-do_action( 'forminator_custom_form_after_stripe_charge', $custom_form, $field, $stripe_entry_data, $submitted_data, $field_data_array );
-
-*/
 add_action('forminator_custom_form_after_paypal_charge','rsvpmaker_forminator_custom_form_after_paypal_charge');
 add_action('forminator_custom_form_after_stripe_charge','rsvpmaker_forminator_custom_form_after_paypal_charge');
 

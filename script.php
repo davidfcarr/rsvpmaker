@@ -148,13 +148,20 @@ function rsvp_form_jquery() {
 	?>
 	var max_guests = $('#max_guests').val();
 	var blank = $('#first_blank').html();
+	var firstblank_hidden = true;
 	if(blank)
 		{
 		$('#first_blank').html(blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount) );
-	guestcount++;
+		$('#first_blank').hide();
+		guestcount++;
 		}
 	$('#add_guests').click(function(event){
 		event.preventDefault();
+		if(firstblank_hidden) {
+			firstblank_hidden = false;
+			$('#first_blank').show();
+			return;
+		}
 	if(guestcount >= max_guests)
 		{
 		$('#first_blank').append('<p><em><?php esc_html_e( 'Guest limit reached', 'rsvpmaker' ); ?></em></p>');

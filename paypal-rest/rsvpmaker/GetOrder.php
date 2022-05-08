@@ -45,9 +45,14 @@ class RSVPMakerGetOrder
             $atts['email'] = $response->result->payer->email_address;
             $atts['transaction_id'] = $response->result->id;
             $atts['status'] = 'PayPal';
-            rsvpmaker_money_tx($atts);
             rsvpmaker_custom_payment('PayPal REST api',$response->result->purchase_units[0]->amount->value,$rsvp_id,$event, $response->result->id);
             $payment_message_id = get_post_meta($event,'payment_confirmation_message',true);
+        if($response->statusCode == 200)
+            {
+                $atts['paypal_response'] = $response;
+                rsvpmaker_money_tx($atts);
+                do_action('rsvpmaker_paypal_verification_response',$atts);
+            }
         $response->result->payment_confirmation_message = $payment_message_id;//(empty($payment_message_post) || eseller_receivable_breakdownmpty($payment_message_post->post_content)) ? '' : do_blocks($payment_message_post->post_content);
         echo json_encode($response); // also log this?
         wp_schedule_single_event( time() + 30, 'rsvpmaker_after_payment',array('paypal',$atts['amount'],$atts['description']));
