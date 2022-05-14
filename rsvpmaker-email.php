@@ -1563,6 +1563,10 @@ $permalink = get_permalink($post->ID);
 $edit_link = get_edit_post_link($post->ID);
 $events_dropdown = get_events_dropdown ();	
 
+/*
+$templates = get_rsvpmaker_email_template();
+$t_index = (int) get_post_meta($post->ID,'rsvp_tx_template',true);
+
 $o = '';
 if($templates && is_array($templates))
 foreach($templates as $index => $template)
@@ -1570,6 +1574,7 @@ foreach($templates as $index => $template)
 		$s = ($index == $t_index) ? ' selected="selected" ' : '';
 		$o .= sprintf('<option value="%d" %s>%s</option>',$index,$s,$template['slug']);
 	}
+*/
 $queued = get_post_meta($post->ID,'rsvprelay_to');
 if($queued) {
 	rsvpmaker_relay_queue();
@@ -3380,3 +3385,25 @@ update_post_meta($post->ID,'_rsvpmail_text',rsvpmaker_text_version($content));
 $wp_query = $wp_query_backup;
 return $content;
 }
+
+function disable_image_lazy_loading_for_email( $default, $tag_name, $context ) {
+	global $post;
+    if ( isset($post->post_type) && $post->post_type == 'rsvpemail' ) {
+        return false;
+    }
+    return $default;
+}
+add_filter(
+    'wp_lazy_loading_enabled',
+    'disable_image_lazy_loading_for_email',
+    999,
+    3
+);
+//jetpack
+add_filter(
+    'lazy_load_is_enabled',
+    'disable_image_lazy_loading_for_email',
+    999,
+    3
+);
+

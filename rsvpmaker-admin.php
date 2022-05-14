@@ -3298,9 +3298,10 @@ function rsvpmaker_debug_log($msg, $label = '', $filename_base = '') {
 			unlink($oldlog);
 		}
 	}
+	if(isset($_GET['debug']) && current_user_can('manage_options'))
+		echo '<pre>'. $msg . '</pre>';
 }
 	
-
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
     if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
     {

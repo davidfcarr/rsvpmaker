@@ -65,6 +65,18 @@ function rsvpmaker_relay_manual_test() {
 	echo '<h1>' . __( 'Manually Trigger Check of Email Lists', 'rsvpmaker' ) . '</h1>';
 
 	$html = rsvpmaker_relay_init( true );
+	if(isset($_GET['cronoff'])) {
+		wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
+		echo '<p>Cron disabled for rsvpmaker_relay_init_hook</p>';
+	}
+
+	elseif(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
+		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
+	}
+	else {
+		printf('<p>Option: <a href="%s">disable cron for testing</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_relay_manual_test&cronoff=1'));
+	}
 
 	if ( $html ) {
 
@@ -316,7 +328,7 @@ function rsvpmaker_get_part( $stream, $msg_number, $mime_type, $structure = fals
 
 
 
-function rsvpmaker_relay_get_pop( $list_type = '' ) {
+function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 
 	global $wpdb;
 
@@ -671,10 +683,10 @@ function rsvpmaker_relay_get_pop( $list_type = '' ) {
 		$log_id = wp_insert_post( $qpost );
 		update_post_meta( $log_id, 'headerinfo', $headerinfo );
 
-		// (($list_type == 'extra') && in_array('autoresponder@example.com',$additional_recipients))
 		if ( $list_type == 'bot' ) {
+			/* pass with header info, to and cc array of objects, structure $to[0]->mailbox, $to[0]->host  */
 			echo "Action call: 'rsvpmaker_autoreply'";
-			do_action( 'rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress, $fromname, $headerinfo->to );
+			do_action( 'rsvpmaker_autoreply', $qpost, $user, $from, $headerinfo->toaddress, $fromname, $headerinfo->to, $headerinfo->cc );
 		}
 
 		if ( in_array( $from, $blocked ) ) {
@@ -776,6 +788,9 @@ function rsvpmaker_relay_get_pop( $list_type = '' ) {
 	imap_expunge( $mail );
 
 	$html .= '<p>Expunge deleted messages</p>';
+
+	if($return_count)
+		return count( $headers ).' messages retrieved';
 
 	return $html;
 

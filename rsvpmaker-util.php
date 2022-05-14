@@ -3953,7 +3953,7 @@ global $post;
 if(isset($_GET['post']))
 	$post = get_post($_GET['post']);
 
-if(isset($post->post_type) && ($post->post_type = 'rsvpmailer') || strpos($_SERVER['REQUEST_URI'],'post-new.php?post_type=rsvpemail') )
+if((isset($post->post_type) && ($post->post_type == 'rsvpmailer')) || strpos($_SERVER['REQUEST_URI'],'post-new.php?post_type=rsvpemail') )
 {
 	rsvpmaker_included_styles();
 	$rsvpmailer_css = 'rsvpemail-editor-style.css';
