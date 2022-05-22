@@ -9,7 +9,7 @@ const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;
-const { InspectorControls } = wp.editor;
+const { InspectorControls } = wp.blockEditor;
 const { PanelBody, TextControl, SelectControl } = wp.components;
 
 registerBlockType( 'rsvpmaker/stripe-form-wrapper', {

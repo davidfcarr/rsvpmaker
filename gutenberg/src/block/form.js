@@ -9,7 +9,7 @@ const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;
-const { InspectorControls } = wp.editor;
+const { InspectorControls } = wp.blockEditor;
 const { PanelBody, SelectControl, TextControl, ToggleControl, RadioControl } = wp.components;
 if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formfield', {

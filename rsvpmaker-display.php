@@ -1592,7 +1592,7 @@ function rsvp_ical_split( $preamble, $value ) {
 
 	}
 
-	return join( $lines, "\n\t" );
+	return join( "\n\t", $lines );
 
 }
 

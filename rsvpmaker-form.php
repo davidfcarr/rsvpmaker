@@ -252,7 +252,6 @@ function customize_rsvp_form() {
 
 				$start_time = get_rsvpmaker_timestamp($post_id);
 				rsvpmaker_reminder_cron( $hours, $start_time, $post_id );
-
 			}
 		}
 	}
@@ -335,7 +334,7 @@ function customize_rsvp_form() {
 			}
 		}
 	}
-
+/*
 	if ( ! empty( $id ) ) {
 
 		$destination = admin_url( 'post.php?action=edit&post=' ) . $id;
@@ -345,7 +344,7 @@ function customize_rsvp_form() {
 		header( 'Location: ' . $destination );
 		exit();
 	}
-
+*/
 }
 
 

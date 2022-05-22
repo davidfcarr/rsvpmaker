@@ -399,7 +399,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 		$namespace = 'rsvpmaker/v1';
 
-		$path = 'stripesuccess/(?P<txkey>.+)';
+		$path = 'stripesuccess/(?P<txkey>[a-zA-Z0-9]+)';
 
 		register_rest_route(
 			$namespace,

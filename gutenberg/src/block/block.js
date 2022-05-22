@@ -10,6 +10,7 @@ import './rsvpmaker-sidebar.js';
 import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
+import './rsvpmailer-wrapper.js';		
 import './schedule.js';		
 import './form.js';		
 import apiFetch from '@wordpress/api-fetch';

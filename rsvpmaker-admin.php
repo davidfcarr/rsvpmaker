@@ -1280,11 +1280,16 @@ if(isset($_POST['rsvpmaker_discussion_active']) && wp_verify_nonce(rsvpmaker_non
 		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
 	}
+	update_option('rsvpmaker_email_queue_limit',intval($_POST['rsvpmaker_email_queue_limit']));
 }
 elseif(isset($_POST))
 	wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
 
 $active = (int) get_option('rsvpmaker_discussion_active');
+
+$limit = (int) get_option('rsvpmaker_email_queue_limit');
+if(empty($limit))
+	$limit = 10;
 
 $server = get_option('rsvpmaker_discussion_server');
 if(empty($server))
@@ -1324,6 +1329,8 @@ echo rsvpmaker_relay_get_pop('bot');
 printf('<p><label>Activate</label> <input type="radio" name="rsvpmaker_discussion_active" value="1" %s /> Yes <input type="radio" name="rsvpmaker_discussion_active" value="0" %s /> No</p>',($active) ? ' checked="checked" ' : '',(!$active) ? ' checked="checked" ' : '');
 
 printf('<p><label>Server</label> <input type="text" name="rsvpmaker_discussion_server" value="%s" /></p>',esc_attr($server));
+
+printf('<p><label>Queue Limit</label> <input type="text" name="rsvpmaker_email_queue_limit" value="%s" /></p>', $limit);
 
 $member = get_option('rsvpmaker_discussion_member');
 if(empty($member))
@@ -2705,8 +2712,8 @@ if(isset($_POST['delete_reminder']) && wp_verify_nonce(rsvpmaker_nonce_data('dat
 	}
 }
 
-if(isset($_GET['paid_only_confirmation'])) {
-	$reminder_id = (int) $_GET['reminder_post_id'];
+if(isset($_POST['paid_only_confirmation'])) {
+	$reminder_id = (int) $_POST['reminder_post_id'];
 	update_post_meta($reminder_id, 'paid_only_confirmation', (int) $_GET['paid_only_confirmation']);
 	printf('<div class="notice notice-success"><p>%s, post_id: %d</p></div>',__('Reminder updated','rsvpmaker'),$reminder_id);
 }
@@ -2793,7 +2800,7 @@ else {
 			$radio = sprintf('<input type="radio" name="paid_only_confirmation" value="1" checked="checked" /> Yes <input type="radio" name="paid_only_confirmation" value="0" /> No ');
 		else
 			$radio = sprintf('<input type="radio" name="paid_only_confirmation" value="1" /> Yes <input type="radio" name="paid_only_confirmation" value="0"  checked="checked"  /> No ');
-		printf('<form action="%s" method="get">
+		printf('<form action="%s" method="post">
 		<input type="hidden" name="post_type" value="rsvpmaker" />
 		<input type="hidden" name="page" value="rsvp_reminders" />
 		<input type="hidden" name="message_type" value="confirmation" />
@@ -2801,7 +2808,7 @@ else {
 		<input type="hidden" name="reminder_post_id" value="%d" />
 		<p>%s %s %s
 		<button>Update</button></p>
-		</form>',admin_url('edit.php'),esc_attr($post_id),esc_attr($reminder->ID),__('Send only after payment','rsvpmaker'),$radio,rsvpmaker_nonce('return'));
+		</form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id),esc_attr($post_id),esc_attr($reminder->ID),__('Send only after payment','rsvpmaker'),$radio,rsvpmaker_nonce('return'));
 	}
 printf('<h3>Delete Reminder</h3><form method="post" action="%s"><select name="delete_reminder[]">%s</select><br /><button>Delete</button>%s</form>',admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&post_id='.$post_id),$delete_reminder_options,rsvpmaker_nonce('return'));
 }
@@ -2815,7 +2822,7 @@ printf('<h3>Add Reminders and Follow Up Messages</h3>
 %s
 <select name="copy_from">%s</select></p>
 <p><input type="checkbox" name="paid_only" value="1"> Send for PAID registrations only</p>
-<p><button>Submit</button></p>%s</form>',admin_url('edit.php'),esc_attr($post_id),$hour_options,__('Based on','rsvpmaker'),$reminder_copy,rsvpmaker_nonce('return'));
+<p><button>Submit</button></p>%s</form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id),esc_attr($post_id),$hour_options,__('Based on','rsvpmaker'),$reminder_copy,rsvpmaker_nonce('return'));
 
 echo '</div>';//end reminders section
 
@@ -3004,14 +3011,20 @@ function rsvpmaker_clone_title($title) {
 add_filter('default_title','rsvpmaker_clone_title');
 
 function rsvpmaker_clone_content ($content) {
+	global $post;
 	if(isset($_GET["clone"]))
 		{
 			$id = (int) $_GET["clone"];
 			$clone = get_post($id);
 			$content = $clone->post_content;
 		}
+	elseif(isset($_GET['post_type']) && ('rsvpemail' == $_GET['post_type']) ) {
+		$content = get_rsvpmailer_default_block_template();
+	}
+
 	return $content;
 }
+
 add_filter('default_content','rsvpmaker_clone_content');
 
 function export_rsvpmaker () {

@@ -5,11 +5,11 @@
 
 const { __ } = wp.i18n;
 const { registerBlockType } = wp.blocks;
-const { RichText } = wp.blockEditor;
+const { InnerBlocks, RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
-const { InnerBlocks, BlockControls } = wp.editor;
+const { BlockControls } = wp.editor;
 const { Component } = wp.element;
-const { InspectorControls } = wp.editor;
+const { InspectorControls } = wp.blockEditor;
 const { PanelBody, DateTimePicker, SelectControl } = wp.components;
 
 registerBlockType( 'rsvpmaker/limited', {

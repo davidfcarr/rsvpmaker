@@ -632,7 +632,7 @@ function rsvpmaker_stripe_notify( $vars ) {
 	$receipt = true;
 
 	if ( ! empty( $vars['rsvp_id'] ) ) {
-		rsvp_confirmation_after_payment( $vars['rsvp_id'] );
+		rsvp_confirmation_after_payment( intval($vars['rsvp_id']) );
 
 		return;
 

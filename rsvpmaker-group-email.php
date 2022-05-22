@@ -74,9 +74,6 @@ function rsvpmaker_relay_manual_test() {
 		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
 	}
-	else {
-		printf('<p>Option: <a href="%s">disable cron for testing</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_relay_manual_test&cronoff=1'));
-	}
 
 	if ( $html ) {
 
@@ -151,7 +148,9 @@ function rsvpmaker_relay_queue() {
 		return;
 	}
 	$total_to_send = sizeof($results);
-	$limit = 10;
+	$limit = (int) get_option('rsvpmaker_email_queue_limit');
+	if(empty($limit))
+		$limit = 10;
 	$sent = 0;
 
 	$html = '<p>Results: ' . sizeof( $results ) . '</p>';
@@ -189,7 +188,9 @@ function rsvpmaker_relay_queue() {
 	else
 		rsvpmaker_debug_log($mail,'group_email_from_meta');
 	$count = 0;
+	$log = 'limit = '.$limit.' ';
 	if ( ! empty( $results ) ) {
+		do_action('rsvpmaker_relay_queue_log_start',$log.', queued'.sizeof($results));
 		foreach ( $results as $row ) {
 			if($count == $limit)
 				break;
@@ -210,6 +211,7 @@ function rsvpmaker_relay_queue() {
 			}
 			$mail['subject'] = $row->post_title;
 			$mail['to'] = $row->meta_value;
+			$log .= $row->meta_value.' ';
 			$html .= sprintf( '<p>%s to %s</p>', $row->post_title, $row->meta_value );
 			$post = get_post( $row->ID );
 			$post_id = $row->ID;
@@ -219,8 +221,9 @@ function rsvpmaker_relay_queue() {
 			}
 			rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
 			add_post_meta( $post->ID, 'rsvpmail_sent', $mail['to'] . ' ' . rsvpmaker_date( 'r' ) );
-			sleep(2);
+			//sleep(2);
 		}
+		do_action('rsvpmaker_relay_queue_log_message',$log);
 		//delete old transients used to prevent duplicate sends
 		$sql = "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_cronemail%' AND (option_value < ".(time() - DAY_IN_SECONDS) ." OR option_value LIKE '%@%' )";
 		$wpdb->query($sql);
