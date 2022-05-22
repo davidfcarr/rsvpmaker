@@ -560,8 +560,6 @@ if ( ! function_exists( 'rsvpmaker_roles' ) ) {
 	}
 }
 
-
-
 function get_confirmation_options( $post_id = 0, $documents = array() ) {
 
 	global $post;
@@ -599,35 +597,6 @@ function get_confirmation_options( $post_id = 0, $documents = array() ) {
 			$output .= sprintf( '<p><a href="%s">%s</a></p>', admin_url( 'post.php?post=' . $payment_confirmation . '&action=edit' ), __( 'Edit Payment Confirmation Message' ) );
 		}
 	}
-
-	$templates = get_rsvpmaker_email_template();
-
-	$chosen = (int) get_post_meta( $post_id, 'rsvp_tx_template', true );
-
-	if ( ! $chosen ) {
-
-		$chosen = (int) get_option( 'rsvpmaker_tx_template' );
-	}
-
-	$choose_template = '';
-
-	if ( $templates ) {
-
-		foreach ( $templates as $index => $template ) {
-
-			if ( $index == 0 ) {
-
-				continue;
-			}
-
-			$s = ( $index == $chosen ) ? ' selected="selected" ' : '';
-
-			$choose_template .= sprintf( '<option value="%d" %s>%s</option>', $index, $s, $template['slug'] );
-
-		}
-	}
-
-	$output .= sprintf( '<p>%s: <select name="rsvp_tx_template">%s</select></p><input type="hidden" name="rsvp_tx_post_id" value="%d">', __( 'Confirmation Email Template' ), $choose_template, $post_id );
 
 	$output = '<div style="max-width: 800px">' . $output . '</div>';
 
@@ -2070,7 +2039,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			} else {
 
-				$req_uri = site_url( '?post_type=rsvpmaker&p=' . $event . '&e=' . $rsvp['email'] );
+				$req_uri = add_query_arg('e',$rsvp['email'],get_permalink($event));
 
 			}
 
@@ -2808,7 +2777,7 @@ if ( ! function_exists( 'event_content' ) ) {
 			}
 		}
 
-		$permalink = site_url( '?post_type=rsvpmaker&p=' . intval( $post->ID ) );
+		$permalink = get_permalink( $post->ID );
 
 		if ( isset( $custom_fields['_rsvp_on'][0] ) ) {
 
