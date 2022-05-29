@@ -10,3 +10,5 @@
  */
 
 import './block/block.js';
+import './block/rsvpmailer-wrapper.js';
+//import './email-latest/index.js';

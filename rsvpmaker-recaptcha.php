@@ -24,12 +24,12 @@ function rsvpmaker_recaptcha_output() {
 
 function rsvpmaker_recaptcha_check( $siteKey, $secret ) {
 
-	require_once 'recaptcha-master/src/autoload.php';
-
 	if ( ! isset( $_POST['g-recaptcha-response'] )  || !wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		return false;
 	}
+	
+	require_once 'recaptcha-master/src/autoload.php';
 
 	$recaptcha = new \ReCaptcha\ReCaptcha( $secret );
 

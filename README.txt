@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0
-Stable tag: 9.3.6
+Stable tag: 9.3.9
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -118,6 +118,26 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.3.9 =
+
+* ColorPalette component added to email wrapper blocks
+
+= 9.3.8 =
+
+* Multiple improvements to the RSVP Mailer utility.
+* Improvements to inline CSS for email, including substitutions for classes like .has-color-black and .has-background-color-black. For themes with a themes.json file, the theme color palette is imported.
+* Option for users to register their own simple CSS substitution like .my-custom-class{background-image:linear-gradient(red,yellow);padding-bottom:5px} - limited to single class / rule pairs
+* Partial support in email for the core/columns block - 2 columns only, 3rd or 4th column will wrap to below columns 1 and 2
+* Better YouTube preview image with play button overlay for email
+* Email List Signup block for use as a standalone mailing list utility. Built in email functions have the advantage of being able to send to just those who have or have not RSVP'ed for event. 
+* For large lists, use the integration with MailChimp or use in combination with plugins for integration with Sendgrid and other high-capacity email service with better handling of spam and email bounce issues.
+
+= 9.3.7 =
+
+* Decoding of UTF-8 encoded subject lines in incoming email for group email discussion list functions
+* Refinements to email content wrapper blocks
+* Latest post block designed for use in email
 
 = 9.3.6 =
 

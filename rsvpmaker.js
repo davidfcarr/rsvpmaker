@@ -9,6 +9,17 @@ jQuery( document ).ready(
 			}
 		);
 
+		$('.wp-block-rsvpmaker-formfield input').change( function () {
+			let v = $(this).val();
+			let h = v.includes('//');
+			console.log(v+' '+h);
+			if(h) {
+				v = v.replace(/[a-z]{0,8}:{0,1}\/\//,'');	
+				console.log('strip prefix');
+				$(this).val(v);	
+			}
+		});
+
 		$( '.rsvpmaker-schedule-detail' ).hide();
 		$( '.rsvpmaker-schedule-button' ).click(
 			function( event ) {

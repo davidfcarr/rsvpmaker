@@ -1358,6 +1358,92 @@ class RSVPMaker_Daily extends WP_REST_Controller {
 	}
 }
 
+class RSVPMaker_Preview extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'preview/(?P<block>.+)';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => 'GET',
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		if('next-events' == $request['block'])
+			return new WP_REST_Response( rsvpmaker_next_rsvps($_GET), 200 );
+		if('schedule' == $request['block'])
+			return new WP_REST_Response( rsvpmaker_daily_schedule($_GET), 200 );
+		if('future-rsvp-links' == $request['block'])
+			return new WP_REST_Response( future-rsvp-links($_GET), 200 );
+		if('emailpostorposts' == $request['block'])
+			return new WP_REST_Response( rsvpmaker_emailpostorposts($_GET), 200 );
+	}
+}
+
+class RSVPMaker_PorC extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'postsorcategories';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => 'GET',
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		$pc[] = array('label' => 'Choose Post or Category', 'value' => '');
+		$posts = get_posts('posts_per_page=20');
+		foreach($posts as $p)
+			$pc[] = array('label' => $p->post_title, 'value' => $p->ID);
+		$categories = get_categories();
+		foreach($categories as $category)
+			$pc[] = array('label' => 'Category: '.$category->name, 'value' => $category->slug);
+		return new WP_REST_Response($pc, 200 );
+	}
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -1433,5 +1519,9 @@ add_action(
 		$flux->register_routes();
 		$daily = new RSVPMaker_Daily();
 		$daily->register_routes();
+		$preview = new RSVPMaker_Preview();
+		$preview->register_routes();
+		$pc = new RSVPMaker_PorC();
+		$pc->register_routes();
 	}
 );

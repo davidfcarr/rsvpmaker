@@ -15,7 +15,7 @@ const { PanelBody, DateTimePicker, SelectControl } = wp.components;
 registerBlockType( 'rsvpmaker/limited', {
 	title: ( 'Limited Time Content (RSVPMaker)' ), // Block title.
 	icon: 'admin-comments', 
-	category: 'layout',
+	category: 'rsvpmaker',
 	keywords: [
 		( 'Expiration' ),
 		( 'Start Time' ),

@@ -16,7 +16,7 @@ registerBlockType( 'rsvpmaker/formfield', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Text' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Form' ),
@@ -76,7 +76,7 @@ registerBlockType( 'rsvpmaker/formtextarea', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Text Area' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Form' ),
@@ -132,7 +132,7 @@ registerBlockType( 'rsvpmaker/formnote', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Note' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Form' ),
@@ -266,7 +266,7 @@ if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP F
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Select' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Form' ),
@@ -317,7 +317,7 @@ registerBlockType( 'rsvpmaker/formradio', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Radio Buttons' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Form' ),
@@ -406,7 +406,7 @@ if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP F
 	registerBlockType( 'rsvpmaker/guests', {
 	title: ( 'RSVPField Guests' ), // Block title.
 	icon: 'products', 
-	category: 'common',
+	category: 'rsvpmaker',
 	keywords: [
 		( 'RSVPMaker' ),
 		( 'Form' ),
@@ -459,7 +459,7 @@ registerBlockType( 'rsvpmaker/formchimp', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Mailing List Checkbox' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Form' ),

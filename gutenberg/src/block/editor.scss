@@ -22,6 +22,9 @@
 	float: left;
 	margin-right: 10px;
 }
+.wp-block-rsvpmaker-emailguestsignup label {
+	display: block;
+}
 .wp-block-rsvpmaker-limited {
 	border: thin dotted #000;
 }
@@ -33,7 +36,7 @@
 
 .wp-block-rsvpmaker-formfield label,
 .wp-block-rsvpmaker-formselect label,
-.wp-block-rsvpmaker-formradio label,
+.wp-block-rsvpmaker-formradio label
 {
 display: inline-block;
 width: 25%;
@@ -76,4 +79,8 @@ select {
 option {
 	height: 1.5em;
 	padding: 5px;
+}
+
+.rsvpcalendar_buttons img {
+	display: inline-block;
 }

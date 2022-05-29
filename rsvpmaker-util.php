@@ -3760,11 +3760,26 @@ function mailpoet_rsvpmaker_shortcode( $shortcode, $newsletter, $subscriber, $qu
 	} elseif ( strpos( $shortcode, 'youtube' ) ) {
 		preg_match( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', $atts['url'], $match );
 		$image   = 'https://img.youtube.com/vi/' . $match[2] . '/mqdefault.jpg';
-		$link    = ( empty( $atts['link'] ) ) ? $match[0] : $atts['link'];
-		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s<br /><img src="%s" width="320" height="180" /></a></p>', $link, $link, $image );
+		$link    = ( empty( $atts['link'] ) ) ? $match[0] : $atts['link'];		
+		//$content = sprintf( '<p><a href="%s">Watch on YouTube: %s<br /><img src="%s" width="320" height="180" /></a></p>', $link, $link, $image );
+		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s</p><div style="text-align: center; padding-top: 130px; height: 640px; width:360px; background-image: url(%s); background-size: contain; background-repeat: no-repeat; margin-left: auto; margin-right: auto;"><a href="%s"><div><img src="%s" ></div></a></div>', $link, $link, $image, $link, plugins_url('rsvpmaker/images/youtube-button-100px.png') );
 	}
 	$content = str_replace( '<h1', '<h1 style="line-height: 1.3" ', $content );
 	$content = str_replace( 'class="rsvpmaker-entry-title-link"', 'style="text-decoration: none" ', $content );
+	return $content;
+}
+
+function rsvpmaker_youtube_email($content) {
+	if(preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?]+)|is',$content,$matches)) {
+		foreach($matches[1] as $youtube_id) {
+			$link = 'https://youtu.be/'.$youtube_id;
+			$img = 'https://img.youtube.com/vi/'.$youtube_id.'/mqdefault.jpg';
+			$html = '<div style="margin-left: auto; margin-right: auto; max-width: 500px; height:283px; background-image: url('.$img.'); background-size: contain; background-repeat: no-repeat;;"><a href="'.$link.'"><div><img style=" style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></div></a></div>';
+			$content = preg_replace('|<iframe.+'.$youtube_id.'[^<]+</iframe>|',$html,$content);
+		}
+	}
+	else
+		$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<div style="margin-left: auto; margin-right: auto; max-width: 500px; height:283px; background-image: url(https://img.youtube.com/vi/$2/mqdefault.jpg); background-size: contain; background-repeat: no-repeat;;"><a href="$0"><div><img style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" alt="watch on YouTube" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></div></a></div>', $content );
 	return $content;
 }
 
@@ -3945,9 +3960,10 @@ function rsvpmaker_is_url_local( $url ) {
 	return ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
 }
 
-add_action('after_setup_theme','rsvpmail_editor_style',99999);
-
+//add_action('after_setup_theme','rsvpmail_editor_style',99999);
+/* deprecated */
 function rsvpmail_editor_style() {
+	return;
 global $editor_styles;
 global $post;
 if(isset($_GET['post']))
@@ -3955,7 +3971,7 @@ if(isset($_GET['post']))
 
 if((isset($post->post_type) && ($post->post_type == 'rsvpmailer')) || strpos($_SERVER['REQUEST_URI'],'post-new.php?post_type=rsvpemail') )
 {
-	rsvpmaker_included_styles();
+	//rsvpmaker_included_styles();
 	$rsvpmailer_css = 'rsvpemail-editor-style.css';
 	$editor_styles = array($rsvpmailer_css);
 }

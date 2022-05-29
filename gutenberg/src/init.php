@@ -138,7 +138,7 @@ var jsonwidget<?php echo esc_attr($slug); ?> = new RSVPJsonWidget('rsvpjsonwidge
 return ob_get_clean();
 }
 
-add_action('init','rsvpmaker_server_block_render');
+add_action('init','rsvpmaker_server_block_render',1);
 
 function rsvpmaker_block_cgb_block_assets() {
 	// Styles.
@@ -409,3 +409,19 @@ function rsvpmaker_limited_time ($atts, $content) {
 
 return $content.$debug;
 }
+
+function add_rsvpmaker_block_category( $block_categories, $editor_context ) {
+    if ( ! empty( $editor_context->post ) ) {
+        array_push(
+            $block_categories,
+            array(
+                'slug'  => 'rsvpmaker',
+                'title' => __( 'RSVPMaker', 'rsvpmaker' ),
+                'icon'  => null,
+            )
+        );
+    }
+    return $block_categories;
+}
+ 
+add_filter( 'block_categories_all', 'add_rsvpmaker_block_category', 10, 2 );

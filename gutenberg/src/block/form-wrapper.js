@@ -15,7 +15,7 @@ const { PanelBody, TextControl, SelectControl } = wp.components;
 registerBlockType( 'rsvpmaker/stripe-form-wrapper', {
 	title: ( 'Stripe Form Wrapper' ), // Block title.
 	icon: 'admin-comments', 
-	category: 'layout',
+	category: 'rsvpmaker',
 	keywords: [
 		( 'Stripe' ),
 		( 'Form' ),

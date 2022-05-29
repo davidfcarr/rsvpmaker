@@ -172,7 +172,10 @@ function rsvpmailer($mail, $description = '') {
  $rsvpmail->Username= (!empty($rsvp_options["smtp_username"]) ) ? $rsvp_options["smtp_username"] : '';
  $rsvpmail->Password= (!empty($rsvp_options["smtp_password"]) ) ? $rsvp_options["smtp_password"] : '';
  $rsvpmail->CharSet = 'UTF-8';
- $name = rsvpmaker_email_to_name($mail["to"]);
+ if(!empty($mail['toname']))
+	$name = $mail['toname'];
+else
+	$name = rsvpmaker_email_to_name($mail["to"]);
  if(empty($name))
 	 $rsvpmail->AddAddress($mail["to"]);
 else
@@ -1157,10 +1160,10 @@ global $rsvp_options;
         'delete_post' => 'delete_rsvpemail'
     ),
     'hierarchical' => false,
-    'menu_position' => 20,
+    'menu_position' => 18,
 	'menu_icon' => 'dashicons-email-alt',
     'supports' => array('title','editor'),
-	'show_in_rest' => true
+	'show_in_rest' => true,
     )
   );
 }
@@ -1683,13 +1686,23 @@ if(!isset($_POST))
 		padding: 10px;
 	}
 </style>
-<p><a href="<?php echo esc_attr($edit_link); ?>"><?php esc_html_e('Edit','rsvpmaker');?></a> - <a href="<?php echo admin_url('post-new.php?post_type=rsvpemail'); ?>">New Email</a> - <a href="<?php echo admin_url(); ?>"><?php esc_html_e('Dashboard','rsvpmaker');?></a> - <a href="<?php echo site_url(); ?>"><?php esc_html_e('Visit Site','rsvpmaker');?></a></p>
+<?php 
+_wp_admin_bar_init();
+//wp_admin_bar_header();
+?>
+<link rel='stylesheet' href='https://delta.local/wp-admin/load-styles.php?c=1&amp;dir=ltr&amp;load%5Bchunk_0%5D=dashicons,admin-bar,common,forms,admin-menu,dashboard,list-tables,edit,revisions,media,themes,about,nav-menus,wp-pointer,widgets&amp;load%5Bchunk_1%5D=,site-icon,l10n,buttons,wp-auth-check&amp;ver=6.1-alpha-53449' type="text/css" media='all' />
+<?php
+wp_admin_bar_render(); ?>
 <div style="width: 150px; float:right;"><button onclick="hideControls()">Hide Controls</button></div>
 <form method="post" action="<?php echo esc_attr($permalink); ?>">
 <?php rsvpmaker_nonce(); ?>
 <table>
 <tr><td><?php esc_html_e('Subject','rsvpmaker');?>:</td><td><input type="text"  size="50" name="subject" value="<?php echo esc_attr($post->post_title); ?>" /></td></tr>
-<tr><td><?php esc_html_e('From Name','rsvpmaker');?>:</td><td><input type="text"  size="50" name="from_name" value="<?php echo (isset($custom_fields["_email_from_name"][0])) ? esc_attr($custom_fields["_email_from_name"][0]) : esc_attr($chimp_options["email-name"]); ?>" /></td></tr>
+<?php 
+if(empty($chimp_options["email-name"]))
+$chimp_options["email-name"] = $chimp_options["email-from"] = '';
+?>
+<tr><td><?php esc_html_e('From Name','rsvpmaker');?>:</td><td><input type="text"  size="50" name="from_name" value="<?php echo (isset($custom_fields["_email_from_name"]) && isset($custom_fields["_email_from_name"][0])) ? esc_attr($custom_fields["_email_from_name"][0]) : esc_attr($chimp_options["email-name"]); ?>" /></td></tr>
 <tr><td><?php esc_html_e('From Email','rsvpmaker');?>:</td><td><input type="text" size="50"  name="from_email" value="<?php echo (isset($custom_fields["_email_from_email"][0])) ? esc_attr($custom_fields["_email_from_email"][0]) : esc_attr($chimp_options["email-from"]); ?>" />
 </td></tr>
 <tr><td><?php esc_html_e('Preview Text','rsvpmaker');?>:</td><td><input type="text" size="50"  name="preview_text" value="<?php echo rsvpmailer_preview(array()); ?>" />
@@ -1853,7 +1866,7 @@ function filter_allowed_block_types_for_rsvpemail( $allowed_block_types, $editor
     return $allowed_block_types;
 }
  
-add_filter( 'allowed_block_types_all', 'filter_allowed_block_types_for_rsvpemail', 10, 2 );
+//add_filter( 'allowed_block_types_all', 'filter_allowed_block_types_for_rsvpemail', 10, 2 );
 
 function rsvpmail_candidate_templates($alt_template = false) {
 	global $wpdb;
@@ -1876,7 +1889,13 @@ if (version_compare($ver, '7.1', '<'))
 #currentdefault {
 	margin: 10px;
 	border: thin dotted #000;
+	padding: 10px;
+	background-color: #fff;
 }
+textarea {
+	width: 80%;
+}
+
 </style>
 <div id="icon-options-general" class="icon32"><br /></div>
 <?php
@@ -1901,13 +1920,6 @@ if(isset($_POST['welcome']))
 ?>
 <h2><?php esc_html_e('RSVPMaker Email Design Templates','rsvpmaker');?></h2>
 <?php
-$content = get_rsvpmailer_default_block_template(true);
-if(!empty($content))
-	printf('<p>Current default email template</p><div id="currentdefault">%s</div>',rsvpmail_filter_style($content));
-
-$content = get_rsvpmailer_tx_block_template(true);
-if(!empty($content))
-	printf('<p>Current transactional template</p><div id="currentdefault">%s</div>',rsvpmail_filter_style($content));
 
 $candidates = rsvpmail_candidate_templates();
 $options = '';
@@ -1959,9 +1971,52 @@ $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Prev
 
 echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
 
-printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select><button>Copy to New Message</button>',admin_url('post-new.php'),$options);
+printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select><button>Copy to New Message</button></form>',admin_url('post-new.php'),$options);
 
 }
+
+$content = get_rsvpmailer_default_block_template(true);
+if(!empty($content))
+	printf('<p>Current default email template</p><div id="currentdefault">%s</div>',rsvpmail_filter_style($content));
+
+$content = get_rsvpmailer_tx_block_template(true);
+if(!empty($content))
+	printf('<p>Current transactional template</p><div id="currentdefault">%s</div>',rsvpmail_filter_style($content));
+
+$welcome = get_option('rsvpmaker_guest_email_welcome');
+if($welcome)
+{
+	$welcome_post = get_post($welcome);
+	printf('<p>Current welcome message</p><div id="currentdefault">%s</div>','<p><a href="'.admin_url("post.php?post=$welcome&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmail_filter_style(do_blocks($welcome_post->post_content)));
+}
+
+$custom_style_array = array();
+if(isset($_POST['custom_style_input'])){
+	$custom = sanitize_textarea_field($_POST['custom_style_input']);
+	$custom_style_array = rsvpmaker_css_to_array($custom);
+	update_option('rsvpmaker_email_custom_styles',$custom_style_array);
+}
+else {
+	$custom_style_array = get_option('rsvpmaker_email_custom_styles');
+}
+if(!empty($custom_style_array)) {
+	$custom = '';
+	foreach($custom_style_array as $class => $style)
+		$custom .= '.'.$class.'{'.$style.';}'."\n";
+}
+printf('<h3>%s</h3><p>%s</p><code>.my-custom-class{background-image:linear-gradient(red,yellow);padding-bottom:5px}</code><br><form id="custom_styles" name="custom_styles" method="post" action="%s"><textarea name="custom_style_input">%s</textarea><br><button>Submit</button>',__('Custom Inline Styles','rsvpmaker'),__('Add custom styles that will replace class entries in the format ','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'),$custom);
+echo '<h2>Current Class-to-Style Conversions</h2><div style="background-color: #fff">';
+$style_sub = rsvpmaker_get_style_substitutions();
+foreach($style_sub as $index => $value) {
+	$example = sprintf('.%s{%s}',esc_html($index),esc_html($value));
+	if(strpos($index,'lign'))
+		printf('<div style="clear: both; border: thin solid #000;">%s</div>',$example);
+	elseif(strpos($index,'background'))
+		printf('<div style="clear: both; border: thin solid #000; %s"><div style="background-color: #fff; color: #000; border: thin solid #000;">%s</div></div>',esc_html($value),$example);
+	else
+		printf('<div style="clear: both; border: thin solid #000;">%s</div><div><span style="background-color: white; %s">Sample on white background</span> <span style="background-color: black; %s">Sample on black background</span></div>',$example,esc_html($value),esc_html($value));
+}
+echo '</div>';
 
 } // end rsvpemail template form
 
@@ -2332,6 +2387,7 @@ function rsvpmaker_email_list_okay ($rsvp) {
 		$mergevars["LNAME"] = stripslashes($rsvp["last"]);
 		RSVPMaker_Chimp_Add($rsvp["email"],$mergevars);
 		mailpoet_email_list_okay($rsvp);
+		rsvpmaker_guest_email_welcome($rsvp['email']);
 		rsvpmaker_guest_list_add($rsvp['email'],$rsvp['first'],$rsvp['last']);
 }
 
@@ -2438,7 +2494,8 @@ Unsubscribe *|EMAIL|* from this list:
 $mail['text'] = rsvpmaker_text_version($mail["html"], $rsvpfooter_text);
 
 $mail["html"] = do_blocks(do_shortcode($rsvpmaker_tx_content));
-$mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>',$mail["html"]);
+//$mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="" width="320" height="180" /></a></p>',$mail["html"]);
+$mail["html"] = rsvpmaker_youtube_email($mail['html']);
 
 	if(rsvpmail_is_problem($mail["to"]) )
 		{
@@ -2958,6 +3015,7 @@ foreach($rsvpdata as $field => $value)
 	foreach($rsvp_to_array as $to)
 	{
 	$mail["to"] = $to;
+	$mail['toname'] = get_bloginfo('name');
 	$mail["from"] = $rsvp["email"];
 	$mail["fromname"] = $rsvp["first"].' '.$rsvp["last"];
 	$mail["subject"] = $notification_subject;
@@ -2983,6 +3041,8 @@ foreach($rsvpdata as $field => $value)
 	if(isset($post->ID)) // not for replay
 	$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"]);
 	$mail["to"] = $rsvp["email"];
+	if(!empty($rsvp['first']))
+		$mail['toname'] = $rsvp['first'].' '.$rsvp['last'];
 	$mail["from"] = $rsvp_to_array[0];
 	$mail["fromname"] = get_bloginfo('name');
 	$mail["subject"] = $confirmation_subject;
@@ -3026,6 +3086,8 @@ $notification_body = str_replace('[rsvpupdate]',sprintf('<a href="%s">Complete R
 	
 $notification_body = do_blocks(do_shortcode($notification_body)).'<p>after shortcode and blocks</p>';
 $mail["to"] = $rsvp['email'];
+if(!empty($rsvp['first']))
+	$mail['toname'] = $rsvp['first'].' '.$rsvp['last'];
 $mail["from"] = $rsvp_to_array[0];
 $mail["fromname"] = get_bloginfo('name');
 $mail["subject"] = $notification_subject;
@@ -3092,6 +3154,8 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	$notification_body = do_blocks(do_shortcode($notification_body));
 
 	$mail["to"] = $rsvp['email'];
+	if(!empty($rsvp['first']))
+		$mail['toname'] = $rsvp['first'].' '.$rsvp['last'];
 	$mail["from"] = $rsvp_to_array[0];
 	$mail["fromname"] = get_bloginfo('name');
 	$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"]);
@@ -3343,7 +3407,9 @@ function rsvpmailer_clean_css($content) {
 	return $content;
 }
 
+/* deprecated */
 function rsvpmaker_included_styles () {
+	return;
 	global $rsvpemail_styles;
 	if(!empty($rsvpemail_styles))
 		return $rsvpemail_styles;
@@ -3548,16 +3614,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		<?php
 		$content = ob_get_clean();
 		$content = rsvpmail_filter_style($content);
-		if(preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?]+)|is',$content,$matches)) {
-			foreach($matches[1] as $youtube_id) {
-				$link = 'https://youtu.be/'.$youtube_id;
-				$img = 'https://img.youtube.com/vi/'.$youtube_id.'/mqdefault.jpg';
-				$html = '<p><a href="'.$link.'">Watch on YouTube: '.$link.'<br /><img src="'.$img.'" width="320" height="180" /></a></p>';
-				$content = preg_replace('|<iframe.+'.$youtube_id.'[^<]+</iframe>|',$html,$content);
-			}
-		}
-		else
-			$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<p><a href="$0">Watch on YouTube: $0<br /><img src="https://img.youtube.com/vi/$2/mqdefault.jpg" width="320" height="180" /></a></p>', $content );
+		$content = rsvpmaker_youtube_email($content);
 
 update_post_meta($post->ID,'_rsvpmail_html',$content);
 update_post_meta($post->ID,'_rsvpmail_text',rsvpmaker_text_version($content));
@@ -3586,16 +3643,246 @@ add_filter(
     3
 );
 
+function rsvpmaker_get_style_substitutions() {
+	global $style_sub;
+	if(empty($style_sub)) {
+		$colors = array(
+			'cool-gray' => '#A9B2B1', //wordpress defaults
+			'dark_gray' => '#28303D',
+			'gray'      => '#39414D',
+			'green'     => '#D1E4DD',
+			'blue'      => '#D1DFE4',
+			'purple'    => '#D1D1E4',
+			'red'       => '#E4D1D1',
+			'orange'    => '#E4DAD1',
+			'yellow'    => '#EEEADD',
+			'aliceblue'=>'#f0f8ff',
+			'true-maroon' => '#772432', //toastmasters
+			'loyal-blue' => '#004165',
+			'happy-yellow' => '#F2DF74',
+			'antiquewhite'=>'#faebd7', //css defaults
+			'aqua'=>'#00ffff',
+			'aquamarine'=>'#7fffd4',
+			'azure'=>'#f0ffff',
+			'beige'=>'#f5f5dc',
+			'bisque'=>'#ffe4c4',
+			'black'=>'#000000',
+			'blanchedalmond'=>'#ffebcd',
+			'blueviolet'=>'#8a2be2',
+			'brown'=>'#a52a2a',
+			'burlywood'=>'#deb887',
+			'cadetblue'=>'#5f9ea0',
+			'chartreuse'=>'#7fff00',
+			'chocolate'=>'#d2691e',
+			'coral'=>'#ff7f50',
+			'cornflowerblue'=>'#6495ed',
+			'cornsilk'=>'#fff8dc',
+			'crimson'=>'#dc143c',
+			'cyan'=>'#00ffff',
+			'darkblue'=>'#00008b',
+			'darkcyan'=>'#008b8b',
+			'darkgoldenrod'=>'#b8860b',
+			'darkgray'=>'#a9a9a9',
+			'darkgrey'=>'#a9a9a9',
+			'darkgreen'=>'#006400',
+			'darkkhaki'=>'#bdb76b',
+			'darkmagenta'=>'#8b008b',
+			'darkolivegreen'=>'#556b2f',
+			'darkorange'=>'#ff8c00',
+			'darkorchid'=>'#9932cc',
+			'darkred'=>'#8b0000',
+			'darksalmon'=>'#e9967a',
+			'darkseagreen'=>'#8fbc8f',
+			'darkslateblue'=>'#483d8b',
+			'darkslategray'=>'#2f4f4f',
+			'darkslategrey'=>'#2f4f4f',
+			'darkturquoise'=>'#00ced1',
+			'darkviolet'=>'#9400d3',
+			'deeppink'=>'#ff1493',
+			'deepskyblue'=>'#00bfff',
+			'dimgray'=>'#696969',
+			'dimgrey'=>'#696969',
+			'dodgerblue'=>'#1e90ff',
+			'firebrick'=>'#b22222',
+			'floralwhite'=>'#fffaf0',
+			'forestgreen'=>'#228b22',
+			'fuchsia'=>'#ff00ff',
+			'gainsboro'=>'#dcdcdc',
+			'ghostwhite'=>'#f8f8ff',
+			'gold'=>'#ffd700',
+			'goldenrod'=>'#daa520',
+			'grey'=>'#808080',
+			'greenyellow'=>'#adff2f',
+			'honeydew'=>'#f0fff0',
+			'hotpink'=>'#ff69b4',
+			'indianred '=>'#cd5c5c',
+			'indigo '=>'#4b0082',
+			'ivory'=>'#fffff0',
+			'khaki'=>'#f0e68c',
+			'lavender'=>'#e6e6fa',
+			'lavenderblush'=>'#fff0f5',
+			'lawngreen'=>'#7cfc00',
+			'lemonchiffon'=>'#fffacd',
+			'lightblue'=>'#add8e6',
+			'lightcoral'=>'#f08080',
+			'lightcyan'=>'#e0ffff',
+			'lightgoldenrodyellow'=>'#fafad2',
+			'lightgray'=>'#d3d3d3',
+			'lightgrey'=>'#d3d3d3',
+			'lightgreen'=>'#90ee90',
+			'lightpink'=>'#ffb6c1',
+			'lightsalmon'=>'#ffa07a',
+			'lightseagreen'=>'#20b2aa',
+			'lightskyblue'=>'#87cefa',
+			'lightslategray'=>'#778899',
+			'lightslategrey'=>'#778899',
+			'lightsteelblue'=>'#b0c4de',
+			'lightyellow'=>'#ffffe0',
+			'lime'=>'#00ff00',
+			'limegreen'=>'#32cd32',
+			'linen'=>'#faf0e6',
+			'magenta'=>'#ff00ff',
+			'maroon'=>'#800000',
+			'mediumaquamarine'=>'#66cdaa',
+			'mediumblue'=>'#0000cd',
+			'mediumorchid'=>'#ba55d3',
+			'mediumpurple'=>'#9370d8',
+			'mediumseagreen'=>'#3cb371',
+			'mediumslateblue'=>'#7b68ee',
+			'mediumspringgreen'=>'#00fa9a',
+			'mediumturquoise'=>'#48d1cc',
+			'mediumvioletred'=>'#c71585',
+			'midnightblue'=>'#191970',
+			'mintcream'=>'#f5fffa',
+			'mistyrose'=>'#ffe4e1',
+			'moccasin'=>'#ffe4b5',
+			'navajowhite'=>'#ffdead',
+			'navy'=>'#000080',
+			'oldlace'=>'#fdf5e6',
+			'olive'=>'#808000',
+			'olivedrab'=>'#6b8e23',
+			'orangered'=>'#ff4500',
+			'orchid'=>'#da70d6',
+			'palegoldenrod'=>'#eee8aa',
+			'palegreen'=>'#98fb98',
+			'paleturquoise'=>'#afeeee',
+			'palevioletred'=>'#d87093',
+			'papayawhip'=>'#ffefd5',
+			'peachpuff'=>'#ffdab9',
+			'peru'=>'#cd853f',
+			'pink'=>'#ffc0cb',
+			'plum'=>'#dda0dd',
+			'powderblue'=>'#b0e0e6',
+			'rosybrown'=>'#bc8f8f',
+			'royalblue'=>'#4169e1',
+			'saddlebrown'=>'#8b4513',
+			'salmon'=>'#fa8072',
+			'sandybrown'=>'#f4a460',
+			'seagreen'=>'#2e8b57',
+			'seashell'=>'#fff5ee',
+			'sienna'=>'#a0522d',
+			'silver'=>'#c0c0c0',
+			'skyblue'=>'#87ceeb',
+			'slateblue'=>'#6a5acd',
+			'slategray'=>'#708090',
+			'slategrey'=>'#708090',
+			'snow'=>'#fffafa',
+			'springgreen'=>'#00ff7f',
+			'steelblue'=>'#4682b4',
+			'tan'=>'#d2b48c',
+			'teal'=>'#008080',
+			'thistle'=>'#d8bfd8',
+			'tomato'=>'#ff6347',
+			'turquoise'=>'#40e0d0',
+			'violet'=>'#ee82ee',
+			'wheat'=>'#f5deb3',
+			'white'=>'#ffffff',
+			'whitesmoke'=>'#f5f5f5',
+			'yellowgreen'=>'#9acd32',
+			
+				);
+			$theme_colors = rsvpmail_filter_style_json();
+			if(!empty($theme_colors)) {
+				foreach($theme_colors as $index => $value) {
+					$colors[$index] = $value;
+				}
+			}
+
+			$style_sub = array(
+				'aligncenter'=>'text-align: center',
+				'alignright'=>'float: right; padding-left: 5px',
+				'alignleft'=>'float: left; padding-right:5px',
+				'wp-block-column'=>'display:inline-block; width: 48%; vertical-align: top;', // support for 2 columns, not 3 or more
+			);			
+		foreach($colors as $index => $color)
+			{
+				$style_sub['has-'.$index.'-color'] = 'color:'.$color;
+				$style_sub['has-'.$index.'-background-color'] = 'padding: 5px;background-color:'.$color;
+			}
+
+			$custom_style_array = get_option('rsvpmaker_email_custom_styles');
+			if(!empty($custom_style_array)) {
+				foreach($custom_style_array as $class => $style)
+					$style_sub[$class] = $style;
+			}	
+		}
+
+	return $style_sub;
+}
+
+function rsvpmaker_css_to_array($css) {
+	$custom_styles = array();
+    $css = strtolower(str_replace("\n",'',$css));
+	$css = preg_replace('/\s+/','',$css);
+	preg_match_all('/\.([a-z0-9\-\_]+){([^}]+)}/',$css,$matches);
+	foreach($matches[1] as $index => $class)
+	{
+		$style = $matches[2][$index];
+		$custom_styles[$class] = $style;
+	}
+	return $custom_styles;
+}
+
+function rsvpmaker_filter_style_substititions ($classarray) {
+	$style_sub = rsvpmaker_get_style_substitutions();
+	$classes = explode(' ',$classarray[1]);
+	$style = '';
+
+	foreach($classes as $class) {
+		if(!empty($style_sub[$class]))
+			$style .= $style_sub[$class].'; ';
+	}
+	if(!empty($style))
+		$style = 'style="'.$style.'"';
+	return $style;
+}
+
+function rsvpmail_filter_style_json() {
+	$theme_colors = array();
+	if(!wp_is_block_theme())
+		return $theme_colors;
+	$json = new WP_Theme_JSON_Resolver();
+	$jsondata = (array) $json->get_merged_data('theme');
+	$p = array_shift($jsondata);
+	$p = $p['settings']['color']['palette'];
+	foreach($p as $index => $value_array) {
+		foreach($value_array as $index => $item) {
+			$theme_colors[$item['slug']] = $item['color'];
+		}
+	}
+	return $theme_colors;
+}
+
 function rsvpmail_filter_style($content) {
 	$content = preg_replace('/<style.+<\/style>/is','',$content);
-	$content = str_replace('<img ','<img style="object-fit: contain; max-width: 550px;"',$content);
-	$content = str_replace('class="aligncenter ','style="text-align: center;" class="aligncenter',$content);
-	$content = str_replace('class="alignright ','style="float: right; padding-left: 5px;" class="alignright',$content);
-	$content = str_replace('class="alignleft ','style="float: left; padding-right: 5px;" class="alignleft',$content);
+	$content = preg_replace('/width="[^"]+"/','',$content);
+	$content = preg_replace('/height="[^"]+"/','',$content);
+	$content = str_replace('<img ','<img style="object-fit: contain; max-width: 100%; max-height: 100%;"',$content);
 	$content = str_replace('<figcaption','<figcaption style="text-align: center; font-style: italic;" ',$content);
 	$content = str_replace('<table','<table style="width: 100%;" ',$content);
 	$content = str_replace('<td','<td style="border: thin solid #000;" ',$content);
 	$content = str_replace('<th','<th style="border: thin solid #000;" ',$content);
+	$content = preg_replace_callback('/class="([^"]+)"/','rsvpmaker_filter_style_substititions',$content);
 	return $content;	
 }
 
@@ -3613,7 +3900,7 @@ function get_rsvpmailer_tx_block_template( $edit = false ) {
 	elseif(empty($content)) {
 		$content = '<!-- wp:rsvpmaker/emailbody -->
 		<div class="wp-block-rsvpmaker-emailbody" style="background-color:#efefef;color:#000;padding:5px"><!-- wp:rsvpmaker/emailcontent -->
-		<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph -->
+		<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Email content"} -->
 		<p></p>
 		<!-- /wp:paragraph --></div>
 		<!-- /wp:rsvpmaker/emailcontent -->
@@ -3639,7 +3926,7 @@ function get_rsvpmailer_tx_block_template( $edit = false ) {
 		update_option('rsvpmailer_tx_block_template', $post_id);
 	}
 	if($edit)
-		$content .= sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit"));
+		$content = sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit")).$content;
 	return $content;
 }
 
@@ -3661,7 +3948,7 @@ function get_rsvpmailer_default_block_template($edit = false) {
 	elseif(empty($content)) {
 		$content = '<!-- wp:rsvpmaker/emailbody -->
 		<div class="wp-block-rsvpmaker-emailbody" style="background-color:#efefef;color:#000;padding:5px"><!-- wp:rsvpmaker/emailcontent -->
-		<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph -->
+		<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Email content"} -->
 		<p></p>
 		<!-- /wp:paragraph --></div>
 		<!-- /wp:rsvpmaker/emailcontent -->
@@ -3695,7 +3982,7 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		update_option('rsvpmailer_default_block_template', $post_id);
 	}
 	if($edit)
-		$content .= sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit"));
+		$content = sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit")).$content;
 	return $content;
 }
 
@@ -3760,9 +4047,11 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='') {
 function rsvpmaker_guest_list() {
 	global $wpdb;
 	echo '<h1>'.__('Guest List').'</h1>';
+	$active = (int) get_option('rsvpmaker_guest_list_active');
+
 	if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
 	{	
-		if(!empty($_POST['active'])) {
+		if(isset($_POST['active'])) {
 			$active = intval($_POST['active']);
 			update_option('rsvpmaker_guest_list_active',$active);	
 		}
@@ -3787,8 +4076,6 @@ function rsvpmaker_guest_list() {
 		}
 		rsvpmaker_email_upload_to_array();
 	}
-	else
-		$active = (int) get_option('rsvpmaker_guest_list_active');
 	?>
 	<p>The guest email list is an optional feature of RSVPMaker that allows you to maintain an email list for those who do not have user accounts on your website but have given you permission to send them email. It's suitable for sending to lists of a few dozen to a few hundred members. For large lists, you will get better performance and spam management by using the integration with MailChimp or Sendgrid.</p>
 	<?php
@@ -3803,7 +4090,6 @@ function rsvpmaker_guest_list() {
 		printf('<p>%s <input type="radio" name="active" value="1"> %s <input type="radio" name="active" value="0"  checked="checked"> %s </p>',__('Active','rsvpmaker'),__('Yes','rsvpmaker'),__('No','rsvpmaker'));
 	submit_button();
 	echo '</form>';
-	if($active) {
 		echo '<h2>'.__('Current List','rsvpmaker').'</h2>';	
 		$list = get_rsvpmaker_guest_list();
 		if(empty($list))
@@ -3818,7 +4104,6 @@ function rsvpmaker_guest_list() {
 			submit_button();
 			echo '</form>';
 		}
-	}
 }
 
 function rsvpmaker_email_upload_to_array() {
@@ -3850,38 +4135,171 @@ function rsvpmaker_email_to_name($to) {
 	$name = '';
 	global $wpdb;
 	$sql = "select display_name from $wpdb->users WHERE user_email LIKE '$to' ";
-	rsvpmaker_debug_log($sql,'email to name');
+	//rsvpmaker_debug_log($sql,'email to name');
 	$name .= $wpdb->get_var($sql);
 	if(!empty($name)) {
 		rsvpmaker_debug_log($name,'email to name');
 		return $name;
 	}
 	$sql = "select * from ".$wpdb->prefix."rsvpmaker WHERE email LIKE '$to' ";
-	rsvpmaker_debug_log($sql,'email to name');
+	//rsvpmaker_debug_log($sql,'email to name');
 	$row = $wpdb->get_row($sql);
 	if(!empty($row->first) || !empty($row->last)) {
 		$name .= $row->first.' '.$row->last;
-		rsvpmaker_debug_log($name,'email to name');
+		//rsvpmaker_debug_log($name,'email to name');
 		return $name;
 	}
 	$table = rsvpmaker_guest_list_table();
 	$sql = "select * from $table WHERE email LIKE '$to' ";
-	rsvpmaker_debug_log($sql,'email to name');
+	//rsvpmaker_debug_log($sql,'email to name');
 	$row = $wpdb->get_row($sql);
 	if(!empty($row->first_name) || !empty($row->last_name)) {
 		$name = $row->first_name.' '.$row->last_name;
-		rsvpmaker_debug_log($name,'email to name');
+		//rsvpmaker_debug_log($name,'email to name');
 		return $name;
 	}
 	return $name;
 }
 
-add_shortcode('email_from_name_test','email_from_name_test');
-function email_from_name_test () {
-$emails = array('david@carrcommunications.com','david@rsvpmaker.com','nonesuch@example.com');
-$output = '';
-foreach($emails as $email) {
-	$output .= rsvpmaker_email_to_name($email);
+function rsvpmaker_guest_email_welcome($email) {
+	global $post;
+	$welcome_id = get_option('rsvpmaker_guest_email_welcome');
+	if(!$welcome_id || !get_option('rsvpmaker_guest_list_active') || rsvpmaker_on_guest_email_list($email))
+		return;
+	$post = get_post($welcome_id);
+	//rsvpmaker_debug_log($post,'welcome_post');
+	if(!$post)
+		return;
+	$mail['to'] = $email;
+	$mail['from'] = get_bloginfo('admin_email');	
+	$mail['fromname'] = get_bloginfo('name');
+	$mail['subject'] = $post->post_title;
+	rsvpmaker_debug_log($post->post_content,'welcome post content');
+	$content = do_blocks($post->post_content);
+	rsvpmaker_debug_log($content,'welcome post after do blocks');
+	$mail['html'] = rsvpmail_filter_style($content);
+	rsvpmaker_debug_log($mail['html'],'welcome post email body');
+	//rsvpmaker_debug_log($mail,'welcome_post email'); get_the_content(null, false, $welcome_id); //
+	$result = rsvpmailer($mail);
+	//rsvpmaker_debug_log($result,'welcome_post result');
+	wp_reset_query();
+	wp_reset_postdata();
 }
-return $output;
+
+function rsvpmaker_on_guest_email_list($email, $checkuserlist = true) {
+	$status = false;
+	global $wpdb;
+	if($checkuserlist)
+	{
+		$sql = "select ID from $wpdb->users WHERE user_email LIKE '$email' ";
+		$id = $wpdb->get_var($sql);
+		if($id) {
+			return true;
+		}	
+	}
+	$table = rsvpmaker_guest_list_table();
+	$sql = "select * from $table WHERE email LIKE '$email' ";
+	//rsvpmaker_debug_log($sql,'on guest list lookup');
+	return $wpdb->get_row($sql);
+}
+
+function rsvpmaker_emailpostorposts($atts) {
+global $wp_query, $post;
+$backup = $wp_query;
+ob_start();
+if(!empty($atts['selection']) && is_numeric($atts['selection']))
+	$args['p'] = intval($atts['selection']);
+else {
+	$posts_per_page = (isset($atts['posts_per_page'])) ? intval($atts['posts_per_page']) : 1;
+	$args = array( 'posts_per_page' => $posts_per_page );
+	$args['category_name'] =  (isset($atts['selection'])) ? sanitize_text_field($atts['selection']) : '';
+}
+// the query
+$wp_query = new WP_Query( $args );?>
+<div class="email-posts">
+<?php while ( have_posts() ) : the_post(); 
+$permalink = get_permalink();
+?>
+<div class="email-post">
+<h2><a href="<?php echo $permalink; ?>"><?php the_title(); ?></a></h2>
+<?php
+if ( has_post_thumbnail() ) {
+    the_post_thumbnail();
+}
+?>
+<p class="the_excerpt"><?php echo $excerpt = get_the_excerpt();?></p>
+<?php 
+if(!strpos($excerpt,$permalink))
+{
+?>
+<p class="email-read-more"><a href="<?php echo $permalink; ?>"><?php _e('Read More','rsvpmaker'); ?></a></p>
+<?php 
+}
+?>
+</div>
+<?php endwhile; // End of the loop. ?>
+</div>
+<?php
+$wp_query = $backup;
+wp_reset_postdata();
+return ob_get_clean();//'hello from the server '.var_export($atts,true);
+}
+
+function rsvpmaker_emailguestsignup ($atts) {
+global $rsvp_options;
+	ob_start();
+	$check = true;
+if(!empty($_POST['rsvpguest_list_email'])) {
+	if(!is_admin() && !empty($rsvp_options["rsvp_recaptcha_site_key"]) && !empty($rsvp_options["rsvp_recaptcha_secret"]))
+	{
+	if(!rsvpmaker_recaptcha_check ($rsvp_options["rsvp_recaptcha_site_key"],$rsvp_options["rsvp_recaptcha_secret"]))	{
+		echo 'Failed security check';
+		$check = false;
+		}	
+	}
+	else {
+		if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
+			echo 'Failed security check';
+			$check = false;	
+		}
+	}
+	$entry = array('email' => sanitize_text_field($_POST['rsvpguest_list_email']),'first' => sanitize_text_field($_POST['rsvpguest_list_first']),'last' => sanitize_text_field($_POST['rsvpguest_list_last']) );
+
+	if($check && is_email($entry['email'])) {
+		//add to email list
+		echo '<p>Adding: '.$entry['email'].'</p>';
+		rsvpmaker_email_list_okay ($entry);
+	}
+	elseif($check) {
+		echo 'invalid email '.$entry['email'];
+	}
+}
+printf('<form action="%s" method="post" class="guest-email-signup"><h4>%s</h4>',esc_url(get_permalink()),__('Email List Signup','rsvpmaker'));
+$fields = empty($atts['fields']) ? '' : sanitize_text_field($atts['fields']);
+if('' == $fields) {
+	?>
+<p><label><?php echo __('First Name','rsvpmaker'); ?></label><input type="text" id="rsvpguest_list_first"  name="rsvpguest_list_first" /></p>
+<p><label><?php echo __('Last Name','rsvpmaker'); ?></label><input type="text" id="rsvpguest_list_last"  name="rsvpguest_list_last" /></p>
+<p><label><?php echo __('Email','rsvpmaker'); ?></label><input type="text" id="rsvpguest_list_email"  name="rsvpguest_list_email" /></p>
+	<?php
+}
+elseif('first' == $fields) {
+	?>
+<p><label><?php echo __('First Name','rsvpmaker'); ?></label><input type="text" id="rsvpguest_list_first"  name="rsvpguest_list_first" /></p>
+<input type="hidden" id="rsvpguest_list_last"  name="rsvpguest_list_last" />
+<p><label><?php echo __('Email','rsvpmaker'); ?></label><input type="text" id="rsvpguest_list_email"  name="rsvpguest_list_email" /></p>
+	<?php
+}
+elseif('email' == $fields) {
+	?>
+<input type="hidden" id="rsvpguest_list_first"  name="rsvpguest_list_first" />
+<input type="hidden" id="rsvpguest_list_last"  name="rsvpguest_list_last" />
+<p><label><?php echo __('Email','rsvpmaker'); ?></label><input type="text" id="rsvpguest_list_email"  name="rsvpguest_list_email" /></p>
+	<?php
+}
+rsvpmaker_nonce();
+rsvpmaker_recaptcha_output();
+printf('<button>%s</button></form>',__('Sign Up','rsvpmaker'));
+return ob_get_clean();
+
 }

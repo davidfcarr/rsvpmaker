@@ -75,10 +75,21 @@ display: inline-block; margin: 0; margin-right: 5px; width: 50px;
 #rsvpform textarea {
 max-width: 90%;
 }
+.guest-email-signup label {
+    display: block;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}    
 #rsvpform label {
 display: inline-block;
-width: 25%;
+width: 30%;
 }
+#rsvpform input[type=text], .guest-email-signup input[type=text] {
+    display: inline-block;
+    width: 80%;
+}
+    
 #rsvpform input[type=text], #rsvpform input[type=email], #rsvpform select {
 max-width: 70%
 }

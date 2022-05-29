@@ -10,16 +10,16 @@ import './rsvpmaker-sidebar.js';
 import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
-import './rsvpmailer-wrapper.js';		
-import './schedule.js';		
+import './schedule.js';
 import './form.js';		
 import apiFetch from '@wordpress/api-fetch';
+import {useState, useEffect} from "@wordpress/element";
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const { PanelBody, SelectControl, TextControl, ToggleControl } = wp.components;
-const { Component, Fragment } = wp.element;
-const { InspectorControls } = wp.blockEditor;
+const { Component, Fragment, RawHTML } = wp.element;
+const { InspectorControls, useBlockProps } = wp.blockEditor;
 
 const rsvpupcoming = [{label: __('Choose event'),value: ''},{label: __('Next event'),value: 'next'},{label: __('Next event - RSVP on'),value: 'nextrsvp'}];
 apiFetch( {path: 'rsvpmaker/v1/future'} ).then( events => {
@@ -76,7 +76,7 @@ registerBlockType( 'rsvpmaker/event', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Embed Event' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a single RSVPMaker event post'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -195,7 +195,7 @@ registerBlockType( 'rsvpmaker/next-events', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Next Events' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Invites registration for next event, or next few dates'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -210,7 +210,20 @@ registerBlockType( 'rsvpmaker/next-events', {
         },
 	edit: function( props ) {
 	const { attributes: { number_of_posts }, setAttributes, isSelected } = props;
+	const [preview, setPreview] = useState([]);
 
+	const fetchPreview = async () => {
+		const path = '/rsvpmaker/v1/preview/next-events?number_of_posts='+number_of_posts;
+		console.log(path);
+		const preview = await apiFetch({path});
+		setPreview(preview);
+	}
+
+	useEffect( () => { fetchPreview(); }, [number_of_posts]);
+/*	if ( preview.length === 0 ) {
+		return <div {...useBlockProps()}>Loading</div>;
+	}
+*/
 		return (
 			<div className={ props.className }>
 				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Registration invite for one or more events.
@@ -231,6 +244,7 @@ registerBlockType( 'rsvpmaker/next-events', {
 	{label: '10 (next +9)', value:10}] }
         onChange={ ( number_of_posts ) => { setAttributes( { number_of_posts } ) } }
 />
+<RawHTML>{preview}</RawHTML>
 			</div>
 		);
 	},
@@ -245,7 +259,7 @@ registerBlockType( 'rsvpmaker/embedform', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Embed Form' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays the form associated with a single RSVPMaker event post'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -300,7 +314,7 @@ registerBlockType( 'rsvpmaker/submission', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Event Submission' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a Form for Submitting an Event for Approvoal'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -361,7 +375,7 @@ registerBlockType( 'rsvpmaker/upcoming', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Upcoming Events' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays an RSVPMaker event listing and/or a calendar widget'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -625,7 +639,7 @@ registerBlockType( 'rsvpmaker/eventlisting', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Event Listing' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays an RSVPMaker event listing (headlines and dates)'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -755,7 +769,7 @@ registerBlockType( 'rsvpmaker/stripecharge', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'Stripe Charge (RSVPMaker)' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a payment widget for the Stripe service'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -979,7 +993,7 @@ registerBlockType( 'rsvpmaker/paypal', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'PayPal Charge (RSVPMaker)' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a payment widget for the PayPal service'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -1194,7 +1208,7 @@ registerBlockType( 'rsvpmaker/rsvpdateblock', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Dateblock' ), // Block title.
 	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Changes the display of the date / time block from the default (top of the post)'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -1282,7 +1296,7 @@ registerBlockType( 'rsvpmaker/upcoming-by-json', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Events (fetch via API)' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a listing of RSVPMaker events from a remote site'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -1382,7 +1396,7 @@ registerBlockType( 'rsvpmaker/future-rsvp-links', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'Future RSVP Links' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a list of links to the RSVP Form for upcoming events with RSVPs turned on'),
 	keywords: [
 		__( 'RSVPMaker' ),
@@ -1449,7 +1463,7 @@ registerBlockType( 'rsvpmaker/countdown', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Countdown Timer' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'common', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays a countdown timer for the specified event'),
 	keywords: [
 		__( 'RSVPMaker' ),

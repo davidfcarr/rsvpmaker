@@ -27,7 +27,7 @@ registerBlockType( 'rsvpmaker/schedule', {
 	title: ( 'RSVPMaker Schedule' ), // Block title.
     icon: 'admin-comments',
     description: __('Daily schedule of events'),
-	category: 'layout',
+	category: 'rsvpmaker',
 	keywords: [
 		( 'RSVPMaker' ),
 		( 'Event' ),
