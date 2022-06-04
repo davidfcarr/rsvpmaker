@@ -24,8 +24,6 @@ function rsvpmailer($mail, $description = '') {
 	$mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail['to'],$description);
 	if(isset($mail['text']))
 		$mail['text'] = rsvpmaker_personalize_email($mail['text'],$mail['to'],$description);
-	if(isset($mail['html']) && strpos($mail['html'],'<style'))
-		$mail['html'] = rsvpmaker_inliner( $mail['html'] );
 
 	if(isset($mail['subject']))
 		$mail['subject'] = do_shortcode($mail['subject']);
@@ -1043,7 +1041,7 @@ function rsvpmailer_default_block_template_wrapper($content, $transactional = fa
 	else
 	$rsvpmailer_default_block_template = get_rsvpmailer_default_block_template();
 	if(!empty($rsvpmailer_default_block_template))
-		$content = preg_replace('/<div class="wp-block-rsvpmaker-emailcontent"[^>]+>/',"$0 $content",$rsvpmailer_default_block_template, 1);
+		$content = preg_replace('/<div[^>]+class="wp-block-rsvpmaker-emailcontent"[^>]*>/',"$0 $content",$rsvpmailer_default_block_template, 1);
 	return $content;
 }
 
@@ -1269,10 +1267,11 @@ return $content;
 }
 
 function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
-	global $wpdb, $current_user;
+	global $wpdb;
+	$sender_user = get_userdata($user_id);
 	$recipients = array();
 	$mail['html'] = $html;
-	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	$from = (isset($postvars["user_email"])) ? $sender_user->user_email : $postvars["from_email"];
 	printf('<p>from %s</p>',$from);
 	update_post_meta($post_id,'rsvprelay_from',$from);
 	update_post_meta($post_id,'rsvprelay_fromname',$postvars["from_name"]);
@@ -1381,7 +1380,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 		if(!empty($emails[0]))
 		{
 			$sending_to[] = 'custom list';
-			$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+			$from = (isset($postvars["user_email"])) ? $sender_user->user_email : $postvars["from_email"];
 			update_post_meta($post_id,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
 			foreach($emails[0] as $email)
 				{
@@ -1402,7 +1401,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	{
 	$users = get_users('blog='.get_current_blog_id());
 	printf('<p>Sending to %s website members</p>',sizeof($users));
-	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	$from = (isset($postvars["user_email"])) ? $sender_user->user_email : $postvars["from_email"];
 	update_post_meta($post_id,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
 	foreach($users as $user)
 		{
@@ -1422,7 +1421,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	
 	if(!empty($postvars["rsvp_guest_list"]))
 	{
-	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	$from = (isset($postvars["user_email"])) ? $sender_user->user_email : $postvars["from_email"];
 	update_post_meta($post_id,'rsvprelay_fromname',stripslashes($postvars["from_name"]));
 
 	$guests = get_rsvpmaker_guest_list();
@@ -1448,7 +1447,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 
 	if(!empty($postvars["network_members"]) && user_can('manage_network',$user_id) )
 	{
-	$from = (isset($postvars["user_email"])) ? $current_user->user_email : $postvars["from_email"];
+	$from = (isset($postvars["user_email"])) ? $sender_user->user_email : $postvars["from_email"];
 	update_post_meta($post_id,'rsvprelay_fromname',sanitize_text_field(stripslashes($postvars["from_name"])));
 	$users = get_users('blog='.get_current_blog_id());
 	$sending_to[] = 'website network members';
@@ -1493,7 +1492,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	}
 
 	if(!empty($recipients)) {
-		printf('<p>Combined list: %s</p>',var_export($recipients,true));
+		//printf('<p>Combined list: %s</p>',var_export($recipients,true));
 		foreach($recipients as $email)
 			add_post_meta($post_id,'rsvprelay_to',$email);
 	}
@@ -1675,23 +1674,6 @@ if(!isset($_POST))
 	if($mailchimp_sent)
 		printf('</p>%s</p>',implode(', ',$mailchimp_sent));	
 }
-?>
-<style>
-	#email-content {
-		width: 650px;
-		margin-left:auto;
-		margin-right: auto;
-		background-color: #fff;
-		color: #000;
-		padding: 10px;
-	}
-</style>
-<?php 
-_wp_admin_bar_init();
-//wp_admin_bar_header();
-?>
-<link rel='stylesheet' href='https://delta.local/wp-admin/load-styles.php?c=1&amp;dir=ltr&amp;load%5Bchunk_0%5D=dashicons,admin-bar,common,forms,admin-menu,dashboard,list-tables,edit,revisions,media,themes,about,nav-menus,wp-pointer,widgets&amp;load%5Bchunk_1%5D=,site-icon,l10n,buttons,wp-auth-check&amp;ver=6.1-alpha-53449' type="text/css" media='all' />
-<?php
 wp_admin_bar_render(); ?>
 <div style="width: 150px; float:right;"><button onclick="hideControls()">Hide Controls</button></div>
 <form method="post" action="<?php echo esc_attr($permalink); ?>">
@@ -1886,7 +1868,7 @@ if (version_compare($ver, '7.1', '<'))
 	printf('<div class="notice notice-warning"><p>The Emogrifier CSS inliner library, which is included to improve formatting of HTML email, relies on PHP features introduced in version 7.1 -- and is disabled because your site is on %s</p></div>',$ver);
 ?>
 <style>
-#currentdefault {
+.currentdefault {
 	margin: 10px;
 	border: thin dotted #000;
 	padding: 10px;
@@ -1946,8 +1928,15 @@ if(!empty($options)) {
 	<br>Optional: send to new members of list upon registration
 	</p>";
 	echo "<p>".__('Add Alternate Templates','rsvpmaker')."<br><select name=\"alt_template\">$options</select>
-	<br>Example: a newsletter template containing a latest posts block that you use, but not all the time.
-	</p>";
+	<br>Example: a newsletter template containing a latest posts block that you use, but not all the time.";
+	$candidates = rsvpmail_candidate_templates(true);
+foreach($candidates as $candidate) {
+	$alts[] = sprintf('<a href="%s">%s</a>',admin_url('post.php?post='.$candidate->ID.'&action=edit'),$candidate->post_title.' '.$candidate->post_modified);
+}
+if(!empty($alts)) {
+	echo '<br>Previously registered: '.implode(', ',$alts);
+}
+echo "</p>\n";
 rsvpmaker_nonce();
 global $rsvp_options;
 $chimp_options = get_option('chimp');
@@ -1977,22 +1966,45 @@ printf('<form id="alt_template" name="alt_template" method="get" action="%s"><in
 
 $content = get_rsvpmailer_default_block_template(true);
 if(!empty($content))
-	printf('<p>Current default email template</p><div id="currentdefault">%s</div>',rsvpmail_filter_style($content));
+	printf('<p>Current default email template</p><div class="currentdefault" id="currentdefault">%s</div>',rsvpmail_filter_style($content));
 
 $content = get_rsvpmailer_tx_block_template(true);
 if(!empty($content))
-	printf('<p>Current transactional template</p><div id="currentdefault">%s</div>',rsvpmail_filter_style($content));
+	printf('<p>Current transactional template</p><div id="currenttx"  class="currentdefault" >%s</div>',rsvpmail_filter_style($content));
 
 $welcome = get_option('rsvpmaker_guest_email_welcome');
 if($welcome)
 {
 	$welcome_post = get_post($welcome);
-	printf('<p>Current welcome message</p><div id="currentdefault">%s</div>','<p><a href="'.admin_url("post.php?post=$welcome&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmail_filter_style(do_blocks($welcome_post->post_content)));
+	printf('<p>Current welcome message</p><div id="currentwelcome"  class="currentdefault" >%s</div>','<p><a href="'.admin_url("post.php?post=$welcome&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmail_filter_style(do_blocks($welcome_post->post_content)));
 }
 
+$candidates = rsvpmail_candidate_templates(true);
+foreach($candidates as $candidate) {
+	printf('<p>Alternate template %s</p><div  class="currentdefault" >%s</div>',$candidate->post_title,'<p><a href="'.admin_url("post.php?post=$candidate->ID&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmail_filter_style(do_blocks($candidate->post_content)));
+}
+
+
 $custom_style_array = array();
+if(isset($_POST['rsvpmaker_email_base_font'])) {
+	$rsvpmaker_email_base_font = stripslashes(sanitize_text_field($_POST['rsvpmaker_email_base_font']));
+	update_option('rsvpmaker_email_base_font',$rsvpmaker_email_base_font);	
+}
+else
+	$rsvpmaker_email_base_font = get_option('rsvpmaker_email_base_font');
+
+if(isset($_POST['rsvpmaker_custom_email_tag_styles']))
+{
+	foreach($_POST['rsvpmaker_custom_email_tag_styles'] as $index => $value) {
+		$rsvpmaker_custom_email_tag_styles[$index] = sanitize_text_field($value);
+	}
+	update_option('rsvpmaker_custom_email_tag_styles',$rsvpmaker_custom_email_tag_styles);
+}
+else 
+	$rsvpmaker_custom_email_tag_styles = get_option('rsvpmaker_custom_email_tag_styles');
+
 if(isset($_POST['custom_style_input'])){
-	$custom = sanitize_textarea_field($_POST['custom_style_input']);
+	$custom = stripslashes(sanitize_textarea_field($_POST['custom_style_input']));
 	$custom_style_array = rsvpmaker_css_to_array($custom);
 	update_option('rsvpmaker_email_custom_styles',$custom_style_array);
 }
@@ -2004,17 +2016,75 @@ if(!empty($custom_style_array)) {
 	foreach($custom_style_array as $class => $style)
 		$custom .= '.'.$class.'{'.$style.';}'."\n";
 }
-printf('<h3>%s</h3><p>%s</p><code>.my-custom-class{background-image:linear-gradient(red,yellow);padding-bottom:5px}</code><br><form id="custom_styles" name="custom_styles" method="post" action="%s"><textarea name="custom_style_input">%s</textarea><br><button>Submit</button>',__('Custom Inline Styles','rsvpmaker'),__('Add custom styles that will replace class entries in the format ','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'),$custom);
+$custom = str_replace(';;',';',$custom);
+
+/* not working yet
+if(!empty($_POST) && ($rsvpmaker_email_base_font || !empty($custom) || !empty($rsvpmaker_custom_email_tag_styles['p'])  || !empty($rsvpmaker_custom_email_tag_styles['h1'])  || !empty($rsvpmaker_custom_email_tag_styles['h2'] ) || !empty($rsvpmaker_custom_email_tag_styles['h3'] ) || !empty($rsvpmaker_custom_email_tag_styles['h4'] ) ) ) {
+	$css = '';
+	if($custom) {
+		$lines = explode("\n",$custom);
+		foreach($lines as $line) {
+			$line = trim($line);
+			if(!empty($line))
+				$css .= '.editor-styles-wrapper  '.$line."\n";
+		}
+	}
+	foreach($rsvpmaker_custom_email_tag_styles as $tag => $style)
+		if(!empty($style))
+			$css .= '.editor-styles-wrapper  '.$tag.'{'.$style.'}'."\n";
+	if($rsvpmaker_email_base_font) {
+		$css .= '.editor-styles-wrapper  p{font-size:'.$rsvpmaker_email_base_font.'px;}'."\n";
+		$rsvpmaker_email_base_font +=3;
+		$css .= '.editor-styles-wrapper  h4{font-size:'.$rsvpmaker_email_base_font.'px;}'."\n";
+		$rsvpmaker_email_base_font +=2;
+		$css .= '.editor-styles-wrapper h3{font-size:'.$rsvpmaker_email_base_font.'px;}'."\n";
+		$rsvpmaker_email_base_font +=2;
+		$css .= '.editor-styles-wrapper  h2{font-size:'.$rsvpmaker_email_base_font.'px;}'."\n";
+		$rsvpmaker_email_base_font +=2;
+		$css .= '.editor-styles-wrapper  h1{font-size:'.$rsvpmaker_email_base_font.'px;}'."\n";
+	}
+	$upload_dir    = wp_upload_dir();
+	$filename = 'rsvpmailer-editor-style.css';
+	$fname         = $upload_dir['basedir'] . '/' . $filename;
+	file_put_contents( $fname, $css );
+	$fileurl = $upload_dir['baseurl'] . '/' . $filename;
+	update_option('rsvpmailer_editor_stylesheet',$fileurl);
+	//printf('<p>Created %s</p>',$fileurl);
+}
+*/
+
+printf('<h3>%s</h3><p>%s</p><code>.my-custom-class{background-image:linear-gradient(red,yellow);padding-bottom:5px}</code><br>
+<form id="custom_styles" name="custom_styles" method="post" action="%s"><textarea name="custom_style_input">%s</textarea><br>
+<label style="display:inline-block; width: 100px;">Base font</label> <input type="text" name="rsvpmaker_email_base_font" value="%s"> - set the base font to be used for all text unless otherwise specified<br />
+Example: make the base body text font larger (headlines will be sized up proportionately)<br><code>font-size: 20px;</code><br>
+Exemple: set the font size and font family<br><code>font-family: Verdana, sans-serif;font-size: 20px;</code><br>
+<label style="display:inline-block; width: 100px;">CSS for p</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[p]" value="%s" /><br>
+<label style="display:inline-block; width: 100px;">CSS for h1</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[h1]" value="%s" /><br>
+<label style="display:inline-block; width: 100px;">CSS for h2</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[h2]" value="%s" /><br>
+<label style="display:inline-block; width: 100px;">CSS for h3</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[h3]" value="%s" /><br>
+<label style="display:inline-block; width: 100px;">CSS for h4</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[h4]" value="%s" /><br>
+%s
+<button>Submit</button></form>',__('Custom Inline Styles','rsvpmaker'),__('Add custom styles that will replace a single class in the format ','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'),$custom,$rsvpmaker_email_base_font,
+$rsvpmaker_custom_email_tag_styles['p'],
+$rsvpmaker_custom_email_tag_styles['h1'],
+$rsvpmaker_custom_email_tag_styles['h2'],
+$rsvpmaker_custom_email_tag_styles['h3'],
+$rsvpmaker_custom_email_tag_styles['h4'],
+rsvpmaker_nonce('return'));
+echo '<p>Notes: customizations will not be reflected in the editor. If changing the font family, use <a href="https://www.w3schools.com/cssref/css_websafe_fonts.asp">web safe fonts</a> that do not rely on external stylesheets.</p>';
+
 echo '<h2>Current Class-to-Style Conversions</h2><div style="background-color: #fff">';
 $style_sub = rsvpmaker_get_style_substitutions();
 foreach($style_sub as $index => $value) {
-	$example = sprintf('.%s{%s}',esc_html($index),esc_html($value));
+	printf('<p>class to CSS<code>.%s{%s}</code></p>',esc_html($index),esc_html($value));
 	if(strpos($index,'lign'))
-		printf('<div style="clear: both; border: thin solid #000;">%s</div>',$example);
+		printf('<div style="clear: both; border: thin solid #000;  font-size: 20px; %s">Aligned content</div><p>ipsum lorem ipsum lorem</p><p>ipsum lorem ipsum lorem</p>',esc_html($value));
 	elseif(strpos($index,'background'))
-		printf('<div style="clear: both; border: thin solid #000; %s"><div style="background-color: #fff; color: #000; border: thin solid #000;">%s</div></div>',esc_html($value),$example);
+		printf('<div style="clear: both; border: thin solid #000; font-size: 20px; %s">ipsum lorem ipsum lorem</div>',esc_html($value));
+	elseif(strpos($index,'column'))
+		printf('<div style="20px; %s">ipsum lorem ipsum lorem</div><div style="20px; %s">ipsum lorem ipsum lorem</div>',esc_html($value),esc_html($value));
 	else
-		printf('<div style="clear: both; border: thin solid #000;">%s</div><div><span style="background-color: white; %s">Sample on white background</span> <span style="background-color: black; %s">Sample on black background</span></div>',$example,esc_html($value),esc_html($value));
+		printf('<div><span style="background-color: white; font-size: 20px; %s">Sample on white background</span> <span style="background-color: gray; font-size: 20px; %s">Sample on gray background</span> <span style="background-color: black; font-size: 20px; %s">Sample on black background</span></div>',esc_html($value),esc_html($value),esc_html($value));
 }
 echo '</div>';
 
@@ -3562,7 +3632,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		ob_start();
 		wp_head();
 		$head = ob_get_clean();
-
+		
 		ob_start();
 		?>
 		<!doctype html>
@@ -3577,7 +3647,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 	?>
 	</style>
 		</head>
-		<body class="rsvpmailer">
+		<body class="rsvpmailer" >
 		<!-- controls go here -->
 		<article>
 		<div class="entry-content">
@@ -3801,6 +3871,23 @@ function rsvpmaker_get_style_substitutions() {
 			'yellowgreen'=>'#9acd32',
 			
 				);
+			foreach($colors as $index => $color) {
+				if(strpos($index,'light') !== false)
+					{
+						$index = str_replace('light','light-',$index);
+						$colors[$index] = $color;
+					}
+				if(strpos($index,'dark') !== false)
+					{
+						$index = str_replace('dark','dark-',$index);
+						$colors[$index] = $color;
+					}
+				if(strpos($index,'medium') !== false)
+					{
+						$index = str_replace('medium','medium-',$index);
+						$colors[$index] = $color;
+					}
+			}
 			$theme_colors = rsvpmail_filter_style_json();
 			if(!empty($theme_colors)) {
 				foreach($theme_colors as $index => $value) {
@@ -3810,21 +3897,26 @@ function rsvpmaker_get_style_substitutions() {
 
 			$style_sub = array(
 				'aligncenter'=>'text-align: center',
-				'alignright'=>'float: right; padding-left: 5px',
-				'alignleft'=>'float: left; padding-right:5px',
-				'wp-block-column'=>'display:inline-block; width: 48%; vertical-align: top;', // support for 2 columns, not 3 or more
+				'alignright'=>'float: right; padding-left: 10px; margin-left: 10px;',
+				'alignleft'=>'float: left; padding-right:10px; margin-right: 10px;',
+				'wp-block-column'=>'display:inline-block; box-sizing: border-box; width: 45%; padding-left: 4%; padding-right: 4%; margin-left: 0; margin-right: 0;vertical-align: top;', // support for 2 columns, not 3 or more
 			);			
 		foreach($colors as $index => $color)
 			{
 				$style_sub['has-'.$index.'-color'] = 'color:'.$color;
-				$style_sub['has-'.$index.'-background-color'] = 'padding: 5px;background-color:'.$color;
+				$style_sub['has-'.$index.'-background-color'] = 'padding: 5px 30px 5px 30px;background-color:'.$color;
 			}
 
 			$custom_style_array = get_option('rsvpmaker_email_custom_styles');
 			if(!empty($custom_style_array)) {
 				foreach($custom_style_array as $class => $style)
 					$style_sub[$class] = $style;
-			}	
+			}
+			$rsvpmaker_email_base_font = get_option('rsvpmaker_email_base_font');
+			if($rsvpmaker_email_base_font)
+				$style_sub['wp-block-rsvpmaker-emailbody'] = stripslashes($rsvpmaker_email_base_font);
+			else
+				$style_sub['wp-block-rsvpmaker-emailbody'] = 'font-size: 20px;';
 		}
 
 	return $style_sub;
@@ -3833,7 +3925,7 @@ function rsvpmaker_get_style_substitutions() {
 function rsvpmaker_css_to_array($css) {
 	$custom_styles = array();
     $css = strtolower(str_replace("\n",'',$css));
-	$css = preg_replace('/\s+/','',$css);
+	$css = preg_replace('/\s{2,}/',' ',$css);
 	preg_match_all('/\.([a-z0-9\-\_]+){([^}]+)}/',$css,$matches);
 	foreach($matches[1] as $index => $class)
 	{
@@ -3847,28 +3939,41 @@ function rsvpmaker_filter_style_substititions ($classarray) {
 	$style_sub = rsvpmaker_get_style_substitutions();
 	$classes = explode(' ',$classarray[1]);
 	$style = '';
-
+	$tag = $classarray[0];
 	foreach($classes as $class) {
 		if(!empty($style_sub[$class]))
 			$style .= $style_sub[$class].'; ';
 	}
-	if(!empty($style))
-		$style = 'style="'.$style.'"';
-	return $style;
+	if( strpos($tag,'style=') )
+		$tag = preg_replace('/style=\"[^"]+/',"$0; $style",$tag);
+	else
+	{
+		$tag = str_replace('>'," style=\"$style\">", $tag);
+	}
+	return $tag;
 }
 
 function rsvpmail_filter_style_json() {
 	$theme_colors = array();
-	if(!wp_is_block_theme())
-		return $theme_colors;
 	$json = new WP_Theme_JSON_Resolver();
 	$jsondata = (array) $json->get_merged_data('theme');
-	$p = array_shift($jsondata);
-	$p = $p['settings']['color']['palette'];
-	foreach($p as $index => $value_array) {
-		foreach($value_array as $index => $item) {
+	$p = array_pop($jsondata);
+	$p = $p['settings']['color'];
+	$palette = $p['palette']['default'];
+	if(isset($p['palette']['theme'])) {
+		$theme = $p['palette']['theme'];
+	}
+	else {
+		$theme = array();
+	}
+	foreach($palette as $index => $item) {
+		if(isset($item['slug'])) {
 			$theme_colors[$item['slug']] = $item['color'];
 		}
+	}
+	foreach($theme as $index => $item) {
+		if(isset($item['slug']))
+			$theme_colors[$item['slug']] = $item['color'];
 	}
 	return $theme_colors;
 }
@@ -3882,10 +3987,34 @@ function rsvpmail_filter_style($content) {
 	$content = str_replace('<table','<table style="width: 100%;" ',$content);
 	$content = str_replace('<td','<td style="border: thin solid #000;" ',$content);
 	$content = str_replace('<th','<th style="border: thin solid #000;" ',$content);
-	$content = preg_replace_callback('/class="([^"]+)"/','rsvpmaker_filter_style_substititions',$content);
+	$content = preg_replace_callback('/<[a-z]+[^>]*class="([^"]+)"[^>]*>/','rsvpmaker_filter_style_substititions',$content);
+	$rsvpmaker_custom_email_tag_styles = get_option('rsvpmaker_custom_email_tag_styles');
+	if(is_array($rsvpmaker_custom_email_tag_styles)) {
+		foreach($rsvpmaker_custom_email_tag_styles as $tag => $style) {
+			if(!empty($style))
+			$content = preg_replace_callback('/\<('.$tag.')[^>]*>/','rsvpmaker_tag_style_substitutions',$content);
+		}
+	}
+	$content = preg_replace('/;{2,10}/',';',$content);
 	return $content;	
 }
 
+function rsvpmaker_tag_style_substitutions($atts) {
+	$rsvpmaker_custom_email_tag_styles = get_option('rsvpmaker_custom_email_tag_styles');
+	if(!is_array($rsvpmaker_custom_email_tag_styles))
+		$rsvpmaker_custom_email_tag_styles = array();
+	$rsvpmaker_custom_email_tag_styles = apply_filters('rsvpmaker_custom_email_tag_styles',$rsvpmaker_custom_email_tag_styles);
+	$tag = $atts[1];
+	$style = '';
+	if(is_array($rsvpmaker_custom_email_tag_styles) && !empty($rsvpmaker_custom_email_tag_styles[$tag]) )
+		$style .= $rsvpmaker_custom_email_tag_styles[$tag];
+	$style = str_replace(';;','',$style);
+    if(strpos($atts[0],'style='))
+        $atts[0] = preg_replace('/style="[^"]+/',"$0; $style",$atts[0]);
+    else
+        $atts[0] = str_replace('>',' style="'.$style.'">',$atts[0]);
+    return $atts[0];
+}
 function get_rsvpmailer_tx_block_template( $edit = false ) {
 	$content = get_option('rsvpmailer_tx_block_template');
 	$post_id = 0;
@@ -4302,4 +4431,30 @@ rsvpmaker_recaptcha_output();
 printf('<button>%s</button></form>',__('Sign Up','rsvpmaker'));
 return ob_get_clean();
 
+}
+
+if(isset($_GET['post_type']) && 'rsvpemail' == $_GET['post_type'])
+add_action('init','rsvpmaker_queue_post_type');
+function rsvpmaker_queue_post_type() {
+	$result = register_post_status('rsvpmessage',array('label'=>'Group Message','internal'=>true,'show_in_admin_status_list'=>true,'show_in_admin_all_list'=>false));
+	global $wpdb;
+	$sql = "SELECT ID, post_title, meta_key, meta_value, post_status FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (meta_key='headerinfo' OR meta_key='rsvpmail_sent') AND post_status='draft' ORDER BY ID DESC LIMIT 0, 200";
+	$results = $wpdb->get_results($sql);
+	$was = 0;
+	foreach($results as $row)
+	{
+		if($row->ID != $was) {
+			if('draft' == $row->post_status) {
+				$sql = "update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=$row->ID ";
+				$result = $wpdb->query($sql);
+				print_r("<p>post status change result %s %s</p>",$sql,var_export($result,true));
+			}
+		}
+		$was = $row->ID;
+	}
+	$sql ="SELECT ID FROM $wpdb->posts WHERE `post_status` LIKE 'rsvpmessage' AND post_date < DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
+	$results = $wpdb->get_results($sql);
+	foreach($results as $row) {
+		wp_delete_post( $row->ID, true ); // delete old posts and their metadata
+	}
 }

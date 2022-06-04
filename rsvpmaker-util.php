@@ -1649,23 +1649,6 @@ function get_rspmaker_paypal_rest_keys() {
 
 }
 
-
-
-if ( version_compare( phpversion(), '7.1', '>=' ) ) {
-
-	require WP_PLUGIN_DIR . '/rsvpmaker/inliner/init.php';
-
-} else {
-
-	function rsvpmaker_inliner( $content, $css = '' ) {
-
-		return $content;
-
-	}
-}
-
-
-
 function rsvpmaker_is_post_meta( $post_id, $field ) {
 
 	global $wpdb;
@@ -3762,7 +3745,7 @@ function mailpoet_rsvpmaker_shortcode( $shortcode, $newsletter, $subscriber, $qu
 		$image   = 'https://img.youtube.com/vi/' . $match[2] . '/mqdefault.jpg';
 		$link    = ( empty( $atts['link'] ) ) ? $match[0] : $atts['link'];		
 		//$content = sprintf( '<p><a href="%s">Watch on YouTube: %s<br /><img src="%s" width="320" height="180" /></a></p>', $link, $link, $image );
-		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s</p><div style="text-align: center; padding-top: 130px; height: 640px; width:360px; background-image: url(%s); background-size: contain; background-repeat: no-repeat; margin-left: auto; margin-right: auto;"><a href="%s"><div><img src="%s" ></div></a></div>', $link, $link, $image, $link, plugins_url('rsvpmaker/images/youtube-button-100px.png') );
+		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s</p><a href="%s" style="text-align: center; padding-top: 130px; height: 640px; width:360px; background-image: url(%s); background-size: contain; background-repeat: no-repeat; margin-left: auto; margin-right: auto; %s"><div><img src="%s" ></div></a>', $link, $link, 'display: block; width: 100%; height: 300px;', $image, $link, plugins_url('rsvpmaker/images/youtube-button-100px.png') );
 	}
 	$content = str_replace( '<h1', '<h1 style="line-height: 1.3" ', $content );
 	$content = str_replace( 'class="rsvpmaker-entry-title-link"', 'style="text-decoration: none" ', $content );
@@ -3774,12 +3757,11 @@ function rsvpmaker_youtube_email($content) {
 		foreach($matches[1] as $youtube_id) {
 			$link = 'https://youtu.be/'.$youtube_id;
 			$img = 'https://img.youtube.com/vi/'.$youtube_id.'/mqdefault.jpg';
-			$html = '<div style="margin-left: auto; margin-right: auto; max-width: 500px; height:283px; background-image: url('.$img.'); background-size: contain; background-repeat: no-repeat;;"><a href="'.$link.'"><div><img style=" style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></div></a></div>';
-			$content = preg_replace('|<iframe.+'.$youtube_id.'[^<]+</iframe>|',$html,$content);
+			$html = '<a href="'.$link.'" style="display: block; margin-left: auto; margin-right: auto; width: 500px; height:283px; background-image: url('.$img.'); background-size: contain; background-repeat: no-repeat;"><img style=" style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></a>';
 		}
 	}
 	else
-		$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<div style="margin-left: auto; margin-right: auto; max-width: 500px; height:283px; background-image: url(https://img.youtube.com/vi/$2/mqdefault.jpg); background-size: contain; background-repeat: no-repeat;;"><a href="$0"><div><img style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" alt="watch on YouTube" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></div></a></div>', $content );
+		$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<a href="$0" style="display: block; margin-left: auto; margin-right: auto; width: 500px; height:283px; background-image: url(https://img.youtube.com/vi/$2/mqdefault.jpg); background-size: contain; background-repeat: no-repeat;"><img style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" alt="watch on YouTube" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></a>', $content );
 	return $content;
 }
 
@@ -4276,3 +4258,64 @@ function rsvpmaker_numbered () {
 }
 
 add_shortcode('rsvpmaker_numbered','rsvpmaker_numbered');
+
+function theme_features_test() {
+	$output = '';
+	$json = new WP_Theme_JSON_Resolver();
+	$jsondata = (array) $json->get_merged_data('theme');
+	$p = array_pop($jsondata);
+	return '<pre>'.var_export($p['settings'],true).'</p>';
+	$p = $p['settings']['color'];
+	$palette = $p['palette']['default'];
+	if(isset($p['palette']['theme'])) {
+		$theme = $p['palette']['theme'];
+	}
+	else {
+		$theme = array();
+	}
+	foreach($palette as $index => $item) {
+		$output .= sprintf('<p>%s %s</p>',$index, var_export($item,true));
+		if(isset($item['slug'])) {
+			$theme_colors[$item['slug']] = $item['color'];
+		}
+			$theme_colors[$item['slug']] = $item['color'];
+	}
+	foreach($theme as $index => $item) {
+		$output .= sprintf('<p>%s %s</p>',$index, var_export($item,true));
+		if(isset($item['slug']))
+			$theme_colors[$item['slug']] = $item['color'];
+	}
+
+	//$output .= '<p> palette: </p><pre>'.var_export($palette,true).'</pre>';
+	//$output .= '<p> theme: </p><pre>'.var_export($theme,true).'</pre>';
+	$output .= '<p> colors </p><pre>'.var_export($theme_colors,true).'</pre>';
+
+	return $output;
+
+
+	$p = array_shift($jsondata);
+	rsvpmaker_debug_log($p['settings']['color'],'theme colors');
+	$p = $p['settings']['color']['palette'];
+
+	foreach($p as $index => $value_array) {
+		foreach($value_array as $index => $item) {
+			if($index == 'theme') {
+				foreach($item as $subitem) {
+					$output .= sprintf('<p>theme item %s</p>',var_export($subitem));
+					if(!empty($subitem['slug']))
+					$theme_colors[$subitem['slug']] = $subitem['color'];		
+				}
+			}
+			elseif(!empty($item['slug']))
+			$theme_colors[$item['slug']] = $item['color'];
+		}
+	}
+
+	return '<pre>'.var_export($jsondata,true).'</pre>'.$output;
+}
+add_shortcode('theme_features_test','theme_features_test');
+
+//placeholder for deprecated function
+function rsvpmaker_inliner($content) {
+return preg_replace('/<style.+</style>/','',$content);
+}

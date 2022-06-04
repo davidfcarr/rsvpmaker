@@ -257,6 +257,23 @@ $html = preg_replace('/<img [^>]+srcset[^>]+>/','',$html);
 $html = preg_replace('/<\/{0,1}noscript>/','',$html);
 
 $preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $html );
+$preview = str_replace('</head>',"<link rel='stylesheet' href=".'"'.admin_url('load-styles.php?c=1&amp;dir=ltr&amp;load%5Bchunk_0%5D=dashicons,admin-bar').'" type="text/css" media=\'all\' />
+<style>
+#email-content {
+	max-width: 800px;
+	margin-left:auto;
+	margin-right: auto;
+	background-color: #fff;
+	color: #000;
+	padding: 10px;
+}
+#control-wrapper, #control-wrapper p, #control-wrapper div {
+	font-size: 16px;
+	font-family: Arial;
+	font-style: normal;
+	font-weigth: normal;
+}
+</style>', $preview);
 $preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding-top: 50px; color: #fff; background-color: #000;"><p style="color: #fff">Email Preview '.$subject.'</p> <div id="email-preview-wrapper" style="max-width: 700px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff;">', $preview );
 $preview = str_replace('</body>','</div></div></body>',$preview);
 

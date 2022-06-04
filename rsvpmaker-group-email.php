@@ -146,7 +146,7 @@ function rsvpmaker_relay_queue() {
 	$last_post_id = 0;
 	//select a message with pending sends
 	//$sql = "SELECT ID FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft') LIMIT 0, $limit";
-	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft') ORDER BY ID LIMIT 0, $limit";
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvprelay_to' AND (post_status='publish' OR post_status='draft'  OR post_status='rsvpmessage') ORDER BY ID LIMIT 0, $limit";
 	$results = $wpdb->get_results($sql);
 	if(empty($results))
 		return;
@@ -503,7 +503,7 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 		$qpost = array(
 			'post_title'  => $subject,
 			'post_type'   => 'rsvpemail',
-			'post_status' => 'draft',
+			'post_status' => 'rsvpmessage',
 			'post_author' => $author,
 		);
 
@@ -924,7 +924,7 @@ function rsvpmaker_qemail ($mail, $recipients) {
 	$qpost['post_title'] = $mail['subject'];
 	$qpost['post_type'] = 'rsvpemail';
 	$qpost['post_author'] = $current_user->ID;
-	$qpost['post_status'] = 'draft';
+	$qpost['post_status'] = 'rsvpmessage';
 	$from = $mail['from'];
 	$fromname = $mail['fromname'];
 
@@ -955,7 +955,7 @@ function rsvpmaker_qemail ($mail, $recipients) {
 function rsvpmaker_relay_queue_monitor () {
 	do_action('rsvpmaker_relay_queue_monitor');
 	global $wpdb;
-	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb_posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish') AND meta_key='rsvprelay_to' ORDER BY ID DESC";
+	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb_posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND meta_key='rsvprelay_to' ORDER BY ID DESC";
 	$results = $wpdb->get_results($sql);
 	$was = 0;
 	echo '<h1>In Queue</h2>';
@@ -969,14 +969,36 @@ function rsvpmaker_relay_queue_monitor () {
 		printf('<p>%s %s</p>',$row->meta_key, $row->meta_value);
 		$was = $row->ID;
 	}
-	echo '<h1>Sent (200 Latest)</h2>';
-	$sql = "SELECT ID, post_title, meta_key, meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND meta_key='rsvpmail_sent' ORDER BY ID DESC LIMIT 0, 200";
+
+	$sql = "SELECT ID, post_title, meta_key, meta_value, post_status FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (meta_key='headerinfo' OR meta_key='rsvpmail_sent') AND post_status='draft' ORDER BY ID DESC";
 	$results = $wpdb->get_results($sql);
 	$was = 0;
 	foreach($results as $row)
 	{
-		if($row->ID != $was)
-			printf('<h2>%s</h2>',$row->post_title);
+		if($row->ID != $was) {
+			if('draft' == $row->post_status) {
+				$sql = "update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=$row->ID ";
+				$result = $wpdb->query($sql);
+				print_r("<p>post status change result %s %s</p>",$sql,var_export($result,true));
+			}
+		}
+		$was = $row->ID;
+	}
+
+	echo '<h1>Sent (200 Latest)</h2>';
+	$sql = "SELECT ID, post_title, meta_key, meta_value, post_status FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND meta_key='rsvpmail_sent' ORDER BY ID DESC LIMIT 0, 200";
+	$results = $wpdb->get_results($sql);
+	$was = 0;
+	foreach($results as $row)
+	{
+		if($row->ID != $was) {
+			printf('<h2>%s status: %s</h2>',$row->post_title, $row->post_status);
+			if('draft' == $row->post_status) {
+				$sql = "update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=$row->ID ";
+				print_r("<p>post status change result %s %s</p>",$sql,var_export($result,true));
+			}
+			$result = $wpdb->query($sql);
+		}
 		printf('<p>%s %s</p>',$row->meta_key, $row->meta_value);
 		$was = $row->ID;
 	}
