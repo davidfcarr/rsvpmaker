@@ -292,9 +292,11 @@ function rsvpmaker_long_date( $post_id, $and_time = false, $end_time = false ) {
 	}
 
 	$output          = $start_date = rsvpmaker_date( $rsvp_options['long_date'], (int) $timerow->ts_start );
+	if($and_time) {
 		$time_format = $rsvp_options['time_format'];
 		$time        = rsvpmaker_date( $time_format, (int) $timerow->ts_start );
 		$output     .= ' ' . $time;
+	}
 	if ( $end_time && ! empty( $timerow->ts_end ) ) {
 		$end_date = rsvpmaker_date( $rsvp_options['long_date'], (int) $timerow->ts_end );
 		if ( ( $end_date != $start_date ) || $and_time ) {
@@ -3316,7 +3318,7 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 
 			'title'  => 'RSVP Report',
 
-			'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp&event=' . $post_id ),
+			'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $post_id ),
 
 			'meta'   => array( 'class' => 'edit_form' ),
 
@@ -4318,4 +4320,88 @@ add_shortcode('theme_features_test','theme_features_test');
 //placeholder for deprecated function
 function rsvpmaker_inliner($content) {
 return preg_replace('/<style.+</style>/','',$content);
+}
+
+function rsvpmaker_admin_heading_help($content, $function) {
+	$helplinks = get_option('rsvpmaker_help');
+	$missing = get_option('rsvpmaker_missing_help');
+	if(empty($missing))
+		$missing = array();
+	if(!is_array($helplinks)) {
+		$helplinks = array();
+		$helplinks['email_get_content'] = sprintf('<p><a href="%s" target="_blank">%s</a></p>','https://rsvpmaker.com/blog/2022/06/02/updated-rsvp-mailer-for-event-invitations-and-newsletters/','Blog Post: Updated RSVP Mailer for Event Invitations and Newsletters');
+	}
+	$help = '';
+	if(!empty($helplinks[$function]))
+	{
+		$help .= $helplinks[$function];
+		$index = array_search($function,$missing);
+		if($index !== false)
+			{
+				unset($missing[$index]);
+				update_option('rsvpmaker_missing_help',$missing);
+			}
+	}
+	else {
+		if(!is_array($missing))
+			$missing = array();
+		if(!in_array($function,$missing))
+			{
+				$missing[$function] = $function;
+				update_option('rsvpmaker_missing_help',$missing);
+				unset($missing[$function]);//before display
+			}
+		$show = array('delta.local','rsvpmaker.com','www.wp4toastmasters.com');
+		if(in_array($_SERVER['SERVER_NAME'],$show))
+			$help = '<p style="font-size: small;">No help link yet for '.$function.'</p>';
+	}
+	return $content . $help;
+}
+
+add_filter('rsvpmaker-admin-heading-help','rsvpmaker_admin_heading_help',1,2);
+
+//rsvpmaker_admin_heading(__('Headline','rsvpmaker'),__FUNCTION__,'tag');
+function rsvpmaker_admin_heading($headline, $function, $tag='', $sidebar = '') {
+if(!empty($tag))
+	$function .= '_'.$tag;
+?>
+<div class="rsvpmaker-admin-heading">
+<?php
+$help = apply_filters('rsvpmaker-admin-heading-help','',$function,$tag);
+$help .= $sidebar;
+if(!empty($help)) 
+	echo '<div class="rsvpmaker-admin-heading-help" style="float: right; margin-left: 20px; width: 300px; background-color: #FFFFE0; padding-left: 10px; border: thin dotted #000;"><p><strong>Help Resources</strong></p>'.$help.'</div>';
+?>
+<div class="rsvpmaker-admin-heading-headline" ><h1><?php echo $headline; ?></h1></div>
+</div>
+<?php
+}
+
+add_action('admin_footer','rsvpmaker_update_help');
+
+function rsvpmaker_update_help() {
+	//print_r($_SERVER);
+	if(strpos($_SERVER['SCRIPT_NAME'],'index.php')) {
+		$helpjson = file_get_contents('https://rsvpmaker.com/wp-json/rsvpmaker/v1/help');
+		if(!empty($helpjson)) {
+			$data = json_decode($helpjson);
+			$data = (array) $data;
+			update_option('rsvpmaker_help',$data);
+			printf('<p style="text-align: center; margin: 20px; padding: 20px;">Downloaded %d help entries</p>',sizeof($data));
+		}	
+	}
+}
+
+function rsvpmaker_print_word() {
+	$printlink = admin_url( str_replace( '/wp-admin/', '', $_SERVER['REQUEST_URI'] ) ) . '&rsvp_print=1&'.rsvpmaker_nonce('query');
+	$wordlink = admin_url( str_replace( '/wp-admin/', '', $_SERVER['REQUEST_URI'] ) ) . '&rsvp_print=word&'.rsvpmaker_nonce('query');
+	return '<p><a target="_blank" href="' . $printlink .'">'.__('Print','rsvpmaker-for-toastmasters').'</a></p><p><a target="_blank" href="' . $wordlink .'">'.__('Export to Word','rsvpmaker-for-toastmasters').'</a></p>';
+}
+
+function rsvpmaker_notice($message, $status='success', $is_dismissible = true) {
+printf('
+<div class="notice notice-%s %s">
+<p>%s</p>
+</div>
+',$status,($is_dismissible) ? 'is-dismissible' : '',$message);
 }

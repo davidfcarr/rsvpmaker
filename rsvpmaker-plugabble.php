@@ -2035,7 +2035,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			if ( is_admin() ) {
 
-				$req_uri = admin_url( 'edit.php?page=rsvp&post_type=rsvpmaker&event=' . $event );
+				$req_uri = admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $event );
 
 			} else {
 
@@ -3530,21 +3530,15 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 <div class="wrap"> 
 
 	<div id="icon-edit" class="icon32"><br /></div>
-
-<h2>
 		<?php
 		$param = ( empty( $_GET['limit'] ) ) ? '' : sanitize_text_field($_GET['limit']) . ' ' . sanitize_text_field($_GET['detail']);
 
 		if ( sizeof( $_GET ) > 2 ) {
-			printf( '<a href="%s">%s</a> - %s %s', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp' ), __( 'RSVP Report', 'rsvpmaker' ), __( 'Details', 'rsvpmaker' ), $param );
+			$title = sprintf( '<a href="%s">%s</a> - %s %s', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report' ), __( 'RSVP Report', 'rsvpmaker' ), __( 'Details', 'rsvpmaker' ), $param );
 		} else {
-			esc_html_e( 'RSVP Report', 'rsvpmaker' );
+			$title = __( 'RSVP Report', 'rsvpmaker' );
 		}
-		?>
-		</h2> 
-
-		<?php
-
+		rsvpmaker_admin_heading($title,__FUNCTION__);
 		if ( ! empty( $_GET['fields'] ) ) {
 
 			rsvp_report_table();
@@ -3600,7 +3594,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 </form>
 
 ',
-				admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp',
+				admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report',
 				esc_html( $row->first ),
 				esc_html( $row->last ),
 				esc_attr( $delete ),
@@ -3627,17 +3621,15 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 			if ( ! isset( $_GET['rsvp_print'] ) ) {
 
-				echo '<div style="float: right; margin-left: 15px; margin-bottom: 15px;"><a href="edit.php?post_type=rsvpmaker&page=rsvp">' . __( 'Show Events List', 'rsvpmaker' ) . '</a> |
+				echo '<div style="float: right; margin-left: 15px; margin-bottom: 15px;"><a href="edit.php?post_type=rsvpmaker&page=rsvp_report">' . __( 'Show Events List', 'rsvpmaker' ) . '</a> |
 
-<a href="edit.php?post_type=rsvpmaker&page=rsvp&event=' . $eventid . '&rsvp_order=alpha">Alpha Order</a> <a href="edit.php?post_type=rsvpmaker&page=rsvp&event=' . $eventid . '&rsvp_order=timestamp">Most Recent First</a> | <a href="edit.php?post_type=rsvpmaker&page=rsvp&event=' . $eventid . '&rsvp_order=alpha">Alpha Order</a>
+<a href="edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $eventid . '&rsvp_order=alpha">Alpha Order</a> <a href="edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $eventid . '&rsvp_order=timestamp">Most Recent First</a> | <a href="edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $eventid . '&rsvp_order=alpha">Alpha Order</a>
 
 		</div>';
 
-		//printf('<p>%d registered</p>',sizeof($rsvps));
-
 				echo '<p><a href="' . sanitize_text_field($_SERVER['REQUEST_URI']) . '&print_rsvp_report=1&rsvp_print=1&' . rsvpmaker_nonce('query') . '" target="_blank" >Format for printing</a></p>';
 
-				echo '<p><a href="edit.php?post_type=rsvpmaker&page=rsvp&event=' . $eventid . '&paypal_log=1">Show PayPal Log</a></p>';
+				echo '<p><a href="edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $eventid . '&paypal_log=1">Show PayPal Log</a></p>';
 
 				if ( isset( $phpexcel_enabled ) ) {
 
@@ -3733,7 +3725,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 						if ( $charge > 0 ) {
 
-							$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp&post_type=rsvpmaker&event=' . $eventid ) . '">
+							$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $eventid ) . '">
 
 <p>' . __( 'Amount', 'rsvpmaker' ) . ': ' . $charge . '<input name="markpaid[]" type="hidden" id="markpaid_' . $rsvp_id . '"  value="' . $rsvp_id . ':' . $charge . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid', 'rsvpmaker' ) . '"></p>
 '.rsvpmaker_nonce('return').'
@@ -3768,7 +3760,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 			if ( ! isset( $_GET['rsvp_print'] ) ) {
 
-				echo '<p><a href="' . admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp' ) . '">' . __( 'Show Events List', 'rsvpmaker' ) . '</a> | <a href="' . sanitize_text_field($_SERVER['REQUEST_URI']) . '&print_rsvp_report=1&rsvp_print=1&' . rsvpmaker_nonce('query') . '" target="_blank" >' . __( 'Format for printing', 'rsvpmaker' ) . '</a></p>';
+				echo '<p><a href="' . admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report' ) . '">' . __( 'Show Events List', 'rsvpmaker' ) . '</a> | <a href="' . sanitize_text_field($_SERVER['REQUEST_URI']) . '&print_rsvp_report=1&rsvp_print=1&' . rsvpmaker_nonce('query') . '" target="_blank" >' . __( 'Format for printing', 'rsvpmaker' ) . '</a></p>';
 			}
 
 			$limit = (int) $_GET['limit'];
@@ -3836,7 +3828,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 <?php rsvpmaker_nonce(); ?>
 				<?php esc_html_e( 'Show details for', 'rsvpmaker' ); ?>
 
-<input type="hidden" name="page" value="rsvp">
+<input type="hidden" name="page" value="rsvp_report">
 
 <input type="hidden" name="post_type" value="rsvpmaker">
 
@@ -3927,7 +3919,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 					if ( $rsvpcount = $wpdb->get_var( $sql ) ) {
 
-						$eventlist .= '<p><a href="' . admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp&event=' . intval( $post_id ) . '">' . __( 'RSVP', 'rsvpmaker' ) . ' ' . __( 'Yes', 'rsvpmaker' ) . ': ' . $rsvpcount . '</a></p>';
+						$eventlist .= '<p><a href="' . admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . intval( $post_id ) . '">' . __( 'RSVP', 'rsvpmaker' ) . ' ' . __( 'Yes', 'rsvpmaker' ) . ': ' . $rsvpcount . '</a></p>';
 					}
 				}
 			}
@@ -4079,7 +4071,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 			if ( ! isset( $_GET['rsvp_print'] ) && current_user_can( 'edit_others_posts' ) && $editor_options ) {
 
-				echo sprintf( '<p><a href="%s&delete=%d">Delete record for: %s %s</a></p>', admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp', $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
+				echo sprintf( '<p><a href="%s&delete=%d">Delete record for: %s %s</a></p>', admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report', $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
 			}
 
 			$userrsvps[] = $row['user_id'];
@@ -4254,7 +4246,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 <?php rsvpmaker_nonce(); ?>
 <select name="edit_rsvp"><option value="0">Add New</option><?php echo $options; ?></select>
 
-<input type="hidden" name="page" value="rsvp">
+<input type="hidden" name="page" value="rsvp_report">
 
 <input type="hidden" name="post_type" value="rsvpmaker">
 
@@ -4270,7 +4262,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 <p><?php esc_html_e( 'Transfers the individual who registered and any guests registered as part of the same party to another event. Payment status is also transferred.' ); ?></p>
 
-<form action="<?php admin_url( 'edit.php?page=rsvp&post_type=rsvpmaker&event=' . sanitize_text_field($_GET['event']) ); ?>" method="post">
+<form action="<?php admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . sanitize_text_field($_GET['event']) ); ?>" method="post">
 <?php rsvpmaker_nonce(); ?>
 <p><select name="move_rsvp"><option value=""><?php esc_html_e( 'Pick Entry', 'rsvpmaker' ); ?></option><?php echo $options; ?></select>
 
@@ -4305,7 +4297,7 @@ to <select name="move_to">
 
 			if ( ! empty( $owed_list ) ) {
 
-				printf( '<h3>Record Payments</h3><form action="%s" method="post">%s', admin_url( 'edit.php?page=rsvp&post_type=rsvpmaker&event=' . intval( $_GET['event'] ) ), rsvpmaker_nonce('return') );
+				printf( '<h3>Record Payments</h3><form action="%s" method="post">%s', admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . intval( $_GET['event'] ) ), rsvpmaker_nonce('return') );
 
 				echo $owed_list;
 
@@ -4360,7 +4352,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 	$form = $custom_fields['_rsvp_form'][0];
 
-	printf( '<form action="%s" method="post">', admin_url( 'edit.php?page=rsvp&post_type=rsvpmaker&event=' . $event ) );
+	printf( '<form action="%s" method="post">', admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $event ) );
 	rsvpmaker_nonce();
 	echo '<p>';
 	?>
@@ -5832,19 +5824,10 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 		?>
 
 <div class="wrap"> 
-
-	<div id="icon-edit" class="icon32"><br /></div>
-
-<h2>
 		<?php
-		esc_html_e( 'Event Templates', 'rsvpmaker' );
-
-		printf( ' <a href="%s"  class="add-new-h2">%s</a>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1' ), __( 'New Template', 'rsvpmaker' ) );
-
-		?>
-  </h2> 
-
-		<?php
+		$heading = __( 'Event Templates', 'rsvpmaker' );
+		$heading .= sprintf( ' <a href="%s"  class="add-new-h2">%s</a>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1' ), __( 'New Template', 'rsvpmaker' ) );
+		rsvpmaker_admin_heading($heading, __FUNCTION__);
 
 		if ( ! empty( $_POST['import_shared_template'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))  ) {
 			$url = sanitize_text_field( $_POST['import_shared_template'] );

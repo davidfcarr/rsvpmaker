@@ -705,19 +705,14 @@ if(!isset($_REQUEST['tab']))
 <input type="hidden" id="activetab" value="calendar" />
 <?php	
 }
-?>
-<div style="float: right;">
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+$sidebar = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
 <input type="hidden" name="cmd" value="_s-xclick">
 <input type="hidden" name="hosted_button_id" value="N6ZRF6V6H39Q8">
-<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" name="submit" alt="PayPal - The safer, easier way to pay online!">
+<img alt="" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
 </form>
-</div>
-
-	<h2><?php esc_html_e('Calendar Options','rsvpmaker');?></h2>
-    
-    <?php
+';
+rsvpmaker_admin_heading(__('Calendar Options','rsvpmaker'),__FUNCTION__,'',$sidebar);
 if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 	echo "<p><em>".__('Note: This site also implements custom code in','rsvpmaker').' '.WP_PLUGIN_DIR."/rsvpmaker-custom.php.</em></p>";
 	?>
@@ -971,13 +966,15 @@ foreach($templates as $tname => $tfile)
 </section>
 <section id="security" class="rsvpmaker">
 <form name="rsvpmaker_security_options" action="<?php echo esc_attr($action_url);?>" method="post">
-<?php rsvpmaker_nonce(); ?>
+<?php rsvpmaker_nonce(); 
+rsvpmaker_admin_heading(__('Security Options','rsvpmaker'),__FUNCTION__,'rsvpmaker_security');
+?>
 <h3><?php esc_html_e('Menu Security','rsvpmaker'); ?>:</h3>
 <?php
 rsvpmaker_menu_security( __("RSVP Report",'rsvpmaker'),  "menu_security", $options );
 rsvpmaker_menu_security(__("Event Templates",'rsvpmaker'),"rsvpmaker_template",$options );
 rsvpmaker_menu_security( __("Recurring Event",'rsvpmaker'), "recurring_event", $options );
-rsvpmaker_menu_security( __("Multiple Events",'rsvpmaker'), "multiple_events",$options );
+//rsvpmaker_menu_security( __("Multiple Events",'rsvpmaker'), "multiple_events",$options );
 rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$options );
 ?>
 <p><em><?php esc_html_e('Security level required to access custom menus (RSVP Report, Documentation)','rsvpmaker'); ?></em></p>
@@ -1001,8 +998,9 @@ if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
 <section id="payments" class="rsvpmaker">
 <?php do_action('rsvpmaker_payments_setting_top'); ?>
 <form name="rsvpmaker_payment_options" action="<?php echo esc_attr($action_url);?>" method="post">
-<?php rsvpmaker_nonce(); ?>
-<h1>Online Payments</h1>
+<?php rsvpmaker_nonce(); 
+rsvpmaker_admin_heading(__('Online Payments','rsvpmaker'),__FUNCTION__,'online_payments');
+?>
 <p>If you wish to collect online payments, please set up API access to the payment gateway of your choice.</p>
 <?php do_action('rsvpmaker_payment_settings'); ?>
 <h3><?php esc_html_e('Track RSVP as &quot;invoice&quot; number','rsvpmaker'); ?>:</h3>
@@ -1160,6 +1158,7 @@ echo default_gateway_check($chosen_gateway);
 
 </section>
 <section id="notification_email" class="rsvpmaker">
+<?php rsvpmaker_admin_heading(__('Email Server Configuration','rsvpmaker'),__FUNCTION__,'email_server'); ?>
 <form name="notify_options" action="<?php echo esc_attr($action_url);?>" method="post">
 <?php rsvpmaker_nonce(); ?>
 <?php do_action('rsvpmaker_email_settings'); ?>
@@ -1238,8 +1237,9 @@ $RSVPMaker_Email_Options->handle_options();
     </section>
 <section id="groupemail" class="rsvpmaker">
 <form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
-<?php rsvpmaker_nonce(); ?>
-<h2><?php esc_html_e('Group Email','rsvpmaker'); ?></h2>
+<?php rsvpmaker_nonce(); 
+rsvpmaker_admin_heading(__('Group Email','rsvpmaker'),__FUNCTION__,'group_email');
+?>
 <?php
 do_action('group_email_admin_notice');
 
@@ -1387,6 +1387,7 @@ function my_post_to_email($email_as_post, $email_user, $from, $to, $fromname = '
 </section>
 <section id="rsvpforms" class="rsvpmaker">
 <?php
+rsvpmaker_admin_heading(__('RSVP Forms','rsvpmaker'),__FUNCTION__,'rsvp_forms');
 printf('<p>%s</p>',__('Use this page to manage alternative RSVP Forms. Like the default form, any of these alternative forms can be customized for an event post or template. If you created a custom form that worked well, you can assign it a name so that it can be reused with other events and templates.','rsvpmaker'));
 printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><h3>%s</h3><p><label>%s</label> <input type="text" name="rsvp_form_new" value=""></p><p><em>%s</em></p><p> %s</p></form>',admin_url('edit.php'),__('Create a Reusable RSVP Form','rsvpmaker'),__('Label','rsvpmaker'),__('A form will be created with a sampling of input fields you can copy, modify, or delete to create a form that meets your needs.','rsvpmaker'),get_submit_button('Create'));
 $forms = rsvpmaker_get_forms();
@@ -1635,14 +1636,10 @@ add_submenu_page('edit.php?post_type=rsvpmaker', __("New Template",'rsvpmaker'),
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Templates",'rsvpmaker'), __("Event Templates",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
 if(!empty($rsvp_options['additional_editors']))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Share Templates",'rsvpmaker'), __("Share Templates",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_share", "rsvpmaker_share" );
-if($rsvp_options["show_screen_recurring"])
-	add_submenu_page('edit.php?post_type=rsvpmaker', __("Recurring Event",'rsvpmaker'), __("Recurring Event",'rsvpmaker'), $rsvp_options["recurring_event"], "add_dates", "add_dates" );
-if(!empty($rsvp_options["show_screen_multiple"]))
-	add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events","rsvpmaker"), __("Multiple Events",'rsvpmaker'), $rsvp_options["multiple_events"], "multiple", "multiple" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events (without a template)",'rsvpmaker'), __("Multiple Events (without a template)",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&quick=5", "rsvpmaker_setup" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Options",'rsvpmaker'), __("Event Options",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_details", "rsvpmaker_details" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Confirmation / Reminders",'rsvpmaker'), __("Confirmation / Reminders",'rsvpmaker'), 'edit_rsvpmakers', "rsvp_reminders", "rsvp_reminders" );
-add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp", "rsvp_report" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp_report", "rsvp_report" );
 add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Payments', 'rsvpmaker' ), __( 'RSVPMaker Payments', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
@@ -2023,10 +2020,6 @@ if(!empty($basic_options)) {
 }
 
 $ver = phpversion();
-if (version_compare($ver, '7.1', '<') && (!isset($_GET['page']) || ($_GET['page'] != 'rsvpmaker_email_template') ) ){
-	$message = sprintf('<p>The Emogrifier CSS inliner library, which is included to improve formatting of HTML email, relies on PHP features introduced in version 7.1 -- and is disabled because your site is on %s</p>',$ver);
-	$notice[] = rsvpmaker_admin_notice_format($message, 'Emogrifier', $cleared, $type='warning');
-}
 
 if(isset($_GET['update_messages']) && isset($_GET['t']))
 {
@@ -2682,7 +2675,11 @@ echo $styles; ?>
 </style>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
-<h1><?php echo __('Confirmation / Reminder Messages','rsvpmaker').': '.get_the_title($post_id); ?></h1> 
+<?php
+$title = __('Confirmation / Reminder Messages','rsvpmaker');
+if($post_id) $title .= ': '.get_the_title($post_id); 
+rsvpmaker_admin_heading($title,__FUNCTION__);
+?> 
 <?php
 
 if($post_id)
@@ -4328,7 +4325,7 @@ echo $styles; ?>
 </style>
 <div class="wrap" style="margin-right: 200px;"> 
 	<div id="icon-edit" class="icon32"><br /></div>
-<h1 id="headline"><?php esc_html_e('RSVP / Event Options','rsvpmaker'); ?></h1>
+<?php rsvpmaker_admin_heading(__('RSVP / Event Options','rsvpmaker'),__FUNCTION__); ?>
 <div id="rsvpmaker_details_status"></div>
 <?php
 
@@ -4721,17 +4718,23 @@ select {
 	font-weight: bold;
 }
 </style>
+
 <div class="wrap">
-	<div id="icon-edit" class="icon32"><br /></div> 
-<h2><?php esc_html_e('Event Setup','rsvpmaker'); ?></h2> 
-<?php
+<?php  
+
 if(isset($_POST["quicktitle"]))
 	rsvpmaker_quick_post();
 elseif(isset($_GET["quick"])) {
+	rsvpmaker_admin_heading(__('Quick Event Setup','rsvpmaker'),__FUNCTION__,'quick');
 	rsvpmaker_quick_ui();
 	echo '</div>';
 	return;
 }
+elseif(isset($_GET['new_template']))
+	rsvpmaker_admin_heading(__('Event Template Setup','rsvpmaker'),__FUNCTION__,'new_template');
+else
+	rsvpmaker_admin_heading(__('Event Setup','rsvpmaker'),__FUNCTION__);
+
 
 $title = '';
 $template = 0;

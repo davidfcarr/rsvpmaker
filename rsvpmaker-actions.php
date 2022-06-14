@@ -55,7 +55,7 @@ add_action( 'save_post', 'rsvpmaker_save_calendar_data' );
 // stripe
 add_action( 'sc_after_charge', 'rsvpmaker_sc_after_charge' );
 
-add_action( 'template_redirect', 'rsvpemail_template_redirect' );
+add_action( 'template_redirect', 'rsvpmaker_email_template_redirect' );
 
 add_action('post_updated', function($post_id, $post_after, $post_before) {
 if($post_after->post_type == 'rsvpmaker')

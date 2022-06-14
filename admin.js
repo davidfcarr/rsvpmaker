@@ -83,31 +83,6 @@ jQuery( document ).ready(
 			}
 		);
 
-		$( document ).on(
-			'click',
-			'.rsvpmaker-nav-tab-wrapper a',
-			function() {
-				$( '.rsvpmaker-nav-tab' ).removeClass( 'nav-tab-active' );
-				$( this ).addClass( 'nav-tab-active' );
-				$( 'section.rsvpmaker' ).hide();
-				$( 'section.rsvpmaker' ).eq( $( this ).index() ).show();
-				return false;
-			}
-		);
-
-		if($('#activetab')) {
-			var activetab = '#'+$('#activetab').val();
-			$( 'section.rsvpmaker' ).hide();
-			$( 'section' + activetab ).show();
-		}
-		else {
-			var active = $( '.nav-tab-active' );
-			if (active) {
-			var activetab = active.attr('href');
-			$( 'section.rsvpmaker' ).hide();
-			$( 'section' + activetab ).show();
-			}
-		}
 
 		$(
 			function() {

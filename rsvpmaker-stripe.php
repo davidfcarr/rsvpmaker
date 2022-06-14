@@ -680,7 +680,7 @@ function rsvpmaker_stripe_report() {
 
 	global $wpdb;
 
-	echo '<h1>Stripe and PayPal Charges</h1>';
+	rsvpmaker_admin_heading(__('Stripe and PayPal Charges','rsvpmaker'),__FUNCTION__,'');
 
 	if ( isset( $_GET['history'] ) ) {
 		stripe_balance_history( (int) $_GET['history'] );

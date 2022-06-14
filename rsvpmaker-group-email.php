@@ -61,8 +61,7 @@ function rsvpmaker_relay_menu_pages() {
 add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
 
 function rsvpmaker_relay_manual_test() {
-
-	echo '<h1>' . __( 'Manually Trigger Check of Email Lists', 'rsvpmaker' ) . '</h1>';
+	rsvpmaker_admin_heading(__('Manually Trigger Check of Email Lists','rsvpmaker'),__FUNCTION__);
 
 	$html = rsvpmaker_relay_init( true );
 	if(isset($_GET['cronoff'])) {
@@ -953,12 +952,14 @@ function rsvpmaker_qemail ($mail, $recipients) {
 }
 
 function rsvpmaker_relay_queue_monitor () {
+	rsvpmaker_admin_heading(__('Group Email Log','rsvpmaker'),__FUNCTION__);
+
 	do_action('rsvpmaker_relay_queue_monitor');
 	global $wpdb;
-	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb_posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND meta_key='rsvprelay_to' ORDER BY ID DESC";
+	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND meta_key='rsvprelay_to' ORDER BY ID DESC";
 	$results = $wpdb->get_results($sql);
 	$was = 0;
-	echo '<h1>In Queue</h2>';
+	echo '<h2>In Queue</h2>';
 	if(empty($results))
 		echo '<p>none</p>';
 	else
@@ -985,7 +986,7 @@ function rsvpmaker_relay_queue_monitor () {
 		$was = $row->ID;
 	}
 
-	echo '<h1>Sent (200 Latest)</h2>';
+	echo '<h2>Sent (200 Latest)</h2>';
 	$sql = "SELECT ID, post_title, meta_key, meta_value, post_status FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND meta_key='rsvpmail_sent' ORDER BY ID DESC LIMIT 0, 200";
 	$results = $wpdb->get_results($sql);
 	$was = 0;

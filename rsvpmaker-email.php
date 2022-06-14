@@ -359,7 +359,7 @@ if($mail["html"])
               $action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
 ; ?>
 <div class="wrap" style="max-width:950px !important;">
-	<h3><?php esc_html_e('RSVPMaker Email List','rsvpmaker');?></h3>
+<?php rsvpmaker_admin_heading(__('RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
 	<p><?php esc_html_e("These settings are related to integration with the MailChimp broadcast email service, as well as RSVPMaker's own functions for broadcasting email to website members or people who have registered for your events.",'rsvpmaker');?></p>			
 	<p><?php echo __("<strong>New for 2021</strong>: scroll down to see options for MailPoet integration",'rsvpmaker');?></p>			
 	<div id="poststuff" style="margin-top:10px;">
@@ -433,6 +433,7 @@ if($slug == 'administrator')
 </div>
 
 <div id="mailpoet">
+<?php rsvpmaker_admin_heading('MailPoet Integration','mailpoet'); ?>
 <h2>MailPoet Integration</h2>
 <p>MailPoet is a WordPress plugin and web service for sending email newsletters and other mass email, with the permission of the recipients.</p>
 <p>You can add RSVPMaker events or event listings to the content of a MailPoet newsletter using a modified versions of the RSVPMaker Shortcodes (see the <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>">Content for Email</a> screen and the <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker Shortcodes Documentation</a>).</p>
@@ -573,9 +574,8 @@ global $wpdb;
 global $rsvp_options;
 global $post;
 ?>
-<div class="wrap"> 
-	<div id="icon-edit" class="icon32"><br /></div>
-<h2><?php esc_html_e('Scheduled Email','rsvpmaker'); ?>  </h2> 
+<div class="wrap">
+<?php rsvpmaker_admin_heading(__('Scheduled Email List','rsvpmaker'),__FUNCTION__); ?>
 <p><?php esc_html_e('Use this screen to create or edit a schedule for sending your email at a specific date and time or on a recurring schedule.','rsvpmaker'); ?></p>
 <?php
 
@@ -1204,7 +1204,7 @@ function remove_rsvpemail_caps_role($role) {
 }
 
 // Template selection
-function rsvpemail_template_redirect()
+function rsvpmaker_email_template_redirect()
 {
 
 global $wp;
@@ -1724,17 +1724,18 @@ echo $events_dropdown;
 ?>
 </select>	
 </p>
-
 <?php
 if(!empty($chimp_options["chimp-key"]))
 {
 ?>
+<div id="mailchimp-option">
 <input type="checkbox" name="mailchimp" value="1" <?php if(isset($_GET['mailchimp'])) echo ' checked="checked" '; ?> > <?php esc_html_e('MailChimp list','rsvpmaker');?> <select name="mailchimp_list">
 <?php
 $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_list"][0] : $chimp_options["chimp-list"];
 echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 ?>
-</select> <select name="chimp_send_now"><option value="1"><?php esc_html_e('Create and Send','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php esc_html_e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select></div>
+</select> <select name="chimp_send_now"><option value="1"><?php esc_html_e('Create and Send','rsvpmaker'); ?></option><option value="" <?php if(isset($_POST["mailchimp"]) && empty($_POST["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php esc_html_e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select>
+</div>
 <?php
 }
 do_action("rsvpmaker_email_send_ui_options");
@@ -1799,11 +1800,9 @@ if($inchimp)
 
 	}
 
-; ?>
-<div id="icon-options-general" class="icon32"><br /></div>
-<h2><?php esc_html_e('Extract Emails','rsvpmaker');?></h2>
+rsvpmaker_admin_heading(__('Extract Email Addresses','rsvpmaker'),__FUNCTION__); ?>
 <p><?php esc_html_e('You can enter an disorganized list of emails mixed in with other text, and this utility will extract just the email addresses.','rsvpmaker');?></p>
-<form id="form1" name="form1" method="post" action="">
+<form id="form1" name="form1" method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_extract_email'); ?>">
 <?php rsvpmaker_nonce(); ?>
   <p>
     <textarea name="emails" id="emails" cols="45" rows="5"></textarea>
@@ -1862,10 +1861,7 @@ function rsvpmail_candidate_templates($alt_template = false) {
 	return $candidates;
 }
 
-function rsvpemail_template () {
-$ver = phpversion();
-if (version_compare($ver, '7.1', '<'))
-	printf('<div class="notice notice-warning"><p>The Emogrifier CSS inliner library, which is included to improve formatting of HTML email, relies on PHP features introduced in version 7.1 -- and is disabled because your site is on %s</p></div>',$ver);
+function rsvpmaker_email_template () {
 ?>
 <style>
 .currentdefault {
@@ -1879,7 +1875,7 @@ textarea {
 }
 
 </style>
-<div id="icon-options-general" class="icon32"><br /></div>
+<?php rsvpmaker_admin_heading(__('RSVPMaker Email Design Templates','rsvpmaker'),__FUNCTION__); ?>
 <?php
 if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
 {
@@ -1899,9 +1895,6 @@ if(isset($_POST['welcome']))
 	update_option('rsvpmaker_guest_email_welcome',intval($_POST['welcome']));
 
 }
-?>
-<h2><?php esc_html_e('RSVPMaker Email Design Templates','rsvpmaker');?></h2>
-<?php
 
 $candidates = rsvpmail_candidate_templates();
 $options = '';
@@ -2118,7 +2111,7 @@ $page_title = __("Email Design Templates",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_email_template";
-$function = "rsvpemail_template";
+$function = "rsvpmaker_email_template";
 
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
@@ -2153,8 +2146,8 @@ $parent_slug = "edit.php?post_type=rsvpemail";
 $page_title = __("Extract Addresses",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
-$menu_slug = "extract";
-$function = "RSVPMaker_extract_email";
+$menu_slug = "rsvpmaker_extract_email";
+$function = "rsvpmaker_extract_email";
 
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
@@ -2291,7 +2284,9 @@ if(isset($_POST['problems']))
 		}
 }
 
-printf('<h1>%s</h1><p>%s</p>',__('Unsubscribed and Blocked','rsvpmaker'),__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
+rsvpmaker_admin_heading(__('Unsubscribed and Blocked','rsvpmaker'),__FUNCTION__);
+
+printf('<p>%s</p>',__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
 $sql = "SELECT * FROM $table ORDER BY code, timestamp DESC";
 $results = $wpdb->get_results($sql);
 if(!empty($results))
@@ -2367,10 +2362,7 @@ wp_reset_query();
 function email_get_content () {
 global $wpdb;
 ;?>
-<div id="icon-options-general" class="icon32"><br /></div>
-<h1>Content for Email</h1>
-
-<?php
+<?php rsvpmaker_admin_heading('Content for Email',__FUNCTION__); 
 
 $candidates = rsvpmail_candidate_templates();
 $options = '';
@@ -2953,7 +2945,7 @@ add_action('init','rsvpmail_unsubscribe');
 
 function rsvpmaker_notification_templates () {
 
-$hook = rsvpmaker_admin_page_top(__('Notification Templates','rsvpmaker'));
+rsvpmaker_admin_heading(__('Notification Templates','rsvpmaker'),__FUNCTION__);
 echo '<p>'.__('Use this form to customize notification and confirmation messages and the information to be included in them. Template placeholders such as [rsvpdetails] are documented at the bottom of the page.').'</p>';
 	
 $sample_data = array('rsvpdetails' => "first: John\nlast: Smith\nemail:js@example.com",'rsvpyesno' => __('YES','rsvpmaker'), 'rsvptitle' => 'Special Event', 'rsvpdate' => 'January 1, 2020','rsvpmessage' => 'Thank you!', 'rsvpupdate' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">'. __('RSVP Update','rsvpmaker').'</a></p>');
@@ -4175,7 +4167,7 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='') {
 
 function rsvpmaker_guest_list() {
 	global $wpdb;
-	echo '<h1>'.__('Guest List').'</h1>';
+	rsvpmaker_admin_heading(__('RSVPMaker Guest List','rsvpmaker'),__FUNCTION__);
 	$active = (int) get_option('rsvpmaker_guest_list_active');
 
 	if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
