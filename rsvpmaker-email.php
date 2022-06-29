@@ -9,16 +9,27 @@ function rsvpmailer($mail, $description = '') {
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
 		return;
 	}
+	global $post, $rsvp_options, $rsvpmaker_message_type;
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
 	if(empty($mail['skip_check']))
 		$problem = rsvpmail_is_problem($mail['to']);
 	else
 		$problem = false;
-	if($problem && ($rsvpmailer_rule != 'permit') ) {
+	if($problem) {
 		$mail['html'] = '[content omitted]';
-		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to unsubscribed email');
+		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to email: '.$problem);
+		rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
 		return $mail['to'].' not sent - '.$problem;
+	}
+	if(isset($mail['message_type'])) {
+		$rsvpmailer_rule = apply_filters('rsvpmailer_rule','permit',$mail['to'], $mail['message_type']);
+		if($rsvpmailer_rule == 'deny') {
+			$mail['html'] = '[content omitted]';
+			$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
+			rsvpemail_error_log($message,$mail);
+			return $message;
+		}	
 	}
 
 	$mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail['to'],$description);
@@ -31,16 +42,6 @@ function rsvpmailer($mail, $description = '') {
 	if(isset($mail['html']))
 	{
 		$mail['html'] = do_shortcode($mail['html']);
-	}
-	global $post, $rsvp_options, $rsvpmaker_message_type;
-	if(isset($mail['message_type']))
-		$rsvpmaker_message_type = $mail['message_type'];
-
-	$rsvpmailer_rule = apply_filters('rsvpmailer_rule','',$mail['to'], $rsvpmaker_message_type);
-	if($rsvpmailer_rule == 'deny') {
-		$mail['html'] = '[content omitted]';
-		$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
-		return $message;
 	}
 	
 	if(empty($rsvp_options["from_always"]) && !empty($rsvp_options["smtp_useremail"]))
@@ -239,17 +240,30 @@ if($mail["html"])
 
 	if(isset($mail["ical"]))
 		$rsvpmail->Ical = $mail["ical"];
-	
+	$errors = '';
 	try {
 		$rsvpmail->Send();
 	} catch (phpmailerException $e) {
 		echo esc_html($e->errorMessage());
+		$errors .= $e->errorMessage();
 	} catch (Exception $e) {
 		echo esc_html($e->getMessage()); //Boring error messages from anything else!
+		$errors .= $e->getMessage();
 	}
-	return $rsvpmail->ErrorInfo;
+	$errors .= $rsvpmail->ErrorInfo;
+	rsvpemail_error_log($errors,$mail);
+	return $errors;
 }
 
+function rsvpemail_error_log($errors,$mail = array()) {
+	if(empty($errors))
+		return;
+	$mail['html'] = $mail['text'] = '';
+	$errors .= ' '.date('r').' '.var_export($mail,true);
+	rsvpmaker_debug_log($errors,'rsvpemail_error_log');
+	if(!empty($mail['post_id']))
+		add_post_meta($mail['post_id'],'rsvpemail_error_log',$errors);
+}
 
   // Avoid name collisions.
   if (!class_exists('RSVPMaker_Email_Options'))
@@ -830,20 +844,23 @@ if($chosen)
 	echo "<p>notekey $notekey</p>";
 }
 ?>
-<h3 id="editorsnote"><?php esc_html_e("Add Editor's Note for",'rsvpmaker'); if(empty($stamp)) echo ' Next broadcast'; else echo ' '.$ts;?></h3>
+<h3 id="editorsnote"><?php esc_html_e("Add Editor's Note for",'rsvpmaker'); if(empty($stamp)) echo ' Next broadcast'; else echo ' '.$ts;?> (optional)</h3>
 <input type="hidden" name="notekey" value="<?php echo esc_attr($notekey); ?>">
 
 <p><?php esc_html_e("A blog post, either public or draft, can be featured as the editor's note at the top of your next email newsletter broadcast. The content of the post title will be added to the end of the email subject line, and the content of the post (up to the more tag, if included) will be included in the body of your email. There are two ways to add an Editor's Note blog post.",'rsvpmaker');?></p>
 
-<p><input type="radio" name="status" value="" checked="checked" /> <strong><?php esc_html_e('Pick a blog post to feature','rsvpmaker');?>:</strong> <select name="chosen"><option value=""><?php esc_html_e('Select Blog Post','rsvpmaker');?></option><?php echo $blog_options; ?></select></p>
+<p><input type="radio" name="status" value="" checked="checked" /> <strong><?php esc_html_e('Pick a blog post to feature','rsvpmaker');?>:</strong> <select name="chosen"><option value=""><?php esc_html_e('None','rsvpmaker');?></option><?php echo $blog_options; ?></select></p>
 
-	<p><input type="radio" name="status" value="draft" /> <strong>Create a draft</strong> based on the headline and message below <br /><input type="radio" name="status" value="publish" /> <strong>Create and publish</strong> blog based on the headline and message below</strong><br /> <em>(<?php esc_html_e('This post will be used as the editors note at the top of your broadcast. Making it public on the blog is optional.','rsvpmaker');?>)</p>
+<p><input type="radio" name="status" value="draft" /> <strong>Create a draft</strong> based on the headline and message below (will not appear on the live website unless you subsequently choose to publish the draft)<br /><input type="radio" name="status" value="publish" /> <strong>Create and publish</strong> blog based on the headline and message below</strong><br /> <em>(<?php esc_html_e('This post will be used as the editors note at the top of your broadcast. Making it public on the blog is optional.','rsvpmaker');?>)</p>
 
 <p><?php esc_html_e('Title/Subject','rsvpmaker');?>: <input type="text" name="notesubject" value="" /></p>
 <p>Message:<br />
 <textarea cols="100" rows="5" name="notebody"></textarea></p>
 
 <?php
+if(isset($post->post_content)) {
+	echo do_blocks($post->post_content);
+}
 
 }
 
@@ -952,7 +969,6 @@ if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data(
 			}
 	}
 	if( (isset($_POST["cron_active"]) || !empty($_POST["cron_relative"])) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-		print_r($_POST);
 	$chosen = (int) $_POST["chosen"]; 
 	if(empty($_POST['cronday']))
 	{
@@ -1082,7 +1098,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				}
 				else
 					$content .= $post->post_content;
-				if(($post->post_type == 'rsvpmaker') && get_rsvpmaker_meta($post->ID,'_rsvp_on',true))
+				if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_rsvpmaker_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
 					$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
@@ -1131,40 +1147,6 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 	}
 }
 
-function create_rsvpemail_post_type() {
-global $rsvp_options;
-  register_post_type( 'rsvpemail',
-    array(
-      'labels' => array(
-        'name' => __( 'RSVP Mailer','rsvpmaker' ),
-        'add_new_item' => __( 'Add New Email','rsvpmaker' ),
-        'edit_item' => __( 'Edit Email','rsvpmaker' ),
-        'new_item' => __( 'RSVP Emails','rsvpmaker' ),
-        'singular_name' => __( 'RSVP Email','rsvpmaker' )
-      ),
-	'public' => true,
-	'exclude_from_search' => true,
-    'publicly_queryable' => true,
-    'show_ui' => true, 
-    'query_var' => true,
-    'rewrite' => true,
-    'capabilities' => array(
-        'edit_post' => 'edit_rsvpemail',
-        'edit_posts' => 'edit_rsvpemails',
-        'edit_others_posts' => 'edit_others_rsvpemails',
-        'publish_posts' => 'publish_rsvpemails',
-        'read_post' => 'read_rsvpemail',
-        'read_private_posts' => 'read_private_rsvpemails',
-        'delete_post' => 'delete_rsvpemail'
-    ),
-    'hierarchical' => false,
-    'menu_position' => 18,
-	'menu_icon' => 'dashicons-email-alt',
-    'supports' => array('title','editor'),
-	'show_in_rest' => true,
-    )
-  );
-}
 
 function add_rsvpemail_caps() {
     // gets the administrator role
@@ -1276,6 +1258,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	update_post_meta($post_id,'rsvprelay_from',$from);
 	update_post_meta($post_id,'rsvprelay_fromname',$postvars["from_name"]);
 	$post = get_post($post_id);
+	$mail['post_id'] = $post_id;
 	if(!empty($postvars["preview"]))
 		{
 		$previewto = trim($postvars["previewto"]);
@@ -2559,8 +2542,10 @@ $mail["html"] = do_blocks(do_shortcode($rsvpmaker_tx_content));
 //$mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="" width="320" height="180" /></a></p>',$mail["html"]);
 $mail["html"] = rsvpmaker_youtube_email($mail['html']);
 
-	if(rsvpmail_is_problem($mail["to"]) )
+$problem = rsvpmail_is_problem($mail["to"]);
+	if($problem)
 		{
+			rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
 			return;
 		}
 	rsvpmailer($mail,__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title.'</div>' );
@@ -2750,6 +2735,10 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
     if ($post->post_type == 'rsvpemail') {
         return $actions;
     }
+	if($post->post_type == 'rsvpmaker_template') {
+		$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=').$post->ID,__('Create / Update','rsvpmaker'));
+	}
+
 	if(current_user_can('edit_post',$post->ID))
 	{
 		if($post->post_type == 'rsvpmaker') {

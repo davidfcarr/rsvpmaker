@@ -732,6 +732,9 @@ function get_events_rsvp_on( $limit = 0 ) {
 
 
 function is_rsvpmaker_deadline_future( $post_id ) {
+	global $post;
+	if('rsvpmaker_template' == $post->post_type)
+		return true;
 	$deadline = (int) get_post_meta( $post_id, '_rsvp_deadline', true );
 	$event    = get_rsvpmaker_event( $post_id );
 	$start = (int) $event->ts_start;
@@ -833,7 +836,7 @@ function rsvpmaker_get_templates( $criteria = '', $include_drafts = false ) {
 	global $wpdb;
 	$templates = array();
 	$status_sql = ($include_drafts) ? "(post_status='publish' OR post_status='draft')" : "post_status='publish'";
-	$sql       = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker' AND BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND $status_sql $criteria GROUP BY $wpdb->posts.ID ORDER BY post_title";
+	$sql       = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker_template' AND BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND $status_sql $criteria GROUP BY $wpdb->posts.ID ORDER BY post_title";
 	$results   = $wpdb->get_results( $sql );
 	foreach ( $results as $template ) {
 		$templates[ $template->ID ] = $template;
@@ -1427,22 +1430,16 @@ function is_rsvpmaker_future( $event_id, $offset_hours = 0 ) {
 
 
 function rsvpmaker_is_template( $post_id = 0 ) {
-
 	global $post, $wpdb;
-
 	if ( ! $post_id ) {
-
 		if ( isset( $post->ID ) ) {
-
 			$post_id = $post->ID;
 
 		} else {
 			return false;
 		}
 	}
-
 	return get_template_sked( $post_id );
-
 }
 
 function rsvpmaker_has_template( $post_id = 0 ) {
@@ -2745,19 +2742,14 @@ function get_template_sked( $post_id ) {
 function rsvpmaker_upgrade_templates() {
 	global $wpdb, $rsvp_options;
 
-	$oldtemplates = $wpdb->get_results( "select post_id FROM $wpdb->postmeta WHERE meta_key='_sked'" );
-	foreach ( $oldtemplates as $oldtemplate ) {
-		if ( ! get_post_meta( $oldtemplate->post_id, '_sked_Varies' ) ) {
-			$sked = get_post_meta( $oldtemplate->post_id, '_sked', true );
-			if ( empty( $sked['hour'] ) ) {
-				$sked['hour'] = $rsvp_options['defaulthour'];
-			}
-			if ( empty( $sked['minutes'] ) ) {
-				$sked['minutes'] = $rsvp_options['defaultmin'];
-			}
-			new_template_schedule( $oldtemplate->post_id, $sked );
-		}
-		delete_post_meta( $oldtemplate->post_id, '_sked' );
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpmaker' AND meta_key='_sked_Monday' ";
+	$results = $wpdb->get_results($sql);
+	foreach($results as $p) {
+		if(get_post_meta($p->ID,'_rsvp_dates',true))
+			$wpdb->query("delete from $wpdb->postmeta WHERE post_id=$p->ID AND meta_key LIKE '_sked%' ");
+		else {
+			$wpdb->query("update $wpdb->posts set post_type='rsvpmaker_template' WHERE ID=$p->ID ");
+		}		
 	}
 }
 
@@ -2790,7 +2782,7 @@ function new_template_schedule( $post_id, $template, $source = '' ) {
 
 function build_template_schedule( $post_id, $dows, $weeks, $hour, $minutes, $duration, $end, $stop ) {
 
-		$weekarray = get_week_array();
+	$weekarray = get_week_array();
 	foreach ( $weekarray as $index => $label ) {
 		$atomic_sked[ $label ] = in_array( $index, $weeks );
 	}
@@ -3310,19 +3302,21 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 		$args[] = $arg;
 	}
 
-		$args[] = array(
+		if('rsvpmaker' == $post->post_type) {
+			$args[] = array(
 
-			'parent' => $parent_tag,
-
-			'id'     => 'rsvp_report',
-
-			'title'  => 'RSVP Report',
-
-			'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $post_id ),
-
-			'meta'   => array( 'class' => 'edit_form' ),
-
-		);
+				'parent' => $parent_tag,
+	
+				'id'     => 'rsvp_report',
+	
+				'title'  => 'RSVP Report',
+	
+				'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . $post_id ),
+	
+				'meta'   => array( 'class' => 'edit_form' ),
+	
+			);	
+		}
 
 		if ( $t ) {
 
@@ -3366,7 +3360,7 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 
 		}
 
-		if ( rsvpmaker_is_template( $post_id ) ) {
+		if ( 'rsvpmaker_template' == $post->post_type ) {
 
 			$args[] = array(
 
@@ -3420,7 +3414,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 		return array();
 	}
 
-	if ( ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpemail' ) ) {
+	if ( ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpemail' )  && ( $post->post_type != 'rsvpmaker_template' ) ) {
 
 		return array();
 	}
@@ -3437,7 +3431,6 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 	$rsvp_id = rsvpmaker_parent( $post_id );
 
 	if ( ( $query == 'rsvpemail' ) && ! $rsvp_id && ! ( strpos( $post->post_title, 'Default' ) ) ) {
-
 		return array();
 	}
 
@@ -3572,7 +3565,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 
 	}
 
-	if ( $post->post_type != 'rsvpmaker' ) {
+	if ( ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' ) ) {
 
 		return array();// no rsvpemail documents unless they have a post parent
 	}
@@ -4013,8 +4006,10 @@ function rsvpmail_is_problem($email) {
 	$code = $wpdb->get_var($sql);
 	if(empty($code))
 		$code = apply_filters('rsvpmail_is_problem',$code,$email);
-	if($code)
+	if($code) {
+		rsvpmaker_debug_log($email.': '.$code.': '.$sql,'rsvpmail_is_problem');
 		return $email.': '.$code;
+	}
 }
 
 function get_rsvp_meta_cache() {
@@ -4228,6 +4223,7 @@ function rsvpmaker_number_events_ui($t) {
 	$events = get_events_by_template($t);
 	$defaultoption = '<option value="0">Next Event</option>';
 	$options = '';
+	$isset = 1;
 	if($events) {
 		$isset = get_post_meta($events[0]->ID,'rsvpeventnumber',true);
 		if(!$isset)
@@ -4405,3 +4401,4 @@ printf('
 </div>
 ',$status,($is_dismissible) ? 'is-dismissible' : '',$message);
 }
+

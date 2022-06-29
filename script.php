@@ -27,7 +27,7 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	rsvpmaker_event_scripts(); // want the front end scripts, too
 	global $post, $scriptversion, $rsvpscript;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
-	if ( ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) ) || ( isset( $_GET['post_type'] ) && ( $_GET['post_type'] == 'rsvpmaker' ) ) || ( ( isset( $_GET['page'] ) &&
+	if ( ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) ) || ( isset( $_GET['post_type'] ) && (( $_GET['post_type'] == 'rsvpmaker' ) || ( $_GET['post_type'] == 'rsvpmaker_template' )) ) || ( ( isset( $_GET['page'] ) &&
 	( ( strpos( $_GET['page'], 'rsvp_report' ) !== false ) || ( strpos( $_GET['page'], 'toast' ) !== false ) ) ) ) ) {
 		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 		wp_enqueue_script( 'jquery-ui-dialog' );

@@ -1537,7 +1537,7 @@ registerBlockType( 'rsvpmaker/countdown', {
 } );
 
 //default to full screen off for RSVPMaker and related documents
-if((rsvpmaker.post_type == 'rsvpemail') || (rsvpmaker.post_type == 'rsvpmaker'))
+if((rsvpmaker.post_type == 'rsvpemail') || (rsvpmaker.post_type == 'rsvpmaker') || (rsvpmaker.post_type == 'rsvpmaker_template'))
 {
 	const isFullscreenMode = wp.data.select( 'core/edit-post' ).isFeatureActive( 'fullscreenMode' ); 
 	if ( isFullscreenMode ) { 

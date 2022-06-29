@@ -274,7 +274,7 @@ var MetaEndDateControl = wp.compose.compose(
 			props.setMetaValue(getTimeValues());
 		}
 
-		if((props.display != 'set') && (props.display.search('ulti') < 0) )
+		if((typeof props.display != 'undefined') && (props.display != 'set') && (props.display.search('ulti') < 0) )
 		return <SelectControl
 			label="Time Display"
 			value={props.display}

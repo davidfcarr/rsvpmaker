@@ -71,13 +71,11 @@ if ( ! wp_is_json_request() ) {
 
 add_filter( 'the_content', 'rsvpmaker_event_content_anchor', 50 );
 
-
-
 function rsvpmaker_event_content_anchor( $content ) {
 
 	global $post;
 
-	if ( ! is_single() || ( $post->post_type != 'rsvpmaker' ) ) {
+	if ( ! is_single() || (( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) ) {
 
 		return $content;
 	}
@@ -561,7 +559,7 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 	}
 
 	// not a template
-
+/* causing problems
 	$queryarg['meta_query'] = array(
 
 		'key'     => '_sked_Monday',
@@ -569,7 +567,7 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		'compare' => 'NOT EXISTS',
 
 	);
-
+*/
 	if ( isset( $_GET['debug'] ) ) {
 
 		$wpdb->show_errors();
@@ -2435,7 +2433,6 @@ function signed_up_ajax( $post_id ) {
 }
 
 
-
 function rsvpmaker_exclude_templates_special( $query ) {
 
 	if ( is_admin() || ! $query->is_search() ) {
@@ -2519,7 +2516,7 @@ function rsvpdateblock( $atts = array() ) {
 	return '<div class="dateblock">' . $dateblock . "\n</div>\n";
 }
 
-function rsvpmaker_format_event_dates( $post_id ) {
+function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 
 	global $post, $rsvp_options;
 
@@ -2532,49 +2529,43 @@ function rsvpmaker_format_event_dates( $post_id ) {
 
 		$post_id = $post->ID;
 	}
-
-	$eventrow = get_rsvpmaker_event( $post_id );
-	$sked = get_template_sked( $post->ID );
-	if(empty($eventrow)){
-		if(!empty($sked))
-			return '<p>Event Template</p>';
-		return;// don't do for non dated events
-	}
-
+	$permalink = get_permalink( $post_id );
 	$custom_fields = get_post_custom( $post_id );
-
 	$time_format = $rsvp_options['time_format'];
 
 	$dur = $tzbutton = '';
-
 	if ( ! strpos( $time_format, 'T' ) && isset( $custom_fields['_add_timezone'][0] ) && $custom_fields['_add_timezone'][0] ) {
-
 		$time_format .= ' T';
-
 	}
-
-	$permalink = get_permalink( $post_id );
-
 	$dateblock = '<div class="dateblock">';
 
-	if ( isset( $_GET['debug'] ) ) {
-
-		$dateblock .= var_export( $eventrow, true ) . 'date:' . $eventrow->date;
-	}
-
-	if ( ! empty( $eventrow ) || ! empty( $sked ) ) {
-
-		if ( ! empty( $sked ) ) {
-
-			$t = rsvpmaker_strtotime( 'tomorrow ' . $sked['hour'] . ':' . $sked['minutes'] );
-
-			$dateblock .= '<p><em>Template displayed using tomorrow\'s date</em> <br />' . sprintf( '<a href="%s">%s</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $post_id ), __( 'Create/update events from template', 'rsvpmaker' ) );
-
-		} else {
-			$t = (int) $eventrow->ts_start;
+	if($template) {
+		$sked = get_template_sked( $post->ID );
+		$occur = array('Varies','First','Second','Third','Fourth','Last','Every');
+		$schedule = '';
+		$day = 'tomorrow';
+		foreach($sked as $index => $value) {
+			if(in_array($index,$occur) && $value)
+				$schedule .= ' '.$index;
+			if(strpos($index,'day') && $value) {
+				if($day == 'tomorrow')
+					$day = $index;
+				$schedule .= ' '.$index;
+			}
 		}
-
+		$dateblock .= '<p><em>Template '.$schedule.' displayed using '.$day."'s date</em> <br />" . sprintf( '<a href="%s">%s</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $post_id ), __( 'Create/update events from template', 'rsvpmaker' ) );
+		$t = rsvpmaker_strtotime( $day.' ' . $sked['hour'] . ':' . $sked['minutes'] );
+		$endt = rsvpmaker_strtotime( $day.' ' . $sked['end'] );
+		$eventrow = (object) array('date' => rsvpmaker_date('Y-m-d H:i:s',$t),'enddate' => rsvpmaker_date('Y-m-d H:i:s',$endt));
+	}
+	else {
+		$eventrow = get_rsvpmaker_event( $post_id );
+		if(empty($eventrow)){
+			return;// don't do for non dated events
+		}
+		$t = (int) $eventrow->ts_start;			
 		$endt = (isset($eventrow->ts_end)) ? (int) $eventrow->ts_end : 0;
+	}
 
 		$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
@@ -2647,25 +2638,15 @@ function rsvpmaker_format_event_dates( $post_id ) {
 
 		$dateblock .= '</div>';// end of dateblock div
 
-	} else // no dates, no sked, maybe this is an agenda or a landing page
-
-		{
-
-		return;
-
-	}
-
 	return $dateblock;// .'<span class="format_function">test<span></div>';
 
 }
-
-
 
 function rsvpmaker_hide_time_posted( $time ) {
 
 	global $post;
 
-	if ( $post->post_type == 'rsvpmaker' ) {
+	if (( $post->post_type == 'rsvpmaker' ) || ( $post->post_type == 'rsvpmaker_template' )) {
 
 		return '';
 	}

@@ -40,11 +40,11 @@ function rsvpmaker_block_category( $categories, $post ) {
 }
 
 add_action( 'init', function(){
+global $rsvp_options;
 
 add_filter( 'block_categories_all', 'rsvpmaker_block_category', 10, 2);
 
 $args = array(
-		'object_subtype' => 'rsvpmaker',
  		'type'		=> 'string',
 		 'single'	=> true,
 		 'default' => '',
@@ -54,21 +54,12 @@ $args = array(
 			return current_user_can('edit_posts');
 		}
 	);
-	register_meta( 'post', '_rsvp_dates', $args );
-	register_meta( 'post', '_rsvp_to', $args );
-	register_meta( 'post', '_rsvp_max', $args );
-	register_meta( 'post', '_rsvp_show_attendees', $args );
-	register_meta( 'post', '_rsvp_instructions', $args );
-	register_meta( 'post', 'simple_price', $args );
-	register_meta( 'post', 'simple_price_label', $args );
-	register_meta( 'post', 'venue', $args );
-	$date_fields = array('_firsttime','_template_start_hour','_template_start_minutes','_sked_hour','_sked_minutes','_sked_stop','_sked_duration','_sked_duration','_sked_end');
-	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
-	foreach($date_fields as $field)
+	$rsvpmaker_strings = array('_rsvp_to','_rsvp_max','_rsvp_show_attendees','_rsvp_instructions','simple_price','simple_price_label','venue','_template_start_hour','_template_start_minutes','_sked_minutes','_sked_stop','_sked_duration','_sked_duration');
+	foreach($rsvpmaker_strings as $field) {
 		register_meta( 'post', $field, $args );
+	}
 
 	$args = array(
-		'object_subtype' => 'rsvpmaker',
 			'type'		=> 'string',
 			'single'	=> true,
 			'default' => '12:00',
@@ -79,9 +70,30 @@ $args = array(
 		}
 	);
 	register_meta( 'post', '_endfirsttime', $args );
-	
 	$args = array(
-		'object_subtype' => 'rsvpmaker',
+		'type'		=> 'string',
+		'single'	=> true,
+		'default' => '12',
+		'show_in_rest'	=> true,
+		'sanitize_callback' => 'rsvpmaker_check_string',
+		'auth_callback' => function() {
+		return current_user_can('edit_posts');
+	}
+	);
+	register_meta( 'post', '_sked_hour', $args );
+	$args = array(
+		'type'		=> 'string',
+		'single'	=> true,
+		'default' => '13:00',
+		'show_in_rest'	=> true,
+		'sanitize_callback' => 'rsvpmaker_check_string',
+		'auth_callback' => function() {
+		return current_user_can('edit_posts');
+	}
+	);
+	register_meta( 'post', '_sked_end', $args );
+
+	$args = array(
  		'type'		=> 'integer',
 		 'single'	=> true,
 		 'default' => 0,
@@ -93,7 +105,36 @@ $args = array(
 	register_meta( 'post', 'rsvp_tx_template', $args );
 		
 	$args = array(
+			 'type'		=> 'boolean',
+			 'single'	=> true,
+			 'default' => false,
+			 'show_in_rest'	=> true,
+			 'auth_callback' => function() {
+				return current_user_can('edit_posts');
+			}
+	);
+	$rsvpmaker_bool = array('rsvp_on','add_timezone','convert_timezone','calendar_icons','rsvp_end_display','rsvp_rsvpmaker_send_confirmation_email','rsvp_confirmation_after_payment','rsvp_confirmation_after_payment','rsvp_confirmation_include_event','rsvp_count','rsvp_yesno','rsvp_captcha','rsvp_login_required','rsvp_form_show_date');
+
+	foreach($rsvpmaker_bool as $field) {
+		$args['default'] = !empty($rsvp_options[$field]);
+		register_meta( 'post', '_'.$field, $args );
+	}
+	$args = array(
 		'object_subtype' => 'rsvpmaker',
+		'type'		=> 'string',
+		'single'	=> true,
+		'default' => '',
+		'show_in_rest'	=> true,
+		'sanitize_callback' => 'rsvpmaker_check_string',
+		'auth_callback' => function() {
+		   return current_user_can('edit_posts');
+	   }
+   );
+	$date_fields = array('_rsvp_dates','_firsttime'); 
+	foreach($date_fields as $field)
+		register_meta( 'post', $field, $args );	
+	$args = array(
+		'object_subtype' => 'rsvpmaker_template',
  		'type'		=> 'boolean',
 		 'single'	=> true,
 		 'default' => false,
@@ -102,24 +143,12 @@ $args = array(
 			return current_user_can('edit_posts');
 		}
 	);
+	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
 	foreach($template_fields as $field)
 		register_meta( 'post', $field, $args );	
-	register_meta( 'post', '_rsvp_on', $args );
 	register_meta( 'post', 'rsvpautorenew', $args );
-	register_meta( 'post', '_add_timezone', $args );
-	register_meta( 'post', '_convert_timezone', $args ); 
-	register_meta( 'post', '_calendar_icons', $args );
-    register_meta( 'post', '_rsvp_end_display', $args );
-	register_meta( 'post', '_rsvp_rsvpmaker_send_confirmation_email', $args );
-	register_meta( 'post', '_rsvp_confirmation_after_payment', $args );
-	register_meta( 'post', '_rsvp_confirmation_include_event', $args );
-	register_meta( 'post', '_rsvp_count', $args );
-	register_meta( 'post', '_rsvp_yesno', $args );
-	register_meta( 'post', '_rsvp_captcha', $args );
-	//register_meta( 'post', '_rsvp_timezone_string', $args );
-	register_meta( 'post', '_rsvp_login_required', $args );
-	register_meta( 'post', '_rsvp_form_show_date', $args );
-});
+
+},99);
 
 function rsvpjsonlisting ($atts) {
 if(empty($atts['url']))
@@ -164,8 +193,7 @@ add_action( 'enqueue_block_assets', 'rsvpmaker_block_cgb_block_assets' );
  * @since 1.0.0
  */
 function rsvpmaker_block_cgb_editor_assets() {
-	// Scripts.
-	global $post;
+	global $post, $rsvp_options, $current_user;
 	wp_enqueue_script(
 		'rsvpmaker_block-cgb-block-js', // Handle.
 		plugins_url( '/dist/blocks.build.js', dirname( __FILE__ ) ), // Block.build.js: We register the block here. Built with Webpack.
@@ -174,13 +202,13 @@ function rsvpmaker_block_cgb_editor_assets() {
 		true // Enqueue the script in the footer.
 	);
 	$post_type = (isset($post->post_type)) ? $post->post_type: '';
+	if(isset($_GET['post_type']))
+		$post_type = $_GET['post_type'];
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
 	if($post_type == 'rsvpemail')
 		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'related_documents', get_related_documents ($post->ID,'rsvpemail'));
-
-	global $post, $rsvp_options, $current_user;
 	$template_id = 0;
-	if(is_admin() && ($post_type == 'rsvpmaker') && isset($_GET['action']) && $_GET['action'] == 'edit')
+	if(is_admin() && (($post_type == 'rsvpmaker') || ($post_type == 'rsvpmaker_template')) ) //&& ( (isset($_GET['action']) && $_GET['action'] == 'edit') || strpos($_SERVER['REQUEST_URI'],'post-new.php') ) )
 		{
 		$projected_label = '';
 		$projected_url = '';
@@ -284,7 +312,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		$confirmation_email_templates[] = array('label' => $template['slug'], 'value' => $index);
 	}
 
-	if($post_type == 'rsvpmaker')
+	if(('rsvpmaker' == $post_type) || ('rsvpmaker_template' == $post_type))
 	{
 		$related_documents = get_related_documents ();
 		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');
@@ -321,6 +349,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'related_document_links' => $related_documents,
 			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
 			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'));
+
 		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker_ajax',$args);
 	}
 				

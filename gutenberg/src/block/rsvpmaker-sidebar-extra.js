@@ -46,7 +46,7 @@ const PluginRSVPMaker = () => {
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
-{(rsvpmaker_ajax.projected_url && <div>
+{((rsvpmaker.post_type == 'rsvpmaker_template') && <div>
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle
 			label="Varies" 
@@ -348,5 +348,5 @@ metaKey="_rsvp_count"/>
     )
 }
 
-if ((typeof rsvpmaker_ajax !== 'undefined') && !rsvpmaker_ajax.special) 
+if (((rsvpmaker.post_type == 'rsvpmaker') || (rsvpmaker.post_type == 'rsvpmaker_template')) && !rsvpmaker_ajax.special) 
 	registerPlugin( 'plugin-rsvpmaker', { render: PluginRSVPMaker } );

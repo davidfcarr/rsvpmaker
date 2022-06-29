@@ -16,6 +16,7 @@ function related_link() {
 	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details} >RSVP and {__('Event Options','rsvpmaker')}</a></p></div>;	
 	}
 
+	
 const RSVPMakerSidebarPlugin = function() {
 if(typeof rsvpmaker_ajax === 'undefined')
 	return null; //not an rsvpmaker post
@@ -52,7 +53,7 @@ if(rsvpmaker_ajax.special)
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div>
-{(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && 
+{(!rsvpmaker_ajax.special && (rsvpmaker.post_type == 'rsvpmaker') && 
 <div>
 <h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
 {rsvpmaker_ajax.top_message}
@@ -60,7 +61,7 @@ if(rsvpmaker_ajax.special)
 <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
 </div>
 )}
-{(rsvpmaker_ajax.projected_url && <div>
+{((rsvpmaker.post_type == 'rsvpmaker_template') && <div>
 <h3>RSVPMaker Template <a href={rsvpmaker_ajax.projected_url}>(Create/Update)</a></h3>
 {rsvpmaker_ajax.top_message}
 			<div class="sked_frequency">
@@ -246,7 +247,7 @@ function RSVPPluginPostPublishPanel() {
     );
 }
 
-if(typeof rsvpmaker_ajax !== 'undefined')
+if((rsvpmaker.post_type == 'rsvpmaker') || (rsvpmaker.post_type == 'rsvpmaker_template'))
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-postpublish', {
 	render: RSVPPluginPostPublishPanel,
 } );

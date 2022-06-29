@@ -152,7 +152,7 @@ function rsvpmaker_relay_queue() {
 	$total_to_send = sizeof($results);
 	$html = '<p>Results: ' . sizeof( $results ) . '</p>';
 	foreach($results as $row) {
-		$epost_id = $row->ID;
+		$mail['post_id'] = $epost_id = $row->ID;
 		if($epost_id != $last_post_id) {
 			//setup message
 			$mail['message_type'] = 'email_rule_group_email';

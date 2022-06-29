@@ -451,8 +451,10 @@ jQuery(function () {
 
 		$displayminutes = $displayhour = '';
 
+		$endtime = rsvpmaker_strtotime($h.':'.$minutes.' +1 hour');
+
 		?>
-<div><label>Time</label> <input type="time" id="sql-time" name="sked[time]" value="<?php echo esc_attr( $h . ':' . $minutes ); ?>" > </div>
+<div><label>Time</label> <input type="time" id="sql-time" name="sked[time]" value="<?php echo esc_attr( $h . ':' . $minutes ); ?>" > <span id="endtimespan"> to <input name="sked[end]" type="time" class="rsvpendtime" id="rsvpendtime" value="<?php echo rsvpmaker_date('H:i:s',$endtime) ?>"> </span> </div>
 <div id="template-time-error"></div>
 		<?php
 
@@ -509,6 +511,7 @@ function save_rsvp_template_meta( $post_id ) {
 	}
 
 	$sked['duration'] = $sked['end_time_type'] = sanitize_text_field( $_POST['end_time_type'] );
+	if(isset($_POST['rsvp_sql_end']))
 	$sked['end']      = $sked['rsvp_sql_end'] = sanitize_text_field( $_POST['rsvp_sql_end'] );
 
 	new_template_schedule( $post_id, $sked );
@@ -519,8 +522,6 @@ function save_rsvp_template_meta( $post_id ) {
 		delete_post_meta( $post_id, 'rsvpautorenew' );
 	}
 }
-
-
 
 if ( ! function_exists( 'rsvpmaker_roles' ) ) {
 
@@ -2736,7 +2737,7 @@ if ( ! function_exists( 'event_content' ) ) {
 		global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
 		// If the post is not an event, leave it alone
 
-		if ( $post->post_type != 'rsvpmaker' ) {
+		if (( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) {
 			return $content;
 		}
 
@@ -3013,6 +3014,9 @@ if ( ! function_exists( 'event_content' ) ) {
 			}
 		}
 
+		if('rsvpmaker_template' == $post->post_type)
+			$dateblock = rsvpmaker_format_event_dates( $post->ID, true ); //'<p><em>Template Preview</em></p>';
+		else {
 		$dateblock = ( strpos( $post->post_content, 'rsvpdateblock]' ) ) ? '' : rsvpmaker_format_event_dates( $post->ID );
 		$event     = get_rsvpmaker_event( $post->ID );
 		if ( $event ) {
@@ -3021,6 +3025,7 @@ if ( ! function_exists( 'event_content' ) ) {
 			$firstrow  = $event->date;
 		} else {
 			$dur = $last_time = $firstrow = '';
+		}
 		}
 
 		if ( ! empty( $rsvpconfirm ) ) {
@@ -3188,7 +3193,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 				rsvphoney_ui();
 
-				if ( $dur && ( $slotlength = ! empty( $custom_fields['_rsvp_timeslots'][0] ) ) ) {
+				if ( !empty($dur) && ( $slotlength = ! empty( $custom_fields['_rsvp_timeslots'][0] ) ) ) {
 
 					?>
 
@@ -5825,8 +5830,7 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 
 <div class="wrap"> 
 		<?php
-		$heading = __( 'Event Templates', 'rsvpmaker' );
-		$heading .= sprintf( ' <a href="%s"  class="add-new-h2">%s</a>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_setup&new_template=1' ), __( 'New Template', 'rsvpmaker' ) );
+		$heading = __( 'Create / Update from Template', 'rsvpmaker' );
 		rsvpmaker_admin_heading($heading, __FUNCTION__);
 
 		if ( ! empty( $_POST['import_shared_template'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))  ) {
@@ -5990,14 +5994,14 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 			$newpost = array(
 				'post_title'   => $event->post_title,
 				'post_content' => $event->post_content,
-				'post_type'    => 'rsvpmaker',
+				'post_type'    => 'rsvpmaker_template',
 				'post_author'  => $current_user->ID,
 				'post_status'  => 'publish',
 			);
 
 			$t = wp_insert_post( $newpost );
 
-			array(
+			$template = array(
 				'week'      => array( 0 ),
 				'dayofweek' => array( 0 ),
 				'hour'      => $tsexplode[1],
