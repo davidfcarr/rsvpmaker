@@ -4402,3 +4402,9 @@ printf('
 ',$status,($is_dismissible) ? 'is-dismissible' : '',$message);
 }
 
+add_shortcode('rsvpmailer_bot_shortcode','rsvpmailer_bot_shortcode');
+function rsvpmailer_bot_shortcode() {
+	$result = rsvpmaker_relay_queue();
+	$result .= rsvpmaker_relay_get_pop( 'bot' );
+	return $result;
+}

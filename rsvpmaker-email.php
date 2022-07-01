@@ -12,6 +12,7 @@ function rsvpmailer($mail, $description = '') {
 	global $post, $rsvp_options, $rsvpmaker_message_type;
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
+	$mail = apply_filters('rsvpmailer_mail',$mail);
 	if(empty($mail['skip_check']))
 		$problem = rsvpmail_is_problem($mail['to']);
 	else
@@ -260,9 +261,9 @@ function rsvpemail_error_log($errors,$mail = array()) {
 		return;
 	$mail['html'] = $mail['text'] = '';
 	$errors .= ' '.date('r').' '.var_export($mail,true);
-	rsvpmaker_debug_log($errors,'rsvpemail_error_log');
+	rsvpmaker_debug_log($errors,'rsvpmail_error_log');
 	if(!empty($mail['post_id']))
-		add_post_meta($mail['post_id'],'rsvpemail_error_log',$errors);
+		add_post_meta($mail['post_id'],'rsvpmail_error_log',$errors);
 }
 
   // Avoid name collisions.
