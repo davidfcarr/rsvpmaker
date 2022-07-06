@@ -253,6 +253,8 @@ if($mail["html"])
 	}
 	$errors .= $rsvpmail->ErrorInfo;
 	rsvpemail_error_log($errors,$mail);
+	if(empty($errors) && isset($mail['post_id']))
+		add_post_meta($mail['post_id'],'rsvpmail_sent',$mail['to']);
 	return $errors;
 }
 
@@ -4415,7 +4417,6 @@ return ob_get_clean();
 
 }
 
-if(isset($_GET['post_type']) && 'rsvpemail' == $_GET['post_type'])
 add_action('init','rsvpmaker_queue_post_type');
 function rsvpmaker_queue_post_type() {
 	$result = register_post_status('rsvpmessage',array('label'=>'Group Message','internal'=>true,'show_in_admin_status_list'=>true,'show_in_admin_all_list'=>false));
@@ -4439,4 +4440,5 @@ function rsvpmaker_queue_post_type() {
 	foreach($results as $row) {
 		wp_delete_post( $row->ID, true ); // delete old posts and their metadata
 	}
+	
 }
