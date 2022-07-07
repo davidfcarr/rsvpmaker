@@ -141,7 +141,7 @@ function rsvpmaker_relay_queue() {
 	$log = 'limit = '.$limit.' ';
 	$sent = 0;
 	$last_post_id = 0;
-	$sql = "select ID as post_id, count(*), post_title as subject, post_content as html FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
+	$sql = "select ID as post_id, count(*), post_title as subject, post_content as html FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, 3";
 	$results = $wpdb->get_results($sql);
 	if(empty($results))
 		return;
@@ -171,7 +171,7 @@ function rsvpmaker_relay_queue() {
 				$recipients[] = $row->meta_value;
 				$count++;
 				if ( ! isset( $_GET['nodelete'] ) ) {
-					$sql = "UPDATE $wpdb->postmeta SET meta_key='was_rsvprelay_to' WHERE meta_id=" . $row->meta_id;
+					$sql = "UPDATE $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_id=" . $row->meta_id;
 					$wpdb->query( $sql );
 				}
 			}
@@ -189,7 +189,6 @@ function rsvpmaker_relay_queue() {
 			$mail['to'] = $to;
 			$result = rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
 			$result = $mail['to'] . ' ' . rsvpmaker_date( 'r' ).' '.$result;
-			add_post_meta( $epost_id, 'rsvpmail_sent', $result );
 			$log .= $result."\n";
 		}
 	}
