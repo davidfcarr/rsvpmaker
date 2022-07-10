@@ -77,7 +77,11 @@ function rsvpmailer($mail, $description = '') {
 		$mail['html'] = "<html><body>\n".$mail['html']."\n</body></html>";		
 	if(!strpos($mail['html'],'rsvpmail_unsubscribe'))
 		$mail['html'] = str_replace('</html>',"\n<p>".sprintf('Unsubscribe from email notifications<br /><a href="%s">%s</a></p>',site_url('?rsvpmail_unsubscribe='.$mail['to']),site_url('?rsvpmail_unsubscribe='.$unsubscribe_email)).'</html>',$mail['html']);
-	
+
+	if(!empty($rsvp_options['postmark_mode']) && 'production' == $rsvp_options['postmark_mode']) {
+		return rsvpmaker_postmark_send($mail);
+	}
+
 	if(function_exists('rsvpmailer_override'))
 		return rsvpmailer_override($mail);
 	if(!empty($rsvp_options['from_always']) && ($rsvp_options['from_always'] != $mail['from']))
@@ -1252,7 +1256,7 @@ return $content;
 }
 
 function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
-	global $wpdb;
+	global $wpdb,$rsvp_options;
 	$sender_user = get_userdata($user_id);
 	$recipients = array();
 	$mail['html'] = $html;
@@ -1478,9 +1482,20 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	}
 
 	if(!empty($recipients)) {
-		//printf('<p>Combined list: %s</p>',var_export($recipients,true));
-		foreach($recipients as $email)
+		if(!empty($rsvp_options['postmark_mode'])) {
+			printf('<p>Trying Postmark: %s</p>',$rsvp_options['postmark_mode']);
+			$chunks = array_chunk($recipients,500);
+			$recipients = array_shift($chunks);
+			rsvpmaker_postmark_broadcast($recipients,$post_id);
+			add_post_meta($post_id,'rsvprelay_sending',$recipients);
+			if(!empty($chunks))
+			foreach($chunks as $chunk) 
+				add_post_meta($post_id,'rsvprelay_chunk',$chunk);
+		}
+		else {
+			foreach($recipients as $email)
 			add_post_meta($post_id,'rsvprelay_to',$email);
+		}
 	}
 	
 	if(!empty($postvars["mailchimp"]) )
@@ -2539,11 +2554,8 @@ Unsubscribe *|EMAIL|* from this list:
 *|UNSUB|*
 ';
 
+$mail["html"] = rsvpmaker_email_html($mail['html']);
 $mail['text'] = rsvpmaker_text_version($mail["html"], $rsvpfooter_text);
-
-$mail["html"] = do_blocks(do_shortcode($rsvpmaker_tx_content));
-//$mail["html"] = preg_replace('/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/','<p><a href="$0">Watch on YouTube: $0<br /><img src="" width="320" height="180" /></a></p>',$mail["html"]);
-$mail["html"] = rsvpmaker_youtube_email($mail['html']);
 
 $problem = rsvpmail_is_problem($mail["to"]);
 	if($problem)
@@ -3667,10 +3679,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		</html>
 		<?php
 		$content = ob_get_clean();
-		$content = rsvpmail_filter_style($content);
-		$content = rsvpmaker_youtube_email($content);
-
-update_post_meta($post->ID,'_rsvpmail_html',$content);
+		$content = rsvpmaker_email_html($content,$post->ID);
 update_post_meta($post->ID,'_rsvpmail_text',rsvpmaker_text_version($content));
 $wp_query = $wp_query_backup;
 return $content;
@@ -4441,4 +4450,113 @@ function rsvpmaker_queue_post_type() {
 		wp_delete_post( $row->ID, true ); // delete old posts and their metadata
 	}
 	
+}
+
+function rsvpmaker_email_add_name($email,$name) {
+	if(empty($name))
+		return $email;
+	return "\"".addslashes($name)."\" <".$email.">";
+}
+
+function rsvpmail_latest_post_promo() {	
+    $posts = query_posts( array('posts_per_page'=>5,'post_type'=>'post') );
+    $featured = array_shift($posts);
+	$promo_id = get_post_meta($featured->ID,'promo_email',true);
+	if($promo_id) //update rather than create
+		$new['ID'] = $promo_id;
+
+    $permalink = get_permalink($featured->ID);
+    $new['post_title'] = $featured->post_title;
+    $html = '<!-- wp:heading -->
+    <h2><a href="'.$permalink.'">'.$featured->post_title.'</a></h2>
+    <!-- /wp:heading -->
+    '."\n";
+    $paragraphs = explode('<!-- wp:paragraph -->',$featured->post_content);
+    $paragraphs = array_slice($paragraphs,0,4);
+    $excerpt = implode('<!-- wp:paragraph -->',$paragraphs);
+    $html .= $excerpt;
+	$html .= '<!-- wp:heading {"level":3} -->
+	<h3><a href="'.$permalink.'">--&gt;&gt; Read More</a></h3>
+	<!-- /wp:heading -->
+	';
+    $html .= '<!-- wp:heading -->
+    <h2>More Headlines</h2>
+    <!-- /wp:heading -->
+    ';
+    foreach($posts as $p) {
+        $permalink = get_permalink($p->ID);
+        $html .= '<!-- wp:heading {"level":3} -->
+        <h3><a href="'.$permalink.'">'.$p->post_title.'</a></h3>
+        <!-- /wp:heading -->
+        ';
+    }
+
+    $rsvpmailer_default_block_template = get_rsvpmailer_default_block_template();
+    $parts = preg_split('/<\/div>\s+<!-- \/wp:rsvpmaker\/emailcontent -->/m',$rsvpmailer_default_block_template,2);
+    if(!empty($parts[1]))
+        $new['post_content'] = $parts[0].$html."</div>\n<!-- /wp:rsvpmaker/emailcontent -->".$parts[1];
+    else
+        $new['post_content'] = $html;
+    $new['post_type'] = 'rsvpemail';
+    $new['post_status'] = 'publish';
+	$promo_id = wp_insert_post($new);
+	add_post_meta($featured->ID,'promo_email',$promo_id);
+    return $promo_id;
+}
+
+function rsvpmail_latest_posts_notification($new_status, $old_status, $post ) {
+	if($new_status != $old_status && 'publish' == $new_status && 'post' == $post->post_type) {
+		$promo_id = rsvpmail_latest_post_promo();
+		$mpost = get_post($promo_id);
+		$meta = get_post_meta($promo_id);
+		if(isset($meta['_rsvpmail_html'][0]))
+			$html = $meta['_rsvpmail_html'][0];
+		else {
+			$html = rsvpmail_filter_style(do_blocks(do_shortcode($mpost->post_content)));
+			update_post_meta($post_id,'_rsvpmail_html',$html);
+		}	
+		$mail['to'] = $mail['from'] = get_bloginfo('admin_email');
+		$mail['subject'] = 'New post promo: '.$post->post_title;
+		$mail['html'] = sprintf('<p><a href="%s">Preview/Send</a></p>
+		<p><a href="%s">Edit</a></p>',add_query_arg('verify',wp_create_nonce( 'verify_email' ),get_permalink($promo_id)),admin_url("post.php?post=$promo_id&action=edit"))."\n\n".$html;
+		rsvpmailer($mail);
+	}
+}
+
+add_action( 'transition_post_status', 'rsvpmail_latest_posts_notification',10,3);
+
+function rsvpmail_replace_placeholders($content,$description='') {
+	$chimp_options = get_option('chimp');
+	$address = isset($chimp_options['mailing_address']) ? $chimp_options['mailing_address'] : '<strong>NOT SET</strong>';
+	$company = isset($chimp_options['company']) ? $chimp_options['company'] : get_bloginfo('name');
+	$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe=*|EMAIL|*'),$content);
+	$content = str_replace('*|REWARDS|*','',$content);
+	$content = str_replace('*|LIST:DESCRIPTION|*',$description,$content);
+	$content = str_replace('*|LIST:ADDRESS|*',$address,$content);
+	$content = str_replace('*|HTML:LIST_ADDRESS_HTML|*',$address,$content);
+	$content = str_replace('*|LIST:COMPANY|*',$company,$content);
+	$content = str_replace('*|CURRENT_YEAR|*',date('Y'),$content);
+	return $content;
+}
+
+function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
+	$html = '';
+	if(is_object($post_or_html)) {
+		$html = $post_or_html->post_content;
+		$post_id = $post_or_html->ID;
+	}
+	if(is_array($post_or_html) && isset($post_or_html['post_content']))
+		$html = $post_or_html['post_content'];
+	if(is_string($post_or_html))
+		$html = $post_or_html;
+	if(strpos($html,'<-- wp:paragraph'))
+		$html = do_blocks($html);
+	if(strpos($html,'['))
+		$html = do_shortcode($html);
+	if(strpos($html,'youtu'))
+		$html = rsvpmaker_youtube_email($html);
+	$html = rsvpmail_filter_style($html);
+	if($post_id)
+		update_post_meta($post_id,'_rsvpmail_html',$html);
+	return $html;
 }

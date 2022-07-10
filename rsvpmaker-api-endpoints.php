@@ -1444,64 +1444,115 @@ class RSVPMaker_PorC extends WP_REST_Controller {
 	}
 }
 
+class RSVPMaker_Confirmation_Code extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvpmaker_confirmation/(?P<code>.+)';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		$transient = get_transient('remote_nonce');
+		$result = (empty($transient)) ? false : $request['code'] == $transient;
+		return new WP_REST_Response( $result, 200 );
+	}
+}
+
+class RSVPMaker_Email_Check extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'email_check';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+	$html = rsvpmaker_relay_queue();
+	if ( empty( $html ) ) {
+		$html = rsvpmaker_relay_get_pop( 'bot' );
+	}
+	do_action('rspvmaker_relay_cron_check',$html);
+		return new WP_REST_Response( $html, 200 );
+	}
+}
+
 add_action(
 	'rest_api_init',
 	function () {
-
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
-
 		$rsvpmaker_sked_controller->register_routes();
-
 		$rsvpmaker_by_type_controller = new RSVPMaker_By_Type_Controller();
-
 		$rsvpmaker_by_type_controller->register_routes();
-
 		$rsvpmaker_listing_controller = new RSVPMaker_Listing_Controller();
-
 		$rsvpmaker_listing_controller->register_routes();
-
 		$rsvpmaker_types_controller = new RSVPMaker_Types_Controller();
-
 		$rsvpmaker_types_controller->register_routes();
-
 		$rsvpmaker_authors_controller = new RSVPMaker_Authors_Controller();
-
 		$rsvpmaker_authors_controller->register_routes();
-
 		$rsvpmaker_guestlist_controller = new RSVPMaker_GuestList_Controller();
-
 		$rsvpmaker_guestlist_controller->register_routes();
-
 		$rsvpmaker_meta_controller = new RSVPMaker_ClearDateCache();
-
 		$rsvpmaker_meta_controller->register_routes();
-
 		$stripesuccess = new RSVPMaker_StripeSuccess_Controller();
-
 		$stripesuccess->register_routes();
-
 		$ppsuccess = new RSVPMaker_PaypalSuccess_Controller();
-
 		$ppsuccess->register_routes();
-
 		$rsvpexp = new RSVP_Export();
-
 		$rsvpexp->register_routes();
-
 		$rsvpimp = new RSVP_RunImport();
-
 		$rsvpimp->register_routes();
-
 		$signed_up = new RSVPMaker_Signed_Up();
-
 		$signed_up->register_routes();
-
 		$email_lookup = new RSVPMaker_Email_Lookup();
-
 		$email_lookup->register_routes();
-
 		$sharedt = new RSVPMaker_Shared_Template();
-
 		$sharedt->register_routes();
 		$setup = new RSVPMaker_Setup();
 		$setup->register_routes();
@@ -1523,5 +1574,9 @@ add_action(
 		$preview->register_routes();
 		$pc = new RSVPMaker_PorC();
 		$pc->register_routes();
+		$conf = new RSVPMaker_Confirmation_Code();
+		$conf->register_routes();
+		$check = new RSVPMaker_Email_Check();
+		$check->register_routes();
 	}
 );

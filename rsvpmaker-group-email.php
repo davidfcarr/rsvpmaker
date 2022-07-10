@@ -117,18 +117,15 @@ function rsvpmaker_relay_init( $show = false ) {
 			$result .= rsvpmaker_relay_get_pop( 'bot' );
 		}
 	}
+	$html = $qresult . $result;
+	do_action('rspvmaker_relay_cron_check',$html);
 
 	if ( $show ) {
-
-		return $qresult . $result;
+		return $html;
 	}
-
 	if ( ! empty( $qresult ) || strpos( $result, 'Mail:' ) ) {
-
 		rsvpmaker_debug_log( $qresult . $result, 'rsvpmaker_relay_result' );
-
 	}
-
 }
 
 function rsvpmaker_relay_queue() {
@@ -141,57 +138,80 @@ function rsvpmaker_relay_queue() {
 	$log = 'limit = '.$limit.' ';
 	$sent = 0;
 	$last_post_id = 0;
-	$sql = "select ID as post_id, count(*), post_title as subject, post_content as html FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, 3";
+	$posts = $wpdb->posts;
+	$postmeta = $wpdb->postmeta;
+	$sql = "select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
 	$results = $wpdb->get_results($sql);
 	if(empty($results))
 		return;
 	foreach($results as $mail) {
-		if($count > $limit)
-			break;
 		$mail = (array) $mail;
 		$log .= $mail['subject'].": ".$mail["count"]."\n";
 		$mail['message_type'] = 'email_rule_group_email';
 		$mail['override'] = 1;
 		$epost_id = $mail['post_id'];
-		$sql = "select meta_value from $wpdb->postmeta WHERE meta_key='_rsvpmail_html' AND post_id=$epost_id";
-		$h = $wpdb->get_var($sql);//get_post_meta($epost_id,'_rsvpmail_html',true); //rsvpmail broadcast
-		if($h)
-			$mail['html'] = $h;
+		$hits = $mail['hits'];
+		$saved = $wpdb->get_var("SELECT meta_value from $postmeta WHERE post_id=$epost_id AND meta_key='mail_array' ");//get_post_meta($epost_id,'mail_array',true);
+		if($saved)
+		{
+			//saved broadcast message
+			$mail = unserialize($saved);
+		}
 		else {
-			$mail['html'] = do_blocks(do_shortcode($mail['html']));
-			update_post_meta($epost_id,'_rsvpmail_html',$mail['html']);
-		}
-		$recipients = array();
-		$sql = "select * from $wpdb->postmeta WHERE meta_key!='_rsvpmail_html' AND meta_key!='rsvpmail_sent' AND post_id=$epost_id";
-		$meta = $wpdb->get_results($sql);
-		foreach($meta as $row) {
-			if('rsvprelay_to' == $row->meta_key) {
-				if($count > $limit)
-					break;
-				$recipients[] = $row->meta_value;
-				$count++;
-				if ( ! isset( $_GET['nodelete'] ) ) {
-					$sql = "UPDATE $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_id=" . $row->meta_id;
-					$wpdb->query( $sql );
+			$sql = "select meta_value from $wpdb->postmeta WHERE meta_key='_rsvpmail_html' AND post_id=$epost_id";
+			$h = $wpdb->get_var($sql);//get_post_meta($epost_id,'_rsvpmail_html',true); //rsvpmail broadcast
+			if($h)
+				$mail['html'] = $h;
+			else {
+				$mail['html'] = do_blocks(do_shortcode($mail['html']));
+				update_post_meta($epost_id,'_rsvpmail_html',$mail['html']);
+			}
+			$sql = "select * from $wpdb->postmeta WHERE meta_key!='_rsvpmail_html' AND meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=$epost_id";
+			$meta = $wpdb->get_results($sql);
+			foreach($meta as $row) {
+				if('rsvprelay_from' == $row->meta_key) {
+					$mail['from'] = $row->meta_value;
+					$log .= 'from: '.$mail['from']."\n";
 				}
-			}
-			if('rsvprelay_from' == $row->meta_key) {
-				$mail['from'] = $row->meta_value;
-				$log .= 'from: '.$mail['from']."\n";
-			}
-			if('rsvprelay_fromname' == $row->meta_key)
-				$mail['fromname'] = $row->meta_value;
-			if('message_description' == $row->meta_key)
-				$mail['message_description'] = $row->meta_value;
+				if('rsvprelay_fromname' == $row->meta_key)
+					$mail['fromname'] = $row->meta_value;
+				if('message_description' == $row->meta_key)
+					$mail['message_description'] = $row->meta_value;
+			}	
 		}
-		$log .= 'queued '.$mail['from'].' '.$mail['subject'].' '.sizeof($recipients).' recipients';
-		foreach($recipients as $to) {
-			$mail['to'] = $to;
+		if($hits == 1) {
 			$result = rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
 			$result = $mail['to'] . ' ' . rsvpmaker_date( 'r' ).' '.$result;
+			$wpdb->query("update $postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND post_id=$epost_id ");
 			$log .= $result."\n";
+			$count++;
+			$limit--;
+		}
+		else {
+			$broadcasts[$epost_id] = $mail;
+			update_post_meta($epost_id,'mail_array',$mail);
 		}
 	}
+
+	if($limit) {
+		foreach($broadcasts as $epost_id => $mail) {
+			$log .= $mail['subject'] . " broadcast\n";
+			if($limit < 1)
+				break;
+			echo $sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$epost_id AND meta_key='rsvprelay_to' LIMIT 0, $limit";
+			$results = $wpdb->get_results($sql);
+			print_r($results);
+			foreach($results as $row) {
+				$mail['to'] = $row->meta_value;
+				$result = rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
+				$result = $mail['to'] . ' ' . rsvpmaker_date( 'r' ).' '.$result;
+				$wpdb->query("update $postmeta SET meta_key='rsvpmail_sent' WHERE meta_id=$row->meta_id ");
+				$log .= $result."\n";
+				$limit--;
+			}
+		}	
+	}
+
 	do_action('rsvpmaker_relay_queue_log_message',$log);
 	return nl2br($log);
 }
@@ -929,9 +949,15 @@ function rsvpmaker_relay_queue_monitor () {
 
 	do_action('rsvpmaker_relay_queue_monitor');
 	global $wpdb;
+	if(isset($_GET['cancel'])) {
+		echo $sql = "DELETE FROM $wpdb->postmeta where post_id=".intval($_GET['cancel'])." AND meta_key='rsvprelay_to' ";
+		echo $result = $wpdb->query($sql);
+
+	}
 	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND (meta_key LIKE 'rsvpmail%' OR meta_key LIKE 'rsvprelay%') ORDER BY ID DESC";
 	$results = $wpdb->get_results($sql);
 	$was = 0;
+	$action = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_relay_queue_monitor&cancel=');
 	echo '<h2>In Queue / Sent</h2>';
 	if(empty($results))
 		echo '<p>none</p>';
@@ -940,9 +966,12 @@ function rsvpmaker_relay_queue_monitor () {
 	{
 		if($row->ID != $was)
 			printf('<h2>%s</h2>',$row->post_title);
-		if('rsvprelay_to' == $row->meta_key)
+		if('rsvprelay_to' == $row->meta_key) {
 			$row->meta_key ='<strong>'.$row->meta_key.'</strong>';
-		printf('<p>%s %s</p>',$row->meta_key, $row->meta_value);
+			printf('<p>%s %s <a href="%s%d">(cancel)</a></p>',$row->meta_key, $row->meta_value,$action,$row->ID);
+		}
+		else
+			printf('<p>%s %s</p>',$row->meta_key, $row->meta_value);
 		$was = $row->ID;
 	}
 
