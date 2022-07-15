@@ -1243,7 +1243,7 @@ rsvpmaker_admin_heading(__('Group Email','rsvpmaker'),__FUNCTION__,'group_email'
 <?php
 do_action('group_email_admin_notice');
 
-echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Designed to work with POP3 email accounts. Members can unsubscribe.','rsvpmaker').'</p>';
+echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Members can unsubscribe.','rsvpmaker').'</p>';
 
 $hooksays = wp_get_schedule('rsvpmaker_relay_init_hook');
 
@@ -1321,24 +1321,33 @@ if(is_plugin_active( 'wp-mailster/wp-mailster.php' ) )
 	echo '</div>';
 	}
 
-echo rsvpmaker_relay_get_pop('member');
-echo rsvpmaker_relay_get_pop('officer');
-echo rsvpmaker_relay_get_pop('extra');
-echo rsvpmaker_relay_get_pop('bot');
+$postmark = get_rsvpmaker_postmark_options();
+if($postmark['handle_incoming']) {
+echo '<p>Incoming messages are being handled through the Postmark integration.</a>';
+}
+else {
+	echo '<p>Configured to use POP3 servers for incoming messages.</p>';
+	echo rsvpmaker_relay_get_pop('member');
+	echo rsvpmaker_relay_get_pop('officer');
+	echo rsvpmaker_relay_get_pop('extra');
+	echo rsvpmaker_relay_get_pop('bot');
+}
 
 printf('<p><label>Activate</label> <input type="radio" name="rsvpmaker_discussion_active" value="1" %s /> Yes <input type="radio" name="rsvpmaker_discussion_active" value="0" %s /> No</p>',($active) ? ' checked="checked" ' : '',(!$active) ? ' checked="checked" ' : '');
 
+if(!$postmark['handle_incoming']) {
 printf('<p><label>Server</label> <input type="text" name="rsvpmaker_discussion_server" value="%s" /></p>',esc_attr($server));
-
 printf('<p><label>Queue Limit</label> <input type="text" name="rsvpmaker_email_queue_limit" value="%s" /></p>', $limit);
-
+}
 $member = get_option('rsvpmaker_discussion_member');
 if(empty($member))
 	$member = array('user' => '','password' => '','subject_prefix' => 'Members:'.get_option('blogname'), 'whitelist' => '', 'blocked' => '','additional_recipients' => '');
+
 print_group_list_options('member', $member);
 
 if(is_plugin_active( 'rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php' ))
 {
+
 	//officers section
 	$officer = get_option('rsvpmaker_discussion_officer');
 	if(empty($officer))
@@ -1352,12 +1361,16 @@ if(empty($extra))
 print_group_list_options('extra', $extra);
 echo '<p><em>'.__('Use for small custom distribution lists. Or use to forward an email you want to share to WordPress, then edit further with RSVP Mailer before sending.','rsvpmaker').'</em></p>';
 
+if($postmark['handle_incoming']) {
+	echo '<p>Postmark integration takes over the "bot" account function</p>';
+}
+else {
 $bot = get_option('rsvpmaker_discussion_bot');
 if(empty($bot))
 	$bot = array('user' => '','password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '','additional_recipients' => '');
 print_group_list_options('bot', $bot);
 echo '<p><em>'.__('Use for automations triggered by an email.','rsvpmaker').'</em></p>';
-
+}
 if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
 {
 ?>
@@ -1514,15 +1527,18 @@ function rsvpmaker_form_summary($fpost) {
 
 function print_group_list_options($list_type, $vars) {
 	printf('<h3>%s List</h3>',ucfirst($list_type));
+	$postmark = get_rsvpmaker_postmark_options();
 	$fields = array('user','password','subject_prefix','whitelist','blocked','additional_recipients');
+
 	foreach($fields as $field)
 		{
 			if(empty($vars[$field]))
 				$vars[$field] = '';
 		}
-	////print_r($vars);
-	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.esc_attr($list_type).'[user]" value="%s" /> </p>',__('Email/User','rsvpmaker'),esc_attr($vars["user"]));	
-	printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.esc_attr($list_type).'[password]" value="%s" /> </p>',__('Password','rsvpmaker'),esc_attr($vars["password"]));
+	if(!$postmark['handle_incoming']) {
+		printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.esc_attr($list_type).'[user]" value="%s" /> </p>',__('Email/User','rsvpmaker'),esc_attr($vars["user"]));	
+		printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.esc_attr($list_type).'[password]" value="%s" /> </p>',__('Password','rsvpmaker'),esc_attr($vars["password"]));	
+	}
 	if($list_type != 'bot') {
 		printf('<p><label>%s</label><br /><input type="text" name="rsvpmaker_discussion_'.esc_attr($list_type).'[subject_prefix]" value="%s" /> </p>',__('Subject Prefix','rsvpmaker'),esc_attr($vars["subject_prefix"]));
 		printf('<p><label>%s</label> <br /><textarea rows="3" cols="80" name="rsvpmaker_discussion_'.esc_attr($list_type).'[whitelist]">%s</textarea> </p>',__('Whitelist - additional allowed sender emails','rsvpmaker'),esc_attr($vars["whitelist"]));	

@@ -78,7 +78,8 @@ function rsvpmailer($mail, $description = '') {
 	if(!strpos($mail['html'],'rsvpmail_unsubscribe'))
 		$mail['html'] = str_replace('</html>',"\n<p>".sprintf('Unsubscribe from email notifications<br /><a href="%s">%s</a></p>',site_url('?rsvpmail_unsubscribe='.$mail['to']),site_url('?rsvpmail_unsubscribe='.$unsubscribe_email)).'</html>',$mail['html']);
 
-	if(!empty($rsvp_options['postmark_mode']) && 'production' == $rsvp_options['postmark_mode']) {
+	$postmark = get_rsvpmaker_postmark_options();
+	if('production' == $postmark['postmark_mode']) {
 		return rsvpmaker_postmark_send($mail);
 	}
 

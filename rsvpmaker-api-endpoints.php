@@ -1482,44 +1482,78 @@ class RSVPMaker_Confirmation_Code extends WP_REST_Controller {
 	}
 }
 
-class RSVPMaker_Email_Check extends WP_REST_Controller {
+class PostmarkIncoming extends WP_REST_Controller {
 
 	public function register_routes() {
-
-		$namespace = 'rsvpmaker/v1';
-		$path      = 'email_check';
-
-		register_rest_route(
-			$namespace,
-			'/' . $path,
-			array(
-
-				array(
-
-					'methods'             => array('POST','GET'),
-
-					'callback'            => array( $this, 'get_items' ),
-
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-
-				),
-
-			)
-		);
-
+	  $namespace = 'rsvpmaker/v1';
+	  $path = 'postmark_incoming/(?P<code>.+)';
+  
+	  register_rest_route( $namespace, '/' . $path, [
+		array(
+		  'methods'             => 'GET, POST, PUT, PATCH, DELETE',
+		  'callback'            => array( $this, 'get_items' ),
+		  'permission_callback' => array( $this, 'get_items_permissions_check' )
+			  ),
+		  ]);     
+	  }
+  
+	public function get_items_permissions_check($request) {
+		$postmark = get_rsvpmaker_postmark_options();
+		return (!empty($postmark['handle_incoming']) && $request['code'] == $postmark['handle_incoming']);
 	}
+  
+  public function get_items($request) {
+$opbusiness = false;
+$json = file_get_contents('php://input');
+$data = json_decode(trim($json));
+$toFull = $data->ToFull;
+$ccFull = $data->CcFull;
+$tolist = $cclist = $audience = array();
+foreach($toFull as $tf) {
+	$audience[] = $tf->Email;
+	$tolist[] = $tf->Email;
+	if(strpos($tf->Email,'p@') || strpos($tf->Email,'p-'))
+		$opbusiness = true;
+}
+foreach($ccFull as $cf) {
+	$audience[] = $cf->Email;
+	$cclist[] = $tf->Email;
+}
+$origin = 'Message originally From: '.$data->From.', To: '.implode(', ',$tolist);
+if(!empty($cclist))
+	$origin .= ', CC: '.implode(', ',$cclist);
+$origin = '<div style="border: medium solid gray; background-color:#fff; color: black; margin: 20px; padding: 10px;">Forwarded by the <a href="https://rsvpmaker.com">RSVPMaker</a> Mailer. '.$origin.'<br><br><br><br><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list</div>';
+$data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
+$mail['subject'] = $qpost['post_title'] = $data->Subject;
+$mail['html'] = $qpost['post_content'] = $data->HtmlBody;
+if(strpos($qpost['post_content'],'</head>'))
+{
+	$parts = explode('</head>',$qpost['post_content']);
+	$qpost['post_content'] = "<html>".$parts[1];
+	$head = $parts[0].'</head>';
+}
 
-	public function get_items_permissions_check( $request ) {
-		return true;
-	}
-
-	public function get_items( $request ) {
-	$html = rsvpmaker_relay_queue();
-	if ( empty( $html ) ) {
-		$html = rsvpmaker_relay_get_pop( 'bot' );
-	}
-	do_action('rspvmaker_relay_cron_check',$html);
-		return new WP_REST_Response( $html, 200 );
+$qpost['post_status'] = 'rsvpmessage';
+$qpost['post_type'] = 'rsvpemail';
+$post_id = wp_insert_post($qpost);
+add_post_meta($post_id,'_rsvpmail_html',$data->HtmlBody);
+if(!empty($head))
+	add_post_meta($post_id,'_rsvpmail_head',$head);
+add_post_meta($post_id,'rsvprelay_from',$data->From);
+add_post_meta($post_id,'rsvprelay_fromname',$data->FromName);
+add_post_meta($post_id,'rsvprelay_postmark_to',$data->ToFull);
+add_post_meta($post_id,'rsvprelay_postmark_cc',$data->CcFull);
+add_post_meta($post_id,'rsvprelay_postmark_audience',$audience);
+if('clubleads@toastmasters.org' == $data->From)
+	mail('david@carrcommunications.com','clubleads: postmark data received',var_export($data,true));
+if('david@carrcommunications.com' == $data->From)
+	mail('david@carrcommunications.com','test from me: '.$data->Subject,var_export($data,true));
+if(strpos($data->From,'toastmasters.org'))
+	mail('david@carrcommunications.com','toastmasters: '.$data->Subject,var_export($data,true));
+	//ob_start();
+rsvpmaker_postmark_incoming($audience,$data,$post_id);
+//mail('david@carrcommunications.com','postmark data processed',ob_get_clean());
+	return new WP_REST_Response($data, 200);
 	}
 }
 
@@ -1576,7 +1610,7 @@ add_action(
 		$pc->register_routes();
 		$conf = new RSVPMaker_Confirmation_Code();
 		$conf->register_routes();
-		$check = new RSVPMaker_Email_Check();
-		$check->register_routes();
+		$pi = new PostmarkIncoming();
+		$pi->register_routes();
 	}
 );

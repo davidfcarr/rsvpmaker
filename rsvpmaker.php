@@ -440,7 +440,7 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'script.php';
 	include $rsvpmaker_dir . 'rsvpmaker-money.php';
 	include $rsvpmaker_dir . 'rsvpmaker-ical.php';
-	include $rsvpmaker_dir . 'postmark/rsvpmaker-postmark.php';
+	include $rsvpmaker_dir . 'rsvpmaker-postmark.php';
 }
 
 $gateways = get_rsvpmaker_payment_options();
