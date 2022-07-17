@@ -132,6 +132,12 @@ function rsvpmaker_relay_init( $show = false ) {
 }
 
 function rsvpmaker_relay_queue() {
+	if(rsvpmaker_postmark_is_live()) {
+		echo '<p>queue off in favor of Postmark</p>';
+		return;
+	}
+	else 
+		echo '<p>queue active</p>';
 	global $wpdb, $post, $page, $pages;
 	$rsvpmaker_message_type = 'email_rule_group_email';
 	$limit = (int) get_option('rsvpmaker_email_queue_limit');
@@ -147,8 +153,6 @@ function rsvpmaker_relay_queue() {
 	$sql = "select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
 	//mail('david@carrcommunications.com','rsvpmaker_email_queue $sql',$sql);
 	$results = $wpdb->get_results($sql);
-	if(empty($results))
-		return;
 	foreach($results as $mail) {
 		$mail = (array) $mail;
 		$log .= $mail['subject'].": ".$mail["count"]."\n";
@@ -168,7 +172,7 @@ function rsvpmaker_relay_queue() {
 			if($h)
 				$mail['html'] = $h;
 			else {
-				$mail['html'] = do_blocks(do_shortcode($mail['html']));
+				$mail['html'] = rsvpmaker_email_html($mail['html']);
 				update_post_meta($epost_id,'_rsvpmail_html',$mail['html']);
 			}
 			$sql = "select * from $wpdb->postmeta WHERE meta_key!='_rsvpmail_html' AND meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=$epost_id";
@@ -217,6 +221,17 @@ function rsvpmaker_relay_queue() {
 				$limit--;
 			}
 		}	
+	}
+
+	//used with postmark integration
+	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
+	$batchrow = $wpdb->get_row($sql);
+	mail('david@carrcommunications.com',$sql.' '.var_export($batchrow,true));
+	if($batchrow) {
+		$recipients = unserialize($batchrow->meta_value);
+		rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
+		$wpdb->query("delete from $wpdb->postmeta where meta_id=$batchrow->meta_id");
+		$log .= sizeof($recipients)." added from batch\n";
 	}
 
 	do_action('rsvpmaker_relay_queue_log_message',$log);
@@ -907,6 +922,7 @@ function rsvpmaker_relay_duplicate( $message_id ) {
 }
 
 function rsvpmaker_qemail ($mail, $recipients) {
+	$recipients = rsvpmaker_recipients_no_problems($recipients);
 	global $current_user;
 	if(is_multisite()) // send through root blog
 		switch_to_blog(1);
@@ -935,18 +951,21 @@ function rsvpmaker_qemail ($mail, $recipients) {
 		add_post_meta($post_id,'rsvprelay_from',$from);
 		if(empty($fromname))
 			$fromname = $from;
-		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
-		foreach($recipients as $email)
-			add_post_meta($post_id,'rsvprelay_to',$email);
-		//for debugging
-		//add_post_meta($post_id,'imap_body',imap_body($mail,$n));
 		if(!empty($_html))
 			add_post_meta($post_id,'_rsvpmail_html',$_html);
+		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
+		if(rsvpmaker_postmark_is_active()) {
+			rsvpmaker_postmark_broadcast($recipients,$post_id);
+		}
+		else {
+			foreach($recipients as $email)
+				add_post_meta($post_id,'rsvprelay_to',$email);
+		}
 		$mail['html'] = 'hidden';
-		rsvpmaker_debug_log($mail,'rsvpmaker_qemail_mail_array');
-		rsvpmaker_debug_log($recipients,'rsvpmaker_qemail_recipients_added');
+		//rsvpmaker_debug_log($mail,'rsvpmaker_qemail_mail_array');
+		//rsvpmaker_debug_log($recipients,'rsvpmaker_qemail_recipients_added');
 	}
-	rsvpmaker_debug_log($post_id,'rsvpmaker_qemail_insert_post_result');
+	//rsvpmaker_debug_log($post_id,'rsvpmaker_qemail_insert_post_result');
 	if(is_multisite())
 		restore_current_blog();
 }
@@ -1112,9 +1131,36 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 
 add_shortcode('hosts_and_subs_test','hosts_and_subs_test');
 
+function rsvpmaker_expand_recipients($email) {
+	global $expand_done;
+	if($expand_done)
+		return $email;// don't get caught in loops
+	$expand_done = true;
+    $emailparts = explode('@',$email);
+	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
+    if(in_array($emailparts[1],$hosts_and_subdomains) || ($emailparts[1]==$hosts_and_subdomains['basedomain']))
+    {
+        $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
+        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);    
+    }
+    if($recipients)
+        return $recipients;
+    else
+        return $email;
+}
+
 function rsvpmaker_recipients_no_problems($recipients) {
-    foreach($recipients as $recipient)
-        if(!rsvpmail_is_problem($recipient))
-            $cleanrecipients[] = $recipient;
+	$additional_recipients = $cleanrecipients = array();
+    foreach($recipients as $email) {
+		$email = rsvpmaker_expand_recipients($email);
+		if(is_array($email))
+			$additional_recipients = array_merge($email,$additional_recipients);
+	}
+	if(!empty($additional_recipients))
+		$recipients = array_merge($recipients,$additional_recipients);
+	foreach($recipients as $email) {
+		if(!rsvpmail_is_problem($email) && !in_array($email,$cleanrecipients))
+			$cleanrecipients[] = $email;	
+	}
     return $cleanrecipients;
 }

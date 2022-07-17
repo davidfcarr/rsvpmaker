@@ -17,6 +17,7 @@ class RSVPMakerGetOrder
         global $current_user;
         $client = RSVPMakerPayPalClient::client();
         $response = $client->execute(new OrdersGetRequest($orderId));
+        if($response)
         {
             $rsvp_id = (empty($_GET['rsvp'])) ? 0 : intval($_GET['rsvp']);
             $event = (empty($_GET['event'])) ? 0 : intval($_GET['event']);

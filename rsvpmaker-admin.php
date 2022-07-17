@@ -2591,15 +2591,13 @@ function rsvp_get_confirm($post_id, $return_post = false) {
 		}			
 		if(!strpos($conf_post->post_content,'!-- /wp'))//if it's not Gutenberg content
 			$conf_post->post_content = wpautop($conf_post->post_content);
-		if(function_exists('do_blocks'))
-			$conf_post->post_content = do_blocks($conf_post->post_content);
+		$conf_post->post_content = do_blocks($conf_post->post_content);
 		$title = (!empty($post->post_title)) ? $post->post_title : 'not set';
 		$context = (is_admin()) ? 'admin' : 'not admin';
 		$log = sprintf('retrieve conf post ID %s for %s %s',$id,$title,$context);
 	}
 	else {
-		if(function_exists('do_blocks'))
-			$content = wp_kses_post(rsvpautog($content));
+		$content = wp_kses_post(rsvpautog($content));
 		$conf_post = array('post_title'=>'Confirmation:'.$post_id, 'post_content'=>$content,'post_type' => 'rsvpemail','post_status' => 'publish','post_parent' => $post_id);
 		$conf_post['ID'] = $id = wp_insert_post($conf_post);
 		$conf_post = (object) $conf_post;
@@ -2642,8 +2640,7 @@ function rsvp_get_reminder($post_id,$hours) {
 	$conf_post = get_post($reminder_id);
 	if(empty($conf_post))
 		return;
-	if(function_exists('do_blocks'))
-		$conf_post->post_content = do_blocks($conf_post->post_content);
+	$conf_post->post_content = rsvpmaker_email_html($conf_post->post_content);
 	return $conf_post;
 }
 
@@ -3693,7 +3690,7 @@ if ( $terms && ! is_wp_error( $terms ) ) {
 wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
 
 	} // if terms
-rsvpmaker_debug_log($log,'rsvpmaker_copy_metadata');
+//rsvpmaker_debug_log($log,'rsvpmaker_copy_metadata');
 }
 
 function rsvpmaker_deadline_from_template($target_id,$deadlinedays,$deadlinehours) {
@@ -4864,7 +4861,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 		<input type="hidden" name="page" value="rsvpmaker_template_list">
 		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(__('Create/Update','rsvpmaker')));
 	}
-	rsvpmaker_debug_log(memory_get_peak_usage(),'peak memory used');
+	//rsvpmaker_debug_log(memory_get_peak_usage(),'peak memory used');
 }
 
 function rsvpmaker_setup_post ($ajax = false) {

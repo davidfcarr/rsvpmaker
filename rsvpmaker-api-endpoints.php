@@ -491,7 +491,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 				$message_post = get_post( $message_id );
 
-				$vars['payment_confirmation_message'] = do_blocks( $message_post->post_content );
+				$vars['payment_confirmation_message'] = rsvpmaker_email_html( $message_post->post_content );
 
 			}
 

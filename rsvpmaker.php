@@ -1113,7 +1113,7 @@ function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 
 
 	$log = sprintf( '%s amount: %s rsvp_id: %s event: %s, tx: %s', $method, $paid, $rsvp_id, $event, $tx_id = 0 );
 
-	rsvpmaker_debug_log( $log );
+	//rsvpmaker_debug_log( $log );
 
 }
 

@@ -19,7 +19,7 @@ function rsvpmaker_rest_array() {
 
 function rsvpmaker_admin_enqueue( $hook ) {
 	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
-	rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');
+	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');
 	if($rsvpmailer_editor_stylesheet)
 		wp_enqueue_style( 'rsvpmaker_editor_style', $rsvpmailer_editor_stylesheet, array(), time(), true );
 	if(is_network_admin())

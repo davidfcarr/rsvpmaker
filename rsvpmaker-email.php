@@ -19,8 +19,8 @@ function rsvpmailer($mail, $description = '') {
 		$problem = false;
 	if($problem) {
 		$mail['html'] = '[content omitted]';
-		rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to email: '.$problem);
-		rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
+		//rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to email: '.$problem);
+		//rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
 		return $mail['to'].' not sent - '.$problem;
 	}
 	if(isset($mail['message_type'])) {
@@ -79,7 +79,7 @@ function rsvpmailer($mail, $description = '') {
 		$mail['html'] = str_replace('</html>',"\n<p>".sprintf('Unsubscribe from email notifications<br /><a href="%s">%s</a></p>',site_url('?rsvpmail_unsubscribe='.$mail['to']),site_url('?rsvpmail_unsubscribe='.$unsubscribe_email)).'</html>',$mail['html']);
 
 	$postmark = get_rsvpmaker_postmark_options();
-	if('production' == $postmark['postmark_mode']) {
+	if(rsvpmaker_postmark_is_active()) {
 		return rsvpmaker_postmark_send($mail);
 	}
 
@@ -268,7 +268,7 @@ function rsvpemail_error_log($errors,$mail = array()) {
 		return;
 	$mail['html'] = $mail['text'] = '';
 	$errors .= ' '.date('r').' '.var_export($mail,true);
-	rsvpmaker_debug_log($errors,'rsvpmail_error_log');
+	//rsvpmaker_debug_log($errors,'rsvpmail_error_log');
 	if(!empty($mail['post_id']))
 		add_post_meta($mail['post_id'],'rsvpmail_error_log',$errors);
 }
@@ -867,7 +867,7 @@ if($chosen)
 
 <?php
 if(isset($post->post_content)) {
-	echo do_blocks($post->post_content);
+	echo rsvpmaker_email_html($post);
 }
 
 }
@@ -1485,8 +1485,6 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	if(!empty($recipients)) {
 		if(!empty($rsvp_options['postmark_mode'])) {
 			printf('<p>Trying Postmark: %s</p>',$rsvp_options['postmark_mode']);
-			$chunks = array_chunk($recipients,500);
-			$recipients = array_shift($chunks);
 			rsvpmaker_postmark_broadcast($recipients,$post_id);
 			add_post_meta($post_id,'rsvprelay_sending',$recipients);
 			if(!empty($chunks))
@@ -1971,14 +1969,13 @@ $welcome = get_option('rsvpmaker_guest_email_welcome');
 if($welcome)
 {
 	$welcome_post = get_post($welcome);
-	printf('<p>Current welcome message</p><div id="currentwelcome"  class="currentdefault" >%s</div>','<p><a href="'.admin_url("post.php?post=$welcome&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmail_filter_style(do_blocks($welcome_post->post_content)));
+	printf('<p>Current welcome message</p><div id="currentwelcome"  class="currentdefault" >%s</div>','<p><a href="'.admin_url("post.php?post=$welcome&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmaker_email_html($welcome_post));
 }
 
 $candidates = rsvpmail_candidate_templates(true);
 foreach($candidates as $candidate) {
-	printf('<p>Alternate template %s</p><div  class="currentdefault" >%s</div>',$candidate->post_title,'<p><a href="'.admin_url("post.php?post=$candidate->ID&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmail_filter_style(do_blocks($candidate->post_content)));
+	printf('<p>Alternate template %s</p><div  class="currentdefault" >%s</div>',$candidate->post_title,'<p><a href="'.admin_url("post.php?post=$candidate->ID&action=edit").'">'.__('Edit','rsvpmaker').'</p>'.rsvpmaker_email_html($candidate));
 }
-
 
 $custom_style_array = array();
 if(isset($_POST['rsvpmaker_email_base_font'])) {
@@ -2612,9 +2609,7 @@ global $rsvp_options;
 <div class="footer"><!-- footer --></div>
 <?php 
 $content = ob_get_clean();
-if(function_exists('do_blocks'))
-	$content = do_blocks($content);
-$content = str_replace('<img ','<img style="display: block; max-width: 90%;" ',$content);
+$content = rsvpmaker_email_html($content);
 return $content;
 }
 
@@ -2664,7 +2659,7 @@ function event_to_embed($post_id, $event_post = NULL, $context = '') {
 <p><strong>%s</strong></p>
 <!-- /wp:paragraph -->',$dateblock).$tmlogin;			
 		}
-		$event_embed["content"] .= do_blocks(do_shortcode($event_post->post_content));
+		$event_embed["content"] .= rsvpmaker_email_html($event_post->post_content);
 		if(get_rsvpmaker_meta($post_id,'_rsvp_on',true))
 		{
 		if(get_post_meta($post_id,'_rsvp_count',true))
@@ -2677,7 +2672,7 @@ function event_to_embed($post_id, $event_post = NULL, $context = '') {
 		}
 		$post = $backup;
 		if(function_exists('do_blocks')){
-			$event_embed["content"] = do_blocks($event_embed["content"]);			
+			$event_embed["content"] = rsvpmaker_email_html($event_embed["content"]);			
 		}
 		else 
 		$event_embed["content"] = wpautop($event_embed["content"]);
@@ -2982,7 +2977,7 @@ foreach($template_forms as $slug => $form)
 		$example = str_replace('['.$field.']',$value,$example);
 	
 	$example = wpautop($example);
-	echo do_blocks(do_shortcode($example));
+	echo rsvpmaker_email_html($example);
 	}
 	echo '</div>';//end border
 
@@ -3075,7 +3070,7 @@ foreach($rsvpdata as $field => $value)
 $notification_body = $templates['notification']['body']; 
 foreach($rsvpdata as $field => $value)
 	$notification_body = str_replace('['.$field.']',$value,$notification_body);
-	$notification_body = do_blocks(do_shortcode($notification_body));
+	$notification_body = rsvpmaker_email_html($notification_body);
 
 	$rsvp_to_array = explode(",", $rsvp_to);
 	$rsvp_to_array = apply_filters('rsvp_to_array',$rsvp_to_array);
@@ -3103,7 +3098,7 @@ $confirmation_body = $templates['confirmation']['body'];
 foreach($rsvpdata as $field => $value)
 	$confirmation_body = str_replace('['.$field.']',$value,$confirmation_body);
 	
-	$confirmation_body = do_blocks(do_shortcode($confirmation_body));	
+	$confirmation_body = rsvpmaker_email_html($confirmation_body);	
 	$mail["html"] = wpautop($confirmation_body);
 	if(isset($post->ID)) // not for replay
 	$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"]);
@@ -3151,7 +3146,7 @@ $url = add_query_arg('e',$rsvp['email'],$url);
 
 $notification_body = str_replace('[rsvpupdate]',sprintf('<a href="%s">Complete Registration</a>',$url),$notification_body);
 	
-$notification_body = do_blocks(do_shortcode($notification_body)).'<p>after shortcode and blocks</p>';
+$notification_body = rsvpmaker_email_html($notification_body).'<p>after shortcode and blocks</p>';
 $mail["to"] = $rsvp['email'];
 if(!empty($rsvp['first']))
 	$mail['toname'] = $rsvp['first'].' '.$rsvp['last'];
@@ -3195,13 +3190,13 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	if($message_id)
 	{
 	  $message_post = get_post($message_id);
-	  $rsvpdata['rsvpmessage'] .= do_blocks($message_post->post_content)."\n\n";
+	  $rsvpdata['rsvpmessage'] .= rsvpmaker_email_html($message_post->post_content)."\n\n";
 	}
 	$message_id = get_post_meta($post->ID,'payment_confirmation_message',true);
 	if($message_id)
 	{
 	  $message_post = get_post($message_id);
-	  $rsvpdata['rsvpmessage'] .= do_blocks($message_post->post_content);
+	  $rsvpdata['rsvpmessage'] .= rsvpmaker_email_html($message_post->post_content);
 	}
 
 	$notification_subject = $templates['confirmation_after_payment']['subject'];
@@ -3218,7 +3213,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	$url = add_query_arg('e',$rsvp['email'],$url);
 	
 	$notification_body = str_replace('[rsvpupdate]',sprintf('<a href="%s">Complete Registration</a>',$url),$notification_body);	
-	$notification_body = do_blocks(do_shortcode($notification_body));
+	$notification_body = rsvpmaker_email_html($notification_body);
 
 	$mail["to"] = $rsvp['email'];
 	if(!empty($rsvp['first']))
@@ -4289,24 +4284,16 @@ function rsvpmaker_guest_email_welcome($email) {
 	$welcome_id = get_option('rsvpmaker_guest_email_welcome');
 	if(!$welcome_id || !get_option('rsvpmaker_guest_list_active') || rsvpmaker_on_guest_email_list($email))
 		return;
-	$post = get_post($welcome_id);
+	$wpost = get_post($welcome_id);
 	//rsvpmaker_debug_log($post,'welcome_post');
-	if(!$post)
+	if(!$wpost)
 		return;
 	$mail['to'] = $email;
 	$mail['from'] = get_bloginfo('admin_email');	
 	$mail['fromname'] = get_bloginfo('name');
-	$mail['subject'] = $post->post_title;
-	rsvpmaker_debug_log($post->post_content,'welcome post content');
-	$content = do_blocks($post->post_content);
-	rsvpmaker_debug_log($content,'welcome post after do blocks');
-	$mail['html'] = rsvpmail_filter_style($content);
-	rsvpmaker_debug_log($mail['html'],'welcome post email body');
-	//rsvpmaker_debug_log($mail,'welcome_post email'); get_the_content(null, false, $welcome_id); //
+	$mail['subject'] = $wpost->post_title;
+	$mail['html'] = rsvpmaker_email_html($wpost->post_content);
 	$result = rsvpmailer($mail);
-	//rsvpmaker_debug_log($result,'welcome_post result');
-	wp_reset_query();
-	wp_reset_postdata();
 }
 
 function rsvpmaker_on_guest_email_list($email, $checkuserlist = true) {
@@ -4513,8 +4500,8 @@ function rsvpmail_latest_posts_notification($new_status, $old_status, $post ) {
 		if(isset($meta['_rsvpmail_html'][0]))
 			$html = $meta['_rsvpmail_html'][0];
 		else {
-			$html = rsvpmail_filter_style(do_blocks(do_shortcode($mpost->post_content)));
-			update_post_meta($post_id,'_rsvpmail_html',$html);
+			$html = rsvpmaker_email_html($mpost->post_content);
+			update_post_meta($promo_id,'_rsvpmail_html',$html);
 		}	
 		$mail['to'] = $mail['from'] = get_bloginfo('admin_email');
 		$mail['subject'] = 'New post promo: '.$post->post_title;
@@ -4552,7 +4539,7 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 		$html = $post_or_html;
 	if(strpos($html,'<-- wp:paragraph'))
 		$html = do_blocks($html);
-	if(strpos($html,'['))
+	if(strpos($html,']'))
 		$html = do_shortcode($html);
 	if(strpos($html,'youtu'))
 		$html = rsvpmaker_youtube_email($html);

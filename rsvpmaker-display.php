@@ -487,7 +487,7 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		}
 	}
 
-	add_filter( 'query', 'rsvpmaker_query_debug' );
+	//add_filter( 'query', 'rsvpmaker_query_debug' );
 
 	$queryarg = array(
 		'post_type'   => 'rsvpmaker',

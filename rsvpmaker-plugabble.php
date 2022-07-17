@@ -2151,7 +2151,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				if ( $duplicate_check ) {
 
-					rsvpmaker_debug_log( $rsvp, 'duplicate check' );
+					//rsvpmaker_debug_log( $rsvp, 'duplicate check' );
 
 					$rsvp_id = $duplicate_check;
 
@@ -4569,7 +4569,7 @@ function admin_edit_rsvp( $id, $event ) {
 															}
 														}
 
-														echo do_blocks( do_shortcode( $form ) );
+														echo rsvpmaker_email_html( $form );
 
 														printf( '<input type="hidden" name="rsvp_id" id="rsvp_id" value="%d" /><input type="hidden" id="event" name="event" value="%d" />%s<p><button>Submit</button></p></form>', $id, $event, rsvpmaker_nonce('query') );
 

@@ -5,6 +5,7 @@ use Postmark\PostmarkClient;
 use Postmark\Models\PostmarkException;
 
 function get_rsvpmaker_postmark_options() {
+    global $postmark;
     if(is_multisite())
         $postmark = get_blog_option(1,'rsvpmaker_postmark');
     else
@@ -12,6 +13,21 @@ function get_rsvpmaker_postmark_options() {
     if(empty($postmark))
         $postmark['postmark_mode'] = '';
     return $postmark;
+}
+
+function rsvpmaker_postmark_is_live() {
+    global $postmark;
+    //if(empty($postmark))
+        $postmark = get_rsvpmaker_postmark_options();
+    print_r($postmark);
+    return (!empty($postmark['postmark_production_key']) && 'production' == $postmark['postmark_mode']);
+}
+
+function rsvpmaker_postmark_is_active() {
+    global $postmark;
+    if(empty($postmark))
+        $postmark = get_rsvpmaker_postmark_options();
+    return ((!empty($postmark['postmark_production_key']) && 'production' == $postmark['postmark_mode']) || (!empty($postmark['postmark_sandbox_key']) && 'sandbox' == $postmark['postmark_mode']));
 }
 
 function rsvpmaker_postmark_testscreen() {
@@ -32,20 +48,24 @@ function rsvpmaker_postmark_testscreen() {
         $postmark = get_rsvpmaker_postmark_options();
         printf('<p>Get postmark options %s</p>',var_export($postmark,true));
     }
-
-    if(empty($postmark['postmark_mode']))
-    {
+    if(empty($postmark['postmark_domain']))
         $postmark['postmark_domain'] = $domain = str_replace('www.','',$_SERVER['SERVER_NAME']);
-        $postmark['postmark_mode'] = '';
-        $postmark['postmark_sandbox_key'] = '';
-        $postmark['postmark_production_key'] = '';
-        $postmark['postmark_tx_from'] = 'headsup@'.$domain;
-        $postmark['postmark_broadcast_from'] = 'shoutout@'.$domain;
-        $postmark['postmark_tx_slug'] = 'outbound';
-        $postmark['postmark_broadcast_slug'] = 'broadcast';
-        $postmark['handle_incoming'] = '';
-    }
-    echo 'mode'.$postmark['postmark_mode'];
+        if(empty($postmark['postmark_mode']))
+            $postmark['postmark_mode'] = '';
+        if(empty($postmark['postmark_sandbox_key']))
+            $postmark['postmark_sandbox_key'] = '';
+        if(empty($postmark['postmark_production_key']))
+            $postmark['postmark_production_key'] = '';
+        if(empty($postmark['postmark_tx_from']))
+            $postmark['postmark_tx_from'] = 'headsup@'.$domain;
+        if(empty($postmark['postmark_broadcast_from']))
+            $postmark['postmark_broadcast_from'] = 'shoutout@'.$domain;
+        if(empty($postmark['postmark_tx_slug']))
+            $postmark['postmark_tx_slug'] = 'outbound';
+        if(empty($postmark['postmark_broadcast_slug']))
+            $postmark['postmark_broadcast_slug'] = 'broadcast';
+        if(empty($postmark['handle_incoming']))
+            $postmark['handle_incoming'] = '';
     printf('<form method="post" action="%s">',admin_url('admin.php?page='.$_GET['page']));
     echo '<h3>Postmark Mode</h3>';
     $checked = (empty($postmark['postmark_mode'])) ? ' checked="checked" ' : '';
@@ -63,53 +83,6 @@ function rsvpmaker_postmark_testscreen() {
     printf('<p>Handle Incoming Webhook: <input type="radio" name="handle_incoming" value="%s" %s> Yes <input type="radio" name="handle_incoming" value="" %s> No<br>Webhook address to register in Postmark %s</p>',$code,$ckyes, $ckno,$url);
     rsvpmaker_nonce();
     echo '<button>Submit</button></form>';
-
-    if(isset($_GET['test'])) {
-        $users = get_users();
-        foreach($users as $user) {
-            $recipients[] = $user->user_email;
-            $recipient_names[$user->user_email] = $user->display_name;
-        }
-        $post_id = 123115;
-        rsvpmaker_postmark_broadcast($recipients,$post_id,'broadcast',$recipient_names);
-    }
-
-    if(isset($_GET['guest'])) {
-        $table = rsvpmaker_guest_list_table();
-        $guests = $wpdb->get_results("select * from $table WHERE active");
-        echo ' guests ';
-        print_r($guests);
-        $post_id = 123588;
-        foreach($guests as $guest) {
-            if(rsvpmail_is_problem($guest->email))
-                continue;
-            $recipients[] = $guest->email;
-            $recipient_names[$guest->email] = $guest->first_name.' '.$guest->last_name;
-        }
-        rsvpmaker_postmark_broadcast($recipients,$post_id,'broadcast',$recipient_names);
-    }
-    if(isset($_GET['latest'])) {
-        $table = rsvpmaker_guest_list_table();
-        $guests = $wpdb->get_results("select * from $table WHERE active");
-        echo ' guests ';
-        print_r($guests);
-        $post_id = rsvpmail_latest_post_promo();
-        foreach($guests as $guest) {
-            if(rsvpmail_is_problem($guest->email))
-                continue;
-            $recipients[] = $guest->email;
-            $recipient_names[$guest->email] = $guest->first_name.' '.$guest->last_name;
-        }
-        rsvpmaker_postmark_broadcast($recipients,$post_id,'broadcast',$recipient_names);
-    }
-    if(isset($_GET['tx'])) {
-        $mail['to'] = 'david@rsvpmaker.com';
-        $mail['from'] = 'david@rsvpmaker.com';
-        $mail['subject'] = 'TX email test';
-        $mail['html'] = '<h1>Wow</h1>';
-        echo $result = rsvpmaker_postmark_send($mail);
-    }
-
 }
 
 function rsvpmaker_postmark_menu() {
@@ -118,6 +91,18 @@ function rsvpmaker_postmark_menu() {
 add_action('admin_menu','rsvpmaker_postmark_menu');
 
 function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$recipient_names=array()) {
+    global $wpdb;
+    $recipients = rsvpmaker_recipients_no_problems($recipients);
+    if(sizeof($recipients) > 201) {
+        $chunks = array_chunk($recipients,200);
+        echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
+        rsvpmaker_debug_log($log,'broadcast recipient chunks');
+        $recipients = array_shift($chunks);
+        foreach($chunks as $chunk) {
+            add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
+        }    
+    }
+
     $postmark = get_rsvpmaker_postmark_options();
     $postmark_key = ('production' == $postmark['postmark_mode']) ? $postmark['postmark_production_key'] : $postmark['postmark_sandbox_key'];
     if(empty($message_stream))
@@ -127,7 +112,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(isset($meta['_rsvpmail_html'][0]))
         $html = $meta['_rsvpmail_html'][0];
     else {
-        $html = rsvpmaker_email_html($mpost,$post_id);//rsvpmail_filter_style(do_blocks(do_shortcode($mpost->post_content)));
+        $html = rsvpmaker_email_html($mpost,$post_id);
         update_post_meta($post_id,'_rsvpmail_html',$html);
     }
     $html = rsvpmail_replace_placeholders($html);
@@ -149,6 +134,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $mail['HtmlBody'] = str_replace('*|EMAIL|*',$to,$html);
         $mail['TextBody'] = str_replace('*|EMAIL|*',$to,$text);
         $batch[] = $mail;
+        $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
     
     $responses = $client->sendEmailBatch($batch);
@@ -162,10 +148,11 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         else
             $sent[] = $response->to;
     }
-    if(count($send_error)) {
-        printf('<p>Successful sends %d</p>',count($sent));
+    if(count($sent)) {
+        do_action('postmark_sent',$sent);
+        printf('<p>Successful sends %d ending with %s</p>',count($sent),$sent[sizeof($sent)-1]);
         foreach($sent as $e) {
-            add_post_meta($post_id,'rsvpmail_sent',$e);
+            add_post_meta($post_id,'rsvpmail_sent_postmark',$e);
         }
     }
     if(count($send_error)) {
@@ -177,9 +164,23 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
 }
 
 function rsvpmaker_postmark_send($mail) {
+    global $wpdb;
     $postmark = get_rsvpmaker_postmark_options();
     $postmark_key = ('production' == $postmark['postmark_mode']) ? $postmark['postmark_production_key'] : $postmark['postmark_sandbox_key'];
     $message_stream = 'outbound';
+    $post_id = empty($mail['post_id']) ? 0 : $mail['post_id'];
+    $recipients = rsvpmaker_expand_recipients($mail['to']);
+    if(is_array($recipients) && !empty($recipients)) {
+        if($post_id)
+            $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '".$mail['to']."' AND post_id=$post_id ");
+        $recipients = rsvpmaker_recipients_no_problems($recipients);
+        $output = '';
+        foreach($recipients as $to) {
+            $mail['to'] = $to;
+            $output .= ' '.rsvpmaker_postmark_send($mail);
+        }
+        return $output;
+    }
     try {
         $client = new PostmarkClient($postmark_key);
         $result = $client->sendEmail($postmark['postmark_tx_from'], $mail['to'], $mail['subject'], $mail['html']);    
@@ -188,20 +189,30 @@ function rsvpmaker_postmark_send($mail) {
         $result = $e;
         //print_r($e);
     }
+    if($post_id)
+        $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '".$mail['to']."' AND post_id=$post_id ");
+    do_action('postmark_sent',array($mail['to']));
     return var_export($result,true);
 }
 
+
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
+    if('david@carrcommunications.com' == $emailobj->From && 'stop' == $emailobj->Subject) {
+        $postmark = get_rsvpmaker_postmark_options();
+        $postmark['postmark_mode'] = '';
+        update_blog_option(1,'rsvpmaker_postmark',$postmark);
+        mail('david@carrcommunications.com','postmark deactivated',date('r'));
+    }
 	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
 	foreach($forwarders as $email) {
 		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
 	    //actions like auto-replies
         //do_action('rsvpmail_relay_slug_and_id',$slug_and_id,$email,$emailobj);
-        rsvpmaker_debug_log($email,'incoming email');
-        rsvpmaker_debug_log($slug_and_id,'incoming slug and id');
+        //rsvpmaker_debug_log($email,'incoming email');
+        //rsvpmaker_debug_log($slug_and_id,'incoming slug and id');
         if(!empty($slug_and_id)) {
             $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
-            rsvpmaker_debug_log($recipients,'incoming recpients');
+            //rsvpmaker_debug_log($recipients,'incoming recpients');
             if($recipients) {
                 $recipient_names = get_transient('recipient_names_'.$slug_and_id['slug']);
                 if(empty($recipient_names))
@@ -216,9 +227,11 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
 
 function rsvpmail_postmark_forward($recipients,$emailobj,$post_id,$recipient_names=array(),$forwarder='')
 {
+    global $wpdb;
+    $recipients = rsvpmaker_recipients_no_problems($recipients);
     $postmark = get_rsvpmaker_postmark_options();
     $postmark_key = ('production' == $postmark['postmark_mode']) ? $postmark['postmark_production_key'] : $postmark['postmark_sandbox_key'];
-    $message_stream = (sizeof($recipients) > 5) ? $postmark['postmark_broadcast_slug'] : $postmark['postmark_tx_slug'];
+    $message_stream = $postmark['postmark_broadcast_slug'];
     $mail['MessageStream'] = $message_stream;
     $mail['From'] = ($message_stream == $postmark['postmark_tx_slug']) ? $postmark['postmark_tx_from'] : $postmark['postmark_broadcast_from'];
     if(!empty($emailobj->FromName))
@@ -229,7 +242,7 @@ function rsvpmail_postmark_forward($recipients,$emailobj,$post_id,$recipient_nam
     }
     $mail['ReplyTo'] = $emailobj->From;
     $mail['Subject'] = $emailobj->Subject;
-    rsvpmaker_debug_log($mail,'rsvpmail_postmark_forward');
+    //rsvpmaker_debug_log($mail,'rsvpmail_postmark_forward');
     $client = new PostmarkClient($postmark_key);
 
     foreach($recipients as $to) {
@@ -254,9 +267,12 @@ function rsvpmail_postmark_forward($recipients,$emailobj,$post_id,$recipient_nam
             $sent[] = $response->to;
     }
     if(count($sent)) {
+        do_action('postmark_sent',$sent);
         printf('<p>Successful sends %d</p>',count($sent));
         foreach($sent as $e) {
-            add_post_meta($post_id,'rsvpmail_sent',$e);
+            if($post_id)
+                $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '".$e."' AND post_id=$post_id ");
+            add_post_meta($post_id,'rsvpmail_sent_by_postmark',$e);
         }
     }
     if(count($send_error)) {
