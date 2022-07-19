@@ -1520,9 +1520,10 @@ foreach($ccFull as $cf) {
 	$cclist[] = $tf->Email;
 }
 $origin = 'Message originally From: '.$data->From.', To: '.implode(', ',$tolist);
+$origin .= ' (<a href="mailto:'.implode(',',$tolist).'?subject='.$data->Subject.'">Reply</a>)';
 if(!empty($cclist))
 	$origin .= ', CC: '.implode(', ',$cclist);
-$origin = '<div style="border: medium solid gray; background-color:#fff; color: black; margin: 20px; padding: 10px;">Forwarded by the <a href="https://rsvpmaker.com">RSVPMaker</a> Mailer. '.$origin.'<br><br><br><br><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list</div>';
+$origin = '<div style="background-color:#fff; color: black; margin-top: 20px; padding: 10px;">Forwarded by the <a href="https://rsvpmaker.com">RSVPMaker</a> Mailer. '.$origin.'<br><br><br><br><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|*</div>';
 $data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
 $mail['subject'] = $qpost['post_title'] = $data->Subject;
 $mail['html'] = $qpost['post_content'] = $data->HtmlBody;
@@ -1536,6 +1537,7 @@ if(strpos($qpost['post_content'],'</head>'))
 $qpost['post_status'] = 'rsvpmessage';
 $qpost['post_type'] = 'rsvpemail';
 $post_id = wp_insert_post($qpost);
+$data->post_id = $post_id;
 add_post_meta($post_id,'_rsvpmail_html',$data->HtmlBody);
 if(!empty($head))
 	add_post_meta($post_id,'_rsvpmail_head',$head);
@@ -1544,15 +1546,11 @@ add_post_meta($post_id,'rsvprelay_fromname',$data->FromName);
 add_post_meta($post_id,'rsvprelay_postmark_to',$data->ToFull);
 add_post_meta($post_id,'rsvprelay_postmark_cc',$data->CcFull);
 add_post_meta($post_id,'rsvprelay_postmark_audience',$audience);
-if('clubleads@toastmasters.org' == $data->From)
-	mail('david@carrcommunications.com','clubleads: postmark data received',var_export($data,true));
-if('david@carrcommunications.com' == $data->From)
-	mail('david@carrcommunications.com','test from me: '.$data->Subject,var_export($data,true));
 if(strpos($data->From,'toastmasters.org'))
 	mail('david@carrcommunications.com','toastmasters: '.$data->Subject,var_export($data,true));
 	//ob_start();
 rsvpmaker_postmark_incoming($audience,$data,$post_id);
-//mail('david@carrcommunications.com','postmark data processed',ob_get_clean());
+do_action('postmark_incoming_email_object',$data,$json);
 	return new WP_REST_Response($data, 200);
 	}
 }

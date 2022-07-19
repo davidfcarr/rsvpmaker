@@ -4441,7 +4441,7 @@ function rsvpmaker_queue_post_type() {
 }
 
 function rsvpmaker_email_add_name($email,$name) {
-	if(empty($name))
+	if(empty($name) || strpos($email,'<')  || strpos($email,'"'))
 		return $email;
 	return "\"".addslashes($name)."\" <".$email.">";
 }
@@ -4494,6 +4494,9 @@ function rsvpmail_latest_post_promo() {
 
 function rsvpmail_latest_posts_notification($new_status, $old_status, $post ) {
 	if($new_status != $old_status && 'publish' == $new_status && 'post' == $post->post_type) {
+		$on = get_option('rsvpmaker_new_post_promos');
+		if(!$on)
+			return;
 		$promo_id = rsvpmail_latest_post_promo();
 		$mpost = get_post($promo_id);
 		$meta = get_post_meta($promo_id);

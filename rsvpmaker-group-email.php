@@ -203,7 +203,7 @@ function rsvpmaker_relay_queue() {
 		}
 	}
 
-	if($limit) {
+	if($limit && !empty($broadcasts)) {
 		foreach($broadcasts as $epost_id => $mail) {
 			$log .= $mail['subject'] . " broadcast\n";
 			if($limit < 1)
@@ -226,7 +226,6 @@ function rsvpmaker_relay_queue() {
 	//used with postmark integration
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
 	$batchrow = $wpdb->get_row($sql);
-	mail('david@carrcommunications.com',$sql.' '.var_export($batchrow,true));
 	if($batchrow) {
 		$recipients = unserialize($batchrow->meta_value);
 		rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
@@ -1100,31 +1099,33 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj) {
 		$recipients = array_merge($recipients,$additional_recipients);
 		if(!in_array(strtolower($from),$recipients))
 			return 'BLOCKED'; //NOT FROM A RECOGNIZED MEMBER ADDRESS
-		set_transient('recipient_names_'.$slug_and_id['slug'],$recipient_names);
+		set_transient('recipient_names',$recipient_names);
 	}
 	return $recipients;
 }
 
 function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
-	$slug_and_id = apply_filters('rsvpmail_slug_and_id',array('slug' => '','blog_id'=>0),$email);
+	global $message_blog_id, $via;
+	$via = ' (via '.$email.')';
+	$slug_and_id = apply_filters('rsvpmail_slug_and_id',array('slug' => '','blog_id'=>0, 'forwarder' => $email),$email);
 	if($slug_and_id['blog_id'])
 		return $slug_and_id;
 	$eparts = explode('@',$email);
 	if(is_multisite()) {
-		$blog_id = array_search($eparts[1],$hosts_and_subdomains['hosts']);
-		printf('<p>%s %d %s</p>',$eparts[1],$blog_id,var_export($hosts_and_subdomains['hosts'],true));
-		if($blog_id) {
-			return array('slug' => $eparts[0],'blog_id' => $blog_id);
+		$message_blog_id = array_search($eparts[1],$hosts_and_subdomains['hosts']);
+		printf('<p>%s %d %s</p>',$eparts[1],$message_blog_id,var_export($hosts_and_subdomains['hosts'],true));
+		if($message_blog_id) {
+			return array('slug' => $eparts[0],'blog_id' => $message_blog_id, 'forwarder' => $email);
 		}
 		$nameparts = explode('-',$eparts[0]);
-		$blog_id = array_search($nameparts[0],$hosts_and_subdomains['subdomains']);
-		if($blog_id) {
+		$message_blog_id = array_search($nameparts[0],$hosts_and_subdomains['subdomains']);
+		if($message_blog_id) {
 			$slug = (empty($nameparts[1])) ? 'members' : $nameparts[1];
-			return array('slug' => $slug,'blog_id' => $blog_id);
+			return array('slug' => $slug,'blog_id' => $message_blog_id, 'forwarder' => $email);
 		}	
 	}
 	if($eparts[1] == $hosts_and_subdomains['basedomain']) {
-		return array('slug' => $eparts[0],'blog_id' => 1);
+		return array('slug' => $eparts[0],'blog_id' => 1, 'forwarder' => $email);
 	}
 	return $slug_and_id;
 }
