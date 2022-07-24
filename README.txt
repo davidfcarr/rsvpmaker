@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0.1
-Stable tag: 9.5.1
+Stable tag: 9.5.2
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -20,14 +20,12 @@ RSVPMaker is an event scheduling, event marketing, and RSVP tracking plugin for 
 * Register attendees, prompting them to enter whatever information you need, including the names of guests.
 * Collect money using PayPal or Stripe.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
-* Use the Limited Time Content Gutenberg block -- a wrapper block that can include paragraphs, images, and other content -- to set a start and/or end time for the display of content. Useful for promoting events and limited time pricing on your home page or in the body of a blog post, without looking foolish if you forget to take down those promotions.
 
 In addition, the included RSVP Mail utility lets you create and format email newsletters as well as event invitations.
 
 * Create and edit newsletters within the WordPress block editor, rather than learning another content composer tool. Use dynamic blocks or shortcodes to incorporate dynamic content like lists of recent blog posts or upcoming events.
 * Power membership-oriented websites with tools for emailing all your members or just those who have or have not registered for a specific event.
-* Send email using your own web server or the integration with Mailchimp.
-* NEW PREMIUM OPTION: [RSVPMaker Mailer for Postmark](https://rsvpmaker.com/rsvpmaker-postmark/) lets you send newsletters, event promotions, and other messages using the Postmark service for reliable and economical sending of both transactional messages.
+* Send email using your own web server, an SMTP plugin or the integration with Mailchimp. (See below for details on the new integration with Postmark - recommended!)
 
 https://youtu.be/NmwN1T9s44E
 
@@ -49,13 +47,16 @@ Here's a demo of editing emails and creating email templates.
 
 https://youtu.be/px9qMpKXyho
 
-More About [RSVPMaker Mailer for Postmark](https://rsvpmaker.com/rsvpmaker-postmark/)
+NEW PREMIUM OPTION: [RSVPMaker Mailer for Postmark](https://rsvpmaker.com/rsvpmaker-postmark/)
 
-The email editing features described above are available in the free version, but the Postmark integration makes RSVPMaker more of a full-fledged alternative to Mailchimp, MailPoet, Sendgrid and other alternatives.
+Send newsletters, event promotions, and other messages using the Postmark service for reliable and economical sending of both transactional messages. Postmark pricing starts at $10 USD for 10,000 email sends.
+
+Postmark integration turns the RSVP Mail tool more of a full-fledged alternative to Mailchimp or MailPoet.
 
 Additional features:
 * Set default forwarding on your server to send messages to Postmark, and you will also be able to manage email forwarding and member mailing lists within this framework.
-* Offers full support for multisite, where each subdomain site can have its own email lists and forwarders. Network administrators can enable the extension on all sites or selected ones.
+* Full support for multisite, where each subdomain site can have its own email lists and forwarders. Network administrators can enable the extension on all sites or selected ones.
+* Option to create an email promo for each new blog post, with an excerpt from the post, a link to the rest of the article, and (optionally) a listing of other recent posts. Turn this feature on, and you'll be sent a preview of the email promo, immediately after the publication of a new post. You can quickly send out after any edits.
 
 [__RSVPMaker.com__](http://www.rsvpmaker.com/)
 [RSVPMaker on GitHub](https://github.com/davidfcarr/rsvpmaker)
@@ -136,6 +137,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.5.2 =
+
+* Add background image picker along with color pickers to email body block.
 
 = 9.5.1 =
 

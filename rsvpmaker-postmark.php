@@ -106,8 +106,11 @@ function rsvpmaker_postmark_options() {
 function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$recipient_names=array()) {
     global $wpdb;
     $recipients = rsvpmaker_recipients_no_problems($recipients);
-    if(sizeof($recipients) > 201) {
-        $chunks = array_chunk($recipients,200);
+    //test code
+    for($i=0; $i < 1000; $i++)
+        $recipients[] = 'testemail'.$i.'@example.com';
+    if(sizeof($recipients) > 499) {
+        $chunks = array_chunk($recipients,500);
         echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
         rsvpmaker_debug_log($log,'broadcast recipient chunks');
         $recipients = array_shift($chunks);
