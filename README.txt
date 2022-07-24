@@ -7,26 +7,31 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.0
-Stable tag: 9.5
+Tested up to: 6.0.1
+Stable tag: 9.5.1
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
 == Description ==
 
-RSVPMaker is an event scheduling and RSVP tracking plugin for WordPress. Use it to:
+RSVPMaker is an event scheduling, event marketing, and RSVP tracking plugin for WordPress. Use it to:
 
 * Schedule and promote events of all sorts: conferences, classes, seminars, speaking events, parties and weddings are a few common uses.
 * Register attendees, prompting them to enter whatever information you need, including the names of guests.
 * Collect money using PayPal or Stripe.
-* Use the included RSVP Mailer tool to create and format email newsletters and event invitations in the WordPress editor. Send them using RSVPMaker's integration with Mailchimp or another high-capacity email service. Or use the built-in mailer to send to more targeted lists through your web server.
-* Power membership-oriented websites with tools for emailing all your members or just those who have or have not registered for a specific event.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
 * Use the Limited Time Content Gutenberg block -- a wrapper block that can include paragraphs, images, and other content -- to set a start and/or end time for the display of content. Useful for promoting events and limited time pricing on your home page or in the body of a blog post, without looking foolish if you forget to take down those promotions.
 
+In addition, the included RSVP Mail utility lets you create and format email newsletters as well as event invitations.
+
+* Create and edit newsletters within the WordPress block editor, rather than learning another content composer tool. Use dynamic blocks or shortcodes to incorporate dynamic content like lists of recent blog posts or upcoming events.
+* Power membership-oriented websites with tools for emailing all your members or just those who have or have not registered for a specific event.
+* Send email using your own web server or the integration with Mailchimp.
+* NEW PREMIUM OPTION: [RSVPMaker Mailer for Postmark](https://rsvpmaker.com/rsvpmaker-postmark/) lets you send newsletters, event promotions, and other messages using the Postmark service for reliable and economical sending of both transactional messages.
+
 https://youtu.be/NmwN1T9s44E
 
-RSVPMaker is free and open source, with no upsell to a premium version. The author is available to consult on customizations, but generally useful enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
+The plugin author is available to consult on customizations, but most generally useful enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
 
 Creating and Managing Events
 
@@ -44,11 +49,18 @@ Here's a demo of editing emails and creating email templates.
 
 https://youtu.be/px9qMpKXyho
 
+More About [RSVPMaker Mailer for Postmark](https://rsvpmaker.com/rsvpmaker-postmark/)
+
+The email editing features described above are available in the free version, but the Postmark integration makes RSVPMaker more of a full-fledged alternative to Mailchimp, MailPoet, Sendgrid and other alternatives.
+
+Additional features:
+* Set default forwarding on your server to send messages to Postmark, and you will also be able to manage email forwarding and member mailing lists within this framework.
+* Offers full support for multisite, where each subdomain site can have its own email lists and forwarders. Network administrators can enable the extension on all sites or selected ones.
 
 [__RSVPMaker.com__](http://www.rsvpmaker.com/)
 [RSVPMaker on GitHub](https://github.com/davidfcarr/rsvpmaker)
 
-Extensions:
+Free Extensions:
 
 [RSVPMaker for Toastmasters](http://wordpress.org/plugins/rsvpmaker-for-toastmasters) provides meeting management for public speaking and leadership development clubs that are part of Toastmasters International.
 
@@ -124,6 +136,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.5.1 =
+
+* RSVP Mail improvements
+* Core features to support [RSVPMaker Mailer for Postmark](https://rsvpmaker/rsvpmaker-for-postmark) extension for high volume email sending
 
 = 9.4.9 =
 

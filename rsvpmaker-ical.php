@@ -1,7 +1,8 @@
 <?php
 
-function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
+function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email, $description = '' ) {
 	global $post;
+	$backslash = '\\';
 
 	global $rsvp_options;
 
@@ -36,14 +37,13 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
 
 	$hangout = get_post_meta( $post->ID, '_hangout', true );
 
-	$description = '';
-
 	if ( ! empty( $hangout ) ) {
 
 		$description .= 'Google Hangout: ' . $hangout . "\n";
 	}
 
-	$description .= 'Event info: ' . get_permalink( $post->ID );
+	if(empty($description))
+		$description .= 'Event info: ' . get_permalink( $post->ID );
 
 	$summary = $post->post_title;
 
@@ -71,6 +71,8 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
 
 	$ical[] = 'VERSION:2.0';
 
+	$ical[] = 'CALSCALE:GREGORIAN';
+
 	$ical[] = 'PRODID:-//WordPress//RSVPMaker//EN';
 
 	$ical[] = 'METHOD:REQUEST';
@@ -80,10 +82,11 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
 	$ical[] = 'DTSTAMP:' . $dtstamp;
 
 	$ical[] = 'ORGANIZER;SENT-BY="MAILTO:' . $from_email . '":MAILTO:' . $from_email;
+	//$ical[] = 'ORGANIZER;CN=' . get_bloginfo('name') . '":MAILTO:' . $from_email;
 
 	$ical[] = 'ATTENDEE;CN=' . $rsvp_email . ';ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;' . 'RSVP=TRUE:mailto:' . $from_email;
 
-	$ical[] = 'UID:' . strtoupper( md5( $event_id ) ) . '-rsvpmaker.com';
+	$ical[] = 'UID:' . strtoupper( md5( $event_id ) ) . '@rsvpmaker.com';
 
 	$ical[] = 'SEQUENCE:' . $sequence;
 
@@ -93,19 +96,17 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
 
 	$ical[] = 'DTEND:' . $end . 'T' . $end_time . 'Z';
 
-	$ical[] = 'LOCATION:' . $venue;
+	$ical[] = 'LOCATION:' . rsvpmaker_ical_escape($venue);
 
 	$ical[] = 'SUMMARY:' . $summary;
 
-	$ical[] = 'DESCRIPTION:' . $description;
+	$ical[] = 'DESCRIPTION:' . rsvpmaker_ical_escape($description);
 
 	$ical[] = 'BEGIN:VALARM';
 
 	$ical[] = 'TRIGGER:-PT15M';
 
 	$ical[] = 'ACTION:DISPLAY';
-
-	$ical[] = 'DESCRIPTION:Reminder';
 
 	$ical[] = 'END:VALARM';
 
@@ -118,17 +119,21 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email, $rsvp_email ) {
 	foreach ( $ical as $line ) {
 
 		if ( strlen( $line ) >= 70 ) {
-
-			$line = trim( chunk_split( $line, 70, "\r\n " ) );
-
+			$line = trim( chunk_split( $line, 70, "\r\n" ) );
+			$line = str_replace("\n","\n ",$line);
 		}
-
 		$icalstring .= $line . "\r\n";
-
 	}
 
 	return trim( $icalstring );
 
 }
 
-
+function rsvpmaker_ical_escape($text) {
+	$text = addslashes($text);
+	$text = str_replace(':','\:',$text);
+	$text = str_replace(';','\;',$text);
+	$text = str_replace(',','\,',$text);
+	$text = str_replace("\n","\\n",$text);
+	return $text;
+}

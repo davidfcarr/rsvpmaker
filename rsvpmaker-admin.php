@@ -480,7 +480,7 @@ echo esc_html($label);
           // hook the options page
           function admin_menu()
           {
-              add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'));
+              add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 17);
           }
           
           
@@ -1658,7 +1658,8 @@ add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), 
 add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Payments', 'rsvpmaker' ), __( 'RSVPMaker Payments', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
-
+if(!empty($rsvp_options['debug']))
+	add_submenu_page('tools.php',__('RSVPMaker Debug Log'),__('RSVPMaker Debug Log'),'manage_options','rsvpmaker_show_debug_log','rsvpmaker_show_debug_log');
 }
 
 add_filter('manage_posts_columns', 'rsvpmaker_columns');
@@ -3291,7 +3292,37 @@ function rsvpmaker_debug_log($msg, $label = '', $filename_base = '') {
 	if(isset($_GET['debug']) && current_user_can('manage_options'))
 		echo '<pre>'. $msg . '</pre>';
 }
-	
+
+function rsvpmaker_show_debug_log() {
+	echo '<h2>RSVPMaker Debug Log</h2><p>Captures events from the plugin\'s operation</p>';
+	echo WP_DEBUG_LOG;
+	global $rsvp_options;
+	$filename_base = 'rsvpmaker';
+	$upload_dir   = wp_upload_dir();
+	 
+	if ( ! empty( $upload_dir['basedir'] ) ) {
+		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
+		if(isset($_GET['clear'])){
+			$content = '';
+			echo 'attempting to clear log';
+			$handle = fopen($fname, 'r+');
+			print_r($handle);
+			ftruncate($handle, rand(1, filesize($fname)));
+			rewind($handle);
+			fclose($handle);
+		}
+		else {
+			$content = file_get_contents($fname);
+		}
+		printf('<p><a href="%s">Clear Log</a></p>',admin_url('tools.php?page=rsvpmaker_show_debug_log&clear=1'));
+		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';
+		if(defined(WP_DEBUG_LOG) && strpos(WP_DEBUG_LOG,'/')) {
+			$content = file_get_contents(WP_DEBUG_LOG);
+			echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';	
+		}
+	}
+}
+
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
     if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
     {

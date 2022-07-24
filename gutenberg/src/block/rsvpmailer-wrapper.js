@@ -5,10 +5,9 @@
 
 const { __ } = wp.i18n;
 const { registerBlockType } = wp.blocks;
-const { InnerBlocks } = wp.blockEditor;
+const { InnerBlocks, InspectorControls, MediaUpload, MediaUploadCheck } = wp.blockEditor;
 const { Component, Fragment, useState, useEffect, RawHTML } = wp.element;
-const { InspectorControls } = wp.blockEditor;
-const { Panel, PanelBody, SelectControl, TextControl, ColorPicker, ColorPalette } = wp.components;
+const { Panel, PanelBody, SelectControl, TextControl, ColorPicker, ColorPalette, Button, ResponsiveWrapper } = wp.components;
 import { useBlockProps } from '@wordpress/block-editor';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -43,25 +42,30 @@ attributes: {
             type: 'string',
             default: '5px',
         },
+        mediaId: {
+            type: 'number',
+            default: 0,
+        },
+        mediaUrl: {
+            type: 'string',
+            default: '',
+        }
 },
 
     edit: function( props ) {	
 
 	const { attributes, className, setAttributes, isSelected } = props;
-    /*if(attributes.paletteBackgroundColor) {
-        className: classnames( className, {
-            [ `has-max-width-${maxWidth}` ]: maxWidth !== 100,
-        } 
-    }
-    */
-        //className.push('has-'+attributes.paletteBackgroundColor+'-background-color');
+
     const bodyStyle = {
         backgroundColor: attributes.backgroundColor,
         color: attributes.color,
         padding: attributes.padding,
+        backgroundImage: attributes.mediaUrl != '' ? 'url("' + attributes.mediaUrl + '")' : 'none',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
     };
     const blockProps = useBlockProps({ style: bodyStyle});
-
 	return (
 		<Fragment>
 		<EmailBodyInspector { ...props } />
@@ -72,7 +76,15 @@ attributes: {
 		);
     },
     save: function( { attributes, className } ) {
-        const bodyStyle = {
+        
+        const bodyStyle = (attributes.mediaUrl != '') ? {
+            backgroundColor: attributes.backgroundColor,
+            color: attributes.color,
+            padding: attributes.padding,
+            backgroundImage: attributes.mediaUrl != '' ? 'url("' + attributes.mediaUrl + '")' : 'none',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'contain',
+        } :  {
             backgroundColor: attributes.backgroundColor,
             color: attributes.color,
             padding: attributes.padding,
@@ -85,9 +97,23 @@ attributes: {
 class EmailBodyInspector extends Component {
 
 	render() {
-		
-		const { attributes: {backgroundColor ,paletteBackgroundColor, padding}, setAttributes, className } = this.props;
+        const removeMedia = () => {
+            setAttributes({
+                mediaId: 0,
+                mediaUrl: ''
+            });
+        }
+     
+         const onSelectMedia = (media) => {
+            setAttributes({
+                mediaId: media.id,
+                mediaUrl: media.url
+            });
+        }
+            
+		const { media, attributes, attributes: {backgroundColor ,paletteBackgroundColor, padding, backgroundImage}, setAttributes, className } = this.props;
         const colors = wp.data.select('core/block-editor').getSettings().colors;
+        console.log(media);
 		return (
 			<InspectorControls key="inspector">
 			<PanelBody title={ __( 'Background Color', 'rsvpmaker' ) } >
@@ -102,6 +128,46 @@ class EmailBodyInspector extends Component {
             onChange={ ( backgroundColor ) => { setAttributes( { backgroundColor: backgroundColor } ) } }
             enableAlpha
         />  
+				</PanelBody>
+                <PanelBody
+					title={__('Select block background image', 'rsvpmaker')}
+					initialOpen={ true }
+				>
+					<div className="editor-post-featured-image background-image">
+						<MediaUploadCheck>
+							<MediaUpload
+								onSelect={onSelectMedia}
+								value={attributes.mediaId}
+								allowedTypes={ ['image'] }
+								render={({open}) => (
+									<Button 
+										className={attributes.mediaId == 0 ? 'editor-post-featured-image__toggle' : 'editor-post-featured-image__preview'}
+										onClick={open}
+									>
+										{attributes.mediaId == 0 && __('Choose an image', 'awp')}
+									</Button>
+								)}
+							/>
+						</MediaUploadCheck>
+						{attributes.mediaId != 0 && 
+							<MediaUploadCheck>
+								<MediaUpload
+									title={__('Replace image', 'rsvpmaker')}
+									value={attributes.mediaId}
+									onSelect={onSelectMedia}
+									allowedTypes={['image']}
+									render={({open}) => (
+										<Button onClick={open} variant="secondary" isLarge>{__('Replace image', 'awp')}</Button>
+									)}
+								/>
+							</MediaUploadCheck>
+						}
+						{attributes.mediaId != 0 && 
+							<MediaUploadCheck>
+								<Button onClick={removeMedia} isLink isDestructive>{__('Remove image', 'awp')}</Button>
+							</MediaUploadCheck>
+						}
+					</div>
 				</PanelBody>
 			</InspectorControls>
 		);

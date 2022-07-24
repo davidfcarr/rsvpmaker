@@ -924,7 +924,10 @@ function rsvpmaker_qemail ($mail, $recipients) {
 	$recipients = rsvpmaker_recipients_no_problems($recipients);
 	global $current_user;
 	if(is_multisite()) // send through root blog
-		switch_to_blog(1);
+	{
+		if(!rsvpmaker_postmark_is_active())
+			switch_to_blog(1);
+	}	
 	if(strpos($mail['html'],'<body')) {
 		preg_match('|<bod[^>]+>(.+)</body>|is',$mail['html'],$match);
 		if(!empty($match[1])) {
@@ -975,9 +978,8 @@ function rsvpmaker_relay_queue_monitor () {
 	do_action('rsvpmaker_relay_queue_monitor');
 	global $wpdb;
 	if(isset($_GET['cancel'])) {
-		echo $sql = "DELETE FROM $wpdb->postmeta where post_id=".intval($_GET['cancel'])." AND meta_key='rsvprelay_to' ";
-		echo $result = $wpdb->query($sql);
-
+		$sql = "DELETE FROM $wpdb->postmeta where post_id=".intval($_GET['cancel'])." AND meta_key='rsvprelay_to' ";
+		$result = $wpdb->query($sql);
 	}
 	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND (meta_key LIKE 'rsvpmail%' OR meta_key LIKE 'rsvprelay%') ORDER BY ID DESC";
 	$results = $wpdb->get_results($sql);
@@ -1052,11 +1054,13 @@ function rsvpmaker_get_hosts_and_subdomains() {
     global $wpdb, $hosts_and_subdomains;
 	if(!empty($hosts_and_subdomains))
 		return $hosts_and_subdomains;
-	if(is_multisite())
-		switch_to_blog(1);
-    $basedomain = parse_url( get_site_url(), PHP_URL_HOST );
-    $basedomain = str_replace('www.','',$basedomain);
-	$hosts_and_subdomains = array('basedomain' => $basedomain, 'hosts' => array(),'subdomains' => array());
+	if(is_multisite()) {
+		$basedomain = parse_url(get_blog_option(1, 'siteurl'), PHP_URL_HOST );
+	}
+    else
+		$basedomain = parse_url( get_site_url(), PHP_URL_HOST );
+	$basedomain = str_replace('www.','',$basedomain);
+ 	$hosts_and_subdomains = array('basedomain' => $basedomain, 'hosts' => array(),'subdomains' => array());
 	if(!is_multisite()) {
 		return $hosts_and_subdomains;
 	}

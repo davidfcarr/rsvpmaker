@@ -60,6 +60,9 @@ add_action( 'template_redirect', 'rsvpmaker_email_template_redirect' );
 add_action('post_updated', function($post_id, $post_after, $post_before) {
 if($post_after->post_type == 'rsvpmaker')
 rsvpmaker_update_event_row ($post_id);
+if('rsvpemail' == $post_after->post_type) {
+	$html = rsvpmaker_email_html($post_after); //update the styled html metadata
+}
 },10,3);
 
 add_action( 'user_register', 'RSVPMaker_register_chimpmail' );
