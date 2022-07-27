@@ -399,7 +399,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 		$namespace = 'rsvpmaker/v1';
 
-		$path = 'stripesuccess/(?P<txkey>[a-zA-Z0-9]+)';
+		$path = 'stripesuccess/(?P<txkey>.+)';
 
 		register_rest_route(
 			$namespace,
@@ -408,7 +408,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 				array(
 
-					'methods'             => 'POST',
+					'methods'             => 'POST,GET',
 
 					'callback'            => array( $this, 'get_items' ),
 
@@ -435,7 +435,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 		global $wpdb;
 
-		$base = get_option( sanitize_text_field($request['txkey']) );
+		$base = get_option( sanitize_text_field($request['txkey']), true );
 
 		$key = 'conf:' . time();
 

@@ -46,9 +46,11 @@ function rsvpmaker_postmark_options() {
         $postmark_settings['restricted'] = (empty($_POST['restricted'])) ? 0 : intval($_POST['restricted']);
         $postmark_settings['enabled'] = ($postmark_settings['restricted']) ? $_POST['enabled'] : array();
         if(is_multisite())
-            update_option('rsvpmaker_postmark',$postmark_settings);
+            update_blog_option(1,'rsvpmaker_postmark',$postmark_settings);
         else
             update_option('rsvpmaker_postmark',$postmark_settings);
+        if('production' == $postmark_settings['postmark_mode'])
+            wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
     }
     else {
         $postmark_settings = get_rsvpmaker_postmark_options();
@@ -75,6 +77,8 @@ function rsvpmaker_postmark_options() {
             $postmark_settings['restricted'] = '0';
         if(empty($postmark_settings['enabled']))
             $postmark_settings['enabled'] = array();
+    print_r(hash_algos());
+    echo var_export(hash('crc32',implode('',$postmark_settings)),true);
     printf('<form method="post" action="%s">',admin_url('admin.php?page='.$_GET['page']));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
     printf('<p><input type="radio" name="postmark_mode" value="" %s> Off - Postmark not managing email</p>',$checked);
@@ -106,17 +110,18 @@ function rsvpmaker_postmark_options() {
 function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$recipient_names=array()) {
     global $wpdb;
     $recipients = rsvpmaker_recipients_no_problems($recipients);
-    //test code
-    for($i=0; $i < 1000; $i++)
-        $recipients[] = 'testemail'.$i.'@example.com';
-    if(sizeof($recipients) > 499) {
+    //mail('david@carrcommunications.com','broadcast recipients after no problems filter '.$post_id,var_export($recipients,true));
+    if(empty($recipients))
+        return;
+    if(sizeof($recipients) > 500) {
         $chunks = array_chunk($recipients,500);
         echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
         rsvpmaker_debug_log($log,'broadcast recipient chunks');
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
             add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
-        }    
+        }
+        wp_schedule_event( strtotime('+2 minutes'), 'minute', 'rsvpmaker_postmark_chunked_batches' );
     }
 
     $postmark_settings = get_rsvpmaker_postmark_options();
@@ -131,6 +136,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $html = rsvpmaker_email_html($mpost,$post_id);
         update_post_meta($post_id,'_rsvpmail_html',$html);
     }
+    mail('david@carrcommunications.com','broadcast recipients html '.$post_id,$html);
     $html = rsvpmail_replace_placeholders($html);
     $text = rsvpmaker_text_version($html);
     $mail['Subject'] = $mpost->post_title;
@@ -152,8 +158,14 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
+    //mail('david@carrcommunications.com','broadcast recipients batch for '.$post_id,var_export($batch,true));
     
+    $hash = postmark_batch_hash($batch,$recipients);
+    if(rsvpmaker_postmark_duplicate($hash))
+        return 'Duplicate message';
+
     $responses = $client->sendEmailBatch($batch);
+    mail('david@carrcommunications.com','broadcast recipients responses for '.$mail['Subject'],var_export($responses,true));
 
     // The response from the batch API returns an array of responses for each
     // message sent. You can iterate over it to get the individual results of sending.
@@ -165,17 +177,38 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
             $sent[] = $response->to;
     }
     if(count($sent)) {
-        do_action('postmark_sent',$sent,$mail['Subject']);
-        printf('<p>Successful sends %d ending with %s</p>',count($sent),$sent[sizeof($sent)-1]);
+        rsvpmaker_postmark_sent_log($sent,$mail['Subject'],$hash);
+        printf('Successful sends %d ending with %s',count($sent),$sent[sizeof($sent)-1]);
         foreach($sent as $e) {
             add_post_meta($post_id,'rsvpmail_sent_postmark',$e);
         }
     }
     if(count($send_error)) {
-        printf('<p>Errors %d (see log)</p>',count($send_error));
+        printf('Errors %d (see log)',count($send_error));
         foreach($send_error as $error) {
             add_post_meta($post_id,'rsvpmail_postmark_error',$error);
         }
+    }
+}
+
+add_action('rsvpmaker_postmark_chunked_batches','rsvpmaker_postmark_chunked_batches');
+function rsvpmaker_postmark_chunked_batches() {
+    global $wpdb;
+    //do we need to switch to blog 1?
+    //used with postmark integration
+	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
+	$batchrow = $wpdb->get_row($sql);
+	if($batchrow) {
+		$recipients = unserialize($batchrow->meta_value);
+		if(empty($recipients))
+			echo 'done';
+        wp_mail(get_bloginfo('admin_email'),'batched sending of email batchrow '.$batchrow->post_id,sizeof($recipients).' recipients');        $log = rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
+        rsvpmaker_postmark_broadcast($recipients, $batchrow->post_id);
+		$wpdb->query("update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id");
+	} else {
+        // until it's needed again
+        wp_unschedule_hook( 'rsvpmaker_postmark_chunked_batches' );
+        wp_mail(get_bloginfo('admin_email'),'batched sending of email complete','No more messages in the queue');
     }
 }
 
@@ -307,6 +340,9 @@ function rsvpmaker_postmark_batch_send($batch) {
     $postmark_settings = get_rsvpmaker_postmark_options();
     $postmark_settings_key = ('production' == $postmark_settings['postmark_mode']) ? $postmark_settings['postmark_production_key'] : $postmark_settings['postmark_sandbox_key'];
     $client = new PostmarkClient($postmark_settings_key);
+    $hash = postmark_batch_hash($batch);
+    if(rsvpmaker_postmark_duplicate($hash))
+        return;
     $responses = $client->sendEmailBatch($batch);
     // The response from the batch API returns an array of responses for each
     // message sent. You can iterate over it to get the individual results of sending.
@@ -318,8 +354,8 @@ function rsvpmaker_postmark_batch_send($batch) {
             $sent[] = $response->to;
     }
     if(count($sent)) {
-        do_action('postmark_sent',$sent,$batch[0]['Subject']);
-        $output .= sprintf('<p>Successful sends %d</p>',count($sent));
+        rsvpmaker_postmark_sent_log($sent,$batch[0]['Subject'],$hash);
+        $output .= sprintf('Successful sends %d',count($sent));
         foreach($sent as $e) {
             if($post_id)
                 $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '".$e."' AND post_id=$post_id ");
@@ -333,6 +369,128 @@ function rsvpmaker_postmark_batch_send($batch) {
         }
     }
     return $output;
+}
+
+function postmark_batch_hash ($batch,$recipients = null) {
+    if($recipients)
+        $rlist = implode('',$recipients);
+    else {
+        $rlist = '';
+        foreach($batch as $mail)
+            $rlist .= $mail['To'];
+    }
+    return hash('crc32c',$batch[0]->Subject.$batch[0]->HtmlBody.$rlist);
+}
+
+function rsvpmaker_postmark_duplicate($hash) {
+    global $wpdb;
+	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients FROM ".$wpdb->base_prefix."postmark_tally where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 15 MINUTE)",$hash);
+	$row = $wpdb->get_row($sql);
+
+    if($row->duplicates > 1)
+    {
+        mail('david@carrcommunications.com','postmark duplicate blocked',var_export($row,true));
+        return true;
+    }
+    return false;
+}
+
+function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='') {
+	global $wpdb, $message_blog_id;
+    $postmark = get_rsvpmaker_postmark_options();
+	if(empty($message_blog_id))
+		$message_blog_id = get_current_blog_id();
+	$sql = $wpdb->prepare("insert into ".$wpdb->base_prefix."postmark_tally set count=%d, subject=%s, blog_id=%s, recipients=%s,hash=%s",sizeof($sent),$subject,$message_blog_id,implode(',',$sent),$hash);
+	$wpdb->query($sql);
+	$sent_in_hour = $wpdb->get_var("SELECT SUM(count) FROM ".$wpdb->base_prefix."postmark_tally WHERE time > DATE_SUB(NOW(), INTERVAL 1 HOUR) ");
+	$message = var_export($sent,true)."\n\n $sent_in_hour sent in the last hour";
+	if((!empty($postmark['circuitbreaker'])) && ($sent_in_hour > $postmark['circuitbreaker'])) {
+		switch_to_blog(1);
+		$postmark = get_option('rsvpmaker_postmark');
+		$postmark['postmark_mode'] = '';
+		update_option('rsvpmaker_postmark',$postmark);
+	}
+    if($sent_in_hour > 50) {
+        $overloadmessage = '';
+        $score = 0;
+        $sql = "SELECT count(*) tally, recipients, subject FROM `".$wpdb->base_prefix."postmark_tally` WHERE time > DATE_SUB(NOW(), INTERVAL 1 HOUR) group by recipients";
+        $results = $wpdb->get_results($sql);
+        foreach($results as $row) {
+            $overloadmessage .= sprintf('%d %s %s'."\n",$row->tally, $row->email,$row->subject);
+            if($row->tally > 20)
+                $score += $row->tally;
+        }
+        if($score > 50)
+        {
+            switch_to_blog(1);
+            $postmark = get_option('rsvpmaker_postmark');
+            $postmark['postmark_mode'] = '';
+            update_option('rsvpmaker_postmark',$postmark);
+            wp_mail(get_bloginfo('admin_email'),'Shutting down Postmark email delivery service because of overload',"Heavy use, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
+        }
+        else 
+        wp_mail(get_bloginfo('admin_email'),'Recent email volume on Postmark >' .$sent_in_hour. ' in past hour',"Heavy use, warning score $score, resulting in this stream of messages\n",$overloadmessage);    
+
+    }
+}
+
+function rsvpmaker_postmark_show_sent_log() {
+    rsvpmaker_admin_heading('Postmark Email Log',__FUNCTION__);
+    echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
+    global $wpdb;
+    $table = $wpdb->base_prefix.'postmark_tally';
+    $blog_id = get_current_blog_id();
+    if($blog_id > 1) {
+        $sql = "SELECT * FROM $table WHERE time > DATE_SUB(NOW(), INTERVAL 31 DAY) AND blog_id=$blog_id ORDER BY id DESC";
+        $showmulti = false;
+    }
+    else {
+        $sql = "SELECT * FROM $table  WHERE time > DATE_SUB(NOW(), INTERVAL 31 DAY) ORDER BY id DESC";
+        $showmulti = is_multisite();
+    }
+    $results = $wpdb->get_results($sql);
+    echo '<table class="wp-list-table widefat striped"><thead><tr><th>Subject</th><th># Recipients</th><th>Blog ID</th><th>Recipients</th></tr></thead><tbody>';
+    foreach($results as $row) {
+        $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'...' : $row->recipients;
+        printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->subject,$row->count,$row->blog_id,$recipients);
+        if(empty($count[$row->blog_id]))
+            $counts[$row->blog_id] = $row->count;
+        else
+            $counts[$row->blog_id] = $row->count;
+    }
+    echo '</tbody></table>';
+
+    if(!empty($counts)) {
+        foreach($counts as $blog_id => $count) {
+            if($showmulti)
+                switch_to_blog($blog_id);
+            $name = get_bloginfo('name');
+            printf('<p><strong>%s</strong> sent %d messages within the last month</p>',$name,$count);
+        }
+    }
+}
+
+function rsvpmaker_postmark_log_table() {
+global $wpdb;
+require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+$sql = 'CREATE TABLE `'.$wpdb->base_prefix.'postmark_tally` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `blog_id` int(11) NOT NULL DEFAULT \'0\',
+        `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `count` int(11) NOT NULL,
+        `subject` varchar(255) NOT NULL,
+        `recipients` longtext NOT NULL,
+        `hash` varchar(255) NOT NULL,
+        PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
+dbDelta($sql);
+add_option('postmark_tally_version',1);
+}
+
+function check_postmark_tally_version() {
+    $version = (int) (is_multisite()) ? get_blog_option(1,'postmark_tally_version') : get_option('postmark_tally_version');
+    if($version < 1)
+        rsvpmaker_postmark_log_table();
 }
 
 add_shortcode('postmark_invite_test','postmark_invite_test');

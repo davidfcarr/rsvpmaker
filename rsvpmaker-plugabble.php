@@ -4987,8 +4987,7 @@ function rsvp_reminder_activation() {
 
 	// if stalled, restart email queue process
 
-	if ( $active && ! wp_next_scheduled( 'rsvpmaker_relay_init_hook' ) ) {
-
+	if ( $active && ! wp_next_scheduled( 'rsvpmaker_relay_init_hook' ) && !rsvpmaker_postmark_is_live() ) {
 		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 	}
 

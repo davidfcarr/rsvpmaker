@@ -1078,6 +1078,8 @@ else {
 <?php 
 $stripe_on = false;
 $stripe_keys = get_rsvpmaker_stripe_keys_all (); 
+if(isset($_GET['reset']))
+	$stripe_keys = array();
 $checkboxes = ($stripe_keys['mode'] == 'production') ? '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" checked="checked" /> Production' : '<input type="radio" name="rsvpmaker_stripe_keys[mode]" value="sandbox"  checked="checked" /> Sandbox <input type="radio" name="rsvpmaker_stripe_keys[mode]" value="production" /> Production';
 if(!empty($stripe_keys['pk']) && !empty($stripe_keys['sk']))
 {
@@ -1277,8 +1279,13 @@ if(isset($_POST['rsvpmaker_discussion_active']) && wp_verify_nonce(rsvpmaker_non
 	update_option('rsvpmaker_discussion_active',(int) $_POST['rsvpmaker_discussion_active']);
 	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
 	if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
-		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
-		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
+		if(rsvpmaker_postmark_is_live()) {
+			echo '<p>Postmark integration is active</p>';
+		}
+		else {
+			wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+			echo '<p>Activating rsvpmaker_relay_init_hook</p>';	
+		}
 	}
 	update_option('rsvpmaker_email_queue_limit',intval($_POST['rsvpmaker_email_queue_limit']));
 }

@@ -94,9 +94,7 @@ function rsvpmaker_stripecharge( $atts ) {
 
 	return rsvpmaker_stripe_form( $vars, $show );
 
-	// return rsvpmaker_stripe_form($vars,$show);
 }
-
 
 $rsvpmaker_stripe_form = '';
 
@@ -462,8 +460,6 @@ var card = elements.create("card", { style: style });
 
 card.mount("#card-element");
 
-
-
 card.addEventListener('change', ({error}) => {
 
   const displayError = document.getElementById('card-result');
@@ -516,15 +512,14 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 	} else {
 	submitButton.style = 'display: none';
 	cardFields.style = 'display: none';
+	console.log(result);
 	  if (result.paymentIntent.status === 'succeeded') {
 		  console.log(result);
 		cardResult.innerHTML = '<?php esc_html_e( 'Recording payment', 'rsvpmaker' ); ?> ...';
 		const form = new FormData(document.getElementById('payee-form'));
 		fetch(successurl, {
   method: 'POST',
-
   body: form,
-
 })
 
 		.then((response) => {
@@ -535,6 +530,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
 		.then((myJson) => {
 
+			console.log('json returned:');
 			console.log(myJson);
 
 			if(!myJson.name)			

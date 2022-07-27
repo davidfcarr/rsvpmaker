@@ -63,25 +63,23 @@ add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
 function rsvpmaker_relay_manual_test() {
 	rsvpmaker_admin_heading(__('Manually Trigger Check of Email Lists','rsvpmaker'),__FUNCTION__);
 	//echo 'about to call rsvpmaker_relay_init';
-	$html = rsvpmaker_relay_init( true );
-	if(isset($_GET['cronoff'])) {
-		wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
-		echo '<p>Cron disabled for rsvpmaker_relay_init_hook</p>';
+
+	if(rsvpmaker_postmark_is_live())
+		echo '<p>Postmark integration is active</p>';
+	else {
+		$html = rsvpmaker_relay_init( true );
+		if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
+			wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+			echo '<p>Activating rsvpmaker_relay_init_hook</p>';
+		}	
+		if ( !empty($html) ) {
+
+			echo wp_kses_post( $html );
+	
+		} else {
+			echo '<p>' . __( 'No messages', 'rsvpmaker' ) . '</p>';
+		}	
 	}
-
-	elseif(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
-		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
-		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
-	}
-
-	if ( $html ) {
-
-		echo wp_kses_post( $html );
-
-	} else {
-		echo '<p>' . __( 'No messages', 'rsvpmaker' ) . '</p>';
-	}
-
 }
 
 add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
@@ -144,7 +142,7 @@ function rsvpmaker_relay_queue() {
 	if(empty($limit))
 		$limit = 10;
 	$count = 0;
-	$log = 'limit = '.$limit.' ';
+	$log = '';
 	$sent = 0;
 	$last_post_id = 0;
 	$posts = $wpdb->posts;
@@ -221,16 +219,6 @@ function rsvpmaker_relay_queue() {
 				$limit--;
 			}
 		}	
-	}
-
-	//used with postmark integration
-	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
-	$batchrow = $wpdb->get_row($sql);
-	if($batchrow) {
-		$recipients = unserialize($batchrow->meta_value);
-		rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
-		$wpdb->query("delete from $wpdb->postmeta where meta_id=$batchrow->meta_id");
-		$log .= sizeof($recipients)." added from batch\n";
 	}
 
 	do_action('rsvpmaker_relay_queue_log_message',$log);
@@ -893,9 +881,9 @@ function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $ur
 
 }
 
-add_filter( 'cron_schedules', 'rsvpmaker_relay_interval' );
+add_filter( 'cron_schedules', 'rsvpmaker_cron_schedules' );
 
-function rsvpmaker_relay_interval( $schedules = array() ) {
+function rsvpmaker_cron_schedules( $schedules = array() ) {
 
 	$schedules['minute'] = array(
 
@@ -1077,8 +1065,8 @@ function rsvpmaker_get_hosts_and_subdomains() {
     return $hosts_and_subdomains;
 }
 
-function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj) {
-	$from = $emailobj->From;
+function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = null) {
+	$from = (isset($emailobj->From)) ? $emailobj->From : '';
 	$recipients = array();
 	$recipient_names = array();
 	//todo built in functionality for forwarders? Or membership add-on?
@@ -1146,7 +1134,7 @@ function rsvpmaker_expand_recipients($email) {
     if(in_array($emailparts[1],$hosts_and_subdomains) || ($emailparts[1]==$hosts_and_subdomains['basedomain']))
     {
         $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
-        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);    
+        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,null);    
     }
     if($recipients)
         return $recipients;

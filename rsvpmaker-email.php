@@ -552,15 +552,6 @@ $merge_vars["LNAME"] = $new_user->last_name;
 RSVPMaker_Chimp_Add($email, $merge_vars);
 }
 
-add_filter( 'cron_schedules', 'rsvpmaker_add_weekly_schedule' ); 
-function rsvpmaker_add_weekly_schedule( $schedules ) {
-  $schedules['weekly'] = array(
-    'interval' => 7 * 24 * 60 * 60, //7 days * 24 hours * 60 minutes * 60 seconds
-    'display' => __( 'Once Weekly', 'rsvpmaker' )
-  );
-  return $schedules;
-}
-
 function rsvpmaker_next_scheduled( $post_id, $returnint = false ) {
 	global $rsvp_options;
 	global $rsvpnext_time;
@@ -1558,7 +1549,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 		printf(__('Skipped %d unsubscribed emails','rsvpmaker'),count($unsubscribed) );
 	
 	//if any messages queued, make sure group email schedule is set
-	if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook'))
+	if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook') && !rsvpmaker_postmark_is_live())
 		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 } //end rsvpmailer_submitted
 
@@ -1760,7 +1751,7 @@ if($queued) {
 	rsvpmaker_relay_queue();
 	//make sure this is turned on
 	update_option('rsvpmaker_discussion_active',true);
-	if(!wp_next_scheduled('rsvpmaker_relay_init_hook'))
+	if(!wp_next_scheduled('rsvpmaker_relay_init_hook') && !rsvpmaker_postmark_is_active())
 		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 	$queued = get_post_meta($post->ID,'rsvprelay_to');
 	if($queued) {
@@ -2245,7 +2236,7 @@ $function = "rsvpmaker_scheduled_email_list";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Guest List",'rsvpmaker');
+$page_title = __("RSVPMaker Email List",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_guest_list";
@@ -3069,7 +3060,23 @@ function rsvpmaker_notification_templates () {
 
 rsvpmaker_admin_heading(__('Notification Templates','rsvpmaker'),__FUNCTION__);
 echo '<p>'.__('Use this form to customize notification and confirmation messages and the information to be included in them. Template placeholders such as [rsvpdetails] are documented at the bottom of the page.').'</p>';
-	
+
+if ( isset( $_POST['ntemp'] ) && rsvpmaker_verify_nonce() ) {
+	$output = '<h2>' . __( 'Updated', 'rsvpmaker' ) . '</h2>';
+	$ntemp = $_POST['ntemp'];
+	foreach($ntemp as $index => $data) {
+		$ntemp[$index]['subject'] = sanitize_text_field($ntemp[$index]['subject']);
+		$ntemp[$index]['body'] = wp_kses_post($ntemp[$index]['body']);
+	}
+	if ( ! empty( $_POST['newtemplate']['subject'] ) && ! empty( $_POST['newtemplate_label'] ) ) {
+		$index = sanitize_text_field($_POST['newtemplate_label']);
+		$ntemp[ $index ]['subject'] = sanitize_text_field( $_POST['newtemplate']['subject'] );
+		$ntemp[ $index ]['body']    = wp_kses_post( $_POST['newtemplate']['body'] );
+	}
+	update_option( 'rsvpmaker_notification_templates', stripslashes_deep( $ntemp ) );
+	$output .= sprintf( '<p><a href="%s">%s</a></p>', admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates' ), __( 'Edit', 'rsvpmaker' ) );
+}
+
 $sample_data = array('rsvpdetails' => "first: John\nlast: Smith\nemail:js@example.com",'rsvpyesno' => __('YES','rsvpmaker'), 'rsvptitle' => 'Special Event', 'rsvpdate' => 'January 1, 2020','rsvpmessage' => 'Thank you!', 'rsvpupdate' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">'. __('RSVP Update','rsvpmaker').'</a></p>');
 $sample_data = apply_filters('rsvpmaker_notification_sample_data',$sample_data);
 $template_forms = get_rsvpmaker_notification_templates ();
@@ -4278,20 +4285,28 @@ function get_rsvpmaker_guest_list($active = true) {
 	return $wpdb->get_results($sql);
 }
 
-function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='') {
+function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segment='') {
 	global $wpdb;
 	$table = rsvpmaker_guest_list_table();
 	$sql = $wpdb->prepare("SELECT id FROM $table where email LIKE %s",$email);
-	if($wpdb->get_var($sql))
-		return; // already in database
-	$sql = $wpdb->prepare("INSERT INTO $table SET email=%s, first_name=%s, last_name=%s ",$email,$first_name,$last_name);
-	$result = $wpdb->query($sql);
+	$id = $wpdb->get_var($sql);
+	if($id) {
+		// add to segment?
+	}
+	else {
+		//get insert id, add segment
+		$sql = $wpdb->prepare("INSERT INTO $table SET email=%s, first_name=%s, last_name=%s ",$email,$first_name,$last_name);
+		$result = $wpdb->query($sql);	
+	}
 }
 
 function rsvpmaker_guest_list() {
 	global $wpdb;
-	rsvpmaker_admin_heading(__('RSVPMaker Guest List','rsvpmaker'),__FUNCTION__);
+	rsvpmaker_admin_heading(__('RSVPMaker Email List','rsvpmaker'),__FUNCTION__);
 	$active = (int) get_option('rsvpmaker_guest_list_active');
+	$segments = get_option('rsvpmail_segments');
+	if(!is_array($segments))
+		$segments = array();
 
 	if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
 	{	
@@ -4299,13 +4314,25 @@ function rsvpmaker_guest_list() {
 			$active = intval($_POST['active']);
 			update_option('rsvpmaker_guest_list_active',$active);	
 		}
+
+		if(isset($_POST['newsegment'])) {
+			$segment = sanitize_text_field($_POST['newsegment']);
+			$segmentindex = preg_replace('[^a-z0-9]','_',strtolower($segment));
+			$segments[$segmentindex] = $segment;
+			update_option('rsvpmail_segments',$segments);
+		}
+		if(!empty($segmentindex))
+			$segment = $segmentindex;
+		else
+			$segment = empty($_POST['segment']) ? '' : sanitize_text_field($_POST['segment']);
+
 		if(!empty($_POST['email'][0]))
 		{
 			foreach($_POST['email'] as $index => $email) {
 				if(is_email($email)) {
 					$first_name = sanitize_text_field($_POST['first_name'][$index]);
 					$last_name = sanitize_text_field($_POST['last_name'][$index]);
-					rsvpmaker_guest_list_add($email, $first_name,$last_name);
+					rsvpmaker_guest_list_add($email, $first_name,$last_name,$segment='');
 				}
 			}
 		}
@@ -4318,20 +4345,31 @@ function rsvpmaker_guest_list() {
 				$wpdb->query($sql);
 			}
 		}
-		rsvpmaker_email_upload_to_array();
+
+		rsvpmaker_email_upload_to_array($segment);
 	}
+
+	if(!is_array($segments))
+		$segment_options = '<option value="">None Configured</option>';
+	else {
+		$segment_options = '<option value="">General List</option>';
+		foreach($segments as $index => $segment) {
+			$segment_options .= sprintf('<option value="%d">%s</option>',$index,$segment);
+		}
+	}
+
 	?>
 	<p>The guest email list is an optional feature of RSVPMaker that allows you to maintain an email list for those who do not have user accounts on your website but have given you permission to send them email. It's suitable for sending to lists of a few dozen to a few hundred members. For large lists, you will get better performance and spam management by using the integration with MailChimp or Sendgrid.</p>
 	<?php
 	printf('<form method="post" enctype="multipart/form-data" action="%s">',admin_url('admin.php?page=rsvpmaker_guest_list'));
 	rsvpmaker_nonce();
-	if($active) {
+	if($active)
 		printf('<p>%s <input type="radio" name="active" value="1" checked="checked"> %s <input type="radio" name="active" value="0" > %s </p>',__('Active','rsvpmaker'),__('Yes','rsvpmaker'),__('No','rsvpmaker'));
-		printf('<p>Email to add <input type="text" name="email[]"> First Name <input type="text" name="first_name[]"> Last Name <input type="text" name="last_name[]"> </p>');
-		printf('<p>%s: <input type="file" name="upload_file" /><br>You can upload a CSV data file with columns in the order email, first name, and last name</p>',__('Select file to upload','rsvpmaker'));
-	}
 	else
 		printf('<p>%s <input type="radio" name="active" value="1"> %s <input type="radio" name="active" value="0"  checked="checked"> %s </p>',__('Active','rsvpmaker'),__('Yes','rsvpmaker'),__('No','rsvpmaker'));
+		printf('<p>Email to add <input type="text" name="email[]"> First Name <input type="text" name="first_name[]"> Last Name <input type="text" name="last_name[]"> </p>');
+		printf('<p>%s: <input type="file" name="upload_file" /><br>You can upload a CSV data file with columns in the order email, first name, and last name</p>',__('Select file to upload','rsvpmaker'));
+		printf('<p>List segment (optional): <select name="segment">%s</select>. For a new segment, enter a label <input type="text" name="newsegment"></p>',$segment_options);
 	submit_button();
 	echo '</form>';
 		echo '<h2>'.__('Current List','rsvpmaker').'</h2>';	
@@ -4350,7 +4388,7 @@ function rsvpmaker_guest_list() {
 		}
 }
 
-function rsvpmaker_email_upload_to_array() {
+function rsvpmaker_email_upload_to_array($segment = '') {
 	$csv_array  = array();
 	if ( ! empty( $_FILES['upload_file']['tmp_name'] ) ) {
 		$file = fopen( $_FILES['upload_file']['tmp_name'], 'r' );
@@ -4369,7 +4407,7 @@ function rsvpmaker_email_upload_to_array() {
 				if(is_email($email)) {
 					$first_name = empty($cells[1]) ? '' : $cells[1];
 					$last_name = empty($cells[2]) ? '' : $cells[2];
-					rsvpmaker_guest_list_add($email, $first_name, $last_name);				
+					rsvpmaker_guest_list_add($email, $first_name, $last_name,$segment);
 				}
 		}
 	}

@@ -735,6 +735,8 @@ function is_rsvpmaker_deadline_future( $post_id ) {
 	global $post;
 	if('rsvpmaker_template' == $post->post_type)
 		return true;
+	if('rsvpmaker' == $post->post_type)
+		return false;
 	$deadline = (int) get_post_meta( $post_id, '_rsvp_deadline', true );
 	$event    = get_rsvpmaker_event( $post_id );
 	$start = (int) $event->ts_start;
@@ -1606,12 +1608,8 @@ function get_rsvpmaker_stripe_keys_all() {
 			'notify'     => '',
 		);
 	}
-
 	return $keys;
-
 }
-
-
 
 function get_rsvpmaker_stripe_keys() {
 
