@@ -1546,9 +1546,6 @@ add_post_meta($post_id,'rsvprelay_fromname',$data->FromName);
 add_post_meta($post_id,'rsvprelay_postmark_to',$data->ToFull);
 add_post_meta($post_id,'rsvprelay_postmark_cc',$data->CcFull);
 add_post_meta($post_id,'rsvprelay_postmark_audience',$audience);
-if(strpos($data->From,'toastmasters.org'))
-	mail('david@carrcommunications.com','toastmasters: '.$data->Subject,var_export($data,true));
-	//ob_start();
 rsvpmaker_postmark_incoming($audience,$data,$post_id);
 do_action('postmark_incoming_email_object',$data,$json);
 	return new WP_REST_Response($data, 200);

@@ -63,25 +63,25 @@ add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
 function rsvpmaker_relay_manual_test() {
 	rsvpmaker_admin_heading(__('Manually Trigger Check of Email Lists','rsvpmaker'),__FUNCTION__);
 	//echo 'about to call rsvpmaker_relay_init';
-
-	if(rsvpmaker_postmark_is_live()) {
-		echo '<p>Postmark Integration is Live</p>';
-		rsvpmaker_postmark_chunked_batches();
+	$html = rsvpmaker_relay_init( true );
+	if(isset($_GET['cronoff'])) {
+		wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
+		echo '<p>Cron disabled for rsvpmaker_relay_init_hook</p>';
 	}
-	else {
-		$html = rsvpmaker_relay_init( true );
-		if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
-			wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
-			echo '<p>Activating rsvpmaker_relay_init_hook</p>';
-		}	
-		if ( !empty($html) ) {
 
-			echo wp_kses_post( $html );
-
-		} else {
-			echo '<p>' . __( 'No messages', 'rsvpmaker' ) . '</p>';
-		}		
+	elseif(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
+		wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+		echo '<p>Activating rsvpmaker_relay_init_hook</p>';
 	}
+
+	if ( $html ) {
+
+		echo wp_kses_post( $html );
+
+	} else {
+		echo '<p>' . __( 'No messages', 'rsvpmaker' ) . '</p>';
+	}
+
 }
 
 add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
@@ -149,7 +149,9 @@ function rsvpmaker_relay_queue() {
 	$last_post_id = 0;
 	$posts = $wpdb->posts;
 	$postmeta = $wpdb->postmeta;
+	//$limit = 10;
 	$sql = "select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
+	//mail('david@carrcommunications.com','rsvpmaker_email_queue $sql',$sql);
 	$results = $wpdb->get_results($sql);
 	foreach($results as $mail) {
 		$mail = (array) $mail;

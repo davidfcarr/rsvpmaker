@@ -3107,7 +3107,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 			$rsvplink = get_rsvp_link( $post->ID, true );
 			if ( !is_rsvpmaker_deadline_future( $post->ID ) ) {
-				$content .= '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . '</p>';
+				$content .= '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . '</p>'.var_export(is_rsvpmaker_deadline_future( $post->ID ),true);
 			} 
 			elseif ( isset( $rsvpstart ) && ( $now < $rsvpstart ) ) {
 

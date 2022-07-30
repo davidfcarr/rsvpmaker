@@ -1804,8 +1804,6 @@ function get_rsvpmaker_archive_link( $page = 1 ) {
 
 }
 
-
-
 function rsvpmaker_examine_query( $request ) {
 
 	$log = var_export( $request, true );

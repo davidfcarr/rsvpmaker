@@ -730,12 +730,11 @@ function get_events_rsvp_on( $limit = 0 ) {
 
 }
 
-
 function is_rsvpmaker_deadline_future( $post_id ) {
 	global $post;
 	if('rsvpmaker_template' == $post->post_type)
 		return true;
-	if('rsvpmaker' == $post->post_type)
+	if('rsvpmaker' != $post->post_type)
 		return false;
 	$deadline = (int) get_post_meta( $post_id, '_rsvp_deadline', true );
 	$event    = get_rsvpmaker_event( $post_id );

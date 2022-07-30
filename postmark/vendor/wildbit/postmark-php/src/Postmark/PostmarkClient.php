@@ -340,6 +340,17 @@ class PostmarkClient extends PostmarkClientBase {
 		return new DynamicResponseModel($this->processRestRequest('PUT', '/server', $body));
 	}
 
+	//rsvpmaker added function
+	function tweakServer($inboundHookUrl = NULL) {
+
+		$body = array();
+		$body["InboundHookUrl"] = $inboundHookUrl;
+		$body["TrackOpens"] = true;
+		$body["InboundDomain"] = 'HtmlAndText';
+
+		return new DynamicResponseModel($this->processRestRequest('PUT', '/server', $body));
+	}
+
 	/**
 	 * Search messages that have been sent using this Server.
 	 *

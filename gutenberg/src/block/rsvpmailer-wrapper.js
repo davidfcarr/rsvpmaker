@@ -49,6 +49,14 @@ attributes: {
         mediaUrl: {
             type: 'string',
             default: '',
+        },
+        backgroundRepeat: {
+            type: 'string',
+            default: 'no-repeat',
+        },
+        backgroundSize: {
+            type: 'string',
+            default: 'contain',
         }
 },
 
@@ -61,8 +69,8 @@ attributes: {
         color: attributes.color,
         padding: attributes.padding,
         backgroundImage: attributes.mediaUrl != '' ? 'url("' + attributes.mediaUrl + '")' : 'none',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
+        backgroundRepeat: attributes.backgroundRepeat,
+        backgroundSize: attributes.backgroundSize,
         backgroundAttachment: 'fixed',
     };
     const blockProps = useBlockProps({ style: bodyStyle});
@@ -82,8 +90,8 @@ attributes: {
             color: attributes.color,
             padding: attributes.padding,
             backgroundImage: attributes.mediaUrl != '' ? 'url("' + attributes.mediaUrl + '")' : 'none',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain',
+            backgroundRepeat: attributes.backgroundRepeat,
+            backgroundSize: attributes.backgroundSize,
         } :  {
             backgroundColor: attributes.backgroundColor,
             color: attributes.color,
@@ -111,7 +119,7 @@ class EmailBodyInspector extends Component {
             });
         }
             
-		const { media, attributes, attributes: {backgroundColor ,paletteBackgroundColor, padding, backgroundImage}, setAttributes, className } = this.props;
+		const { media, attributes, attributes: {backgroundColor ,paletteBackgroundColor, padding, backgroundImage, backgroundRepeat, backgroundSize}, setAttributes, className } = this.props;
         const colors = wp.data.select('core/block-editor').getSettings().colors;
         console.log(media);
 		return (
@@ -130,7 +138,7 @@ class EmailBodyInspector extends Component {
         />  
 				</PanelBody>
                 <PanelBody
-					title={__('Select block background image', 'rsvpmaker')}
+					title={__('Select email background image', 'rsvpmaker')}
 					initialOpen={ true }
 				>
 					<div className="editor-post-featured-image background-image">
@@ -168,7 +176,19 @@ class EmailBodyInspector extends Component {
 							</MediaUploadCheck>
 						}
 					</div>
-				</PanelBody>
+                    <SelectControl
+                                label={__("Background Repeat", "rsvpmaker")}
+                                options={[{'label':'None (no-repeat)','value':'no-repeat'},{'label':'Repeat Vertical (repeat-y)','value':'repeat-y'},{'label':'Repeat Horizontal (repeat-x)','value':'repeat-x'},{'label':'Repeat (repeat)','value':'repeat'}]}
+                                value={backgroundRepeat}
+                                onChange={(backgroundRepeat) => setAttributes({backgroundRepeat: backgroundRepeat})}
+                    />
+                    <SelectControl
+                                label={__("Background Sizing", "rsvpmaker")}
+                                options={[{'label':'Contain','value':'contain'},{'label':'Cover','value':'cover'}]}
+                                value={backgroundSize}
+                                onChange={(backgroundSize) => setAttributes({backgroundSize: backgroundSize})}
+                    />                
+                </PanelBody>
 			</InspectorControls>
 		);
 	}

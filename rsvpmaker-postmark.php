@@ -2,6 +2,7 @@
 // Import the Postmark Client Class:
 require_once('postmark/vendor/autoload.php');
 use Postmark\PostmarkClient;
+use Postmark\PostmarkAdminClient;
 use Postmark\Models\PostmarkException;
 
 function get_rsvpmaker_postmark_options() {
@@ -77,8 +78,6 @@ function rsvpmaker_postmark_options() {
             $postmark_settings['restricted'] = '0';
         if(empty($postmark_settings['enabled']))
             $postmark_settings['enabled'] = array();
-    print_r(hash_algos());
-    echo var_export(hash('crc32',implode('',$postmark_settings)),true);
     printf('<form method="post" action="%s">',admin_url('admin.php?page='.$_GET['page']));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
     printf('<p><input type="radio" name="postmark_mode" value="" %s> Off - Postmark not managing email</p>',$checked);
@@ -105,23 +104,79 @@ function rsvpmaker_postmark_options() {
     }
     rsvpmaker_nonce();
     echo '<button>Submit</button></form>';
+
+if(!isset($_GET['debug']))
+    return;
+
+if(!empty($postmark_settings['postmark_production_key']))
+{
+    $client = new PostmarkClient($postmark_settings['postmark_production_key']);
+    $server = $client->getServer();
+    $trackopens = true;
+    $tracklinks = 'HtmlOnly';
+    if($server['inboundhookurl'] != $url)
+    {
+        //$client->tweakServer($url);
+        $client->editServer($server['name'],$server['color'],$server['rawemailenabled'],
+        $server['smtpapiactivated'], $url, $server['bouncehookurl'],$server['openhookurl'],$server['firstopenonly'],
+        $trackopens,$tracklinks);
+        echo "<p>Updating server settings</p>";
+    }    
+    echo "<p>Server settings are current</p>";
+
+    /*
+editServer($name = NULL, $color = NULL, $rawEmailEnabled = NULL,
+		$smtpApiActivated = NULL, $inboundHookUrl = NULL, $bounceHookUrl = NULL,
+		$openHookUrl = NULL, $postFirstOpenOnly = NULL, $trackOpens = NULL,
+		$inboundDomain = NULL, $inboundSpamThreshold = NULL,
+		$trackLinks = NULL, 
+
+[id] => 9167770
+            [name] => rsvpmaker sandbox
+            [apitokens] => Array
+                (
+                    [0] => 1ad00992-cb28-43cd-9cfe-35858d3ae3f2
+                )
+
+            [color] => green
+            [smtpapiactivated] => 1
+            [rawemailenabled] => 
+            [deliverytype] => Sandbox
+            [serverlink] => https://account.postmarkapp.com/servers/9167770/overview
+            [inboundaddress] => 73883bf9421838397d8fa35453d24452@inbound.postmarkapp.com
+            [inboundhookurl] => https://rsvpmaker.com/wp-json/rsvpmaker/v1/postmark_incoming/1c71259c92
+            [bouncehookurl] => 
+            [openhookurl] => 
+            [deliveryhookurl] => 
+            [postfirstopenonly] => 
+            [inbounddomain] => 
+            [inboundhash] => 73883bf9421838397d8fa35453d24452
+            [inboundspamthreshold] => 0
+            [trackopens] => 
+            [tracklinks] => None
+*/
+
+
+    echo '<pre>';
+    print_r($server);
+    echo '</pre>';
+}
+
 }
 
 function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$recipient_names=array()) {
     global $wpdb;
     $recipients = rsvpmaker_recipients_no_problems($recipients);
-    //mail('david@carrcommunications.com','broadcast recipients after no problems filter '.$post_id,var_export($recipients,true));
     if(empty($recipients))
         return;
     if(sizeof($recipients) > 500) {
         $chunks = array_chunk($recipients,500);
         echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
-        rsvpmaker_debug_log($log,'broadcast recipient chunks');
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
             add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
         }
-        wp_schedule_event( strtotime('+2 minutes'), 'minute', 'rsvpmaker_postmark_chunked_batches' );
+        wp_schedule_event( strtotime('+15 seconds'), 'minute', 'rsvpmaker_postmark_chunked_batches' );
     }
 
     $postmark_settings = get_rsvpmaker_postmark_options();
@@ -136,7 +191,6 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $html = rsvpmaker_email_html($mpost,$post_id);
         update_post_meta($post_id,'_rsvpmail_html',$html);
     }
-    mail('david@carrcommunications.com','broadcast recipients html '.$post_id,$html);
     $html = rsvpmail_replace_placeholders($html);
     $text = rsvpmaker_text_version($html);
     $mail['Subject'] = $mpost->post_title;
@@ -158,14 +212,12 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
-    //mail('david@carrcommunications.com','broadcast recipients batch for '.$post_id,var_export($batch,true));
     
     $hash = postmark_batch_hash($batch,$recipients);
     if(rsvpmaker_postmark_duplicate($hash))
         return 'Duplicate message';
 
     $responses = $client->sendEmailBatch($batch);
-    mail('david@carrcommunications.com','broadcast recipients responses for '.$mail['Subject'],var_export($responses,true));
 
     // The response from the batch API returns an array of responses for each
     // message sent. You can iterate over it to get the individual results of sending.
@@ -196,30 +248,33 @@ function rsvpmaker_postmark_chunked_batches() {
     global $wpdb;
     //do we need to switch to blog 1?
     //used with postmark integration
+    $log = '';
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
 	$batchrow = $wpdb->get_row($sql);
 	if($batchrow) {
 		$recipients = unserialize($batchrow->meta_value);
 		if(empty($recipients))
-			echo 'done';
-        wp_mail(get_bloginfo('admin_email'),'batched sending of email batchrow '.$batchrow->post_id,sizeof($recipients).' recipients');        $log = rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
-        rsvpmaker_postmark_broadcast($recipients, $batchrow->post_id);
+			$log .= 'done';
+        else {
+            if(!isset($_GET['page']))
+                wp_mail(get_bloginfo('admin_email'),'batched sending of email batchrow '.$batchrow->post_id,sizeof($recipients).' recipients');
+            $log .= rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
+        }
 		$wpdb->query("update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id");
 	} else {
         // until it's needed again
         wp_unschedule_hook( 'rsvpmaker_postmark_chunked_batches' );
-        wp_mail(get_bloginfo('admin_email'),'batched sending of email complete','No more messages in the queue');
+        if(!isset($_GET['page'])) //if not checking manually
+            wp_mail(get_bloginfo('admin_email'),'batched sending of email complete','No more messages in the queue');
+        $log .= 'No batched messages waiting';
     }
 }
 
 function rsvpmaker_postmark_send($mail) {
-    rsvpmaker_debug_log($mail,'rsvpmaker_postmark_send start');
     $postmark_settings = get_rsvpmaker_postmark_options();
     $mail['MessageStream'] = $postmark_settings['postmark_tx_slug'];
     $batch = rsvpmaker_postmark_batch($mail, $mail['to']);
-    rsvpmaker_debug_log($batch,'rsvpmaker_postmark_send batch');
     $result = rsvpmaker_postmark_batch_send($batch);
-    rsvpmaker_debug_log($result,'rsvpmaker_postmark_batch_send result');
     return $result;
 }
 
@@ -234,18 +289,13 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         mail($admin_email,'postmark deactivated',date('r'));
     }
 	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
-    rsvpmaker_debug_log($hosts_and_subdomains,'hosts and subdomains');
-	foreach($forwarders as $email) {
-        rsvpmaker_debug_log($email,'forwarders as email loop');
+ 	foreach($forwarders as $email) {
 		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
-        rsvpmaker_debug_log($slug_and_id,'slug_and_id');
         if(!empty($slug_and_id)) {
             $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
-            rsvpmaker_debug_log($recipients,'rsvpmail_recipients_by_slug_and_id');
             if($recipients) {
                 $batch = rsvpmaker_postmark_batch($emailobj, $recipients, $slug_and_id);
                 $result = rsvpmaker_postmark_batch_send($batch);
-                rsvpmaker_debug_log($result,'rsvpmaker_postmark_batch_send result');
             }
         }
 	}
@@ -300,18 +350,6 @@ function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_
     return $mail;
 }
 
-add_shortcode('rsvpmaker_postmark_array_test','rsvpmaker_postmark_array_test');
-
-function rsvpmaker_postmark_array_test() {
-    $mail['to'] = 'david@carrcommunications.com';
-    $mail['cc'] = 'david@rsvpmaker.com';
-    $mail['subject'] = 'postmark array test';
-    $mail['MessageStream'] = 'outbound';
-    $mail['html'] = '<p>message</p>';
-    $mail = rsvpmaker_postmark_array($mail);
-    return var_export($mail,true);
-}
-
 function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
     if(!is_array($recipients))
         $recipients = array($recipients);
@@ -322,7 +360,6 @@ function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
     //use tx only for small batches like rsvp notification / confirmation
     $message_stream = ((sizeof($recipients) < 3) && is_array($mail) && $postmark_settings['postmark_tx_slug'] == $mail['MessageStream']) ? $postmark_settings['postmark_tx_slug'] : $postmark_settings['postmark_broadcast_slug'];
     $template = rsvpmaker_postmark_array($mail, $message_stream, $slug_and_id);
-    rsvpmaker_debug_log($template,'postmark array template');
     foreach($recipients as $to) {
         $mail = $template;
         $mail['HtmlBody'] = rsvpmaker_personalize_email($mail['HtmlBody'],$to);
@@ -379,7 +416,7 @@ function postmark_batch_hash ($batch,$recipients = null) {
         foreach($batch as $mail)
             $rlist .= $mail['To'];
     }
-    return hash('crc32c',$batch[0]->Subject.$batch[0]->HtmlBody.$rlist);
+    return hash('crc32c',var_export($batch[0],true).$rlist);
 }
 
 function rsvpmaker_postmark_duplicate($hash) {
@@ -389,7 +426,7 @@ function rsvpmaker_postmark_duplicate($hash) {
 
     if($row->duplicates > 1)
     {
-        mail('david@carrcommunications.com','postmark duplicate blocked',var_export($row,true));
+        mail(get_bloginfo('admin_email'),'postmark duplicate blocked',var_export($row,true));
         return true;
     }
     return false;
@@ -426,11 +463,10 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='') {
             $postmark = get_option('rsvpmaker_postmark');
             $postmark['postmark_mode'] = '';
             update_option('rsvpmaker_postmark',$postmark);
-            wp_mail(get_bloginfo('admin_email'),'Shutting down Postmark email delivery service because of overload',"Heavy use, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
+            wp_mail(get_bloginfo('admin_email'),'Shutting down RSVPMaker/Postmark email delivery service because of overload',"Heavy use, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
         }
-        else 
-        wp_mail(get_bloginfo('admin_email'),'Recent email volume on Postmark >' .$sent_in_hour. ' in past hour',"Heavy use, warning score $score, resulting in this stream of messages\n",$overloadmessage);    
-
+        elseif(!empty($overloadmessage))
+            wp_mail(get_bloginfo('admin_email'),'Recent email volume on RSVPMaker/Postmark >' .$sent_in_hour. ' in past hour',"Heavy use, warning score $score, resulting in this stream of messages\n",$overloadmessage);
     }
 }
 
@@ -493,28 +529,21 @@ function check_postmark_tally_version() {
         rsvpmaker_postmark_log_table();
 }
 
-add_shortcode('postmark_invite_test','postmark_invite_test');
-function postmark_invite_test() {
-$post_id = 122762;
-$from_email = 'rsvp@rsvpmaker.com';
-$rsvp_email = 'david@carrcommunications.com';
-$conf = get_post(117934);
-$ical = rsvpmaker_to_ical_email( $post_id, $from_email, $rsvp_email, rsvpmaker_text_version(do_blocks($conf->post_content)) );
-$timestamp = date('r');
-$mail['to'] = 'david@carrcommunications.com';
-$mail['subject'] = 'invite test '.$timestamp;
-$mail['from'] = 'david@rsvpmaker.com';
-$mail['fromname'] = 'RSVPMaker Test';
-$base64 = base64_encode($ical);
-$mail['Attachments'][] = array('ContentType' => 'application/ics','Name'=>'invite.ics','Content'=>$base64);
-$mail['Attachments'][] = array('ContentType' => 'text/calendar; charset=\"UTF-8\"; method=REQUEST','Name'=>'Invitation.ics','Content'=>$base64);
-$mail['html'] = '<p>this is a test</p>';
-
-$output = '';
-$output .= 'test send '.$timestamp . rsvpmaker_postmark_send($mail);
-$output .= '<p><textarea cols="200" rows="50">'.$ical.'</textarea></p>';
-//$base64 = "QkVHSU46VkNBTEVOREFSDQpQUk9ESUQ6LS8vR29vZ2xlIEluYy8vR29vZ2xlIENhbGVuZGFyIDcwLjkwNTQvL0VODQpWRVJTSU9OOjIuMA0KQ0FMU0NBTEU6R1JFR09SSUFODQpNRVRIT0Q6UkVRVUVTVA0KQkVHSU46VkVWRU5UDQpEVFNUQVJUOjIwMjIwNzE4VDE2MDAwMFoNCkRURU5EOjIwMjIwNzE4VDE3MDAwMFoNCkRUU1RBTVA6MjAyMjA3MThUMTI1ODMzWg0KT1JHQU5JWkVSO0NOPURhdmlkIEYuIENhcnI6bWFpbHRvOmRhdmlkQGNhcnJjb21tdW5pY2F0aW9ucy5jb20NClVJRDo3aGt2ZnJldjB0b2dwZW1xaWdlcDcyMTM0akBnb29nbGUuY29tDQpBVFRFTkRFRTtDVVRZUEU9SU5ESVZJRFVBTDtST0xFPVJFUS1QQVJUSUNJUEFOVDtQQVJUU1RBVD1ORUVEUy1BQ1RJT047UlNWUD0NCiBUUlVFO0NOPXpvb21ndWVzdEByc3ZwbWFrZXIuY29tO1gtTlVNLUdVRVNUUz0wOm1haWx0bzp6b29tZ3Vlc3RAcnN2cG1ha2VyLmMNCiBvbQ0KQVRURU5ERUU7Q1VUWVBFPUlORElWSURVQUw7Uk9MRT1SRVEtUEFSVElDSVBBTlQ7UEFSVFNUQVQ9QUNDRVBURUQ7UlNWUD1UUlVFDQogO0NOPURhdmlkIEYuIENhcnI7WC1OVU0tR1VFU1RTPTA6bWFpbHRvOmRhdmlkQGNhcnJjb21tdW5pY2F0aW9ucy5jb20NClgtTUlDUk9TT0ZULUNETy1PV05FUkFQUFRJRDotMzk0NDQ0NTIwDQpDUkVBVEVEOjIwMjIwNzE4VDEyNTgwNloNCkRFU0NSSVBUSU9OOlBsZWFzZSBqb2luIG1lIGluIGEgWm9vbSBtZWV0aW5nIGF0Jm5ic3BcOzxhIGhyZWY9Imh0dHBzOi8vem9vbQ0KIC51cy9qLzQ3NDc0NzE5NjM/cHdkPVFYcFlaMWxoZG1adVJHcDRRVkJPVUZWRGFHVmxkejA5IiBpZD0ib3c2NzIiIF9faXNfb3duZQ0KIHI9InRydWUiPmh0dHBzOi8vem9vbS51cy9qLzx3YnI+NDc0NzQ3MTk2Mz9wd2Q9PHdicj5RWHBZWjFsaGRtWnVSR3A0UVZCT1VGVg0KIERhR1ZsZHo8d2JyPjA5PC9hPjxicj48YnI+VG8gam9pbiBmcm9tIHRoZSBab29tIGFwcFwsIGVudGVyIHRoaXMgbWVldGluZyBJRA0KICBhbmQgcGFzc3dvcmQ8YnI+PGJyPk1lZXRpbmcgSUQ6IDQ3NCA3NDcgMTk2Mzxicj5QYXNzd29yZDogMDAyNDQ1XG5cbi06On46fg0KIDo6fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46Og0KIH46fjo6LVxuRG8gbm90IGVkaXQgdGhpcyBzZWN0aW9uIG9mIHRoZSBkZXNjcmlwdGlvbi5cblxuVmlldyB5b3VyIGV2ZW50IGF0IA0KIGh0dHBzOi8vY2FsZW5kYXIuZ29vZ2xlLmNvbS9jYWxlbmRhci9ldmVudD9hY3Rpb249VklFVyZlaWQ9TjJocmRtWnlaWFl3ZEc5bg0KIGNHVnRjV2xuWlhBM01qRXpOR29nZW05dmJXZDFaWE4wUUhKemRuQnRZV3RsY2k1amIyMCZ0b2s9TWpnalpHRjJhV1JBWTJGeWNtTg0KIHZiVzExYm1sallYUnBiMjV6TG1OdmJXTmtNelZrT1RBNU1XTmlOMlppWmpJd05qRTVZV1UwWW1Jd09HWmlNek5tTVRnMk5qRTFORw0KIFkmY3R6PUFtZXJpY2ElMkZOZXdfWW9yayZobD1lbiZlcz0xLlxuLTo6fjp+Ojp+On46fjp+On46fjp+On46fjp+On46fjp+On46fg0KIDp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjp+On46fjo6fjp+OjotDQpMQVNULU1PRElGSUVEOjIwMjIwNzE4VDEyNTgzMloNCkxPQ0FUSU9OOmh0dHBzOi8vem9vbS51cy9qLzQ3NDc0NzE5NjM/cHdkPVFYcFlaMWxoZG1adVJHcDRRVkJPVUZWRGFHVmxkejA5DQpTRVFVRU5DRTowDQpTVEFUVVM6Q09ORklSTUVEDQpTVU1NQVJZOlRlc3QNClRSQU5TUDpPUEFRVUUNCkVORDpWRVZFTlQNCkVORDpWQ0FMRU5EQVINCg==";
-//$output .= '<p>Sample:<br><textarea cols="200" rows="50">'.str_replace(' ','| |',base64_decode($base64)).'</textarea></p>';
-
-return $output;
+add_filter('option_postmark_settings','rsvpmaker_option_postmark_settings');
+function rsvpmaker_option_postmark_settings($option) {
+    if((empty($options)) && rsvpmaker_postmark_is_live()) {
+    $postmark_settings = get_rsvpmaker_postmark_options();
+    $option = json_encode(array(
+        'enabled'        => 1,
+        'api_key'        => $postmark_settings['postmark_production_key'],
+        'stream_name'    => $postmark_settings['postmark_tx_slug'],
+        'sender_address' => $postmark_settings['postmark_tx_from'],
+        'force_from'     => 0,
+        'force_html'     => 0,
+        'track_opens'    => 0,
+        'track_links'    => 0,
+        'enable_logs'    => 1
+    ));
+    }
+    return $option;
 }

@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0.1
-Stable tag: 9.5.3
+Stable tag: 9.5.5
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -137,6 +137,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.5.5 =
+
+* Formatting options for email background images.
 
 = 9.5.2 =
 
