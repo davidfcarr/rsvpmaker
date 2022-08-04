@@ -1552,6 +1552,104 @@ do_action('postmark_incoming_email_object',$data,$json);
 	}
 }
 
+class RSVPMaker_Confirm_Email_Membership extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvpmailer_member/(?P<email>.+)';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb;
+		$email = $request['email'];
+		if(is_email($email))
+		{
+			$table = rsvpmaker_guest_list_table();
+			$sql = "select id from $table where email LIKE '$email' ";
+			$result = ($wpdb->get_var($sql) > 0);
+		}
+		else
+			$result = false;
+		return new WP_REST_Response( $result, 200 );
+	}
+}
+
+class RSVPMail_Remote_Signup extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvpmailer_signup/(?P<code>.+)';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return (urldecode($request['code']) == get_rsvpmail_signup_key());
+	}
+
+	public function get_items( $request ) {
+		global $wpdb;
+		ob_start();
+		if(is_email($_POST['email']))
+		{   
+			$rsvp = $_POST;
+			ob_start();
+			rsvpmaker_guest_list_add($rsvp['email'],sanitize_text_field(stripslashes($rsvp['first'])),sanitize_text_field(stripslashes($rsvp['last'])),'',0);
+			$result['message'] = ob_get_clean();
+			$result['success'] = true;
+			$result['code'] = urldecode($request['code']);
+			$result['key'] = get_rsvpmail_signup_key();
+		}
+		else {
+			$result['message'] = 'Please enter a valid email address.';
+			$result['success'] = false;
+		}
+		return new WP_REST_Response( $result, 200 );
+	}
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -1607,5 +1705,9 @@ add_action(
 		$conf->register_routes();
 		$pi = new PostmarkIncoming();
 		$pi->register_routes();
+		$confmemb = new RSVPMaker_Confirm_Email_Membership();
+		$confmemb->register_routes();
+		$rsignup = new RSVPMail_Remote_Signup();
+		$rsignup->register_routes();
 	}
 );
