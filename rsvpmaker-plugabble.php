@@ -5907,7 +5907,6 @@ if ( ! function_exists( 'rsvpmaker_template_list' ) ) {
 				}
 
 				$sql = "select * from $wpdb->postmeta WHERE post_id=" . $override ." AND ($keysql) ";
-				echo $sql;
 				$results = $wpdb->get_results( $sql );
 	
 				if ( is_array( $results ) ) {

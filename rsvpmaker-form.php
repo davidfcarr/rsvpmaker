@@ -885,4 +885,44 @@ function rsvpmaker_formchimp( $atts, $content ) {
 	return '<p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1" ' . $checked . ' /> ' . __( 'Add me to your email list', 'rsvpmaker' ) . '</p>';
 }
 
+function rsvpmaker_add_to_list_on_rsvp_form() {
+	global $rsvp_options;
+	if(empty($rsvp_options['rsvp_form']))
+		return;
+	$fpost = get_post($rsvp_options['rsvp_form']);
+	if(isset($_POST['add_add_checkbox']) && !strpos($fpost->post_content,'formchimp')) {
+		$update['post_content'] = $fpost->post_content . "\n\n".'<!-- wp:rsvpmaker/formchimp {"checked":true} -->
+<div class="wp-block-rsvpmaker-formchimp"><p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1" checked/> Add me to your email list</p></div>
+<!-- /wp:rsvpmaker/formchimp -->';
+		$update['ID'] = $fpost->ID;
+		wp_update_post($update);
+	}
+	elseif(!strpos($fpost->post_content,'wp-block-rsvpmaker-formchimp'))
+	{
+		echo '<p><input type="checkbox" name="add_add_checkbox"> Include "Add me to your email list" checkbox on event signup form.</p>';
+	}
+}
 
+function rsvpmail_signup_page_add() {
+	global $wpdb, $current_user;
+	if(isset($_POST['add_email_signup_page'])){
+		$new['post_title'] = 'Join Our Email List';
+		$new['post_content'] = '<!-- wp:rsvpmaker/emailguestsignup /-->';
+		$new['post_author'] = $current_user->ID;
+		$new['post_type'] = 'page';
+		$new['post_status'] = 'publish';
+		wp_insert_post($new);
+	}
+
+	$sql = "SELECT * from $wpdb->posts WHERE post_content LIKE '%wp:rsvpmaker/emailguestsignup%' and post_status='publish' ";
+	$results = $wpdb->get_results($sql);
+	if($results) {
+		echo '<p><strong>Email Signup Form is Published Here:</strong> ';
+		foreach($results as $row) 
+			printf('<a href="%s">%s</a> &nbsp;',get_permalink($row->ID),$row->post_title);
+		echo '</p>';
+	}
+	else {
+		echo '<p><input type="checkbox" name="add_email_signup_page" value="1"> Add Email Signup Page</p>';
+	}
+}

@@ -355,7 +355,7 @@ function rsvpemail_error_log($errors,$mail = array()) {
 
               $options = $this->get_options();
               
-              if (isset($_POST["emailsubmitted"])) {
+              if (isset($_POST["emailsubmitted"]) || isset($_POST["mailing_address"])) {
                  		
 				  //$options = array();
 				  if(is_array($options))
@@ -414,9 +414,14 @@ remove_script_host : false,
 <?php rsvpmaker_admin_heading(__('RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
 <p>RSVPMaker provides its own mailing list management, which is most useful in combination with the Postmark integration.</p>	
 <p>See <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'); ?>">RSVPMailer Mailing list</a></p>
-<p>If you would like to set a message to be displayed whenever someone confirms their subscription to the RSVPMaker's own email list, you can set that here.</p>
+<?php rsvpmaker_add_to_list_on_rsvp_form(); ?>
+<p>If you would like to set a message to be displayed whenever someone confirms their subscription to the RSVPMaker's own email list, you can set that here. The placeholder code *|EMAIL|* maybe used to display the subscriber's email address.</p>
 <form method="post" action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>">
-<textarea name="rsvpmailer_list_confirmation_message" class="mce"><?php echo get_option('rsvpmailer_list_confirmation_message');?></textarea>
+<p><textarea name="rsvpmailer_list_confirmation_message" class="mce"><?php echo get_option('rsvpmailer_list_confirmation_message');?></textarea></p>
+<p><?php esc_html_e('Mailing Address','rsvpmaker');?>: 
+<input type="text" name="mailing_address" id="mailing_address" value="<?php echo esc_attr($options["mailing_address"]); ?>" /> <em>Providing a physical mailing list address is recommended as a bulk email best practice</em>
+</p>
+
 <?php 
 rsvpmaker_nonce();
 submit_button(); 
@@ -2281,6 +2286,24 @@ $function = "email_get_content";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
+$page_title = __("RSVPMaker Email List",'rsvpmaker');
+$menu_title = $page_title;
+$capability = 'edit_others_rsvpemails';
+$menu_slug = "rsvpmaker_guest_list";
+$function = "rsvpmaker_guest_list";
+
+add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
+$parent_slug = "edit.php?post_type=rsvpemail";
+$page_title = __("Unsubscribed List",'rsvpmaker');
+$menu_title = $page_title;
+$capability = 'edit_others_rsvpemails';
+$menu_slug = "unsubscribed_list";
+$function = "unsubscribed_list";
+
+add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
+$parent_slug = "edit.php?post_type=rsvpemail";
 $page_title = __("Email Design Templates",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
@@ -2308,29 +2331,11 @@ $function = "rsvpmaker_scheduled_email_list";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("RSVPMaker Email List",'rsvpmaker');
-$menu_title = $page_title;
-$capability = 'edit_others_rsvpemails';
-$menu_slug = "rsvpmaker_guest_list";
-$function = "rsvpmaker_guest_list";
-
-add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
-
-$parent_slug = "edit.php?post_type=rsvpemail";
 $page_title = __("Extract Addresses",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_extract_email";
 $function = "rsvpmaker_extract_email";
-
-add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
-
-$parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Unsubscribed List",'rsvpmaker');
-$menu_title = $page_title;
-$capability = 'edit_others_rsvpemails';
-$menu_slug = "unsubscribed_list";
-$function = "unsubscribed_list";
 
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
@@ -4424,7 +4429,7 @@ function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $sear
 			$where = ' WHERE ';
 		$where .= " (email LIKE '%$search%' OR first_name LIKE '%$search%' OR last_name LIKE '%$search%')";			
 	}
-	$sql = "SELECT $table.*, email as user_email, $table_meta.meta_value as segment FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id $where ORDER BY last_name, first_name";
+	$sql = "SELECT $table.*, email as user_email, $table_meta.meta_value as segment FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id $where ORDER BY email";
 	if($limit)
 		$sql .= " LIMIT $start, $limit";
 	$results = $wpdb->get_results($sql);
@@ -4460,21 +4465,23 @@ function rsvpmail_confirm_email($e) {
 function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segment='', $active=1) {
 	$email = trim(strtolower($email));
 	global $wpdb;
+	$output = '';
 	$id = $exists = $confirmed = 0;
 	$table = rsvpmaker_guest_list_table();
-	echo $sql = $wpdb->prepare("SELECT * FROM $table where email LIKE %s",$email);
+	$sql = $wpdb->prepare("SELECT * FROM $table where email LIKE %s",$email);
 	$row = $wpdb->get_row($sql);
 	if($row) {
-		print_r();
 		$exists = $id = $row->id;
 		$active = $confirmed = $row->active;
 	}
 
 	if($id) 
 	{
-		echo $sql = $wpdb->prepare("INSERT INTO $table SET email=%s, first_name=%s, last_name=%s, active=%d ",$email,$first_name,$last_name,$active);
+		$sql = $wpdb->prepare("UPDATE $table SET email=%s, first_name=%s, last_name=%s, active=%d WHERE id=%d ",$email,$first_name,$last_name,$active, $id);
+		$result = $wpdb->query($sql);
 	}
 	else {
+		$sql = $wpdb->prepare("INSERT INTO $table SET email=%s, first_name=%s, last_name=%s, active=%d ",$email,$first_name,$last_name,$active);
 		$result = $wpdb->query($sql);
 		$id = $wpdb->insert_id;
 	}
@@ -4489,7 +4496,7 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 
 	$list_active = get_option('rsvpmaker_guest_list_active');
 	if($exists && $confirmed)
-		echo '<p>You are already a confirmed member of the email list.</p>';
+		$output .= '<p>You are already a confirmed member of the email list.</p>';
 	elseif(!$active && $list_active) {
 		//confirmation required
 		$mail['to'] = $email;
@@ -4499,10 +4506,11 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		$confirm = site_url('?rsvpmail_subscribe='.$email);
 		$mail['html'] = sprintf('<p>Please <a href="%s">confirm your subscription</a> to the email list.</p><p>Follow this link to confirm<br><a href="%s">%s</a></p><p>If you did not initiate a subscription request, please ignore this note and accept our apologies.</p>',$confirm,$confirm,$confirm);
 		rsvpmailer($mail);
-		echo '<p><em>Please check your email for a message asking you to confirm your subscription.</em></p>';
+		$output .= '<p><em>Please check your email for a message asking you to confirm your subscription.</em></p>';
 		if($exists)
-			echo '<p>Looks like you may have signed up previously but not confirmed your subscription.</p>';
+			$output .=  '<p>Looks like you may have signed up previously but not confirmed your subscription.</p>';
 	}
+	return $output;
 }
 
 function rsvpmaker_add_contact_segment($id, $segment='') {
@@ -4647,6 +4655,8 @@ function rsvpmaker_guest_list() {
 		printf('<p>%s <input type="radio" name="active" value="1" checked="checked"> %s <input type="radio" name="active" value="0" > %s </p>',__('Active','rsvpmaker'),__('Yes','rsvpmaker'),__('No','rsvpmaker'));
 	else
 		printf('<p>%s <input type="radio" name="active" value="1"> %s <input type="radio" name="active" value="0"  checked="checked"> %s </p>',__('Active','rsvpmaker'),__('Yes','rsvpmaker'),__('No','rsvpmaker'));
+		rsvpmaker_add_to_list_on_rsvp_form();
+		rsvpmail_signup_page_add();
 		printf('<p>Email to add <input type="text" name="email[]"> First Name <input type="text" name="first_name[]"> Last Name <input type="text" name="last_name[]"> </p>');
 		printf('<p>%s: <input type="file" name="upload_file" /><br>You can upload a CSV data file with columns in the order email, first name, and last name</p>',__('Select file to upload','rsvpmaker'));
 		$sql = "SHOW TABLES LIKE '$mailpoet_table' ";
@@ -5129,18 +5139,38 @@ function get_rsvpmail_signup_key () {
 	return $key;
 }
 
-function rsvpmail_signup_form() {
+function rsvpmail_signup_form( $atts = array() ) {
 $key = get_rsvpmail_signup_key();
+if(empty($atts['fields']))
+{
+	$fields = '<p>Email<br>
+	<input name="email"></p>
+	<p>First Name<br>
+	<input name="first"></p>
+	<p>Last Name<br>
+	<input name="last"></p>
+';
+}
+elseif('first' == $atts['fields'])
+{
+	$fields = '<p>Email<br>
+	<input name="email"></p>
+	<p>First Name<br>
+	<input name="first"></p>
+';
+}
+if('email' == $atts['fields'])
+{
+	$fields = '<p>Email<br>
+	<input name="email"></p>
+';
+}
+
 $url = rest_url('rsvpmaker/v1/rsvpmailer_signup/'.$key);
 return "
 <form id=\"email_signup_form\" method=\"post\" 
   action=\"$url\">
-<p>Email<br>
-<input name=\"email\"></p>
-<p>First Name<br>
-<input name=\"first\"></p>
-<p>Last Name<br>
-<input name=\"last\"></p>
+$fields
 <p><button>Submit</button></p>
 </form>
 <div id=\"signup_message\"></div>

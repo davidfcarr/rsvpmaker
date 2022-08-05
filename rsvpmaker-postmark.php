@@ -477,9 +477,6 @@ function rsvpmaker_postmark_show_sent_log() {
     $table = $wpdb->base_prefix.'postmark_tally';
     $blog_id = get_current_blog_id();
 
-    $days = (isset($_GET['days'])) ? intval($_GET['days']) : 31;
-    printf('<form method="get" action="%s">Showing data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> <button>Change</button></form>',admin_url('edit.php'),$days);
-
     $grandtotal = 0;
     $where = ($blog_id > 1) ? ' AND blog_id='.$blog_id : '';
     $sql = "SELECT sum(count) total, blog_id FROM `$table` WHERE time > DATE_SUB(NOW(), INTERVAL $days DAY) $where group by blog_id";
@@ -500,37 +497,63 @@ function rsvpmaker_postmark_show_sent_log() {
     if(rsvpmaker_postmark_is_live()) {
         $postmark_settings = get_rsvpmaker_postmark_options();
         $client = new PostmarkClient($postmark_settings['postmark_production_key']);
+        $detailsurl = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1');
         if($client) {
             $clicks = $client->getClickStatistics();
+            $clickcount = 0;
             if(!empty($clicks['clicks'])) {
                 foreach($clicks['clicks'] as $click) {
                     if($blog_id > 1 && !strpos($click['Tag'],'-'.$blog_id.'-'))
                         continue;//ignore if not tagged for this blog id
                     //echo '<pre> click '.var_export($click,true).'</pre>';
+                    $clickcount++;
                     if(strpos($click['originallink'],'unsubscribe'))
                         $unsub[] = $click['recipient'];
-                    else
-                        $clicklog[] = sprintf('<p>%s clicked by <strong>%s</strong> %s, Message ID %s</p>',$click['originallink'],$click['recipient'],$click['geo']['country'],$click['MessageId']);
+                    else {
+                        $tag = empty($click['Tag']) ? 'misc' : $click['tag'];
+                        $clicklog[$tag][] = sprintf('%s clicked by <strong>%s</strong> %s, Message ID %s',$click['originallink'],$click['recipient'],$click['geo']['country'],$click['MessageId']);
+                    }
                 }
             }
-            if(!empty($clicklog))
+            if($clickcount)
             {
-                printf('<h3>Clicks: %d</h3>',sizeof($clicklog));
-                echo implode("\n",$clicklog);
+                printf('<h3>Clicks: %d <a href="%s">(details)</a></h3>',$clickcount,$detailsurl);
+                foreach($clicklog as $tag => $items)
+                {
+                    $title = ('misc' == $tag) ? 'miscellaneous' : postmark_tag_to_title($tag);
+                    if(empty($title))
+                        $title = 'miscellaneous';
+                    printf('<p><strong>%s</strong> %s clicks</p>',$title,sizeof($items));
+                    if(isset($_GET['details']))
+                        echo '<p>'.implode('<br>',$items).'</p>';
+                }
             }
             if(!empty($unsub))
                 printf('<p>Unsubscribe clicks: %s</p>',implode(', ',$unsub));
             $opens = $client->getOpenStatistics();
+            $opencount = 0;
             if($opens['totalcount']) {
                 foreach($opens['opens'] as $open) {
+                    $tag = empty($open['Tag']) ? 'misc' : $open['Tag'];
                     if($blog_id > 1 && !strpos($open['Tag'],'-'.$blog_id.'-'))
                         continue;//ignore if not tagged for this blog id
                     //echo '<pre>open '.var_export($open,true).'</pre>';
-                    $title = postmark_tag_to_title($open['Tag']);
-                    $opened[] = $open['recipient'] .' '.$title;
+                    $opened[$tag][] = $open['recipient'];
+                    $opencount++;
                 }
-                if(!empty($opened))
-                    printf('<h3>Opens: %d</h3><p>%s</p>',sizeof($opened),implode(', ',$opened));    
+            }
+            if($opencount)
+                {
+                printf('<h3>Opens: %d <a href="%s">(details)</a></h3>',$opencount,$detailsurl);                    
+                foreach($opened as $tag => $items) 
+                    {
+                        $title = ('misc' == $tag) ? 'miscellaneous' : postmark_tag_to_title($tag);
+                        if(empty($title))
+                            $title = 'miscellaneous';
+                        printf('<p><strong>%s</strong> %s opens</p>',$title,sizeof($items));
+                        if(isset($_GET['details']))
+                            echo '<p>'.implode(', ',$items).'</p>';
+                    }
             }
             else {
                 echo '<p>No email opens detected - check whether open tracking and link tracking are active on the Postmark server.</p>';
@@ -552,6 +575,9 @@ function rsvpmaker_postmark_show_sent_log() {
             }
         }
     }
+
+    $days = (isset($_GET['days'])) ? intval($_GET['days']) : 31;
+    printf('<form method="get" action="%s">Showing outgoing message data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> days <button>Change</button></form>',admin_url('edit.php'),$days);
 
     if($blog_id > 1) {
         $sql = "SELECT * FROM $table WHERE time > DATE_SUB(NOW(), INTERVAL $days DAY) AND blog_id=$blog_id ORDER BY id DESC";

@@ -206,7 +206,7 @@ function rsvpmaker_relay_queue() {
 			$log .= $mail['subject'] . " broadcast\n";
 			if($limit < 1)
 				break;
-			echo $sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$epost_id AND meta_key='rsvprelay_to' LIMIT 0, $limit";
+			$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$epost_id AND meta_key='rsvprelay_to' LIMIT 0, $limit";
 			$results = $wpdb->get_results($sql);
 			//print_r($results);
 			//return;

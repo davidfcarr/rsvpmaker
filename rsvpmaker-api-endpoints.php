@@ -1631,13 +1631,12 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		global $wpdb;
-		ob_start();
-		if(is_email($_POST['email']))
+		$email = trim($_POST['email']);
+		if(is_email($email))
 		{   
-			$rsvp = $_POST;
-			ob_start();
-			rsvpmaker_guest_list_add($rsvp['email'],sanitize_text_field(stripslashes($rsvp['first'])),sanitize_text_field(stripslashes($rsvp['last'])),'',0);
-			$result['message'] = ob_get_clean();
+			$first = isset($_POST['first']) ? sanitize_text_field($_POST['first']) : '';
+			$last = isset($_POST['last']) ? sanitize_text_field($_POST['last']) : '';
+			$result['message'] = rsvpmaker_guest_list_add($email,$first,$last,'',0);
 			$result['success'] = true;
 			$result['code'] = urldecode($request['code']);
 			$result['key'] = get_rsvpmail_signup_key();
