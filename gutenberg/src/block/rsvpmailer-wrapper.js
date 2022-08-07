@@ -361,8 +361,8 @@ attributes: {
         "type": "string"
     },
     "posts_per_page": {
-        "type": "integer",
-        "default" : 1
+        "type": "string",
+        "default" : "1"
     },
 },
     edit: function( {attributes, setAttributes} ) {

@@ -48,7 +48,7 @@ function rsvpmaker_postmark_options() {
         $postmark_settings['enabled'] = ($postmark_settings['restricted']) ? $_POST['enabled'] : array();
         $postmark_settings['limited'] = (empty($_POST['limited'])) ? 0 : intval($_POST['limited']);
         $postmark_settings['allowed'] = ($postmark_settings['limited']) ? $_POST['allowed'] : array();
-        $postmark_settings['site_admin_message'] = !empty($_POST['site_admin_message']) ? sanitize_textarea_field(stripslashes($_POST['site_admin_message'])) : '';
+        $postmark_settings['site_admin_message'] = !empty($_POST['site_admin_message']) ? wp_kses_post(stripslashes($_POST['site_admin_message'])) : '';
         if(is_multisite())
             update_blog_option(1,'rsvpmaker_postmark',$postmark_settings);
         else
@@ -476,7 +476,7 @@ function rsvpmaker_postmark_show_sent_log() {
     global $wpdb;
     $table = $wpdb->base_prefix.'postmark_tally';
     $blog_id = get_current_blog_id();
-
+    $days = isset($_GET['days']) ? intval($_GET['days']) : 31;
     $grandtotal = 0;
     $where = ($blog_id > 1) ? ' AND blog_id='.$blog_id : '';
     $sql = "SELECT sum(count) total, blog_id FROM `$table` WHERE time > DATE_SUB(NOW(), INTERVAL $days DAY) $where group by blog_id";
@@ -498,8 +498,11 @@ function rsvpmaker_postmark_show_sent_log() {
         $postmark_settings = get_rsvpmaker_postmark_options();
         $client = new PostmarkClient($postmark_settings['postmark_production_key']);
         $detailsurl = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1');
+        $offset = 0;
+        $recipient = NULL;
+        $target_tag = isset($_GET['tag']) ? sanitize_text_field($_GET['tag']) : NULL;
         if($client) {
-            $clicks = $client->getClickStatistics();
+            $clicks = $client->getClickStatistics(500,$offset,$recipient,$target_tag);
             $clickcount = 0;
             if(!empty($clicks['clicks'])) {
                 foreach($clicks['clicks'] as $click) {
@@ -508,10 +511,11 @@ function rsvpmaker_postmark_show_sent_log() {
                     //echo '<pre> click '.var_export($click,true).'</pre>';
                     $clickcount++;
                     if(strpos($click['originallink'],'unsubscribe'))
-                        $unsub[] = $click['recipient'];
+                        $unsub[] = isset($_GET['hide']) ? rsvpmaker_partiallyHideEmail($click['recipient']) : $click['recipient'];
                     else {
                         $tag = empty($click['Tag']) ? 'misc' : $click['tag'];
-                        $clicklog[$tag][] = sprintf('%s clicked by <strong>%s</strong> %s, Message ID %s',$click['originallink'],$click['recipient'],$click['geo']['country'],$click['MessageId']);
+                        $email = isset($_GET['hide']) ? rsvpmaker_partiallyHideEmail($click['recipient']) : $click['recipient'];
+                        $clicklog[$tag][] = sprintf('%s clicked by <strong>%s</strong> %s, Message ID %s',$click['originallink'],$email,$click['geo']['country'],$click['MessageId']);
                     }
                 }
             }
@@ -530,7 +534,7 @@ function rsvpmaker_postmark_show_sent_log() {
             }
             if(!empty($unsub))
                 printf('<p>Unsubscribe clicks: %s</p>',implode(', ',$unsub));
-            $opens = $client->getOpenStatistics();
+            $opens = $client->getOpenStatistics(500, $offset, $recipient, $target_tag);
             $opencount = 0;
             if($opens['totalcount']) {
                 foreach($opens['opens'] as $open) {
@@ -538,7 +542,8 @@ function rsvpmaker_postmark_show_sent_log() {
                     if($blog_id > 1 && !strpos($open['Tag'],'-'.$blog_id.'-'))
                         continue;//ignore if not tagged for this blog id
                     //echo '<pre>open '.var_export($open,true).'</pre>';
-                    $opened[$tag][] = $open['recipient'];
+                    $email = isset($_GET['hide']) ? rsvpmaker_partiallyHideEmail($open['recipient']) : $open['recipient'];
+                    $opened[$tag][] = $email;
                     $opencount++;
                 }
             }
@@ -550,7 +555,7 @@ function rsvpmaker_postmark_show_sent_log() {
                         $title = ('misc' == $tag) ? 'miscellaneous' : postmark_tag_to_title($tag);
                         if(empty($title))
                             $title = 'miscellaneous';
-                        printf('<p><strong>%s</strong> %s opens</p>',$title,sizeof($items));
+                        printf('<p><strong>%s</strong> (<a href="%s">Details</a>) %s opens</p>',$title,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$tag),sizeof($items));
                         if(isset($_GET['details']))
                             echo '<p>'.implode(', ',$items).'</p>';
                     }

@@ -3744,12 +3744,33 @@ function mailpoet_rsvpmaker_shortcode( $shortcode, $newsletter, $subscriber, $qu
 	return $content;
 }
 
+add_shortcode('rsvpmaker_youtube_email_test','rsvpmaker_youtube_email_test');
+
+function rsvpmaker_youtube_email_test() {
+	$content = '<p>The Postmark service for reliable email delivery is active.</p></div>
+	<article>
+	<div class="entry-content" style="">
+	<div id="email-content">
+
+	<!-- editors note goes here -->
+
+		
+<figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio" style=""><div class="wp-block-embed__wrapper" style="">
+<iframe title="5th Anniversary Celebration - Online Presenters Toastmasters"   src="https://www.youtube.com/embed/7H5-oRolU_I?feature=oembed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div></figure>';
+preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?"]+)|is',$content,$matches);
+return rsvpmaker_youtube_email($content);// htmlentities(var_export($matches,true));
+}
+
+
 function rsvpmaker_youtube_email($content) {
-	if(preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?]+)|is',$content,$matches)) {
+	$iframe = '|<iframe.+src="https://www.youtube.com/embed/([^\?"]+).+</iframe>|is';
+	if(preg_match_all($iframe,$content,$matches)) {
 		foreach($matches[1] as $youtube_id) {
 			$link = 'https://youtu.be/'.$youtube_id;
 			$img = 'https://img.youtube.com/vi/'.$youtube_id.'/mqdefault.jpg';
 			$html = '<a href="'.$link.'" style="display: block; margin-left: auto; margin-right: auto; width: 500px; height:283px; background-image: url('.$img.'); background-size: contain; background-repeat: no-repeat;"><img style=" style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></a>';
+			return str_replace($matches[0],$html,$content);
 		}
 	}
 	else

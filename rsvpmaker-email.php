@@ -4802,9 +4802,9 @@ $permalink = get_permalink();
 <div class="email-post">
 <h2><a href="<?php echo $permalink; ?>"><?php the_title(); ?></a></h2>
 <?php
-if ( has_post_thumbnail() ) {
-    the_post_thumbnail();
-}
+$thumburl = get_the_post_thumbnail_url($post);
+if($thumburl)
+	printf('<figure><img src="%s" style="max-width: %s" ></figure>',$thumburl,'90%');
 ?>
 <p class="the_excerpt"><?php echo $excerpt = get_the_excerpt();?></p>
 <?php 
@@ -5044,6 +5044,7 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 	if(strpos($html,'youtu'))
 		$html = rsvpmaker_youtube_email($html);
 	$html = rsvpmail_filter_style($html);
+	$html = str_replace('loading="lazy"','',$html);
 	if($post_id)
 		update_post_meta($post_id,'_rsvpmail_html',$html);
 	return $html;
@@ -5198,3 +5199,19 @@ form.style.display = 'none';
 }
 </script>";
 }
+
+function rsvpmaker_partiallyHideEmail($email)
+{
+  // use FILTER_VALIDATE_EMAIL filter to validate an email address
+  if(filter_var($email, FILTER_VALIDATE_EMAIL))
+  {
+    // split an email by "@"
+    list($first, $last) = explode("@", $email);
+ 
+    // get half the length of the first part
+    $len = floor(strlen($first)/2);
+ 
+    // partially hide a string by "*" and return full string
+    return substr($first, 0, $len) . str_repeat('*', $len) . "@" . $last;
+  }
+}  

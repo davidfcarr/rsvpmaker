@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0.1
-Stable tag: 9.5.8
+Stable tag: 9.6
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -137,6 +137,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.6 =
+
+* Updated RSVP Email Embed Post or Post List block for including one or more blog post excerpts in a message.
+
+= 9.5.9 =
+
+* Fix for YouTube embeds in email
 
 = 9.5.8 =
 
