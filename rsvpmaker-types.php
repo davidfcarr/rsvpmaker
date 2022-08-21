@@ -5,6 +5,7 @@ function rsvpmaker_create_post_type() {
 	global $rsvp_options;
 
 	$menu_label = ( isset( $rsvp_options['menu_label'] ) ) ? $rsvp_options['menu_label'] : __( 'RSVP Events', 'rsvpmaker' );
+	$rewrite = array('slug' => 'rsvpmaker','with_front' => false);
 
 	$supports = array( 'title', 'editor', 'author', 'excerpt', 'custom-fields', 'thumbnail', 'revisions' );
 
@@ -36,12 +37,65 @@ function rsvpmaker_create_post_type() {
 
 			'show_ui'            => true,
 
-			'query_var'          => true,
+			<div class="eltd-section-title-holder">
+			<h2 class="eltd-st-title">Newsletter</h2>
+			<p>Get notified whenever we publish a new story.</p>
+			<form id="email_signup_form_sidebar" method="post" 
+			  action="https://www.floridabulldog.org/wp-json/rsvpmaker/v1/rsvpmailer_signup/@FlSQ(!eqX2D">
+			<p>Email<br>
+				<input name="email"></p>
+				<p>First Name<br>
+				<input name="first"></p>
+				<p>Last Name<br>
+				<input name="last"></p>
+			
+			<p><button>Sign Up</button></p>
+			</form>
+			<div id="signup_message_sidebar"></div>
+			</div>
+			<script>
+			const form = document.getElementById('email_signup_form_sidebar');
+			const message = document.getElementById('signup_message_sidebar');
+			console.log(message.innerHTML);
+			form.addEventListener('submit', function(e) {
+				// Prevent default behavior:
+				e.preventDefault();
+				// Create payload as new FormData object:
+				const payload = new FormData(form);
+				// Post the payload using Fetch:
+				fetch('https://www.floridabulldog.org/wp-json/rsvpmaker/v1/rsvpmailer_signup/@FlSQ(!eqX2D', {
+				method: 'POST',
+				body: payload,
+				})
+				.then(res => res.json())
+				.then(data => showMessage(data))
+			})
+			function showMessage(data) {
+			message.innerHTML = data.message;
+			if(data.success)
+			form.style.display = 'none';
+			}
+			
+			const form = document.getElementById('email_signup_form');
+			const message = document.getElementById('signup_message');
+			console.log(message.innerHTML);
+			form.addEventListener('submit', function(e) {
+				// Prevent default behavior:
+				e.preventDefault();
+				// Create payload as new FormData object:
+				const payload = new FormData(form);
+				// Post the payload using Fetch:
+				fetch('https://www.floridabulldog.org/wp-json/rsvpmaker/v1/rsvpmailer_signup/@FlSQ(!eqX2D', {
+				method: 'POST',
+				body: payload,
+				})
+				.then(res => res.json())
+				.then(data => showMessage(data))
+			})
+			
+			</script>			'query_var'          => true,
 
-			'rewrite'            => array(
-				'slug'       => 'rsvpmaker',
-				'with_front' => false,
-			),
+			'rewrite'            => $rewrite,
 
 			'capability_type'    => 'rsvpmaker',
 
