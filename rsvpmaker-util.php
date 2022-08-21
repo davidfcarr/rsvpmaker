@@ -737,7 +737,9 @@ function is_rsvpmaker_deadline_future( $post_id ) {
 	if('rsvpmaker' != $post->post_type)
 		return false;
 	$deadline = (int) get_post_meta( $post_id, '_rsvp_deadline', true );
-	$event    = get_rsvpmaker_event( $post_id );
+	$event = get_rsvpmaker_event( $post_id );
+	if(!is_object($event))
+		return false;
 	$start = (int) $event->ts_start;
 	$end = (int) $event->ts_end;
 	if ( ! $deadline  ) {
@@ -1060,6 +1062,12 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 			$last_tz = $timezone;
 			$t   = strtotime( $event->date );
 			$end = strtotime( $event->enddate );
+			//end should not be before the beginning
+			if(($end < $t) || ($event->ts_end < $event->ts_start)) {
+				$end = $event->ts_end = $t + HOUR_IN_SECONDS;
+				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET ts_end=%d, enddate=%s WHERE event=%d', $end, rsvpmaker_date('Y-m-d H:i:s',$end), $event->event );
+				$wpdb->query($sql);
+			}
 			if ( ( $t != (int) $event->ts_start ) || ( $end != (int) $event->ts_end ) ) {
 				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d', $t, $end, $timezone, $event->event );
 				//rsvpmaker_debug_log( $sql, 'consistency set timestamps' );
@@ -1610,9 +1618,19 @@ function get_rsvpmaker_stripe_keys_all() {
 	return $keys;
 }
 
-function get_rsvpmaker_stripe_keys() {
+function get_rsvpmaker_stripe_keys($sandbox = false) {
 
 	$keys = get_rsvpmaker_stripe_keys_all();
+	//if set for this specific block
+	if($sandbox || (!empty($_GET['sb']) && current_user_can('manage_options'))) {
+		$_SESSION['sandbox_override'] = true;
+		return array(
+			'sk'     => $keys['sandbox_sk'],
+			'pk'     => $keys['sandbox_pk'],
+			'mode'   => 'sandbox',
+			'notify' => $keys['notify'],
+		);
+	}
 
 	if ( ! empty( $keys['mode'] ) && ( $keys['mode'] == 'production' ) && ! empty( $keys['sk'] ) ) {
 
@@ -4154,14 +4172,14 @@ global $rsvp_options;
 }
 
 function rsvphoney_ui($return = false) {
-	$html = '<div class="rsvploginrequired" aria-hidden="true"><p><label>Login</label> <input name="rsvp_login" /></p><p><label>Password</label> <input name="rsvp_pass" /></p><p></p></div>';
+	$html = '<div class="rsvploginrequired" aria-hidden="true"><p><label>Extra Discount Code</label> <input name="extra_special_discount_code" /></p><p></p></div>';
 	if($return)
 		return $html;
 	echo $html;
 }
 add_action('init','rsvphoney_login',1);
 function rsvphoney_login() {
-	if(!empty($_POST['rsvp_login']) || !empty($_POST['rsvp_pass']))
+	if(!empty($_POST['extra_special_discount_code']))
 		rsvphoney_login_now();
 }
 
@@ -4409,4 +4427,45 @@ function rsvpmailer_bot_shortcode() {
 	$result = rsvpmaker_relay_queue();
 	$result .= rsvpmaker_relay_get_pop( 'bot' );
 	return $result;
+}
+
+function rsvpmaker_guestparty($rsvp_id, $master = false) {
+	global $wpdb;
+	$guestparty = '';
+	$exclude = array('first','last','id','email','yesno','event','owed','amountpaid','master_rsvp','guestof','note','participants','user_id','timestamp','payingfor');
+	if($master) {
+		$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $rsvp_id . ' ORDER BY id';
+		$row = $wpdb->get_row($guestsql, ARRAY_A);
+		if(!$row) {
+			rsvpmaker_debug_log($guestsql,'rsvpmaker_guestparty master row not found');
+			return;
+		}
+		$row = rsvp_row_to_profile( $row );
+		$guestparty .= '<p>'.$row['first'].' '.$row['last'];
+		foreach($row as $key => $value) {
+			if(in_array($key,$exclude))
+				continue;
+			$guestparty .= '<br>'.ucwords(str_replace('_',' ',$key)).': '.$value;
+		}
+		$guestparty .= '</p>';
+}
+
+	$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $rsvp_id . ' ORDER BY id';
+
+	if ( $results = $wpdb->get_results( $guestsql, ARRAY_A ) ) {
+		$guestparty .= "<h3>Guests</h3>\n";
+		foreach($results as $row) {
+			$row = rsvp_row_to_profile( $row );
+			$guestparty .= '<p>'.$row['first'].' '.$row['last'];
+			foreach($row as $key => $value) {
+				if(in_array($key,$exclude))
+					continue;
+				$guestparty .= '<br>'.ucwords(str_replace('_',' ',$key)).': '.$value;
+			}
+			$guestparty .= '</p>';
+		}
+		rsvpmaker_debug_log($guestparty,'guestparty');
+		return $guestparty;
+	}
+	return false;
 }

@@ -168,7 +168,7 @@ function rsvpmaker_relay_queue() {
 		}
 		else {
 			$sql = "select meta_value from $wpdb->postmeta WHERE meta_key='_rsvpmail_html' AND post_id=$epost_id";
-			$h = $wpdb->get_var($sql);//get_post_meta($epost_id,'_rsvpmail_html',true); //rsvpmail broadcast
+			$h = $wpdb->get_var($sql);
 			if($h)
 				$mail['html'] = $h;
 			else {

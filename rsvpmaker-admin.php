@@ -321,7 +321,7 @@ rsvpmaker_defaults_for_post($post_id);
 }
 else
 {
-	$checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno');
+	$checkboxes = array("show_attendees","count","captcha","login_required",'confirmation_include_event','rsvpmaker_send_confirmation_email','yesno','confirmation_after_payment');
 	foreach($checkboxes as $check)
 		{
 			if(!isset($setrsvp[$check]))

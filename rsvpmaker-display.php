@@ -572,8 +572,10 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 
 		$wpdb->show_errors();
 	}
-
+	rsvpmaker_debug_log(is_email_context(),'is email');
+	rsvpmaker_debug_log($queryarg,'upcoming query queryarg');
 	$wp_query = new WP_Query( $queryarg );
+	rsvpmaker_debug_log($wp_query,'upcoming query');
 
 	// clean up so this doesn't interfere with other operations
 
@@ -617,6 +619,7 @@ function rsvpmaker_query_debug( $query ) {
 
 
 function rsvpmaker_upcoming( $atts = array() ) {
+	rsvpmaker_debug_log($atts,'rsvpmaker upcoming start');
 	$no_events = ( isset( $atts['no_events'] ) ) ? $atts['no_events'] : 'No events currently listed.';
 
 	if ( isset( $atts['calendar'] ) && ( $atts['calendar'] == 2 ) ) {

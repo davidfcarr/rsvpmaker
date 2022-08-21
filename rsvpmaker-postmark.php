@@ -100,7 +100,7 @@ function rsvpmaker_postmark_options() {
     $ckno = (empty($postmark_settings['handle_incoming'])) ? ' checked="checked" ' : '';
     printf('<p>Handle Incoming Webhook: <input type="radio" name="handle_incoming" value="%s" %s> Yes <input type="radio" name="handle_incoming" value="" %s> No<br>Webhook address to register in Postmark %s</p>',$code,$ckyes, $ckno,$url);
     if(is_multisite()) {
-        $sites = get_sites();
+        $sites = get_sites(array('orderby' => 'domain'));
         echo '<table><tr><td>';
         $checkyes = ($postmark_settings['restricted']) ? 'checked="checked"' : '';
         $checkno = (!$postmark_settings['restricted']) ? 'checked="checked"' : '';
@@ -179,7 +179,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     }
     $html = rsvpmail_replace_placeholders($html);
     $text = rsvpmaker_text_version($html);
-    $mail['Subject'] = $mpost->post_title;
+    $mail['Subject'] = do_shortcode($mpost->post_title);
     $mail['MessageStream'] = $message_stream;
     $mail['Tag'] = rsvpemail_tag($post_id);
     if(isset($meta['rsvprelay_from'][0]))
@@ -216,7 +216,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
             $sent[] = $response->to;
     }
     if(count($sent)) {
-        rsvpmaker_postmark_sent_log($sent,$mail['Subject'],$hash);
+        rsvpmaker_postmark_sent_log($sent,$mail['Subject'],$hash,$mail['Tag']);
         printf('Successful sends %d ending with %s',count($sent),$sent[sizeof($sent)-1]);
         foreach($sent as $e) {
             add_post_meta($post_id,'rsvpmail_sent_postmark',$e);
@@ -254,7 +254,7 @@ function rsvpmaker_postmark_chunked_batches() {
             wp_mail('david@carrcommunications.com','batch done '.$sent,var_export($all,true));
             $title = get_the_title($batchrow->post_id);
             $mail['subject'] = 'Sent to '.$sent.' recipients: '.$title;
-            $mail['html'] = sprintf('<p>The RSVPMaker Mailer for Postmark email broadcast is complete.</p> </p>See the results on the <a href="%s">Postmark Email Log</a> page. </p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log'));
+            $mail['html'] = sprintf('<p>The RSVPMaker Mailer for Postmark email broadcast is complete.</p> </p>See the results on the <a href="%s">Postmark Email Log</a> page. </p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag=rsvpemail-'.get_current_blog_id().'-'.$batchrow->post_id));
             $mail['from'] = $mail['to'] = get_option('admin_email');
             $mail['fromname'] = get_option('blogname');
             rsvpmailer($mail);
@@ -392,7 +392,7 @@ function rsvpmaker_postmark_batch_send($batch) {
             $sent[] = $response->to;
     }
     if(count($sent)) {
-        rsvpmaker_postmark_sent_log($sent,$batch[0]['Subject'],$hash);
+        rsvpmaker_postmark_sent_log($sent,$batch[0]['Subject'],$hash,$batch[0]['Tag']);
         $output .= sprintf('Successful sends %d',count($sent));
         foreach($sent as $e) {
             if($post_id)
@@ -432,12 +432,12 @@ function rsvpmaker_postmark_duplicate($hash) {
     return false;
 }
 
-function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='') {
+function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
 	global $wpdb, $message_blog_id;
     $postmark = get_rsvpmaker_postmark_options();
 	if(empty($message_blog_id))
 		$message_blog_id = get_current_blog_id();
-	$sql = $wpdb->prepare("insert into ".$wpdb->base_prefix."postmark_tally set count=%d, subject=%s, blog_id=%s, recipients=%s,hash=%s",sizeof($sent),$subject,$message_blog_id,implode(',',$sent),$hash);
+	$sql = $wpdb->prepare("insert into ".$wpdb->base_prefix."postmark_tally set count=%d, subject=%s, blog_id=%s, recipients=%s,hash=%s, tag=%s",sizeof($sent),$subject,$message_blog_id,implode(',',$sent), $hash, $tag);
 	$wpdb->query($sql);
 	$sent_lately = $wpdb->get_var("SELECT SUM(count) FROM ".$wpdb->base_prefix."postmark_tally WHERE time > DATE_SUB(NOW(), INTERVAL 15 MINUTE) ");
 	$message = var_export($sent,true)."\n\n $sent_lately sent in the last 15 minutes";
@@ -593,10 +593,11 @@ function rsvpmaker_postmark_show_sent_log() {
         $showmulti = is_multisite();
     }
     $results = $wpdb->get_results($sql);
-    echo '<table class="wp-list-table widefat striped"><thead><tr><th>Subject</th><th># Recipients</th><th>Blog ID</th><th>Recipients</th></tr></thead><tbody>';
+    echo '<table class="wp-list-table widefat striped"><thead><tr><th>Subject</th><th># Recipients</th><th>Blog ID</th><th>Recipients</th><th>Details</th></tr></thead><tbody>';
     foreach($results as $row) {
         $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'...' : $row->recipients;
-        printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->subject,$row->count,$row->blog_id,$recipients);
+        $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag));
+        printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->subject,$row->count,$row->blog_id,$recipients,$prompt);
     }
     echo '</tbody></table>';
 
@@ -648,17 +649,22 @@ $sql = 'CREATE TABLE `'.$wpdb->base_prefix.'postmark_tally` (
         `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `count` int(11) NOT NULL,
         `subject` varchar(255) NOT NULL,
+        `tag` varchar(255) NOT NULL,
         `recipients` longtext NOT NULL,
         `hash` varchar(255) NOT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
 dbDelta($sql);
-add_option('postmark_tally_version',1);
+$version = 2;
+if(is_multisite())
+    update_blog_option(1,'postmark_tally_version',$version);
+else
+    update_option('postmark_tally_version',$version);
 }
 
 function check_postmark_tally_version() {
     $version = (int) (is_multisite()) ? get_blog_option(1,'postmark_tally_version') : get_option('postmark_tally_version');
-    if($version < 1)
+    if($version < 2)
         rsvpmaker_postmark_log_table();
 }
 

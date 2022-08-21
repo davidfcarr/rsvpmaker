@@ -43,8 +43,8 @@ add_action( 'plugins_loaded', 'rsvpmaker_gutenberg_check' );
 //add_action( 'rest_api_init', 'rest_api_init_rsvpmaker' );
 
 add_action( 'rsvp_daily_reminder_event', 'rsvp_daily_reminder' );
-add_action( 'rsvpmaker_cron_email_preview', 'rsvpmaker_cron_email_preview' );
-add_action( 'rsvpmaker_cron_email', 'rsvpmaker_cron_email_send' );
+add_action( 'rsvpmaker_cron_email_preview', 'rsvpmaker_cron_email_preview',10,3 );
+add_action( 'rsvpmaker_cron_email', 'rsvpmaker_cron_email_send',10,3 );
 
 add_action( 'rsvpmaker_email_list_okay', 'rsvpmaker_email_list_okay', 10, 1 );
 add_action( 'rsvpmaker_replay_email', 'rsvpmaker_replay_email', 10, 3 );

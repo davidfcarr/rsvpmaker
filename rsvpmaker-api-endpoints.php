@@ -421,15 +421,11 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 	}
 
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
 
 	}
-
-
 
 	public function get_items( $request ) {
 
@@ -454,8 +450,6 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 				}
 			}
 		}
-
-		// $vars['charge_id'] = $charge->id;
 
 		if ( ! empty( $vars['rsvp_id'] ) ) {
 
@@ -508,7 +502,6 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 		return new WP_REST_Response( $vars, 200 );
 
 	}
-
 }
 
 class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
@@ -1552,6 +1545,34 @@ do_action('postmark_incoming_email_object',$data,$json);
 	}
 }
 
+class OptinMonsterEmail extends WP_REST_Controller {
+
+	public function register_routes() {
+	  $namespace = 'rsvpmaker/v1';
+	  $path = 'optin_monster/(?P<code>.+)';
+  
+	  register_rest_route( $namespace, '/' . $path, [
+		array(
+		  'methods'             => 'GET, POST, PUT, PATCH, DELETE',
+		  'callback'            => array( $this, 'get_items' ),
+		  'permission_callback' => array( $this, 'get_items_permissions_check' )
+			  ),
+		  ]);     
+	  }
+  
+	public function get_items_permissions_check($request) {
+		$key = get_rsvpmail_signup_key();
+		return ($request['code'] == $key);
+	}
+  
+  public function get_items($request) {
+$json = file_get_contents('php://input');
+$data = json_decode(trim($json));
+$result['message'] = rsvpmaker_guest_list_add($data->lead->email,$data->lead->firstName,$data->lead->lastName,'',0);
+	return new WP_REST_Response($data, 200);
+	}
+}
+
 class RSVPMaker_Confirm_Email_Membership extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -1708,5 +1729,7 @@ add_action(
 		$confmemb->register_routes();
 		$rsignup = new RSVPMail_Remote_Signup();
 		$rsignup->register_routes();
+		$om = new OptinMonsterEmail();
+		$om->register_routes();
 	}
 );

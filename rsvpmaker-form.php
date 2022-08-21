@@ -334,20 +334,7 @@ function customize_rsvp_form() {
 			}
 		}
 	}
-/*
-	if ( ! empty( $id ) ) {
-
-		$destination = admin_url( 'post.php?action=edit&post=' ) . $id;
-		if ( ! empty( $post_id ) ) {
-			$destination .= '&back=' . $post_id;
-		}
-		header( 'Location: ' . $destination );
-		exit();
-	}
-*/
 }
-
-
 
 function rsvp_field_apply_default( $content, $slug, $default ) {
 
@@ -501,8 +488,6 @@ function rsvp_form_radio( $atts, $content = '' ) {
 
 }
 
-
-
 function rsvp_form_field( $atts, $content = '' ) {
 
 	// same for all field types
@@ -524,15 +509,7 @@ function rsvp_form_field( $atts, $content = '' ) {
 
 	global $profile;
 
-	global $guestprofile;
-
-	if ( ! empty( $guestprofile ) ) {
-
-		$profile = $guestprofile;
-	}
-
 	if ( ! empty( $atts['guestform'] ) ) { // if not set, default is true
-
 		rsvp_add_guest_field( $content, $slug );
 	}
 
@@ -546,8 +523,6 @@ function rsvp_form_field( $atts, $content = '' ) {
 	return rsvp_field_apply_default( $content, $slug, $default );
 
 }
-
-
 
 function rsvp_form_note( $atts = array() ) {
 
@@ -580,7 +555,7 @@ function rsvp_form_guests( $atts, $content ) {
 
 	global $guestfields;
 
-	global $guestprofile;
+	global $gprofile;
 
 	$shared = '';
 
@@ -624,7 +599,7 @@ function rsvp_form_guests( $atts, $content ) {
 
 				$output .= sprintf( '<div class="guest_blank"><p><strong>%s %d</strong></p>', $label, $count ) . "\n";
 
-				$guestprofile = rsvp_row_to_profile( $row );
+				$gprofile = rsvp_row_to_profile( $row );
 
 				$shared = '';
 
@@ -632,9 +607,9 @@ function rsvp_form_guests( $atts, $content ) {
 
 					foreach ( $guestfields as $slug => $field ) {
 
-						if ( ! empty( $guestprofile[ $slug ] ) ) {
+						if ( ! empty( $gprofile[ $slug ] ) ) {
 
-							$shared .= rsvp_field_apply_default( $field, $slug, $guestprofile[ $slug ] );
+							$shared .= rsvp_field_apply_default( $field, $slug, $gprofile[ $slug ] );
 
 						} else {
 							$shared .= $field;
@@ -692,8 +667,6 @@ function rsvp_form_guests( $atts, $content ) {
 	return $output;
 
 }
-
-
 
 function stripe_form_wrapper( $atts, $content ) {
 

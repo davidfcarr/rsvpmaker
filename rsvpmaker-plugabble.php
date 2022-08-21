@@ -1901,7 +1901,7 @@ if ( ! function_exists( 'save_replay_rsvp' ) ) {
 
 				if ( ! empty( $_POST['note'] ) ) {
 
-					$cleanmessage .= 'Note: ' . sanitize_textarea_field( stripslashes( $_POST['note'] ) );
+					$cleanmessage .= ' Note: ' . sanitize_textarea_field( stripslashes( $_POST['note'] ) );
 				}
 
 				rsvp_notifications( $rsvp, $rsvp_to, $subject, $cleanmessage, $rsvp_confirm );
@@ -2413,7 +2413,9 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				foreach ( $_POST['guest']['first'] as $index => $first ) {
 
-					$last = ( empty( $_POST['guest']['last']) || !empty($_POST['guest']['last'][ $index ]) ) ? '' : sanitize_text_field($_POST['guest']['last'][ $index ]);
+					$last = ( !empty( $_POST['guest']['last']) && !empty($_POST['guest']['last'][ $index ]) ) ? sanitize_text_field($_POST['guest']['last'][ $index ]) : '';
+					rsvpmaker_debug_log($last,'guest last');
+					rsvpmaker_debug_log($_POST['guest'], 'guest array');
 					if ( ! empty( $first ) ) {
 						$guest_sql[ $index ] = $wpdb->prepare( ' SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s', $event, $yesno, $rsvp_id, $guestof, $first, $last );
 						$guest_text[ $index ] = sprintf( "Guest: %s %s\n", $first, $last );
@@ -2509,9 +2511,11 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				}
 			}
 
-			if ( ! empty( $guest_list ) ) {
+			$guestparty = rsvpmaker_guestparty($rsvp_id);
+			//fix
+			if ( $guestparty ) {
 
-				$cleanmessage .= __( 'Guests', 'rsvpmaker' ) . ': ' . implode( ', ', $guest_list );
+				$cleanmessage .= $guestparty;
 			}
 
 			if ( ! empty( $multiple_warning ) ) {
@@ -2523,7 +2527,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				if ( ! empty( $_POST['note'] ) ) {
 
-					$cleanmessage .= 'Note: ' . stripslashes( $_POST['note'] );
+					$cleanmessage .= ' Note: ' . stripslashes( $_POST['note'] );
 				}
 
 				$include_event = get_post_meta( $post->ID, '_rsvp_confirmation_include_event', true );
@@ -2558,7 +2562,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			do_action( 'rsvp_recorded', $rsvp );
 
-			header( 'Location: ' . $req_uri . '&rsvp=' . $rsvp_id . '#rsvpmaker_top' );
+			header( 'Location: ' . $req_uri . '&rsvp=' . $rsvp_id .'&timelord='.rsvpmaker_nonce('value').'#rsvpmaker_top' );
 
 			exit();
 
@@ -2566,8 +2570,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 	}
 } // end save rsvp
-
-
 
 if ( ! function_exists( 'rsvp_notifications' ) ) {
 
@@ -2848,7 +2850,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 		}
 
-		if ( isset( $_GET['rsvp'] ) ) {
+		if ( isset( $_GET['rsvp'] ) && rsvpmaker_verify_nonce()) {
 
 			$rsvp_confirm = rsvp_get_confirm( $post->ID );
 
@@ -2857,6 +2859,8 @@ if ( ! function_exists( 'event_content' ) ) {
 			$rsvpconfirm = '<h3>' . esc_html( __( 'RSVP Recorded', 'rsvpmaker' ) ) . '</h3>	
 
 ' . $rsvp_confirm;
+		$rsvp_id = intval($_GET['rsvp']);
+		$rsvpconfirm .= rsvpmaker_guestparty($rsvp_id,true);
 
 		} elseif ( isset( $_COOKIE[ 'rsvp_for_' . $post->ID ] ) && ! $email_context ) {
 
@@ -2890,7 +2894,6 @@ if ( ! function_exists( 'event_content' ) ) {
 				$rsvpconfirm .= '<div class="rsvpdetails"><p>' . __( 'Your RSVP', 'rsvpmaker' ) . ": $answer</p>\n";
 
 				$profile = $details = rsvp_row_to_profile( $rsvprow );
-
 				if ( isset( $details['total'] ) && $details['total'] ) {
 
 					$invoice_id = (int) get_post_meta( $post->ID, '_open_invoice_' . $rsvp_id, true );
@@ -3004,13 +3007,9 @@ if ( ! function_exists( 'event_content' ) ) {
 			$rsvprow = $wpdb->get_row( $sql, ARRAY_A );
 
 			if ( $rsvprow ) {
-
 				$master_rsvp = $rsvprow['id'];
-
 				$answer = ( $rsvprow['yesno'] ) ? __( 'Yes', 'rsvpmaker' ) : __( 'No', 'rsvpmaker' );
-
-				$profile = $details = rsvp_row_to_profile( $rsvprow );
-
+				$guestprofile = $details = rsvp_row_to_profile( $rsvprow );
 			}
 		}
 
@@ -4055,7 +4054,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 
 			if ( $row['note'] ) {
 
-				echo 'note: ' . nl2br( esc_attr( $row['note'] ) ) . '<br />';
+				echo ' note: ' . nl2br( esc_attr( $row['note'] ) ) . '<br />';
 			}
 
 			$t = rsvpmaker_strtotime( $row['timestamp'] );
@@ -5098,7 +5097,7 @@ if ( ! function_exists( 'rsvp_daily_reminder' ) ) {
 
 							if ( $row['note'] ) {
 
-								$notification .= 'note: ' . wp_kses_post( nl2br( $row['note'] ) ) . '<br />';
+								$notification .= ' note: ' . wp_kses_post( nl2br( $row['note'] ) ) . '<br />';
 							}
 
 							$t = rsvpmaker_strtotime( $row['timestamp'] );

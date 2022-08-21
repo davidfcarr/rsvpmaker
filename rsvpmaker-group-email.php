@@ -166,7 +166,7 @@ function rsvpmaker_relay_queue() {
 		}
 		else {
 			$sql = "select meta_value from $wpdb->postmeta WHERE meta_key='_rsvpmail_html' AND post_id=$epost_id";
-			$h = $wpdb->get_var($sql);//get_post_meta($epost_id,'_rsvpmail_html',true); //rsvpmail broadcast
+			$h = $wpdb->get_var($sql);
 			if($h)
 				$mail['html'] = $h;
 			else {
@@ -1077,8 +1077,8 @@ function rsvpmaker_get_hosts_and_subdomains() {
     return $hosts_and_subdomains;
 }
 
-function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj) {
-	$from = $emailobj->From;
+function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
+	$from = ($emailobj) ? $emailobj->From : '';
 	$recipients = array();
 	$recipient_names = array();
 	//todo built in functionality for forwarders? Or membership add-on?
@@ -1146,7 +1146,7 @@ function rsvpmaker_expand_recipients($email) {
     if(in_array($emailparts[1],$hosts_and_subdomains) || ($emailparts[1]==$hosts_and_subdomains['basedomain']))
     {
         $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
-        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);    
+        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id);
     }
     if($recipients)
         return $recipients;
