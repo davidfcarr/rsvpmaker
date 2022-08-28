@@ -1078,6 +1078,7 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
 	foreach($emailobj->CcFull as $one) {
 		$addresses[] = $one->Email;
 	}
+	$from = $emailobj->From;
 	$recipients = array();
 	$recipient_names = array();
 	$recipients = apply_filters('rsvpmail_recipients_from_forwarders',$recipients,$slug_and_id,$from,$addresses);

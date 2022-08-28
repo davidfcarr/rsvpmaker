@@ -277,10 +277,8 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         if(!empty($slug_and_id)) {
             rsvpmaker_debug_log($slug_and_id,'slug and id');
             $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
-            rsvpmaker_debug_log($recipients,'recipients');
             foreach($recipients as $index => $email)
                 $recipients[$index] = rsvpmaker_email_add_name($email,'forwarded');
-            rsvpmaker_debug_log($recipients,'recipients added name');
             if($recipients) {
                 $batch = rsvpmaker_postmark_batch($emailobj, $recipients, $slug_and_id);
                 $result = rsvpmaker_postmark_batch_send($batch);
@@ -587,7 +585,7 @@ function rsvpmaker_postmark_show_sent_log() {
     foreach($results as $row) {
         $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'...' : $row->recipients;
         $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag));
-        printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->subject,$row->count,$row->blog_id,$recipients,$prompt);
+        printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->subject,$row->count,$row->blog_id,htmlentities($recipients),$prompt);
     }
     echo '</tbody></table>';
 

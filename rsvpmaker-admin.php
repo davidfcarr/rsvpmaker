@@ -3212,7 +3212,17 @@ function rsvpmaker_debug_log($msg, $label = '', $filename_base = '', $reset = fa
 
 function rsvpmaker_show_debug_log() {
 	echo '<h2>RSVPMaker Debug Log</h2><p>Captures events from the plugin\'s operation</p>';
-	echo WP_DEBUG_LOG;
+	if(isset($_POST['wpclear'])) {
+		file_put_contents(WP_DEBUG_LOG, '');	
+	}
+	if(isset($_GET['wp'])) {
+		$log = file_get_contents(WP_DEBUG_LOG);
+		printf('<p><a href="%s">Show RSVPMaker Debug Log</a></p>', admin_url('tools.php?page=rsvpmaker_show_debug_log'));
+		printf('<form method="post" action=""><input type="hidden" name="wpclear" value="1"><button>Clear WP Log</button><form>');
+		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($log).'</textarea>';		
+		return;
+	}
+	printf('<p><a href="%s">Show WP DEBUG LOG</a></p>', admin_url('tools.php?page=rsvpmaker_show_debug_log&wp=1'));
 	global $rsvp_options;
 	$filename_base = 'rsvpmaker';
 	$upload_dir   = wp_upload_dir();
@@ -3226,6 +3236,7 @@ function rsvpmaker_show_debug_log() {
 		printf('<form method="post" action="%s"><input type="hidden" name="clear" value="1"><button>Clear Log</button></form>',admin_url('tools.php?page=rsvpmaker_show_debug_log'));
 		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';		
 	}
+
 }
 
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
