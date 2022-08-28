@@ -63,7 +63,6 @@ add_action( 'admin_menu', 'rsvpmaker_relay_menu_pages' );
 function rsvpmaker_relay_manual_test() {
 	rsvpmaker_admin_heading(__('Manually Trigger Check of Email Lists','rsvpmaker'),__FUNCTION__);
 	//echo 'about to call rsvpmaker_relay_init';
-
 	if(rsvpmaker_postmark_is_live()) {
 		echo '<p>Postmark Integration is Live</p>';
 		rsvpmaker_postmark_chunked_batches();
@@ -149,11 +148,11 @@ function rsvpmaker_relay_queue() {
 	$last_post_id = 0;
 	$posts = $wpdb->posts;
 	$postmeta = $wpdb->postmeta;
-	$sql = "select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE post_status='rsvpmessage' AND meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
+	$sql = "select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
 	$results = $wpdb->get_results($sql);
 	foreach($results as $mail) {
 		$mail = (array) $mail;
-		$log .= $mail['subject'].": ".$mail["count"]."\n";
+		$log .= $mail['subject'].": ".$mail["hits"]."\n";
 		$mail['message_type'] = 'email_rule_group_email';
 		$mail['override'] = 1;
 		$epost_id = $mail['post_id'];
@@ -165,15 +164,9 @@ function rsvpmaker_relay_queue() {
 			$mail = unserialize($saved);
 		}
 		else {
-			$sql = "select meta_value from $wpdb->postmeta WHERE meta_key='_rsvpmail_html' AND post_id=$epost_id";
-			$h = $wpdb->get_var($sql);
-			if($h)
-				$mail['html'] = $h;
-			else {
-				$mail['html'] = rsvpmaker_email_html($mail['html']);
-				update_post_meta($epost_id,'_rsvpmail_html',$mail['html']);
-			}
-			$sql = "select * from $wpdb->postmeta WHERE meta_key!='_rsvpmail_html' AND meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=$epost_id";
+			$epost = get_post($epost_id);
+			$mail['html'] = rsvpmaker_email_html($epost);
+			$sql = "select * from $wpdb->postmeta WHERE meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=$epost_id";
 			$meta = $wpdb->get_results($sql);
 			foreach($meta as $row) {
 				if('rsvprelay_from' == $row->meta_key) {
@@ -188,7 +181,8 @@ function rsvpmaker_relay_queue() {
 		}
 
 		if($hits == 1) {
-			$result = rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
+			$message_description = empty($message_description) ? '' : '<div class="rsvpexplain">' . $message_description . '</div>';
+			$result = rsvpmailer( $mail, $message_description );
 			$result = $mail['to'] . ' ' . rsvpmaker_date( 'r' ).' '.$result;
 			$wpdb->query("update $postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND post_id=$epost_id ");
 			$log .= $result."\n";
@@ -1078,11 +1072,15 @@ function rsvpmaker_get_hosts_and_subdomains() {
 }
 
 function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
-	$from = ($emailobj) ? $emailobj->From : '';
+	foreach($emailobj->ToFull as $one) {
+		$addresses[] = $one->Email;
+	}
+	foreach($emailobj->CcFull as $one) {
+		$addresses[] = $one->Email;
+	}
 	$recipients = array();
 	$recipient_names = array();
-	//todo built in functionality for forwarders? Or membership add-on?
-	$recipients = apply_filters('rsvpmail_recipients_from_forwarders',$recipients,$slug_and_id,$emailobj);
+	$recipients = apply_filters('rsvpmail_recipients_from_forwarders',$recipients,$slug_and_id,$from,$addresses);
 
 	if(empty($recipients) && ('members' == $slug_and_id['slug']) && get_option('rsvpmaker_discussion_active')) {
 		$users = get_users('blog_id='.$slug_and_id['blog_id']);

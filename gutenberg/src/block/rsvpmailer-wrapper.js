@@ -436,7 +436,7 @@ attributes: {
 });
 
 registerBlockType( 'rsvpmaker/emailguestsignup', {
-	title: ( 'RSVP Email Guest List Signup' ), // Block title.
+	title: ( 'RSVP Email List Signup' ), // Block title.
 	icon: 'admin-comments', 
 	category: 'rsvpmaker',
 	keywords: [

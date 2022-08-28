@@ -667,7 +667,6 @@ for($i=0; $i < 24; $i++)
 
 	$houropt .= sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
 	}
-
 for($i=0; $i < 60; $i += 5)
 	{
 	$selected = ($i == $defaultmin) ? ' selected="selected" ' : '';
@@ -687,31 +686,23 @@ if(isset($_POST['timezone_string']))
 <div class="wrap" style="max-width:950px !important;">
 
     <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
-      <a class="rsvpmaker-nav-tab nav-tab rsvpmaker-nav-tab-active nav-tab-active" href="#calendar"><?php esc_html_e('Calendar Settings','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#security"><?php esc_html_e('Security','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#payments"><?php esc_html_e('Payments','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#notification_email"><?php esc_html_e('Email Server','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#email"><?php esc_html_e('Mailing List','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab" href="#rsvpforms"><?php esc_html_e('RSVP Forms','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['tab'])) echo 'rsvpmaker-nav-tab-active'; ?>" href="#calendar"><?php esc_html_e('Calendar Settings','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'security' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#security"><?php esc_html_e('Security','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'payments' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#payments"><?php esc_html_e('Payments','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'email' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#email"><?php esc_html_e('Email &amp; Mailing List','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'group_email' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'rsvp_forms' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#rsvpforms"><?php esc_html_e('RSVP Forms','rsvpmaker');?></a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
     <section id="calendar" class="rsvpmaker">
-	<?php
-if(!isset($_REQUEST['tab']))
-{
-?>
-<input type="hidden" id="activetab" value="calendar" />
-<?php	
-}
+<?php
 $sidebar = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
 <input type="hidden" name="cmd" value="_s-xclick">
 <input type="hidden" name="hosted_button_id" value="N6ZRF6V6H39Q8">
 <input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" name="submit" alt="PayPal - The safer, easier way to pay online!">
 <img alt="" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
-</form>
-';
+</form>';
 rsvpmaker_admin_heading(__('Calendar Options','rsvpmaker'),__FUNCTION__,'',$sidebar);
 if(file_exists(WP_PLUGIN_DIR."/rsvpmaker-custom.php") )
 	echo "<p><em>".__('Note: This site also implements custom code in','rsvpmaker').' '.WP_PLUGIN_DIR."/rsvpmaker-custom.php.</em></p>";
@@ -982,14 +973,6 @@ rsvpmaker_menu_security( __("Documentation",'rsvpmaker'), "documentation",$optio
   <input type="checkbox" name="security_option[additional_editors]" value="1" <?php if(isset($options["additional_editors"]) && $options["additional_editors"]) echo ' checked="checked" ';?> /> <strong><?php esc_html_e('Additional Editors','rsvpmaker'); ?></strong> <em><?php esc_html_e('Allow users to share editing rights for event templates and related events.','rsvpmaker'); ?></em>
 	<p><strong>How this works: </strong> When this function is enabled, event authors have the option of allowing other users to be additional editors or co-authors for an event or a series of events based  on a template. This is useful for community websites where multiple organizations post their events. The organization can appoint multiple officers or representatives to have equal rights to update the events template for their meetings and all the individual events based on that template.</p>
 	<p>Note that to unlock events for editing, RSVPMaker changes the author ID for a post to the ID of the authorized user editing the post.</p>				
-<?php
-if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'security')
-{
-?>
-<input type="hidden" id="activetab" value="security" />
-<?php	
-}
-?>
 <input type="hidden" name="tab" value="security">
 				 				 				
 <div class="submit"><input type="submit" name="Submit" value="<?php esc_html_e('Update','rsvpmaker'); ?>" /></div>
@@ -1129,12 +1112,6 @@ if (class_exists('Stripe_Checkout_Functions'))
 <p><?php echo __('Developers also have the option of hooking into the "rsvpmaker_cash_or_custom" action hook (<a href="https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/" target="_blank">documentation</a>)','rsvpmaker'); ?></p>
 
 <?php
-if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'payments')
-{
-?>
-<input type="hidden" id="activetab" value="payments" />
-<?php	
-}
 $gateways = get_rsvpmaker_payment_options ();
 $chosen_gateway = get_rsvpmaker_payment_gateway ();
 $o = '';
@@ -1159,84 +1136,14 @@ echo default_gateway_check($chosen_gateway);
 </form>
 
 </section>
-<section id="notification_email" class="rsvpmaker">
-<?php rsvpmaker_admin_heading(__('Email Server Configuration','rsvpmaker'),__FUNCTION__,'email_server'); ?>
-<form name="notify_options" action="<?php echo esc_attr($action_url);?>" method="post">
-<?php rsvpmaker_nonce(); ?>
-<?php do_action('rsvpmaker_email_settings'); ?>
-<p><?php esc_html_e('These settings are related to transactional emails, such as registration confirmation messages. If you are using another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults.','rsvpmaker'); ?></p>
-
-<p>
-<?php esc_html_e('From Email Address for All Notifications','rsvpmaker'); ?><br />
-<input type="text" name="enotify_option[from_always]" value="<?php if(!empty($options["from_always"])) echo esc_attr($options["from_always"]); elseif(!empty($options["smtp_useremail"])) echo esc_attr($options["smtp_useremail"]);?>" size="15" />
-</p>
-<h3 id="smtp"><?php esc_html_e('SMTP for Notifications','rsvpmaker'); ?></h3>
-<p><?php esc_html_e('For more reliable delivery of email notifications, enable delivery through the SMTP email protocol. Standard server parameters will be used for Gmail and the SendGrid service, or specify the server port number and security protocol','rsvpmaker'); ?>.</p>
-<p><?php esc_html_e('If you are using another plugin that improves the delivery of email notifications, such one of the <a href="https://wordpress.org/plugins/sendgrid-email-delivery-simplified/">SendGrid plugin</a> (which uses the SendGrid API rather than SMTP), leave this set to "None - use wp_mail()."','rsvpmaker'); ?>.</p>
-  <select name="enotify_option[smtp]" id="smtp">
-  <option value="" <?php if(isset($options["smtp"]) && ($options["smtp"] == '' )) {echo ' selected="selected" ';}?> ><?php esc_html_e('None - use wp_mail()','rsvpmaker'); ?></option>
-  <option value="gmail" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'gmail')) {echo ' selected="selected" ';}?> >Gmail</option>
-  <option value="sendgrid" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'sendgrid')) {echo ' selected="selected" ';}?> >SendGrid (SMTP)</option>
-  <option value="other" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'other')) {echo ' selected="selected" ';}?> ><?php esc_html_e('Other SMTP (specified below)','rsvpmaker'); ?></option>
-  </select>
-<br />
-<?php esc_html_e('Email Account for Notifications','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_useremail]" value="<?php if(isset($options["smtp_useremail"])) echo esc_attr($options["smtp_useremail"]);?>" size="15" />
-<br />
-<?php esc_html_e('Email Username','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_username]" value="<?php if(isset($options["smtp_username"])) echo esc_attr($options["smtp_username"]);?>" size="15" />
-<br />
-<?php esc_html_e('Email Password','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_password]" value="<?php if(isset($options["smtp_password"])) echo esc_attr($options["smtp_password"]);?>" size="15" />
-<br />
-<?php esc_html_e('Server (parameters below not necessary if you specified Gmail or SendGrid)','rsvpmaker'); ?><br />
-<input type="text" name="enotify_option[smtp_server]" value="<?php if(isset($options["smtp_server"])) echo esc_attr($options["smtp_server"]);?>" size="15" />
-<br />
-<?php esc_html_e('SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)','rsvpmaker'); ?> 
-<br />
-<input type="text" name="enotify_option[smtp_prefix]" value="<?php if(isset($options["smtp_prefix"])) echo esc_attr($options["smtp_prefix"]);?>" size="15" />
-<br />
-<?php esc_html_e('SMTP Port','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_port]" value="<?php if(isset($options["smtp_port"])) echo esc_attr($options["smtp_port"]);?>" size="15" />
-<br />
-
-<p><?php esc_html_e('See <a href="http://www.wpsitecare.com/gmail-smtp-settings/">this article</a> for additional guidance on using Gmail (requires a tweak to security settings in your Google account). If you have trouble getting Gmail or ssl or tls connections to work, an unencrypted port 25 connection to an email account on the same server that hosts your website should be reasonably secure since no data will be passed over the network.','rsvpmaker');?></p>
-
-<?php 
-if(!empty($options["smtp"]))
-	{
-?>
-<a href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php&smtptest=1'); ?>"><?php esc_html_e('Send SMTP Test to RSVP To address','rsvpmaker'); ?></a>
-<?php
-	}
-?>
-<?php
-if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'notification_email')
-{
-?>
-<input type="hidden" id="activetab" value="notification_email" />
-<?php	
-}
-?>
-<input type="hidden" name="tab" value="notification_email">
-
-<div class="submit"><input type="submit" name="Submit" value="<?php esc_html_e('Update','rsvpmaker'); ?>" /></div>
-</form>
-</section>
 <section id="email" class="rsvpmaker">
-
 <?php
 global $RSVPMaker_Email_Options;
 if(empty($RSVPMaker_Email_Options))
 $RSVPMaker_Email_Options = new RSVPMaker_Email_Options();
 $RSVPMaker_Email_Options->handle_options();
 ?>
-
-    </section>
+</section>
 <section id="groupemail" class="rsvpmaker">
 <form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
 <?php rsvpmaker_nonce(); 
@@ -1650,8 +1557,7 @@ list-style-type: circle;
 
 }
 
-function rsvpmaker_admin_menu() {
-	
+function rsvpmaker_admin_menu() {	
 global $rsvp_options;
 //do_action('rsvpmaker_admin_menu_top');
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Create / Update from Template",'rsvpmaker'), __("Create / Update",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
@@ -1665,6 +1571,7 @@ add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), 
 add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Payments', 'rsvpmaker' ), __( 'RSVPMaker Payments', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
+add_submenu_page('edit.php','Email Promos','Email Promos','edit_others_posts','rsvpmail_latest_posts_notification_setup','rsvpmail_latest_posts_notification_setup');
 if(!empty($rsvp_options['debug']))
 	add_submenu_page('tools.php',__('RSVPMaker Debug Log'),__('RSVPMaker Debug Log'),'manage_options','rsvpmaker_show_debug_log','rsvpmaker_show_debug_log');
 }
@@ -2478,7 +2385,7 @@ $wpdb->show_errors();
 				$t = rsvpmaker_strtotime($row["timestamp"]);
 				$notification .= 'posted: '.rsvpmaker_date($rsvp_options["short_date"],$t);
 				$notification .=  "</p>";
-				$notification .=  "<h3>Event Details</h3>\n".str_replace('#rsvpnow">','#rsvpnow">'.__('Update','rsvptoast').' ',str_replace('*|EMAIL|*',$notify, $event_content));
+				$notification .=  "<h3>Event Details</h3>\n".str_replace('#rsvpnow">','#rsvpnow">'.__('Update','rsvptoast').' ',preg_replace('/(\*|){0,1}EMAIL(|\*){0,1}/',$notify, $event_content));
 				
 				echo "Notification for $notify<br />$notification";
 
@@ -3274,7 +3181,7 @@ $cleared = is_array($cleared) ? $cleared : array();
     update_option('cleared_rsvpmaker_notices',$cleared);
 }
 
-function rsvpmaker_debug_log($msg, $label = '', $filename_base = '') {
+function rsvpmaker_debug_log($msg, $label = '', $filename_base = '', $reset = false) {
 	global $rsvp_options;
 		if(empty($rsvp_options["debug"]))
 			return;
@@ -3289,7 +3196,10 @@ function rsvpmaker_debug_log($msg, $label = '', $filename_base = '') {
 	 
 	if ( ! empty( $upload_dir['basedir'] ) ) {
 		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
-		file_put_contents($fname, date('r')."\n".$msg."\n\n", FILE_APPEND);
+		if($reset)
+			file_put_contents($fname, rsvpmaker_date('r')."\n".$msg."\n\n");
+		else
+			file_put_contents($fname, rsvpmaker_date('r')."\n".$msg."\n\n", FILE_APPEND);
 		//clean old logs
 		$oldlog = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d',time() - 172800).'.txt';
 		if (file_exists($oldlog)) {
@@ -3309,24 +3219,12 @@ function rsvpmaker_show_debug_log() {
 	 
 	if ( ! empty( $upload_dir['basedir'] ) ) {
 		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
-		if(isset($_GET['clear'])){
-			$content = '';
-			echo 'attempting to clear log';
-			$handle = fopen($fname, 'r+');
-			print_r($handle);
-			ftruncate($handle, rand(1, filesize($fname)));
-			rewind($handle);
-			fclose($handle);
+		if(isset($_POST['clear'])){
+			rsvpmaker_debug_log('','reset','',true);
 		}
-		else {
-			$content = file_get_contents($fname);
-		}
-		printf('<p><a href="%s">Clear Log</a></p>',admin_url('tools.php?page=rsvpmaker_show_debug_log&clear=1'));
-		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';
-		if(defined(WP_DEBUG_LOG) && strpos(WP_DEBUG_LOG,'/')) {
-			$content = file_get_contents(WP_DEBUG_LOG);
-			echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';	
-		}
+		$content = file_get_contents($fname);
+		printf('<form method="post" action="%s"><input type="hidden" name="clear" value="1"><button>Clear Log</button></form>',admin_url('tools.php?page=rsvpmaker_show_debug_log'));
+		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';		
 	}
 }
 
@@ -5057,7 +4955,7 @@ function rsvpmaker_share() {
 	
 	if(!empty($_POST['editor_email']) && !empty($t)  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 		$email = sanitize_text_field($_POST['editor_email']);
-		if(!is_email($email))
+		if(!rsvpmail_contains_email($email))
 		{
 			echo '<p>Invalid email</p>';
 		}
@@ -5306,7 +5204,7 @@ function rsvpmaker_submission_post() {
 		}
 
 		$to = sanitize_text_field($_POST['to']);
-		if(!is_email($to))
+		if(!rsvpmail_contains_email($to))
 			$to = $rsvp_options['rsvp_to'];
 		if(empty($title))
 			$missing[] = 'event title';
@@ -5324,7 +5222,7 @@ function rsvpmaker_submission_post() {
 			wp_redirect($r);
 			exit();
 		}
-		if(!is_email($email))
+		if(!rsvpmail_contains_email($email))
 		{
 			$r = add_query_arg('submission_error','invalid email address',$permalink).'#results';
 			wp_redirect($r);

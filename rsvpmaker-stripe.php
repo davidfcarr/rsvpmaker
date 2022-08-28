@@ -387,8 +387,6 @@ function rsvpmaker_stripe_checkout() {
 
 </div>
 
-
-
 <p><button id="card-button" class="stripebutton" data-secret="<?php echo esc_attr( $intent->client_secret ); ?>">
 
 	<?php echo esc_html( $paylabel ); ?>

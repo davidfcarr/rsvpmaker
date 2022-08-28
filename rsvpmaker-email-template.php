@@ -86,8 +86,6 @@ if ( ! empty( $_GET['debug'] ) ) {
 	echo "<p>active: $cron_active </p>";
 }
 
-
-
 if ( $rsvpmaker_cron_context && $cron_active ) {
 
 	$scheduled_email = get_post_meta( $post->ID, 'scheduled_email', true );
@@ -126,8 +124,6 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 		return;
 	}
-
-
 
 	if ( $cron['cron_mailchimp'] && ( $rsvpmaker_cron_context == 2 ) ) {
 
@@ -253,7 +249,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 	}
 }
-$html = preg_replace('/<img [^>]+srcset[^>]+>/','',$html);
+$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
 $html = preg_replace('/<\/{0,1}noscript>/','',$html);
 
 $preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $html );

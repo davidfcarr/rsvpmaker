@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0.1
-Stable tag: 9.6.5
+Stable tag: 9.6.8
 
 Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
 
@@ -25,7 +25,8 @@ In addition, the included RSVP Mail utility lets you create and format email new
 
 * Create and edit newsletters within the WordPress block editor, rather than learning another content composer tool. Use dynamic blocks or shortcodes to incorporate dynamic content like lists of recent blog posts or upcoming events.
 * Power membership-oriented websites with tools for emailing all your members or just those who have or have not registered for a specific event.
-* Send email using your own web server, an SMTP plugin or the integration with Mailchimp. (See below for details on the new integration with Postmark - recommended!)
+* Send email using your own web server, an SMTP plugin or the integration with Mailchimp.
+* NEW: Postmark integration supports both broadcast / mailing list and transactional messages (like RSVP Confirmations). Postmark integration turns the RSVP Mail tool more of a full-fledged alternative to Mailchimp or MailPoet. <a href="mailto:david@rsvpmaker.com?subject=RSVPMaker Postmark customizations">Contact the plugin author</a> for details about additional customizations for reselling Postmark services across WordPress multisite networks and managing forwarders and email discussion lists through the WordPress dashbboard. A premium plugin including these services is under development.
 
 https://youtu.be/NmwN1T9s44E
 
@@ -46,17 +47,6 @@ The RSVP Mailer tool allows you to use the familiar WordPress editor to format e
 Here's a demo of editing emails and creating email templates.
 
 https://youtu.be/px9qMpKXyho
-
-NEW PREMIUM OPTION: [RSVPMaker Mailer for Postmark](https://rsvpmaker.com/rsvpmaker-postmark/)
-
-Send newsletters, event promotions, and other messages using the Postmark service for reliable and economical sending of both transactional messages. Postmark pricing starts at $10 USD for 10,000 email sends.
-
-Postmark integration turns the RSVP Mail tool more of a full-fledged alternative to Mailchimp or MailPoet.
-
-Additional features:
-* Set default forwarding on your server to send messages to Postmark, and you will also be able to manage email forwarding and member mailing lists within this framework.
-* Full support for multisite, where each subdomain site can have its own email lists and forwarders. Network administrators can enable the extension on all sites or selected ones.
-* Option to create an email promo for each new blog post, with an excerpt from the post, a link to the rest of the article, and (optionally) a listing of other recent posts. Turn this feature on, and you'll be sent a preview of the email promo, immediately after the publication of a new post. You can quickly send out after any edits.
 
 [__RSVPMaker.com__](http://www.rsvpmaker.com/)
 [RSVPMaker on GitHub](https://github.com/davidfcarr/rsvpmaker)
@@ -137,6 +127,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.6.7 =
+
+* Integrated Postmark options from beta test into main plugin.
+* Integrated "Join mailing list" popup with configuration options for text, colors, and CSS properties.
+
+= 9.6.6 =
+
+* RSVP Mailer refinements
 
 = 9.6.5 =
 

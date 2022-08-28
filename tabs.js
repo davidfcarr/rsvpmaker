@@ -1,7 +1,8 @@
 jQuery( document ).ready(
 	function( $ ) {
         $('section').hide();
-        $('section').first().show();
+        //$('section').first().show();
+		$( 'section' ).eq( $( '.rsvpmaker-nav-tab-wrapper .rsvpmaker-nav-tab-active' ).index() ).show();
 		$( document ).on(
 			'click',
 			'.rsvpmaker-nav-tab-wrapper a, .nav-tab-wrapper a',

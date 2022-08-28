@@ -1478,7 +1478,7 @@ function ajax_rsvp_email_lookup( $email, $event ) {
 
 	$p = get_permalink( $event );
 
-	if ( ! is_email( $email ) ) {
+	if ( ! rsvpmail_contains_email( $email ) ) {
 
 		return;
 	}
@@ -2552,7 +2552,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID );
 
-				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'], str_replace( '*|EMAIL|*', $rsvp['email'] . '&update=' . $rsvp_id, $rsvp_options['rsvplink'] ) );
+				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'], rsvpmail_replace_email_placeholder($rsvp['email'],$rsvp_options['rsvplink']) . '&update=' . $rsvp_id );
 				
 				rsvp_notifications_via_template( $rsvp, $rsvp_to, $rsvpdata );
 
@@ -4877,6 +4877,15 @@ if ( ! function_exists( 'rsvpmaker_profile_lookup' ) ) {
 
 		if ( ! empty( $email ) ) {
 
+			if(isset($_GET['rmail'])) {
+				$sql = 'SELECT email, first_name as first, last_name as last FROM ' . $wpdb->prefix . 'rsvpmaker_guest_email WHERE email LIKE "' . $email . '" ORDER BY id DESC';
+				$profile = $wpdb->get_row($sql,ARRAY_A);
+				if($profile) {
+					mail('david@carrcommunications.com','profile lookup match',var_export($profile,true));
+					return $profile;
+				}
+			}
+
 			$sql = 'SELECT details FROM ' . $wpdb->prefix . 'rsvpmaker WHERE email LIKE "' . $email . '" ORDER BY id DESC';
 
 			$details = $wpdb->get_var( $sql );
@@ -5106,7 +5115,7 @@ if ( ! function_exists( 'rsvp_daily_reminder' ) ) {
 
 							$notification .= '</p>';
 
-							$notification .= "<h3>Event Details</h3>\n" . str_replace( '*|EMAIL|*', $notify, $event );
+							$notification .= "<h3>Event Details</h3>\n" . rsvpmail_replace_email_placeholder( $event, $notify);
 
 							$notification = wp_kses_post( $notification );
 

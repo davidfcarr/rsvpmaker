@@ -33,7 +33,6 @@ function rsvpmaker_postmark_is_active() {
 }
 
 function rsvpmaker_postmark_options() {
-    rsvpmaker_admin_heading(__('RSVPMaker Mailer for Postmark','rsvpmaker'),__FUNCTION__);
     global $postmark_settings, $wpdb;
     if(isset($_POST['postmark_mode']) && rsvpmaker_verify_nonce()){
         $postmark_settings['postmark_mode'] = sanitize_text_field($_POST['postmark_mode']);
@@ -85,7 +84,8 @@ function rsvpmaker_postmark_options() {
             $postmark_settings['limited'] = '0';
         if(empty($postmark_settings['allowed']))
             $postmark_settings['allowed'] = array();
-    printf('<form method="post" action="%s">',admin_url('admin.php?page='.$_GET['page']));
+    echo '<p>To fill in these variables, first <a href="https://account.postmarkapp.com/sign_up" target="_blank">create a Postmark account</a>. Postmark provides reliable email deliver for both broadcast / mailing list messages and transactional messages such as RSVP confirmations. Premium add-ons and customization services for managing email forwarding and metered access for multisite site owners are available from <a href="mailto:david@rsvpmaker.com" target="_blank">david@rsvpmaker.com</a>.</p>';        
+    printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker-admin.php&tab=email'));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
     printf('<p><input type="radio" name="postmark_mode" value="" %s> Off - Postmark not managing email</p>',$checked);
     $checked = ($postmark_settings['postmark_mode'] == 'sandbox') ? ' checked="checked" ' : '';
@@ -101,28 +101,20 @@ function rsvpmaker_postmark_options() {
     printf('<p>Handle Incoming Webhook: <input type="radio" name="handle_incoming" value="%s" %s> Yes <input type="radio" name="handle_incoming" value="" %s> No<br>Webhook address to register in Postmark %s</p>',$code,$ckyes, $ckno,$url);
     if(is_multisite()) {
         $sites = get_sites(array('orderby' => 'domain'));
-        echo '<table><tr><td>';
         $checkyes = ($postmark_settings['restricted']) ? 'checked="checked"' : '';
         $checkno = (!$postmark_settings['restricted']) ? 'checked="checked"' : '';
-        printf('<p><strong>Enable for</strong> <input type="radio" name="restricted" value="0" %s> All sites <input type="radio" name="restricted" value="1" %s> Just the sites listed below&nbsp;&nbsp;&nbsp;</p>',$checkno,$checkyes);
+        printf('<p><strong>Enable for</strong> <input type="radio" name="restricted" value="0" %s> All sites <input type="radio" name="restricted" value="1" %s> Just the sites checked below&nbsp;&nbsp;&nbsp;</p>',$checkno,$checkyes);
         foreach($sites as $site) {
             $checked = (in_array($site->blog_id,$postmark_settings['enabled'])) ? 'checked="checked"' : '';
             printf('<div class="enabled_sites"><input type="checkbox" name="enabled[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,$site->domain);
         }
-        echo '</td><td>';
-        $checkyes = ($postmark_settings['limited']) ? 'checked="checked"' : '';
-        $checkno = (!$postmark_settings['limited']) ? 'checked="checked"' : '';
-        printf('<p><strong>Allow sending to more than 100 recipients for</strong> <input type="radio" name="limited" value="0" %s> All sites <input type="radio" name="limited" value="1" %s> Just the sites listed below</p>',$checkno,$checkyes);
-        foreach($sites as $site) {
-            $checked = (in_array($site->blog_id,$postmark_settings['allowed'])) ? 'checked="checked"' : '';
-            printf('<div class="enabled_sites"><input type="checkbox" name="allowed[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,$site->domain);
-        }
-        echo '</td></tr></table>';
         $message = isset($postmark_settings['site_admin_message']) ? $postmark_settings['site_admin_message'] : 'Your site is not currently allowed to send to more than 100 recipients. Contact the network administrator.';
         echo '<p>Message to administrators of sites not authorized to send to > 100 recipients.<br><textarea name="site_admin_message" cols="100" rows="5">'.$message.'</textarea></p>';
     }
     rsvpmaker_nonce();
-    echo '<button>Submit</button></form>';
+    echo '<input type="hidden" name="tab" value="email">';
+    submit_button();
+    echo '</form>';
 
 if(!isset($_GET['debug']))
     return;
@@ -171,12 +163,8 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $message_stream = (sizeof($recipients) > 1) ? $postmark_settings['postmark_broadcast_slug'] : $postmark_settings['postmark_tx_slug'];
     $mpost = get_post($post_id);
     $meta = get_post_meta($post_id);
-    if(isset($meta['_rsvpmail_html'][0]))
-        $html = $meta['_rsvpmail_html'][0];
-    else {
-        $html = rsvpmaker_email_html($mpost,$post_id);
-        update_post_meta($post_id,'_rsvpmail_html',$html);
-    }
+    
+    $html = rsvpmaker_email_html($mpost,$post_id);
     $html = rsvpmail_replace_placeholders($html);
     $text = rsvpmaker_text_version($html);
     $mail['Subject'] = do_shortcode($mpost->post_title);
@@ -188,14 +176,17 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     $fromname = (empty($meta['rsvprelay_fromname'][0])) ? get_bloginfo('name') : $meta['rsvprelay_fromname'][0];
     $mail['From'] = rsvpmaker_email_add_name($mail['From'],$fromname);
     $client = new PostmarkClient($postmark_settings_key);
+    if(!strpos($html,'rmail='))
+    	$html = preg_replace_callback('/href="([^"]+)/','add_rsvpmail_arg',$html);		
 
+    mail('david@carrcommunications.com','html submitted to postmark',$html);
     foreach($recipients as $index => $to) {
         if(isset($recipient_names[$to]))
             $mail['To'] = rsvpmaker_email_add_name($to,$recipient_names[$to]);
         else
             $mail['To'] = $to;
-        $mail['HtmlBody'] = str_replace('*|EMAIL|*',$to,$html);
-        $mail['TextBody'] = str_replace('*|EMAIL|*',$to,$text);
+        $mail['HtmlBody'] = str_replace('e=EMAIL','e='.$to,$html);
+        $mail['TextBody'] = str_replace('e=EMAIL','e='.$to,$text);
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
@@ -246,14 +237,8 @@ function rsvpmaker_postmark_chunked_batches() {
         wp_mail(postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
 		$wpdb->query("update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id");
         if($doneafterthis) {
-            $sent = 0;
-            $all = get_post_meta($batchrow->post_id,'rsvprelay_to_batch_done');
-            foreach($all as $recipients) {
-                $sent += sizeof($recipients);
-            }
-            wp_mail('david@carrcommunications.com','batch done '.$sent,var_export($all,true));
             $title = get_the_title($batchrow->post_id);
-            $mail['subject'] = 'Sent to '.$sent.' recipients: '.$title;
+            $mail['subject'] = 'Sent: '.$title;
             $mail['html'] = sprintf('<p>The RSVPMaker Mailer for Postmark email broadcast is complete.</p> </p>See the results on the <a href="%s">Postmark Email Log</a> page. </p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag=rsvpemail-'.get_current_blog_id().'-'.$batchrow->post_id));
             $mail['from'] = $mail['to'] = get_option('admin_email');
             $mail['fromname'] = get_option('blogname');
@@ -290,7 +275,12 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
  	foreach($forwarders as $email) {
 		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
         if(!empty($slug_and_id)) {
+            rsvpmaker_debug_log($slug_and_id,'slug and id');
             $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
+            rsvpmaker_debug_log($recipients,'recipients');
+            foreach($recipients as $index => $email)
+                $recipients[$index] = rsvpmaker_email_add_name($email,'forwarded');
+            rsvpmaker_debug_log($recipients,'recipients added name');
             if($recipients) {
                 $batch = rsvpmaker_postmark_batch($emailobj, $recipients, $slug_and_id);
                 $result = rsvpmaker_postmark_batch_send($batch);
@@ -422,7 +412,7 @@ function postmark_batch_hash ($batch,$recipients = null) {
 
 function rsvpmaker_postmark_duplicate($hash) {
     global $wpdb;
-	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM ".$wpdb->base_prefix."postmark_tally where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 15 MINUTE)",$hash);
+	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM ".$wpdb->base_prefix."postmark_tally where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 120 MINUTE)",$hash);
 	$row = $wpdb->get_row($sql);
     if($row->duplicates)
     {
@@ -465,7 +455,7 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
             update_option('rsvpmaker_postmark',$postmark);
             wp_mail(postmark_admin_email(),'Shutting down RSVPMaker/Postmark email delivery service because of overload',"Heavy use, $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
         }
-        elseif(!empty($overloadmessage))
+        elseif(!empty($postmark['volume_warning']) && !empty($overloadmessage))
             wp_mail(postmark_admin_email(),'Recent email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
     }
 }

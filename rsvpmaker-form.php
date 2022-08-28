@@ -872,7 +872,7 @@ function rsvpmaker_add_to_list_on_rsvp_form() {
 	}
 	elseif(!strpos($fpost->post_content,'wp-block-rsvpmaker-formchimp'))
 	{
-		echo '<p><input type="checkbox" name="add_add_checkbox"> Include "Add me to your email list" checkbox on event signup form.</p>';
+		echo '<p><input type="checkbox" name="add_add_checkbox"> Include "Add me to your email list" checkbox on your default event signup form.</p>';
 	}
 }
 

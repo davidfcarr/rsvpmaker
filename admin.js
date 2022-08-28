@@ -680,3 +680,7 @@ $('.stripe_keys').change( function() {
 	
 });
 
+function showPopupOptions() {
+	document.getElementById('show_popup_options').style = 'display: block';
+	document.getElementById('show_popup_options_checkbox').style = 'display: none';
+}
