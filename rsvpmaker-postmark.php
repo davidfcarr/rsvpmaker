@@ -147,8 +147,8 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     $recipients = rsvpmaker_recipients_no_problems($recipients);
     if(empty($recipients))
         return;
-    if(sizeof($recipients) > 500) {
-        $chunks = array_chunk($recipients,500);
+    if(sizeof($recipients) > 200) {
+        $chunks = array_chunk($recipients,200);
         echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
@@ -179,14 +179,13 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(!strpos($html,'rmail='))
     	$html = preg_replace_callback('/href="([^"]+)/','add_rsvpmail_arg',$html);		
 
-    mail('david@carrcommunications.com','html submitted to postmark',$html);
     foreach($recipients as $index => $to) {
         if(isset($recipient_names[$to]))
             $mail['To'] = rsvpmaker_email_add_name($to,$recipient_names[$to]);
         else
             $mail['To'] = $to;
-        $mail['HtmlBody'] = str_replace('e=EMAIL','e='.$to,$html);
-        $mail['TextBody'] = str_replace('e=EMAIL','e='.$to,$text);
+        $mail['HtmlBody'] = str_replace('*|EMAIL|*','e='.$to,$html);
+        $mail['TextBody'] = str_replace('*|EMAIL|*','e='.$to,$text);
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
@@ -233,9 +232,11 @@ function rsvpmaker_postmark_chunked_batches() {
         $batchrow = $results[0];
         $doneafterthis = sizeof($results) == 1;
 		$recipients = unserialize($batchrow->meta_value);
-        $log .= rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
-        wp_mail(postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
 		$wpdb->query("update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id");
+        $log .= rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
+        $postmark_options = get_rsvpmaker_postmark_options();
+        if(!empty($postmark_options['notify_batch_send']))
+            wp_mail(postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
         if($doneafterthis) {
             $title = get_the_title($batchrow->post_id);
             $mail['subject'] = 'Sent: '.$title;

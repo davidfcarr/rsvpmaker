@@ -4881,7 +4881,6 @@ if ( ! function_exists( 'rsvpmaker_profile_lookup' ) ) {
 				$sql = 'SELECT email, first_name as first, last_name as last FROM ' . $wpdb->prefix . 'rsvpmaker_guest_email WHERE email LIKE "' . $email . '" ORDER BY id DESC';
 				$profile = $wpdb->get_row($sql,ARRAY_A);
 				if($profile) {
-					mail('david@carrcommunications.com','profile lookup match',var_export($profile,true));
 					return $profile;
 				}
 			}

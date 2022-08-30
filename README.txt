@@ -8,25 +8,24 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0.1
-Stable tag: 9.6.8
+Stable tag: 9.7
 
-Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe.
+RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
 == Description ==
 
-RSVPMaker is an event scheduling, event marketing, and RSVP tracking plugin for WordPress. Use it to:
+RSVPMaker is an event and email marketing tool. For events, it handles scheduling, event marketing, and RSVP tracking. You can send email to small lists through your web server or take advantage of the integrations with Postmark and Mailchimp to scale up.
+
+Use RSVPMaker to:
 
 * Schedule and promote events of all sorts: conferences, classes, seminars, speaking events, parties and weddings are a few common uses.
 * Register attendees, prompting them to enter whatever information you need, including the names of guests.
 * Collect money using PayPal or Stripe.
 * Create webinars and other online events leveraging free resources like the YouTube Live service.
-
-In addition, the included RSVP Mail utility lets you create and format email newsletters as well as event invitations.
-
-* Create and edit newsletters within the WordPress block editor, rather than learning another content composer tool. Use dynamic blocks or shortcodes to incorporate dynamic content like lists of recent blog posts or upcoming events.
+* Create, format, and edit email newsletters within the WordPress block editor, rather than learning another content composer tool. Use dynamic blocks or shortcodes to incorporate dynamic content like lists of recent blog posts or upcoming events.
 * Power membership-oriented websites with tools for emailing all your members or just those who have or have not registered for a specific event.
 * Send email using your own web server, an SMTP plugin or the integration with Mailchimp.
-* NEW: Postmark integration supports both broadcast / mailing list and transactional messages (like RSVP Confirmations). Postmark integration turns the RSVP Mail tool more of a full-fledged alternative to Mailchimp or MailPoet. <a href="mailto:david@rsvpmaker.com?subject=RSVPMaker Postmark customizations">Contact the plugin author</a> for details about additional customizations for reselling Postmark services across WordPress multisite networks and managing forwarders and email discussion lists through the WordPress dashbboard. A premium plugin including these services is under development.
+* New Postmark integration has the advantage of supporting both broadcast / mailing list and transactional messages (like RSVP Confirmations). Postmark integration turns the RSVP Mail tool more of a full-fledged alternative to Mailchimp or MailPoet. <a href="mailto:david@rsvpmaker.com?subject=RSVPMaker Postmark customizations">Contact the plugin author</a> for details about additional customizations for reselling Postmark services across WordPress multisite networks and managing forwarders and email discussion lists through the WordPress dashbboard. A premium plugin including these services is under development.
 
 https://youtu.be/NmwN1T9s44E
 
@@ -56,8 +55,6 @@ Free Extensions:
 [RSVPMaker for Toastmasters](http://wordpress.org/plugins/rsvpmaker-for-toastmasters) provides meeting management for public speaking and leadership development clubs that are part of Toastmasters International.
 
 [RSVPMaker Volunteer Roles](https://wordpress.org/plugins/rsvpmaker-volunteer-roles/) Sign up people to fill specific roles at an event.
-
-[RSVPMaker Excel](http://wordpress.org/plugins/rsvpmaker-excel) lets you download RSVP reports in Excel for nicer formatting than you get with the CSV output. Uses functions from the [PHPExcel](http://www.phpexcel.net/) library.
 
 Translations (some may be out of date):
 
@@ -127,6 +124,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.7 =
+
+* Corrected an issue with duplicate email sends.
 
 = 9.6.7 =
 

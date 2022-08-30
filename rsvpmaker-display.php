@@ -572,10 +572,9 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 
 		$wpdb->show_errors();
 	}
-	rsvpmaker_debug_log(is_email_context(),'is email');
-	rsvpmaker_debug_log($queryarg,'upcoming query queryarg');
+	//rsvpmaker_debug_log(is_email_context(),'is email');
 	$wp_query = new WP_Query( $queryarg );
-	rsvpmaker_debug_log($wp_query,'upcoming query');
+	//rsvpmaker_debug_log($wp_query,'upcoming query');
 
 	// clean up so this doesn't interfere with other operations
 

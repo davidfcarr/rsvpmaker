@@ -1432,8 +1432,6 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	if(!empty($campaign["id"]))
 	{
 	//restore mailchimp template codes, stripped out for other purposes
-	$html = str_replace('e=EMAIL','e=*|EMAIL|*',$html);
-	$text = str_replace('e=EMAIL','e=*|EMAIL|*',$text);
 	$html = str_replace('<!-- mailchimp -->','<a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a><br>',$html);
 	$content_result = $MailChimp->put("campaigns/".$campaign["id"].'/content', array(
 	'html' => $html, 'text' => $text) );
@@ -2487,7 +2485,7 @@ $menu_slug = "email_log";
 $function = "email_log";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 }
-if(rsvpmaker_postmark_is_live())
+if(rsvpmaker_postmark_is_active())
 	add_submenu_page("edit.php?post_type=rsvpemail", 'Postmark Email Log', 'Postmark Email Log', 'manage_options', 'rsvpmaker_postmark_show_sent_log', 'rsvpmaker_postmark_show_sent_log');
 
 }
@@ -4639,6 +4637,50 @@ function rsvpmaker_guestlist_nextprev($start) {
 	return $previous.' '.$next.' showing up to 500 at a time';
 }
 
+add_action('admin_init','rsvpmail_csv_export');
+function rsvpmail_csv_export() {
+
+	if ( ! isset( $_GET['rsvpmail_csv'] ) ) {
+
+		return;
+	}
+
+	if ( ! rsvpmaker_verify_nonce()) { 
+		die( 'Security error' );
+	}
+
+	global $wpdb;
+	$fields  = array('email','first_name','last_name','active','segments');
+
+	header( 'Content-Type: text/csv' );
+
+	header( 'Content-Disposition: attachment;filename="' . str_replace('.','-',$_SERVER['SERVER_NAME']) . '-' . date( 'Y-m-d-H-i' ) . '.csv"' );
+
+	header( 'Cache-Control: max-age=0' );
+
+	$out = fopen( 'php://output', 'w' );
+
+	fputcsv( $out, $fields );
+
+	$table = rsvpmaker_guest_list_table();
+	$table_meta = $table.'_meta';
+
+	$sql = 'SELECT email,first_name,last_name,active, meta_value as segment, meta_key FROM ' . $table . " LEFT JOIN ".$table_meta." ON `$table`.id = `$table_meta`.guest_id ORDER BY email";
+	$results = $wpdb->get_results( $sql, ARRAY_A );
+	//wp_die(var_export($results,true));
+	foreach($results as $row) {
+		$meta_key = array_pop($row);
+		if($meta_key != 'segment')
+			$row[4] = '';
+		fputcsv( $out, $row );
+	}
+
+	fclose( $out );
+
+	exit();
+
+} // end rsvpmail_csv_export
+
 function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $search = '') {
 	global $wpdb;
 	$table = rsvpmaker_guest_list_table();
@@ -4778,6 +4820,17 @@ function rsvpmaker_guest_list() {
 
 	$mailpoet_table = $wpdb->prefix.'mailpoet_subscribers';
 
+	$totalcount = $wpdb->get_var('SELECT count(*) from '.$table);
+	$activecount = $wpdb->get_var('SELECT count(*) from '.$table.' where active=1' );
+
+	if(isset($_GET['testlist'])) {
+		$wpdb->query("DELETE FROM $table where email LIKE '%example.com' ");
+		echo '<div class="notice"><p>Resending email requesting confirmation</p></div>';
+		for($i = 1; $i < 10000; $i++) {
+			rsvpmaker_guest_list_add('test'.$i.'@localhost.com', 'Testy '.$i,'Tester');
+		}
+	}
+
 	if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
 	{	
 		if(isset($_POST['active'])) {
@@ -4872,6 +4925,8 @@ function rsvpmaker_guest_list() {
 	?>
 	<p>This built-in email list is an optional feature of RSVPMaker that allows you to maintain an email list from within WordPress, independent of an external service such as Mailchimp or MailPoet. For lists of more than 100 recipients, consider using the <a href="https://rsvpmaker.com/rsvpmaker-postmark/">RSVPMaker Mailer for Postmark</a> integration for better management of anti-spam issues.</p>
 	<?php
+	printf('<p>You can <a href="%s">export the list</a>, work with it in a spreadsheet, and import it again. Or use the form below to make changes.</p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&rsvpmail_csv&timelord='.rsvpmaker_nonce('value')));
+
 	printf('<form method="post" enctype="multipart/form-data" action="%s">',admin_url('admin.php?page=rsvpmaker_guest_list'));
 	rsvpmaker_nonce();
 	if($active)
@@ -4893,7 +4948,7 @@ function rsvpmaker_guest_list() {
 		printf('<p>List segment (optional): <select name="segment">%s</select>. For a new segment, enter a label <input type="text" name="newsegment"></p>',$segment_options);
 	submit_button();
 	echo '</form>';
-		echo '<h2>'.__('Current List','rsvpmaker').'</h2>';
+		echo '<h2>'.__('Current List','rsvpmaker').' (total: '. $totalcount.' active: '. $activecount .')</h2>';
 		$start = (isset($_GET['start'])) ? intval($_GET['start']) : 0;
 		$search = (isset($_GET['s'])) ? sanitize_text_field($_GET['s']) : '';
 		if(isset($_GET['unconfirmed']))
@@ -4907,14 +4962,19 @@ function rsvpmaker_guest_list() {
 			echo '<p>Empty</p>';
 		else {
 			printf('<form method="post" action="%s">',admin_url('admin.php?page=rsvpmaker_guest_list'));
-			echo '<table class="wp-list-table widefat striped"><tr><th>Delete</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Segment</th><th>Add checked to<br>'.rsvpmaker_email_segments_dropdown('segment',false).'</th></tr>';
-			foreach($list as $item) {
+			echo '<div style="width: 200px; margin-left: auto; margin-right: auto;">';
+			submit_button('Apply to Checked Items Below');
+			echo '</div>';
+			echo '<table class="wp-list-table widefat striped"><tr><th>Delete</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Segment</th><th>Add checked to<br>'.rsvpmaker_email_segments_dropdown('segment',false).'<br></th></tr>';
+			foreach($list as $index => $item) {
 				$prompt = ($item->active) ? '' : '<br><strong>Not confirmed.</strong> <input type="checkbox" name="resend[]" value="'.$item->id.'"> Resend confirmation prompt? <button>Submit</button>';
-				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$item->id);
+				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <input type="checkbox" class="edit" value="%d"></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,$item->id,$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$item->id);
 			}
 			echo '</table>';
 			rsvpmaker_nonce();
-			submit_button();
+			echo '<div style="width: 200px; margin-left: auto; margin-right: auto;">';
+			submit_button('Apply to Checked Items Above');
+			echo '</div>';
 			echo '</form>';
 			echo "$nextprev";
 		}
@@ -4963,9 +5023,11 @@ function rsvpmaker_email_upload_to_array($segment = '') {
 		foreach ( $csv_array as $linenumber => $cells ) {
 				$email = $cells[0];
 				if(rsvpmail_contains_email($email)) {
-					$first_name = empty($cells[1]) ? '' : $cells[1];
-					$last_name = empty($cells[2]) ? '' : $cells[2];
-					rsvpmaker_guest_list_add($email, $first_name, $last_name,$segment);
+					$first_name = empty($cells[1]) ? '' : sanitize_text_field($cells[1]);
+					$last_name = empty($cells[2]) ? '' : sanitize_text_field($cells[2]);
+					$active = (isset($cells[3])) ? intval($cells[3]) : 1;
+					$segment = (isset($cells[4])) ? sanitize_text_field($cells[4]) : '';
+					rsvpmaker_guest_list_add($email, $first_name, $last_name,$segment,$active);
 				}
 		}
 	}
@@ -5334,13 +5396,15 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 	$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
 	$html = preg_replace('/<img [^>]+data-lazy-src[^>]+>/m','',$html);
 	$html = preg_replace('/<\/{0,1}noscript>/','',$html);
-	$html = str_replace('e=*|EMAIL|*','e=EMAIL',$html);
 	$html = preg_replace_callback('/href="([^"]+)/','add_rsvpmail_arg',$html);		
 	return $html;
 }
 
 function add_rsvpmail_arg($match) {
-	return 'href="'.add_query_arg('rmail','1',$match[1]);
+	//remove and restore mailchimp coding if present
+	$link = str_replace('*|EMAIL|*','EMAILEMAIL',$match[1]);
+	$link = 'href="'.add_query_arg('rmail','1',$link);
+	return str_replace('EMAILEMAIL','*|EMAIL|*',$link);
 }
 
 function rsvpmail_editors_note_ui($post_id) {
@@ -5584,6 +5648,10 @@ function rsvpmail_list_rsvpmodal_controller() {
 		add_action('wp_footer','rsvpmail_list_rsvpmodal',99);
 		setcookie('rsvpmail_shown_popup',1,time()+DAY_IN_SECONDS);
 	}
+	else {
+		if(isset($_GET['dc']))
+		rsvpmaker_debug_log($_COOKIE,'popup not displayed. Cookie values. '.$_GET['dc']);
+	}
 }
 
 function get_rsvpmail_list_rsvpmodal_css() {
@@ -5753,7 +5821,6 @@ window.onclick = function(event) {
 }
 
 function rsvpmail_replace_email_placeholder($html, $email) {
-	$html = str_replace('e=EMAIL','e='.$email,$html);
 	$html = str_replace('*|EMAIL|*',$email,$html); // any references outside of a query string
 	return $html;
 }
@@ -5761,4 +5828,3 @@ function rsvpmail_replace_email_placeholder($html, $email) {
 function rsvpmail_contains_email($email) {
 	return preg_match ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $email, $match);
 }
-

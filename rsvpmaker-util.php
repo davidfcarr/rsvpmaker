@@ -414,7 +414,7 @@ function rsvpmaker_date( $date_format = '', $t = null ) {
 	}
 
 	$output = wp_date( $date_format, $t, $tz );
-	return $output;// . "($date_format)";
+	return $output;
 }
 
 function rsvpmaker_prettydate($t, $type = 'long_date') {

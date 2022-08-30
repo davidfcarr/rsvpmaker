@@ -1983,7 +1983,7 @@ if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 	if(isset($_GET["smtptest"]))
 		{
 		$mail["to"] = $rsvp_options["rsvp_to"];
-	$mail["from"] = "david@carrcommunications.com";
+	$mail["from"] = get_bloginfo('admin_email');
 	$mail["fromname"] = "RSVPMaker";
 	$mail["subject"] = __("Testing SMTP email notification",'rsvpmaker');
 	$mail["html"] = '<p>'. __('Test from RSVPMaker.','rsvpmaker').'</p>';
