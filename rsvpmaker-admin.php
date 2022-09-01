@@ -1664,7 +1664,20 @@ else
 		}
 	} // end event dates column
 	elseif($column_name == 'rsvpmaker_cron') {
-		echo rsvpmaker_next_scheduled($post_id);	
+		//echo rsvpmaker_next_scheduled($post_id);
+		$signatures = get_post_meta($post_id,'signatures');
+		foreach($signatures as $signature) {
+			$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&timelord='.rsvpmaker_nonce('value');
+			$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
+			if($next) {
+				printf('<p>Scheduled send: %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+			}
+			$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
+			if($next) {
+				$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
+				printf('<p>Scheduled send: %s %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+			}	
+		}		
 	}
 }
 

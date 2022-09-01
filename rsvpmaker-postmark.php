@@ -15,6 +15,8 @@ function get_rsvpmaker_postmark_options() {
         $postmark_settings['postmark_mode'] = '';
     elseif(!empty($postmark_settings['enabled']) && !in_array(get_current_blog_id(),$postmark_settings['enabled']))
         $postmark_settings['postmark_mode'] = '';//disable
+    elseif(!empty($postmark_settings['sandbox_only']) && in_array(get_current_blog_id(),$postmark_settings['sandbox_only']))
+        $postmark_settings['postmark_mode'] = 'sandbox';
     return $postmark_settings;
 }
 
@@ -32,6 +34,16 @@ function rsvpmaker_postmark_is_active() {
     return ((!empty($postmark_settings['postmark_production_key']) && 'production' == $postmark_settings['postmark_mode']) || (!empty($postmark_settings['postmark_sandbox_key']) && 'sandbox' == $postmark_settings['postmark_mode']));
 }
 
+function show_rsvpmaker_postmark_status() {
+    if(rsvpmaker_postmark_is_live())
+        echo '<p>RSVPMaker\'s integration with the Postmark service is live, ensuring reliable message delivery</p>';
+    elseif(rsvpmaker_postmark_is_active())
+        echo '<p>Postmark integration is in sandbox mode, meaning RSVPMaker messages will only be sent to a test instance of the Postmark cloud.</p>';
+    else
+        echo '<p>RSVPMaker\'s integration with Postmark is not active on this site.</p>';
+    do_action('show_rsvpmaker_postmark_status');
+}
+
 function rsvpmaker_postmark_options() {
     global $postmark_settings, $wpdb;
     if(isset($_POST['postmark_mode']) && rsvpmaker_verify_nonce()){
@@ -44,10 +56,10 @@ function rsvpmaker_postmark_options() {
         $postmark_settings['postmark_broadcast_slug'] = sanitize_text_field($_POST['postmark_broadcast_slug']);
         $postmark_settings['handle_incoming'] = sanitize_text_field($_POST['handle_incoming']);
         $postmark_settings['restricted'] = (empty($_POST['restricted'])) ? 0 : intval($_POST['restricted']);
-        $postmark_settings['enabled'] = ($postmark_settings['restricted']) ? $_POST['enabled'] : array();
+        $postmark_settings['enabled'] = ($postmark_settings['restricted'] && !empty($_POST['enabled'])) ? array_map('intval',$_POST['enabled']) : array();
         $postmark_settings['limited'] = (empty($_POST['limited'])) ? 0 : intval($_POST['limited']);
-        $postmark_settings['allowed'] = ($postmark_settings['limited']) ? $_POST['allowed'] : array();
         $postmark_settings['site_admin_message'] = !empty($_POST['site_admin_message']) ? wp_kses_post(stripslashes($_POST['site_admin_message'])) : '';
+        $postmark_settings['sandbox_only'] = array_map('intval',$_POST['sandbox_only']);
         if(is_multisite())
             update_blog_option(1,'rsvpmaker_postmark',$postmark_settings);
         else
@@ -82,8 +94,8 @@ function rsvpmaker_postmark_options() {
             $postmark_settings['enabled'] = array();
         if(empty($postmark_settings['limited']))
             $postmark_settings['limited'] = '0';
-        if(empty($postmark_settings['allowed']))
-            $postmark_settings['allowed'] = array();
+        if(empty($postmark_settings['sandbox_only']))
+            $postmark_settings['sandbox_only'] = array();
     echo '<p>To fill in these variables, first <a href="https://account.postmarkapp.com/sign_up" target="_blank">create a Postmark account</a>. Postmark provides reliable email deliver for both broadcast / mailing list messages and transactional messages such as RSVP confirmations. Premium add-ons and customization services for managing email forwarding and metered access for multisite site owners are available from <a href="mailto:david@rsvpmaker.com" target="_blank">david@rsvpmaker.com</a>.</p>';        
     printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker-admin.php&tab=email'));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
@@ -101,13 +113,17 @@ function rsvpmaker_postmark_options() {
     printf('<p>Handle Incoming Webhook: <input type="radio" name="handle_incoming" value="%s" %s> Yes <input type="radio" name="handle_incoming" value="" %s> No<br>Webhook address to register in Postmark %s</p>',$code,$ckyes, $ckno,$url);
     if(is_multisite()) {
         $sites = get_sites(array('orderby' => 'domain'));
+        $col1 = $col2 = '';
         $checkyes = ($postmark_settings['restricted']) ? 'checked="checked"' : '';
         $checkno = (!$postmark_settings['restricted']) ? 'checked="checked"' : '';
         printf('<p><strong>Enable for</strong> <input type="radio" name="restricted" value="0" %s> All sites <input type="radio" name="restricted" value="1" %s> Just the sites checked below&nbsp;&nbsp;&nbsp;</p>',$checkno,$checkyes);
         foreach($sites as $site) {
             $checked = (in_array($site->blog_id,$postmark_settings['enabled'])) ? 'checked="checked"' : '';
-            printf('<div class="enabled_sites"><input type="checkbox" name="enabled[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,$site->domain);
+            $col1 .= sprintf('<div class="enabled_sites"><input type="checkbox" name="enabled[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,$site->domain);
+            $checked = (in_array($site->blog_id,$postmark_settings['sandbox_only'])) ? 'checked="checked"' : '';
+            $col2 .= sprintf('<div class="enabled_sites"><input type="checkbox" name="sandbox_only[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,$site->domain);
         }
+        printf('<table><tr><th>Enabled</th><th>Sandbox Only</th></tr><tr><td>%s</td><td>%s</td></tr></table>',$col1,$col2);
         $message = isset($postmark_settings['site_admin_message']) ? $postmark_settings['site_admin_message'] : 'Your site is not currently allowed to send to more than 100 recipients. Contact the network administrator.';
         echo '<p>Message to administrators of sites not authorized to send to > 100 recipients.<br><textarea name="site_admin_message" cols="100" rows="5">'.$message.'</textarea></p>';
     }
@@ -184,8 +200,8 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
             $mail['To'] = rsvpmaker_email_add_name($to,$recipient_names[$to]);
         else
             $mail['To'] = $to;
-        $mail['HtmlBody'] = str_replace('*|EMAIL|*','e='.$to,$html);
-        $mail['TextBody'] = str_replace('*|EMAIL|*','e='.$to,$text);
+        $mail['HtmlBody'] = str_replace('*|EMAIL|*',$to,$html);
+        $mail['TextBody'] = str_replace('*|EMAIL|*',$to,$text);
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }

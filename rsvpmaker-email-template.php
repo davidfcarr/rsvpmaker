@@ -278,6 +278,9 @@ button {
 $preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding-top: 50px; color: #fff; background-color: #000;"><div id="email-preview-wrapper" style="max-width: 700px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff; padding-top: 5px;border-radius: 25px; padding:25px; margin-bottom: 25px;">', $preview );
 $preview = str_replace('</body>','</div></div></body>',$preview);
 
+if(isset($_GET['cancel_promo']) && rsvpmaker_verify_nonce())
+	wp_unschedule_hook('rsvpmailer_post_promo');
+
 if ( isset( $_GET['template_preview'] ) ) {
 
 		$preview = rsvpmaker_personalize_email( $preview, 'david@carrcommunications.com', '<div class="rsvpexplain">This message is a demo.</div>' );
