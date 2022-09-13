@@ -59,6 +59,14 @@ section.rsvpmaker:first-child {
 	display:none;
 }
 
+.rsvpmaker .nav-tab-active {
+	background-color:#fff;
+}
+
+section.rsvpmaker {
+	background: #fff;
+}
+
 .no-js #sections.rsvpmaker {
 	border-top:1px solid #ccc;
 	margin-top:22px;

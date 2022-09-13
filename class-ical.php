@@ -9,7 +9,7 @@ class RSVPMaker_iCal {
 	public function __construct() {
 		// if ( (int) RSVPMaker()->options['general']['ical_feed'] != false ) {
 			// actions
-			add_action( 'init', array( $this, 'add_events_ical_feed' ) );
+			add_action('init', array( $this, 'add_events_ical_feed' ) );
 
 			// filters
 			add_filter( 'parse_request', array( $this, 'parse_ical_request' ) );

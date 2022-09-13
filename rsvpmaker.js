@@ -423,3 +423,26 @@ class RSVPJsonWidget {
 	}
 
 }
+
+const flexforms = document.querySelectorAll('.rsvpmaker-flexible-form');
+flexforms.forEach(flexform => {
+  flexform.addEventListener('submit', function handleClick(e) {
+    e.preventDefault();
+    // Create payload as new FormData object:
+    const payload = new FormData(this);
+	console.log(payload);
+	fetch(rsvpmaker_rest.rest_url+'rsvpmaker/v1/flexform', {
+		method: 'POST',
+		body: payload,
+		})
+		.then(res => res.json())
+		.then(data => showMessage(data))
+	})	
+});
+
+function showMessage(data) {
+	appslug = document.getElementById( 'appslug' ).value;
+	console.log('appslug for message: '+appslug);
+	document.getElementById( 'flexible-form-'+appslug ).innerHTML = '';
+	document.getElementById( 'flexform-result-'+appslug ).innerHTML = data.message;
+}

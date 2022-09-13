@@ -1,6 +1,8 @@
 <?php
 
-function rsvpmaker_recaptcha_output() {
+function rsvpmaker_recaptcha_output($return = false) {
+if($return)
+	ob_start();
 
 	global $rsvp_options;
 
@@ -19,13 +21,13 @@ function rsvpmaker_recaptcha_output() {
 		<?php
 
 	}
-
+if($return)
+	return ob_get_clean();
 }
 
 function rsvpmaker_recaptcha_check( $siteKey, $secret ) {
 
-	if ( ! isset( $_POST['g-recaptcha-response'] )  || !wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-
+	if ( ! isset( $_POST['g-recaptcha-response'] ) ) {
 		return false;
 	}
 	

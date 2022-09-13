@@ -39,6 +39,7 @@ function rsvpmaker_block_category( $categories, $post ) {
 	);
 }
 
+/*
 add_action( 'init', function(){
 global $rsvp_options;
 
@@ -166,8 +167,9 @@ var jsonwidget<?php echo esc_attr($slug); ?> = new RSVPJsonWidget('rsvpjsonwidge
 <?php
 return ob_get_clean();
 }
+*/
 
-add_action('init','rsvpmaker_server_block_render',1);
+//add_action('init','rsvpmaker_server_block_render',1);
 
 function rsvpmaker_block_cgb_block_assets() {
 	// Styles.

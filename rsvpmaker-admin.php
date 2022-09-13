@@ -686,12 +686,12 @@ if(isset($_POST['timezone_string']))
 <div class="wrap" style="max-width:950px !important;">
 
     <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['tab'])) echo 'rsvpmaker-nav-tab-active'; ?>" href="#calendar"><?php esc_html_e('Calendar Settings','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'security' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#security"><?php esc_html_e('Security','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'payments' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#payments"><?php esc_html_e('Payments','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'email' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#email"><?php esc_html_e('Email &amp; Mailing List','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'group_email' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'rsvp_forms' == $_REQUEST['tab'] ) echo 'rsvpmaker-nav-tab-active'; ?>" href="#rsvpforms"><?php esc_html_e('RSVP Forms','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['tab'])) echo 'nav-tab-active'; ?>" href="#calendar"><?php esc_html_e('Calendar Settings','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'security' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#security"><?php esc_html_e('Security','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'payments' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#payments"><?php esc_html_e('Payments','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'email' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#email"><?php esc_html_e('Email &amp; Mailing List','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'group_email' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'rsvp_forms' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#rsvpforms"><?php esc_html_e('RSVP Forms','rsvpmaker');?></a>
     </h2>
 
     <div id='sections' class="rsvpmaker">
@@ -1461,22 +1461,6 @@ function print_group_list_options($list_type, $vars) {
 	}	
 }
 
-function rsvpmaker_default_event_content($content) {
-global $post;
-global $rsvp_options;
-global $rsvp_template;
-if(empty($post->post_type))
-	return $content;
-if(($post->post_type == 'rsvpmaker') && ($content == ''))
-{
-if(isset($rsvp_template->post_content))
-	return $rsvp_template->post_content;
-return wp_kses_post($rsvp_options['default_content']);
-}
-else
-return $content;
-}
-
 function rsvpmaker_title_from_template($title) {
 global $rsvp_template;
 global $post;
@@ -1491,7 +1475,6 @@ if(isset($_GET["from_template"]) )
 return $title;
 }
 
-add_filter('the_editor_content','rsvpmaker_default_event_content');
 add_filter('default_title','rsvpmaker_title_from_template');
 
 function rsvpmaker_doc () {
@@ -1557,7 +1540,8 @@ list-style-type: circle;
 
 }
 
-function rsvpmaker_admin_menu() {	
+function rsvpmaker_admin_menu() {
+	
 global $rsvp_options;
 //do_action('rsvpmaker_admin_menu_top');
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Create / Update from Template",'rsvpmaker'), __("Create / Update",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
@@ -1781,82 +1765,6 @@ function rsvpmaker_essentials () {
 	echo '<div class="notice notice-success is-dismissible">'.$message.'</div>';
 }
 
-function rsvpmaker_corrupted_dates_check() {
-global $wpdb;
-$fixed = $corrupt = '';
-
-if(isset($_POST['fixrsvpyear']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-{
-foreach($_POST['fixrsvpyear'] as $post_id => $year)
-{
-	$year = (int) $year;
-	$month = (int) $_POST['fixrsvpmonth'][$post_id];
-	$day = (int) $_POST['fixrsvpday'][$post_id];
-	$hour = (int) $_POST['fixrsvphour'][$post_id];
-	$minutes = (int) $_POST['fixrsvpminutes'][$post_id];
-	if($month < 10)
-		$month = '0'.$month;
-	if($day < 10)
-		$day = '0'.$day;
-	if($hour < 10)
-		$hour = '0'.$hour;
-	if($minutes < 10)
-		$minutes = '0'.$minutes;
-	$datestring = $year.'-'.$month.'-'.$day.' '.$hour.':'.$minutes.':00';
-	$fixed .= '<div>Fixed date: '.$datestring.' for '.get_the_title($post_id).'</div>';
-	update_post_meta($post_id,'_rsvp_dates',$datestring);
-}
-
-echo '<div class="notice notice-info">'.$fixed.'</div>';
-
-}
-
-//first try to clean up errors automatically 
-	$manualcheck = false;
-	$sql = "SELECT ID, post_title, meta_value
-	FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id
-	where meta_key='_rsvp_dates' AND post_status='publish' AND meta_value NOT REGEXP '[0-9]{4}-[0-9]{2}-[0-9]{2} {1,2}[0-9]{2}:[0-9]{2}:[0-9]{2}'
-	AND meta_value > CURDATE()
-	ORDER BY post_title, meta_value";
-	$results1 = $wpdb->get_results($sql);
-	if($results1)
-	{
-		foreach($results1 as $row) {
-		$dateparts = preg_split('/[-: ]/',$row->meta_value);
-		if(empty($dateparts[3]) || empty($dateparts[4]))
-			{
-				//if not a complete date
-				$manualcheck = true;
-				continue;
-			}
-		$year = $dateparts[0];
-		$month = str_pad($dateparts[1],2,'0',STR_PAD_LEFT);
-		$day = str_pad($dateparts[2],2,'0',STR_PAD_LEFT);
-		$hour = str_pad($dateparts[3],2,'0',STR_PAD_LEFT);
-		$minutes = empty($dateparts[4]) ? '00' : str_pad($dateparts[4],2,'0',STR_PAD_LEFT);
-		$newdate = sprintf('%s-%s-%s %s:%s:00',$year,$month,$day,$hour,$minutes);
-		update_post_meta($row->ID,'_rsvp_dates',$newdate);
-		}
-	}	
-if($manualcheck) {
-	$sql = "SELECT ID, post_title, meta_value
-	FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id
-	where meta_key='_rsvp_dates' AND post_status='publish' AND meta_value NOT REGEXP '[0-9]{4}-[0-9]{2}-[0-9]{2} {1,2}[0-9]{2}:[0-9]{2}:[0-9]{2}' 
-	AND meta_value > CURDATE()
-	ORDER BY post_title, meta_value";
-	$results = $wpdb->get_results($sql);
-	if($results)
-	{
-		foreach($results as $row) {
-		$dateparts = preg_split('/[-: ]/',$row->meta_value);
-		$corrupt .= sprintf('<div><label style="display: inline-block; width: 200px;">%s</label> <input type="text" name="fixrsvpyear[%d]" value="%s" size="4" >-<input type="text" name="fixrsvpmonth[%d]" value="%s" size="2" >-<input type="text" name="fixrsvpday[%d]" value="%s" size="2" > <input type="text" name="fixrsvphour[%d]" value="%s"  size="2" >:<input type="text" name="fixrsvpminutes[%d]" value="%s" size="2" >:00 %s</div>',$row->post_title, $row->ID, $dateparts[0], $row->ID,  (empty($dateparts[1])) ? '' : $dateparts[1], $row->ID,  (empty($dateparts[2])) ? '' : $dateparts[2], $row->ID,  (empty($dateparts[3])) ? '' : $dateparts[3], $row->ID, (empty($dateparts[4])) ? '' : $dateparts[4], $row->meta_value);
-		}
-	printf('<div class="notice notice-error"><h3>%s</h3><p>%s</p><form method="post" action="%s">%s<p><button>Repair</button></p>%s</form></div>',__('Date Variables Corrupted','rsvpmaker'),__('A correct date would be in the format YEAR-MONTH-DAY HOUR:MINUTES:SECONDS or 2030-01-01 19:30:00 for January 1, 2030 at 7:30 pm','rsvpmaker'),admin_url(),$corrupt,rsvpmaker_nonce('return') );
-	}	
-}
-
-}
-
 function rsvpmaker_admin_notice() {
 
 if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
@@ -1892,8 +1800,6 @@ $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
 $basic_options = '';
-
-rsvpmaker_corrupted_dates_check();
 
 if( empty($rsvp_options["eventpage"]) && !get_option('noeventpageok') && !is_plugin_active('rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php') )
 	{
@@ -2915,8 +2821,9 @@ function rsvpmaker_clone_title($title) {
 }
 add_filter('default_title','rsvpmaker_clone_title');
 
-function rsvpmaker_clone_content ($content) {
-	global $post;
+function rsvpmaker_default_content ($content) {
+	global $rsvp_options;
+	global $rsvp_template;
 	if(isset($_GET["clone"]))
 		{
 			$id = (int) $_GET["clone"];
@@ -2926,11 +2833,14 @@ function rsvpmaker_clone_content ($content) {
 	elseif(isset($_GET['post_type']) && ('rsvpemail' == $_GET['post_type']) ) {
 		$content = get_rsvpmailer_default_block_template();
 	}
-
+	if(isset($rsvp_template->post_content))
+		$content = $rsvp_template->post_content;
+	if(isset($_GET['post_type']) && ('rsvpemail' == $_GET['post_type']) && !empty($rsvp_options['default_content']))
+		$content = wp_kses_post($rsvp_options['default_content']);		
 	return $content;
 }
 
-add_filter('default_content','rsvpmaker_clone_content');
+add_filter('default_content','rsvpmaker_default_content');
 
 function export_rsvpmaker () {
 //pack data from custom tables into wordpress metadata

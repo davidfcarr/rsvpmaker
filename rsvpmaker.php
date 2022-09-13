@@ -7,10 +7,10 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 9.7.1
+Version: 9.7.5
 */
 function get_rsvpversion() {
-	return '9.7.1';
+	return '9.7.5';
 }
 global $wp_version;
 global $default_tz;
@@ -608,8 +608,6 @@ if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 19 ) 
 	cpevent_activate();
 }
 
-rsvpmaker_upgrade_templates();
-
 function rsvpmaker_deactivate() {
 
 	// Unregister the post type, so the rules are no longer in memory.
@@ -635,10 +633,6 @@ function rsvpmaker_deactivate() {
 }
 
 register_deactivation_hook( __FILE__, 'rsvpmaker_deactivate' );
-
-
-
-add_action( 'init', 'rsvp_firsttime', 1 );
 
 function rsvp_firsttime() {
 
@@ -681,39 +675,6 @@ function rsvp_firsttime() {
 
 		}
 	}
-
-}
-
-
-
-function convert_date_meta() {
-
-	global $wpdb;
-
-	$date_table = $wpdb->prefix . rsvp_dates;
-
-	$sql = "SELECT * FROM $date_table";
-
-	$results = $wpdb->get_results( $sql );
-
-	if ( ! $results ) {
-
-		return;
-	}
-
-	foreach ( $results as $row ) {
-
-		add_post_meta( $row->postID, '_rsvp_dates', $row->datetime );
-
-		if ( $row->duration ) {
-
-			add_post_meta( $row->postID, '_' . $row->datetime, $row->duration );
-		}
-	}
-
-	// fix for duplicate dates
-
-	// rsvpmaker_duplicate_dates();
 }
 
 add_filter('single_template_hierarchy','rsvpmaker_single_template_hierarchy');
@@ -786,8 +747,6 @@ if ( ! function_exists( 'rsvpmaker_permalink_query' ) ) {
 	}
 } // end function exists
 
-
-
 function format_cddate( $year, $month, $day, $hours, $minutes ) {
 
 	$month = (int) $month;
@@ -809,58 +768,6 @@ function format_cddate( $year, $month, $day, $hours, $minutes ) {
 }
 
 
-
-function update_rsvpmaker_dates( $post_id, $dates_array, $durations_array, $end_array = array() ) {
-
-	$current_dates = get_rsvpmaker_meta( $post_id, '_rsvp_dates', false );
-
-	foreach ( $dates_array as $index => $cddate ) {
-
-		$duration = $durations_array[ $index ];
-
-		$end_time = ( empty( $end_array[ $index ] ) ) ? '' : $end_array[ $index ];
-
-		if ( empty( $current_dates ) ) {
-
-			 add_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
-
-		} elseif ( is_array( $current_dates ) ) {
-
-			if ( empty( $current_dates[ $index ] ) ) {
-
-					add_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
-
-					// rsvpmaker_debug_log("$post_id,$cddate,$duration,$end_time",'add date parameters');
-
-			} else {
-
-				update_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
-
-				// rsvpmaker_debug_log("$post_id,$cddate,$duration,$end_time,$index".$current_dates[$index],'update date parameters');
-
-			}
-		} else {
-			 add_rsvpmaker_date( $post_id, $cddate, $duration, $end_time, $index );
-		}
-
-		$current_dates[] = $cddate;
-
-	}
-
-	$missing = array_diff( $current_dates, $dates_array );
-
-	if ( ! empty( $missing ) ) {
-
-		foreach ( $missing as $cddate ) {
-
-			delete_rsvpmaker_date( $post_id, $cddate );
-		}
-	}
-
-}
-
-
-
 function delete_rsvpmaker_date( $post_id, $cddate ) {
 
 	delete_post_meta( $post_id, '_rsvp_dates', $cddate );
@@ -870,8 +777,6 @@ function delete_rsvpmaker_date( $post_id, $cddate ) {
 	delete_transient( 'rsvpmakerdates' );
 
 }
-
-
 
 function add_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '', $index = 0 ) {
 
@@ -911,8 +816,6 @@ function update_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '
 	delete_transient( 'rsvpmakerdates' );
 
 }
-
-
 
 function rsvpmaker_upcoming_data( $atts ) {
 	global $post;
@@ -1117,13 +1020,6 @@ function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 
 
 }
 
-function rsvpmaker_before_post_display_action() {
-	global $post;
-	if ( isset( $post->post_type ) && (( $post->post_type == 'rsvpmaker' ) || ( $post->post_type == 'rsvpmaker_template' )) ) {
-		do_action( 'rsvpmaker_before_display' );
-	}
-}
-
 function add_rsvpmaker_roles() {
 
 	$rsvpmakereditor = get_role( 'rsvpmakereditor' );
@@ -1260,5 +1156,5 @@ function rsvpmaker_server_block_render() {
 
 	register_block_type( 'rsvpmaker/embedposts', array( 'render_callback' => 'rsvpmaker_emailpostorposts' ) );
 	register_block_type( 'rsvpmaker/emailguestsignup', array( 'render_callback' => 'rsvpmail_signup_form' ) );
-
+	register_block_type( 'rsvpmaker/formwrapper', array( 'render_callback' => 'rsvpmaker_flexible_form_wrapper' ) );
 }

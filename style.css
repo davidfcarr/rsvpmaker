@@ -81,10 +81,15 @@ max-width: 90%;
     margin: 0;
     line-height: 1;
 }    
-#rsvpform label {
+#rsvpform label, .wp-block-rsvpmaker-formfield label {
 display: inline-block;
 width: 30%;
 }
+
+.rsvpmaker-flexible-form button {
+    font-size: x-large;
+}
+
 #rsvpform input[type=text], .guest-email-signup input[type=text] {
     display: inline-block;
     width: 80%;

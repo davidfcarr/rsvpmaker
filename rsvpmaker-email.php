@@ -30,8 +30,6 @@ function rsvpmailer($mail, $description = '') {
 		$problem = false;
 	if($problem) {
 		$mail['html'] = '[content omitted]';
-		//rsvpmaker_debug_log($mail,'rsvpmailer blocked sending to email: '.$problem);
-		//rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
 		return $mail['to'].' not sent - '.$problem;
 	}
 	if(isset($mail['message_type'])) {
@@ -146,19 +144,10 @@ function rsvpmailer($mail, $description = '') {
 			remove_filter('wp_mail_content_type', 'set_html_content_type');
 		return;
 	}
-	global $wp_version;//once 5.5 is out of beta, delete 2nd test
-	if(is_wp_version_compatible('5.5')) {
 	require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
 	require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
 	require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';
 	$rsvpmail = new PHPMailer\PHPMailer\PHPMailer();	
-	}
-	else
-	{
-		require_once ABSPATH . WPINC . '/class-phpmailer.php';
-		require_once ABSPATH . WPINC . '/class-smtp.php';
-		$rsvpmail = new PHPMailer();	
-	}
 	
 	if(!empty($rsvp_options["smtp"]))
 	{
@@ -1693,6 +1682,7 @@ function rsvpmaker_template_inline_test($atts) {
 }
 
 function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) {
+	wp_suspend_cache_addition(true);
 	rsvpmaker_debug_log("$post_id,$user_id, $posthash",'rsvpmailer_delayed_send args');
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
@@ -1703,6 +1693,7 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) 
 	$result = rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id);
 	$result .= ob_get_clean();
 	rsvpmaker_debug_log($result,'rsvpmailer_submitted results');
+	wp_suspend_cache_addition(false);
 }
 
 function rsvpmailer_add_editors_note($post) {
@@ -2177,22 +2168,6 @@ foreach($lines as $line)
 	}
 return $inline_array;
 }	
-
-function filter_allowed_block_types_for_rsvpemail( $allowed_block_types, $editor_context ) {
-	global $post;
-	//print_r($allowed_block_types);
-    if ( 'rsvpemail' == $post->post_type ) {
-		$allowed_block_types = array();
-		$block_types = WP_Block_Type_Registry::get_instance()->get_all_registered();
-		foreach($block_types as $block_name => $block) {
-			if(!strpos($block_name,'columns') && !strpos($block_name,'row') && !strpos($block_name,'ore/grid'))
-			$allowed_block_types[] = $block_name;
-		}
-    }
-    return $allowed_block_types;
-}
- 
-//add_filter( 'allowed_block_types_all', 'filter_allowed_block_types_for_rsvpemail', 10, 2 );
 
 function rsvpmail_candidate_templates($alt_template = false) {
 	global $wpdb;
@@ -3043,11 +3018,6 @@ function is_email_context () {
 		return (isset($email_context) && $email_context);
 }
 
-add_shortcode('rsvpmaker_cron_email_send_test','rsvpmaker_cron_email_send_test');
-function rsvpmaker_cron_email_send_test() {
-	return 'send test'.date('r') . rsvpmaker_cron_email_send(123824);
-}
-
 function rsvpmaker_cron_email_send($post_id,$user_id,$posthash = '') {
 	rsvpmaker_debug_log("$post_id,$user_id,$posthash",'cron email send args');
 	global $rsvpmaker_cron_context;
@@ -3275,8 +3245,6 @@ printf('<p>%s <a href="%s">%s</a></p>',__('Continue to','rsvpmaker'),site_url(),
 exit();
 }
 
-add_action('init','rsvpmail_unsubscribe');
-
 function rsvpmail_confirm_subscribe () {
 	if(!isset($_REQUEST['rsvpmail_subscribe']))
 		return;
@@ -3318,8 +3286,6 @@ function rsvpmail_confirm_subscribe () {
 	<?php
 exit();
 }
-	
-add_action('init','rsvpmail_confirm_subscribe');
 
 function rsvpmaker_notification_templates () {
 
@@ -3619,13 +3585,6 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	$mail["subject"] = $notification_subject;
 	$mail["html"] = $payment_confirmation_message . wpautop($notification_body);
 	rsvpmaker_tx_email($post, $mail);	
-}
-
-add_action('init','rsvp_payment_reminder_test');
-function rsvp_payment_reminder_test () {
-	if(!isset($_GET['payrem']))
-		return;
-	rsvp_payment_reminder(sanitize_text_field($_GET['payrem']));
 }
 
 add_action('rsvp_payment_reminder','rsvp_payment_reminder',10,1);
@@ -4086,14 +4045,14 @@ function disable_image_lazy_loading_for_email( $default, $tag_name, $context ) {
     }
     return $default;
 }
-add_filter(
+ add_filter(
     'wp_lazy_loading_enabled',
     'disable_image_lazy_loading_for_email',
     999,
     3
 );
 //jetpack
-add_filter(
+ add_filter(
     'lazy_load_is_enabled',
     'disable_image_lazy_loading_for_email',
     999,
@@ -4605,7 +4564,6 @@ function rsvpmaker_guest_list_table() {
 	$guest_meta_table = $guest_table.'_meta';
 	$version = 7;
 	$ver = (int) get_option('rsvpmaker_guest_email_table');
-	//$test = @ $wpdb->get_var("SELECT 1 FROM `$history_table` LIMIT 1");
 	if($ver < $version)
 	{
 		update_option('rsvpmaker_guest_email_table',$version);
@@ -4656,7 +4614,6 @@ add_action('admin_init','rsvpmail_csv_export');
 function rsvpmail_csv_export() {
 
 	if ( ! isset( $_GET['rsvpmail_csv'] ) ) {
-
 		return;
 	}
 
@@ -4840,6 +4797,15 @@ function rsvpmaker_guest_list() {
 	$totalcount = $wpdb->get_var('SELECT count(*) from '.$table);
 	$activecount = $wpdb->get_var('SELECT count(*) from '.$table.' where active=1' );
 
+	if(isset($_GET['latest'])) {
+		$results = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC LIMIT 0, 100");// 
+		foreach($results as $row)
+		{
+			print_r($row);
+			echo '<br/>';
+		}
+	}
+
 	if(isset($_GET['testlist'])) {
 		$wpdb->query("DELETE FROM $table where email LIKE '%example.com' ");
 		echo '<div class="notice"><p>Resending email requesting confirmation</p></div>';
@@ -4939,6 +4905,20 @@ function rsvpmaker_guest_list() {
 		}
 	}
 
+	if(isset($_POST['edit_email']) && rsvpmaker_verify_nonce()) {
+		$sql = $wpdb->prepare("update $table set email=%s, first_name=%s,last_name=%s WHERE id=%d",sanitize_text_field($_POST['edit_email']),sanitize_text_field($_POST['first_name']),sanitize_text_field($_POST['last_name']),intval($_POST['id']));
+		$wpdb->query($sql);
+	}
+
+	if(isset($_GET['edit'])) {
+		$row = $wpdb->get_row("select * from $table where id=".intval($_GET['edit']));
+		printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'));
+		printf('<p>%s: Email <input type="text" name="edit_email" value="%s"> First Name <input type="text" name="first_name" value="%s"> Last Name <input type="text" name="last_name" value="%s"><input type="hidden" name="id" value="%d"> </p>',__('Edit','rsvpmaker'),$row->email,$row->first_name,$row->last_name,$row->id);
+		submit_button('Update');
+		rsvpmaker_nonce();
+		echo '</form>';	
+	}
+
 	?>
 	<p>This built-in email list is an optional feature of RSVPMaker that allows you to maintain an email list from within WordPress, independent of an external service such as Mailchimp or MailPoet. For lists of more than 100 recipients, consider using the <a href="https://rsvpmaker.com/rsvpmaker-postmark/">RSVPMaker Mailer for Postmark</a> integration for better management of anti-spam issues.</p>
 	<?php
@@ -4991,7 +4971,7 @@ function rsvpmaker_guest_list() {
 			echo '<table class="wp-list-table widefat striped"><tr><th>Delete</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Segment</th><th>Add checked to<br>'.rsvpmaker_email_segments_dropdown('segment',false).'<br></th></tr>';
 			foreach($list as $index => $item) {
 				$prompt = ($item->active) ? '' : '<br><strong>Not confirmed.</strong> <input type="checkbox" name="resend[]" value="'.$item->id.'"> Resend confirmation prompt? <button>Submit</button>';
-				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <input type="checkbox" class="edit" value="%d"></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,$item->id,$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$item->id);
+				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit='.$item->id),$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$item->id);
 			}
 			echo '</table>';
 			rsvpmaker_nonce();
@@ -5222,38 +5202,14 @@ return ob_get_clean();
 
 }
 
-add_action('init','rsvpmaker_queue_post_type');
-function rsvpmaker_queue_post_type() {
-	$result = register_post_status('rsvpmessage',array('label'=>'Group Message','internal'=>true,'show_in_admin_status_list'=>true,'show_in_admin_all_list'=>false));
-	global $wpdb;
-	$sql = "SELECT ID, post_title, meta_key, meta_value, post_status FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (meta_key='headerinfo' OR meta_key='rsvpmail_sent') AND post_status='draft' ORDER BY ID DESC LIMIT 0, 200";
-	$results = $wpdb->get_results($sql);
-	$was = 0;
-	foreach($results as $row)
-	{
-		if($row->ID != $was) {
-			if('draft' == $row->post_status) {
-				$sql = "update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=$row->ID ";
-				$result = $wpdb->query($sql);
-				print_r("<p>post status change result %s %s</p>",$sql,var_export($result,true));
-			}
-		}
-		$was = $row->ID;
-	}
-	$sql ="SELECT ID FROM $wpdb->posts WHERE `post_status` LIKE 'rsvpmessage' AND post_date < DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
-	$results = $wpdb->get_results($sql);
-	foreach($results as $row) {
-		wp_delete_post( $row->ID, true ); // delete old posts and their metadata
-	}
-	
-}
-
 function rsvpmaker_email_add_name($email,$name) {
 	if(empty($name) || strpos($email,'<')  || strpos($email,'"'))
 		return $email;
 	return "\"".addslashes($name)."\" <".$email.">";
 }
-
+function rsvpmaker_queue_post_type() {
+	register_post_status('rsvpmessage',array('label'=>'Group Message','internal'=>true,'show_in_admin_status_list'=>true,'show_in_admin_all_list'=>false));
+}
 function rsvpmail_post_excerpt($post, $pcount = 5) {
 	$content = $post->post_content;
 	$button_label = get_option('rsvpmail_button_label');
@@ -5340,7 +5296,7 @@ function rsvpmail_latest_post_promo($args = array()) {
 			wp_unschedule_hook('rsvpmailer_post_promo');
 			wp_schedule_single_event( $t,'rsvpmailer_post_promo');
 			$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>1);
-			$schedule = sprintf('<p><em>Scheduling to send at %s to %s mailing list (<a href="%s">cancel</a>).</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t), $segment, add_query_arg($cancel,get_permalink($promo_id)) );
+			$schedule = sprintf('<p><em>Scheduling to send at %s to %s mailing list. Options: <a href="%s">Edit</a> | <a href="%s">cancel</a>.</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t), $segment, admin_url("post.php?post=$promo_id&action=edit"), add_query_arg($cancel,get_permalink($promo_id)) );
 			$html = $schedule.$html;
 		}
 	else
@@ -5408,8 +5364,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	<p>Include <input type="text" size="5" name="rsvpmaker_new_post_promos[paragraphs]" value="<?php echo $args['paragraphs']; ?>" > paragraphs from the latest post and links to <input type="text" size="5" name="rsvpmaker_new_post_promos[additional_posts]" value="<?php echo $args['additional_posts']; ?>" > additional recent posts.</p>
 	<p>Label for Read More button <input type="text" name="rsvpmail_button_label" value="<?php echo $button_label;?>"></p>
 	<p><em>Excerpts will include the specified number of paragraphs or all the text up to the content up to the &lt;-- more --&gt; tag block, if included in the featured post.</em></p>
-	<p><input type="checkbox" name="rsvpmaker_new_post_promos[auto]" value="1" <?php if(isset($args['auto'])) echo ' checked="checked" '; ?> > Automatically send at the scheduled time (tomorrow if the time is past for today)</p> 
-	<p>Time to send, if checked <input type="time" name="rsvpmaker_new_post_promos[time]" value="<?php if(isset($args['time'])) echo esc_attr($args['time']); else echo '09:00' ?>" > (interpreted as this time tomorrow if the time is past for today)</p> 
+	<p>Auto send time <input type="time" name="rsvpmaker_new_post_promos[time]" value="<?php if(isset($args['time'])) echo esc_attr($args['time']); else echo '09:00' ?>" > (interpreted as this time tomorrow if the time is past for today)</p> 
 	<?php
 	echo '<p>Send to: ';
 	$segment = (isset($args['segment'])) ? $args['segment'] : '';
@@ -5576,8 +5531,8 @@ function get_rsvpmail_signup_key () {
 function rsvpmail_signup_form( $atts = array() ) {
 $key = get_rsvpmail_signup_key();
 $rand = rand();
-if(isset($_POST['email']) && isset($_POST['code'])) {
-	$email = trim($_POST['email']);
+if(isset($_POST['em']) && isset($_POST['code'])) {
+	$email = trim($_POST['em']);
 	if($_POST['code'] != $key )
 		$result['message'] = 'Error';
 	elseif(rsvpmail_contains_email($email))
@@ -5599,7 +5554,7 @@ if(isset($_POST['email']) && isset($_POST['code'])) {
 if(empty($atts['fields']))
 {
 	$fields = '<p>Email<br>
-	<input name="email"></p>
+	<input name="em"></p>
 	<p>First Name<br>
 	<input name="first"></p>
 	<p>Last Name<br>
@@ -5609,7 +5564,7 @@ if(empty($atts['fields']))
 elseif('first' == $atts['fields'])
 {
 	$fields = '<p>Email<br>
-	<input name="email"></p>
+	<input name="em"></p>
 	<p>First Name<br>
 	<input name="first"></p>
 ';
@@ -5617,9 +5572,11 @@ elseif('first' == $atts['fields'])
 elseif('email' == $atts['fields'])
 {
 	$fields = '<p>Email<br>
-	<input name="email"></p>
+	<input name="em"></p>
 ';
 }
+
+$fields .= rsvphoney_ui(true);
 
 $url = rest_url('rsvpmaker/v1/rsvpmailer_signup/'.$key);
 return "
@@ -5709,8 +5666,6 @@ if(empty($rsvpmail_editors_note)) {
 }
 return $rsvpmail_editors_note;
 }
-
-add_action('init','rsvpmail_list_rsvpmodal_controller');
 
 function rsvpmail_list_rsvpmodal_controller() {
 	if(isset($_GET['rmail'])) {
@@ -5895,6 +5850,16 @@ window.onclick = function(event) {
 <?php
 }
 
+add_action('wp_footer','rsvpmail_show_cookies');
+
+function rsvpmail_show_cookies() {
+	if(isset($_GET['cookie'])) {
+		echo '<div style="background-color: #fff;">';
+		print_r($_COOKIE);
+		echo '</div>';
+	}
+}
+
 function rsvpmail_replace_email_placeholder($html, $email) {
 	$html = str_replace('*|EMAIL|*',$email,$html); // any references outside of a query string
 	return $html;
@@ -5902,4 +5867,23 @@ function rsvpmail_replace_email_placeholder($html, $email) {
 
 function rsvpmail_contains_email($email) {
 	return preg_match ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $email, $match);
+}
+
+add_shortcode('rsvpmail_archive','rsvpmail_archive');
+
+function rsvpmail_archive($atts) {
+global $wpdb, $rsvp_options;
+$output = '';
+$date_format = isset($atts['date_format']) ? $atts['date_format'] : $rsvp_options['long_date'];
+$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_status='publish' AND meta_key='rsvpmail_last_hash' ORDER BY ID DESC";
+$results = $wpdb->get_results($sql);
+//$output .= $sql .' results '. var_export($results,true);
+if($results) {
+	$output .= '<ul>';
+	foreach($results as $row) {
+		$output .= sprintf('<li><span class="rsvpmail_archive_date">%s</span> <span class="rsvpmail_archive_subject"><a href="%s">%s</a></span></li>',rsvpmaker_date($date_format,rsvpmaker_strtotime($row->post_date)),get_permalink($row->ID),$row->post_title);
+	}
+	$output .= '</ul>';
+}
+return $output;
 }

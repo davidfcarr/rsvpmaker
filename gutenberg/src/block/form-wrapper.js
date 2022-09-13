@@ -96,3 +96,4 @@ class StripeInspector extends Component {
 		);
 	}
 }
+

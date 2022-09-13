@@ -157,7 +157,7 @@ function rsvpmaker_relay_queue() {
 		$mail['override'] = 1;
 		$epost_id = $mail['post_id'];
 		$hits = $mail['hits'];
-		$saved = $wpdb->get_var("SELECT meta_value from $postmeta WHERE post_id=$epost_id AND meta_key='mail_array' ");//get_post_meta($epost_id,'mail_array',true);
+		$saved = $wpdb->get_var("SELECT meta_value from $postmeta WHERE post_id=$epost_id AND meta_key='mail_array' ");
 		if($saved)
 		{
 			//saved broadcast message

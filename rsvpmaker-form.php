@@ -850,7 +850,6 @@ function rsvpmaker_get_form_id( $slug ) {
 		return $forms[ $slug ];
 }
 
-add_action( 'init', 'remove_save_content_filters', 99 );
 add_action( 'set_current_user', 'remove_save_content_filters', 99 );
 
 function rsvpmaker_formchimp( $atts, $content ) {
@@ -898,4 +897,42 @@ function rsvpmail_signup_page_add() {
 	else {
 		echo '<p><input type="checkbox" name="add_email_signup_page" value="1"> Add Email Signup Page</p>';
 	}
+}
+
+function rsvpmaker_flexible_form_wrapper($atts,$content) {
+	global $post;
+	$slug = empty($atts['appslug']) ? 'contact' : sanitize_text_field($atts['appslug']);
+	$recaptcha = !empty($atts['recaptcha']);
+	update_post_meta($post->ID,'flexform_recaptcha',$recaptcha);
+	$button_label = empty($atts['button_label']) ? 'Submit' : sanitize_text_field($atts['button_label']);
+	$output = sprintf('<form class="rsvpmaker-flexible-form %s" id="flexible-form-%s"><input type="hidden" id="appslug" name="appslug" value="%s"><input type="hidden" name="post_id" value="%d">',$slug,$slug,$slug,$post->ID) . $content;
+	$output .= rsvpmaker_nonce('field');
+	if($recaptcha)
+		{
+			$output .= rsvpmaker_recaptcha_output(true);
+		}
+	$output .= sprintf('<p><button>%s</button></p></form>',$button_label);
+	$output .= sprintf('<div id="flexform-result-%s"></div>',$slug);
+	return $output;
+}
+
+function rsvpmaker_contact_form($postvars) {
+if(!is_email($postvars['email']))
+	return array('message' => 'Missing required field, email');
+global $rsvp_options;
+$mail['html'] = '';
+foreach($postvars as $index => $value) {
+	$value = stripslashes($value);
+	$label = ucfirst(str_replace('_',' ',$index));
+	$mail['html'] .= sprintf("<p><strong>%s</strong><br>%s</p>",$label,$value);
+}
+$mail['from'] = $postvars['email'];
+$mail['subject'] = 'Contact form';
+if(isset($postvars['subject']))
+	$mail['subject'] .= ': '.$postvars['subject'];
+$mail['subject'] .= ' ('.get_bloginfo('name').')';
+$mail['to'] = $rsvp_options['rsvp_to'];
+$result = rsvpmailer($mail);
+$message = empty($result) ? '<span style="border: medium solid red;padding:10px;">Unknown error</span>' : '<span style="border: medium solid green;padding:10px;">Message sent</span>';
+return array('message' => 'Submitted: '.$message);
 }

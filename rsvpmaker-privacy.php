@@ -16,7 +16,7 @@ function register_rsvpmaker_exporter( $exporters ) {
 
 }
 
-add_filter(
+ add_filter(
 	'wp_privacy_personal_data_exporters',
 	'register_rsvpmaker_exporter',
 	10
@@ -156,7 +156,7 @@ function register_rsvpmaker_eraser( $erasers ) {
 
 
 
-add_filter(
+ add_filter(
 	'wp_privacy_personal_data_erasers',
 	'register_rsvpmaker_eraser',
 	10

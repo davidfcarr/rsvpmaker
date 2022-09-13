@@ -84,8 +84,6 @@ function rsvpmaker_event_content_anchor( $content ) {
 
 }
 
-
-
 add_filter( 'the_content', 'event_content', 5 );
 
 function event_js( $content ) {
@@ -618,7 +616,6 @@ function rsvpmaker_query_debug( $query ) {
 
 
 function rsvpmaker_upcoming( $atts = array() ) {
-	rsvpmaker_debug_log($atts,'rsvpmaker upcoming start');
 	$no_events = ( isset( $atts['no_events'] ) ) ? $atts['no_events'] : 'No events currently listed.';
 
 	if ( isset( $atts['calendar'] ) && ( $atts['calendar'] == 2 ) ) {
@@ -871,12 +868,8 @@ function rsvpmaker_upcoming( $atts = array() ) {
 		$listings = str_replace( '><a', '> <a', $listings ); // todo preg replace
 
 	}
-
 	return $listings;
-
 }
-
-
 
 // get all of the dates for the month
 
@@ -2405,8 +2398,6 @@ function sked_to_text( $sked ) {
 
 }
 
-
-
 function signed_up_ajax( $post_id ) {
 
 	global $wpdb;
@@ -2426,7 +2417,7 @@ function signed_up_ajax( $post_id ) {
 			$output .= ' ' . __( 'Limit', 'rsvpmaker' ) . ': ' . $rsvp_max;
 		}
 
-		return '<p class="signed_up">' . $output . '</p>';
+		return $output;
 
 	}
 

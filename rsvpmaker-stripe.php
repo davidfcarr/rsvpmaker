@@ -170,6 +170,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	$url = get_permalink( $rsvpmaker_stripe_checkout_page_id );
 	$sandbox = empty($vars['sandbox']) ? 0 : 1; // sandbox set at block level
 	$keys = get_rsvpmaker_stripe_keys($sandbox);
+	rsvpmaker_debug_log($keys,'stripe keys');
 	if(empty($keys['pk']) && $keys['sandbox_pk'])
 		;//if Stripe not enabled
 	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {

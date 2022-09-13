@@ -876,8 +876,6 @@ class RSVPMaker_Signed_Up extends WP_REST_Controller {
 
 	}
 
-
-
 	public function get_items( $request ) {
 
 		global $wpdb;
@@ -1498,6 +1496,7 @@ class PostmarkIncoming extends WP_REST_Controller {
 $opbusiness = false;
 $json = file_get_contents('php://input');
 $data = json_decode(trim($json));
+
 $toFull = $data->ToFull;
 $ccFull = $data->CcFull;
 $tolist = $cclist = $audience = array();
@@ -1511,6 +1510,13 @@ foreach($ccFull as $cf) {
 	$audience[] = $cf->Email;
 	$cclist[] = $tf->Email;
 }
+$check = implode('|',$audience).$data->Subject;
+$last = get_transient('postmark_last_incoming');
+if($check == $last) {
+	rsvpmaker_debug_log($check,'incoming duplicate');
+	return;
+}
+set_transient('postmark_last_incoming',$check,time()+30);
 $origin = 'Message originally From: '.$data->From.', To: '.implode(', ',$tolist);
 $origin .= ' (<a href="mailto:'.implode(',',$tolist).'?subject='.$data->Subject.'">Reply</a>)';
 if(!empty($cclist))
@@ -1540,34 +1546,6 @@ add_post_meta($post_id,'rsvprelay_postmark_audience',$audience);
 add_post_meta($post_id,'rsvprelay_postmark_data',$data);
 rsvpmaker_postmark_incoming($audience,$data,$post_id);
 do_action('postmark_incoming_email_object',$data,$json);
-	return new WP_REST_Response($data, 200);
-	}
-}
-
-class OptinMonsterEmail extends WP_REST_Controller {
-
-	public function register_routes() {
-	  $namespace = 'rsvpmaker/v1';
-	  $path = 'optin_monster/(?P<code>.+)';
-  
-	  register_rest_route( $namespace, '/' . $path, [
-		array(
-		  'methods'             => 'GET, POST, PUT, PATCH, DELETE',
-		  'callback'            => array( $this, 'get_items' ),
-		  'permission_callback' => array( $this, 'get_items_permissions_check' )
-			  ),
-		  ]);     
-	  }
-  
-	public function get_items_permissions_check($request) {
-		$key = get_rsvpmail_signup_key();
-		return ($request['code'] == $key);
-	}
-  
-  public function get_items($request) {
-$json = file_get_contents('php://input');
-$data = json_decode(trim($json));
-$result['message'] = rsvpmaker_guest_list_add($data->lead->email,$data->lead->firstName,$data->lead->lastName,'',0);
 	return new WP_REST_Response($data, 200);
 	}
 }
@@ -1646,13 +1624,16 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 	}
 
 	public function get_items_permissions_check( $request ) {
-		return (urldecode($request['code']) == get_rsvpmail_signup_key());
+		$valid = (isset($_POST['em']) && empty($_POST['extra_special_discount_code']) && (urldecode($request['code']) == get_rsvpmail_signup_key()));
+		if(!$valid)
+			rsvpmaker_debug_log($_POST,'spam signup');
+		return $valid;
 	}
 
 	public function get_items( $request ) {
 		global $wpdb;
-		$email = trim($_POST['email']);
-		if(rsvpmail_contains_email($email))
+		$email = trim($_POST['em']);
+		if(is_email($email))
 		{   
 			$first = isset($_POST['first']) ? sanitize_text_field($_POST['first']) : '';
 			$last = isset($_POST['last']) ? sanitize_text_field($_POST['last']) : '';
@@ -1669,8 +1650,59 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 	}
 }
 
-add_action(
-	'rest_api_init',
+class RSVPMaker_Flex_Form extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'flexform';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		global $rsvp_options;
+		rsvpmaker_create_nonce();
+		$post_id = intval($_POST['post_id']);
+		$valid = (empty($_POST['extra_special_discount_code']) && $post_id);
+		if($valid && get_post_meta($post_id,'flexform_recaptcha',true) )
+			$valid = rsvpmaker_recaptcha_check ($rsvp_options["rsvp_recaptcha_site_key"],$rsvp_options["rsvp_recaptcha_secret"]);
+		return $valid;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb;
+		ob_start();
+		$formvars = array_map('sanitize_textarea_field',$_POST['profile']);
+		$slug = sanitize_text_field($_POST['appslug']);
+		if('contact' == $slug)
+			$result = rsvpmaker_contact_form($formvars);
+		else {
+			$result = apply_filters('rsvpflexform_'.$slug,array('message' => 'Error: unrecognized app, '.$slug),$formvars);
+		}
+		$result['message'] .= trim(strip_tags(ob_get_clean()));
+		return new WP_REST_Response( $result, 200 );
+	}
+}
+
+add_action('rest_api_init',
 	function () {
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
 		$rsvpmaker_sked_controller->register_routes();
@@ -1728,7 +1760,7 @@ add_action(
 		$confmemb->register_routes();
 		$rsignup = new RSVPMail_Remote_Signup();
 		$rsignup->register_routes();
-		$om = new OptinMonsterEmail();
-		$om->register_routes();
+		$flex = new RSVPMaker_Flex_Form();
+		$flex->register_routes();
 	}
 );

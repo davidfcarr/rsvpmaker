@@ -178,7 +178,6 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(empty($message_stream))
         $message_stream = (sizeof($recipients) > 1) ? $postmark_settings['postmark_broadcast_slug'] : $postmark_settings['postmark_tx_slug'];
     $mpost = get_post($post_id);
-    $meta = get_post_meta($post_id);
     
     $html = rsvpmaker_email_html($mpost,$post_id);
     $html = rsvpmail_replace_placeholders($html);
@@ -189,7 +188,9 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(isset($meta['rsvprelay_from'][0]))
         $mail['ReplyTo'] = $meta['rsvprelay_from'][0];
     $mail['From'] = ($message_stream == $postmark_settings['postmark_tx_slug']) ? $postmark_settings['postmark_tx_from'] : $postmark_settings['postmark_broadcast_from'];
-    $fromname = (empty($meta['rsvprelay_fromname'][0])) ? get_bloginfo('name') : $meta['rsvprelay_fromname'][0];
+    $fromname = get_post_meta($post_id,'rsvprelay_fromname',true);
+    if(empty($fromname))
+        $fromname = get_bloginfo('name');
     $mail['From'] = rsvpmaker_email_add_name($mail['From'],$fromname);
     $client = new PostmarkClient($postmark_settings_key);
     if(!strpos($html,'rmail='))
@@ -202,6 +203,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
             $mail['To'] = $to;
         $mail['HtmlBody'] = str_replace('*|EMAIL|*',$to,$html);
         $mail['TextBody'] = str_replace('*|EMAIL|*',$to,$text);
+        $mail['Headers'] = array('X-Auto-Response-Suppress' => 'OOF'); //tells Exchange not to send out of office auto replies
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
@@ -238,9 +240,8 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
 
 add_action('rsvpmaker_postmark_chunked_batches','rsvpmaker_postmark_chunked_batches');
 function rsvpmaker_postmark_chunked_batches() {
+    wp_suspend_cache_addition(true);
     global $wpdb;
-    //do we need to switch to blog 1?
-    //used with postmark integration
     $log = '';
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
 	$results = $wpdb->get_results($sql);
@@ -268,6 +269,7 @@ function rsvpmaker_postmark_chunked_batches() {
             wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
         }
 	}
+    wp_suspend_cache_addition(false);
 }
 
 function rsvpmaker_postmark_send($mail) {
@@ -279,6 +281,7 @@ function rsvpmaker_postmark_send($mail) {
 }
 
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
+    wp_suspend_cache_addition(true);
     $admin_email = postmark_admin_email();
     $result = '';
     if($admin_email == $emailobj->From && 'stop' == $emailobj->Subject) {
@@ -288,6 +291,8 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         update_blog_option(1,'rsvpmaker_postmark',$postmark_settings);
         mail($admin_email,'postmark deactivated',date('r'));
     }
+    $postmark_settings = get_rsvpmaker_postmark_options();
+
 	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
  	foreach($forwarders as $email) {
 		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
@@ -302,10 +307,12 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
             }
         }
 	}
+    wp_suspend_cache_addition(false);
     return $result;
 }
 
 function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_and_id = NULL) {
+    wp_suspend_cache_addition(true);
     global $via;
     $slug = (is_array($slug_and_id) && !empty($slug_and_id['slug'])) ? '['.$slug_and_id['slug'].'] ' : '';
     $blog_id = (is_array($slug_and_id) && !empty($slug_and_id['blog_id'])) ? $slug_and_id['blog_id'] : get_current_blog_id();
@@ -353,10 +360,12 @@ function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_
         }
     }
     $mail['MessageStream'] = $message_stream;
+    wp_suspend_cache_addition(false);
     return $mail;
 }
 
 function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
+    wp_suspend_cache_addition(true);
     if(!is_array($recipients))
         $recipients = array($recipients);
     $recipient_names = get_transient('recipient_names');
@@ -373,6 +382,7 @@ function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
         $mail['To'] = (isset($recipient_names[$to])) ? rsvpmaker_email_add_name($to,$recipient_names[$to]) : $to;
         $batch[] = $mail;
     }
+    wp_suspend_cache_addition(false);
     return $batch;
 }
 
@@ -429,7 +439,7 @@ function rsvpmaker_postmark_duplicate($hash) {
     global $wpdb;
 	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM ".$wpdb->base_prefix."postmark_tally where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 120 MINUTE)",$hash);
 	$row = $wpdb->get_row($sql);
-    if($row->duplicates)
+    if(!empty($row->duplicates))
     {
         rsvpmaker_debug_log($row,'postmark duplicate blocked');
         return true;
@@ -600,9 +610,12 @@ function rsvpmaker_postmark_show_sent_log() {
     $results = $wpdb->get_results($sql);
     echo '<table class="wp-list-table widefat striped"><thead><tr><th>Subject</th><th># Recipients</th><th>Blog ID</th><th>Recipients</th><th>Details</th></tr></thead><tbody>';
     foreach($results as $row) {
-        $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'...' : $row->recipients;
-        $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag));
-        printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->subject,$row->count,$row->blog_id,htmlentities($recipients),$prompt);
+        if(isset($_GET['showall']) && $row->id == intval($_GET['showall']))
+            $recipients = str_replace(',',', ',$row->recipients);
+        else
+            $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'... (<a href="'.admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&showall='.$row->id).'#row'.$row->id.'">Show All</a>)' : $row->recipients;
+        $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a><br>%s',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag),$row->tag);
+        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,$row->time,$row->count,$row->blog_id,$recipients,$prompt);
     }
     echo '</tbody></table>';
 

@@ -11,7 +11,7 @@ const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;
 const { InspectorControls } = wp.blockEditor;
 const { PanelBody, SelectControl, TextControl, ToggleControl, RadioControl } = wp.components;
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
+
 registerBlockType( 'rsvpmaker/formfield', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Text' ), // Block title.
@@ -71,7 +71,6 @@ registerBlockType( 'rsvpmaker/formfield', {
 },
 } );
 
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formtextarea', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Text Area' ), // Block title.
@@ -127,7 +126,6 @@ registerBlockType( 'rsvpmaker/formtextarea', {
 	},
 } );
 
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formnote', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Note' ), // Block title.
@@ -261,7 +259,6 @@ class TextAreaInspector extends Component {
 				</InspectorControls>
 		);	} }
 		
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 	registerBlockType( 'rsvpmaker/formselect', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Select' ), // Block title.
@@ -312,7 +309,6 @@ if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP F
 	},
 } );
 
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formradio', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Radio Buttons' ), // Block title.
@@ -402,7 +398,6 @@ class ChoiceInspector extends Component {
 				</InspectorControls>
 		);	} }
 
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 	registerBlockType( 'rsvpmaker/guests', {
 	title: ( 'RSVPField Guests' ), // Block title.
 	icon: 'products', 
@@ -454,7 +449,6 @@ if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP F
     }
 });
 
-if((typeof rsvpmaker_ajax !== 'undefined') && (rsvpmaker_ajax.special == 'RSVP Form'))
 registerBlockType( 'rsvpmaker/formchimp', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPField Mailing List Checkbox' ), // Block title.
@@ -532,3 +526,84 @@ class ChimpInspector extends Component {
 				</PanelBody>
 				</InspectorControls>
 		);	} }
+
+
+registerBlockType( 'rsvpmaker/formwrapper', {
+	title: ( 'RSVPMaker Form Wrapper' ), // Block title.
+	icon: 'admin-comments', 
+	category: 'rsvpmaker',
+	keywords: [
+		( 'RSVPMaker' ),
+		( 'Form' ),
+		( 'Contact' ),
+	],
+attributes: {
+		appslug: {
+			type: 'string',
+			default: 'contact',
+		},
+		button_label: {
+			type: 'string',
+			default: __('Submit','rsvpmaker'),
+		},
+		recaptcha: {
+			type: 'boolean',
+			default: false,
+		},
+},
+
+	edit: function( props ) {	
+
+	const { attributes, attributes: {appslug, button_label, recaptcha}, className, setAttributes, isSelected } = props;
+	const RFORM_TEMPLATE = [
+		[ 'rsvpmaker/formfield', { label: 'First Name', slug: 'first_name' } ],
+		[ 'rsvpmaker/formfield', { label: 'Last Name', slug: 'last_name' } ],
+		[ 'rsvpmaker/formfield', { label: 'Email', slug: 'email', "required":"required" } ],
+	];
+
+	return (
+		<Fragment>
+		<FormWrapperInspector { ...props } />
+<div>
+	{!isSelected && <p><em>Click here to set form options</em></p>}
+	<InnerBlocks template={ RFORM_TEMPLATE } />
+{recaptcha && <div><img src="/wp-content/plugins/rsvpmaker/images/recaptcha-preview.png" height="112" width="426" alt="ReCaptcha goes here" /></div>}
+<p><button>{button_label}</button></p>
+</div>
+		</Fragment>
+		);
+	},
+	save: function( { attributes, className } ) {
+		return <div><InnerBlocks.Content /></div>;
+	}
+});
+
+class FormWrapperInspector extends Component {
+
+	render() {            
+		const { attributes, attributes: {appslug, button_label, recaptcha}, setAttributes, className } = this.props;
+		return (
+			<InspectorControls key="inspector">
+			<PanelBody title={ __( 'Form Options', 'rsvpmaker' ) } >
+	<TextControl
+		label={__("Button Label",'rsvpmaker')}
+		value={ button_label }
+		onChange={ ( button_label ) => { setAttributes( { button_label: button_label } ) } }
+	/>
+	<TextControl
+		label={__("App Slug",'rsvpmaker')}
+		value={ appslug }
+		onChange={ ( appslug ) => { setAttributes( { appslug: appslug } ) } }
+	/>
+	<p><em>Leave the App Slug as "contact" for the built-in contact form. Change it to integrate with your own custom app (see <a href="https://rsvpmaker.com/knowledge-base/rsvpmaker-form-wrapper-block/">documentation</a>).</em></p>
+	<ToggleControl
+		label={__("Include ReCaptcha",'rsvpmaker')}
+		checked={ recaptcha }
+		onChange={ ( recaptcha ) => { setAttributes( { recaptcha } ) } }
+	/>
+	<p><em>ReCaptcha must be enabled first on the RSVPMaker Settings screen.</em></p>
+			</PanelBody>
+			</InspectorControls>
+		);
+	}
+}
