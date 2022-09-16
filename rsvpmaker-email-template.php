@@ -14,10 +14,10 @@ global $email_context;
 $email_context = true;
 
 $mail['html'] = $html = rsvpmaker_template_inline();
+
 $text = get_post_meta($post->ID,'_rsvpmail_text',true);
 
 	$cron = get_post_meta( $post->ID, 'rsvpmaker_cron_email', true );
-
 	$subject = $post->post_title;
 
 	$notekey = get_rsvp_notekey();
@@ -62,10 +62,6 @@ if ( $chosen ) {
 	}
 }
 
-
-
-
-
 global $rsvpmaker_cron_context;
 
 if ( isset( $_GET['cronic'] ) && current_user_can( 'publish_rsvpemails' ) ) {
@@ -73,13 +69,9 @@ if ( isset( $_GET['cronic'] ) && current_user_can( 'publish_rsvpemails' ) ) {
 	$rsvpmaker_cron_context = (int) $_GET['cronic'];
 }
 
-
-
 $cron_active = empty( $cron['cron_active'] ) ? 0 : $cron['cron_active'];
 
 $cron_active = apply_filters( 'rsvpmaker_cron_active', $cron_active, $cron );
-
-
 
 if ( ! empty( $_GET['debug'] ) ) {
 

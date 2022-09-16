@@ -480,7 +480,6 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		add_filter( 'posts_orderby', 'rsvpmaker_orderby' );
 
 		if ( $paged == 1 ) {
-
 			cache_rsvp_dates( $limit + 20 );
 		}
 	}
@@ -498,27 +497,19 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		$queryarg['author'] = $atts['author'];
 	}
 
-	// $querystring .= "&author=".$atts["author"];
-
 	if ( isset( $atts['one'] ) && ! empty( $atts['one'] ) ) {
 
 		$queryarg['posts_per_page'] = 1;
-
-		// $querystring .= "&posts_per_page=1";
 
 		if ( is_numeric( $atts['one'] ) ) {
 
 			$queryarg['p'] = $atts['one'];
 		}
 
-		// $querystring .= '&p='.$atts["one"];
-
 		elseif ( $atts['one'] != 'next' ) {
 
 			$queryarg['name'] = $atts['one'];
 		}
-
-		// $querystring .= '&name='.$atts["one"];
 
 	}
 
@@ -527,18 +518,12 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		$queryarg['rsvpmaker-type'] = $atts['type'];
 	}
 
-	// $querystring .= "&rsvpmaker-type=".$atts["type"];
-
 	if ( $limit ) {
 
 		$queryarg['posts_per_page'] = $limit;
 	}
 
-	// $querystring .= "&posts_per_page=".$limit;
-
 	if ( ! empty( $atts['post_id'] ) && is_numeric( $atts['post_id'] ) ) {
-
-		// $querystring .= '&p='.$atts['post_id'];
 
 		$queryarg['p'] = $atts['post_id'];
 
@@ -547,32 +532,20 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 	}
 
 	if ( isset( $atts['meta_key'] ) ) {
-
 		$queryarg['meta_key'] = $atts['meta_key'];
 	}
 
 	if ( isset( $atts['meta_value'] ) ) {
-
 		$queryarg['meta_value'] = $atts['meta_value'];
 	}
 
-	// not a template
-/* causing problems
-	$queryarg['meta_query'] = array(
-
-		'key'     => '_sked_Monday',
-
-		'compare' => 'NOT EXISTS',
-
-	);
-*/
 	if ( isset( $_GET['debug'] ) ) {
 
 		$wpdb->show_errors();
 	}
-	//rsvpmaker_debug_log(is_email_context(),'is email');
+	
+	//add_filter('posts_request','rsvpmaker_modify_query');
 	$wp_query = new WP_Query( $queryarg );
-	//rsvpmaker_debug_log($wp_query,'upcoming query');
 
 	// clean up so this doesn't interfere with other operations
 
@@ -594,13 +567,23 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 
 	remove_filter( 'posts_orderby', 'rsvpmaker_orderby' );
 
-	remove_filter( 'query', 'rsvpmaker_query_debug' );
-
 	return $wp_query;
 
 }
 
+/*
+possible future approach add_filter('posts_request','rsvpmaker_modify_query');
+function rsvpmaker_modify_query($sql) {
+	global $wpdb;
 
+	$sql = "SELECT SQL_CALC_FOUND_ROWS $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(a1.date,'%M %e, %Y') as date, a1.enddate, a1.display_type
+	FROM " . $wpdb->posts . '
+	JOIN ' . $wpdb->prefix . 'rsvpmaker_event' . ' a1 ON ' . $wpdb->posts . ".ID =a1.event
+	WHERE (a1.date > NOW()  OR a1.enddate > NOW()) AND post_status='publish' ORDER BY a1.date LIMIT 0,10 ";
+	//rsvpmaker_debug_log($sql,'rsvpmaker query');
+	return $sql;
+}
+*/
 
 function rsvpmaker_query_debug( $query ) {
 

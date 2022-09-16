@@ -1204,7 +1204,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				}
 				else
 					$content .= $post->post_content;
-				if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_rsvpmaker_meta($post->ID,'_rsvp_on',true))
+				if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_post_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
 					$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
@@ -1682,7 +1682,7 @@ function rsvpmaker_template_inline_test($atts) {
 }
 
 function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) {
-	wp_suspend_cache_addition(true);
+	//wp_suspend_cache_addition(true);
 	rsvpmaker_debug_log("$post_id,$user_id, $posthash",'rsvpmailer_delayed_send args');
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
@@ -1693,7 +1693,7 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) 
 	$result = rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id);
 	$result .= ob_get_clean();
 	rsvpmaker_debug_log($result,'rsvpmailer_submitted results');
-	wp_suspend_cache_addition(false);
+	//wp_suspend_cache_addition(false);
 }
 
 function rsvpmailer_add_editors_note($post) {
@@ -1746,6 +1746,8 @@ global $wpdb;
 global $current_user;
 global $rsvpmaker_cron_context;
 global $rsvp_options;
+
+wp_admin_bar_render(); 
 
 if(!empty($rsvpmaker_cron_context))
 	return;
@@ -1902,7 +1904,7 @@ $permalink = get_permalink($post->ID);
 if(isset($_GET['scheduling']))
 	$permalink = add_query_arg('scheduling',1,$permalink);
 $edit_link = get_edit_post_link($post->ID);
-$events_dropdown = get_events_dropdown ();	
+$events_dropdown = get_events_dropdown ();
 $queued = get_post_meta($post->ID,'rsvprelay_to');
 $delayed = wp_next_scheduled( 'rsvpmailer_delayed_send' );
 if($delayed) {
@@ -1938,7 +1940,6 @@ if(!isset($postvars))
 		printf('</p>%s</p>',implode(', ',$mailchimp_sent));	
 }
 
-wp_admin_bar_render(); 
 $cronpostvars = get_post_meta($post->ID,'scheduled_send_vars',true);
 if(empty($cronpostvars))
 	$cronpostvars = array();
@@ -2011,7 +2012,7 @@ echo $events_dropdown;
 <p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> <input type="radio" name="send_when" value="now" <?php if(!isset($_GET['scheduling'])) echo 'checked="checked"'; ?>> Now <input type="radio" name="send_when" value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" <?php if(isset($_GET['scheduling'])) echo 'checked="checked"'; ?> > Advanced</p>
 <?php 
 printf('<div id="cron_schedule_options" %s>',(isset($_GET['scheduling'])) ? '' : 'style="display:none"');
-rsvpmaker_cron_schedule_options();
+//rsvpmaker_cron_schedule_options();
 echo '</div>';
 ?>
 </form>
@@ -2966,7 +2967,7 @@ function event_to_embed($post_id, $event_post = NULL, $context = '') {
 <!-- /wp:paragraph -->',$dateblock).$tmlogin;			
 		}
 		$event_embed["content"] .= rsvpmaker_email_html($event_post->post_content);
-		if(get_rsvpmaker_meta($post_id,'_rsvp_on',true))
+		if(get_post_meta($post_id,'_rsvp_on',true))
 		{
 		if(get_post_meta($post_id,'_rsvp_count',true))
 			$event_embed["content"] .= rsvpcount($post_id);
@@ -3092,6 +3093,9 @@ function get_rsvp_notekey($epost_id = 0) {
 	}
 	else {
 		$stamp = rsvpmaker_next_scheduled($epost_id, true);
+		if(empty($stamp))
+			return 'nonesuch';
+		wp_die($stamp);
 		//$stamp = preg_replace('/M [a-z]+$/','M',$stamp);
 		$notekey = 'editnote'.rsvpmaker_date('Y-m-d',$stamp);//date('YmdH',rsvpmaker_strtotime($stamp));
 	}
@@ -3710,7 +3714,7 @@ function rsvpmailer_template_preview() {
 function event_title_link () {
 	global $post, $rsvp_options;
 	$time_format = $rsvp_options["time_format"];
-	$add_timezone = get_rsvpmaker_meta($post->ID,'_add_timezone',true);	
+	$add_timezone = get_post_meta($post->ID,'_add_timezone',true);	
 	if(!strpos($time_format,'T') && $add_timezone )
 		{
 		$time_format .= ' T';

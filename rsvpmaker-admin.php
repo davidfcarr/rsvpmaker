@@ -1576,7 +1576,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 		echo esc_html($event->enddate);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
-		$end_type = get_rsvpmaker_meta($post_id,'_firsttime');
+		$end_type = get_post_meta($post_id,'_firsttime');
 		if(empty($end_type))
 			echo 'End Time Not Shown';
 		else {
@@ -1585,9 +1585,9 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 				echo esc_html($options[$end_type]);
 		}
 		printf('<input type="hidden" class="end_display_code" value="%s" />',$end_type);
-		$rsvp_on = get_rsvpmaker_meta($post_id,'_rsvp_on');
-		$convert_timezone = get_rsvpmaker_meta($post_id,'_convert_timezone',true);
-		$add_timezone = get_rsvpmaker_meta($post_id,'_add_timezone',true);
+		$rsvp_on = get_post_meta($post_id,'_rsvp_on');
+		$convert_timezone = get_post_meta($post_id,'_convert_timezone',true);
+		$add_timezone = get_post_meta($post_id,'_add_timezone',true);
 		if(!empty($rsvp_on))
 			echo '<br />RSVP On';
 		if(!empty($add_timezone))
@@ -1599,7 +1599,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 
 $datetime = get_rsvp_date($post_id);
 $template = get_template_sked($post_id);
-$rsvpmaker_special = get_rsvpmaker_meta($post_id,'_rsvpmaker_special',true);
+$rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
 $s = $dateline = '';
 
@@ -3360,7 +3360,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				$duration = (empty($template["duration"])) ? '' : $template["duration"];
 				$end_time = (empty($template['end'])) ? '' : $template['end'];
-				$cddate = get_rsvpmaker_meta($target_id,'_rsvp_dates',true);
+				$cddate = get_post_meta($target_id,'_rsvp_dates',true);
 				if(!empty($cddate))
 					{
 					$parts = explode(' ',$cddate);
@@ -3591,10 +3591,10 @@ if(empty($post_id))
 	$rsvp_timezone = '';
 }
 else {
-	$icons = get_rsvpmaker_meta($post_id,"_calendar_icons",true);
-	$add_timezone = get_rsvpmaker_meta($post_id,"_add_timezone",true);
-	$convert_timezone = get_rsvpmaker_meta($post_id,"_convert_timezone",true);
-	$rsvp_timezone = get_rsvpmaker_meta($post_id,"_rsvp_timezone_string",true);	
+	$icons = get_post_meta($post_id,"_calendar_icons",true);
+	$add_timezone = get_post_meta($post_id,"_add_timezone",true);
+	$convert_timezone = get_post_meta($post_id,"_convert_timezone",true);
+	$rsvp_timezone = get_post_meta($post_id,"_rsvp_timezone_string",true);	
 }
 if(isset($_GET['page']) && ( ($_GET['page'] == 'rsvpmaker_details') ) )
 {
@@ -5245,8 +5245,8 @@ switch( $column_name ) :
 
 		}
 		case 'rsvpmaker_end': {
-			$end_type = get_rsvpmaker_meta($post->ID,'_firsttime',true);
-			$end = get_rsvpmaker_meta($post->ID,'_endfirsttime',true);
+			$end_type = get_post_meta($post->ID,'_firsttime',true);
+			$end = get_post_meta($post->ID,'_endfirsttime',true);
 			echo '<label class="alignleft">
 			<span class="title">End Time</span>
 			<span class="input-text-wrap"><input type="time" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
@@ -5257,8 +5257,8 @@ switch( $column_name ) :
 
 		}
 		case 'rsvpmaker_display': {
-			$end_type = get_rsvpmaker_meta($post->ID,'_firsttime',true);
-			$end = get_rsvpmaker_meta($post->ID,'_endfirsttime',true);
+			$end_type = get_post_meta($post->ID,'_firsttime',true);
+			$end = get_post_meta($post->ID,'_endfirsttime',true);
 			//if(!empty($end_type) && (strpos($end,':') > 0))
 			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
 			echo '<label class="alignleft">

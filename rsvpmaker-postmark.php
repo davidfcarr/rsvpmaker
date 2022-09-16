@@ -240,7 +240,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
 
 add_action('rsvpmaker_postmark_chunked_batches','rsvpmaker_postmark_chunked_batches');
 function rsvpmaker_postmark_chunked_batches() {
-    wp_suspend_cache_addition(true);
+    //wp_suspend_cache_addition(true);
     global $wpdb;
     $log = '';
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
@@ -269,7 +269,7 @@ function rsvpmaker_postmark_chunked_batches() {
             wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
         }
 	}
-    wp_suspend_cache_addition(false);
+    //wp_suspend_cache_addition(false);
 }
 
 function rsvpmaker_postmark_send($mail) {
@@ -281,7 +281,7 @@ function rsvpmaker_postmark_send($mail) {
 }
 
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
-    wp_suspend_cache_addition(true);
+    //wp_suspend_cache_addition(true);
     $admin_email = postmark_admin_email();
     $result = '';
     if($admin_email == $emailobj->From && 'stop' == $emailobj->Subject) {
@@ -307,12 +307,13 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
             }
         }
 	}
-    wp_suspend_cache_addition(false);
+    //wp_suspend_cache_addition(false);
     return $result;
 }
 
 function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_and_id = NULL) {
-    wp_suspend_cache_addition(true);
+    rsvpmaker_debug_log($source,'postmark mail array source');
+    //wp_suspend_cache_addition(true);
     global $via;
     $slug = (is_array($slug_and_id) && !empty($slug_and_id['slug'])) ? '['.$slug_and_id['slug'].'] ' : '';
     $blog_id = (is_array($slug_and_id) && !empty($slug_and_id['blog_id'])) ? $slug_and_id['blog_id'] : get_current_blog_id();
@@ -360,12 +361,13 @@ function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_
         }
     }
     $mail['MessageStream'] = $message_stream;
-    wp_suspend_cache_addition(false);
+    rsvpmaker_debug_log($mail,'postmark mail array out');
+    //wp_suspend_cache_addition(false);
     return $mail;
 }
 
 function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
-    wp_suspend_cache_addition(true);
+    //wp_suspend_cache_addition(true);
     if(!is_array($recipients))
         $recipients = array($recipients);
     $recipient_names = get_transient('recipient_names');
@@ -377,12 +379,18 @@ function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
     $template = rsvpmaker_postmark_array($mail, $message_stream, $slug_and_id);
     foreach($recipients as $to) {
         $mail = $template;
-        $mail['HtmlBody'] = rsvpmaker_personalize_email($mail['HtmlBody'],$to);
-        $mail['TextBody'] = rsvpmaker_text_version($mail['HtmlBody']);
+        if(empty($mail['HtmlBody'])) {
+            $mail['TextBody'] = rsvpmaker_personalize_email($mail['TextBody'],$to);
+            $mail['HtmlBody'] = wpautop($mail['TextBody']);
+        }
+        else {
+            $mail['HtmlBody'] = rsvpmaker_personalize_email($mail['HtmlBody'],$to);
+            $mail['TextBody'] = (empty($mail['TextBody'])) ? rsvpmaker_text_version($mail['HtmlBody']) : rsvpmaker_text_version($mail['TextBody']);    
+        }
         $mail['To'] = (isset($recipient_names[$to])) ? rsvpmaker_email_add_name($to,$recipient_names[$to]) : $to;
         $batch[] = $mail;
     }
-    wp_suspend_cache_addition(false);
+    //wp_suspend_cache_addition(false);
     return $batch;
 }
 
@@ -412,7 +420,6 @@ function rsvpmaker_postmark_batch_send($batch) {
         foreach($sent as $e) {
             if($post_id)
                 $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '".$e."' AND post_id=$post_id ");
-            add_post_meta($post_id,'rsvpmail_sent_by_postmark',$e);
         }
     }
     if(count($send_error)) {
