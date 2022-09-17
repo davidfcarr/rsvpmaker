@@ -797,7 +797,11 @@ registerBlockType( 'rsvpmaker/stripecharge', {
             type: 'string',
             default: '',
             },
-            january: {
+            currency: {
+				type: 'string',
+				default: 'usd',
+			},
+			january: {
             type: 'string',
             default: '',
             },
@@ -852,7 +856,7 @@ registerBlockType( 'rsvpmaker/stripecharge', {
         },
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
-	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december, paypal }, setAttributes, isSelected } = props;
+	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december, paypal, currency }, setAttributes, isSelected } = props;
 		var show = (paymentType.toString() == 'schedule') ? true : false;
 		//alert(show);
 		
@@ -971,6 +975,11 @@ show &&
         checked={ paypal }
         onChange={ ( paypal ) => { setAttributes( { paypal } ) } }
     />
+	<TextControl
+        label={ __( 'Currency Code (lowercase)', 'rsvpmaker' ) }
+        value={ currency }
+        onChange={ ( currency ) => setAttributes( { currency } ) }
+    />
 			</div>
 		);
 	},
@@ -1017,7 +1026,11 @@ registerBlockType( 'rsvpmaker/paypal', {
             type: 'string',
             default: 'once',
             },
-            amount: {
+            currencyCode: {
+				type: 'string',
+				default: 'USD',
+			},
+			amount: {
             type: 'string',
             default: '',
             },
@@ -1072,7 +1085,7 @@ registerBlockType( 'rsvpmaker/paypal', {
         },
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
-	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december, paypal }, setAttributes, isSelected } = props;
+	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december, currencyCode }, setAttributes, isSelected } = props;
 		var show = (paymentType.toString() == 'schedule') ? true : false;
 		//alert(show);
 		
@@ -1186,6 +1199,11 @@ show &&
     />
 </div>
  }
+<TextControl
+        label={ __( 'Currency Code', 'rsvpmaker' ) }
+        value={ currencyCode }
+        onChange={ ( currencyCode ) => setAttributes( { currencyCode } ) }
+    />
 			</div>
 		);
 	},

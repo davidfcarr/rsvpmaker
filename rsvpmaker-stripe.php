@@ -17,7 +17,7 @@ function rsvpmaker_to_stripe( $rsvp ) {
 
 	$vars['rsvp_post_id'] = $post->ID;
 
-	$include = array( 'amount', 'rsvp_id', 'email', 'event' );
+	$include = array( 'amount', 'rsvp_id', 'email', 'event', 'currency' );
 
 	foreach ( $rsvp as $index => $value ) {
 
@@ -50,6 +50,8 @@ function rsvpmaker_stripecharge( $atts ) {
 	$vars['paymentType'] = $paymentType = ( empty( $atts['paymentType'] ) ) ? 'once' : $atts['paymentType'];
 
 	$vars['paypal'] = (empty($atts['paypal'])) ? 0 : $atts['paypal'];
+
+	$vars['currency'] = isset($atts['currency']) ? sanitize_text_field($atts['currency']) : 'usd';
 
 	$show = ( ! empty( $atts['showdescription'] ) && ( $atts['showdescription'] == 'yes' ) ) ? true : false;
 
@@ -109,9 +111,8 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 		$show = ( ! empty( $vars['showdescription'] ) && ( $vars['showdescription'] == 'yes' ) ) ? true : false;
 	}
 
-	$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
-
-	$vars['currency'] = $currency;
+	if(empty($vars['currency']))
+		$vars['currency'] = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
 
 	$rsvpmaker_stripe_checkout_page_id = $wpdb->get_var( "SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' " );
 
@@ -188,7 +189,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	if ( $show ) {
 		if(isset($_GET['amount']))
 			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
-		$output .= sprintf( '<p>%s%s %s<br />%s</p>', $currency_symbol, esc_html( $vars['amount'] ), esc_html( $rsvp_options['paypal_currency'] ), esc_html( $vars['description'] ) );
+		$output .= sprintf( '<p>%s%s %s<br />%s</p>', $currency_symbol, esc_html( $vars['amount'] ), esc_html( $vars['currency'] ), esc_html( $vars['description'] ) );
 	}
 
 	return $output;

@@ -86,10 +86,11 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $vars['amount'] = $amount;
   $vars['description'] = $description;
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
+  rsvpmaker_debug_log($currency_code,'currency code');
   ob_start();
   ?>
   <script
-      src="https://www.paypal.com/sdk/js?client-id=<?php echo $paypal_client_id;?>">
+      src="https://www.paypal.com/sdk/js?client-id=<?php echo $paypal_client_id.'&currency='.$currency_code;?>">
   </script>
   <script>
     paypal.Buttons({
@@ -169,13 +170,19 @@ function rsvpmaker_paypay_button_embed($atts) {
 //rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) )
 global $rsvp_options;
 global $paypal_rest_keys, $post;
+$currency = 'USD';
+if(isset($atts['currencyCode']))
+  $currency = sanitize_text_field($atts['currencyCode']);
+elseif(isset($rsvp_options['paypal_currency']))
+  $currency = $rsvp_options['paypal_currency'];
+
 if ( isset( $atts['paymentType'] ) && ( $atts['paymentType'] == 'donation' ) ) {
   if(isset($_GET['amount']))
     {
         $atts['amount'] = sanitize_text_field($_GET['amount']);
     }
   else
-    return sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value=""><br><button class="stripebutton">%s</button>%s</form>', get_permalink(), __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $rsvp_options['paypal_currency'] ) ), __( 'Pay with PayPal' ), rsvpmaker_nonce('return') );
+    return sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value=""><br><button class="stripebutton">%s</button>%s</form>', get_permalink(), __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $currency ) ), __( 'Pay with PayPal' ), rsvpmaker_nonce('return') );
 }
 if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id']))
   return;
@@ -186,25 +193,22 @@ $explanation = (empty($atts['paypal'])) ? '' : '<p>'.__('Or pay with PayPal','rs
 
 $currency_symbol = '';
 
-if ( isset( $rsvp_options['paypal_currency'] ) ) {
+if ( $currency == 'USD' ) {
 
-  if ( $rsvp_options['paypal_currency'] == 'USD' ) {
+  $currency_symbol = '$';
 
-    $currency_symbol = '$';
+} elseif ( $currency == 'EUR' ) {
 
-  } elseif ( $rsvp_options['paypal_currency'] == 'EUR' ) {
-
-    $currency_symbol = '€';
-  }
+  $currency_symbol = '€';
 }
 
 $charge = $atts['amount'];
 $description = (empty($atts['description'])) ? 'charge from '.$_SERVER['SERVER_NAME'] : sanitize_text_field($atts['description']);
-$output = $explanation . rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $description, array('tracking'=>'shortcode-test') );
+$output = $explanation . rsvpmaker_paypal_button( $charge, $currency, $description, array('tracking'=>'rsvpmaker-paypal') );
 
 $show = ( ! empty( $atts['showdescription'] ) && ( $atts['showdescription'] == 'yes' ) ) ? true : false;
 if ( $show && empty($atts['paypal']) ) {
-  $output .= sprintf( '<p>%s %s<br />%s</p>', esc_html( $currency_symbol.$atts['amount'] ), esc_html( $rsvp_options['paypal_currency'] ), esc_html( $atts['description'] ) );
+  $output .= sprintf( '<p>%s %s<br />%s</p>', esc_html( $currency_symbol.$atts['amount'] ), esc_html( $currency ), esc_html( $atts['description'] ) );
 }
 
 return $output;

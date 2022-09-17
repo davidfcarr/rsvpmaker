@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.0.2
-Stable tag: 9.7.6
+Stable tag: 9.7.7
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
@@ -123,6 +123,12 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 9.7.7 =
+
+* Corrected handling of currencies other than USD for PayPal payments.
+* Added currency as an option that can be set for individual events, or individual Stripe or PayPal payment blocks, separate from the choice on the RSVPMaker Settings screen.
+* Per-event currency code choice can be set from the RSVP Options screen (not available within the editor sidebar yet)
 
 = 9.7.6 =
 

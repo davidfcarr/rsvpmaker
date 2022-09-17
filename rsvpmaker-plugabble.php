@@ -642,6 +642,8 @@ if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 		$rsvp_yesno = $custom_fields['_rsvp_yesno'][0];
 
+		$currency = isset($custom_fields['_rsvp_currency'][0]) ? $custom_fields['_rsvp_currency'][0] : $rsvp_options['paypal_currency'];
+
 		if ( isset( $custom_fields['_rsvp_reminder'][0] ) && $custom_fields['_rsvp_reminder'][0] ) {
 
 			$t = rsvpmaker_strtotime( $custom_fields['_rsvp_reminder'][0] );
@@ -1124,6 +1126,8 @@ if ( isset( $remindyear ) ) {
 
 <p><strong><?php echo __( 'Pricing', 'rsvpmaker' ); ?></strong></p>
 
+<p>Currency: <input type="text" name="setrsvp[currency]" value="<?php echo $currency; ?>"></p>
+
 <p><?php echo __( 'You can set a different price for members vs. non-members, adults vs. children, etc.', 'rsvpmaker' ); ?></p>
 
 <p><input type="radio" name="setrsvp[count_party]" value="1" 
@@ -1198,8 +1202,7 @@ if ( isset( $i ) ) {
 				echo esc_attr( $per['price'][ $i ] );}
 			?>" /> 
 			<?php
-			if ( isset( $rsvp_options['paypal_currency'] ) ) {
-				echo esc_html($rsvp_options['paypal_currency']);}
+				echo esc_html($currency);
 			?>
 	</div>
 
@@ -1285,8 +1288,7 @@ if ( isset( $i ) ) {
 			?>
 	" /> 
 			<?php
-			if ( isset( $rsvp_options['paypal_currency'] ) ) {
-				echo esc_html($rsvp_options['paypal_currency']);}
+				echo esc_html($currency);
 			?>
 	</div>
 
@@ -2940,23 +2942,24 @@ if ( ! function_exists( 'event_content' ) ) {
 
 						$gateway = get_rsvpmaker_payment_gateway();
 
+						$currency = get_post_meta($post->ID,'_rsvp_currency',true);
+						if(empty($currency))
+							$currency = $rsvp_options['paypal_currency'];
+
 						if ( $gateway == 'Stripe' ) {
-
 							$rsvprow['amount'] = $charge;
-
 							$rsvprow['rsvp_id'] = $rsvp_id;
-
+							$rsvprow['currency'] = strtolower($currency);
 							$rsvpconfirm .= rsvpmaker_to_stripe( $rsvprow );
-
 						} 
 						elseif ( $gateway == 'Both Stripe and PayPal' ) {
-
 							$rsvprow['amount'] = $charge;
 							$rsvprow['rsvp_id'] = $rsvp_id;
+							$rsvprow['currency'] = strtolower($currency);
 							$rsvpconfirm .= rsvpmaker_to_stripe( $rsvprow );
 							$rsvpconfirm .= '<p>'. __('Credit card processing by Stripe','rsvpmaker').'</p>';
 							$rsvpconfirm .= '<p>'. __('Or pay with PayPal','rsvpmaker').'</p>';
-							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
+							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $currency, $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
 						} 
 						elseif ( $gateway == 'Stripe via WP Simple Pay' ) {
 
@@ -2972,7 +2975,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 						} elseif ( $gateway == 'PayPal REST API' ) {
 
-							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
+							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $currency, $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
 
 						} 
 					
