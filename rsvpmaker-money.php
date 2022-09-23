@@ -4,7 +4,7 @@ function rsvpmaker_money_table() {
 	$money_table = $wpdb->prefix . 'rsvpmaker_money';
     $current_version = 2;
 	$version       = (int) get_option( 'rsvpmaker_money_table' );
-	if ( $verion < $current_version ) {
+	if ( $version < $current_version ) {
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta(
 			"CREATE TABLE `$money_table` (

@@ -56,10 +56,8 @@ function paypal_verify_rest () {
         require_once 'rsvpmaker/GetOrder.php';
         $request_body = file_get_contents('php://input');        
         $data = json_decode($request_body);
-        rsvpmaker_debug_log($data,'paypal data');
         $order_id = empty($data->orderID) ? 0 : $data->orderID;
         $pporder = new RSVPMakerGetOrder;
-        rsvpmaker_debug_log($pporder,'paypal pp order object');
         $pporder->getOrder($order_id);
         do_action('rsvpmaker_paypal_confirmation_tracking',$data);
         die();
@@ -68,6 +66,12 @@ function paypal_verify_rest () {
 
 add_action('init','paypal_verify_rest');
 
+add_shortcode('rsvpmaker_paypal_button_invoice','rsvpmaker_paypal_button_invoice');
+function rsvpmaker_paypal_button_invoice($atts) {
+  $vars['invoice_id'] = 'dues-123';
+  return rsvpmaker_paypal_button (40, 'USD', 'test transaction with invoice', $vars);
+}
+
 //rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) )
 function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description='', $vars = array()) {
   global $paypal_rest_keys, $post;
@@ -75,6 +79,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     return;
 
   $rsvp_id = (empty($vars['rsvp'])) ? 0 : $vars['rsvp'];
+  $invoice_id = (empty($vars['invoice_id'])) ? '' : $vars['invoice_id'];
   $event = (empty($vars['event'])) ? $post->ID : $vars['event'];
   if($paypal_rest_keys['sandbox'])
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
@@ -86,24 +91,28 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $vars['amount'] = $amount;
   $vars['description'] = $description;
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
-  rsvpmaker_debug_log($currency_code,'currency code');
   ob_start();
   ?>
   <script
       src="https://www.paypal.com/sdk/js?client-id=<?php echo $paypal_client_id.'&currency='.$currency_code;?>">
   </script>
   <script>
-    paypal.Buttons({
-      createOrder: function(data, actions) {
-        return actions.order.create({
-          purchase_units: [{
+    var purchase = {
           custom_id: '<?php echo $rsvp_id; ?>',
+          <?php if($invoice_id) {
+            echo "invoice_id: '".$invoice_id."',\n";
+          }
+          ?>
           description: '<?php echo $description; ?>',
             amount: {
               value: '<?php echo $amount; ?>',
               currency_code: '<?php echo $currency_code; ?>'
             }
-          }]
+          };
+    paypal.Buttons({
+      createOrder: function(data, actions) {
+        return actions.order.create({
+          purchase_units: [purchase]
         });
       },
       onApprove: function(data, actions) {
@@ -131,26 +140,9 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
           else {
               result = 'Transaction error';
           }
+          console.log(result);
           document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><h2>PayPal</h2><p>'+result+'</p></div>';
-          //document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><h2>PayPal</h2>'+myJSon.result.payment_confirmation_message+'</div>';
-          if(myJson.statusCode == 200) {
-            console.log('Now, check for confirmation message');
-            fetch(rsvpmaker_rest.rsvpmaker_json_url+'paypalsuccess/<?php echo $event; ?>/<?php echo $tracking; ?>')
-            .then((response) => {
-              return response.json();
-            })
-            .then((myJson) => {
-              console.log(myJson);
-              if(myJson.payment_confirmation_message) {
-                console.log('preparing confirmation message');
-                var withconfirmation = document.getElementById("paypal-button-container").innerHTML + myJson.payment_confirmation_message;
-                document.getElementById("paypal-button-container").innerHTML = withconfirmation;
-              }
-              else 
-                console.log('confirmation message not found');
-            });
-          }//end check for confirmation
-    });
+        });
         });
       },
       onError: function (err) {

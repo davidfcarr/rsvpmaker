@@ -1,6 +1,12 @@
 var el = wp.element.createElement;
 const { __ } = wp.i18n; // Import __() from wp.i18n
 
+import { registerPlugin } from '@wordpress/plugins';
+import { __experimentalMainDashboardButton as MainDashboardButton } from '@wordpress/edit-post';
+import { Dashicon, Button, Modal } from '@wordpress/components';
+import { useState } from '@wordpress/element';
+const { subscribe } = wp.data;
+
 const RSVPEmailSidebarPlugin = function() {
 let type = wp.data.select( 'core/editor' ).getCurrentPostType();
 	if(type != 'rsvpemail')
@@ -13,7 +19,84 @@ let type = wp.data.select( 'core/editor' ).getCurrentPostType();
 </div>
 );
 }
-if(rsvpmaker.post_type == 'rsvpemail')
-wp.plugins.registerPlugin( 'rsvpmailer-sidebar-plugin', {
-	render: RSVPEmailSidebarPlugin,
+
+if(rsvpmaker.post_type == 'rsvpemail') {
+	registerPlugin( 'rsvpmailer-sidebar-plugin', {
+		render: RSVPEmailSidebarPlugin,
+	} );
+
+	let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+	let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+	let wasPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
+	// determine whether to show notice
+	subscribe( () => {
+		const isSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+		const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+		const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
+		const shouldTriggerTemplateNotice = (
+				( wasSavingPost && ! isSavingPost && ! wasAutosavingPost ) ||
+				( wasAutosavingPost && wasPreviewingPost && ! isPreviewingPost )
+		);
+
+		// Save current state for next inspection.
+		wasSavingPost = isSavingPost;
+		wasAutosavingPost = isAutosavingPost;
+		wasPreviewingPost = isPreviewingPost;
+
+		if ( shouldTriggerTemplateNotice ) {
+	wp.data.dispatch('core/notices').createNotice(
+	'success', // Can be one of: success, info, warning, error.
+	__('Preview & Send Email'), // Text string to display.
+	{
+		id: 'rsvpemialnotice', //assigning an ID prevents the notice from being added repeatedly
+		isDismissible: true, // Whether the user can dismiss the notice.
+		// Any actions the user can perform.
+		actions: [
+			{
+				url: wp.data.select("core/editor").getPermalink(),
+				label: __('View in email template'),
+			}
+		]
+	}
+);
+wp.data.dispatch('core/notices').createNotice(
+	'success', // Can be one of: success, info, warning, error.
+	__('Preview & Send Email'), // Text string to display.
+	{
+		id: 'rsvpemialnowsnack', //assigning an ID prevents the notice from being added repeatedly
+		isDismissible: true, // Whether the user can dismiss the notice.
+		// Any actions the user can perform.
+		type: 'snackbar',
+		actions: [
+			{
+				url: wp.data.select("core/editor").getPermalink(),
+				label: __('View in email template'),
+			}
+		]
+	}
+);
+		}
+		/*
+		else {
+			wp.data.dispatch('core/notices').createNotice(
+				'info', // Can be one of: success, info, warning, error.
+				__('Pulish and Update to Preview & Send Email'), // Text string to display.
+				{
+					id: 'rsvpemialsoon', //assigning an ID prevents the notice from being added repeatedly
+					isDismissible: true, // Whether the user can dismiss the notice.
+				}
+			);			
+		}
+		*/
 } );
+
+wp.data.dispatch('core/notices').createNotice(
+	'info', // Can be one of: success, info, warning, error.
+	__('Edit and Publish or Update, then Preview in Email Template and Send'), // Text string to display.
+	{
+		id: 'rsvpemialnotice', //assigning an ID prevents the notice from being added repeatedly
+		isDismissible: true, // Whether the user can dismiss the notice.
+	}
+);			
+
+}

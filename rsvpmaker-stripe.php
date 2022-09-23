@@ -1,6 +1,5 @@
 <?php
 function rsvpmaker_to_stripe( $rsvp ) {
-
 	global $post;
 
 	$vars['description'] = $post->post_title;

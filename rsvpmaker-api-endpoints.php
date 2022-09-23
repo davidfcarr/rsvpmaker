@@ -503,72 +503,6 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 	}
 }
 
-class RSVPMaker_PaypalSuccess_Controller extends WP_REST_Controller {
-
-	public function register_routes() {
-
-		$namespace = 'rsvpmaker/v1';
-
-		$path = 'paypalsuccess/(?P<post_id>.+)/(?P<tracking>.+)';
-
-		register_rest_route(
-			$namespace,
-			'/' . $path,
-			array(
-
-				array(
-
-					'methods'             => 'GET',
-
-					'callback'            => array( $this, 'get_items' ),
-
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-
-				),
-
-			)
-		);
-
-	}
-
-
-
-	public function get_items_permissions_check( $request ) {
-
-		return true;
-
-	}
-
-	public function get_items( $request ) {
-		if(isset($request['tracking']))
-			$vars = get_metadata_by_mid('post',intval($request['tracking']));
-		if(empty($vars))
-			$vars = array();
-
-		$message_id = get_post_meta( $request['post_id'], 'payment_confirmation_message', true );
-
-		if ( $message_id ) {
-
-			$message_post = get_post( $message_id );
-
-			if ( empty( $message_post->post_content ) ) {
-
-				$message_post->post_content = '<p>' . __( 'Thank you for your payment', 'rsvpmaker' ) . '</p>';
-			}
-
-			$vars['payment_confirmation_message'] = do_blocks( $message_post->post_content );
-
-			if(!empty($vars['rsvp_id'])) //rsvp_id
-				rsvp_confirmation_after_payment( $vars['rsvp_id'] );
-		}
-
-		do_action('rsvpmaker_confirmed_paypal_payment', $vars);
-
-		return new WP_REST_Response( $vars, 200 );
-
-	}
-}
-
 class RSVP_Export extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -1720,8 +1654,6 @@ add_action('rest_api_init',
 		$rsvpmaker_meta_controller->register_routes();
 		$stripesuccess = new RSVPMaker_StripeSuccess_Controller();
 		$stripesuccess->register_routes();
-		$ppsuccess = new RSVPMaker_PaypalSuccess_Controller();
-		$ppsuccess->register_routes();
 		$rsvpexp = new RSVP_Export();
 		$rsvpexp->register_routes();
 		$rsvpimp = new RSVP_RunImport();

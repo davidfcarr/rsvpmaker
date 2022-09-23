@@ -430,22 +430,20 @@ function get_sql_curdate() {
 
 }
 
-function get_rsvp_date( $post_id ) {
-
+function get_rsvp_date( $post_id, $format = '' ) {
+	global $wpdb, $rsvpdates, $rsvp_options;
 	if ( empty( $post_id ) ) {
 		return;
 	}
-
-	global $wpdb, $rsvpdates;
-
 	if ( empty( $rsvpdates ) ) {
-
 		cache_rsvp_dates( 50 );
 	}
 
 	if ( ! empty( $rsvpdates[ $post_id ] ) ) {
-
-		return $rsvpdates[ $post_id ][0];
+		if(empty($format))
+			return $rsvpdates[ $post_id ][0];
+		else
+			return rsvpmaker_date($rsvp_options[$format],rsvpmaker_strtotime($rsvpdates[ $post_id ][0]));
 	}
 
 	$wpdb->show_errors();
@@ -456,8 +454,10 @@ function get_rsvp_date( $post_id ) {
 		$wpdb->query( 'DELETE FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id ) );
 		return;
 	}
-	return $date;
-
+	if(empty($format))
+		return $date;
+	else
+		return rsvpmaker_date($rsvp_options[$format],rsvpmaker_strtotime($date));
 }
 
 function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '', $index = 0 ) {

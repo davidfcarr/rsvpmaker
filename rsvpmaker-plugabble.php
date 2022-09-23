@@ -2153,8 +2153,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				if ( $duplicate_check ) {
 
-					//rsvpmaker_debug_log( $rsvp, 'duplicate check' );
-
 					$rsvp_id = $duplicate_check;
 
 				}
@@ -2350,7 +2348,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 					if ( empty( $wpdb->get_var( $sql ) ) ) {
 
 						$sql = $wpdb->prepare( 'INSERT INTO  ' . $wpdb->prefix . 'rsvpmaker_event SET event=%d, post_title=%s, date=%s', $event, $post->post_title, get_rsvp_date( $event ) );
-						//rsvpmaker_debug_log( $sql, 'save_rsvp rsvpmaker_event' );
 						$wpdb->query( $sql );
 
 					}
@@ -2416,8 +2413,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				foreach ( $_POST['guest']['first'] as $index => $first ) {
 
 					$last = ( !empty( $_POST['guest']['last']) && !empty($_POST['guest']['last'][ $index ]) ) ? sanitize_text_field($_POST['guest']['last'][ $index ]) : '';
-					rsvpmaker_debug_log($last,'guest last');
-					rsvpmaker_debug_log($_POST['guest'], 'guest array');
 					if ( ! empty( $first ) ) {
 						$guest_sql[ $index ] = $wpdb->prepare( ' SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s', $event, $yesno, $rsvp_id, $guestof, $first, $last );
 						$guest_text[ $index ] = sprintf( "Guest: %s %s\n", $first, $last );
@@ -2552,9 +2547,9 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				$rsvpdata['yesno'] = $yesno;
 				$rsvpdata['rsvpdate'] = $date;
 
-				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID );
+				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID, false, $rsvp['email'], $rsvp_id );
 
-				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'], rsvpmail_replace_email_placeholder($rsvp['email'],$rsvp_options['rsvplink']) . '&update=' . $rsvp_id );
+				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
 				
 				rsvp_notifications_via_template( $rsvp, $rsvp_to, $rsvpdata );
 

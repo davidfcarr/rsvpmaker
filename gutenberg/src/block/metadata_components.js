@@ -7,8 +7,10 @@ const { Fragment } = wp.element;
 import apiFetch from '@wordpress/api-fetch';
 
 import { __experimentalGetSettings } from '@wordpress/date';
-
 const settings = __experimentalGetSettings();
+//experimental deprecated after WordPress 6.1
+//import { getSettings } from '@wordpress/date';
+//const settings = getSettings();
 // To know if the current timezone is a 12 hour time with look for "a" in the time format
 // We also make sure this a is not escaped by a "/"
 
@@ -19,7 +21,7 @@ const is12HourTime = /a(?!\\)/i.test(
 		.split( '' )
 		.reverse()
 		.join( '' ) // Reverse the string and test for "a" not followed by a slash
-);	
+);
 
 function HourOptions () {
 	

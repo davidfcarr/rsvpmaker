@@ -84,3 +84,17 @@ option {
 .rsvpcalendar_buttons img {
 	display: inline-block;
 }
+a#emailhome {
+	display: inline-block;
+	margin-right: 20px;
+	height: 60px;
+	width: 60px;
+	text-align: center;
+	padding-top: 20px;
+	background-color: #000;
+	text-decoration: none;
+}
+#emailpreviewprompt {
+	font-size: large;
+	font-style: italic;
+}

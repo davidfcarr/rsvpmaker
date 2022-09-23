@@ -2463,13 +2463,20 @@ function rsvpmaker_author_page( $query ) {
 
 add_filter( 'pre_get_posts', 'rsvpmaker_author_page' );
 
-function get_rsvp_link( $post_id, $justlink = false ) {
+function get_rsvp_link( $post_id, $justlink = false, $email = '', $rsvp_id = 0 ) {
 
 	global $rsvp_options;
 
 	$rsvplink = get_permalink( $post_id );
 
-	$rsvplink = add_query_arg( 'e', '*|EMAIL|*', $rsvplink ) . '#rsvpnow';
+	if(empty($email))
+		$rsvplink = add_query_arg( 'e', '*|EMAIL|*', $rsvplink );
+	else
+		$rsvplink = add_query_arg( 'e', $email, $rsvplink );
+
+	if($rsvp_id)
+		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
+	$rsvplink .= '#rsvpnow';
 
 	if ( ! is_user_logged_in() && get_post_meta( $post_id, '_rsvp_login_required', true ) ) {
 

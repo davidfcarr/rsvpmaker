@@ -3532,6 +3532,13 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	$rsvp = (array) $wpdb->get_row($sql);
 	$post = get_post($rsvp['event']);
 	$rsvpdata = unserialize($rsvp['details']);
+	if(empty($rsvpdata['rsvptitle']))
+		$rsvpdata['rsvptitle'] = get_the_title($rsvp['event']);
+	if(empty($rsvpdata['rsvpdate']))
+		$rsvpdata['rsvpdate'] = get_rsvp_date($rsvp['event'],'long_date');
+	elseif(strpos($rsvpdata['rsvpdate'],':'))
+		$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],rsvpmaker_strtotime($rsvpdata['rsvpdate']));
+	rsvpmaker_debug_log($rsvpdata,'rsvp_confirmation_after_payment rsvpdata');
 
 	$guests = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=$rsvp_id");
 	if($guests) {
@@ -3572,12 +3579,13 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	foreach($rsvpdata as $field => $value)
 		$notification_body = str_replace('['.$field.']',$value,$notification_body);
 	$notification_body = str_replace('[rsvpdetails]',$details,$notification_body);
-	
-	$url = get_permalink($rsvp['event']);
-	$url = add_query_arg('rsvp',$rsvp['id'],$url);
-	$url = add_query_arg('e',$rsvp['email'],$url);
-	
-	$notification_body = str_replace('[rsvpupdate]',sprintf('<a href="%s">Complete Registration</a>',$url),$notification_body);	
+
+	rsvpmaker_debug_log($notification_body,'rsvp_confirmation_after_payment $notification_body');
+
+	$rsvp_options['rsvplink'] = get_rsvp_link( $rsvp['event'], false, $rsvp['email'], $rsvp['id'] );
+	$rsvpupdate_link = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
+
+	$notification_body = str_replace('[rsvpupdate]',$rsvpupdate_link,$notification_body);
 	$notification_body = rsvpmaker_email_html($notification_body);
 
 	$mail["to"] = $rsvp['email'];
@@ -4526,9 +4534,11 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		<!-- /wp:paragraph -->
 		
 		<!-- wp:rsvpmaker/emailcontent -->
-		<div style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px" class="wp-block-rsvpmaker-emailcontent"><!-- wp:paragraph {"placeholder":"Email content"} -->
+		<div style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px" class="wp-block-rsvpmaker-emailcontent">
+		<!-- wp:paragraph {"placeholder":"Add email content here"} -->
 		<p></p>
-		<!-- /wp:paragraph --></div>
+		<!-- /wp:paragraph -->
+		</div>
 		<!-- /wp:rsvpmaker/emailcontent -->
 		
 		<!-- wp:rsvpmaker/emailcontent -->
@@ -4559,6 +4569,12 @@ function get_rsvpmailer_default_block_template($edit = false) {
 	}
 	if($edit)
 		$content = sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit")).$content;
+	else {
+		$content = str_replace('{"placeholder":"Email content"}','{"placeholder":"Add email content here"}',$content);
+		$content = preg_replace('|</div>[^<]*<!-- /wp:rsvpmaker/emailcontent -->|','<!-- wp:paragraph {"placeholder":"Add email content here"} -->
+		<p></p>
+		<!-- /wp:paragraph -->'."$0",$content,1);
+	}
 	return $content;
 }
 
