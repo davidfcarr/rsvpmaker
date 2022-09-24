@@ -943,8 +943,6 @@ foreach($templates as $tname => $tfile)
 <h3><?php esc_html_e('Troubleshooting and Logging','rsvpmaker'); ?></h3>
   <input type="checkbox" name="option[debug]" value="1" <?php if(isset($options["debug"]) && $options["debug"]) echo ' checked="checked" ';?> /> <strong><?php esc_html_e('Debug and log. Log messages will be saved in the uploads directory with file names in the pattern rsvpmaker_log_2018-01-01.txt','rsvpmaker'); ?></strong>
 	<br />
-  <input type="checkbox" name="option[log_email]" value="1" <?php if(isset($options["log_email"]) && $options["log_email"]) echo ' checked="checked" ';?> /> <strong><?php esc_html_e('Log email','rsvpmaker'); ?>: Monitor notification/confirmation messages generated</strong>
-	<br />
 			  <div class="submit"><input type="submit" name="Submit" value="<?php esc_html_e('Update','rsvpmaker'); ?>" /></div>
 			</form>
 

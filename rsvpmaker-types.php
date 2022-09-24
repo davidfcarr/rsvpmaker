@@ -179,7 +179,7 @@ function create_rsvpemail_post_type() {
       register_post_type( 'rsvpemail',
         array(
           'labels' => array(
-            'name' => __( 'RSVP Mailer','rsvpmaker' ),
+            'name' => __( 'RSVP Email Newsletters and Notifications','rsvpmaker' ),
             'add_new_item' => __( 'Add New Email','rsvpmaker' ),
             'edit_item' => __( 'Edit Email','rsvpmaker' ),
             'new_item' => __( 'RSVP Emails','rsvpmaker' ),

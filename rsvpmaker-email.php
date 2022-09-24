@@ -66,11 +66,6 @@ function rsvpmailer($mail, $description = '') {
 	if(!strpos($mail['fromname'],'(via'))
 		$mail['fromname'] = $mail['fromname'] . ' (via '.$via.')';
 
-	if(!empty($rsvp_options["log_email"]) && isset($post->ID))
-		{
-			$mail['timestamp'] = date('Y-m-d H:i');
-			add_post_meta($post->ID, '_rsvpmaker_email_log',$mail);
-		}
 	$rsvp_options = apply_filters('rsvp_email_options',$rsvp_options);
 	if(empty($mail['html']))
 	$mail['html'] = wpautop($mail['text']);
@@ -2466,19 +2461,29 @@ $function = "rsvpmaker_extract_email";
 
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
-if(!empty($rsvp_options["log_email"]))
-{
-$parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Email Log",'rsvpmaker');
-$menu_title = $page_title;
-$capability = 'edit_others_rsvpemails';
-$menu_slug = "email_log";
-$function = "email_log";
-add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
-}
 if(rsvpmaker_postmark_is_active())
 	add_submenu_page("edit.php?post_type=rsvpemail", 'Postmark Email Log', 'Postmark Email Log', 'manage_options', 'rsvpmaker_postmark_show_sent_log', 'rsvpmaker_postmark_show_sent_log');
+else {
+	$parent_slug = 'edit.php?post_type=rsvpemail';
 
+	add_submenu_page(
+		$parent_slug,
+		__( 'Group Email', 'rsvpmaker' ),
+		__( 'Group Email', 'rsvpmaker' ),
+		'manage_options',
+		'rsvpmaker_relay_manual_test',
+		'rsvpmaker_relay_manual_test'
+	);
+
+	add_submenu_page(
+		$parent_slug,
+		__( 'Group Email Log', 'rsvpmaker' ),
+		__( 'Group Email Log', 'rsvpmaker' ),
+		'manage_options',
+		'rsvpmaker_relay_queue_monitor',
+		'rsvpmaker_relay_queue_monitor'
+	);
+}
 }
 
 function rsvpmaker_mailpoet_notice() {
@@ -2553,20 +2558,6 @@ Useful formatting codes for email ("excerpt" works well in most cases):
 		printf('[custom:rsvpmaker_one post_id="%d" format="excerpt"] %s %s'."\n",$event->ID,$event->post_title,$event->date);
 	}
 echo '</textarea>';
-}
-
-function email_log () {
-global $wpdb;
-$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key = '_rsvpmaker_email_log' ORDER BY meta_id DESC LIMIT 0, 100";
-$results = $wpdb->get_results($sql);
-if($results)
-foreach($results as $row)
-	{
-		$mail = unserialize($row->meta_value);
-		if(is_array($mail))
-		foreach($mail as $index => $value)
-			printf('<p><strong>%s</strong></p><div>%s</div>',$index,$value);
-	}
 }
 
 function unsubscribed_list () {
@@ -5689,18 +5680,14 @@ return $rsvpmail_editors_note;
 
 function rsvpmail_list_rsvpmodal_controller() {
 	if(isset($_GET['rmail'])) {
-		setcookie('rsvpmail_subscriber',1,time()+YEAR_IN_SECONDS);
-		return;//hooray, already a subscriber
+		$result = setcookie('rsvpmail',1,time()+31556952);
+		//hooray, already a subscriber
 	}
-	if((empty($_COOKIE['rsvpmail_subscriber']) && empty($_COOKIE['rsvpmail_shown_popup']) && get_option('rsvpmail_list_rsvpmodal_on')) || isset($_GET['show_rsvp_popup']))
+	elseif((!is_user_logged_in() && empty($_COOKIE['rsvpmail']) && empty($_COOKIE['rsvpmail_subscriber']) && empty($_COOKIE['rsvpmail_shown_popup']) && get_option('rsvpmail_list_rsvpmodal_on')) || isset($_GET['show_rsvp_popup']))
 	{
 		add_action('wp_head','rsvpmail_list_rsvpmodal_css');
 		add_action('wp_footer','rsvpmail_list_rsvpmodal',99);
 		setcookie('rsvpmail_shown_popup',1,time()+DAY_IN_SECONDS);
-	}
-	else {
-		if(isset($_GET['dc']))
-		rsvpmaker_debug_log($_COOKIE,'popup not displayed. Cookie values. '.$_GET['dc']);
 	}
 }
 

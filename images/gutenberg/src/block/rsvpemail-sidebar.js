@@ -15,6 +15,7 @@ let type = wp.data.select( 'core/editor' ).getCurrentPostType();
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div><h3>{__('Email Editor','rsvpmaker')}</h3><p>{__('Use the WordPress editor to compose the body of your message, with the post title as your subject line. View post will display your content in an email template, with a user interface for addressing options.','rsvpmaker')}</p>
+<p><a href="https://rsvpmaker.com/knowledge-base/using-rsvp-mailer/" target="_blank">Documentation</a></p>
 {related_documents.map( function (x) {return <li><a href={x.href}>{x.title}</a></li>} )}
 </div>
 );
@@ -76,23 +77,11 @@ wp.data.dispatch('core/notices').createNotice(
 	}
 );
 		}
-		/*
-		else {
-			wp.data.dispatch('core/notices').createNotice(
-				'info', // Can be one of: success, info, warning, error.
-				__('Pulish and Update to Preview & Send Email'), // Text string to display.
-				{
-					id: 'rsvpemialsoon', //assigning an ID prevents the notice from being added repeatedly
-					isDismissible: true, // Whether the user can dismiss the notice.
-				}
-			);			
-		}
-		*/
 } );
 
 wp.data.dispatch('core/notices').createNotice(
 	'info', // Can be one of: success, info, warning, error.
-	__('Edit and Publish or Update, then Preview in Email Template and Send'), // Text string to display.
+	__('Compose your message with the post title as the subject line and post content as the email body. Once you save and publish your post, preview it in the email template, choose your recipients, and send it.'), // Text string to display.
 	{
 		id: 'rsvpemialnotice', //assigning an ID prevents the notice from being added repeatedly
 		isDismissible: true, // Whether the user can dismiss the notice.
