@@ -1062,7 +1062,6 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
 		$blocked = ( empty( $vars['blocked'] ) ) ? array() : group_emails_extract( $vars['blocked'] );
 		$whitelist = ( empty( $vars['whitelist'] ) ) ? array() : group_emails_extract( $vars['whitelist'] );
 		$additional_recipients = ( empty( $vars['additional_recipients'] ) ) ? array() : group_emails_extract( $vars['additional_recipients'] );
-		rsvpmaker_debug_log($users,'rsvpmail_recipients_by_slug_and_id_users');
 		foreach($users as $user) {
 			if(!rsvpmail_is_problem($user->user_email) && !in_array($user->user_email,$blocked)) {
 				$email = $user->user_email;

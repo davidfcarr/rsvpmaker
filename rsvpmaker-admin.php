@@ -1574,7 +1574,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 		echo esc_html($event->enddate);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
-		$end_type = get_post_meta($post_id,'_firsttime');
+		$end_type = get_post_meta($post_id,'_firsttime',true);
 		if(empty($end_type))
 			echo 'End Time Not Shown';
 		else {
@@ -1583,7 +1583,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 				echo esc_html($options[$end_type]);
 		}
 		printf('<input type="hidden" class="end_display_code" value="%s" />',$end_type);
-		$rsvp_on = get_post_meta($post_id,'_rsvp_on');
+		$rsvp_on = get_post_meta($post_id,'_rsvp_on',true);
 		$convert_timezone = get_post_meta($post_id,'_convert_timezone',true);
 		$add_timezone = get_post_meta($post_id,'_add_timezone',true);
 		if(!empty($rsvp_on))
@@ -3150,9 +3150,6 @@ function rsvpmaker_show_debug_log() {
 	 
 	if ( ! empty( $upload_dir['basedir'] ) ) {
 		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
-		if(isset($_POST['clear'])){
-			rsvpmaker_debug_log('','reset','',true);
-		}
 		$content = file_get_contents($fname);
 		printf('<form method="post" action="%s"><input type="hidden" name="clear" value="1"><button>Clear Log</button></form>',admin_url('tools.php?page=rsvpmaker_show_debug_log'));
 		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';		

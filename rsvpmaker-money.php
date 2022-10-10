@@ -57,6 +57,5 @@ function rsvpmaker_money_tx($atts) {
     `fee`  = %s,
     `tracking_key` = %s,
     `tracking_value` = %s",$name,$email,$description,$date,$status,$transaction_id,$user_id,$metadata,$amount,$fee,$tracking_key,$tracking_value);
-    rsvpmaker_debug_log($sql,'rsvpmaker_money_tx sql');
     $wpdb->query($sql);
 }

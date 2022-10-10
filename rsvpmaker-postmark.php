@@ -297,7 +297,6 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
  	foreach($forwarders as $email) {
 		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
         if(!empty($slug_and_id)) {
-            rsvpmaker_debug_log($slug_and_id,'slug and id');
             $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
             foreach($recipients as $index => $email)
                 $recipients[$index] = rsvpmaker_email_add_name($email,'forwarded');
@@ -312,7 +311,6 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
 }
 
 function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_and_id = NULL) {
-    rsvpmaker_debug_log($source,'postmark mail array source');
     //wp_suspend_cache_addition(true);
     global $via;
     $slug = (is_array($slug_and_id) && !empty($slug_and_id['slug'])) ? '['.$slug_and_id['slug'].'] ' : '';
@@ -361,7 +359,6 @@ function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_
         }
     }
     $mail['MessageStream'] = $message_stream;
-    rsvpmaker_debug_log($mail,'postmark mail array out');
     //wp_suspend_cache_addition(false);
     return $mail;
 }
