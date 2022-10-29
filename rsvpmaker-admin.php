@@ -295,7 +295,7 @@ function rsvpmaker_date_option_event($t, $endtime, $type) {
 
 	global $rsvp_options;
 	$prefix = "edit_";
-	
+	$index = 0;
 	?>
 	<div id="<?php echo esc_attr($prefix); ?>date<?php echo esc_attr($index);?>" ><input type="hidden" id="defaulthour" value="<?php echo esc_attr($rsvp_options["defaulthour"]); ?>" /><input type="hidden" id="defaultmin" value="<?php echo esc_attr($rsvp_options["defaultmin"]); ?>" />
 	<p><label>Date</label> <input type="date" name="newrsvpdate" id="newrsvpdate" value="<?php echo date('Y-m-d',$t); ?>"> 
@@ -2081,7 +2081,7 @@ $th = (int) $template['hour'];
 $cy = date("Y");
 $cm = date("m");
 
-if(!empty(trim($template["stop"])))
+if(!empty($template["stop"]))
 	{
 	$stopdate = rsvpmaker_strtotime($template["stop"].' 23:59:59');
 	}
@@ -4180,6 +4180,7 @@ if(isset($_GET['trash']) && isset($_GET['post_id'])) {
 }
 
 echo rsvpmaker_details_post();
+customize_forms_and_messages();
 
 if(empty($post->ID))
 {
@@ -5241,7 +5242,7 @@ switch( $column_name ) :
 		}
 		case 'rsvpmaker_end': {
 			$end_type = get_post_meta($post->ID,'_firsttime',true);
-			$end = get_post_meta($post->ID,'_endfirsttime',true);
+			$end = get_post_meta($post->ID,'_rsvp_end_date',true);
 			echo '<label class="alignleft">
 			<span class="title">End Time</span>
 			<span class="input-text-wrap"><input type="time" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
@@ -5253,7 +5254,7 @@ switch( $column_name ) :
 		}
 		case 'rsvpmaker_display': {
 			$end_type = get_post_meta($post->ID,'_firsttime',true);
-			$end = get_post_meta($post->ID,'_endfirsttime',true);
+			$end = get_post_meta($post->ID,'_rsvp_end_date',true);
 			//if(!empty($end_type) && (strpos($end,':') > 0))
 			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
 			echo '<label class="alignleft">

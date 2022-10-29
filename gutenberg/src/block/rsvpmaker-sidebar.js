@@ -3,7 +3,7 @@
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
 const { Panel, PanelBody, PanelRow } = wp.components;
-import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle} from './metadata_components.js';
+import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle, MetaTimeLord, MetaEndDateTimeControl} from './metadata_components.js';
 
 var el = wp.element.createElement;
 const { __ } = wp.i18n; // Import __() from wp.i18n
@@ -58,7 +58,7 @@ if(rsvpmaker_ajax.special)
 <h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
 {rsvpmaker_ajax.top_message}
 <MetaDateControl metaKey='_rsvp_dates' />
-<MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
+<MetaEndDateTimeControl />
 </div>
 )}
 {((rsvpmaker.post_type == 'rsvpmaker_template') && <div>
@@ -344,4 +344,11 @@ if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
 			}
 } );
 	
+}
+
+if((rsvpmaker.post_type == 'rsvpmaker') || (rsvpmaker.post_type == 'rsvpmaker_template')) {
+	const isEditorSidebarOpened = wp.data.select( 'core/edit-post' ).isEditorSidebarOpened();
+	if ( ! isEditorSidebarOpened ) {
+	  wp.data.dispatch( 'core/edit-post' ).openGeneralSidebar('edit-post/document');
+	}
 }

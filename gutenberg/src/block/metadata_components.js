@@ -1,10 +1,11 @@
 const { __ } = wp.i18n; // Import __() from wp.i18n
 //const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
 const el = wp.element.createElement;
-const { DateTimePicker, RadioControl, SelectControl, TextControl, TextareaControl,FormToggle } = wp.components;
+const { DateTimePicker, TimePicker, RadioControl, SelectControl, TextControl, TextareaControl,FormToggle } = wp.components;
 const { withSelect, withDispatch } = wp.data;
 const { Fragment } = wp.element;
 import apiFetch from '@wordpress/api-fetch';
+import { inputToDate } from '@wordpress/utils';
 
 import { __experimentalGetSettings } from '@wordpress/date';
 
@@ -322,102 +323,6 @@ var MetaEndDateControl = wp.compose.compose(
 	}
 );
 
-var MetaTemplateEndDateControl = wp.compose.compose(
-	withDispatch( function( dispatch, props ) {
-		return {
-			setMetaValue: function( metaValue ) {
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { '_sked_end': metaValue } }
-				);
-			},
-			setDisplay: function( value ) {
-				dispatch( 'core/editor' ).editPost(
-					{ meta: { '_sked_duration': value } }
-				);
-			}
-		}
-	} ),
-	withSelect( function( select, props ) {
-		let metaValue = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_sked_end' ];
-		if((typeof metaValue === 'string') && (metaValue.indexOf(':') > 0))
-			var parts = metaValue.split(':');
-		else
-			{
-				let hour = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_sked_hour' ];
-				let newhour = parseInt(hour)+1;
-				if(newhour < 10)
-					hour = '0'+newhour.toString();
-				else
-					hour = newhour.toString();
-				let minutes = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_sked_minutes' ];
-				var parts = [hour,minutes];
-			}
-		return {
-			parts: parts,
-			display: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_sked_duration' ],
-			//metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ],
-		}
-	} ) )( function( props ) {
-		//inner function to handle change
-		function setHour(hour) {
-			var newtime = hour+':'+props.parts[1];
-			setMetaValue(newtime);
-		}
-
-		function setMinutes(minutes) {
-			var newtime = props.parts[0]+':'+minutes;
-			setMetaValue(newtime);
-		}
-
-		if((props.display != 'set') && (props.display.search('ulti') < 0) )
-		return <SelectControl
-			label="Time Display"
-			value={props.display}
-			options={ [
-				{ label: 'End Time Not Displayed', value: '' },
-				{ label: 'Show End Time', value: 'set' },
-				{ label: 'All Day / Time Not Shown', value: 'allday' },
-				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
-            { label: '3 Days / Time Not Shown', value: 'multi|3' },
-            { label: '4 Days / Time Not Shown', value: 'multi|4' },
-            { label: '5 Days / Time Not Shown', value: 'multi|5' },
-            { label: '6 Days / Time Not Shown', value: 'multi|6' },
-            { label: '7 Days / Time Not Shown', value: 'multi|7' },
-			] }
-			onChange={function( content ) {
-				props.setDisplay( content );
-			}}
-		/> 
-
-		return <div>
-		<SelectControl
-			label="Time Display"
-			value={props.display}
-			options={ [
-				{ label: 'End Time Not Displayed', value: '' },
-				{ label: 'Show End Time', value: 'set' },
-				{ label: 'All Day / Time Not Shown', value: 'allday' },
-				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
-            { label: '3 Days / Time Not Shown', value: 'multi|3' },
-            { label: '4 Days / Time Not Shown', value: 'multi|4' },
-            { label: '5 Days / Time Not Shown', value: 'multi|5' },
-            { label: '6 Days / Time Not Shown', value: 'multi|6' },
-            { label: '7 Days / Time Not Shown', value: 'multi|7' },
-			] }
-			onChange={function( content ) {
-				props.setDisplay( content );
-			}}
-		/> 
-		End Time: <br /><select id="endhour" value={props.parts[0]} onChange={ (hour) => {setMetaValue(hour+':'+props.parts[1])} }>
-		<HourOptions />
-		</select>	
-		<select id="endminutes" value={props.parts[1]} onChange={ (minutes) => {setMetaValue(props.parts[0]+':'+minutes);console.log(props.parts[0]+':'+minutes) } } >
-		<MinutesOptions />
-		</select>	
-		</div>
-	}
-);
-
 var MetaTemplateStartTimeControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
 		return {
@@ -552,4 +457,153 @@ var MetaFormToggle = wp.compose.compose(
 	}
 );
 
-export {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle, MetaTextareaControl};
+var MetaPrices = wp.compose.compose(
+	withDispatch( function( dispatch, props ) {
+		return {
+			setMetaValue: function( metaValue, index ) {
+					dispatch( 'core/editor' ).editPost(
+					{ meta: { [ props.metaKey[index] ]: metaValue } }
+				);
+				//todo trigger change in week components for template
+			}
+		}
+	} ),
+	withSelect( function( select, props ) {
+		let value = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ];//boolvalue,
+		return {
+			metaValue: value,
+		}
+	} ) )( function( props ) {
+		return props.metaValue.forEach( function(value, index) {
+		<TextControl value={value} 
+		onChange={ function( value ) {
+				props.setMetaValue( value, index );
+			} }	
+		/>
+} );				
+	}
+);
+
+var MetaEndDateTimeControl = wp.compose.compose(
+
+	withDispatch( function( dispatch, props ) {
+		return {
+			setDisplay: function( value ) {
+				dispatch( 'core/editor' ).editPost(
+					{ meta: { ['_firsttime']: value } } //'_firsttime'
+				);
+			}
+		}
+	} ),
+	withSelect( function( select, props ) {
+		let display = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_firsttime'];
+		return {
+			display: display,
+			//endtime: metaValue,
+			//metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ],
+		}
+	} ) )( function( props ) {
+		//inner function to handle change
+
+		if((typeof props.display != 'undefined') && (props.display != 'set') && (props.display.search('ulti') < 0) )
+		return <SelectControl
+			label="Time Display"
+			value={props.display}
+			options={ [
+				{ label: 'End Time Not Displayed', value: '' },
+				{ label: 'Show End Time', value: 'set' },
+				{ label: 'All Day / Time Not Shown', value: 'allday' },
+				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
+            { label: '3 Days / Time Not Shown', value: 'multi|3' },
+            { label: '4 Days / Time Not Shown', value: 'multi|4' },
+            { label: '5 Days / Time Not Shown', value: 'multi|5' },
+            { label: '6 Days / Time Not Shown', value: 'multi|6' },
+            { label: '7 Days / Time Not Shown', value: 'multi|7' },
+			] }
+			onChange={function( content ) {
+				props.setDisplay( content );
+			}}
+		/> 
+
+		return <div>
+		<SelectControl
+			label="Time Display"
+			value={props.display}
+			options={ [
+				{ label: 'End Time Not Displayed', value: '' },
+				{ label: 'Show End Time', value: 'set' },
+				{ label: 'All Day / Time Not Shown', value: 'allday' },
+			] }
+			onChange={function( content ) {
+				props.setDisplay( content );
+			}}
+		/>
+		<div class="endtime" style={{backgroundColor: 'lightgray', padding: 5}}><h3>End Time</h3>
+		<RSVPEndDateControl metaKey='_rsvp_end_date' />
+		</div>
+		</div>
+	}
+);
+
+var RSVPEndDateControl = wp.compose.compose(
+	withDispatch( function( dispatch, props ) {
+		return {
+			setMetaValue: function( metaValue ) {
+				metaValue = metaValue.replace('T',' ');
+				apiFetch({path: 'rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id});
+				dispatch( 'core/editor' ).editPost(
+					{ meta: { [ props.metaKey ]: metaValue } }
+				);
+			}
+		}
+	} ),
+	withSelect( function( select, props ) {
+		let current = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ];
+		
+		if(!current)
+		{
+			let datestring = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_rsvp_dates' ];
+			let timestring = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ];
+			if(timestring) {
+				let parts = datestring.split(' ');
+				current = parts[0] + ' ' + timestring;
+			}
+			else {
+				let startdate = new Date(datestring);
+				startdate.setTime(startdate.getTime() + 60 * 1000);
+				current = startdate.getHours();
+				if(current < 10)
+				current = '0'+current;
+				current = current+':'+startdate.getMinutes()+':00';
+			}
+		}		
+		return {
+			metaValue: current,
+		}
+	} ) )( function( props ) {
+
+		const settings = __experimentalGetSettings();
+		// To know if the current timezone is a 12 hour time with look for "a" in the time format
+		// We also make sure this a is not escaped by a "/"
+		const is12HourTime = /a(?!\\)/i.test(
+			settings.formats.time
+				.toLowerCase() // Test only the lower case a
+				.replace( /\\\\/g, '' ) // Replace "//" with empty strings
+				.split( '' )
+				.reverse()
+				.join( '' ) // Reverse the string and test for "a" not followed by a slash
+		);	
+
+		return el( DateTimePicker, {
+			label: props.label,
+			is12Hour: is12HourTime,
+			currentDate: props.metaValue,
+			options: props.options,
+			onChange: function( content ) {
+				props.setMetaValue( content );
+			},
+		});
+	}
+);
+
+export {MetaEndDateControl, MetaDateControl, MetaTextControl, MetaSelectControl, MetaRadioControl, MetaFormToggle, MetaTextareaControl, MetaEndDateTimeControl};

@@ -31,7 +31,6 @@ add_action('admin_init', 'rsvp_csv' );
 add_action('admin_init', 'additional_editors_setup' );
 add_action('admin_init', 'rsvpmaker_setup_post' );
 add_action('admin_init', 'add_rsvpemail_caps' );
-add_action('admin_init', 'customize_rsvp_form' );
 
 add_action( 'admin_menu', 'my_events_menu' );
 add_action( 'admin_menu', 'my_rsvpemails_menu' );

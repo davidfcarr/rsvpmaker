@@ -509,14 +509,7 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 		echo ' selected="selected" ';}
 	?>
 ><?php echo __( 'All day/time not shown', 'rsvpmaker' ); ?></option>
-
-	<?php
-	for ( $i = 2; $i < 8; $i++ ) {
-		$multi = 'multi|' . $i;
-		$s     = ( $duration_type == $multi ) ? ' selected="selected" ' : '';
-		printf( '<option value="%s" %s>%s</option>', $multi, $s, $i . ' ' . __( 'days/time not shown', 'rsvpmaker' ) );
-	}
-
+<?php
 	echo '</select>';
 	echo '</p>';
 }
@@ -1123,9 +1116,14 @@ function rsvpmaker_update_event_row ($post_id) {
 	$timezone = rsvpmaker_get_timezone_string($post_id);
 	$type = get_post_meta($post_id,'_firsttime',true);
 	$date = get_post_meta($post_id,'_rsvp_dates',true);
+	$enddate = get_post_meta($post_id,'_rsvp_end_date',true);
+	rsvpmaker_debug_log($enddate,'enddate rsvpmaker_update_event_row');
+	if(empty($enddate)) {
 	$end = get_post_meta($post_id,'_endfirsttime',true);
-	$ts_start = rsvpmaker_strtotime($date);
 	$enddate = rsvpmaker_end_date($date,$type,$end);
+	update_post_meta($post_id,'_rsvp_end_date',$enddate);
+	}
+	$ts_start = rsvpmaker_strtotime($date);
 	$ts_end = rsvpmaker_strtotime($enddate);
 	$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$post_id" );
 	if($event)
@@ -1157,7 +1155,7 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 function sync_rsvpmaker_event_dates( $meta_id, $object_id, $meta_key, $meta_value ) {
 	global $wpdb, $post;
 	$event_table = $wpdb->prefix . 'rsvpmaker_event';
-	$keys        = array( '_endfirsttime', '_firsttime', '_rsvp_dates', '_rsvp_timezone_string' );
+	$keys        = array( '_rsvp_end_date','_endfirsttime', '_firsttime', '_rsvp_dates', '_rsvp_timezone_string' );
 
 	if ( in_array( $meta_key, $keys ))
 		delete_transient('rsvp_meta_cache');
@@ -1170,7 +1168,6 @@ function sync_rsvpmaker_event_dates( $meta_id, $object_id, $meta_key, $meta_valu
 	}
 }
 add_action( 'updated_postmeta', 'sync_rsvpmaker_event_dates', 10, 4 );
-//add_action( 'added_post_meta', 'sync_rsvpmaker_event_dates', 10, 4 );
 
 function fix_enddatetime( $enddatetime, $date, $post_id ) {
 	global $wpdb;
@@ -2854,7 +2851,7 @@ function get_form_links( $post_id, $t, $parent_tag ) {
 
 			'title'  => 'RSVP Form -> Default',
 
-			'href'   => admin_url( "edit.php?title=Form&rsvpcz_default=rsvp_form&post_id=$post_id" ),
+			'href'   => admin_url( "edit.php?title=Form&rsvpcz_default=rsvp_form&post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id" ),
 
 			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 
@@ -2872,7 +2869,7 @@ function get_form_links( $post_id, $t, $parent_tag ) {
 
 			'title'  => 'RSVP Form -> Customize',
 
-			'href'   => admin_url( "edit.php?title=Form&rsvpcz=_rsvp_form&post_id=$post_id&source=" . $form_id ), // $formurl,
+			'href'   => admin_url( "edit.php?title=Form&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=_rsvp_form&post_id=$post_id&source=" . $form_id ), // $formurl,
 
 			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 
@@ -2902,7 +2899,7 @@ function get_form_links( $post_id, $t, $parent_tag ) {
 
 				'title'  => 'RSVP Form, ' . $label . ' -> Customize',
 
-				'href'   => admin_url( "edit.php?title=Form&rsvpcz=_rsvp_form&post_id=$post_id&source=" . $named_form_id ),
+				'href'   => admin_url( "edit.php?title=Form&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=_rsvp_form&post_id=$post_id&source=" . $named_form_id ),
 				'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 			);
 	}
@@ -2975,7 +2972,7 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 			'title'  => 'RSVP confirmation -> Default',
 
-			'href'   => admin_url( "edit.php?title=Form&rsvpcz_default=rsvp_confirm&post_id=$post_id" ), // $formurl,
+			'href'   => admin_url( "edit.php?title=Form&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz_default=rsvp_confirm&post_id=$post_id" ), // $formurl,
 
 			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 
@@ -2996,7 +2993,7 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 			'title'  => 'Confirmation -> Customize',
 
-			'href'   => admin_url( "edit.php?title=Confirmation&rsvpcz=_rsvp_confirm&post_id=$post_id&source=" . $confirm_id ),
+			'href'   => admin_url( "edit.php?title=Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=_rsvp_confirm&post_id=$post_id&source=" . $confirm_id ),
 
 			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 
@@ -3052,7 +3049,7 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 					'title'  => $type . ' ' . $hours . ' hours -> Customize',
 
-					'href'   => admin_url( "edit.php?title=Reminder $hours&rsvpcz=$meta_key&post_id=$post_id&source=" . $reminder->ID ),
+					'href'   => admin_url( "edit.php?title=Reminder $hours&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=$meta_key&post_id=$post_id&source=" . $reminder->ID ),
 
 					'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 
@@ -3061,6 +3058,20 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 			}
 		}
 	}
+
+	$args[] = array(
+
+		'parent' => $parent_tag,
+
+		'id'     => 'payment_options',
+
+		'title'  => 'Payment Options',
+
+		'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=' . $post_id.'#eventpayment' ),
+
+		'meta'   => array( 'class' => 'edit-rsvpmaker-options' ),
+
+	);
 
 	$payconf = get_post_meta( $post_id, 'payment_confirmation_message', true );
 
@@ -3076,7 +3087,7 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 			'title'  => 'Payment Confirmation',
 
-			'href'   => admin_url( "edit.php?title=Payment Confirmation&rsvpcz=$meta_key&post_id=$post_id" ),
+			'href'   => admin_url( "edit.php?title=Payment Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=$meta_key&post_id=$post_id" ),
 
 			'meta'   => array( 'class' => 'rsvpmenu' ),
 
@@ -3112,7 +3123,7 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 				'title'  => 'Payment Confirmation -> Customize',
 
-				'href'   => admin_url( "edit.php?title=Payment Confirmation&rsvpcz=$meta_key&post_id=$post_id&source=$payconf" ),
+				'href'   => admin_url( "edit.php?title=Payment Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=$meta_key&post_id=$post_id&source=$payconf" ),
 
 				'meta'   => array( 'class' => 'rsvpmenu-custom' ),
 
@@ -4281,4 +4292,277 @@ function rsvpmaker_guestparty($rsvp_id, $master = false) {
 		return $guestparty;
 	}
 	return false;
+}
+
+function customize_forms_and_messages() {
+	global $current_user, $wpdb, $rsvp_options;
+	if ( ! empty( $_GET['rsvp_form_new'] ) ) {
+		$id = rsvpmaker_get_form_id( $_GET['rsvp_form_new'] );
+		printf('<div class="notice notice-successs"><p>New form: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		return;
+	}
+
+	if ( ! empty( $_GET['rsvp_form_switch'] ) && ! empty( $_GET['post_id'] ) ) {
+		$id      = (int) $_GET['rsvp_form_switch'];
+		$post_id = (int) $_GET['post_id'];
+		update_post_meta( $post_id, '_rsvp_form', $id );
+		printf('<div class="notice notice-successs"><p>Switched form: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		return;
+	}
+
+	if ( current_user_can( 'manage_options' ) && isset( $_GET['upgrade_rsvpform'] ) ) {
+		$id = upgrade_rsvpform();
+		printf('<div class="notice notice-successs"><p>Upgraded form: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		return;
+	}
+
+	if ( isset( $_GET['rsvpcz_default'] ) && isset( $_GET['post_id'] ) ) {
+		$meta_key = sanitize_text_field($_GET['rsvpcz_default']);
+		$post_id  = (int) $_GET['post_id'];
+		$id       = $rsvp_options[ $meta_key ];
+		update_post_meta( $post_id, '_' . $meta_key, $id );
+		printf('<div class="notice notice-successs"><p>Switched to default form: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		return;
+	}
+
+	if ( isset( $_GET['rsvpcz'] ) && isset( $_GET['post_id'] ) ) {
+		$meta_key = sanitize_text_field($_GET['rsvpcz']);
+		$parent   = (int) $_GET['post_id'];
+		$title    = sanitize_text_field(stripslashes($_GET['title'])) . ':' . $parent;
+		$content  = '';
+		if ( isset( $_GET['source'] ) ) {
+			$source = (int) $_GET['source'];
+			if ( $source ) {
+				$old     = get_post( $source );
+				$content = ( empty( $old->post_content ) ) ? '' : $old->post_content;
+			}
+		}
+
+		$new['post_title'] = $title;
+
+		$new['post_parent'] = $parent;
+
+		$new['post_status'] = 'publish';
+
+		$new['post_type'] = ( $meta_key == '_rsvp_form' ) ? 'rsvpmaker' : 'rsvpemail';
+
+		$new['post_author'] = $current_user->ID;
+
+		$new['post_content'] = $content;
+
+		$id = wp_insert_post( $new );
+		if ( ! $id ) {
+			return;
+		}
+
+		if ( !empty($source) ) {
+
+			rsvpmaker_copy_metadata( $source, $id );
+		}
+
+		update_post_meta( $parent, $meta_key, $id );
+
+		if ( $meta_key == '_rsvp_form' ) {
+
+			update_post_meta( $id, '_rsvpmaker_special', 'RSVP Form' );// important to make form blocks available
+			printf('<div class="notice notice-successs"><p>Custom form created: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		} else {
+			update_post_meta( $id, '_rsvpmaker_special', $title );
+			printf('<div class="notice notice-successs"><p>%s created: <a href="%s">Edit</a></p></div>',$title,admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		}
+		return;
+	}
+
+	if ( isset( $_GET['customize_rsvpconfirm'] ) ) {
+
+		$parent = (int) $_GET['post_id'];
+
+		$source = (int) get_post_meta( $parent, '_rsvp_confirm', true );
+
+		$old = get_post( $source );
+
+		if ( $old->post_parent ) { // false for default message
+
+			$id = $old->ID; // if link called after custom post already created
+
+		} elseif ( $old ) {
+
+			$new['post_title'] = 'Confirmation:' . $parent;
+
+			$new['post_parent'] = $parent;
+
+			$new['post_status'] = 'publish';
+
+			$new['post_type'] = 'rsvpemail';
+
+			$new['post_author'] = $current_user->ID;
+
+			$new['post_content'] = $old->post_content;
+
+			$id = wp_insert_post( $new );
+
+			if ( $id ) {
+
+				update_post_meta( $parent, '_rsvp_confirm', $id );
+			}
+
+			update_post_meta( $id, '_rsvpmaker_special', 'Confirmation Message' );
+
+		}
+		printf('<div class="notice notice-successs"><p>Custom confirmation message created: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		return;
+	}
+
+	if ( isset( $_POST['create_reminder_for'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+		$parent  = $post_id = (int) $_POST['create_reminder_for'];
+		$event   = get_post( $post_id );
+		$subject = $event->post_title;
+
+		$hours = (int) $_REQUEST['hours'];
+
+		$key = '_rsvp_reminder_msg_' . $hours;
+
+		$copy_from = (int) $_POST['copy_from'];
+
+		$content = '';
+
+		if ( $copy_from ) {
+
+			$copy = get_post( $copy_from );
+
+			$content = $copy->post_content;
+
+		}
+
+		$id = get_post_meta( $parent, $key, true );
+
+		if ( ! $id ) {
+
+			$label = ( $hours > 0 ) ? __( 'Follow Up', 'rsvpmaker' ) : __( 'Reminder', 'rsvpmaker' );
+
+			$title = $label . ': ' . get_the_title( $post_id ) . ' [datetime]';
+
+			$new['post_title'] = $title;
+
+			$new['post_parent'] = $post_id;
+
+			$new['post_status'] = 'publish';
+
+			$new['post_type'] = 'rsvpemail';
+
+			$new['post_author'] = $current_user->ID;
+
+			$new['post_content'] = $content;
+
+			$id = wp_insert_post( $new );
+
+		}
+
+		if ( $id ) {
+
+			update_post_meta( $parent, $key, $id );
+
+			update_post_meta( $id, '_rsvpmaker_special', 'Reminder (' . $hours . ' hours) ' . $subject );
+
+			if ( isset( $_POST['paid_only'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+				update_post_meta( $id, 'paid_only_confirmation', 1 );
+			}
+
+			if ( rsvpmaker_is_template( $post_id ) ) {
+
+				rsvpmaker_template_reminder_add( $hours, $post_id );
+
+				rsvpautorenew_test(); // will add to the next scheduled event associated with template
+
+			} else {
+				$start_time = get_rsvpmaker_timestamp($post_id);
+				rsvpmaker_reminder_cron( $hours, $start_time, $post_id );
+			}
+		}
+
+		printf('<div class="notice notice-successs"><p>Reminder created: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+		return;
+	}
+
+	if ( isset( $_GET['payment_confirmation'] ) ) {
+
+		$parent = (int) $_GET['post_id'];
+
+		$id = get_post_meta( $parent, 'payment_confirmation_message', true );
+
+		$source = ( isset( $_GET['source'] ) ) ? (int) $_GET['source'] : 0;
+
+		if ( empty( $id ) || $source ) {
+
+			$new['post_title'] = 'Payment Confirmation:' . $parent;
+
+			$new['post_parent'] = $parent;
+
+			$new['post_status'] = 'draft';
+
+			$new['post_type'] = 'rsvpemail';
+
+			$new['post_author'] = $current_user->ID;
+
+			if ( $source ) {
+
+				$source_post = get_post( $source );
+
+				$new['post_content'] = $source_post->post_content;
+
+			} else {
+				$new['post_content'] = '';
+			}
+
+			$id = wp_insert_post( $new );
+
+			if ( $id ) {
+				update_post_meta( $parent, 'payment_confirmation_message', $id );
+				update_post_meta( $id, '_rsvpmaker_special', 'Payment Confirmation Message' );			
+				printf('<div class="notice notice-successs"><p>Payment confirmation message created: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+				return;
+			}
+		}
+	}
+
+	if ( isset( $_GET['customize_form'] ) ) {
+
+		$parent = (int) $_GET['post_id'];
+
+		$source = (int) get_post_meta( $parent, '_rsvp_form', true );
+
+		$old = get_post( $source );
+
+		if ( $old->post_parent ) { // false for default form
+
+			$id = $old->ID; // if link called after custom post already created
+
+		} elseif ( $old ) {
+
+			$new['post_title'] = 'RSVP Form:' . $parent;
+
+			$new['post_parent'] = $parent;
+
+			$new['post_status'] = 'publish';
+
+			$new['post_type'] = 'rsvpmaker';
+
+			$new['post_author'] = $current_user->ID;
+
+			$new['post_content'] = $old->post_content;
+
+			remove_all_filters( 'content_save_pre' ); // don't allow form fields to be filtered out
+
+			$id = wp_insert_post( $new );
+
+			if ( $id ) {
+				update_post_meta( $parent, '_rsvp_form', $id );
+				update_post_meta( $id, '_rsvpmaker_special', 'RSVP Form' );
+				printf('<div class="notice notice-successs"><p>Custom form: <a href="%s">Edit</a></p></div>',admin_url( 'post.php?post=' . $id . '&action=edit' ));
+				return;
+			}
+		}
+	}
 }

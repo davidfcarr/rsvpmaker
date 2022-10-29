@@ -224,206 +224,22 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 if ( ! function_exists( 'template_schedule' ) ) {
 
 	function template_schedule( $template ) {
-
-		if ( ! is_array( $template ) ) {
-
-			$template = unserialize( $template );
-		}
-
 		global $post;
-
-		if ( ! isset( $post->ID ) ) {
-
-			$post = (object) array( 'ID' => 0 );
-		}
-
-		global $wpdb;
-
-		global $rsvp_options;
-
-		// backward compatability
-
-		if ( isset( $template['week'] ) && is_array( $template['week'] ) ) {
-
-			$weeks = $template['week'];
-
-			$dows = $template['dayofweek'];
-
-		} else {
-
-			$weeks = array();
-
-			$dows = array();
-
-			$weeks[0] = ( isset( $template['week'] ) ) ? $template['week'] : 0;
-
-			$dows[0] = ( isset( $template['dayofweek'] ) ) ? $template['dayofweek'] : 0;
-
-		}
-
-		// default values
-
-		if ( ! isset( $template['hour'] ) ) {
-
-			$template['hour'] = 19;
-
-			$template['minutes'] = '00';
-
-		}
-
-		$end_time = ( empty( $template['end_time'] ) ) ? '' : $template['end_time'];
-
-		if ( $post->ID ) {
-
-			printf( '<p><a href="%s">%s</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . intval( $post->ID ) ), esc_html( __( 'View/add/update events based on this template', 'rsvpmaker' ) ) );
-		}
-
-		global $wpdb;
-
-		$dayarray  = array( __( 'Sunday', 'rsvpmaker' ), __( 'Monday', 'rsvpmaker' ), __( 'Tuesday', 'rsvpmaker' ), __( 'Wednesday', 'rsvpmaker' ), __( 'Thursday', 'rsvpmaker' ), __( 'Friday', 'rsvpmaker' ), __( 'Saturday', 'rsvpmaker' ) );
-		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ) );
-
-		echo '<p>' . esc_html( __( 'Regular Schedule', 'rsvpmaker' ) ) . ':</p><table id="skedtable"><tr><td>';
-
-		if ( $weeks[0] == 0 ) {
-			$weeks = array(); // clear out any other values
-			$dows  = array();
-		}
-
-		if ( is_array( $weekarray ) ) {
-
-			foreach ( $weekarray as $index => $label ) {
-
-				$class = ( $index > 0 ) ? ' class="regular_sked" ' : '';
-
-				$checked = ( in_array( $index, $weeks ) || ( ( $index == 0 ) && empty( $weeks ) ) ) ? ' checked="checked" ' : '';
-
-				printf( '<div><input type="checkbox" name="sked[week][]" value="%d" id="wkcheck%d" %s %s /> %s<div>', $index, $index, $checked, $class, esc_html( $label ) );
-
+		$sked = get_template_sked( $post->ID );
+		$occur = array('Varies','First','Second','Third','Fourth','Last','Every');
+		$schedule = '';
+		$day = 'tomorrow';
+		foreach($sked as $index => $value) {
+			if(in_array($index,$occur) && $value)
+				$schedule .= ' '.$index;
+			if(strpos($index,'day') && $value) {
+				if($day == 'tomorrow')
+					$day = $index;
+				$schedule .= ' '.$index;
 			}
 		}
-
-		echo '</td><td id="daycolumn">';
-
-		if ( is_array( $dayarray ) ) {
-
-			foreach ( $dayarray as $index => $label ) {
-
-				$checked = ( is_array( $dows ) && ( in_array( $index, $dows ) ) ) ? ' checked="checked" ' : '';
-
-				printf( '<div><input type="checkbox" name="sked[dayofweek][]" value="%d" id="daycheck%d" %s class="days" /> %s<div>', $index, $index, $checked, esc_html( $label ) );
-
-			}
-		}
-
-		echo '</td><tr></table><div id="daymsg"></div>';
-
-		?>
-
-<script>
-
-jQuery(function () {
-
-	jQuery('#wkcheck0').on('click', function () {
-
-		if(this.checked){
-
-		jQuery('#wkcheck1').prop('checked', false);
-
-		jQuery('#wkcheck2').prop('checked', false);
-
-		jQuery('#wkcheck3').prop('checked', false);
-
-		jQuery('#wkcheck4').prop('checked', false);
-
-		jQuery('#wkcheck5').prop('checked', false);
-
-		jQuery('#wkcheck6').prop('checked', false);
-
-		jQuery('#daycheck0').prop('checked', false);
-
-		jQuery('#daycheck1').prop('checked', false);
-
-		jQuery('#daycheck2').prop('checked', false);
-
-		jQuery('#daycheck3').prop('checked', false);
-
-		jQuery('#daycheck4').prop('checked', false);
-
-		jQuery('#daycheck5').prop('checked', false);
-
-		jQuery('#daycheck6').prop('checked', false);
-
-		jQuery('#daycolumn').css('border', 'none');	
-
-		jQuery('#daymsg').html('');
-
-		}
-
-	});
-
-	jQuery('#wkcheck6').on('click', function () {
-
-		if(this.checked){
-
-		jQuery('#wkcheck0').prop('checked', false);
-
-		jQuery('#wkcheck1').prop('checked', false);
-
-		jQuery('#wkcheck2').prop('checked', false);
-
-		jQuery('#wkcheck3').prop('checked', false);
-
-		jQuery('#wkcheck4').prop('checked', false);
-
-		jQuery('#wkcheck5').prop('checked', false);
-
-		}
-
-	});
-
-	jQuery('.regular_sked').on('click', function () {
-
-		if(this.checked){
-
-		jQuery('#wkcheck0').prop('checked', false);
-
-		if(!jQuery('#daycheck0').prop('checked') && !jQuery('#daycheck1').prop('checked') && !jQuery('#daycheck2').prop('checked') && !jQuery('#daycheck3').prop('checked') && !jQuery('#daycheck4').prop('checked') && !jQuery('#daycheck5').prop('checked') && !jQuery('#daycheck6').prop('checked'))
-
-			{
-
-				jQuery('#daycolumn').css('border', 'thin solid red');	
-
-				jQuery('#skedtable td').css('padding', '5px');
-
-				jQuery('#daymsg').html('<em><?php esc_html_e( 'choose one or more days of the week', 'rsvpmaker' ); ?></em>');
-
-			}
-
-		}
-
-	});
-
-	jQuery('.days').on('click', function () {
-
-		if(this.checked){
-
-		jQuery('#daycolumn').css('border', 'none');	
-
-		jQuery('#daymsg').html('');
-
-		}
-
-	});
-
-
-
-});
-
-</script>
-
-
-
+		echo '<p><em>Template: '.$schedule.' (set in editor)</em></p>';
+?>
 <p><?php esc_html_e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="<?php
 				if ( isset( $template['stop'] ) ) {
 					echo esc_attr($template['stop']);}
@@ -439,30 +255,10 @@ jQuery(function () {
 		if ( $auto ) {
 			echo 'checked="checked"';}
 		?>
- /> <?php esc_html_e( 'Automatically add dates according to this schedule', 'rsvpmaker' ); ?></em></p>
-
-		<?php
-
-		$h = $template['hour'];
-
-		$minutes = $template['minutes'];
-
-		$duration = isset( $template['duration'] ) ? $template['duration'] : '';
-
-		$displayminutes = $displayhour = '';
-
-		$endtime = rsvpmaker_strtotime($h.':'.$minutes.' +1 hour');
-
-		?>
-<div><label>Time</label> <input type="time" id="sql-time" name="sked[time]" value="<?php echo esc_attr( $h . ':' . $minutes ); ?>" > <span id="endtimespan"> to <input name="sked[end]" type="time" class="rsvpendtime" id="rsvpendtime" value="<?php echo rsvpmaker_date('H:i:s',$endtime) ?>"> </span> </div>
-<div id="template-time-error"></div>
-		<?php
-
-		rsvpmaker_duration_select( 'sked[duration]', $template, $h . ':' . $minutes, 0 );
-
-	}
+ /> <?php esc_html_e( 'Automatically add dates according to schedule', 'rsvpmaker' ); ?></em></p>
+<?php
+}
 } // end template schedule
-
 
 function rsvpmaker_sanitize_array_vars($array) {
 	if(!is_array($array))
@@ -592,7 +388,7 @@ function get_confirmation_options( $post_id = 0, $documents = array() ) {
 		$output              .= sprintf( '<p><a href="%s" target="_blank">Create / Edit Reminders</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=' . $post_id ) );
 		$payment_confirmation = (int) get_post_meta( $post_id, 'payment_confirmation_message', true );
 		if ( empty( $payment_confirmation ) || empty( get_post( $payment_confirmation ) ) ) {
-				$add_payment_conf = admin_url( 'edit.php?title=Payment%20Confirmation&rsvpcz=payment_confirmation_message&post_id=' . $post_id );
+				$add_payment_conf = admin_url( 'edit.php?title=Payment%20Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=payment_confirmation_message&post_id=' . $post_id );
 				$output          .= sprintf( '<p><a href="%s">%s</a></p>', $add_payment_conf, __( 'Add Payment Confirmation Message' ) );
 		} else {
 			$output .= sprintf( '<p><a href="%s">%s</a></p>', admin_url( 'post.php?post=' . $payment_confirmation . '&action=edit' ), __( 'Edit Payment Confirmation Message' ) );
@@ -1091,7 +887,7 @@ if ( isset( $remindyear ) ) {
 
 		?>
 
-<h3>Payment Gateway</h3>
+<h3 id="eventpayment">Payment Gateway</h3>
 
 		<?php
 
@@ -1259,7 +1055,7 @@ if ( isset( $i ) ) {
 
 		}
 
-		$pad = ( $start < 3 ) ? 5 : 1;
+		$pad = 1;//( $start < 2 ) ? 2 : 1;
 
 		for ( $i = $start; $i < ( $start + $pad ); $i++ ) {
 
@@ -1396,6 +1192,23 @@ if ( isset( $i ) ) {
 	<div id="morecodes"></div>
 
 <p><a id="add_codes" href="#">+ <?php esc_html_e( 'More Codes', 'rsvpmaker' ); ?></a></p>
+
+<?php
+printf('<h3>%s</h3>',__('Payment Confirmation','rsvpmaker'));
+$payment_confirmation = (int) get_post_meta($post->ID,'payment_confirmation_message',true);
+$confirm_on_payment = get_post_meta($post->ID,'_rsvp_confirmation_after_payment',true);
+printf('<p>Delay email confirmation until after payment <input type="radio" name="setrsvp[confirmation_after_payment]" value="1" %s /> YES  <input type="radio" name="setrsvp[confirmation_after_payment]" value="0" %s /> NO </p>',($confirm_on_payment) ? 'checked="checked"' : '' ,(!$confirm_on_payment) ? 'checked="checked"' : '' );
+if($payment_confirmation)
+{
+	$pconf = get_post($payment_confirmation);
+	echo (empty($pconf->post_content)) ? '<p>[not set]</p>' : $pconf->post_content;
+	printf('<p><a href="%s">Edit</a></p>',admin_url('post.php?post='.$payment_confirmation.'&action=edit'));
+}
+else {
+	printf('<p><a href="%s">Add</a></p>',admin_url('edit.php?title=Payment%20Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=payment_confirmation_message&post_id='.$post->ID));
+}
+?>
+<p><em>Used to share information only paid attendees are entitled to, such as login details for a paid online training event.</em></p>
 
 <script type="text/javascript">	
 

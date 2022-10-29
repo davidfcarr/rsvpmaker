@@ -14,7 +14,7 @@ const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
 const { Panel, PanelBody, PanelRow } = wp.components;
 //import {TemplateTextControl} from './template-settings.js';  
 
-import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaFormToggle} from './metadata_components.js';
+import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaFormToggle, MetaEndDateTimeControl} from './metadata_components.js';
 
 function related_link() {
 	if(rsvpmaker_ajax && rsvpmaker_ajax.special)
@@ -41,9 +41,9 @@ const PluginRSVPMaker = () => {
         >
 { /* <MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
  */
-(!rsvpmaker_ajax.special && !rsvpmaker_ajax.template_msg && <div>
+((rsvpmaker.post_type == 'rsvpmaker') && <div>
 <MetaDateControl metaKey='_rsvp_dates' />
-<MetaEndDateControl type="date" statusKey="_firsttime" timeKey="_endfirsttime" />
+<MetaEndDateTimeControl />
 </div>
 )}
 {((rsvpmaker.post_type == 'rsvpmaker_template') && <div>

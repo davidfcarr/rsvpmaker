@@ -130,7 +130,7 @@ $args = array(
 		   return current_user_can('edit_posts');
 	   }
    );
-	$date_fields = array('_rsvp_dates','_firsttime'); 
+	$date_fields = array('_rsvp_dates','_firsttime','_rsvp_end_date'); 
 	foreach($date_fields as $field)
 		register_meta( 'post', $field, $args );	
 	$args = array(
@@ -210,6 +210,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 	$template_id = 0;
 	if(is_admin() && (($post_type == 'rsvpmaker') || ($post_type == 'rsvpmaker_template')) ) //&& ( (isset($_GET['action']) && $_GET['action'] == 'edit') || strpos($_SERVER['REQUEST_URI'],'post-new.php') ) )
 		{
+		
 		$projected_label = '';
 		$projected_url = '';
 		$template_label = '';
@@ -362,6 +363,12 @@ function rsvpmaker_block_cgb_editor_assets() {
 		array( 'wp-edit-blocks' ), // Dependency to include the CSS after it.
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.editor.build.css' )
 	);
+	if(($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template'))
+	wp_enqueue_style(
+		'rsvpmaker_fullscreen', // Handle.
+		plugins_url( 'src/block/fullscreen.css', dirname( __FILE__ ) ), // Block editor CSS.
+		array( 'wp-edit-blocks' ), '1.0' );
+
 } // End function rsvpmaker_block_cgb_editor_assets().
 
 // Hook: Editor assets.

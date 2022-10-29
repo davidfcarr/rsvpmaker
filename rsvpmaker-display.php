@@ -2536,7 +2536,10 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 		}
 		$dateblock .= '<p><em>Template '.$schedule.' displayed using '.$day."'s date</em> <br />" . sprintf( '<a href="%s">%s</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $post_id ), __( 'Create/update events from template', 'rsvpmaker' ) );
 		$t = rsvpmaker_strtotime( $day.' ' . $sked['hour'] . ':' . $sked['minutes'] );
-		$endt = rsvpmaker_strtotime( $day.' ' . $sked['end'] );
+		if(!empty($sked['end']))
+			$endt = rsvpmaker_strtotime( $day.' ' . $sked['end'] );
+		else
+			$endt = $t + HOUR_IN_SECONDS;
 		$eventrow = (object) array('date' => rsvpmaker_date('Y-m-d H:i:s',$t),'enddate' => rsvpmaker_date('Y-m-d H:i:s',$endt));
 	}
 	else {
