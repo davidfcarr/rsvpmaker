@@ -4613,6 +4613,7 @@ if(isset($_GET['t']))
 printf('<p><em>%s</em></p>',__('Start by entering an event title and date or schedule details. A draft event post will be created and loaded into the editor.'));
 printf('<form id="rsvpmaker_setup" action="%s" method="post"><input type="hidden" name="template" value="%d">', admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'),$template);
 echo '<h1 style="font-size: 20px;">Title: <input type="text" name="rsvpmaker_new_post" style="font-size: 20px; width: 60%" value="'.$title.'" /></h1>';
+printf('<div style="float:right; width: 400px;margin-left: 20px;"><p>Once an event post is created, you can set options including confirmation and reminder messages from the black "admin bar" menu at the top of the screen and from the editor sidebar accessed by clicking on the calendar icon.</p><img src="%s" style="width: 400px" /></div>',trailingslashit(plugin_dir_url( __FILE__ )).'images/event-options-menu-sidebar.png');
 draw_eventdates();
 if(isset($_GET['t']))
 	echo '<p><em>'.__('Event will inherit defaults from template for RSVPs, date format options.','rsvpmaker').'</em></p>';
@@ -4667,10 +4668,44 @@ $o .= sprintf('<option value="%d">%s</option>',esc_attr($form_id),esc_html($labe
 printf('<p class="rsvp_form_select"><label>%s</label> <select name="rsvp_form">%s</select></p>',__('RSVP Form','rsvpmaker'),$o);
 
 }
+?>
+<div id="priceper"></div>
+<p><a href="#" id="add_blanks">Add Price(s)<a></p>
+<?php
 rsvpmaker_nonce();
 submit_button();
 echo '</form></div>';
-	
+
+?>
+<script type="text/javascript">	
+
+jQuery(document).ready(function($) {
+
+var blankcount = 0;
+
+var lastblank = 0;
+
+var blank = '<div class="pricelabel"><?php esc_html_e( 'Units', 'rsvpmaker' ); ?>:</div><div class="pricevalue"><input name="unit[]" value="Tickets" /> </div><div class="pricelabel">@ Price:</div><div class="pricevalue"><input name="price[]" value="" /> USD	</div><div class="pricelabel">Deadline (optional):</div><div class="pricevalue"><input name="price_deadline[]" value="" placeholder="2022-10-30 23:59:00" /></div><div class="pricelabel">Multiple Admissions:</div><div class="pricevalue"><input name="price_multiple[]" value="1" /><br /><em>Example: If the price is for a table of 8, enter "8"</em></div>';
+$('#add_blanks').click(function(event){
+event.preventDefault();
+var newblank = '<' + 'div class="priceblock" id="blank_'+blankcount+'">' + blank +'</div>';
+if(blankcount > 0)
+	newblank = newblank.replace('Tickets','');
+else {
+	$('#priceper').append('<h3>Event Pricing - <a target="_blank" href="https://rsvpmaker.com/knowledge-base/setting-event-pricing/">Help</a></h3><p><input type="radio" name="setrsvp[count_party]" value="1" checked="checked" > Multiply price times size of party<br /><input type="radio" name="setrsvp[count_party]" value="0"> Let user specify number of admissions per category</p><p>Optionally, you can add a time limit on specific prices, if for example you are offering "early bird" pricing on registration, after which the price goes up. Enter a full date and time. Example: 2022-10-30  23:59:00 or October 30, 2022 11:59 pm for midnight tonight. For additional options you can set later, such as discount coupon codes and payment confirmation messages, see the Payment section under RSVP / Event Options.</p>');
+	$('#add_blanks').html('Add another price');
+}
+
+blankcount++;
+
+$('#priceper').append(newblank);
+
+});
+
+});
+</script>
+<?php
+
 	if(isset($_GET['t']))
 		return;
 
