@@ -6264,8 +6264,14 @@ ORDER BY meta_value LIMIT 0,100";
 			printf('%s %s / ',$s['name'],rsvpmaker_date('l F jS, Y',$t));
 		echo '<p>';
 
-		if($_GET['autorenew'])
+		if(isset($_GET['autorenew']))
 			auto_renew_project ($_GET['autorenew'], true);
+		else {
+			foreach ( $templates as $template ) {
+				$url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&autorenew='.$template->ID);
+				printf('<p><a href="%s">Auto renew %s</a></p>',$url,$template->post_title);
+			}
+		}
 		?>
 
 </div>
@@ -6317,7 +6323,6 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 	function rsvp_template_checkboxes( $t ) {
 
-		auto_renew_project($t,true);
 		global $wpdb;
 
 		global $current_user,$rsvp_options;

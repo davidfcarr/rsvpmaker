@@ -3195,12 +3195,10 @@ if(!empty($sofar))
 if($fts > (time() + (2 * MONTH_IN_SECONDS)) )
 	return; // cancel if more than 2 months worth of events in system
 $sked = get_template_sked($template_id);
-echo 'template sked';
-print_r($sked);
-$hour = str_pad($sked['hour'],2,'0',STR_PAD_LEFT);
-$minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
 if(!isset($sked["week"]))
 	return;
+$hour = str_pad($sked['hour'],2,'0',STR_PAD_LEFT);
+$minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
 $added = ($fts) ? sprintf('<p>In addition to previously published dates ending %s</p>',rsvpmaker_date($rsvp_options['long_date'],$fts))."\n" : '';
 $projected = rsvpmaker_get_projected($sked);
 $htext = '';
