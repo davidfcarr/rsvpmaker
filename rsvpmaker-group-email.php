@@ -1094,7 +1094,7 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 		}
 		$nameparts = explode('-',$eparts[0]);
 		$message_blog_id = array_search($nameparts[0],$hosts_and_subdomains['subdomains']);
-		if($message_blog_id) {
+		if($message_blog_id && ($eparts[1] == $hosts_and_subdomains['basedomain'])) {
 			$slug = (empty($nameparts[1])) ? 'members' : $nameparts[1];
 			return array('slug' => $slug,'blog_id' => $message_blog_id, 'forwarder' => $email);
 		}	

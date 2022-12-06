@@ -6226,9 +6226,47 @@ ORDER BY meta_value LIMIT 0,100";
 				printf( '<p>Template %d also shows date %s</p>', $template->ID, esc_html( $date ) );
 			}
 		}
+
+		if(isset($_POST['holiday_include'])) {
+			foreach($_POST['holiday_include'] as $index) {
+				if($_POST['name'][$index] && $_POST['schedule'][$index]) {
+					$h[] = array('name' => sanitize_text_field(stripslashes($_POST['name'][$index])),'schedule' => sanitize_text_field($_POST['schedule'][$index]),'default' => isset($_POST['default'][$index]),'overflow' => sanitize_text_field($_POST['overflow'][$index]));
+				}
+			}
+			update_option('rsvpmaker_holidays',$h);
+		}
+		printf('<h3 id="holidays">Holidays and Blackout Dates (<a href="%s">Customize</a>)</h3>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&setholidays=1#holidays'));
+		if(isset($_GET['setholidays'])) {
+		echo '<p>Schedule field can be a specific date like "December 25", a description like "Third Thursday of November" or a date range like "July 1 to August 31"</p>';
+		echo '<p>Set the Adjacent day rule if (a) the holiday sometimes falls on a weekend and is observed the Friday before or Monday after or (b) the day after the holiday is also a day off for your organization (example: the day after Thanksgiving).</p>';
+		echo '<p>The defaults are based on U.S. federal holidays but can be customized for other regions and traditions.</p>';
+		printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list#holidays'));
+		$schedule = rsvpmakerDefaultHolidays();
+		$schedule[] = array('name' => '','schedule' => '', 'default' => false, 'overflow' => '');
+		$schedule[] = array('name' => '','schedule' => '', 'default' => false, 'overflow' => '');
+		$schedule[] = array('name' => '','schedule' => '', 'default' => false, 'overflow' => '');
+		$schedule[] = array('name' => '','schedule' => '', 'default' => false, 'overflow' => '');
+		foreach($schedule as $index => $s) {
+			$isdefault = ($s['default']) ? ' checked="checked" ' : '';
+			printf('<p>Name<br><input type="text" name="name[%d]" value="%s"><br>Schedule<br><input type="text" name="schedule[%d]" value="%s"> 
+			<br>Adjacent day rule: <select name="overflow[%d]"><option value="%s">%s</option><option value="weekend">Monday/Friday if falls on weekend</option><option value="nextday">Next day</option></select>
+			<br><input type="checkbox" name="holiday_include[]" value="%d" checked="checked"> include <input type="checkbox" name="default[%d]" value="1" %s> block by default</p>',
+			$index,$s['name'],$index,$s['schedule'],$index,$s['overflow'],$s['overflow'],$index,$index,$isdefault);
+		}
+		submit_button( __( 'Set Holidays and Blackout Dates', 'rsvpmaker' ) );
+		rsvpmaker_nonce();
+		echo '</form>';		
+		}
+
+		$holidays = commonHolidays();
+		echo '<p><strong>Current list</strong> ';
+		foreach($holidays as $t => $s)
+			printf('%s %s / ',$s['name'],rsvpmaker_date('l F jS, Y',$t));
+		echo '<p>';
+
+		if($_GET['autorenew'])
+			auto_renew_project ($_GET['autorenew'], true);
 		?>
-
-
 
 </div>
 
@@ -6279,6 +6317,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 	function rsvp_template_checkboxes( $t ) {
 
+		auto_renew_project($t,true);
 		global $wpdb;
 
 		global $current_user,$rsvp_options;
@@ -6397,7 +6436,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 		global $current_user;
 
 		$sched_result = get_events_by_template( $t );
-
+		$holidays = commonHolidays();
 		$add_date_checkbox = $updatelist = $editlist = $nomeeting = '';
 
 		if ( $sched_result ) {
@@ -6405,7 +6444,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 			foreach ( $sched_result as $index => $sched ) {
 
 				$thistime = rsvpmaker_strtotime( $sched->datetime );
-
+				$holiday_check = rsvpmaker_holiday_check($thistime,$holidays);
 				$fulldate = rsvpmaker_date( $rsvp_options['long_date'] . ' ' . $rsvp_options['time_format'], $thistime );
 
 				$a = ( $index % 2 ) ? '' : 'alternate';
@@ -6459,7 +6498,6 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 				$schedoptions = sprintf( ' (<a href="%s">Options</a>)', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=' ) . $sched->ID );
 
 				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="update_from_template" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $timechange, $edit, $sched->postID, $d, rsvpmaker_date( 'F d, Y', $thistime ), get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft . $schedoptions );
-
 				$template_update = get_post_meta( $sched->postID, '_updated_from_template', true );
 
 				if ( ! empty( $template_update ) && ( $template_update != $sched->post_modified ) ) {
@@ -6470,8 +6508,8 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 				// $sametime_events
 				$mod        .= rsvpmaker_sametime( $sched->datetime, $sched->ID );
-				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s</p>', $a, $sched->postID, __( 'Update', 'rsvpmaker' ), $sched->post_title . $ifdraft, $fulldate, $mod, $timechange );
-
+				$hwarn = ($holiday_check) ? $holiday_check['hwarn'] : '';
+				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="update_from_template" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s %s</p>', $a, $sched->postID, __( 'Update', 'rsvpmaker' ), $sched->post_title . $ifdraft, $fulldate, $hwarn, $mod, $timechange );
 			}
 		}
 
@@ -6516,6 +6554,9 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 					continue;
 				}
+
+				$holiday_check = rsvpmaker_holiday_check($ts,$holidays);
+				$hwarn = ($holiday_check) ? $holiday_check['hwarn'] : '';
 
 				if ( empty( $nomeeting ) ) {
 					$nomeeting = '';
@@ -6648,7 +6689,9 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 			</select>
 
 			<input type="text" name="recur_title[<?php echo esc_attr($i); ?>]" value="<?php echo esc_html( $post->post_title ); ?>" >
-				<?php echo rsvpmaker_sametime( rsvpmaker_date( 'Y-m-d H:i:s', $ts ) ); ?>
+				<?php echo rsvpmaker_sametime( rsvpmaker_date( 'Y-m-d H:i:s', $ts ) );
+				echo $hwarn;
+				?>
 </div>
 
 				<?php

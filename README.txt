@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.1
-Stable tag: 9.8.7
+Tested up to: 6.1.1
+Stable tag: 9.9.1
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
@@ -124,7 +124,22 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
-= 9.8.7 =
+= 9.9.2 =
+
+* Added a check for holidays that may overlap with a recurring event schedule. Administrators can customize the list of holidays observed.
+* Fixed an issue with HTML email centering not working on Outlook.
+
+
+= 9.9.1 =
+
+* Removed function for automatically addding single-rsvpmaker block template (causing more problems than it solved)
+
+= 9.8.9 =
+
+* Better event display on archive pages
+* PayPal code fix
+
+= 9.8.8 =
 
 * Option to set pricing on the event setup screen.
 * Screenshot showing where to find configuration options from within the editor.

@@ -2,7 +2,7 @@
 
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\SandboxEnvironment;
-use PayPalCheckoutSdk\Core\PayPalEnvironment;
+use PayPalCheckoutSdk\Core\ProductionEnvironment;
 
 class RSVPMakerPayPalClient
 {
@@ -32,7 +32,7 @@ class RSVPMakerPayPalClient
         else {
             $clientId = getenv("CLIENT_ID") ?: $paypal_rest_keys['client_id'];
             $clientSecret = getenv("CLIENT_SECRET") ?: $paypal_rest_keys['client_secret'];
-            return new PayPalEnvironment($clientId, $clientSecret);    
+            return new ProductionEnvironment($clientId, $clientSecret);    
         }
     }
 }

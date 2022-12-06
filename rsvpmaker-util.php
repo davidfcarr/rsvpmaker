@@ -1179,6 +1179,16 @@ function fix_enddatetime( $enddatetime, $date, $post_id ) {
 	return $enddatetime;
 }
 
+function rsvpmaker_excerpt_filter($excerpt) {
+	global $post;
+	if(('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type)) {
+		$block = rsvp_date_block($post->ID);
+		$excerpt = $block['dateblock'];// htmlentities(var_export($block,true)); //get_rsvp_date($post->ID);
+		$excerpt .= ' '.substr(strip_tags($post->post_content),0,200) . ' ....';	
+	}
+	return $excerpt;
+}
+
 function rsvpmaker_excerpt( $post ) {
 	global $rsvp_options, $post;
 	$rsvp_on = get_post_meta( $post->ID, '_rsvp_on', true );
@@ -4005,36 +4015,6 @@ function rsvphoney_ui($return = false) {
 function rsvphoney_login() {
 	if(!empty($_POST['extra_special_discount_code']))
 		rsvphoney_login_now();
-}
-
-function rsvpmaker_single_block_template() {
-	global $rsvp_template_done;
-	if(!function_exists('get_block_templates') || $rsvp_template_done)
-		return;
-	$rsvp_template_done = true; // don't do twice
-	$templates = get_block_templates();
-	foreach($templates as $template) {
-		if($template->slug == 'single') {
-			$rsvpmaker_content = $template->content;
-			$theme = $template->theme;
-		}
-		if($template->slug == 'single-rsvpmaker') {
-			return; // if already exists, don't add
-		}
-	}
-
-	if(!empty($rsvpmaker_content)) // found existing template, not stopped by existing rsvpmaker template
-	{
-		$rsvpmaker_content = preg_replace('/<[^a-z]+wp:post-(date|author)[^>]+>/','',$rsvpmaker_content);
-		$new['post_name'] = 'single-rsvpmaker';
-		$new['post_type'] = 'wp_template';
-		$new['post_status'] = 'publish';
-		$new['post_excerpt'] = 'Single event from RSVPMaker';
-		$new['post_title'] = 'RSVPMaker Single';
-		$new['post_content'] = $rsvpmaker_content;
-		$post_id = wp_insert_post($new);
-		wp_add_object_terms($post_id,$theme,'wp_theme');
-	}
 }
 
 add_action('admin_init','rsvpmaker_number_events_post',1);

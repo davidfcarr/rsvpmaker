@@ -171,4 +171,4 @@ function rsvpmaker_filter_debug() {
 	exit;
 }
 
-add_action('after_switch_theme','rsvpmaker_single_block_template');
+add_filter('get_the_excerpt','rsvpmaker_excerpt_filter',1);

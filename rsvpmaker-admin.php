@@ -3195,14 +3195,16 @@ if(!empty($sofar))
 if($fts > (time() + (2 * MONTH_IN_SECONDS)) )
 	return; // cancel if more than 2 months worth of events in system
 $sked = get_template_sked($template_id);
+echo 'template sked';
+print_r($sked);
 $hour = str_pad($sked['hour'],2,'0',STR_PAD_LEFT);
 $minutes = str_pad($sked['minutes'],2,'0',STR_PAD_LEFT);
-	
-//printf('<pre>%s</pre>',var_export($sked,true));
 if(!isset($sked["week"]))
 	return;
 $added = ($fts) ? sprintf('<p>In addition to previously published dates ending %s</p>',rsvpmaker_date($rsvp_options['long_date'],$fts))."\n" : '';
 $projected = rsvpmaker_get_projected($sked);
+$htext = '';
+$holidays = commonHolidays();
 if($projected)
 foreach($projected as $i => $ts)
 {
@@ -3210,24 +3212,37 @@ if(($ts < current_time('timestamp')))
 	continue; // omit dates past
 if(isset($fts) && $ts <= $fts)
 	continue;
+$holiday_check = rsvpmaker_holiday_check($ts,$holidays);
+$hthis = '';
+if($holiday_check) {
+	if($holiday_check['default']) {
+		$htext .= '<p>'.$holiday_check['hwarn']."</p>\n";
+		continue;
+	}
+	$htext .= '<p>'.$holiday_check['hwarn']."</p>\n";
+	$hthis = $holiday_check['hwarn'];
+}
 $post = get_post($template_id);
 $date = rsvpmaker_date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
-$added .= add_rsvpmaker_from_template($post, $sked, $date, $ts);
+$added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 } // end for loop
 
 if($notify && !empty($added))
 	{
 		$admin = get_option('admin_email');
 		$mail['subject'] = __('Dates added for '.$post->post_title,'rsvpmaker');
-		$mail['html'] = "<p>Dates added according to recurring event schedule.</p>\n".$added;
+		if(!empty($htext)) 
+			$mail['subject'] .= ' - check overlap with holidays';
+		$mail['html'] = "<p>Dates added according to recurring event schedule.</p>\n".$added.$htext;
 		$mail['to'] = $admin;
 		$mail['from'] = $admin;
 		$mail['fromname'] = get_bloginfo('name');
+		echo $mail['html'];
 		rsvpmailer($mail);
 	}
 }
 
-function add_rsvpmaker_from_template($post, $template, $date, $ts) {
+function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') {
 	global $wpdb, $rsvp_options;
 	if($post->post_status != 'publish')
 		return;
@@ -3256,7 +3271,7 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts) {
 			if($post_id = wp_insert_post( $my_post ) )
 				{
 				$prettydate = rsvpmaker_date($rsvp_options['long_date'],$ts);
-				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> </p>',$prettydate,get_permalink($post_id),__('View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),__('Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),__('Trash','rsvpmaker'));
+				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> %s</p>',$prettydate,get_permalink($post_id),__('View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),__('Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),__('Trash','rsvpmaker'),$hthis);
 				add_rsvpmaker_date($post_id,$date,$duration);				
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$upts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);

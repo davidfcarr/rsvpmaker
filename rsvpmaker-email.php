@@ -5440,6 +5440,9 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 		$html = rsvpmaker_youtube_email($html);
 	$html = rsvpmail_filter_style($html);
 	$html = str_replace('loading="lazy"','',$html);
+	$html = preg_replace('/<(figure|figcaption)/','<div',$html);
+	$html = preg_replace('/<\/(figure|figcaption)/','</div',$html);
+
 	$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
 	$html = preg_replace('/<img [^>]+data-lazy-src[^>]+>/m','',$html);
 	$html = preg_replace('/<\/{0,1}noscript>/','',$html);

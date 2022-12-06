@@ -1730,7 +1730,7 @@ function rsvpmaker_archive_pages( $query ) {
 		return;
 	}
 
-	if ( is_archive() && isset( $query->query['post_type'] ) && ( $query->query['post_type'] == 'rsvpmaker' ) ) {
+	if ( is_archive() && $query->is_main_query() && isset( $query->query['post_type'] ) && ( $query->query['post_type'] == 'rsvpmaker' ) ) {
 
 		add_filter( 'posts_join', 'rsvpmaker_join' );
 
@@ -1750,7 +1750,7 @@ function rsvpmaker_archive_pages( $query ) {
 		}
 	}
 
-	if ( is_archive() && ! empty( $query->query['rsvpmaker-type'] ) ) {
+	if ( is_archive() && $query->is_main_query() && ! empty( $query->query['rsvpmaker-type'] ) ) {
 
 		add_filter( 'posts_join', 'rsvpmaker_join' );
 
@@ -1768,6 +1768,21 @@ function rsvpmaker_archive_pages( $query ) {
 
 			add_filter( 'posts_request', 'rsvpmaker_examine_query' );
 		}
+	}
+
+	if(is_archive() && !$query->is_main_query() ) {
+
+		remove_filter( 'posts_join', 'rsvpmaker_join' );
+
+		remove_filter( 'posts_groupby', 'rsvpmaker_groupby' );
+
+		remove_filter( 'posts_distinct', 'rsvpmaker_distinct' );
+
+		remove_filter( 'posts_fields', 'rsvpmaker_select' );
+
+		remove_filter( 'posts_where', 'rsvpmaker_where' );
+
+		remove_filter( 'posts_orderby', 'rsvpmaker_orderby' );
 	}
 
 }
