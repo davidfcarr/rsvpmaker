@@ -128,7 +128,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 * Added a check for holidays that may overlap with a recurring event schedule. Administrators can customize the list of holidays observed.
 * Fixed an issue with HTML email centering not working on Outlook.
-
+* Also corrected an issue with email forwarding functions (more specific pattern matching).
 
 = 9.9.1 =
 
