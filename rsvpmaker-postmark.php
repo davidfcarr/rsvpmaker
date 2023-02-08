@@ -180,7 +180,6 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     $mpost = get_post($post_id);
     
     $html = rsvpmaker_email_html($mpost,$post_id);
-    $html = rsvpmail_replace_placeholders($html);
     $text = rsvpmaker_text_version($html);
     $mail['Subject'] = do_shortcode($mpost->post_title);
     $mail['MessageStream'] = $message_stream;
@@ -193,9 +192,10 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $fromname = get_bloginfo('name');
     $mail['From'] = rsvpmaker_email_add_name($mail['From'],$fromname);
     $client = new PostmarkClient($postmark_settings_key);
+    /*
     if(!strpos($html,'rmail='))
     	$html = preg_replace_callback('/href="([^"]+)/','add_rsvpmail_arg',$html);		
-
+    */
     foreach($recipients as $index => $to) {
         if(isset($recipient_names[$to]))
             $mail['To'] = rsvpmaker_email_add_name($to,$recipient_names[$to]);
@@ -298,6 +298,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
 		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
         if(!empty($slug_and_id)) {
             $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
+            do_action('rsvpmail_relay_slug_and_id',$slug_and_id,$email,$emailobj);
             foreach($recipients as $index => $email)
                 $recipients[$index] = rsvpmaker_email_add_name($email,'forwarded');
             if($recipients) {

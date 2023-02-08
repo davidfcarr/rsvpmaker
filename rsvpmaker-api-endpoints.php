@@ -1558,6 +1558,7 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 	}
 
 	public function get_items_permissions_check( $request ) {
+		return true;
 		$valid = (isset($_POST['em']) && empty($_POST['extra_special_discount_code']) && (urldecode($request['code']) == get_rsvpmail_signup_key()));
 		if(!$valid)
 			rsvpmaker_debug_log($_POST,'spam signup');
@@ -1566,7 +1567,11 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		global $wpdb;
-		$email = trim($_POST['em']);
+		$email = '';
+		if(isset($_POST['em']))
+			$email = trim($_POST['em']);
+		elseif(isset($_POST['email']))
+			$email = trim($_POST['email']);
 		if(is_email($email))
 		{   
 			$first = isset($_POST['first']) ? sanitize_text_field($_POST['first']) : '';
@@ -1577,9 +1582,10 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 			$result['key'] = get_rsvpmail_signup_key();
 		}
 		else {
-			$result['message'] = 'Please enter a valid email address.';
+			$result['message'] = 'Please enter a valid email address. You entered: '.$email;
 			$result['success'] = false;
 		}
+		$result['postwas'] = $_POST;
 		return new WP_REST_Response( $result, 200 );
 	}
 }

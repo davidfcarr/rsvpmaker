@@ -5225,6 +5225,7 @@ function rsvpmaker_submission_post() {
 	
 		$mail['subject'] = "Event submission: ".$title.' '.$cddate;
 		$mail['html'] = $description.sprintf('<hr />
+		<p>Event date: '.rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t).'</p>
 		<p><a href="%s">Edit / Approve</a></p>
 		<p>Submitted by %s %s / <a href="%s">submission page</a></p>',admin_url('post.php?action=edit&post='.$post_id),esc_html($contact),esc_html($email),esc_url_raw($_POST['pagelink']));
 		$mail['fromname'] = $contact;

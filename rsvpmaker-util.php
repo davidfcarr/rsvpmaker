@@ -1183,7 +1183,7 @@ function rsvpmaker_excerpt_filter($excerpt) {
 	global $post;
 	if(('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type)) {
 		$block = rsvp_date_block($post->ID);
-		$excerpt = $block['dateblock'];// htmlentities(var_export($block,true)); //get_rsvp_date($post->ID);
+		$excerpt = !empty($block['dateblock']) ? $block['dateblock'] : '';// htmlentities(var_export($block,true)); //get_rsvp_date($post->ID);
 		$excerpt .= ' '.substr(strip_tags($post->post_content),0,200) . ' ....';	
 	}
 	return $excerpt;
@@ -3898,6 +3898,9 @@ function rsvpmail_problem_init() {
 function rsvpmail_is_problem($email) {
 	if(strpos($email,'example.com'))
 		return $email.' : example.com blocked';
+	if(!is_email($email))
+		return 'not a valid email';
+	$email = sanitize_text_field($email);
 	global $wpdb;
 	$table = $wpdb->prefix . "rsvpmailer_blocked";
 	$email = trim(strtolower($email));

@@ -3178,6 +3178,7 @@ if(!isset($_REQUEST['rsvpmail_unsubscribe']))
 	return;
 //if they unsubscribed, don't pester them
 setcookie('rsvpmail_subscriber',1,time()+YEAR_IN_SECONDS);
+global $wpdb;
 ?>
 <!doctype html>
 <html>
@@ -3202,7 +3203,7 @@ if(!rsvpmail_contains_email($e))
 else
 	{
 	rsvpmail_add_problem($e,'unsubscribed');
-	echo '<p>'.__('Unsubscribed from website email lists','rsvpmaker').'</p>';
+	echo '<p>'.__('Unsubscribed <strong>'.$e.'</strong> from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
 	$chimp_options = get_option('chimp');
 	if(!empty($chimp_options) && !empty($chimp_options["chimp-key"]))
@@ -3229,6 +3230,16 @@ else
 	do_action('rsvpmail_unsubscribe',$e);
 	}
 }
+if(isset($_POST['change_to'])) {
+	$to = sanitize_text_field($_POST['change_to']);
+	if(is_email($to)) {
+		$native = rsvpmaker_guest_list_lookup_by_email ($e);
+		rsvpmaker_guest_list_add($to,$native->first_name,$native->last_name,$native->segment,0);
+		printf('<p><strong>Important:</strong> Check your email for a message asking you to confirm the new address <strong>%s</strong></p>',$to);
+	}
+	else
+		echo '<p>Error: new email is invalid</p>';
+}
 if(isset($_GET['rsvpmail_unsubscribe']))
 {
 $e = sanitize_text_field(trim($_GET['rsvpmail_unsubscribe']));
@@ -3239,6 +3250,21 @@ $e = sanitize_text_field(trim($_GET['rsvpmail_unsubscribe']));
 <button><?php esc_html_e('Unsubscribe','rsvpmaker'); ?></button>
 </form>
 <?php
+$native = rsvpmaker_guest_list_lookup_by_email ($e);
+if($native) {
+?>
+<h3>Or: Change Email</h3>
+<form method="post" action="<?php echo site_url(); ?>">
+<?php rsvpmaker_nonce(); ?>
+<p>Change From<br>
+<input type="email" name="rsvpmail_unsubscribe" value="<?php echo esc_attr($e); ?>">
+<p>Change To<br>
+<input type="email" name="change_to">
+<button><?php esc_html_e('Change Email','rsvpmaker'); ?></button>
+</form>
+<?php
+}
+
 }
 
 printf('<p>%s <a href="%s">%s</a></p>',__('Continue to','rsvpmaker'),site_url(),site_url());
@@ -4717,6 +4743,14 @@ function rsvpmail_confirm_email($e) {
 	}
 }
 
+function rsvpmaker_guest_list_lookup_by_email ($email) {
+	$email = trim(strtolower($email));
+	global $wpdb;
+	$table = rsvpmaker_guest_list_table();
+	$sql = "SELECT * FROM $table WHERE email='$email' ";
+	return $wpdb->get_row($sql);
+}
+
 function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segment='', $active=1) {
 	$email = trim(strtolower($email));
 	global $wpdb;
@@ -4761,9 +4795,9 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		$confirm = site_url('?rsvpmail_subscribe='.$email);
 		$mail['html'] = sprintf('<p>Please <a href="%s">confirm your subscription</a> to the email list.</p><p>Follow this link to confirm<br><a href="%s">%s</a></p><p>If you did not initiate a subscription request, please ignore this note and accept our apologies.</p>',$confirm,$confirm,$confirm);
 		rsvpmailer($mail);
-		$output .= '<p><em>Please check your email for a message asking you to confirm your subscription.</em></p>';
+		$output .= 'Please check your email for a message asking you to confirm your subscription.';
 		if($exists)
-			$output .=  '<p>Looks like you may have signed up previously but not confirmed your subscription.</p>';
+			$output .=  ' Looks like you may have signed up previously but not confirmed your subscription.';
 	}
 	return $output;
 }
@@ -4889,8 +4923,10 @@ function rsvpmaker_guest_list() {
 		{
 			echo '<div class="notice"><p>Deleting selected emails</p></div>';
 			foreach($_POST['delete'] as $id) {
-				$sql = "delete from $table where id = $id";
-				$wpdb->query($sql);
+				if(is_numeric($id)) {
+					$sql = "delete from $table where id = ".intval($id);
+					$wpdb->query($sql);	
+				}
 			}
 		}
 
@@ -4988,7 +5024,9 @@ function rsvpmaker_guest_list() {
 			echo '</div>';
 			echo '<table class="wp-list-table widefat striped"><tr><th>Delete</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Segment</th><th>Add checked to<br>'.rsvpmaker_email_segments_dropdown('segment',false).'<br></th></tr>';
 			foreach($list as $index => $item) {
-				$prompt = ($item->active) ? '' : '<br><strong>Not confirmed.</strong> <input type="checkbox" name="resend[]" value="'.$item->id.'"> Resend confirmation prompt? <button>Submit</button>';
+				$prompt = rsvpmail_is_problem($item->email) ? '<br><strong>Unsubscribed or Error</strong>' : '';
+				if(empty($prompt))
+					$prompt = ($item->active) ? '' : '<br><strong>Not confirmed.</strong> <input type="checkbox" name="resend[]" value="'.$item->id.'"> Resend confirmation prompt? <button>Submit</button>';
 				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit='.$item->id),$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$item->id);
 			}
 			echo '</table>';
@@ -5412,7 +5450,7 @@ function rsvpmail_replace_placeholders($content,$description='') {
 	$from_options = get_rsvpemail_from_settings();
 	$address = !empty($from_options['mailing_address']) ? $from_options['mailing_address'] : '<strong>NOT SET</strong>';
 	$company = !empty($from_options['company']) ? $from_options['company'] : get_bloginfo('name');
-	$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe=*|EMAIL|*'),$content);
+	$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe=*|EMAIL|*&rmail=1'),$content);
 	$content = str_replace('*|REWARDS|*','',$content);
 	$content = str_replace('*|LIST:DESCRIPTION|*',$description,$content);
 	$content = str_replace('*|LIST:ADDRESS|*',$address,$content);
@@ -5442,19 +5480,21 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 	$html = str_replace('loading="lazy"','',$html);
 	$html = preg_replace('/<(figure|figcaption)/','<div',$html);
 	$html = preg_replace('/<\/(figure|figcaption)/','</div',$html);
-
 	$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
 	$html = preg_replace('/<img [^>]+data-lazy-src[^>]+>/m','',$html);
 	$html = preg_replace('/<\/{0,1}noscript>/','',$html);
-	$html = preg_replace_callback('/href="([^"]+)/','add_rsvpmail_arg',$html);		
+	$html = rsvpmail_replace_placeholders($html);
+	$html = preg_replace_callback('/href="([^"&]+)(")/','add_rsvpmail_arg',$html);		
 	return $html;
 }
 
 function add_rsvpmail_arg($match) {
 	//remove and restore mailchimp coding if present
 	$link = str_replace('*|EMAIL|*','EMAILEMAIL',$match[1]);
-	$link = 'href="'.add_query_arg('rmail','1',$link);
-	return str_replace('EMAILEMAIL','*|EMAIL|*',$link);
+	$link = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe=*|EMAIL|*'),$link);
+	$link = 'href="'.add_query_arg('rmail','1',$link).'"';
+	$link = str_replace('EMAILEMAIL','*|EMAIL|*',$link);
+	return $link;
 }
 
 function rsvpmail_editors_note_ui($post_id) {
@@ -5621,13 +5661,8 @@ form$rand.addEventListener('submit', function(e) {
     body: payload,
     })
     .then(res => res.json())
-    .then(data => showMessage(data))
+    .then(data => alert(data.message))
 })
-function showMessage(data) {
-message$rand.innerHTML = data.message;
-if(data.success)
-form.style.display = 'none';
-}
 </script>";
 }
 
