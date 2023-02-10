@@ -267,8 +267,7 @@ jQuery( document ).ready(
 		var guestlist = '';
 		function format_guestlist(guest) {
 
-			if ( ! guest.first) {
-
+			if ( ! guest.first && !guest.last ) {
 				return;
 			}
 
