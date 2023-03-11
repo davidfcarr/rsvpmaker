@@ -481,6 +481,7 @@ echo esc_html($label);
           function admin_menu()
           {
               add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 17);
+              add_options_page('RSVPMaker (new)', 'RSVPMaker (new)', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin', 18);
           }
           
           
@@ -2963,6 +2964,8 @@ return $filename;
 }
 
 function future_rsvpmakers_by_template($template_id) {
+	if(!$template_id)
+		return false;
 	$ids = array();
 	$sched_result = get_events_by_template($template_id);
 	if($sched_result)
@@ -3158,7 +3161,7 @@ function rsvpmaker_show_debug_log() {
 }
 
 function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
-    if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
+	if (!empty($args[0]) && ( 'edit_post' == $cap || strpos($cap,'rsvpmaker') ) )
     {
         global $wpdb;
 		$post_id = $args[0];

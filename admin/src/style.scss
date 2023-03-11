@@ -1,0 +1,76 @@
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+
+.wp-block-create-block-admin {
+	background-color: #21759b;
+	color: #fff;
+	padding: 2px;
+}
+
+.components-tab-panel__tab-content {
+	clear:both;
+	display: block;
+	background-color: #fff;
+	padding: 10px;
+}
+
+textarea {
+	width: 80%;
+}
+
+.rsvptab {
+	margin-bottom: 200px;
+	min-height: 800px;
+}
+
+#savebuttonwrapper {
+	width: 200px;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+#savebuttonwrapper button {
+	background-color: black;
+	color: white;
+	font-weight: bold;
+	font-size: large;
+}
+
+.rsvp-notification {
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+	color: #fff;
+	padding: 2px;
+	animation-name: fadeOut;
+	animation-delay: 20s;
+	animation-duration: 5s;
+	border: medium solid darkblue;
+	z-index: 10;
+}
+.rsvp-notification-success {
+	background-color: #21759b;
+}
+
+.rsvptab-saving {
+	opacity: 0.2;
+}
+
+#savecontrols {
+	color: #000;
+	background-color: #fff;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	padding: 15px;
+	background-color: #fff;
+	border-top: thick solid #7C2128;
+	width: 100%;
+	opacity: 1;
+	z-index: 200;
+}

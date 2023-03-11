@@ -1642,6 +1642,291 @@ class RSVPMaker_Flex_Form extends WP_REST_Controller {
 	}
 }
 
+class RSVPMaker_Json_Meta extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'json_meta';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $rsvp_options;
+		$post_id = intval($_GET['post_id']);
+		$changes = '';
+			$json = file_get_contents('php://input');
+			$data = json_decode(trim($json));
+			if($data && !current_user_can('edit_post',$post_id))
+				return new WP_REST_Response( array('status' => 'User does not have rights to edit this document'), 401 );
+
+			$changes .= 'data:'.var_export($data,true).' ';	
+			if(isset($data->kv)) {
+				foreach($data->kv as $kv) {
+					$changes .= $kv->key.'='.$kv->value .' ';
+					update_post_meta($post_id,$kv->key,$kv->value);
+				}
+			}
+		$post = get_post($post_id);
+		$_rsvp_confirm = get_post_meta($post_id,'_rsvp_confirm',true);
+		if(empty($_rsvp_confirm)) {
+			$_rsvp_confirm = $rsvp_options['rsvp_confirm'];
+			$confirm_type = 'Default';
+			$cpost = get_post($_rsvp_confirm);
+		}
+		else {
+			$cpost = get_post($_rsvp_confirm);
+			$confirmation_type = ($cpost->post_parent == $post_id) ? '' : 'Inherited';
+		}
+		$excerpt = strip_tags($cpost->post_content);
+		$excerpt = (strlen($excerpt) > 100) ? substr($excerpt, 0, 100).' ...' : $excerpt;	
+		$_meet_recur = (int) get_post_meta($post->ID,'_meet_recur',true);	
+		$form_id = get_post_meta($post->ID,'_rsvp_form',true);
+		if(empty($form_id))
+			$form_id = (int) $rsvp_options['rsvp_form'];
+		$fpost = get_post($form_id);
+		//rsvpmaker_debug_log($form_id);
+		$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$post->ID);
+		$form_customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
+		$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
+		$note = (strpos($fpost->post_content,'name="note"') || strpos($fpost->post_content,'formnote')) ? 'Yes' : 'No';
+		preg_match_all('/\[([A-Za-z0_9_]+)/',$fpost->post_content,$matches);
+		if(!empty($matches[1]))
+		foreach($matches[1] as $match)
+			$fields[$match] = $match;
+		preg_match_all('/"slug":"([^"]+)/',$fpost->post_content,$matches);
+		if(!empty($matches[1]))
+		foreach($matches[1] as $match)
+			$fields[$match] = $match;	
+		$merged_fields = (empty($fields)) ? '' : implode(', ',$fields);
+		$form_fields = sprintf('Fields: %s, Guests: %s, Note field: %s',$merged_fields,$guest,$note);
+		$form_type = '';
+		$form_edit_post = (current_user_can('edit_post',$fpost->ID));
+		$form_edit_post = true;
+		if($fpost->post_parent == 0)
+			$form_type = __('Default','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+		elseif($fpost->post_parent != $post->ID)
+			$form_type = __('Inherited','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+		$form_customize = admin_url('?post_id='. $post_id. '&customize_form='.$fpost->ID);	
+		$meta = array(
+			'editor_base_url' => admin_url('post.php?action=edit&post='),
+			'_rsvp_form' => $form_id,
+			'_meet_recur' => $_meet_recur,//template
+			'form_type' => $form_type,
+			'_rsvp_dates' => get_post_meta($post_id,'_rsvp_dates',true),
+			'_rsvp_end_date' => get_post_meta($post_id,'_rsvp_end_date',true),
+			'_firsttime' => get_post_meta($post_id,'_firsttime',true),//display
+			'_rsvp_on' => intval(get_post_meta($post->ID,'_rsvp_on',true)),
+			'_rsvp_to' => get_post_meta($post->ID,'_rsvp_to',true),
+			'_rsvp_confirm' => $_rsvp_confirm,
+			'confirmation_excerpt' => $excerpt,
+			'confirmation_customize' => admin_url('?post_id='. $post->ID. '&customize_rsvpconfirm='.$_rsvp_confirm.'#confirmation'),
+			'reminders' => admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post->ID),
+			'form_customize' => $form_customize,
+			'form_type' => $form_type,
+			'_rsvp_instructions' => get_post_meta($post_id,'_rsvp_instructions',true),
+			'is12Hour' => strpos($rsvp_options['time_format'],'A') > 0
+        );
+		$rsvpdetails = ['_rsvp_rsvpmaker_send_confirmation_email','_rsvp_confirmation_include_event','_rsvp_count','_rsvp_count_party','_rsvp_yesno','_rsvp_max','_rsvp_login_required','_rsvp_show_attendees','_convert_timezone','_add_timezone'];
+		foreach($rsvpdetails as $key) {
+			$meta[$key] = intval(get_post_meta($post_id,$key,true));
+		if(rsvpmaker_is_template($post_id)) {
+			$tvars = ["Varies",
+			"First",
+			"Second",
+			"Third",
+			"Fourth",
+			"Last",
+			"Every",
+			"Sunday",
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"hour",
+			"minutes",
+			"end"];
+			foreach($tvars as $var) {
+				$key = '_sked_'.$var;
+				$meta[$key] = get_post_meta($post_id,$key,true);
+			}
+			$meta['rsvpautorenew'] = get_post_meta($post_id,'rsvpautorenew',true);	
+		}
+		$meta['form_links'] = get_form_links($post_id, $_meet_recur, 'rsvp_options');
+		$meta['confirmation_links'] = get_conf_links($post_id, $_meet_recur, 'rsvp_options');
+		$meta['related_document_links'] = get_related_documents($post_id);
+		$meta['changes'] = $changes;
+	}
+		return new WP_REST_Response( $meta, 200 );
+	}
+}
+
+class RSVPMaker_Form extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvp_form';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $rsvp_options;
+		$json = file_get_contents('php://input');
+		if(!empty($json)) {
+			$data = json_decode(trim($json));
+			if($data && !current_user_can('manage_options',$post_id))
+				return new WP_REST_Response( array('status' => 'User does not have rights to edit this document'), 401 );	
+		} 
+		$form = get_post($rsvp_options['rsvp_form']);
+		$response['blocksdata'] = parse_blocks($form->post_content);
+		$response['button_style'] = get_post_meta($rsvp_options['rsvp_form'],'rsvp_button_style',true);
+		if(!$response['button_style'])
+			$response['button_style'] = array('color'=>'#ffffff','backgroundColor'=>'#000000','padding'=>'5px');
+		$response['button_label'] = get_post_meta($rsvp_options['rsvp_form'],'rsvp_button_label',true);
+		if(!$response['button_label'])
+			$response['button_label'] = 'RSVP Now';
+		return new WP_REST_Response( $response, 200 );
+	}
+}
+
+class RSVP_Options_Json extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvp_options';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return current_user_can('manage_options');
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $rsvp_options, $current_user;
+		$json = file_get_contents('php://input');
+		$actions = [];
+		$changes = 0;
+		if(!empty($json)) {
+			$data = json_decode(trim($json));
+			if(is_array($data)) {
+				foreach($data as $o) {
+					if(isset($o->type)) {
+						if('option' == $o->type) {
+							update_option($o->key,sanitize_rsvpopt($o->value));
+						}
+						elseif('meta' == $o->type)
+						{
+							update_post_meta($o->post_id,$o->key,sanitize_rsvpopt($o->value));
+						}
+						elseif('action' == $o->type)
+						{
+							$actions[] = $o;//process these at the end
+						}
+						elseif('rsvp_options' == $o->type)
+						{
+							$rsvp_options[$o->key] = sanitize_rsvpopt($o->value);
+							$changes++;
+						}
+					}
+					//else
+						//$rsvp_options[$o->key] = $o->value;
+				}
+			}
+			//else
+				//$rsvp_options[$data->key] = $data->value;
+			if($changes)
+				update_option( 'RSVPMAKER_Options',$rsvp_options );
+			$response = array('changes'=>$changes,'actions'=>$actions,'data'=>$data);
+			return new WP_REST_Response( $response , 200 );	
+		} 
+		$response['rsvp_options'] = $rsvp_options;
+		$response['current_user_id'] = $current_user->ID;
+		$response['current_user_email'] = $current_user->user_email;
+		$response['edit_url'] = admin_url('https://delta.local/wp-admin/post.php?action=edit&post=');
+		$c = get_post($rsvp_options['rsvp_confirm']);
+		$c = ($c && !empty($c->post_content)) ? do_blocks($c->post_content) : '<p>Error retrieving message.</p>';
+		$response['confirmation_message'] = $c;
+		$response['stylesheet_url'] = plugins_url('rsvpmaker/style.css');
+		return new WP_REST_Response( $response, 200 );
+	}
+}
+
+function sanitize_rsvpopt($value) {
+	if(strpos($value,'</'))
+		$value = wp_kses_post($value);
+	elseif(strpos($value,"\n"))
+		$value = sanitize_textarea_field($value);
+	else
+		$value = sanitize_text_field($value);
+	return $value;
+}
+
 add_action('rest_api_init',
 	function () {
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -1700,5 +1985,11 @@ add_action('rest_api_init',
 		$rsignup->register_routes();
 		$flex = new RSVPMaker_Flex_Form();
 		$flex->register_routes();
+		$jm = new RSVPMaker_Json_Meta();
+		$jm->register_routes();
+		$form = new RSVPMaker_Form();
+		$form->register_routes();
+		$ropts = new RSVP_Options_Json();
+		$ropts->register_routes();
 	}
 );

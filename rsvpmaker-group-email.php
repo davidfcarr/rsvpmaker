@@ -177,6 +177,10 @@ function rsvpmaker_relay_queue() {
 			$results = $wpdb->get_results($sql);
 			//print_r($results);
 			//return;
+
+			if(empty($message_description))
+				$message_description = '';
+
 			foreach($results as $row) {
 				$mail['to'] = $row->meta_value;
 				$result = rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );

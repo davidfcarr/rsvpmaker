@@ -12,7 +12,10 @@ function get_rsvpmaker_postmark_options() {
     else
         $postmark_settings = get_option('rsvpmaker_postmark');
     if(empty($postmark_settings))
+    {
+        $postmark_settings = array();
         $postmark_settings['postmark_mode'] = '';
+    }
     elseif(!empty($postmark_settings['enabled']) && !in_array(get_current_blog_id(),$postmark_settings['enabled']))
         $postmark_settings['postmark_mode'] = '';//disable
     elseif(!empty($postmark_settings['sandbox_only']) && in_array(get_current_blog_id(),$postmark_settings['sandbox_only']))

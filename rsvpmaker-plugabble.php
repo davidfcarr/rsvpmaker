@@ -242,7 +242,8 @@ if ( ! function_exists( 'template_schedule' ) ) {
 ?>
 <p><?php esc_html_e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="<?php
 				if ( isset( $template['stop'] ) ) {
-					echo esc_attr($template['stop']);}
+					echo esc_attr($template['stop']);
+				}
 				?>" placeholder="<?php
 		esc_html_e( 'example', 'rsvpmaker' );
 		echo ': ' . date( 'Y' ) . '-12-31';
@@ -2361,7 +2362,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				$rsvpdata['rsvpdate'] = $date;
 
 				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID, false, $rsvp['email'], $rsvp_id );
-
 				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
 				
 				rsvp_notifications_via_template( $rsvp, $rsvp_to, $rsvpdata );

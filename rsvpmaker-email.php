@@ -122,7 +122,7 @@ function rsvpmailer($mail, $description = '') {
 			printf('<p>Attachments: %s</p>',var_export($attachments,true));
 		}
 		else
-			$attachments = NULL;
+			$attachments = false;
 		if(isset($mail["ical"]))
 			{
 			$temp = tmpfile();
@@ -1189,6 +1189,8 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				{
 					$content .= sprintf("<!-- wp:heading -->\n<h2>%s</h2>\n<!-- /wp:heading -->\n",$post->post_title);
 					$block = rsvp_date_block($id);
+					if(!$block)
+						$block['dateblock'] = '';
 					$blockgraph = str_replace('</div><div class="rsvpcalendar_buttons">','<br />',$block['dateblock']);
 					$blockgraph = "<!-- wp:paragraph -->\n<p><strong>".strip_tags($blockgraph,'<br><a>').'</strong></p>'."\n<!-- /wp:paragraph -->";
 					$content .= $blockgraph;
@@ -4752,6 +4754,8 @@ function rsvpmaker_guest_list_lookup_by_email ($email) {
 }
 
 function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segment='', $active=1) {
+	$first_name = sanitize_text_field($first_name);
+	$last_name = sanitize_text_field($last_name);
 	$email = trim(strtolower($email));
 	global $wpdb;
 	$output = '';
