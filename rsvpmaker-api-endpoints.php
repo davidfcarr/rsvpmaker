@@ -1817,21 +1817,61 @@ class RSVPMaker_Form extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
-		global $wpdb, $rsvp_options;
+		global $wpdb, $rsvp_options, $post, $current_user;
 		$json = file_get_contents('php://input');
+		$updated = array();
+		$form_id = (empty($_GET['form_id'])) ? $rsvp_options['rsvp_form'] : intval($_GET['form_id']); 
 		if(!empty($json)) {
-			$data = json_decode(trim($json));
-			if($data && !current_user_can('manage_options',$post_id))
+			if(!current_user_can('manage_options',$post_id))
 				return new WP_REST_Response( array('status' => 'User does not have rights to edit this document'), 401 );	
-		} 
-		$form = get_post($rsvp_options['rsvp_form']);
-		$response['blocksdata'] = parse_blocks($form->post_content);
-		$response['button_style'] = get_post_meta($rsvp_options['rsvp_form'],'rsvp_button_style',true);
-		if(!$response['button_style'])
-			$response['button_style'] = array('color'=>'#ffffff','backgroundColor'=>'#000000','padding'=>'5px');
-		$response['button_label'] = get_post_meta($rsvp_options['rsvp_form'],'rsvp_button_label',true);
-		if(!$response['button_label'])
-			$response['button_label'] = 'RSVP Now';
+			$data = json_decode(trim($json));
+			$output = '';
+			foreach($data->form as $index => $block) {
+				if($block->blockName)
+					$output .= rsvpBlockDataOutput($block, $post_id);
+			}
+			if($data->newForm) {
+					$updated['post_title'] = 'Form:'.$data->newForm;
+					$updated['post_type'] = 'rsvpmaker_form';
+					$updated['post_author'] = $current_user->ID;
+					$updated['post_content'] = $output;
+					$updated['post_status'] = 'publish';
+					$form_id = wp_insert_post($updated);
+					if($data->event_id)
+						update_post_meta($data->event_id,'_rsvp_form',$form_id);
+			}
+			else {
+				$updated['ID'] = $form_id;
+				$updated['post_content'] = $output;
+				$upid = wp_update_post($updated);	
+			}
+		}
+		$form = get_post($form_id);
+		$response['form_id'] = $form_id;
+		$response['form'] = parse_blocks($form->post_content);
+		$response['form_options'] = [];
+		$response['form_options'][] = array('value'=>$rsvp_options['rsvp_form'],'label'=>'Default');
+		$includedform = array($rsvp_options['rsvp_form']);
+		$reusable = get_option('rsvpmaker_forms');
+		if(is_array($reusable))
+		foreach($reusable as $label => $value) {
+			$response['form_options'][] = array('value'=>$value,'label'=>$label);
+			$includedform[] = $value;
+		}
+		$allforms = $wpdb->get_results("select ID, post_title, post_parent from $wpdb->posts WHERE post_type='rsvpmaker_form' ORDER BY ID DESC LIMIT 0, 50");
+		foreach($allforms as $form)
+		{
+			if(!in_array($form->ID,$includedform)) {
+				$label = '';
+				if($form->post_parent) {
+					$parent = get_post($form->post_parent);
+					if($parent && $parent->post_type == 'rsvpmaker_template');
+						$label = ' (from template: '.$parent->post_title.')';
+				}
+				$response['form_options'][] = array('value'=>$form->ID,'label'=>$form->post_title.$label);
+			}
+		}
+		$response['updated'] = $updated;
 		return new WP_REST_Response( $response, 200 );
 	}
 }
@@ -1872,6 +1912,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		$json = file_get_contents('php://input');
 		$actions = [];
 		$changes = 0;
+		$status = [];
 		if(!empty($json)) {
 			$data = json_decode(trim($json));
 			if(is_array($data)) {
@@ -1890,8 +1931,21 @@ class RSVP_Options_Json extends WP_REST_Controller {
 						}
 						elseif('rsvp_options' == $o->type)
 						{
+							$status[] = "rsvp option change $o->key $o->value";
 							$rsvp_options[$o->key] = sanitize_rsvpopt($o->value);
 							$changes++;
+						}
+						elseif('mergearray' == $o->type)
+						{
+							$p = get_option($o->key);
+							if(!$p)
+								$p = array();
+							$changes = (array) $o->value;
+							foreach($changes as $chkey => $change) {
+								if($change && $change != 'set')
+									$p[$chkey] = sanitize_text_field($change);
+							}
+							update_option($o->key,$p);
 						}
 					}
 					//else
@@ -1902,9 +1956,69 @@ class RSVP_Options_Json extends WP_REST_Controller {
 				//$rsvp_options[$data->key] = $data->value;
 			if($changes)
 				update_option( 'RSVPMAKER_Options',$rsvp_options );
-			$response = array('changes'=>$changes,'actions'=>$actions,'data'=>$data);
+			$response = array('changes'=>$changes,'actions'=>$actions,'data'=>$data,'status'=>$status);
 			return new WP_REST_Response( $response , 200 );	
-		} 
+		}
+
+		//if(isset($_GET['tab']) && 'payment' == $_GET['tab'])
+		//{
+			$response['gateways'] = array();
+			$gateways = get_rsvpmaker_payment_options ();
+			foreach($gateways as $gateway)
+			$response['gateways'][] = array('value'=>$gateway,'label'=>$gateway);
+			$response['chosen_gateway'] = get_rsvpmaker_payment_gateway ();
+			$stripe = get_option('rsvpmaker_stripe_keys');
+			if(!is_array($stripe))
+				{
+					$response['stripe']['sk'] = '';
+					$response['stripe']['pk'] = '';
+					$response['stripe']['sandbox_sk'] = '';
+					$response['stripe']['sandbox_pk'] = '';
+					$response['stripe']['mode'] = 'production';
+				}
+			else {
+				if(!empty($stripe['pk']) && !empty($stripe['sk'])) {
+					$response['stripe']['sk'] = 'set';
+					$response['stripe']['pk'] = 'set';	
+				}
+				else {
+					$response['stripe']['sk'] = '';
+					$response['stripe']['pk'] = '';	
+				}		
+				if(!empty($stripe['pk']) && !empty($stripe['sk'])) {
+					$response['stripe']['sandbox_sk'] = 'set';
+					$response['stripe']['sandbox_pk'] = 'set';	
+				}
+				else {
+					$response['stripe']['sandbox_sk'] = '';
+					$response['stripe']['sandbox_pk'] = '';	
+				}		
+				$response['stripe']['mode'] = (empty($stripe['mode'])) ? 'production' : $stripe['mode'];
+			}
+			$pp = get_option('rsvpmaker_paypal_rest_keys');
+			if(!is_array($pp))
+				{
+					$response['paypal']['client_id'] = '';
+					$response['paypal']['client_secret'] = '';
+					$response['paypal']['sandbox_client_id'] = '';
+					$response['paypal']['sandbox_client_secret'] = '';
+					$response['paypal']['sandbox'] = 0;//0 for production
+				}
+			else {
+				if (!empty($pp['client_id']) && !empty($pp['client_secret']))
+				{
+					$response['paypal']['client_id'] = 'set';
+					$response['paypal']['client_secret'] = 'set';
+				}
+				else
+				{
+					$response['paypal']['client_id'] = '';
+					$response['paypal']['client_secret'] = '';
+				}
+				$response['paypal']['sandbox'] = $pp['sandbox'];
+			}	
+		//}
+
 		$response['rsvp_options'] = $rsvp_options;
 		$response['current_user_id'] = $current_user->ID;
 		$response['current_user_email'] = $current_user->user_email;

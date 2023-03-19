@@ -1,5 +1,7 @@
 <?php
 
+
+
 function rsvpmaker_create_post_type() {
 
 	global $rsvp_options;
@@ -116,6 +118,60 @@ function rsvpmaker_create_post_type() {
 		)
 	);
 
+	register_post_type(
+		'rsvpmaker_form',
+		array(
+
+			'labels'             => array(
+
+				'name'          => 'Forms',
+
+				'add_new_item'  => __( 'Add New RSVP Form', 'rsvpmaker' ),
+
+				'edit_item'     => __( 'Edit RSVP Form', 'rsvpmaker' ),
+
+				'new_item'      => __( 'RSVP Form', 'rsvpmaker' ),
+
+				'singular_name' => __( 'RSVP Form', 'rsvpmaker' ),
+
+			),
+
+			'menu_icon'          => 'dashicons-clipboard',
+
+			'public'             => true,
+
+			'can_export'         => false,
+
+			'publicly_queryable' => true,
+
+			'show_ui'            => true,
+
+            'show_in_menu' => 'edit.php?post_type=rsvpmaker', //make submenu
+
+			'query_var'          => true,
+
+			'rewrite'            => array(
+				'slug'       => 'rsvpmaker_form',
+				'with_front' => false,
+			),
+
+			'capability_type'    => 'rsvpmaker',
+
+			'map_meta_cap'       => true,
+
+			'has_archive'        => false,
+
+			'hierarchical'       => false,
+
+			'menu_position'      => 16,
+
+			'supports'           => array( 'title', 'editor', 'author', 'custom-fields', 'revisions' ),
+
+			'show_in_rest'       => true,
+
+		)
+	);
+
 	// Add new taxonomy, make it hierarchical (like categories)
 
 	$labels = array(
@@ -172,6 +228,29 @@ function rsvpmaker_create_post_type() {
 	if ( isset( $current_user ) ) {
 		rsvpmaker_roles();
 	}
+
+	$model_version = 1;
+	if(empty($rsvp_options['model_version']) || $rsvp_options['model_version'] < $model_version) {
+		global $wpdb;
+		$wpdb->query("update $wpdb->posts set post_type='rsvpmaker_form' WHERE post_type='rsvpmaker' AND post_content LIKE '%wp:rsvpmaker/formfield%' ");
+		$rsvp_options['model_version'] = $model_version;
+		update_option('RSVPMAKER_Options',$rsvp_options);
+	}
+
+}
+
+add_filter('the_content','rsvpmaker_form_single');
+
+function rsvpmaker_form_single($content) {
+	global $post;
+	if('rsvpmaker_form' == $post->post_type) {
+		if(current_user_can('edit_post',$post->ID)) {
+			return '<p><em>This form is meant for use as part of an event, but you can edit it here.</em></p><div id="rsvpmaker-single-form" form_id="'.$post->ID.'">Loading form editor ...</div>';
+		}
+		$add_to_top = '<div><h2>Form Preview</h2></div>';
+		$content = $add_to_top."\n".$content;
+	}
+	return $content;
 }
 
 function create_rsvpemail_post_type() {

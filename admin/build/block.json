@@ -16,6 +16,7 @@
   "style": "file:./style-index.css",
   "viewScript": [
     "file:./adminui.js",
-    "rsvpmakeradmin"
+    "file:./single-form.js",
+    "file:./event-options.js"
   ]
 }

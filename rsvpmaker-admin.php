@@ -480,11 +480,10 @@ echo esc_html($label);
           // hook the options page
           function admin_menu()
           {
-              add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 17);
-              add_options_page('RSVPMaker (new)', 'RSVPMaker (new)', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin', 18);
+			add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin', 17);
+			add_options_page('RSVPMaker Email', 'RSVPMaker Email', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 18);
           }
-          
-          
+                    
           // handle plugin options
           function get_options()
           {
@@ -687,15 +686,25 @@ if(isset($_POST['timezone_string']))
 <div class="wrap" style="max-width:950px !important;">
 
     <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
+	<?php if(isset($_GET['legacy'])) {
+		?>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['tab'])) echo 'nav-tab-active'; ?>" href="#calendar"><?php esc_html_e('Calendar Settings','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'security' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#security"><?php esc_html_e('Security','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'payments' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#payments"><?php esc_html_e('Payments','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'email' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#email"><?php esc_html_e('Email &amp; Mailing List','rsvpmaker');?></a>
+		<?php
+	}?>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['legacy']) ) echo 'nav-tab-active'; ?>" href="#email"><?php esc_html_e('Email &amp; Mailing List','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'group_email' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
+	  <?php if(isset($_GET['legacy'])) {
+		?>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'rsvp_forms' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#rsvpforms"><?php esc_html_e('RSVP Forms','rsvpmaker');?></a>
+		<?php
+	}?>
     </h2>
 
     <div id='sections' class="rsvpmaker">
+	<?php if(isset($_GET['legacy'])) {
+		?>
     <section id="calendar" class="rsvpmaker">
 <?php
 $sidebar = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
@@ -1135,6 +1144,9 @@ echo default_gateway_check($chosen_gateway);
 </form>
 
 </section>
+<?php
+}//end show legacy
+?>
 <section id="email" class="rsvpmaker">
 <?php
 global $RSVPMaker_Email_Options;
@@ -1311,6 +1323,8 @@ function my_post_to_email($email_as_post, $email_user, $from, $to, $fromname = '
 </pre>
 
 </section>
+<?php if(isset($_GET['legacy'])) {
+?>
 <section id="rsvpforms" class="rsvpmaker">
 <?php
 rsvpmaker_admin_heading(__('RSVP Forms','rsvpmaker'),__FUNCTION__,'rsvp_forms');
@@ -1355,11 +1369,6 @@ $tab .= '<input type="hidden" name="tab" value="rsvpforms">';
 		printf('<form action="%s" method="post"><input type="hidden" name="form_id" value="%d">%s: <input type="text" name="rsvpmaker_save_form">%s <button>%s</button>%s</form>',admin_url('options-general.php?page=rsvpmaker-admin.php'),$fpost->ID,__('Name','rsvpmaker'),$tab,__('Save','rsvpmaker'),rsvpmaker_nonce('return'));
 	}
 }
-
-?>
-</section>
-<section id="rsvpforms" class="rsvpmaker">
-<?php
 printf('<p>%s</p>',__('Use this page to manage alternative RSVP Forms. Like the default form, any of these alternative forms can be customized for an event post or template. If you created a custom form that worked well, you can assign it a name so that it can be reused with other events and templates.','rsvpmaker'));
 printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><h3>%s</h3><p><label>%s</label> <input type="text" name="rsvp_form_new" value=""></p><p><em>%s</em></p><p> %s</p></form>',admin_url('edit.php'),__('Create a Reusable RSVP Form','rsvpmaker'),__('Label','rsvpmaker'),__('A form will be created with a sampling of input fields you can copy, modify, or delete to create a form that meets your needs.','rsvpmaker'),get_submit_button('Create'));
 $forms = rsvpmaker_get_forms();
@@ -1404,6 +1413,9 @@ $tab .= '<input type="hidden" name="tab" value="rsvpforms">';
 
 ?>
 </section>
+<?php
+} //end show legacy (form)
+?>
 </sections>
 
 </div>
@@ -1983,7 +1995,7 @@ if($sort == 'past')
 elseif($sort == 'special')
 	{
 	add_filter('posts_join', 'rsvpmaker_join_special',99 );
-	add_filter('posts_where', function($content) {return '';}, 99 );
+	add_filter('posts_where', function($content) {return ' AND post_type="rsvpmaker" ';}, 99 );
 	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
 	}
 elseif($sort == 'all')
@@ -2019,7 +2031,7 @@ function rsvpmaker_sort_message() {
 	if(empty($sort))
 		$sort = 'future';
 		$current_sort = $o = $opt = '';
-		$sortoptions = array('future' => __('Future Events','rsvpmaker'),'past' => __('Past Events','rsvpmaker'),'all' => __('All RSVPMaker Posts','rsvpamker'),'special' => __('Special','rsvpmaker'));
+		$sortoptions = array('future' => __('Future Events','rsvpmaker'),'past' => __('Past Events','rsvpmaker'),'all' => __('All RSVPMaker Posts','rsvpamker'));
 		foreach($sortoptions as $key => $option)
 		{
 			if(isset($_GET['s']))

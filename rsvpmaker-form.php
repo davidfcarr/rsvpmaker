@@ -49,7 +49,7 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 				'post_title'   => 'RSVP Form:Default',
 				'post_content' => $form,
 				'post_status'  => 'publish',
-				'post_type'    => 'rsvpmaker',
+				'post_type'    => 'rsvpmaker_form',
 				'post_parent'  => 0,
 			)
 		);
@@ -518,7 +518,7 @@ function rsvpmaker_get_forms() {
 			$data['post_content'] = $form;
 			$data['post_status']  = 'publish';
 			$data['post_author']  = 1;
-			$data['post_type']    = 'rsvpmaker';
+			$data['post_type']    = 'rsvpmaker_form';
 			$forms['webinar']     = wp_insert_post( $data );
 			update_post_meta( $forms['webinar'], '_rsvpmaker_special', 'RSVP Form' );
 		}
@@ -536,7 +536,7 @@ function rsvpmaker_get_forms() {
 			$data['post_content'] = $form;
 			$data['post_status']  = 'publish';
 			$data['post_author']  = 1;
-			$data['post_type']    = 'rsvpmaker';
+			$data['post_type']    = 'rsvpmaker_form';
 			$forms['simple']      = wp_insert_post( $data );
 			update_post_meta( $forms['simple'], '_rsvpmaker_special', 'RSVP Form' );
 		}

@@ -2818,101 +2818,19 @@ function rsvpmaker_parent( $post_id ) {
 function get_form_links( $post_id, $t, $parent_tag ) {
 
 	global $rsvp_options;
-
-	$label = '';
-
-	$form_id = get_post_meta( $post_id, '_rsvp_form', true );
-
-	$forms = rsvpmaker_get_forms();
-
-	if ( $form_id ) {
-
-		$parent_id = rsvpmaker_parent( $form_id );
-		$formtype  = array_search( $form_id, $forms );
-		if ( empty( $parent_id ) ) {
-			$label = empty( $formtype ) ? ' (Default)' : '(Default: ' . $formtype . ')';
-		} elseif ( $parent_id == $t ) {
-			$label = ' (From Template)';
-		}
-	} else {
-		$form_id = $rsvp_options['rsvp_form'];
-		$label   = ' (Default)';
-	}
-
 	$args[] = array(
 
 		'parent' => $parent_tag,
 
 		'id'     => 'edit_form',
 
-		'title'  => 'RSVP Form' . $label,
+		'title'  => 'RSVP Form',
 
-		'href'   => admin_url( 'post.php?action=edit&post=' . $form_id . '&back=' . $post_id ),
+		'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=' . $post_id.'#rsvpform-section' ),
 
 		'meta'   => array( 'class' => 'rsvpmenu' ),
 
 	);
-	if ( empty( $label ) || ( $label == ' (From Template)' ) || ( strpos( $label, ':' ) ) ) {
-		$args[] = array(
-
-			'parent' => 'edit_form',
-
-			'id'     => 'customize_form',
-
-			'title'  => 'RSVP Form -> Default',
-
-			'href'   => admin_url( "edit.php?title=Form&rsvpcz_default=rsvp_form&post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id" ),
-
-			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-
-		);
-	}
-	if ( ! empty( $label ) ) {
-
-		// if inherited, provide option to customize
-
-		$args[] = array(
-
-			'parent' => 'edit_form',
-
-			'id'     => 'customize_form',
-
-			'title'  => 'RSVP Form -> Customize',
-
-			'href'   => admin_url( "edit.php?title=Form&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=_rsvp_form&post_id=$post_id&source=" . $form_id ), // $formurl,
-
-			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-
-		);
-
-	}
-	foreach ( $forms as $label => $named_form_id ) {
-		if ( $named_form_id == $form_id ) {
-			continue;
-		}
-			$args[] = array(
-
-				'parent' => 'edit_form',
-
-				'id'     => 'switch_form_' . $label,
-
-				'title'  => 'RSVP Form, ' . $label . ' -> Switch',
-
-				'href'   => admin_url( "edit.php?post_id=$post_id&rsvp_form_switch=" . $named_form_id ),
-				'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-			);
-			$args[] = array(
-
-				'parent' => 'edit_form',
-
-				'id'     => 'customize_form_' . $label,
-
-				'title'  => 'RSVP Form, ' . $label . ' -> Customize',
-
-				'href'   => admin_url( "edit.php?title=Form&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=_rsvp_form&post_id=$post_id&source=" . $named_form_id ),
-				'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-			);
-	}
 
 	return $args;
 
@@ -4548,4 +4466,23 @@ function customize_forms_and_messages() {
 			}
 		}
 	}
+}
+
+function rsvpBlockDataOutput($block, $post_id) {
+    if(empty($block))
+        return;
+    $attrs = ($block->attrs) ? json_encode($block->attrs) : '';
+	if($block->innerHTML || sizeof($block->innerContent)) {
+        $output = sprintf('<!-- wp:%s %s -->',$block->blockName,$attrs)."\n";
+        $output .= $block->innerHTML."\n";
+        if(is_array($block->innerBlocks) && sizeof($block->innerBlocks)) {
+            foreach($block->innerBlocks as $innerblock) {
+                $output .= jsonBlockDataOutput($innerblock,$post_id);
+            }
+        }
+        $output .= sprintf('<!-- /wp:%s -->',$block->blockName)."\n\n";    
+    }
+    else 
+        $output = sprintf('<!-- wp:%s %s /-->',$block->blockName,$attrs)."\n\n";
+    return $output;
 }

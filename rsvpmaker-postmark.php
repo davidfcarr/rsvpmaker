@@ -62,7 +62,7 @@ function rsvpmaker_postmark_options() {
         $postmark_settings['enabled'] = ($postmark_settings['restricted'] && !empty($_POST['enabled'])) ? array_map('intval',$_POST['enabled']) : array();
         $postmark_settings['limited'] = (empty($_POST['limited'])) ? 0 : intval($_POST['limited']);
         $postmark_settings['site_admin_message'] = !empty($_POST['site_admin_message']) ? wp_kses_post(stripslashes($_POST['site_admin_message'])) : '';
-        $postmark_settings['sandbox_only'] = array_map('intval',$_POST['sandbox_only']);
+        $postmark_settings['sandbox_only'] = (isset($_POST['sandbox_only'])) ? array_map('intval',$_POST['sandbox_only']) : array();
         if(is_multisite())
             update_blog_option(1,'rsvpmaker_postmark',$postmark_settings);
         else

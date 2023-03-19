@@ -797,14 +797,6 @@ if ( isset( $remindyear ) ) {
 <br /><em><?php echo __( 'Used for volunteer shift signups. Duration must also be set.', 'rsvpmaker' ); ?></em>
 
 		<?php
-
-		if ( is_numeric( $rsvp_form ) ) {
-
-			if ( ! empty( $_POST['reset_form'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-				$rsvp_form = (int) $_POST['reset_form'];
-				update_post_meta( $post->ID, '_rsvp_form', $rsvp_form );
-			}
-
 			$fpost = get_post( $rsvp_form );
 
 			$edit = admin_url( 'post.php?action=edit&post=' . $fpost->ID . '&back=' . $post_id );
@@ -841,53 +833,10 @@ if ( isset( $remindyear ) ) {
 
 			printf( '<div>Fields: %s<br />Guests: %s<br />Note field: %s</div>', $merged_fields, $guest, $note );
 
-			if ( current_user_can( 'edit_post', $fpost->ID ) ) {
+			if ( current_user_can( 'edit_post', $fpost->ID ) )
+			printf('<div id="react_event_options" form_id="%d" event_id="%d" ></div>',$fpost->ID,$post->ID);
 
-				if ( $fpost->post_parent == 0 ) {
-
-					printf( '<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>', $edit, $customize );
-
-				} elseif ( $fpost->post_parent != $post->ID ) {
-
-					printf( '<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (inherited from Template)</div><div><a href="%s" target="_blank">Customize</a></div>', $edit, $customize );
-
-				} else {
-
-					printf( '<div id="editconfirmation"><a href="%s" target="_blank">Edit</a></div>', $edit );
-
-					printf( '<div><input type="checkbox" name="reset_form" value="%d" /> Reset to default form', intval( $rsvp_options['rsvp_form'] ) );
-
-				}
-			} else {
-				printf( '<div><a href="%s" target="_blank">Customize</a></div>', $customize );
-			}
-		} else {
-
-			?>
-
-<br /><?php echo __( 'RSVP Form', 'rsvpmaker' ); ?> (<a href="#" id="enlarge">Enlarge</a>):<br />
-
-<textarea id="rsvpform" name="setrsvp[form]" cols="120" rows="5" style="max-width: 95%;">
-			<?php
-			if ( isset( $rsvp_form ) ) {
-				echo htmlentities( $rsvp_form );}
-			?>
-	</textarea>
-
-			<?php rsvp_form_setup_form( $rsvp_form ); ?>
-
-<div>
-
- <button id="create-form">Generate form</button>
-
-</div>
-
-			<?php
-
-		}
-
-		?>
-
+?>
 <h3 id="eventpayment">Payment Gateway</h3>
 
 		<?php

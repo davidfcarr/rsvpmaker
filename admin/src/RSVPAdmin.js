@@ -7,7 +7,7 @@ import Email from './Email.js'
 import GroupEmail from './GroupEmail.js'
 import Forms from './Forms.js'
 
-export default function RSVPAdmin () {
+export default function RSVPAdmin (props) {
     const onSelect = ( tabName ) => {
         console.log( 'Selecting tab', tabName );
     };
@@ -15,7 +15,33 @@ export default function RSVPAdmin () {
     const url = window.location.href;
     const tabarg = url.match(/tab=([^&]+)/);
     const start = (tabarg) ? tabarg[1] : 'general';
+    const [changes,setChanges] = useState([]);
 
+    function addChange(key,value,type='rsvp_options') {
+        manageChanges(key,value,type);
+    }
+    
+    function manageChanges(key=null,value=null,type='rsvp_options') {
+        if(!key)
+            return changes;
+        if('reset' == key)
+            {
+                setChanges([]);
+            }
+        setChanges((ch) => {
+            console.log('changeset start',ch);
+            console.log('changeset new value',value);
+            const exists = ch.findIndex( (item) => item.key==key );
+            console.log('changeset exists test',exists);
+            if(exists > -1)
+                ch[exists].value = value;
+            else
+                ch.push({'key':key,'value':value,'type':type});      
+            console.log('changeset',ch);
+            return(ch);
+        });
+    }
+    
     const MyTabPanel = () => (
         <TabPanel
             className="rsvpmaker-tab-panel"
@@ -39,16 +65,6 @@ export default function RSVPAdmin () {
                     className: 'nav-tab',
                 },
                 {
-                    name: 'email',
-                    title: 'Email and Mailing List',
-                    className: 'nav-tab',
-                },
-                {
-                    name: 'groupemail',
-                    title: 'Group Email',
-                    className: 'nav-tab',
-                },
-                {
                     name: 'forms',
                     title: 'Forms',
                     className: 'nav-tab',
@@ -57,17 +73,13 @@ export default function RSVPAdmin () {
         >
             { ( tab ) => {
                 if('general' == tab.name)
-                    return <General />
+                    return <General addChange={addChange} setChanges={setChanges} changes={changes} />
                 if('security' == tab.name)
-                    return <Security />
+                    return <Security  addChange={addChange} setChanges={setChanges} changes={changes} />
                 if('payment' == tab.name)
-                    return <Payment />
-                if('email' == tab.name)
-                    return <Email />
-                if('groupemail' == tab.name)
-                    return <GroupEmail />
+                    return <Payment  addChange={addChange} setChanges={setChanges} changes={changes} />
                 if('forms' == tab.name)
-                    return <Forms />
+                    return <Forms form_id={props.form_id} addChange={addChange} setChanges={setChanges} changes={changes} />
                else
                 return <section><p>{ tab.title }</p></section>
         } }

@@ -2,9 +2,9 @@ import React, {useState} from "react"
 import apiClient from './http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 
-export function useOptions() {
+export function useOptions(tab = '') {
     function fetchOptions(queryobj) {
-        return apiClient.get('rsvp_options');
+        return apiClient.get('rsvp_options?tab='+tab);
     }
     return useQuery(['rsvp_options'], fetchOptions, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
         console.log('rsvp options query',data);
@@ -13,7 +13,7 @@ export function useOptions() {
       }, refetchInterval: false });
 }
 
-export function useOptionsMutation(updateSuccess) {
+export function useOptionsMutation(setChanges,makeNotification) {
     const queryClient = useQueryClient();
 
     async function updateOption (option) {
@@ -21,23 +21,20 @@ export function useOptionsMutation(updateSuccess) {
     }
     
     return useMutation(updateOption, {
-        onMutate: async (option) => {
-            console.log('optimistic update option',option);
+        onMutate: async (options) => {
+            console.log('optimistic update option',options);
             await queryClient.cancelQueries(['rsvp_options']);
             const previousValue = queryClient.getQueryData(['rsvp_options']);
             queryClient.setQueryData(['rsvp_options'],(oldQueryData) => {
                 //function passed to setQueryData
                 const {data} = oldQueryData;
-                if(Array.isArray(option)) {
-                    option.forEach((o) => {data[o.key] = o.value;});
-                }
-                else
-                    data[option.key] = option.value;
+                options.forEach((o) => {
+                    if('rsvp_options' == o.type)
+                        data.rsvp_options[o.key] = o.value;
+                });
                 const newdata = {
                     ...oldQueryData, data: data
                 };
-                console.log('key optimistic update',option.key);
-                console.log('value optimistic update',option.value);
                 console.log('newdata optimistic update',newdata);
                 return newdata;
             }) 
@@ -50,8 +47,7 @@ export function useOptionsMutation(updateSuccess) {
         },
         onSuccess: (data, error, variables, context) => {
             console.log('updated');
-            updateSuccess();
-            //makeNotification('Updated');
+            setChanges([]);
         },
         onError: (err, variables, context) => {
             //makeNotification('Error '+err.message);

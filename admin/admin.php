@@ -26,12 +26,56 @@ function react_admin_script() {
 		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
 		wp_localize_script(get_rsvpmaker_admin_script_handle('viewScript'), 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}	
+	elseif(isset($_GET['page']) && ('rsvpmaker_details' == $_GET['page'] ) && isset($_GET['post_id'])) 
+	{
+		wp_enqueue_script(
+			'rsvpmaker_details', // Handle.
+			plugins_url( 'rsvpmaker/admin/build/event-options.js'), // Block.build.js: We register the block here. Built with Webpack.
+			array( 'wp-blocks', 'wp-i18n', 'wp-element','wp-components' ), // Dependencies, defined above.
+			time(),
+			true // Enqueue the script in the footer.
+		);
+		wp_enqueue_style(
+			'rsvpmaker_details', // Handle.
+			plugins_url( 'rsvpmaker/admin/build/style-index.css'), // Block.build.js: We register the block here. Built with Webpack.
+			array( ), // Dependencies, defined above.
+			time()
+		);
+		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
+		wp_localize_script('rsvpmaker_details', 'rsvpmaker_rest',rsvpmaker_rest_array());
+	}	
+
 }
+
+add_action('wp_enqueue_scripts', 'rsvpmaker_frontend_admin');
+function rsvpmaker_frontend_admin () {
+	global $post;
+	if($post && 'rsvpmaker_form' == $post->post_type) 
+	{
+		wp_enqueue_script(
+			'rsvpmaker_single_form', // Handle.
+			plugins_url( 'rsvpmaker/admin/build/single-form.js'), // Block.build.js: We register the block here. Built with Webpack.
+			array( 'wp-blocks', 'wp-i18n', 'wp-element','wp-components' ), // Dependencies, defined above.
+			time(),
+			true // Enqueue the script in the footer.
+		);
+		wp_enqueue_style(
+			'rsvpmaker_single_form_style', // Handle.
+			plugins_url( 'rsvpmaker/admin/build/style-index.css'), // Block.build.js: We register the block here. Built with Webpack.
+			array( ), // Dependencies, defined above.
+			time()
+		);
+		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
+		wp_localize_script('rsvpmaker_single_form', 'rsvpmaker_rest',rsvpmaker_rest_array());
+	}
+}
+
 
 function get_rsvpmaker_admin_script_handle ($type) {
 	return generate_block_asset_handle( 'rsvpmaker/admin', $type);
 }
 	
 function rsvpmaker_react_admin() {
-	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin"></div>';
+	global $rsvp_options;
+	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'"></div>';
 }
