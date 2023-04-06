@@ -62,14 +62,27 @@ $args = array(
 	$args = array(
 			'type'		=> 'string',
 			'single'	=> true,
-			'default' => '12:00',
+			'default' => get_rsvpmaker_payment_gateway(),
 			'show_in_rest'	=> true,
 			'sanitize_callback' => 'rsvpmaker_check_string',
 			'auth_callback' => function() {
 			return current_user_can('edit_posts');
 		}
 	);
-	register_meta( 'post', '_endfirsttime', $args );
+	register_meta( 'post', '_payment_gateway', $args );
+
+	$args = array(
+		'type'		=> 'string',
+		'single'	=> true,
+		'default' => $rsvp_options['paypal_currency'],
+		'show_in_rest'	=> true,
+		'sanitize_callback' => 'rsvpmaker_check_string',
+		'auth_callback' => function() {
+		return current_user_can('edit_posts');
+	}
+);
+register_meta( 'post', '_rsvp_currency', $args );
+
 	$args = array(
 		'type'		=> 'string',
 		'single'	=> true,
@@ -103,7 +116,20 @@ $args = array(
 		}
 	);
 	register_meta( 'post', 'rsvp_tx_template', $args );
-		
+	register_meta( 'post', '_rsvp_start', $args );
+	register_meta( 'post', '_rsvp_deadline', $args );
+
+	$args = array(
+		'type'		=> 'string',
+		'single'	=> true,
+		'default' => '1',
+		'show_in_rest'	=> true,
+		'auth_callback' => function() {
+		   return current_user_can('edit_posts');
+	   }
+   );
+   register_meta( 'post', '_rsvp_count_party', $args );
+
 	$args = array(
 			 'type'		=> 'boolean',
 			 'single'	=> true,
@@ -201,7 +227,18 @@ function rsvpmaker_block_cgb_editor_assets() {
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.build.js' ), // Version: filemtime — Gets file modification time.
 		true // Enqueue the script in the footer.
 	);
+
+	wp_enqueue_script(
+		'rsvpmaker_sidebar-js', // Handle.
+		plugins_url( 'rsvpmaker/admin/build/editor-sidebar/sidebars.js' ), // Block.build.js: We register the block here. Built with Webpack.
+		array( 'wp-blocks', 'wp-i18n', 'wp-element' ), // Dependencies, defined above.
+		time(),//filemtime( plugin_dir_path( 'rsvpmaker' ) . 'admin/dist/sidebars.js' ), // Version: filemtime — Gets file modification time.
+		true // Enqueue the script in the footer.
+	);
 	$post_type = (isset($post->post_type)) ? $post->post_type: '';
+	wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
+	wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
+
 	if(isset($_GET['post_type']))
 		$post_type = $_GET['post_type'];
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
@@ -322,8 +359,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'template_label' => $template_label,
 			'template_url' => $template_url,
 			'ajax_nonce'    => wp_create_nonce('ajax_nonce'),
-			'_rsvp_first_date' => $date,
-			'_rsvp_end' => $end,
+			'eventdata' => get_rsvpmaker_event($post->ID),
 			'_rsvp_on' => (empty(get_post_meta($post->ID,'_rsvp_on',true)) ? 'No' : 'Yes' ),
 			'template_msg' => $template_msg,
 			'event_id' => $post_id,
@@ -339,6 +375,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'confirmation_type' => $confirmation_type,
 			'confirm_edit_post' => $confirm_edit_post,
 			'rsvp_tx_template_choices' => $confirmation_email_templates,
+			'form_id' => $fpost->ID,
 			'form_fields' => $form_fields,
 			'form_edit' => $form_edit,
 			'form_customize' => $form_customize,
@@ -347,6 +384,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 			'complex_pricing' => $complex_pricing,		
 			'complex_template' => $complex_template,
 			'edit_payment_confirmation' => $edit_payment_confirmation,
+			'payment_gateway_options' => get_rsvpmaker_payment_options(),
+			'payment_gateway' => get_rsvpmaker_payment_gateway(),
 			'related_document_links' => $related_documents,
 			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
 			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'));

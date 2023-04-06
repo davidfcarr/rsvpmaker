@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 10.0.1
+Version: 10.1
 */
 
 function get_rsvpversion() {
-	return '10.0.1';
+	return '10.1';
 }
 
 global $wp_version;
@@ -781,40 +781,17 @@ function delete_rsvpmaker_date( $post_id, $cddate ) {
 }
 
 function add_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '', $index = 0 ) {
-
-	$slug = ( $index == 0 ) ? 'firsttime' : $cddate;
-
-	add_post_meta( $post_id, '_rsvp_dates', $cddate );
-
-	add_post_meta( $post_id, '_' . $slug, $duration );
-
-	if ( empty( $end_time ) ) {
-
-		$et = rsvpmaker_strtotime( $cddate . ' +1 hour' );
-
-		$end_time = rsvpmaker_date( 'H:i', $et );
-
+	if($end_time && !strpos($end_time,'-')) {
+		$parts = explode(' ',$cddate);
+		$end_time = $parts[0].' '.$end_time;
 	}
-
-	add_post_meta( $post_id, '_end' . $slug, $end_time );
-
+	add_rsvpmaker_event($post_id,$cddate,$end_time,$duration);
 }
 
 function update_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '', $index = 0 ) {
-
-	$slug = ( $index == 0 ) ? 'firsttime' : $cddate;
-
-	update_post_meta( $post_id, '_rsvp_dates', $cddate );
-
-	update_post_meta( $post_id, '_' . $slug, $duration );
-
-	if ( ! empty( $end_time ) ) {
-
-		update_post_meta( $post_id, '_end' . $slug, $end_time );
-	}
-
-	delete_transient( 'rsvpmakerdates' );
-
+	rsvpmaker_update_event_field($post_id,'date',$cddate);
+	rsvpmaker_update_event_field($post_id,'enddate',$end_time);
+	rsvpmaker_update_event_field($post_id,'display_type',$duration);
 }
 
 function rsvpmaker_upcoming_data( $atts ) {

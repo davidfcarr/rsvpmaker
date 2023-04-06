@@ -16,7 +16,7 @@ export default function Payment (props) {
     const [stripePk,setStripePk] = useState(data.data.stripe.pk);
     const [stripeSk,setStripeSk] = useState(data.data.stripe.sk);
     const [paypalCi,setPaypalCi] = useState(data.data.paypal.client_id);
-    const [paypalCs,setPaypalcs] = useState(data.data.paypal.client_secret);
+    const [paypalCs,setPaypalCs] = useState(data.data.paypal.client_secret);
     const [stripeSandboxPk,setStripeSandboxPk] = useState(data.data.stripe.sandbox_pk);
     const [stripeSandboxSk,setStripeSandboxSk] = useState(data.data.stripe.sandbox_sk);
     const [paypalSandboxCi,setPaypalSandboxCi] = useState(data.data.paypal.sandbox_client_id);
@@ -46,7 +46,7 @@ export default function Payment (props) {
     }
 
     function savePayPal() {
-        const newstripe = {'mode':('sandbox' == paypalMode) ? 1 : 0};
+        const newpaypal = {'mode':('sandbox' == paypalMode) ? 1 : 0};
         if(paypalCi && paypalCs) {
            newpaypal.client_id = paypalCi;   
            newpaypal.client_secret = paypalCs;
@@ -83,7 +83,7 @@ export default function Payment (props) {
     <div className="key-inputs">
     <div className="production">
     {paypalCi != 'set' && <TextControl label="PayPal Client ID" className="payment" value={paypalCi} onChange={(value) => {setPaypalCi(value); savePayPal();}} />}
-    {paypalCi != 'set' && <TextControl label="PayPal Client Secret" className="payment" value={paypalCs} onChange={(value) => {setPaypalSandboxCs(value); savePayPal()} } />}
+    {paypalCi != 'set' && <TextControl label="PayPal Client Secret" className="payment" value={paypalCs} onChange={(value) => {setPaypalCs(value); savePayPal()} } />}
     {paypalCi == 'set' && <p>PayPal Production Keys Set <button onClick={() => {setPaypalCi(''); setPaypalcs('');}}>Reset</button></p>}
     </div>
     <div className="sandbox">
@@ -92,7 +92,7 @@ export default function Payment (props) {
     {paypalSandboxCi == 'set' && <p>PayPal Sandbox Keys Set <button onClick={() => {setPaypalSandboxCi(''); setPaypalSandboxCs('');}}>Reset</button></p>}
     </div>
     </div>
-    <RadioControl label="Stripe Mode" selected={stripeMode} options={modeoptions} onChange={setStripeMode} />
+    <RadioControl label="PayPal Mode" selected={paypalMode} options={modeoptions} onChange={setPaypalMode} />
 
     <SelectControl label="Chosen Gateway" value={chosenGateway} options={data.data.gateways} onChange={(value) => {setChosenGateway(value); addChange('payment_gateway',value); } } />
 

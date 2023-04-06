@@ -442,3 +442,42 @@ min-height: 150px;
 	font-size: 20px;
 	font-weight: bold;
 }
+
+#react_date_time .rsvpmaker-date-time {
+	background-color: #fff;
+	max-width: 300px;
+	padding: 20px;
+}
+.rsvp-end-date {
+	background-color: #ddd;
+}
+button.is-primary {
+	background-color: blue;
+	color: #fff;
+}
+.components-datetime__date {
+	margin-bottom: 1.5em;
+}
+
+.rsvpmaker-setup-modal {
+	padding: 15px;
+	width: 800px;
+	min-height: 700px;
+	border: medium solid darkblue;
+}
+.rsvpguide-page {
+	background-color: #fff;
+	margin: 5px;
+	padding: 10px;
+}
+.guide-page-1-columns {
+	display: flex;
+	align-items: stretch;
+	gap: 30px;
+}
+.rsvpguide-datetime {
+	width: 300px;
+}
+.rsvpsettings-tab-contents {
+	padding-bottom: 500px;
+}

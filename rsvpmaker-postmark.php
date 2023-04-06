@@ -445,11 +445,11 @@ function postmark_batch_hash ($batch,$recipients = null) {
 
 function rsvpmaker_postmark_duplicate($hash) {
     global $wpdb;
+    check_postmark_tally_version();
 	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM ".$wpdb->base_prefix."postmark_tally where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 120 MINUTE)",$hash);
 	$row = $wpdb->get_row($sql);
     if(!empty($row->duplicates))
     {
-        rsvpmaker_debug_log($row,'postmark duplicate blocked');
         return true;
     }
     return false;

@@ -6,8 +6,8 @@
 //  Import CSS.
 import './style.scss';
 import './editor.scss';
-import './rsvpmaker-sidebar.js';
-import './rsvpmaker-sidebar-extra.js';
+//import './rsvpmaker-sidebar.js';
+//import './rsvpmaker-sidebar-extra.js';
 import './rsvpemail-sidebar.js';		
 import './limited_time.js';		
 import './schedule.js';

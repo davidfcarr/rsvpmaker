@@ -17,6 +17,8 @@
   "viewScript": [
     "file:./adminui.js",
     "file:./single-form.js",
-    "file:./event-options.js"
+    "file:./event-options.js",
+    "file:./date-time.js",
+    "file:./editor-sidebar/sidebars.js"
   ]
 }

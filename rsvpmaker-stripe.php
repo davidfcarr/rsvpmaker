@@ -102,8 +102,6 @@ $rsvpmaker_stripe_form = '';
 function rsvpmaker_stripe_form( $vars, $show = false ) {
 	global $rsvp_options;
 
-	rsvpmaker_debug_log( $vars, 'rsvpmaker_stripe_form' );
-
 	global $post, $rsvp_options, $current_user, $button, $rsvpmaker_stripe_form, $wpdb;
 	if ( ! $show ) {
 
@@ -116,8 +114,6 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	$rsvpmaker_stripe_checkout_page_id = $wpdb->get_var( "SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' " );
 
 	if ( empty( $rsvpmaker_stripe_checkout_page_id ) ) {
-
-		rsvpmaker_debug_log( $rsvpmaker_stripe_checkout_page_id, 'attempting rsvpmaker_stripe_checkout_page_id' );
 
 		$postvar['post_content'] = '<!-- wp:shortcode -->
 
@@ -144,8 +140,6 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 		$rsvpmaker_stripe_checkout_page_id = wp_insert_post( $postvar );
 
 		update_post_meta( $rsvpmaker_stripe_checkout_page_id, '_rsvpmaker_special', 'Payment checkout page for Stripe' );
-
-		rsvpmaker_debug_log( $rsvpmaker_stripe_checkout_page_id, 'new checkout page' );
 
 	}
 
@@ -206,7 +200,6 @@ function rsvpmaker_stripe_validate($public, $secret) {
 		// param is '' in this case
 		$output .=  'Param is:' . $e->getError()->param . '\n';
 		$output .=   'Message is:' . $e->getError()->message . '\n';
-		rsvpmaker_debug_log($output,'stripe error details');
 		return '<span style="color:red">'.$e->getError()->message.'</span>';
 	  } catch (\Stripe\Exception\AuthenticationException $e) {
 		$output =  'Status is:' . $e->getHttpStatus() . '\n';
@@ -215,7 +208,6 @@ function rsvpmaker_stripe_validate($public, $secret) {
 		// param is '' in this case
 		$output .=  'Param is:' . $e->getError()->param . '\n';
 		$output .=   'Message is:' . $e->getError()->message . '\n';
-		rsvpmaker_debug_log($output,'stripe error details');
 		return '<span style="color:red">'.$e->getError()->message.'</span>';
 	  } catch (\Stripe\Exception\ApiConnectionException $e) {
 		$output =  'Status is:' . $e->getHttpStatus() . '\n';
@@ -243,8 +235,6 @@ function rsvpmaker_stripe_validate($public, $secret) {
 }
 
 function rsvpmaker_stripe_checkout() {
-
-	rsvpmaker_debug_log( 'rsvpmaker_stripe_checkout' );
 
 	global $post, $rsvp_options, $current_user;
 

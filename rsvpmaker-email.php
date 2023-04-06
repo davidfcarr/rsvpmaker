@@ -1679,8 +1679,6 @@ function rsvpmaker_template_inline_test($atts) {
 }
 
 function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) {
-	//wp_suspend_cache_addition(true);
-	rsvpmaker_debug_log("$post_id,$user_id, $posthash",'rsvpmailer_delayed_send args');
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
 	$epost = get_post($post_id);
@@ -1689,20 +1687,15 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) 
 	ob_start();
 	$result = rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id);
 	$result .= ob_get_clean();
-	rsvpmaker_debug_log($result,'rsvpmailer_submitted results');
-	//wp_suspend_cache_addition(false);
 }
 
 function rsvpmailer_add_editors_note($post) {
 	global $rsvpmaker_cron_context;
-	rsvpmaker_debug_log($rsvpmaker_cron_context,'cron context for editors note');
 	$editorsnote['add_to_head'] = '';
 	if(empty($rsvpmaker_cron_context))
 		return $editorsnote;
 	$notekey = get_rsvp_notekey($post->ID);
-	rsvpmaker_debug_log($notekey,'notekey');
 	$chosen = (int) get_post_meta( $post->ID, $notekey, true );
-	rsvpmaker_debug_log($chosen,'note chosen');
 	if(!$chosen)
 		return $editorsnote;
 
@@ -1722,7 +1715,6 @@ function rsvpmailer_add_editors_note($post) {
 	}
 
 	$note = '<h2>'.$editorsnote['add_to_head']."</h2>\n".$note;
-	rsvpmaker_debug_log($note,'note');
 	if(strpos($post->post_content,'<!-- editors note goes here -->'))
 		$editorsnote['html'] = str_replace( '<!-- editors note goes here -->', $note, $post->post_content );
 	elseif(strpos($post->post_content,'wp-block-rsvpmaker-emailcontent'))
@@ -3024,7 +3016,6 @@ function is_email_context () {
 }
 
 function rsvpmaker_cron_email_send($post_id,$user_id,$posthash = '') {
-	rsvpmaker_debug_log("$post_id,$user_id,$posthash",'cron email send args');
 	global $rsvpmaker_cron_context;
 	$rsvpmaker_cron_context = 2; // 1 means preview
 	rsvpmailer_delayed_send($post_id,$user_id,$posthash);
@@ -3058,7 +3049,7 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 	if(current_user_can('edit_post',$post->ID))
 	{
 		if($post->post_type == 'rsvpmaker') {
-			$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=').$post->ID,__('Event Options','rsvpmaker'));
+			$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('post.php?action=edit&tab=basics&post=').$post->ID,__('Event Options','rsvpmaker'));
 			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
 			}
 		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));
@@ -3496,7 +3487,6 @@ foreach($rsvpdata as $field => $value)
 	$mail["html"] = wpautop($confirmation_body);
 	if(isset($post->ID)) // not for replay
 	$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"], rsvpmaker_text_version($confirmation_body));
-	rsvpmaker_debug_log($mail["ical"],'ical text rsvp_notifications_via_template');
 	$mail["to"] = $rsvp["email"];
 	if(!empty($rsvp['first']))
 		$mail['toname'] = $rsvp['first'].' '.$rsvp['last'];
@@ -3568,7 +3558,6 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 		$rsvpdata['rsvpdate'] = get_rsvp_date($rsvp['event'],'long_date');
 	elseif(strpos($rsvpdata['rsvpdate'],':'))
 		$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],rsvpmaker_strtotime($rsvpdata['rsvpdate']));
-	rsvpmaker_debug_log($rsvpdata,'rsvp_confirmation_after_payment rsvpdata');
 
 	$guests = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=$rsvp_id");
 	if($guests) {
@@ -3577,8 +3566,6 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 		}
 		$rsvpdata['guests'] = implode(', ',$guestarr);
 	}
-
-	//rsvpmaker_debug_log($rsvpdata,'rsvp_confirmation_after_payment');
 		
 	$details = '';
 	foreach($rsvpdata as $label => $value)
@@ -5100,26 +5087,21 @@ function rsvpmaker_email_to_name($to) {
 	$name = '';
 	global $wpdb;
 	$sql = "select display_name from $wpdb->users WHERE user_email LIKE '$to' ";
-	//rsvpmaker_debug_log($sql,'email to name');
 	$name .= $wpdb->get_var($sql);
 	if(!empty($name)) {
 		return $name;
 	}
 	$sql = "select * from ".$wpdb->prefix."rsvpmaker WHERE email LIKE '$to' ";
-	//rsvpmaker_debug_log($sql,'email to name');
 	$row = $wpdb->get_row($sql);
 	if(!empty($row->first) || !empty($row->last)) {
 		$name .= $row->first.' '.$row->last;
-		//rsvpmaker_debug_log($name,'email to name');
 		return $name;
 	}
 	$table = rsvpmaker_guest_list_table();
 	$sql = "select * from $table WHERE email LIKE '$to' ";
-	//rsvpmaker_debug_log($sql,'email to name');
 	$row = $wpdb->get_row($sql);
 	if(!empty($row->first_name) || !empty($row->last_name)) {
 		$name = $row->first_name.' '.$row->last_name;
-		//rsvpmaker_debug_log($name,'email to name');
 		return $name;
 	}
 	return $name;
@@ -5131,7 +5113,6 @@ function rsvpmaker_guest_email_welcome($email) {
 	if(!$welcome_id || !get_option('rsvpmaker_guest_list_active') || rsvpmaker_on_guest_email_list($email))
 		return;
 	$wpost = get_post($welcome_id);
-	//rsvpmaker_debug_log($post,'welcome_post');
 	if(!$wpost)
 		return;
 	$mail['to'] = $email;
@@ -5156,7 +5137,6 @@ function rsvpmaker_on_guest_email_list($email, $checkuserlist = true) {
 	}
 	$table = rsvpmaker_guest_list_table();
 	$sql = "select * from $table WHERE email LIKE '$email' ";
-	//rsvpmaker_debug_log($sql,'on guest list lookup');
 	return $wpdb->get_row($sql);
 }
 

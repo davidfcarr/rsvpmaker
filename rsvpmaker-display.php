@@ -484,7 +484,6 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		}
 	}
 
-	//add_filter( 'query', 'rsvpmaker_query_debug' );
 
 	$queryarg = array(
 		'post_type'   => 'rsvpmaker',
@@ -570,33 +569,6 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 	return $wp_query;
 
 }
-
-/*
-possible future approach add_filter('posts_request','rsvpmaker_modify_query');
-function rsvpmaker_modify_query($sql) {
-	global $wpdb;
-
-	$sql = "SELECT SQL_CALC_FOUND_ROWS $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(a1.date,'%M %e, %Y') as date, a1.enddate, a1.display_type
-	FROM " . $wpdb->posts . '
-	JOIN ' . $wpdb->prefix . 'rsvpmaker_event' . ' a1 ON ' . $wpdb->posts . ".ID =a1.event
-	WHERE (a1.date > NOW()  OR a1.enddate > NOW()) AND post_status='publish' ORDER BY a1.date LIMIT 0,10 ";
-	//rsvpmaker_debug_log($sql,'rsvpmaker query');
-	return $sql;
-}
-*/
-
-function rsvpmaker_query_debug( $query ) {
-
-	if ( strpos( $query, 'rsvpmaker' ) ) {
-
-		rsvpmaker_debug_log( $query, 'log all rsvpmaker queries' );
-	}
-
-	return $query;
-
-}
-
-
 
 function rsvpmaker_upcoming( $atts = array() ) {
 	$no_events = ( isset( $atts['no_events'] ) ) ? $atts['no_events'] : 'No events currently listed.';
@@ -1587,23 +1559,12 @@ function rsvpmaker_to_ical() {
 
 	header( 'Content-Disposition: attachment; filename=' . $post->post_name . '.ics' );
 
-	$dates = get_rsvp_dates( $post->ID );
+	$event = get_rsvpmaker_event( $post->ID );
+	$datetime = $event->date;
+	$end_time = $event->enddate;
 
-	$date = $dates[0];
-
-	$datetime = $date['datetime'];
-
-	$end_time = $date['end_time'];
-
-	if ( sizeof( $dates ) > 1 ) {
-		$lastdate = array_pop( $dates );
-		$ical_end = get_utc_ical( $lastdate['datetime'] );
-	} elseif ( empty( $end_time ) ) {
-		$ical_end = get_utc_ical( $datetime . ' +1 hour' );
-	} else {
-		$p        = explode( ' ', $datetime );
-		$ical_end = get_utc_ical( $p[0] . ' ' . $end_time );
-	}
+	$ical_end = get_utc_ical( $datetime . ' +1 hour' );
+	$ical_end = get_utc_ical( $end_time );
 
 	$start = get_utc_ical( $datetime );
 
@@ -2859,102 +2820,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 	$permalink = get_permalink( $post_id );
 
-	$results = get_rsvp_dates( $post_id );
-
-	if ( $results ) {
-
-		$start = 2;
-
-		$dateblock = '<span class="rsvp_date_block"></span>';
-
-		global $last_time;
-
-		foreach ( $results as $index => $row ) {
-
-			if ( empty( $firstrow ) ) {
-
-				$firstrow = $row;
-			}
-
-			$last_time = $t = rsvpmaker_strtotime( $row['datetime'] );
-
-			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
-
-			$dateblock .= utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
-
-			$dur = $row['duration'];
-
-			if ( $dur == 'set' ) {
-
-				$end_time = $row['end_time'];
-
-				$dur = rsvpmaker_strtotime( $end_time );
-
-				$tzcode = strpos( $time_format, 'T' );
-
-				if ( $tzcode ) {
-
-					$time_format = str_replace( 'T', '', $time_format );
-				}
-
-				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t );
-
-				$dateblock .= ' <span class="end_time">' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $dur ) . '</span>';
-
-				if ( $tzcode ) {
-
-					$dateblock .= ' ' . rsvpmaker_date( 'T', $t );
-				}
-
-				$dateblock .= '</span>';
-
-			} elseif ( ( $dur != 'allday' ) && ! strpos( $dur, '|' ) ) {
-
-				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
-
-			}
-
-			if ( $top && isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) {
-
-				if ( is_email_context() ) {
-					$tzbutton = sprintf( '<a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
-				} else {
-					$atts['time'] = $row['datetime'];
-
-					if ( $dur == 'set' ) {
-
-						$atts['end'] = $row['end_time'];
-					}
-
-					$tzbutton = rsvpmaker_timezone_converter( $atts );
-				}
-			}
-			$dateblock .= '<div><span id="timezone_converted' . esc_attr( $post_id ) . '"></span><span id="extra_timezone_converted' . esc_attr( $post_id ) . '"></span></div></div>';
-		}
-
-		// gcal link
-
-		if ( ( ( ! empty( $rsvp_options['calendar_icons'] ) && ! isset( $custom_fields['_calendar_icons'][0] ) ) || ! empty( $custom_fields['_calendar_icons'][0] ) ) ) {
-			$end_time = get_post_meta( $post->ID, '_rsvp_end_date', true );
-			if ( ! empty( $end_time ) ) {
-
-				// use multiday value
-			} elseif ( ! empty( $firstrow['end_time'] ) ) {
-					$p        = explode( ' ', $firstrow['datetime'] );
-					$end_time = $p[0] . ' ' . $firstrow['end_time'];
-			} else {
-				$end_time = $firstrow['datetime'] . ' +1 hour';
-			}
-			$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
-			if ( is_email_context() ) {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>', rsvpmaker_to_gcal( $post, $firstrow['datetime'], $end_time ), $permalink . $j . 'ical=1', $tzbutton );
-			} else {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $firstrow['datetime'], $end_time ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
-			}
-		} elseif ( ! empty( $custom_fields['_convert_timezone'][0] ) ) { // convert button without calendar icons
-			$dateblock .= '<div class="rsvpcalendar_buttons">' . $tzbutton . '</div>';
-		}
-	} elseif ( rsvpmaker_is_template( $post->ID ) ) {
+	if ( rsvpmaker_is_template( $post->ID ) ) {
 
 		$sked = get_template_sked( $post->ID );
 
@@ -3018,7 +2884,75 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 			$dateblock .= sprintf( '<br /><a href="%s">%s</a>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $post_id ), __( 'Create/update events from template', 'rsvpmaker' ) );
 		}
-	} else // no dates, no sked, maybe this is an agenda or a landing page
+	}
+	elseif ( $event = get_rsvpmaker_event($post_id) ) {
+
+		$dateblock = '<span class="rsvp_date_block"></span>';
+
+		global $last_time;
+
+			$last_time = $t = $event->ts_start;
+
+			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
+
+			$dateblock .= utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+
+			if ( $event->display_type == 'set' ) {
+				$tzcode = strpos( $time_format, 'T' );
+
+				if ( $tzcode ) {
+
+					$time_format = str_replace( 'T', '', $time_format );
+				}
+
+				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $event->ts_start );
+
+				$dateblock .= ' <span class="end_time">' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end ) . '</span>';
+
+				if ( $tzcode ) {
+
+					$dateblock .= ' ' . rsvpmaker_date( 'T', $t );
+				}
+
+				$dateblock .= '</span>';
+
+			} elseif ( ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+
+				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
+
+			}
+
+			if ( $top && isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) {
+
+				if ( is_email_context() ) {
+					$tzbutton = sprintf( '<a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+				} else {
+					$atts['time'] = $event->date;
+
+					if ( $event->display_type == 'set' ) {
+						$atts['end'] = $event->enddate;
+					}
+
+					$tzbutton = rsvpmaker_timezone_converter( $atts );
+				}
+			}
+			$dateblock .= '<div><span id="timezone_converted' . esc_attr( $post_id ) . '"></span><span id="extra_timezone_converted' . esc_attr( $post_id ) . '"></span></div></div>';
+		
+
+		// gcal link
+
+		if ( ( ( ! empty( $rsvp_options['calendar_icons'] ) && ! isset( $custom_fields['_calendar_icons'][0] ) ) || ! empty( $custom_fields['_calendar_icons'][0] ) ) ) {
+			$end_time = $event->enddate;
+			$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
+			if ( is_email_context() ) {
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>', rsvpmaker_to_gcal( $post, $firstrow['datetime'], $end_time ), $permalink . $j . 'ical=1', $tzbutton );
+			} else {
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $firstrow['datetime'], $end_time ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
+			}
+		} elseif ( ! empty( $custom_fields['_convert_timezone'][0] ) ) { // convert button without calendar icons
+			$dateblock .= '<div class="rsvpcalendar_buttons">' . $tzbutton . '</div>';
+		}
+	}  else // no dates, no sked, maybe this is an agenda or a landing page
 
 	{
 
@@ -3032,7 +2966,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 	return array(
 		'dateblock' => $dateblock,
-		'dur'       => $dur,
+		'dur'       => $event->display_type,
 		'last_time' => $last_time,
 		'firstrow'  => $firstrow,
 	);

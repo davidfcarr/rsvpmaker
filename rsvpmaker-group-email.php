@@ -98,9 +98,6 @@ function rsvpmaker_relay_init( $show = false ) {
 	if ( $show ) {
 		return $html;
 	}
-	if ( ! empty( $qresult ) || strpos( $result, 'Mail:' ) ) {
-		rsvpmaker_debug_log( $qresult . $result, 'rsvpmaker_relay_result' );
-	}
 }
 
 function rsvpmaker_relay_queue() {
@@ -935,10 +932,7 @@ function rsvpmaker_qemail ($mail, $recipients) {
 				add_post_meta($post_id,'rsvprelay_to',$email);
 		}
 		$mail['html'] = 'hidden';
-		//rsvpmaker_debug_log($mail,'rsvpmaker_qemail_mail_array');
-		//rsvpmaker_debug_log($recipients,'rsvpmaker_qemail_recipients_added');
 	}
-	//rsvpmaker_debug_log($post_id,'rsvpmaker_qemail_insert_post_result');
 	if(is_multisite())
 		restore_current_blog();
 }

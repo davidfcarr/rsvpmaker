@@ -1,6 +1,6 @@
 import React, {useState, useEffect, Suspense} from "react"
-//import {useForms, useFormsMutation} from './queries.js'
-import { SelectControl, ToggleControl, TextControl, RadioControl, TextareaControl } from '@wordpress/components';
+import { ToggleControl, TextControl, RadioControl, TextareaControl } from '@wordpress/components';
+import {SelectCtrl} from './Ctrl.js'
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import {Up,Down,Delete} from './icons.js';
@@ -16,15 +16,16 @@ export default function Forms (props) {
     const [newForm,setNewForm] = useState('');
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
     const {changes,addChange,setChanges} = props;
-
+    const event_id = wp?.data?.select("core/editor")?.getCurrentPostId();
     console.log('Forms props',props);
     console.log('Forms formId',formId);
 
 function fetchForms() {
-    return apiClient.get('rsvp_form?form_id='+formId);
+    return apiClient.get('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId());
 }
 const {data,isLoading} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
-    setFormId(data.data.form_id);
+    if(!formId)
+        setFormId(data.data.form_id);
     console.log('rsvp forms query',data);
 }, onError: (err, variables, context) => {
     console.log('error retrieving rsvp forms',err);
@@ -32,7 +33,7 @@ const {data,isLoading} = useQuery(['rsvp_form',formId], fetchForms, { enabled: t
     
 const queryClient = useQueryClient();
 async function updateForm (form) {
-    return await apiClient.post('rsvp_form?form_id='+formId, {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});
+    return await apiClient.post('rsvp_form?form_id='+formId+'&post_id='+wp?.data.select("core/editor").getCurrentPostId(), {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});
 }
 
 const {mutate:formMutate} = useMutation(updateForm, {
@@ -67,13 +68,19 @@ const {mutate:formMutate} = useMutation(updateForm, {
         queryClient.setQueryData(['rsvp_form',formId], context.previousValue);
     },    
 });
- 
+
     if(isLoading)
         return <p>Loading ...</p>
     const form = data.data.form.filter((block) => block.blockName);
     const formOptions = data.data.form_options;
     const fetchedFormID = data.data.form_id;
     let lastblock = form.length - 1;
+
+    function toServerTs(datestr) {
+        const newdate = new Date(datestr);
+        return newdate.getTime()-correction;
+    }
+
     //check for presence of guest and note
     const guestfields = [];
     for(let i = 0; i < lastblock; i++) {
@@ -215,7 +222,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
                 <div className="formAtts">
                 {('rsvpmaker/formfield' == block.blockName) && <TextControl label={block.attrs.label} />}
                 {('rsvpmaker/formtextarea' == block.blockName) && <TextareaControl label={block.attrs.label} />}
-                {('rsvpmaker/formselect' == block.blockName) && <SelectControl label={block.attrs.label} options={choices} />}
+                {('rsvpmaker/formselect' == block.blockName) && <SelectCtrl label={block.attrs.label} options={choices} />}
                 {('rsvpmaker/formradio' == block.blockName) && <RadioControl label={block.attrs.label} options={choices} />}
                 </div>               
                     )
@@ -228,7 +235,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
     let isrsvp = true;
 
     return (<div className="rsvptab">
-    {!props.single_form && <SelectControl label="Choose Form" value={formId} options={formOptions} onChange={setFormId} />}
+    {!props.single_form && <SelectCtrl label="Choose Form" value={formId} options={formOptions} onChange={setFormId} />}
     {formId != fetchedFormID && <p>Reloading ...</p>}
     <ToggleControl label="Show Form Preview" checked={showPreview} onChange={() => {setShowPreview(!showPreview)} } />
     {showPreview && form.map((block, blockindex) => {
@@ -242,7 +249,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
             <div>
                 {('rsvpmaker/formfield' == block.blockName) && <TextControl label={block.attrs.label} />}
                 {('rsvpmaker/formtextarea' == block.blockName) && <TextareaControl label={block.attrs.label} />}
-                {('rsvpmaker/formselect' == block.blockName) && <SelectControl label={block.attrs.label} options={choices} />}
+                {('rsvpmaker/formselect' == block.blockName) && <SelectCtrl label={block.attrs.label} options={choices} />}
                 {('rsvpmaker/formradio' == block.blockName) && <RadioControl label={block.attrs.label} options={choices} />}
                 {('rsvpmaker/guests' == block.blockName) && <Guests />}
                 {('rsvpmaker/formchimp' == block.blockName) && <p><input type="checkbox" /> Add me to your email list</p>}
@@ -275,8 +282,8 @@ const {mutate:formMutate} = useMutation(updateForm, {
  
     </div>)
     })}      
-    <p>Add a form field <SelectControl label="Type" options={addfields} value={addfield} onChange={((value) => {setAddfield(value);})} /> {!['rsvpmaker/formnote','rsvpmaker/guests','rsvpmaker/formchimp'].includes(addfield) && <TextControl label="Field Label" value={addfieldLabel} onChange={((value) => {setAddfieldLabel(value);})} />} </p>
-    {['rsvpmaker/formselect','rsvpmaker/formradio'].includes(addfield) && <p><textarea value={addfieldChoices} onChange={(e) => { setAddfieldChoices(e.target.value); }} /><br /><em>Enter one choice per line</em></p> }
+    <p>Add a form field <SelectCtrl label="Type" options={addfields} value={addfield} onChange={((value) => {setAddfield(value);})} /> {!['rsvpmaker/formnote','rsvpmaker/guests','rsvpmaker/formchimp'].includes(addfield) && <TextControl label="Field Label" value={addfieldLabel} onChange={((value) => {setAddfieldLabel(value);})} />} </p>
+    {['rsvpmaker/formselect','rsvpmaker/formradio'].includes(addfield) && <p><label>Choices</label><br /><textarea value={addfieldChoices} onChange={(e) => { setAddfieldChoices(e.target.value); }} /><br /><em>Enter one choice per line</em></p> }
     <p><button onClick={addFieldNow}>Add</button></p>
     <p>You can also open this form <a href={'/wp-admin/post.php?action=edit&post='+formId}>in the WordPress editor</a>.</p>
 

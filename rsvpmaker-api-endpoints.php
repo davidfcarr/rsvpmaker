@@ -1447,7 +1447,7 @@ foreach($ccFull as $cf) {
 $check = implode('|',$audience).$data->Subject;
 $last = get_transient('postmark_last_incoming');
 if($check == $last) {
-	rsvpmaker_debug_log($check,'incoming duplicate');
+	//rsvpmaker_debug_log($check,'incoming duplicate');
 	return;
 }
 set_transient('postmark_last_incoming',$check,time()+30);
@@ -1707,7 +1707,6 @@ class RSVPMaker_Json_Meta extends WP_REST_Controller {
 		if(empty($form_id))
 			$form_id = (int) $rsvp_options['rsvp_form'];
 		$fpost = get_post($form_id);
-		//rsvpmaker_debug_log($form_id);
 		$form_edit = admin_url('post.php?action=edit&post='.$fpost->ID.'&back='.$post->ID);
 		$form_customize = admin_url('?post_id='. $post->ID. '&customize_form='.$fpost->ID);
 		$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
@@ -1821,29 +1820,37 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$json = file_get_contents('php://input');
 		$updated = array();
 		$form_id = (empty($_GET['form_id'])) ? $rsvp_options['rsvp_form'] : intval($_GET['form_id']); 
+		$post_id = (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) ? 0 : intval($_GET['post_id']);
+		$post = get_post($post_id);
 		if(!empty($json)) {
 			if(!current_user_can('manage_options',$post_id))
 				return new WP_REST_Response( array('status' => 'User does not have rights to edit this document'), 401 );	
 			$data = json_decode(trim($json));
-			$output = '';
-			foreach($data->form as $index => $block) {
-				if($block->blockName)
-					$output .= rsvpBlockDataOutput($block, $post_id);
-			}
-			if($data->newForm) {
-					$updated['post_title'] = 'Form:'.$data->newForm;
-					$updated['post_type'] = 'rsvpmaker_form';
-					$updated['post_author'] = $current_user->ID;
+			if($data->start)
+				update_post_meta($post_id,'_rsvp_start',rsvpmaker_strtotime($data->start));
+			if($data->deadline)
+				update_post_meta($post_id,'_rsvp_start',rsvpmaker_strtotime($data->deadline));
+			if(isset($data->form) && is_array($data->form)) {
+				$output = '';
+				foreach($data->form as $index => $block) {
+					if($block->blockName)
+						$output .= rsvpBlockDataOutput($block, $post_id);
+				}
+				if($data->newForm) {
+						$updated['post_title'] = 'Form:'.$data->newForm;
+						$updated['post_type'] = 'rsvpmaker_form';
+						$updated['post_author'] = $current_user->ID;
+						$updated['post_content'] = $output;
+						$updated['post_status'] = 'publish';
+						$form_id = wp_insert_post($updated);
+						if($data->event_id)
+							update_post_meta($data->event_id,'_rsvp_form',$form_id);
+				}
+				else {
+					$updated['ID'] = $form_id;
 					$updated['post_content'] = $output;
-					$updated['post_status'] = 'publish';
-					$form_id = wp_insert_post($updated);
-					if($data->event_id)
-						update_post_meta($data->event_id,'_rsvp_form',$form_id);
-			}
-			else {
-				$updated['ID'] = $form_id;
-				$updated['post_content'] = $output;
-				$upid = wp_update_post($updated);	
+					$upid = wp_update_post($updated);	
+				}	
 			}
 		}
 		$form = get_post($form_id);
@@ -2041,6 +2048,353 @@ function sanitize_rsvpopt($value) {
 	return $value;
 }
 
+class RSVP_Event_Date extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvp_event_date';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $rsvp_options, $current_user;
+		$event_id = intval($_GET['event_id']);
+		$json = file_get_contents('php://input');
+		if(!empty($_POST) || !empty($json))
+		{
+			if(!current_user_can('edit_post',$event_id))
+			return new WP_REST_Response( 'user does not have editing rights for this event', 401 );
+		}
+		$upsql = '';
+		if(!empty($json)) {
+			$data = json_decode(trim($json));
+			if(isset($data->date) && isset($data->timezone)) //retry submission
+			{
+				$ts_start = rsvpmaker_strtotime($data->date);
+				$ts_end = rsvpmaker_strtotime($data->enddate);
+				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET date=%s, enddate=%s, ts_start=%d, ts_end=%d, display_type=%s, timezone=%s WHERE event=%d",$data->date,$data->enddate,$ts_start, $ts_end, $data->display_type, $data->timezone, $event_id);
+			}
+			elseif(isset($data->date))
+			{
+				$ts_start = rsvpmaker_strtotime($data->date);
+				$ts_end = rsvpmaker_strtotime($data->enddate);
+				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET date=%s, enddate=%s, ts_start=%d, ts_end=%d WHERE event=%d",$data->date,$data->enddate,$ts_start, $ts_end, $event_id);
+			}
+			elseif(isset($data->enddate)) // end date set independently
+			{
+				$ts_end = rsvpmaker_strtotime($data->enddate);
+				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET enddate=%s, ts_end=%d WHERE event=%d",$data->enddate,$ts_end,$event_id);
+			}
+			elseif(isset($data->display_type)) // end date set independently
+			{
+				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET display_type=%s WHERE event=%d",$data->display_type,$event_id);
+			}
+			elseif(isset($data->timezone)) // end date set independently
+			{
+				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET timezone=%s WHERE event=%d",$data->timezone,$event_id);
+			}
+			if(!empty($upsql))
+				$wpdb->query($upsql);
+		}
+		$event = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
+		$event->upsql = $upsql;
+		$event->tzchoices = timezone_identifiers_list();
+
+		//$event->date = $event->ts_start * 1000;
+		//$event->enddate = $event->ts_end * 1000;
+		//$response['event'] = $event;
+		//$response['date'] = $event['ts_start'] * 1000;
+		//$response['enddate'] = $event['ts_end'] * 1000;
+		return new WP_REST_Response( $event , 200 );	
+	}
+}
+
+class RSVP_Confirm_Remind extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'confirm_remind';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $current_user;
+		$status = '';
+		$post_id= intval($_GET['event_id']);
+		$json = file_get_contents('php://input');
+		if(!empty($_POST) || !empty($json))
+		{
+			if(!current_user_can('edit_post',$post_id))
+			return new WP_REST_Response( 'user does not have editing rights for this event', 401 );
+		}
+		if(!empty($json)) {
+			$data = json_decode($json);
+			if('customize' == $data->action) {
+				$old = get_post($data->source);
+				$new['post_content'] = $old->post_content;
+				$new['post_type'] = 'rsvpemail';
+				$new['post_author'] = $current_user->ID;
+				$new['post_status'] = 'publish';
+				$new['post_parent'] = $data->event_id;
+				$new['post_title'] = $data->type.' for '.$post_id;
+				$id = wp_insert_post($new);
+				update_post_meta($post_id,'_rsvp_confirm',$id);
+			}
+			if('add_payment_confirmation' == $data->action) {
+				$old = get_post($data->source);
+				$new['post_content'] = $old->post_content;
+				$new['post_type'] = 'rsvpemail';
+				$new['post_author'] = $current_user->ID;
+				$new['post_status'] = 'publish';
+				$new['post_parent'] = $data->event_id;
+				$new['post_title'] = $data->type.' for '.$post_id;
+				$id = wp_insert_post($new);
+				$status .= ' added payment confirmation ' .$id;
+				update_post_meta($post_id,'payment_confirmation_message',$id);
+			}
+			elseif('add_reminder' == $data->action) {
+				$hours = $data->hours;
+				$event_title = get_the_title($post_id);
+				if('before' == $data->beforeafter)
+				{
+					$hours = 0 - $hours;
+					$new['post_title'] = 'Reminder: '. $event_title;
+				}
+				else {
+					$new['post_title'] = 'Follow up: '. $event_title;
+				}
+				$old = get_post($data->source);
+				$new['post_content'] = $old->post_content;
+				$new['post_type'] = 'rsvpemail';
+				$new['post_author'] = $current_user->ID;
+				$new['post_status'] = 'publish';
+				$new['post_parent'] = $data->event_id;
+				$id = wp_insert_post($new);
+				$status .= ' added reminder ' .$id.' hours: '.$hours;
+				update_post_meta($post_id,'_rsvp_reminder_msg_'.$hours,$id);
+				rsvpmaker_reminder_cron($hours, get_rsvp_date($post_id), $post_id);
+			}
+		}
+		
+$response["confirmation"] = rsvp_get_confirm( $post_id, true );
+$response['confirmation']->html = do_blocks($response["confirmation"]->post_content);
+$response['reminder'] = [];
+$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
+$results = $wpdb->get_results($sql);
+if($results)
+{
+	foreach($results as $row) {
+		//$hour = 
+		$rpost = get_post($row->meta_value);
+		if($rpost) {
+			$rpost->hour = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
+			$rpost->html = do_blocks($rpost->post_content);
+			$response['reminder'][] = $rpost;
+		}
+	}
+}
+
+$payment_confirmation = (int) get_post_meta($post_id,'payment_confirmation_message',true);
+$response['payment_confirmation'] = null;
+if($payment_confirmation)
+{
+	$pconf = get_post($payment_confirmation);
+	if($pconf) {
+	$response['payment_confirmation'] = $pconf;
+	$response['payment_confirmation']->html = do_blocks($pconf->post_content);
+	}
+}
+$response['edit_url'] = admin_url('post.php?action=edit&post=');
+$response['status'] = $status;
+return new WP_REST_Response( $response, 200 );	
+
+	}//end handle
+}//end class
+
+class RSVP_Pricing extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'pricing';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;// current_user_can('edit_posts');
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $current_user;
+		$status = '';
+		$post_id= intval($_GET['event_id']);
+		$json = file_get_contents('php://input');
+		if(!empty($_POST) || !empty($json))
+		{
+			if(!current_user_can('edit_post',$post_id))
+			return new WP_REST_Response( 'user does not have editing rights for this event', 401 );
+		}
+		if(!empty($json)) {
+			$data = json_decode($json);
+			if('pricing' == $data->update) {
+				$change = array_map('rsvp_pricing_ts', $data->change);
+				$status .= 'change: '.var_export($change, true);
+				update_post_meta($post_id,'pricing',$change);
+			}
+			if('coupon_codes' == $data->update) {
+				$status .= 'change: '.var_export($data->change, true);
+				delete_post_meta( $post_id, '_rsvp_coupon_code' );
+				delete_post_meta( $post_id, '_rsvp_coupon_method' );
+				delete_post_meta( $post_id, '_rsvp_coupon_discount' );	
+				foreach($data->change->coupon_codes as $index => $code) {
+					add_post_meta( $post_id, '_rsvp_coupon_code', $code );
+					add_post_meta( $post_id, '_rsvp_coupon_method', $data->change->coupon_methods[$index] );
+					add_post_meta( $post_id, '_rsvp_coupon_discount', $data->change->coupon_discounts[$index] );	
+				}
+		
+
+				update_post_meta($post_id,'_rsvp_coupons',(array) $data->change);
+			}
+		}
+		$pricing = rsvp_get_pricing($post_id);
+		//if(sizeof($pricing) && $pricing[0]->price)
+		$response['pricing'] = $pricing;
+		$coupon_codes = get_post_meta( $post_id, '_rsvp_coupon_code' );
+		$coupon_methods = get_post_meta( $post_id, '_rsvp_coupon_method' );
+		$coupon_discounts = get_post_meta( $post_id, '_rsvp_coupon_discount' );		
+		$response['coupon_codes'] = is_array($coupon_codes) ? $coupon_codes : [];
+		$response['coupon_methods'] = is_array($coupon_methods) ? $coupon_methods : [];
+		$response['coupon_discounts'] = is_array($coupon_discounts) ? $coupon_discounts : [];
+		$response['status'] = $status;
+	return new WP_REST_Response( $response, 200 );
+	}//end handle
+}//end class
+
+function rsvp_pricing_ts ($row) {
+	if(!empty($row->deadlineDate)) {
+		$string = $row->deadlineDate.' ';
+		$string .= ($row->deadlineTime) ? $row->deadlineTime : '23:59';
+		$row->price_deadline = rsvpmaker_strtotime($string);
+	}
+	else
+		$row->price_deadline = null;
+	return $row;
+}
+
+function rsvp_pricing_date_time($row) {
+	global $rsvp_options;
+	if($row->price_deadline)
+	{
+		$row->deadlineDate = rsvpmaker_date('Y-m-d',$row->price_deadline);
+		$row->deadlineTime = rsvpmaker_date('H:i:s',$row->price_deadline);
+		$row->niceDeadline = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$row->price_deadline);
+	}
+	else
+		$row->deadlineDate = $row->deadlineTime = '';
+	$row->price = number_format($row->price,2);
+	$row->filtered= true;
+	return $row;
+}
+
+function rsvp_get_pricing($post_id) {
+	$p = (isset($_GET['reset'])) ? null : get_post_meta($post_id,'pricing',true);
+	if($p && is_array($p))
+	{
+		$pricing = $p;
+	}
+	else {
+		$pricing = [];
+		$per = get_post_meta($post_id,'_per',true);
+		if($per) {
+			foreach($per['unit'] as $index => $unit)
+			{
+				$price = $per['price'][$index];
+				$price_deadline = empty($per['price_deadline'][$index]) ? '' : $per['price_deadline'][$index];
+				$price_multiple = empty($per['price_multiple'][$index]) ? 1 : $per['price_multiple'][$index];
+				$pricing[] = (object) array('unit'=>$unit,'price'=>$price,'price_deadline'=>$price_deadline,'price_multiple'=>$price_multiple);
+			}
+	}	
+	}
+$pricing = array_map('rsvp_pricing_date_time',$pricing);
+usort($pricing,'rsvp_price_compare');
+if(!empty($per)) {//update from old format
+	update_post_meta($post_id,'pricing',$pricing);
+}
+return $pricing;
+}
+
+function rsvp_price_compare ($a,$b) {
+	if(empty($a->price_deadline))
+		$a->price_deadline = time()+YEAR_IN_SECONDS;
+	if(empty($b->price_deadline))
+		$b->price_deadline = time()+YEAR_IN_SECONDS;
+	return $a->price_deadline - $b->price_deadline;
+}
+
 add_action('rest_api_init',
 	function () {
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -2105,5 +2459,11 @@ add_action('rest_api_init',
 		$form->register_routes();
 		$ropts = new RSVP_Options_Json();
 		$ropts->register_routes();
+		$d = new RSVP_Event_Date();
+		$d->register_routes();
+		$rconf = new RSVP_Confirm_Remind();
+		$rconf->register_routes();
+		$pricing = new RSVP_Pricing();
+		$pricing->register_routes();
 	}
 );

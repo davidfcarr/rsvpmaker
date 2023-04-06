@@ -8,7 +8,6 @@ add_action('init','rsvpmail_list_rsvpmodal_controller',1);
 add_action('init', 'remove_save_content_filters', 99 );
 add_action('init','rsvpmaker_create_nonce',1);
 add_action('init','rsvphoney_login',1);
-add_action('init', 'rsvp_firsttime', 1 );
 
 add_action('admin_init','rsvpmaker_queue_post_type');
 
@@ -17,8 +16,6 @@ add_action( 'add_meta_boxes', 'rsvplanding_register_meta_boxes' );
 add_action( 'admin_bar_menu', 'toolbar_rsvpmaker', 99 );
 
 add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
-
-add_action( 'admin_head', 'rsvpmaker_upcoming_admin_js' );
 add_action( 'admin_head', 'rsvpmaker_template_admin_title' );
 
 add_action('admin_init', 'rsvpmaker_plugin_add_privacy_policy_content' );
@@ -29,7 +26,7 @@ add_action('admin_init', 'rsvpmaker_editors' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvp_csv' );
 add_action('admin_init', 'additional_editors_setup' );
-add_action('admin_init', 'rsvpmaker_setup_post' );
+//add_action('admin_init', 'rsvpmaker_setup_post' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 
 add_action( 'admin_menu', 'my_events_menu' );
@@ -66,11 +63,15 @@ add_action( 'sc_after_charge', 'rsvpmaker_sc_after_charge' );
 add_action( 'template_redirect', 'rsvpmaker_email_template_redirect' );
 
 add_action('post_updated', function($post_id, $post_after, $post_before) {
-if($post_after->post_type == 'rsvpmaker')
-rsvpmaker_update_event_row ($post_id);
+global $wpdb;
 if('rsvpemail' == $post_after->post_type) {
 	$html = rsvpmaker_email_html($post_after); //update the styled html metadata
 }
+if(('rsvpmaker' == $post_after->post_type) && $post_after->post_title != $post_before->post_title) {
+	$table = get_rsvpmaker_event_table();
+	$wpdb->query($wpdb->prepare("update $table SET post_title=%s where event=%d",$post_after->post_title,$post_after->ID)); //keep title in sync
+}
+
 },10,3);
 
 add_action( 'user_register', 'RSVPMaker_register_chimpmail' );

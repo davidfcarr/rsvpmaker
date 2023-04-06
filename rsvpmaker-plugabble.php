@@ -112,7 +112,7 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 					'<p><a href="%s">%s</a> | <a href="%s">%s</a> | <a href="%s">%s</a> | <a href="%s">%s</a></p>',
 					admin_url( 'post.php?action=edit&post=' . $t ),
 					__( 'Edit Template Content', 'rsvpmaker' ),
-					admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=' . $t ),
+					admin_url( 'post.php?action=edit&tab=basics&post=' . $t ),
 					__( 'Edit Template Options', 'rsvpmaker' ),
 					admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t ),
 					__( 'See Related Events', 'rsvpmaker' ),
@@ -402,11 +402,10 @@ function get_confirmation_options( $post_id = 0, $documents = array() ) {
 
 }
 
-
-
 if ( ! function_exists( 'GetRSVPAdminForm' ) ) {
 
 	function GetRSVPAdminForm( $post_id ) {
+		return;
 		global $custom_fields;
 
 		global $post;
@@ -1785,11 +1784,11 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			$custom_fields = get_post_custom( $post->ID );
 
-			$rsvp_to = $custom_fields['_rsvp_to'][0];
+			$rsvp_to = empty($custom_fields['_rsvp_to'][0]) ? $rsvp_options['rsvp_to'] : $custom_fields['_rsvp_to'][0];
 
 			$rsvp_confirm = rsvp_get_confirm( $post->ID );
 
-			$rsvp_max = $custom_fields['_rsvp_max'][0];
+			$rsvp_max = empty($custom_fields['_rsvp_max'][0]) ? 0 : $custom_fields['_rsvp_max'][0];
 
 			$count = $wpdb->get_var( 'SELECT count(*) FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$event AND yesno=1" );
 
@@ -2027,23 +2026,20 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				$index = (int) $_POST['guest_count_price'];
 
-				$per = unserialize( $custom_fields['_per'][0] );
+				$per = rsvp_get_pricing($event);
 
-				$price = $per['price'][ $index ];
+				$price = $per[ $index ]->price;
 
-				$unit = $per['unit'][ $index ];
+				$unit = $per[ $index ]->unit;
 
-				$multiple = (int) ( isset( $per['price_multiple'][ $index ] ) ) ? $per['price_multiple'][ $index ] : 1;
+				$multiple = ( isset( $per[ $index ]->price_multiple ) ) ? (int) $per[ $index ]->price_multiple : 1;
 
 				if ( $multiple == 1 ) { // coupon codes not applied to multiple admission "table" pricing
-
 					$price = rsvpmaker_check_coupon_code( $price );
 				}
 
 				if ( $multiple > 1 ) {
-
 					$rsvp['total'] = $price;
-
 					if ( $participants > $multiple ) {
 
 						$multiple_warning = '<div style="color:red;">' . "Warning: party of $participants exceeds table size" . '</div>';
@@ -3021,45 +3017,42 @@ if ( ! function_exists( 'event_content' ) ) {
 
 					}
 				}
-
-				if ( isset( $custom_fields['_per'][0] ) && $custom_fields['_per'][0] ) {
+				
+				$pricing = rsvp_get_pricing($post->ID);
+				//print_r($pricing);
+				if ($pricing) {
 
 					$pf = '';
 
 					$options = '';
 
-					$per = unserialize( $custom_fields['_per'][0] );
+					foreach ( $pricing as $index => $price_row ) {
 
-					foreach ( $per['unit'] as $index => $value ) {
-
-						if ( ( $index == 0 ) && empty( $per['price'][ $index ] ) ) { // no price = $0 where no other price is specified
-
+						if ( empty($price_row->price ) ) { // no price = $0 where no other price is specified
 							continue;
 						}
 
-						if ( empty( $per['price'][ $index ] ) && ( $per['price'][ $index ] != 0 ) ) {
+						$price = (float) $price_row->price;
 
-							continue;
-						}
-
-						$price = (float) $per['price'][ $index ];
+						printf('<p>price %s</p>',$price);
 
 						$deadstring = '';
 
-						if ( ! empty( $per['price_deadline'][ $index ] ) ) {
+						if ( ! empty( $price_row->price_deadline ) ) {
 
-							$deadline = (int) $per['price_deadline'][ $index ];
+							$deadline = (int) $price_row->price_deadline;
 
 							if ( time() > $deadline ) {
 
 								continue;
 
 							} else {
-								$deadstring = ' (' . __( 'until', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $rsvp_options['short_date'] . ' ' . $rsvp_options['time_format'], $deadline ) . ')';
+								if(!empty($price_row->niceDeadline))
+									$deadstring = ' (' . __( 'until', 'rsvpmaker' ) . ' ' . $price_row->niceDeadline . ')';
 							}
 						}
 
-						$display[ $index ] = $value . ' @ ' . ( ( $rsvp_options['paypal_currency'] == 'USD' ) ? '$' : $rsvp_options['paypal_currency'] ) . ' ' . number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . $deadstring;
+						$display[ $index ] = $price_row->unit . ' @ ' . ( ( $rsvp_options['paypal_currency'] == 'USD' ) ? '$' : $rsvp_options['paypal_currency'] ) . ' ' . number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . $deadstring;
 
 					}
 
@@ -3094,16 +3087,16 @@ if ( ! function_exists( 'event_content' ) ) {
 
 							foreach ( $display as $index => $value ) {
 
-								if ( empty( $per['price'][ $index ] ) && ( $per['price'][ $index ] != 0 ) ) {
+								if ( empty( $pricing ) ) {
 
 									continue;
 								}
 
-								$price = (float) $per['price'][ $index ];
-
-								$unit = $per['unit'][ $index ];
-
-								$pf .= '<div class="paying_for_tickets"><select name="payingfor[' . $index . ']" class="tickets"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select><input type="hidden" name="unit[' . $index . ']" value="' . esc_attr( $unit ) . '" />' . esc_html( $value ) . '<input type="hidden" name="price[' . $index . ']" value="' . esc_attr( $price ) . '" /></div>' . "\n";
+								if(!empty($pricing[$index])) {
+									$price = (float) $pricing[ $index ]->price;
+									$unit = $pricing[ $index ]->unit;
+									$pf .= '<div class="paying_for_tickets"><select name="payingfor[' . $index . ']" class="tickets"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select><input type="hidden" name="unit[' . $index . ']" value="' . esc_attr( $unit ) . '" />' . esc_html( $value ) . '<input type="hidden" name="price[' . $index . ']" value="' . esc_attr( $price ) . '" /></div>' . "\n";	
+								} 
 
 							}
 						}
@@ -3775,9 +3768,11 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 				$owed = $details['total'] - $row['amountpaid'];
 				if ( $owed ) {
 					echo '<div style="color: red;font-weight: bold;">' . __( 'Owed', 'rsvpmaker' ) . ': ' . $owed . '</div>';
-
+					$url = get_permalink($row['event']);
+					$url = add_query_arg('rsvp',$row['id'],$url);
+					$url = add_query_arg('e',$row['email'],$url);					
+					printf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>',$url,$url);
 					if ( $owed > 0 ) {
-
 						$owed_list .= sprintf( '<p><input type="checkbox" name="markpaid[]" value="%s:%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_html( $owed ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $owed ), __( 'Owed', 'rsvpmaker' ) );
 					}
 				}
