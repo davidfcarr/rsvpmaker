@@ -67,11 +67,6 @@ function add_rsvpmaker_new_event_defaults($post_id,$post,$is_update) {
 	if(isset($_GET['t']))
 	{
 	$t = intval($_GET['t']);
-	$tpl = get_post($t);
-	$ev['post_content'] = $tpl->post_content;
-	$title = $ev['post_title'] = $tpl->post_title;
-	wp_update_post($ev);
-	$post_id = wp_insert_post($ev);
 	add_post_meta($post_id,'_meet_recur',$t);
 	rsvpmaker_copy_metadata($t, $post_id);
 	//alter this for template
@@ -96,6 +91,26 @@ else
 	rsvpmaker_defaults_for_post($post_id);	
 }
 }
+
+function rsvp_default_content_from_template($content) {
+	if(isset($_GET['t'])) {
+		$t = intval($_GET['t']);
+		$tpl = get_post($t);
+		$content = $tpl->post_content;
+	}
+	return $content;
+} 
+function rsvp_default_title_from_template($content) {
+	if(isset($_GET['t'])) {
+		$t = intval($_GET['t']);
+		$tpl = get_post($t);
+		$content = $tpl->post_title;
+	}
+	return $content;
+} 
+
+add_filter('default_title','rsvp_default_title_from_template');
+add_filter('default_content','rsvp_default_content_from_template');
 
 function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', $post_title = '') {
 	global $wpdb, $post;
