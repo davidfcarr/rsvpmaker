@@ -6765,4 +6765,4 @@ function rsvpmaker_check_coupon_code( $price ) {
 
 }
 
-?>
+

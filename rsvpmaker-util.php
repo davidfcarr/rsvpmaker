@@ -4399,3 +4399,11 @@ function rsvpBlockDataOutput($block, $post_id) {
     return $output;
 }
 
+add_filter('the_content','rsvpmaker_show_meta',999,2);
+
+function rsvpmaker_show_meta($content) {
+	global $post;
+	if(isset($_GET['showmeta']) && current_user_can('manage_options'))
+		$content .= '<hr>metadata<hr><pre>'.var_export(get_post_meta($post->ID),true).'</pre>';
+	return $content;
+}
