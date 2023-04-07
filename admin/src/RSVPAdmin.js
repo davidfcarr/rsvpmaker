@@ -18,6 +18,9 @@ export default function RSVPAdmin (props) {
     const [changes,setChanges] = useState([]);
 
     function addChange(key,value,type='rsvp_options') {
+        console.log('addchange key',key);
+        console.log('addchange value',value);
+        console.log('addchange type',type);
         manageChanges(key,value,type);
     }
     
@@ -29,6 +32,8 @@ export default function RSVPAdmin (props) {
                 setChanges([]);
             }
         setChanges((ch) => {
+            if(!ch || !Array.isArray(ch)) 
+                return [].push(value);
             console.log('changeset start',ch);
             console.log('changeset new value',value);
             const exists = ch.findIndex( (item) => item.key==key );

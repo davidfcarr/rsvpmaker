@@ -33,7 +33,7 @@ const {data,isLoading} = useQuery(['rsvp_form',formId], fetchForms, { enabled: t
     
 const queryClient = useQueryClient();
 async function updateForm (form) {
-    return await apiClient.post('rsvp_form?form_id='+formId+'&post_id='+wp?.data.select("core/editor").getCurrentPostId(), {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});
+    return await apiClient.post('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId(), {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});
 }
 
 const {mutate:formMutate} = useMutation(updateForm, {

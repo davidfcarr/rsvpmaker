@@ -4389,7 +4389,7 @@ function rsvpBlockDataOutput($block, $post_id) {
 			$output .= $block->innerHTML."\n";
         if(!empty($block->innerBlocks) && is_array($block->innerBlocks) && sizeof($block->innerBlocks)) {
             foreach($block->innerBlocks as $innerblock) {
-                $output .= jsonBlockDataOutput($innerblock,$post_id);
+                $output .= rsvpBlockDataOutput($innerblock,$post_id);
             }
         }
         $output .= sprintf('<!-- /wp:%s -->',$block->blockName)."\n\n";    

@@ -1821,14 +1821,21 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$updated = array();
 		$form_id = (empty($_GET['form_id'])) ? $rsvp_options['rsvp_form'] : intval($_GET['form_id']); 
 		$post_id = (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) ? 0 : intval($_GET['post_id']);
-		$post = get_post($post_id);
+		$post = ($post_id) ? get_post($post_id) : null;
 		if(!empty($json)) {
-			if(!current_user_can('manage_options',$post_id))
-				return new WP_REST_Response( array('status' => 'User does not have rights to edit this document'), 401 );	
+			if($post_id)
+			{
+				if(!current_user_can('edit_post',$post_id))
+				return new WP_REST_Response( array('status' => 'User does not have rights to edit this document'), 401 );
+			}
+			else {
+				if(!current_user_can('edit_post',$form_id))
+				return new WP_REST_Response( array('status' => 'User lacks administrative rights'), 401 );
+			}
 			$data = json_decode(trim($json));
-			if($data->start)
+			if($data->start && $post_id)
 				update_post_meta($post_id,'_rsvp_start',rsvpmaker_strtotime($data->start));
-			if($data->deadline)
+			if($data->deadline && $post_id)
 				update_post_meta($post_id,'_rsvp_start',rsvpmaker_strtotime($data->deadline));
 			if(isset($data->form) && is_array($data->form)) {
 				$output = '';
@@ -1951,6 +1958,8 @@ class RSVP_Options_Json extends WP_REST_Controller {
 							foreach($changes as $chkey => $change) {
 								if($change && $change != 'set')
 									$p[$chkey] = sanitize_text_field($change);
+								if(('mode' == $chkey) && ('rsvpmaker_paypal_rest_keys' == $o->key))
+									$p['sandbox'] = ('sandbox' == $change) ? '1' : '0';
 							}
 							update_option($o->key,$p);
 						}
@@ -2010,6 +2019,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 					$response['paypal']['sandbox_client_id'] = '';
 					$response['paypal']['sandbox_client_secret'] = '';
 					$response['paypal']['sandbox'] = 0;//0 for production
+					$response['paypal']['mode'] = 'production';
 				}
 			else {
 				if (!empty($pp['client_id']) && !empty($pp['client_secret']))
@@ -2022,7 +2032,17 @@ class RSVP_Options_Json extends WP_REST_Controller {
 					$response['paypal']['client_id'] = '';
 					$response['paypal']['client_secret'] = '';
 				}
-				$response['paypal']['sandbox'] = $pp['sandbox'];
+				if (!empty($pp['sandbox_client_id']) && !empty($pp['client_secret']))
+				{
+					$response['paypal']['sandbox_client_id'] = 'set';
+					$response['paypal']['sandbox_client_secret'] = 'set';
+				}
+				else
+				{
+					$response['paypal']['sandbox_client_id'] = '';
+					$response['paypal']['sandbox_client_secret'] = '';
+				}
+				$response['paypal']['mode'] = ($pp['sandbox']) ? 'sandbox' : 'production';
 			}	
 		//}
 
