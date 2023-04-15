@@ -494,8 +494,9 @@ jQuery( document ).ready(
 						return;
 					}
 					var dt       = new Date( timestamp );
-					var dtstring = dt.getFullYear() + '-' + pad2( dt.getMonth() + 1 ) + '-' + pad2( dt.getDate() ) + ' ' + pad2( dt.getHours() ) + ':' + pad2( dt.getMinutes() ) + ':' + pad2( dt.getSeconds() );
+					//var dtstring = dt.getFullYear() + '-' + pad2( dt.getMonth() + 1 ) + '-' + pad2( dt.getDate() ) + ' ' + pad2( dt.getHours() ) + ':' + pad2( dt.getMinutes() ) + ':' + pad2( dt.getSeconds() );
 					var justdate = dt.getFullYear() + '-' + pad2( dt.getMonth() + 1 ) + '-' + pad2( dt.getDate() );
+					var justtime = pad2( dt.getHours() ) + ':' + pad2( dt.getMinutes() ) + ':' + pad2( dt.getSeconds() );
 
 					var endtext = $( '.rsvpmaker_end', specific_post_row ).text();
 					if (endtext == '') {
@@ -509,11 +510,8 @@ jQuery( document ).ready(
 					var end_display_code = $( '.end_display_code', specific_post_row ).val();
 
 					/* populate the inputs with column data */
-					$( ':input[name="event_dates"]', specific_post_edit_row ).val( dtstring );
-					$( ':input[name="end_time"]', specific_post_edit_row ).val( end_tstring );
-					if (end_display_code) {
-						$( '.quick_time_display', specific_post_edit_row ).val( end_display_code );
-					}
+					$( ':input[name="start_date"]', specific_post_edit_row ).val( justdate );
+					$( ':input[name="start_time"]', specific_post_edit_row ).val( justtime );
 				}
 			}
 		}

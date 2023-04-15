@@ -157,6 +157,21 @@ function rsvpmaker_update_event_row ($post_id) {
 	return (object) array('event' => $post_id, 'post_title'=> $post->post_title,'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 }
 
+function rsvpmaker_update_start_time ($post_id, $date) {
+	global $wpdb, $post;
+	$event_table = $wpdb->prefix . 'rsvpmaker_event';
+	$event = get_rsvpmaker_event($post_id);
+	$post = get_post($post_id);
+	$diff = $event->ts_end - $event->ts_start;
+	if($diff <= 0)
+		$diff = HOUR_IN_SECONDS;
+	$ts_start = rsvpmaker_strtotime($date);
+	$ts_end = $ts_start + $diff;
+	$enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end);
+	$sql = $wpdb->prepare("update $event_table SET display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s WHERE event=%s",$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
+	$wpdb->query($sql);
+}
+
 function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 	global $wpdb, $post, $rsvp_options;
 	$event_table = $wpdb->prefix . 'rsvpmaker_event';
@@ -1143,7 +1158,7 @@ function fix_enddatetime( $enddatetime, $date, $post_id ) {
 
 function rsvpmaker_excerpt_filter($excerpt) {
 	global $post;
-	if(('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type)) {
+	if(isset($post->post_type) && (('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type))) {
 		$block = rsvp_date_block($post->ID);
 		$excerpt = !empty($block['dateblock']) ? $block['dateblock'] : '';// htmlentities(var_export($block,true)); //get_rsvp_date($post->ID);
 		$excerpt .= ' '.substr(strip_tags($post->post_content),0,200) . ' ....';	

@@ -5109,67 +5109,37 @@ if(!get_rsvp_date($post->ID))
 	return; // only for dated events, not templates etc
 	// you can check post type as well but is seems not required because your columns are added for specific CPT anyway
 
-switch( $column_name ) :
+	switch( $column_name ) :
 		case 'event_dates': {
-
+	
 			// you can also print Nonce here, do not do it ouside the switch() because it will be printed many times
 			rsvpmaker_nonce();
-
+	
 			// please not the fieldset classes could be:
 			// inline-edit-col-left, inline-edit-col-center, inline-edit-col-right
 			// each class for each column, all columns are float:left,
 			// so, if you want a left column, use clear:both element before
 			// the best way to use classes here is to look in browser "inspect element" at the other fields
-
+	
 			// for the FIRST columns only, it opens <fieldset> element, all our fields will be there
 			echo '<fieldset class="inline-edit-col-right"><div class="inline-edit-col"><div class="inline-edit-group wp-clearfix">';
-
+			if(empty($event))
+				$event = get_rsvpmaker_event($post->ID);
+			$dateparts = explode(' ',$event->date);
+			//echo '<div id="rsvpmaker-quick-edit-react" event="'.$post->ID.'" date="'.$event->date.'" enddate="'.$event->date.'" ts_start="'.$event->ts_start.'" ts_end="'.$event->ts_end.'" timezone="'.$event->ts_end.'" display_type="'.$event->display_type.'"><button id="quick-edit-dates-now" event="'.$post->ID.'" date="'.$event->date.'" enddate="'.$event->date.'" ts_start="'.$event->ts_start.'" ts_end="'.$event->ts_end.'" timezone="'.$event->ts_end.'" display_type="'.$event->display_type.'">Edit Dates</button></div>';
+	
 			echo '<label class="alignleft">
-					<span class="title">Datetime</span>
-					<span class="input-text-wrap"><input type="text" class="quick_event_date" id="quick_event_date-'.$post->ID.'" post_id="'.$post->ID.'" name="event_dates" value=""></span>
+					<span class="title">Event Date and Time</span>
+					<span class="input-text-wrap"><input class="quick_event_date_new" id="start_date-'.$post->ID.'" post_id="'.$post->ID.'" name="start_date" type="text" value=""></span>
+					<span class="input-text-wrap"><input class="quick_event_date_new" id="start_time-'.$post->ID.'" post_id="'.$post->ID.'" name="start_time" type="time" value=""></span>
 					<span id="quick_event_date_text-'.$post->ID.'"></span>
 				</label>';
-
+	//					<span class="input-text-wrap"><input type="text" class="quick_event_date" id="quick_event_date-'.$post->ID.'" post_id="'.$post->ID.'" name="event_dates" value=""></span>
+	
 			break;
-
+	
 		}
-		case 'rsvpmaker_end': {
-			if(empty($event))
-				$event = get_rsvpmaker_event($post->ID);
-			$end_type = (isset($event->display_type) ) ? $event->display_type : '';
-			$end = (isset($event->enddate)) ? $event->enddate : '';
-			echo '<label class="alignleft">
-			<span class="title">End Time</span>
-			<span class="input-text-wrap"><input type="time" class="quick_end_time" id="quick_end_time-'.$post->ID.'" post_id="'.$post->ID.'" name="end_time" value=""></span>
-			<span id="quick_end_time_text-'.$post->ID.'"></span>
-</label>';
-
-			break;
-
-		}
-		case 'rsvpmaker_display': {
-			if(empty($event))
-				$event = get_rsvpmaker_event($post->ID);
-			$end_type = (isset($event->display_type) ) ? $event->display_type : '';
-			$end = (isset($event->enddate)) ? $event->enddate : '';
-			//if(!empty($end_type) && (strpos($end,':') > 0))
-			$options = array('set' => 'Show End Time','allday' => 'All Day/Times Not Shown','multi|2' => '2 Days','multi|3' => '3 Days','multi|4' => '4 Days','multi|5' => '5 Days','multi|6' => '6 Days','multi|7' => '7 Days');
-			echo '<label class="alignleft">
-			<span class="title">Time Display</span>
-			<select name="quick_time_display" class="quick_time_display">
-			<option value="">End Time Not Shown</option>';
-			foreach($options as $key => $option)
-				printf('<option value="%s">%s</option>',$key,$option);
-			echo '</select>
-</label>';
-
-			// for the LAST column only - closing the fieldset element
-			echo '</div></div></fieldset>';
-
-			break;
-
-		}
-
+	
 	endswitch;
 }
 
@@ -5178,7 +5148,7 @@ switch( $column_name ) :
  */
 
 function rsvpmaker_quick_edit_save( $post_id ){
-	if(empty($_POST['event_dates']))
+	if(empty($_POST['start_date']))
 		return;
 	// check user capabilities
 	if ( !current_user_can( 'edit_post', $post_id ) ) {
@@ -5188,23 +5158,8 @@ function rsvpmaker_quick_edit_save( $post_id ){
 	// check nonce
 	if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 		return;
-
-	if ( isset( $_POST['event_dates'] ) ) {
-		if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$_POST['event_dates'])) {
-			$date = sanitize_text_field($_POST['event_dates']);
-			rsvpmaker_update_event_field ($post->ID, 'date', $date);
-		}
-		else
-			return;
+	$datetime = $_POST['start_date'].' '.$_POST['start_time'];
+	if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$datetime)) {
+		rsvpmaker_update_start_time (intval($_POST['post_ID']), $datetime);
 	}
-	if ( isset( $_POST['end_time'] ) ) {
-		if(preg_match('/^\d{2}:\d{2}$/',$_POST['end_time'])) {
-		 $end = sanitize_text_field($_POST['end_time']);
-		 rsvpmaker_update_event_field ($post->ID, 'enddate', $end);
-		} 
-	}
-	 if ( isset( $_POST['quick_time_display'] ) ) {
-		$display_type = sanitize_text_field($_POST['quick_time_display']);
-		rsvpmaker_update_event_field ($post->ID, 'display_type', $display_type);
-   	}
 }

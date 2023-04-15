@@ -243,7 +243,7 @@ add_filter('the_content','rsvpmaker_form_single');
 
 function rsvpmaker_form_single($content) {
 	global $post;
-	if('rsvpmaker_form' == $post->post_type) {
+	if(isset($post->post_type) && ('rsvpmaker_form' == $post->post_type)) {
 		if(current_user_can('edit_post',$post->ID)) {
 			return '<p><em>This form is meant for use as part of an event, but you can edit it here.</em></p><div id="rsvpmaker-single-form" form_id="'.$post->ID.'">Loading form editor ...</div>';
 		}

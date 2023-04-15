@@ -1658,7 +1658,7 @@ if ( ! function_exists( 'event_content' ) ) {
 		global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
 		// If the post is not an event, leave it alone
 
-		if (( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) {
+		if (empty($post->post_type) || ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) {
 			return $content;
 		}
 
@@ -2184,7 +2184,7 @@ if ( ! function_exists( 'event_content' ) ) {
 				
 				$pricing = rsvp_get_pricing($post->ID);
 				//print_r($pricing);
-				if ($pricing) {
+				if ($pricing && ($pricing[0]->price != '0.00')) {
 
 					$pf = '';
 
@@ -2224,7 +2224,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 						$number_prices = sizeof( $display );
 
-						if ( $number_prices ) {
+						if ( $number_prices && $display[0] ) {
 
 							if ( $number_prices == 1 ) { // don't show options, just one choice
 

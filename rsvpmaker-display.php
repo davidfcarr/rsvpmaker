@@ -1972,7 +1972,7 @@ function rsvpmaker_next_rsvps( $atts = array() ) {
 
 				$output .= $d['dateblock'];
 
-				$output .= '<p>&nbsp;</p>' . get_rsvp_link( $post->ID );
+				$output .= get_rsvp_link( $post->ID );
 
 				$output .= '</div><!-- end next featured -->';
 
@@ -2905,7 +2905,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 					$time_format = str_replace( 'T', '', $time_format );
 				}
 
-				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $event->ts_start );
+				$dateblock .= '<span class="time">' . rsvpmaker_date( $time_format, $event->ts_start );
 
 				$dateblock .= ' <span class="end_time">' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end ) . '</span>';
 
@@ -2945,9 +2945,9 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			$end_time = $event->enddate;
 			$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
 			if ( is_email_context() ) {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>', rsvpmaker_to_gcal( $post, $firstrow['datetime'], $end_time ), $permalink . $j . 'ical=1', $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), $permalink . $j . 'ical=1', $tzbutton );
 			} else {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $firstrow['datetime'], $end_time ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
 			}
 		} elseif ( ! empty( $custom_fields['_convert_timezone'][0] ) ) { // convert button without calendar icons
 			$dateblock .= '<div class="rsvpcalendar_buttons">' . $tzbutton . '</div>';
