@@ -442,6 +442,9 @@ min-height: 150px;
 	font-size: 20px;
 	font-weight: bold;
 }
+.alertnotice {
+	color: red;
+}
 
 #react_date_time .rsvpmaker-date-time {
 	background-color: #fff;
@@ -480,4 +483,13 @@ button.is-primary {
 }
 .rsvpsettings-tab-contents {
 	padding-bottom: 500px;
+}
+#create-update-form {
+	width: 90%;
+}
+#create-update-controls {
+	position: sticky;
+	top: 5px;
+	right: 5px;
+	width: 150px;
 }

@@ -19,6 +19,7 @@
     "file:./single-form.js",
     "file:./event-options.js",
     "file:./date-time.js",
-    "file:./editor-sidebar/sidebars.js"
+    "file:./editor-sidebar/sidebars.js",
+    "file:./metabox.js"
   ]
 }

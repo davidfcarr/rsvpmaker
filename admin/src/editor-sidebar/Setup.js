@@ -31,8 +31,8 @@ export default function Setup (props) {
 
 return (
     <div>
-    {!isOpen && <p><button onClick={open} >Show Setup Guide</button><br /><em>Click to see more event options</em></p>}
-    {isOpen && <Modal className="rsvpmaker-setup-modal" title="RSVPMaker Setup" onRequestClose={ close } >
+    {!isOpen && <p><button onClick={open} >RSVP / Event Options</button><br /><em>Click to see more event options</em></p>}
+    {isOpen && <Modal className="rsvpmaker-setup-modal" title="RSVP / Event Options" onRequestClose={ close } >
 
         <TabPanel
             className="rsvpmaker-tab-panel"

@@ -2808,7 +2808,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		);
 	}
 
-	$time_format = $rsvp_options['time_format'];
+	$time_format = ' '.$rsvp_options['time_format'];
 
 	$dur = $tzbutton = '';
 

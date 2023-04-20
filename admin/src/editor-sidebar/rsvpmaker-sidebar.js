@@ -8,6 +8,7 @@ import {MetaFormToggle, MetaTimeLord, MetaEndDateTimeControl} from './metadata_c
 import DateOrTemplate from './DateOrTemplate.js';
 import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();
+import TemplateProjected from './TemplateProjected.js';
 
 var el = wp.element.createElement;
 const { __ } = wp.i18n; // Import __() from wp.i18n
@@ -104,82 +105,6 @@ if(("undefined" !== typeof rsvpmaker_ajax) && rsvpmaker_ajax.template_url) {
 			]
 		}
 	);	
-}
-
-if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
-
-		let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
-		let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
-		let wasPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
-		// determine whether to show notice
-		subscribe( () => {
-			const isSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
-			const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
-			const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
-			const hasActiveMetaBoxes = wp.data.select( 'core/edit-post' ).hasMetaBoxes();
-			
-			// Save metaboxes on save completion, except for autosaves that are not a post preview.
-			const shouldTriggerTemplateNotice = (
-					( wasSavingPost && ! isSavingPost && ! wasAutosavingPost ) ||
-					( wasAutosavingPost && wasPreviewingPost && ! isPreviewingPost )
-				);
-
-			// Save current state for next inspection.
-			wasSavingPost = isSavingPost;
-			wasAutosavingPost = isAutosavingPost;
-			wasPreviewingPost = isPreviewingPost;
-	
-			if ( shouldTriggerTemplateNotice ) {
-				var newurl = rsvpmaker_ajax.projected_url.replace('template_list','setup');
-	wp.data.dispatch('core/notices').createNotice(
-		'info', // Can be one of: success, info, warning, error.
-		__('After updating this template, click'), // Text string to display.
-		{
-			id: 'rsvptemplateupdate', //assigning an ID prevents the notice from being added repeatedly
-			isDismissible: true, // Whether the user can dismiss the notice.
-			// Any actions the user can perform.
-			actions: [
-				{
-					url: newurl,
-					label: __('New Event based on template'),
-				},
-				{
-					label: ' or ',
-				},
-				{
-					url: rsvpmaker_ajax.projected_url,
-					label: __('Create / Update events'),
-				},
-			]
-		}
-	);
-	wp.data.dispatch('core/notices').createNotice(
-		'info', // Can be one of: success, info, warning, error.
-		__('After updating this template, click'), // Text string to display.
-		{
-			id: 'rsvptemplateupdatesnack', //assigning an ID prevents the notice from being added repeatedly
-			type: 'snackbar',
-			isDismissible: true, // Whether the user can dismiss the notice.
-			// Any actions the user can perform.
-			actions: [
-				{
-					url: newurl,
-					label: __('New Event based on template'),
-				},
-				{
-					label: ' or to update series ',
-				},
-				{
-					url: rsvpmaker_ajax.projected_url,
-					label: __('Create / Update events'),
-				},
-			]
-		}
-	);
-
-			}
-} );
-	
 }
 
 if((rsvpmaker.post_type == 'rsvpmaker') || (rsvpmaker.post_type == 'rsvpmaker_template')) {

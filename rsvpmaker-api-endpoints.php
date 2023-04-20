@@ -2140,6 +2140,8 @@ class RSVP_Event_Date extends WP_REST_Controller {
 				$wpdb->query($upsql);
 		}
 		$event = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
+		if(!$event)
+			return new WP_REST_Response( array('message'=>'not an event'), 200 );	
 		$event->upsql = $upsql;
 		$event->tzchoices = timezone_identifiers_list();
 
@@ -2321,7 +2323,8 @@ class RSVP_Pricing extends WP_REST_Controller {
 		if(!empty($json)) {
 			$data = json_decode($json);
 			if('pricing' == $data->update) {
-				$change = array_map('rsvp_pricing_ts', $data->change);
+				$change = array_filter($data->change,'rsvp_pricing_deleted');
+				$change = array_map('rsvp_pricing_ts', $change);
 				$status .= 'change: '.var_export($change, true);
 				update_post_meta($post_id,'pricing',$change);
 			}
@@ -2336,7 +2339,6 @@ class RSVP_Pricing extends WP_REST_Controller {
 					add_post_meta( $post_id, '_rsvp_coupon_discount', $data->change->coupon_discounts[$index] );	
 				}
 		
-
 				update_post_meta($post_id,'_rsvp_coupons',(array) $data->change);
 			}
 		}
@@ -2354,8 +2356,16 @@ class RSVP_Pricing extends WP_REST_Controller {
 	}//end handle
 }//end class
 
+function rsvp_pricing_deleted($row) {
+	if(!is_object($row) || empty($row->price))
+		return false;
+	return true;
+}
+
 function rsvp_pricing_ts ($row) {
-	if(!empty($row->deadlineDate)) {
+	if(!is_object($row) || empty($row->price))
+		$row = null;
+	elseif(!empty($row->deadlineDate)) {
 		$string = $row->deadlineDate.' ';
 		$string .= ($row->deadlineTime) ? $row->deadlineTime : '23:59';
 		$row->price_deadline = rsvpmaker_strtotime($string);
@@ -2375,7 +2385,7 @@ function rsvp_pricing_date_time($row) {
 	}
 	else
 		$row->deadlineDate = $row->deadlineTime = '';
-	$row->price = number_format($row->price,2);
+	$row->price = number_format((float) $row->price,2);
 	$row->filtered= true;
 	return $row;
 }
@@ -2404,7 +2414,12 @@ usort($pricing,'rsvp_price_compare');
 if(!empty($per)) {//update from old format
 	update_post_meta($post_id,'pricing',$pricing);
 }
+$pricing = array_filter($pricing,'rsvp_pricing_no_zeroes');
 return $pricing;
+}
+
+function rsvp_pricing_no_zeroes($pricing) {
+	return intval($pricing->price);
 }
 
 function rsvp_price_compare ($a,$b) {
@@ -2414,6 +2429,82 @@ function rsvp_price_compare ($a,$b) {
 		$b->price_deadline = time()+YEAR_IN_SECONDS;
 	return $a->price_deadline - $b->price_deadline;
 }
+
+class RSVP_Template_Projected extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'template_projected';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;// current_user_can('edit_posts');
+	}
+
+	public function get_items( $request ) {
+	$response = get_rsvpmaker_projected_api(intval($_GET['post']));
+	return new WP_REST_Response( $response, 200 );
+	}//end handle
+}//end class
+
+function get_rsvpmaker_projected_api($t) {
+	global $rsvp_options,$post;
+	$title = get_the_title($t);
+	$return = array('title'=>$title,'dates'=>[]);
+	$sched_result = get_events_by_template( $t );
+	$holidays = commonHolidays();
+	$return['action'] = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t );
+	$exists = [];
+	foreach($sched_result as $event) {
+		$parts = explode(' ',$event->date);
+		$exists[] = $event->date;
+		$event->note = (isset($holidays[$parts[0]])) ? $holidays[$parts[0]]['name'] : '';
+		$template_update = get_post_meta( $event->event, '_updated_from_template', true );
+		$event->modified = ( ! empty( $template_update ) && ( $template_update != $event->post_modified ) ) ? __( 'Modified independently of template. Update could overwrite customizations.', 'rsvpmaker' ) : '';
+		$event->dups = rsvpmaker_check_sametime($event->date,$event->event);
+		$event->prettydate = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start);
+		$event->id = $event->event;
+		$event->type = 'existing';
+		$return['dates'][] = $event;
+	}
+	$projected = rsvpmaker_get_projected( get_template_sked( $t ) );
+	if ( $projected && is_array( $projected ) ) {
+		foreach ( $projected as $i => $ts ) {
+			$year = rsvpmaker_date('Y',$ts);
+			$month = rsvpmaker_date('m',$ts);
+			$day = rsvpmaker_date('d',$ts);
+			$datetime = rsvpmaker_date('Y-m-d H:i:s',$ts);
+			$date = rsvpmaker_date('Y-m-d',$ts);
+			$prettydate = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$ts);
+			$note = (isset($holidays[$date])) ? $holidays[$date]['name'] : '';
+			$dups = rsvpmaker_check_sametime($datetime);
+			if(!in_array($datetime,$exists))
+				$return['dates'][] = array('id'=>'p'.$ts,'type'=>'projected','datetime'=>$datetime,'year'=>$year,'month'=>$month,'day'=>$day,'note'=>$note,'dups'=>$dups);
+		} // end for loop
+	}
+	return $return;
+}
+
 
 add_action('rest_api_init',
 	function () {
@@ -2485,5 +2576,7 @@ add_action('rest_api_init',
 		$rconf->register_routes();
 		$pricing = new RSVP_Pricing();
 		$pricing->register_routes();
+		$proj = new RSVP_Template_Projected();
+		$proj->register_routes();
 	}
 );

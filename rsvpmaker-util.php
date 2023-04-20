@@ -181,6 +181,7 @@ function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 		$sql = $wpdb->prepare("UPDATE $event_table SET date=%s, ts_start=%d WHERE event=%d ",$date,$ts_start,$event_post_id);
 	}
 	elseif('enddate' == $field) {
+		$date = $wpdb->get_var("SELECT date from $event_table WHERE event=$event_post_id");
 		$enddate = $value;
 		$ts_start = rsvpmaker_strtotime($date);
 		$ts_end = rsvpmaker_strtotime($enddate);
@@ -527,14 +528,16 @@ function rsvpmaker_timestamp_to_time( $t, $add_tz = false ) {
 	return rsvpmaker_date( $rsvp_options['time_format'], $t );
 }
 
-function rsvpmaker_date( $date_format = '', $t = null ) {
+function rsvpmaker_date( $date_format = '', $t = 0, $tzstring = '') {
 	global $post;
+	$t = intval($t);
 	if ( strpos( $date_format, '%' ) !== false ) {
 		$date_format = strftime_format_to_date_format( $date_format );
 	}
 
 	$post_id  = ( empty( $post->ID ) ) ? 0 : $post->ID;
-	$tzstring = rsvpmaker_get_timezone_string( $post_id );
+	if(empty($tzstring))
+		$tzstring = rsvpmaker_get_timezone_string( $post_id );
 	$tz       = new DateTimeZone( $tzstring );
 
 	if ( empty( $date_format ) ) {
@@ -800,18 +803,8 @@ function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT 
 
 	global $wpdb;
 
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
-
-	 FROM " . $wpdb->posts . '
-
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-	 JOIN " . $wpdb->postmeta . ' a2 ON ' . $wpdb->posts . ".ID =a2.post_id AND a2.meta_key='_meet_recur' AND a2.meta_value=" . $template_id . " 
-
-	 WHERE a1.meta_value > '" . get_sql_curdate() . "' AND (post_status='publish' OR post_status='draft')
-
-	 ORDER BY a1.meta_value " . $order;
-
+	$event_table = get_rsvpmaker_event_table();
+	$sql = "SELECT $wpdb->posts.ID, $wpdb->posts.post_title, $wpdb->posts.post_status, $wpdb->posts.post_author, $wpdb->posts.post_modified, $wpdb->posts.ID as postID, $event_table.*, $event_table.date as datetime FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN $event_table ON $event_table.event = $wpdb->posts.ID WHERE date > '" . get_sql_curdate() . "' AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=$template_id ORDER BY date " . $order;
 	$wpdb->show_errors();
 
 	return $wpdb->get_results( $sql, $output );
@@ -4421,4 +4414,32 @@ function rsvpmaker_show_meta($content) {
 	if(isset($_GET['showmeta']) && current_user_can('manage_options'))
 		$content .= '<hr>metadata<hr><pre>'.var_export(get_post_meta($post->ID),true).'</pre>';
 	return $content;
+}
+
+function rsvpmaker_check_sametime($datetime,$post_id=0) {
+	global $wpdb, $rsvp_options;
+	$parts = explode(' ',$datetime);
+	$dups = array('sametime' => [], 'sameday' => []);
+	$event_table = get_rsvpmaker_event_table();
+	$sql = $wpdb->prepare("select * from $event_table WHERE date=%s AND event != %d ",$datetime,$post_id);
+	$results = $wpdb->get_results($sql);
+	if($results) {
+		foreach($results as $row) {
+			$row->prettydate = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$row->ts_start);
+			$row->permalink = get_permalink($row->event);
+			$row->edit = admin_url('post.php?action=edit&post='.$row->event);
+			$dups['sametime'][] = $row;
+		}
+	}
+	$sql = $wpdb->prepare("select * from $event_table WHERE date!=%s AND event != %d AND date LIKE '".$parts[0]."%' ",$datetime,$post_id);
+	$results = $wpdb->get_results($sql);
+	if($results) {
+		foreach($results as $row) {
+			$row->prettydate = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$row->ts_start);
+			$row->permalink = get_permalink($row->event);
+			$row->edit = admin_url('post.php?action=edit&post='.$row->event);
+			$dups['sameday'][] = $row;
+		}
+	}
+	return $dups;
 }

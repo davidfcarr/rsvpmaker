@@ -141,7 +141,7 @@ export default function Pricing() {
         )}
         <p><label>Unit</label> <TextControl value={unitToAdd} onChange={setUnitToAdd} /></p>
         <p><label>Price</label> <TextControl value={priceToAdd} onChange={setPriceToAdd} /></p>
-        <p><label>Deadline (optional)</label> <input type="date" value={deadlineDate} onChange={(e) =>{setDeadlineDate(e.target.value)} } /> <input type="time" value={deadlineTime} onChange={(e) =>{setDeadlineTime(e.target.value)} } />
+        <p><label>Deadline (optional)</label> <input type="date" value={deadlineDate} onChange={(e) =>{setDeadlineDate(e.target.value)} } /> <input type="time" value={deadlineTime} onChange={(e) =>{setDeadlineTime(e.target.value)} } /> {(deadlineDate || deadlineTime) && <button onClick={() => {setDeadlineDate('');setDeadlineTime('')} }>Remove Deadline</button>}
         <br /><em>Example: early bird rate to register for a conference.</em></p>
         <p><label>Multiple (optional)</label> <input type="number" value={multiple} onChange={(e) =>{setMultiple(e.target.value)} } />
         <br /><em>Example: price for a table of 8 at a dinner, rather than a single registration.</em></p>

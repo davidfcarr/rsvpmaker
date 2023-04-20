@@ -44,6 +44,26 @@ function react_admin_script() {
 		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
 		wp_localize_script('rsvpmaker_details', 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}	
+
+	elseif( ((isset($_GET['action']) && ('edit' == $_GET['action'] && 'rsvpmaker_template' == $post->post_type )) || (strpos($_SERVER['REQUEST_URI'],'post-new.php') && isset($_GET['post_type']) && 'rsvpmaker_template' == $_GET['post_type'] ) ) )
+	{
+		wp_enqueue_script(
+			'rsvpmaker_meta', // Handle.
+			plugins_url( 'rsvpmaker/admin/build/metabox.js'), // Block.build.js: We register the block here. Built with Webpack.
+			array( 'wp-blocks', 'wp-i18n', 'wp-element','wp-components' ), // Dependencies, defined above.
+			time(),
+			true // Enqueue the script in the footer.
+		);
+		wp_enqueue_style(
+			'rsvpmaker_meta', // Handle.
+			plugins_url( 'rsvpmaker/admin/build/style-index.css'), // Block.build.js: We register the block here. Built with Webpack.
+			array( ), // Dependencies, defined above.
+			time()
+		);
+		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
+		wp_localize_script('rsvpmaker_meta', 'rsvpmaker_rest',rsvpmaker_rest_array());
+	}	
+
 	elseif(isset($_GET['page']) && ('rsvpmaker_setup' == $_GET['page'] )) 
 	{
 		wp_enqueue_script(
@@ -97,3 +117,23 @@ function rsvpmaker_react_admin() {
 	global $rsvp_options;
 	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'"></div>';
 }
+
+function rsvpmaker_template_callback() {
+	?>
+	<div id="rsvpmaker-template-metabox">
+		Loading Create/Update from Template
+	</div>
+	<?php
+}
+
+add_action( 'add_meta_boxes', function() {
+	global $post;
+	//if('rsvpmaker-template' == $post->post_type)
+	add_meta_box(
+		'rsvpmaker-create-update',
+		'RSVPMaker Create/Update',
+		'rsvpmaker_template_callback',
+		'rsvpmaker_template',
+		'advanced'
+	);
+} );

@@ -1129,7 +1129,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 					$cost = $value * $price;
 
-					$rsvp['payingfor'] .= '<div class="payingfor">' . "$value $unit @ " . number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] . '</div>';
+					$rsvp['payingfor'] .= " $value $unit @ " . number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'];
 
 					$rsvp['total'] += $cost;
 
@@ -2197,8 +2197,6 @@ if ( ! function_exists( 'event_content' ) ) {
 						}
 
 						$price = (float) $price_row->price;
-
-						printf('<p>price %s</p>',$price);
 
 						$deadstring = '';
 
