@@ -11,7 +11,10 @@ export default function DateOrTemplate() {
     const tab = (tabarg) ? tabarg[1] : 'basics';
     const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus) || ((tabarg) && tabarg[1]));
     const event_id = wp?.data?.select("core/editor").getCurrentPostId();
-    const {data,isLoading} = useRSVPDate(event_id);
+    const {data,isLoading,isError} = useRSVPDate(event_id);
+    if(isError)
+        return <p>Error loading event date</p>
+
     const eventdata = (isLoading) ? rsvpmaker_ajax.eventdata : data.data;
     console.log('eventdata DateOrTemplate',eventdata);
 

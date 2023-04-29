@@ -34,7 +34,7 @@ if(!function_exists('get_rsvpmaker_timestamp')) {
 }
 
 function add_rsvpmaker_event($post_id,$date,$enddate='',$display_type='',$tz='') {
-	global $rsvp_options;
+	global $rsvp_options, $wpdb;
 	$ts_start = rsvpmaker_strtotime($date);
 	if($enddate)
 	{
@@ -119,11 +119,15 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 		$timezone = wp_timezone_string();
 	date_default_timezone_set( $timezone );
 	$ts_start = strtotime($date);
-	$enddate = rsvpmaker_make_end_date ($date,$type,$end);
+	if(strpos($end,'-'))
+		$enddate = $end;
+	else
+		$enddate = rsvpmaker_make_end_date ($date,$type,$end);
 	$ts_end = strtotime($enddate);
 	$sql = $wpdb->prepare("INSERT INTO $event_table SET display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s, event=%s",$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
-	if(!empty($post_title))
-		$sql .= ", post_title='".addslashes($post_title)."'";
+	if(empty($post_title))
+		$post_title = get_the_title($post_id);
+	$sql .= ", post_title='".addslashes($post_title)."'";
 	$wpdb->query($sql);
 	return (object) array('event' => $post_id, 'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 }

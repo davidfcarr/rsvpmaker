@@ -642,17 +642,20 @@ const MetaTimestampControl = wp.compose.compose(
 			metadate.setTime((props.metaValue * 1000)+correction);
 		const [date,setDate] = useState((props.metaValue) ? metadate.getFullYear()+'-'+(pad(metadate.getMonth()+1))+'-'+pad(metadate.getDate()): '');
 		const [time,setTime] = useState((props.metaValue) ? pad(metadate.getHours())+':'+pad(metadate.getMinutes()) : '');
+		const [message,setMessage] = useState('');
 	
 		function save() {
 			const sdate = new Date(date+' '+time);
 			props.setMetaValue((sdate.getTime()-correction)/1000);
+			setMessage('New date will be recorded when you save/publish/update');
 		}
 
 		return (
 			<div>
 				<label>{props.label}</label>
-				<p><input type="date" value={date} onChange={(e) => {setDate(e.target.value)}} /> <input type="time" value={time} onChange={(e) => {setTime(e.target.value)}} /> {date && time && <button onClick={save}>Save</button>}</p>
+				<p><input type="date" value={date} onChange={(e) => {setDate(e.target.value)}} /> <input type="time" value={time} onChange={(e) => {setTime(e.target.value)}} /> {date && time && <button onClick={save}>Set</button>}</p>
 				{((date && !time) || (time && !date)) && <p><em>Enter both date and time</em></p>}
+				{message}
 			</div>
 		);
 	}

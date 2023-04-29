@@ -7,7 +7,9 @@ export default function DateTimeMakerInner(props) {
     const {event_id} = props;
     const [local,setLocal] = useState({});
     const [error,setError] = useState('');
-    const {data:bigdata,isLoading} = useRSVPDate(event_id);
+    const {data:bigdata,isLoading,isError} = useRSVPDate(event_id);
+    if(isError)
+        return <p>Error loading event date</p>
     const {mutate:datemutate} = useRSVPDateMutation(event_id,setError);
     if(isLoading)
         return <p>Loading date and time ...</p>
@@ -51,8 +53,11 @@ export default function DateTimeMakerInner(props) {
     }
 
     function setEndDate(datestring) {
+        console.log('end date '+datestring);
         const newendDate = new Date(datestring);
         if(newendDate.getDate() < date.getDate()) {
+            console.log('new end date error end',newendDate);
+            console.log('new end date error date',date);
             alert('end date cannot be before start date');
             return;
         }

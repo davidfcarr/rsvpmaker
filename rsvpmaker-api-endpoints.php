@@ -2140,16 +2140,22 @@ class RSVP_Event_Date extends WP_REST_Controller {
 				$wpdb->query($upsql);
 		}
 		$event = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
-		if(!$event)
-			return new WP_REST_Response( array('message'=>'not an event'), 200 );	
+		if(!$event) {
+			$type = get_post_type($event_id);
+			if('rsvpmaker_template' == $type)
+				return new WP_REST_Response( array('message'=>'not an event', 'is_template'=>true), 200 );	
+			elseif('rsvpmaker' == $type)
+			{
+				rsvpmaker_add_event_row($event_id,date('Y-m-d H:i:s',strtotime('tomorrow 12:00')),date('Y-m-d H:i:s',strtotime('tomorrow 13:00')),'');//add_rsvpmaker_new_event_defaults($event_id,get_post($event_id),false);
+				$event = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
+				if(!$event)
+					return new WP_REST_Response( array('message'=>'error adding default dates', 'debug'=>var_export($event)), 200 );	
+			}
+			else
+				return new WP_REST_Response( array('message'=>'not an event'), 200 );	
+		}
 		$event->upsql = $upsql;
 		$event->tzchoices = timezone_identifiers_list();
-
-		//$event->date = $event->ts_start * 1000;
-		//$event->enddate = $event->ts_end * 1000;
-		//$response['event'] = $event;
-		//$response['date'] = $event['ts_start'] * 1000;
-		//$response['enddate'] = $event['ts_end'] * 1000;
 		return new WP_REST_Response( $event , 200 );	
 	}
 }

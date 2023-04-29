@@ -7,7 +7,9 @@ import { OptionsToggle,OptRadio,OptSelect,OptText,OptTextArea } from "./OptionCo
 
 export default function General (props) {
     const {changes,addChange,setChanges} = props;
-    const {data,isLoading} = useOptions('general');
+    const {data,isLoading,isError} = useOptions('general');
+    if(isError)
+        return <p>Error loading general options</p>
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
 
     if(isLoading)

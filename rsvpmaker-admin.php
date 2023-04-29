@@ -1554,11 +1554,28 @@ function rsvpmaker_columns($defaults) {
     return $defaults;
 }
 
+function rsvpmaker_template_custom_column($column_name, $post_id) {
+	if('template_schedule' == $column_name) {
+		$sked = get_template_sked($post_id);
+		//echo var_export($sked,true).'<br>';
+		$output = '';
+		foreach($sked as $key => $value) {
+			if(!preg_match('/[A-Z]/',$key))
+				break;
+			if($value)
+				$output .= $key.' ';
+		}
+		echo esc_html($output);
+	}
+}
+
 function rsvpmaker_custom_column($column_name, $post_id) {
 	global $wpdb, $rsvp_options, $event;
+	$event = get_rsvpmaker_event($post_id);
+	if(!$event)
+		return;
 	
     if( $column_name == 'rsvpmaker_end' ) {
-		$event = get_rsvpmaker_event($post_id);
 		if($event)
 		echo esc_html($event->enddate);
 	}
@@ -1585,8 +1602,6 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 			echo '<br /><em>Show in my timezone</em> button displayed';
 	}
     elseif( $column_name == 'event_dates' ) {
-if(empty($event))
-	$event = get_rsvpmaker_event($post_id);
 
 $datetime = (isset($event->date)) ? $event->date : '';
 $template = get_template_sked($post_id);
@@ -5055,7 +5070,7 @@ function rsvpmaker_submission_post() {
 		}
 		add_post_meta($post_id,'_rsvpmaker_submission',date('Y-m-d H:i:s'));
 	
-		$mail['subject'] = "Event submission: ".$title.' '.$cddate;
+		$mail['subject'] = "Event submission: ".$title.' '.$datetime;
 		$mail['html'] = $description.sprintf('<hr />
 		<p>Event date: '.rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$t).'</p>
 		<p><a href="%s">Edit / Approve</a></p>
@@ -5084,6 +5099,15 @@ function rsvpmaker_submission_post() {
 
 add_shortcode('rsvpmaker_submission','rsvpmaker_submission');
 
+add_filter('manage_rsvpmaker_template_posts_columns', 'rsvpmaker_template_edit_columns');
+// the above hook will add columns only for default 'post' post type, for CPT:
+// manage_{POST TYPE NAME}_posts_columns
+function rsvpmaker_template_edit_columns( $column_array ) {
+	unset($column_array["tags"]);
+	$column_array['template_schedule'] = __('Template Schedule','rsvpmaker');
+	return $column_array;
+}
+
 /*
  * New columns
  */
@@ -5092,8 +5116,8 @@ add_filter('manage_rsvpmaker_posts_columns', 'rsvpmaker_edit_columns');
 // manage_{POST TYPE NAME}_posts_columns
 function rsvpmaker_edit_columns( $column_array ) {
 	unset($column_array["tags"]);
-	$column_array['event_dates'] = __('Event Dates','rsvpmaker');
-	$column_array['rsvpmaker_end'] = __('End Time','rsvpmaker');
+	$column_array['event_dates'] = __('Event Start','rsvpmaker');
+	$column_array['rsvpmaker_end'] = __('Event End','rsvpmaker');
 	$column_array['rsvpmaker_display'] = __('Display','rsvpmaker');
 	return $column_array;
 }
@@ -5105,7 +5129,10 @@ function rsvpmaker_edit_columns( $column_array ) {
 
 function rsvpmaker_quick_edit_fields( $column_name, $post_type ) {
 global $post;
-if(!get_rsvp_date($post->ID))
+if('rsvpmaker' != $post->post_type)
+	return;
+$event = get_rsvpmaker_event($post->ID);
+if(!$event)
 	return; // only for dated events, not templates etc
 	// you can check post type as well but is seems not required because your columns are added for specific CPT anyway
 
@@ -5123,8 +5150,7 @@ if(!get_rsvp_date($post->ID))
 	
 			// for the FIRST columns only, it opens <fieldset> element, all our fields will be there
 			echo '<fieldset class="inline-edit-col-right"><div class="inline-edit-col"><div class="inline-edit-group wp-clearfix">';
-			if(empty($event))
-				$event = get_rsvpmaker_event($post->ID);
+			
 			$dateparts = explode(' ',$event->date);
 			//echo '<div id="rsvpmaker-quick-edit-react" event="'.$post->ID.'" date="'.$event->date.'" enddate="'.$event->date.'" ts_start="'.$event->ts_start.'" ts_end="'.$event->ts_end.'" timezone="'.$event->ts_end.'" display_type="'.$event->display_type.'"><button id="quick-edit-dates-now" event="'.$post->ID.'" date="'.$event->date.'" enddate="'.$event->date.'" ts_start="'.$event->ts_start.'" ts_end="'.$event->ts_end.'" timezone="'.$event->ts_end.'" display_type="'.$event->display_type.'">Edit Dates</button></div>';
 	

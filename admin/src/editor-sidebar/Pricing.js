@@ -21,7 +21,7 @@ export default function Pricing() {
     function fetchPricing() {
         return apiClient.get('pricing?event_id='+rsvpmaker_ajax.event_id);
     }
-    const {data,isLoading} = useQuery(['pricing'], fetchPricing, { enabled: true, retry: 2, 
+    const {data,isLoading,isError} = useQuery(['pricing'], fetchPricing, { enabled: true, retry: 2, 
     onSuccess: (data, error, variables, context) => {
         console.log('rsvp pricing query',data);
     }, onError: (err, variables, context) => {
@@ -33,6 +33,9 @@ export default function Pricing() {
         return await apiClient.post('pricing?event_id='+rsvpmaker_ajax.event_id, command);
     }
     
+    if(isError)
+        return <p>Error loading pricing data.</p>
+
     const {mutate:mutatePricing} = useMutation(updatePricing, {
         onMutate: async (command) => {
             const previousValue = queryClient.getQueryData(['pricing']);

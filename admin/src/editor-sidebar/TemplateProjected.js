@@ -49,11 +49,14 @@ export default function TemplateProjected (props) {
         const parts = window.location.href.split('?');
         return apiClient.get('template_projected?'+parts[1]);
     }
-    const {data,isLoading} = useQuery(['template_projected'], fetchProjected, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
+    const {data,isLoading,isError} = useQuery(['template_projected'], fetchProjected, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
         console.log('template_projected',data);
     }, onError: (err, variables, context) => {
        console.log('error retrieving template_projected',err);
     }, refetchInterval: false });
+
+    if(isError)
+        return <p>Error loading projected dates.</p>
 
     const handleSelectAll = e => {
         setIsCheckAll(!isCheckAll);

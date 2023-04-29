@@ -6,7 +6,9 @@ import {useSaveControls} from './SaveControls';
 import { OptionsToggle,OptRadio,OptSelect,OptText,OptTextArea } from "./OptionControls.js";
 
 export default function Payment (props) {
-    const {data,isLoading} = useOptions('payment');
+    const {data,isLoading,isError} = useOptions('payment');
+    if(isError)
+        return <p>Error loading payment options</p>
     const {changes,addChange,setChanges} = props;
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
 

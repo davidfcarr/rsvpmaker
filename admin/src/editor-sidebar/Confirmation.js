@@ -14,13 +14,16 @@ export default function Confirmation() {
     function fetchMessages() {
         return apiClient.get('confirm_remind?event_id='+rsvpmaker_ajax.event_id);
     }
-    const {data,isLoading} = useQuery(['confirm_remind'], fetchMessages, { enabled: true, retry: 2, 
+    const {data,isLoading,isError} = useQuery(['confirm_remind'], fetchMessages, { enabled: true, retry: 2, 
     onSuccess: (data, error, variables, context) => {
         console.log('rsvp confirmation query',data);
     }, onError: (err, variables, context) => {
         console.log('error retrieving messages',err);
     }, refetchInterval: false });
         
+    if(isError)
+        return <p>Error loading confirmation message data</p>
+
     const queryClient = useQueryClient();
     async function updateMessage (command) {
         return await apiClient.post('confirm_remind?event_id='+rsvpmaker_ajax.event_id, command);

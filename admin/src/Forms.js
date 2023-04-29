@@ -23,14 +23,17 @@ export default function Forms (props) {
 function fetchForms() {
     return apiClient.get('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId());
 }
-const {data,isLoading} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
+const {data,isLoading,isError} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
     if(!formId)
         setFormId(data.data.form_id);
     console.log('rsvp forms query',data);
 }, onError: (err, variables, context) => {
     console.log('error retrieving rsvp forms',err);
 }, refetchInterval: false });
-    
+
+if(isError)
+    return <p>Error loading form options</p>
+
 const queryClient = useQueryClient();
 async function updateForm (form) {
     return await apiClient.post('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId(), {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});

@@ -48,8 +48,8 @@ export default function DateTimeMaker(props) {
 
     function setEndDate(datestring) {
         const newendDate = new Date(datestring);
-        if(newendDate.getDate() < date.getDate()) {
-            alert('end date cannot be before start date');
+        if(newendDate.getTime() < date.getTime()) {
+             alert('end date cannot be before start date');
             return;
         }
         const endsqldate = sqlDate(newendDate);

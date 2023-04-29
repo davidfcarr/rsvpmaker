@@ -2528,29 +2528,25 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 	}
 
 		$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
-
-		$dateblock .= utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+		$startdate = rsvpmaker_date( $rsvp_options['long_date'], $t );
+		$dateblock .= utf8_encode( $startdate );
 
 		$dur = (isset($eventrow->display_type)) ? $eventrow->display_type : '';
 
 		if ( $dur == 'set' && $endt ) {
-
-			$dateblock .= '<span class="time"> ' . rsvpmaker_timestamp_to_time( $t );
-
-			$dateblock .= ' <span class="end_time"> ' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_timestamp_to_time( $endt ) . '</span>';
-
-			$dateblock .= '</span>';
-
-		} elseif ( strpos( $dur, '|' ) ) {
-
+			$enddate = rsvpmaker_date( $rsvp_options['long_date'], $endt );
+			if($startdate == $enddate) {
+				$dateblock .= '<span class="time"> ' . rsvpmaker_timestamp_to_time( $t );
+				$dateblock .= ' <span class="end_time"> ' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_timestamp_to_time( $endt ) . '</span>';	
+				$dateblock .= '</span>';	
+			}
+			else {
+				$dateblock .= '<span class="time"> ' . rsvpmaker_timestamp_to_time( $t ) . '</span>';
+				$dateblock .= ' <span class="end_time"> <br />' . __( 'to', 'rsvpmaker' ) . ' ' . utf8_encode( $enddate ) . ' ' . rsvpmaker_timestamp_to_time( $endt ) . '</span>';	
+			}
+		} 
+		elseif ( ( $dur != 'allday' ) ) {
 			$dateblock .= '<span class="time"> ' . rsvpmaker_timestamp_to_time( $t ) . '</span>';
-
-			$dateblock .= ' <span class="end_time"> <br />' . __( 'to', 'rsvpmaker' ) . ' ' . utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $endt ) ) . ' ' . rsvpmaker_timestamp_to_time( $endt ) . '</span>';
-
-		} elseif ( ( $dur != 'allday' ) ) {
-
-			$dateblock .= '<span class="time"> ' . rsvpmaker_timestamp_to_time( $t ) . '</span>';
-
 		}
 
 		$dateblock .= '</div>';// end startdate div

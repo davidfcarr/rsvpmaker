@@ -6,7 +6,9 @@ import {useSaveControls} from './SaveControls';
 import { OptionsToggle,OptSelect} from "./OptionControls.js";
 
 export default function Security (props) {
-    const {data,isLoading} = useOptions('security');
+    const {data,isLoading,isError} = useOptions('security');
+    if(isError)
+        return <p>Error loading security options</p>
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
     const {changes,addChange,setChanges} = props;
     const {mutate:setOption} = useOptionsMutation(setChanges,makeNotification);
