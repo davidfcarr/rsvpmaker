@@ -1138,3 +1138,148 @@ function rsvpmaker_recipients_no_problems($recipients) {
 	}
     return $cleanrecipients;
 }
+
+function rsvpmail_email_to_parts($email) {
+	global $wpdb;
+	preg_match('/([^@-]+)-{0,1}(.*)@(.+)/',$email,$match);
+	if(is_multisite()) {
+		$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
+		$blog_id = $wpdb->get_var($sql);
+		if($blog_id) {
+			$fkey = empty($match[2]) ? 'members' : $match[2];
+			return array('subdomain'=>$match[1],'fwdkey'=>$fkey,'domain'=>$match[3],'blog_id'=>$blog_id);
+		}
+		else {
+			//root domain or mapped domain
+			$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[3]);
+			$blog_id = $wpdb->get_var($sql);
+			if($blog_id)	
+				return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>$blog_id);
+		}
+		return false;
+	}
+	//not multisite
+	if($match[3] == parse_url(get_site_url(),PHP_URL_HOST))
+		return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>1);
+	else
+		return false;
+}
+
+function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
+    $join = ($subdomain) ? '-' : '';
+    $slug_ids = get_officer_slug_ids($blog_id);
+    if($slug_ids) {
+        foreach($slug_ids as $slug => $slug_id) {
+        foreach($slug_id as $user_id) {
+                if($user_id) {
+                    $officer = get_userdata($user_id);
+                    $recipients[$subdomain.$join.$slug.'@'.$domain][] = $officer->user_email;
+                }
+            }
+        }
+    }
+    $forward_by_id = (is_multisite()) ? get_blog_option($blog_id,'wpt_forward_general') : get_option('wpt_forward_general');
+    $basecamp = (is_multisite()) ? get_blog_option($blog_id,'wpt_forward_basecamp') : get_option('wpt_forward_basecamp');
+    if($forward_by_id) {
+        $ffemail = (is_multisite()) ? get_blog_option($blog_id,'findafriend_email') : get_option('findafriend_email');
+        $recipients[$ffemail] = [];
+        foreach($forward_by_id as $forwarder => $email) {
+            if(empty($recipients[$email]))
+                $recipients[$ffemail][] = $email;
+            else
+                foreach($recipients[$email] as $f)
+                    $recipients[$ffemail][] = $f;
+            }
+    }
+    if($basecamp) {
+        $recipients[$subdomain.$join.'basecamp@'.$domain] = [];
+        foreach($basecamp as $forwarder => $email) {
+            if(empty($recipients[$email]))
+                $recipients[$subdomain.$join.'basecamp@'.$domain][] = $email;
+            else
+                foreach($recipients[$email] as $f)
+                    $recipients[$subdomain.$join.'basecamp@'.$domain][] = $f;
+        }
+    }
+
+    $custom_forwarders = (is_multisite()) ? get_blog_option($blog_id,'custom_forwarders') : get_option('custom_forwarders');
+    if(!empty($custom_forwarders))
+    {
+        $recipients[$forwarder] = [];
+        foreach($custom_forwarders as $forwarder => $emails) {
+            foreach($emails as $email) {
+                if(!empty($recipients[$email])) {
+                    $recipients[$forwarder] = array_merge($recipients[$forwarder], $recipients[$email]);
+                }
+                else {
+                    $recipients[$forwarder][] = $email;
+                }
+            }
+        }
+    }
+
+    $members_on = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'member_distribution_list', true) : get_option('member_distribution_list', true);
+    $officers_on = (is_multisite()) ? get_blog_option($blog_id,'officer_distribution_list') : get_option('officer_distribution_list');
+
+    if($members_on) {
+        $listvars = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'member_distribution_list_vars') : get_option('member_distribution_list_vars');
+        $list_email = ($subdomain) ? $subdomain.'@'.$domain : "members@".$domain;
+        $recipients[$list_email] = rsvpmail_get_member_emails($blog_id);
+        if(!empty($listvars['additional']))
+        foreach($listvars['additional'] as $email) {
+            $recipients[$list_email][] = $email;
+        }
+        $listvars[$list_email.'_whitelist'] = $listvars['whitelist'];
+    }
+
+    if($officers_on) {
+        $listvars = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'officer_distribution_list_vars') : get_option('officer_distribution_list_vars');
+        $list_email = ($subdomain) ? $subdomain.'-officers@'.$domain : "officers@".$domain;
+        $officers = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'wp4toastmasters_officer_ids') : get_option('wp4toastmasters_officer_ids');
+
+        if($officers && is_array($officers)) {
+
+            foreach($officers as $id) {
+
+                $member = get_userdata($id);
+
+                if($member) {
+
+                    $email = strtolower($member->user_email);
+
+                    $recipients[$list_email][] = $email;
+
+                }
+
+            }
+            if(!empty($listvars['additional']))
+            foreach($listvars['additional'] as $email) {
+                $recipients[$list_email][] = $email;
+            }
+            $recipients[$list_email.'_whitelist'] = $listvars['whitelist'];
+    }
+    }
+    return $recipients;
+}
+
+function rsvpmail_get_member_emails( $blog_id = 0 ) {
+
+	if ( empty( $blog_id ) ) {
+
+		$blog_id = get_current_blog_id();
+	}
+
+	$members = get_users(
+		array(
+			'blog_id' => $blog_id,
+			'orderby' => 'display_name',
+		)
+	);
+
+	$emails = array();
+
+	foreach ( $members as $member ) {
+		$emails[] = strtolower( $member->user_email );
+	}
+	return $emails;
+}

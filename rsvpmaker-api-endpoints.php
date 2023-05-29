@@ -1444,6 +1444,9 @@ foreach($ccFull as $cf) {
 	$audience[] = $cf->Email;
 	$cclist[] = $tf->Email;
 }
+
+$origin = sprintf("<p>Forwarded message, originally <br />From <a href=\"mailto:%s\">%s</a><br />To: %s<br />Cc: %s<br /><a href=\"mailto:%s?cc=%s&subject=Re: %s\">Reply All</a></p>",$data->From,$data->From,htmlentities($data->To),htmlentities($data->Cc),$data->From,implode(',',$audience),$data->Subject);
+$origin = '<div class="postmark-origin" style="padding:10px; background-color:#efefef">'.$origin.'</div>';
 $check = implode('|',$audience).$data->Subject;
 $last = get_transient('postmark_last_incoming');
 if($check == $last) {
@@ -1451,11 +1454,6 @@ if($check == $last) {
 	return;
 }
 set_transient('postmark_last_incoming',$check,time()+30);
-$origin = 'Message originally From: '.$data->From.', To: '.implode(', ',$tolist);
-$origin .= ' (<a href="mailto:'.implode(',',$tolist).'?subject='.$data->Subject.'">Reply</a>)';
-if(!empty($cclist))
-	$origin .= ', CC: '.implode(', ',$cclist);
-$origin = '<div style="background-color:#fff; color: black; margin-top: 20px; padding: 10px;">Forwarded by the <a href="https://rsvpmaker.com">RSVPMaker</a> Mailer. '.$origin.'</div>';
 $data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
 $mail['subject'] = $qpost['post_title'] = $data->Subject;
 $mail['html'] = $qpost['post_content'] = $data->HtmlBody;

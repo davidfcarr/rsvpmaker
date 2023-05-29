@@ -2026,7 +2026,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 			$rsvplink = get_rsvp_link( $post->ID, true );
 			if ( !is_rsvpmaker_deadline_future( $post->ID ) ) {
-				$content .= '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . '</p>'.var_export(is_rsvpmaker_deadline_future( $post->ID ),true);
+				$content .= '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . '</p>';
 			} 
 			elseif ( isset( $rsvpstart ) && ( $now < $rsvpstart ) ) {
 
@@ -2068,7 +2068,7 @@ if ( ! function_exists( 'event_content' ) ) {
 				<?php
 
 				if ( get_post_meta( $post->ID, '_rsvp_form_show_date', true ) ) {
-					echo rsvpmaker_format_event_dates( $post->ID );
+					echo '<div class="date_on_form">'.rsvpmaker_format_event_dates( $post->ID ).'</div>';
 				}
 
 				if ( $rsvp_instructions ) {

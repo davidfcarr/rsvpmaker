@@ -3741,7 +3741,8 @@ function rsvpmail_add_problem($email,$code) {
 	global $wpdb;
 	$table = $wpdb->prefix . "rsvpmailer_blocked";
 	$email = trim(strtolower($email));
-	if(! $wpdb->get_var("SELECT code from $table where email='".$email."'") )
+	$sql = $wpdb->prepare("SELECT code from $table where email=%s",$email);
+	if(! $wpdb->get_var($sql) )
 		$wpdb->query("INSERT INTO $table SET email='".$email."',code='".$code."' ");
 	do_action('rsvpmail_add_problme',$email,$code);
 }
@@ -3773,7 +3774,7 @@ function rsvpmail_is_problem($email) {
 	global $wpdb;
 	$table = $wpdb->prefix . "rsvpmailer_blocked";
 	$email = trim(strtolower($email));
-	$sql = "SELECT code from $table where email='".$email."' AND (code='unsubscribed' OR code LIKE 'blocke%')";
+	$sql = $wpdb->prepare("SELECT code from $table where email=%s AND (code='unsubscribed' OR code LIKE 'blocke%')",$email);
 	$code = $wpdb->get_var($sql);
 	if(empty($code))
 		$code = apply_filters('rsvpmail_is_problem',$code,$email);

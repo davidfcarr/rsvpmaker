@@ -2384,7 +2384,6 @@ function signed_up_ajax( $post_id ) {
 
 
 function rsvpmaker_exclude_templates_special( $query ) {
-
 	if ( is_admin() || ! $query->is_search() ) {
 
 		return;

@@ -283,6 +283,22 @@ function rsvpmaker_postmark_send($mail) {
     return $result;
 }
 
+function rsvpmail_recipients_by_email_parts($breakdown) {
+    $allforwarders = get_transient('allforwarders_'.$breakdown['blog_id']);
+    if(empty($allforwarders)) {
+        //not cached 
+        $allforwarders = rsvpmail_get_consolidated_forwarders($breakdown['blog_id'],$breakdown['subdomain'],$breakdown['domain']);
+        set_transient('allforwarders_'.$breakdown['blog_id'],$allforwarders);
+    }
+    //mail('david@carrcommunications.com','allforwarders 3',var_export($match,true)."\n".var_export($allforwarders,true));
+    return $allforwarders;
+}
+
+add_shortcode('allforwarders','allforwarders');
+function allforwarders() {
+return var_export(get_transient('allforwarders_109'),true);
+}
+
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     //wp_suspend_cache_addition(true);
     $admin_email = postmark_admin_email();
@@ -296,22 +312,49 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     }
     $postmark_settings = get_rsvpmaker_postmark_options();
 
-	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
- 	foreach($forwarders as $email) {
-		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
-        if(!empty($slug_and_id)) {
-            $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj);
-            do_action('rsvpmail_relay_slug_and_id',$slug_and_id,$email,$emailobj);
-            foreach($recipients as $index => $email)
-                $recipients[$index] = rsvpmaker_email_add_name($email,'forwarded');
-            if($recipients) {
-                $batch = rsvpmaker_postmark_batch($emailobj, $recipients, $slug_and_id);
+    //test new approach
+    $from = strtolower($emailobj->From);
+    $testoutput = '';
+    $testrecipients = [];
+    $sent = [];
+    foreach($forwarders as $email) {
+        $breakdown = rsvpmail_email_to_parts($email);
+        $email = apply_filters('rsvpmail_email_match',$email,$from,$breakdown,$emailobj);
+        $testoutput .= "\n $email after filter\n";
+        $testoutput .= sprintf("%s to %s\n",$email, var_export($breakdown,true));
+        //mail('david@carrcommunications.com','testoutput',$testoutput);
+        if($breakdown && empty($testrecipients[$breakdown['blog_id']]))
+            $testrecipients[$breakdown['blog_id']] = rsvpmail_recipients_by_email_parts($breakdown);
+        if(!empty($testrecipients[$breakdown['blog_id']][$email]) && is_array($testrecipients[$breakdown['blog_id']][$email])) {
+            update_option('testrecipients',$testrecipients[$breakdown['blog_id']][$email]);
+            $testoutput .= "\n\nSelected list: ";
+            $testoutput .= var_export($testrecipients[$breakdown['blog_id']][$email],true)."\n\n";
+            $recipients = [];
+            foreach($testrecipients[$breakdown['blog_id']][$email] as $to)
+                if(!in_array($to,$recipients))
+                    $recipients[] = $to;
+            if(($breakdown['fwdkey'] == 'members') || ($breakdown['fwdkey'] == 'officers'))
+            {
+                $testoutput .= "\ntest from address\n".$from."\n";
+                if((in_array($from,$testrecipients[$breakdown['blog_id']][$email])) || (!empty($testrecipients[$breakdown['blog_id']][$email.'_whitelist']) && is_array($testrecipients[$breakdown['blog_id']][$email.'_whitelist']) && in_array($from,$testrecipients[$breakdown['blog_id']][$email.'_whitelist']))) {
+                    $batch = rsvpmaker_postmark_batch($emailobj, $recipients, array('blog_id'=>$breakdown['blog_id'],'slug'=>$breakdown['fwdkey']));
+                    $result = rsvpmaker_postmark_batch_send($batch);
+                    $testoutput .= "\nSEND\n".$result;    
+                }
+                else
+                    $testoutput .= "\nBLOCK\n";            
+            }
+            else {
+                //go ahead and send
+                $batch = rsvpmaker_postmark_batch($emailobj, $recipients, array('blog_id'=>$breakdown['blog_id'],'slug'=>$breakdown['fwdkey']));
                 $result = rsvpmaker_postmark_batch_send($batch);
+                $testoutput .= "\nSEND\n".$result;
             }
         }
-	}
-    //wp_suspend_cache_addition(false);
-    return $result;
+        else
+            $testoutput .= "\n no match for testrecipients[".$breakdown['blog_id']."][".$email."] \n";
+    }
+    return $testoutput;
 }
 
 function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_and_id = NULL) {
@@ -716,3 +759,319 @@ function rsvpmaker_option_postmark_settings($option) {
 function postmark_admin_email() {
     return (is_multisite()) ? get_blog_option(1,'admin_email') : get_option('admin_email');
 }
+
+function postmark_forwarder_tester() {
+    $recipients = $combined = $original_to = $original_cc = [];
+    $data = postmark_incoming_test();
+    $original = '';
+    $output = '';
+    if(!empty($data->To))
+        $original .= 'To: '.htmlentities($data->To);
+    if(!empty($data->Cc))
+        $original .= ' CC: '.htmlentities($data->Cc);
+    foreach($data->ToFull as $index => $obj) {
+        $combined[] = strtolower($obj->Email);
+    }
+    foreach($data->CcFull as $index => $obj) {
+        $combined[] = strtolower($obj->Email);
+    }
+
+    $localdomains = ['toastmost.org','libertylakers.org'];
+    $customdomains = ['libertylakers.org' => 33];
+    foreach($combined as $to) {
+        $domain_lookup = '';
+        $femail = '';
+        $parts = explode('@',$to);
+        if(in_array($parts[1],$localdomains)) {
+            if($parts[1] = $localdomains[0]) {
+                if(strpos($parts[0],'-'))
+                {
+                    $leftparts = explode('-',$parts[0]);
+                    $domain_lookup = str_replace('.','',$leftparts[0]);
+                    $femail = $leftparts[1];
+                }
+                else {
+                    $domain_lookup = 'members';
+                    $femail = $parts[0];    
+                }
+            }
+            else {
+                $domain_lookup = $parts[1];
+                $femail = $parts[0]; 
+            }
+            if($domain_lookup) {
+                //$site_id = is_multisite() ? rsvpmail_site_id($domain_lookup) : 1;
+                $site_id = rsvpmail_site_id($domain_lookup);
+                if($site_id) {
+                    $list = postmark_resolve_email($femail, $site_id);
+                    if(empty($list))
+                        $output .= '<p>No match for '.$femail.'/'.$site_id.'</p>';
+                    else
+                        $recipients = array_merge($recipients,$list);
+                }
+            }
+
+        }
+        $output .= sprintf('<p>%s - %s %s</p>',$to,$domain_lookup,$femail);
+    }
+
+    return $output.'<p>'.$original . ' combined: '.implode(', ',$combined).' <br>recipients '.implode(', ',$recipients).'</p>';
+
+    return $output.'<pre>'.var_export($data,true).'</pre>';
+}
+
+function postmark_site_id($domain_lookup) {
+    $domains = ['op'=>109,'demo'=>22,'libertylakers.org'=>300];
+    $site_id = (empty($domains[$domain_lookup])) ? false : $domains[$domain_lookup];
+    return $site_id;
+}
+
+function postmark_resolve_email($femail, $site_id) {
+    $recipients = [];
+    $list[22]['members'] = ['member1@example.com','member2@example.com','member3@example.com'];
+    $list[22]['officers'] = ['officer1@example.com','officer2@example.com','demo-vpm@toastmost.org'];
+    $list[22]['president'] = ['david@carrcommunications.com'];
+    $list[22]['mentors'] = ['david@carrcommunications.com','demo-officers@toastmost.org'];
+    $list[300]['members'] = ['member31@example.com','member32@example.com','member33@example.com'];
+    if(!empty($list[$site_id][$femail]))
+        $recipients = $list[$site_id][$femail];
+    return $recipients;
+}
+
+function postmark_incoming_test() {
+$json = '{
+    "FromName": "David F. Carr",
+    "MessageStream": "inbound",
+    "From": "david@carrcommunications.com",
+    "FromFull": {
+      "Email": "david@carrcommunications.com",
+      "Name": "David F. Carr",
+      "MailboxHash": ""
+    },
+    "To": "demo-officers@toastmost.org, demo-president@toastmost.org, \"David F. Carr\" <davidfcarr@gmail.com>",
+    "ToFull": [
+      {
+        "Email": "demo-officers@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "demo-president@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "members@libertylakers.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "officers@libertylakers.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "libertylakers.org-officers@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "davidfcarr@gmail.com",
+        "Name": "David F. Carr",
+        "MailboxHash": ""
+      }
+    ],
+    "Cc": "demo-vpe@toastmost.org, demo-vpm@toastmost.org, demo-mentors@toastmost.org, demo-crazy@toastmost.org",
+    "CcFull": [
+      {
+        "Email": "demo-vpe@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "demo-vpm@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "demo-mentors@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      },
+      {
+        "Email": "demo-crazy@toastmost.org",
+        "Name": "",
+        "MailboxHash": ""
+      }
+    ],
+    "Bcc": "e57457449614918835dd9c9189b67f3b@inbound.postmarkapp.com",
+    "BccFull": [
+      {
+        "Email": "e57457449614918835dd9c9189b67f3b@inbound.postmarkapp.com",
+        "Name": "",
+        "MailboxHash": ""
+      }
+    ],
+    "OriginalRecipient": "e57457449614918835dd9c9189b67f3b@inbound.postmarkapp.com",
+    "Subject": "Forwarder and list test",
+    "MessageID": "6a9bd15d-dcf2-4b89-b234-863ad1426f50",
+    "ReplyTo": "",
+    "MailboxHash": "",
+    "Date": "Sat, 27 May 2023 09:15:47 -0400",
+    "TextBody": "Test\n",
+    "HtmlBody": "<div dir=\"ltr\">Test<\/div>\n",
+    "StrippedTextReply": "",
+    "Tag": "",
+    "Headers": [
+      {
+        "Name": "Return-Path",
+        "Value": "<SRS0=92bb=bq=carrcommunications.com=david@toastmost.org>"
+      },
+      {
+        "Name": "Received",
+        "Value": "by p-pm-inboundg02c-aws-useast1c.inbound.postmarkapp.com (Postfix, from userid 996)\tid 66A0B453CA3; Sat, 27 May 2023 13:16:04 +0000 (UTC)"
+      },
+      {
+        "Name": "X-Spam-Checker-Version",
+        "Value": "SpamAssassin 3.4.0 (2014-02-07) on\tp-pm-inboundg02c-aws-useast1c"
+      },
+      {
+        "Name": "X-Spam-Status",
+        "Value": "No"
+      },
+      {
+        "Name": "X-Spam-Score",
+        "Value": "4.5"
+      },
+      {
+        "Name": "X-Spam-Tests",
+        "Value": "DKIM_SIGNED,DKIM_VALID,HTML_MESSAGE,PYZOR_CHECK,\tRCVD_IN_DNSWL_NONE,RCVD_IN_ZEN_BLOCKED_OPENDNS,SPF_HELO_NONE,SPF_PASS,\tSUSPICIOUS_RECIPS,T_SCC_BODY_TEXT_LINE"
+      },
+      {
+        "Name": "Received",
+        "Value": "from delivery26.mailspamprotection.com (delivery26.mailspamprotection.com [185.56.84.25])\t(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256\/256 bits))\t(No client certificate requested)\tby p-pm-inboundg02c-aws-useast1c.inbound.postmarkapp.com (Postfix) with ESMTPS id 069AB453CA2\tfor <e57457449614918835dd9c9189b67f3b@inbound.postmarkapp.com>; Sat, 27 May 2023 13:16:03 +0000 (UTC)"
+      },
+      {
+        "Name": "Received",
+        "Value": "from 218.69.208.35.bc.googleusercontent.com ([35.208.69.218] helo=c104924.sgvps.net)\tby se26.mailspamprotection.com with esmtps (TLSv1.2:AES128-GCM-SHA256:128)\t(Exim 4.92)\t(envelope-from <SRS0=92bb=bq=carrcommunications.com=david@toastmost.org>)\tid 1q2tm5-004kKX-Ak\tfor e57457449614918835dd9c9189b67f3b@inbound.postmarkapp.com; Sat, 27 May 2023 08:16:03 -0500"
+      },
+      {
+        "Name": "DKIM-Signature",
+        "Value": "v=1; a=rsa-sha256; q=dns\/txt; c=relaxed\/relaxed;\td=carrcommunications.com; s=default; h=Cc:To:Subject:Date:From:list-help:\tlist-unsubscribe:list-subscribe:list-post:list-owner:list-archive;\tbh=rnWn6hAFGzscwCpPPg\/xQ+158m1PejLdKZ07YBETSYI=; b=eOuZ4BsAWJH2DDV49+39ehL3V\/\tvBaCxv5Zu1tCGPDxopFtiQ6wa+lKP5UrEoW+AWhXLbpvqUvsw4gDmTZ02RBBqCHP1RD50w3Q\/WT1A\tbfNIwstckiyNJyIO\/A9\/fZ3pKOs\/yHqOIm3sRPPw\/im5E4tRCPpeO4tSevobBwwnOGfA=;"
+      },
+      {
+        "Name": "Received",
+        "Value": "from [35.208.244.18] (port=55914 helo=se15.mailspamprotection.com)\tby c104924.sgvps.net with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384\t(Exim 4.96)\t(envelope-from <david@carrcommunications.com>)\tid 1q2tm5-000Gr5-04\tfor demo-vpe@toastmost.org;\tSat, 27 May 2023 13:16:01 +0000"
+      },
+      {
+        "Name": "Received",
+        "Value": "from mail-yw1-f170.google.com ([209.85.128.170])\tby se15.mailspamprotection.com with esmtps (TLSv1.3:TLS_AES_256_GCM_SHA384:256)\t(Exim 4.92)\t(envelope-from <david@carrcommunications.com>)\tid 1q2tm3-005pKH-6s\tfor demo-vpe@toastmost.org; Sat, 27 May 2023 08:16:00 -0500"
+      },
+      {
+        "Name": "Received",
+        "Value": "by mail-yw1-f170.google.com with SMTP id 00721157ae682-565cfe4ece7so6943087b3.2        for <demo-vpe@toastmost.org>; Sat, 27 May 2023 06:15:58 -0700 (PDT)"
+      },
+      {
+        "Name": "DKIM-Signature",
+        "Value": "v=1; a=rsa-sha256; c=relaxed\/relaxed;        d=carrcommunications-com.20221208.gappssmtp.com; s=20221208; t=1685193358; x=1687785358;        h=cc:to:subject:message-id:date:from:mime-version:from:to:cc:subject         :date:message-id:reply-to;        bh=rnWn6hAFGzscwCpPPg\/xQ+158m1PejLdKZ07YBETSYI=;        b=E6wR1xfXHdpqHULeYIImy8A5lNSMNSVJeqMOZGGBCUQ7d7LOhxQvhZqxYPyC4PENNv         D0gU8zRv73iJ7BETobOgPAsyIkwuOTnXfBqd6W4XLBohs2Xh7CBLX5uzgJiIFpEDW2Be         \/xQ29T9oVnf24YL+Yd1w7+CZu4d4DWgVzNNJGRtuIMvNsMGXU+\/y9162LI7n3HEZlMM\/         NyzB1fIVAbJay7ENNSpRXJW+1ekSqIOJg02UP4matRkAECLEDgt1U6JdZSUHoFPwT+Ob         TuR14n5kaQEp\/\/G7rK\/edyNwYYooGqpyJyDQsDoGMJcsUWLoDTpIhPznakDJaOPYG0DP         O+XA=="
+      },
+      {
+        "Name": "X-Google-DKIM-Signature",
+        "Value": "v=1; a=rsa-sha256; c=relaxed\/relaxed;        d=1e100.net; s=20221208; t=1685193358; x=1687785358;        h=cc:to:subject:message-id:date:from:mime-version:x-gm-message-state         :from:to:cc:subject:date:message-id:reply-to;        bh=rnWn6hAFGzscwCpPPg\/xQ+158m1PejLdKZ07YBETSYI=;        b=EiN3CuKedZa9pCBzoGMxX0ew2wx90bvbQV+\/gytm9Hx8SI9z1VPx4EZkIE8J5X3lym         7kV+LYug2W+fLHh7K2twbyByosMjA6wgOcdHI7n+wjEDkMyQ8AqtPczYJhmR9evzetUo         +lIRe0a5likXu7jVqSIaxToNAL8O5K2vXMsETt7ecAY1RL8JCsqsNY2G+aF+8hBTQR2u         K+YYSxhmuPoDB9+CqNNk13EQrlId98orUk\/DYrRzxiJp9kUTRz2DujpFf1mChfS6pfT7         l218g1eJTs9oRAp0SmVAud4Uz\/Qf2pOFhQO\/mbolJuKV8p+x8vCCCmP5gsr1wuuX7Pe+         d\/Ew=="
+      },
+      {
+        "Name": "X-Gm-Message-State",
+        "Value": "AC+VfDzthYvHf5xUQcSbiUtb0aYCO5SsTrRUMkDnGYLHB8a2xUmZOkAi\t1qY8kwDVYFHb588WCqjUWDgHk31qFjqsRUAyvKh3bA=="
+      },
+      {
+        "Name": "X-Google-Smtp-Source",
+        "Value": "ACHHUZ4LCvDW2vvodMi0QXBl\/OIQE\/DZ6ntGS51ULmRhGgSJ+ZxPL1MMcC+BqpXItYxUmUmouc+pMbfk1ODNIk43iE4="
+      },
+      {
+        "Name": "X-Received",
+        "Value": "by 2002:a81:4fd5:0:b0:565:b4e9:74a7 with SMTP id d204-20020a814fd5000000b00565b4e974a7mr4917793ywb.47.1685193358280; Sat, 27 May 2023 06:15:58 -0700 (PDT)"
+      },
+      {
+        "Name": "MIME-Version",
+        "Value": "1.0"
+      },
+      {
+        "Name": "Message-ID",
+        "Value": "<CAJbdpGtwEEcXT0j_KwarXRmBbyOnvoZ7S49-PsJnCXj1e20JLQ@mail.gmail.com>"
+      },
+      {
+        "Name": "Received-SPF",
+        "Value": "softfail (se15.mailspamprotection.com: transitioning domain of carrcommunications.com does not designate 209.85.128.170 as permitted sender) client-ip=209.85.128.170; envelope-from=david@carrcommunications.com; helo=mail-yw1-f170.google.com;"
+      },
+      {
+        "Name": "X-SPF-Result",
+        "Value": "se15.mailspamprotection.com: transitioning domain of carrcommunications.com does not designate 209.85.128.170 as permitted sender"
+      },
+      {
+        "Name": "Authentication-Results",
+        "Value": "mailspamprotection.com; spf=softfail smtp.mailfrom=david@carrcommunications.com; dkim=pass header.i=carrcommunications-com.20221208.gappssmtp.com"
+      },
+      {
+        "Name": "X-SpamExperts-Class",
+        "Value": "ham"
+      },
+      {
+        "Name": "X-SpamExperts-Evidence",
+        "Value": "Combined (0.20)"
+      },
+      {
+        "Name": "X-Recommended-Action",
+        "Value": "accept"
+      },
+      {
+        "Name": "X-Filter-ID",
+        "Value": "Mvzo4OR0dZXEDF\/gcnlw0a1TH2PAsCdBCefHR9dLpBupSDasLI4SayDByyq9LIhVYPGAIdi8wKHq +CAAA8rH6kTNWdUk1Ol2OGx3IfrIJKywOmJyM1qr8uRnWBrbSAGDKm8oTPTOtXVsuiY3CQn636F6 9qtBqRJgshxH+yGeCXACL+VXs+wjOKavRDV9OsPmBMmyNbDn7R5kilAhwr3KtPvewi+NVw3s8AaB O3eL9xrfjNQgD4Wu4djl\/0ccnHnReA6scZZwpzkCo4WoBCri0uYUcfEloDWv8y1k883\/5L6WZvJ8 2v5qqDoKQEdlLW3+fNcjGq4w5IjuQj91OL62DoNxG38PukMPwTJbVShPzeKQ3fbbTo\/YRK+tB9pi rNkrfOd0Lki8UcIop6ZvPjacVKLMgEgpvRxWpdqomhYjh246G9pysxXCSB5rHvRaGN\/MRK7lwTrY egpy7\/8+6KMpZ7LGgaeKqwlxi0fxcLZvNmvlgTl6fJxyntEfhZCKje4Zt1xSC46hEx9PvRsXkCB2 dC7\/+fOTvqVqTiiM4NskccSe\/POvc5OCITYf544qt8hZy17P7cY\/rQjML4nS3F6wrP6BQUTeGC4w Nm1yxBPK+DO05aNHu9VCJ2sFLFRRTpVfKm8oTPTOtXVsuiY3CQn630DBSefh1lZL0lzlorhBKYvo nV+E7OMXRvgtdyMlnmWipHwY1Re3fm\/rN5b+XVFpEcFtR0giFHDBnkJCcJVHdAImx6vaPzx0Rxvl 3WkmepWb9APZ3SMlf7OqPszvbLHaZhk3ngOCCtU5l3QYjib1YiAtOHf2DruBH22jRxOqvTfdat7+ GwEHHNHRnEtwdn106Os2CQIyYooPwUZVbl9zufS6FzWfZGViQ\/A5Sq5EHoUKOh8Kt49Eciiho9aM 1tIJU5FzyxoJifLoWcPmYKuqbZH1H\/aAwarQpYDOYx\/6JtUOrqCyaAXLcDUjxja1GUwOM1eM8n\/T MI3XIe13AOrMyVmbO+8nMRYL9kekVL4dhx06V9ECIyIwp9c70LlMQgcOCfyPJLFl3NCaNLm80s\/h 4hA="
+      },
+      {
+        "Name": "X-Report-Abuse-To",
+        "Value": "spam@quarantine1.mailspamprotection.com"
+      },
+      {
+        "Name": "X-Originating-IP",
+        "Value": "35.208.69.218"
+      },
+      {
+        "Name": "X-SpamExperts-Domain",
+        "Value": "c104924.sgvps.net"
+      },
+      {
+        "Name": "X-SpamExperts-Username",
+        "Value": "35.208.69.218"
+      },
+      {
+        "Name": "Authentication-Results",
+        "Value": "mailspamprotection.com; auth=pass smtp.auth=35.208.69.218@c104924.sgvps.net"
+      },
+      {
+        "Name": "X-SpamExperts-Outgoing-Class",
+        "Value": "ham"
+      },
+      {
+        "Name": "X-SpamExperts-Outgoing-Evidence",
+        "Value": "Combined (0.23)"
+      },
+      {
+        "Name": "X-Recommended-Action",
+        "Value": "accept"
+      },
+      {
+        "Name": "X-Filter-ID",
+        "Value": "Pt3MvcO5N4iKaDQ5O6lkdGlMVN6RH8bjRMzItlySaT+sfiq3hx8pX3PnEcZQF6zAPUtbdvnXkggZ 3YnVId\/Y5jcf0yeVQAvfjHznO7+bT5yu6jD6\/cbRTNHps+4\/l9fISOJL5jgq0dAaqfZfZ+D5y5Vk L8v0v1QpawOm8sDExxi0eSLSY2NpLbwy4p7HRPiMuA3MH\/gmSvDV4MtyJ\/n1+wHge3HAogrU3AfZ MFKvceKBhUAuFeS54pPv2vsVEup9ygkN6HIGx0G7nQOa1bihorAHx8r\/iErsfoiNuSRmnkSVTg+6 Z8b7XNrLsN6w1rmbZpgz+8Zqo8\/0yqmhGrhFWmeupYYdzPm7YfRDaULOU2lkrQQyZ\/c\/nQCN\/+0h fTQW67Zt5GqKWaOBDqMDdTBiCeNwxuyQxxpFBZS72lACfRLGYP\/Zj29Dpz4JZGFu9hfz+sPa00Wf FmZwEM\/0ZmjjnuQc6n8m9KR6SmWJuaJzM+qUDH1Ezqi4hzy9Wek66NxEOhvacrMVwkgeax70Whjf zJ4cMWqZYm+yJsD+ZoGQ7p8slJ0rink5yGLuN603zpd088XcZRX4p0EGqucJfyPQaLwqyT5p50x8 1ZKcmzCu2U0dOwEwFz1hUezuoZZB7wEpDN6+8DsCup5AUR3adq+ACehggDoMTx64uTo4mWprJRUn WgAofHWoeO84ZebpAH6aTplPMI8qwV+3DFuSDk5MQkFJkPEV0x2OFYpBGzXLrfjaM0qxA8UPDxN9 lFIRIuejs5IZ5dm0Rb3W7BGb6p2Zbz2CH+yShT9dwqyR7QtAppgtuctFVQp078svLEqHvTCZfCmb vHuyadb25I64jbUw3PODXNyNV0iF8Gh0552UEF73Y80OmAux3oN13+ztUzne3UOLo8EIHCjLPS7S nAjVhGt3svE7ZJ3XtYW0BdoTQS1B00PlfzfoiNb1+Fn1ZdvibQD\/g7QRwBU9EDvXStC7Fr+xT1EK v3ObV9aqZ16sL1dm4zuNRcgRKiGg7nXFaZTxk\/yHlWZSM+xwews5pduy\/95D1GKddTNmnIIudXq9 lcPEBM2uaQykbc4VWfL7weynLd1iSIqnJE7c4F2H+M3UkIw9wpL5D\/yF8BAAxodc2tT3K7c+w3qs 5s7L8fDiSW7Ie1Huf6ZU9LftxXX6dQt7i9k\/ZkftvJ3hVLXKl1wZv7WEDrNRkbewq\/prMd40wB\/W 9jihx+Za\/cV70jOJzN2r4A=="
+      },
+      {
+        "Name": "X-Report-Abuse-To",
+        "Value": "spam@quarantine1.mailspamprotection.com"
+      }
+    ],
+    "Attachments": []
+  }
+';
+return json_decode($json);
+}
+
+add_shortcode('postmark_forwarder_tester','postmark_forwarder_tester');
