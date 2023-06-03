@@ -1159,7 +1159,7 @@ function rsvpmail_email_to_parts($email) {
 		return false;
 	}
 	//not multisite
-	if($match[3] == parse_url(get_site_url(),PHP_URL_HOST))
+	if($match[3] == str_replace('www.','',parse_url(get_site_url(),PHP_URL_HOST)))
 		return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>1);
 	else
 		return false;

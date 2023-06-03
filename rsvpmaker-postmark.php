@@ -288,7 +288,7 @@ function rsvpmail_recipients_by_email_parts($breakdown) {
     if(empty($allforwarders)) {
         //not cached 
         $allforwarders = rsvpmail_get_consolidated_forwarders($breakdown['blog_id'],$breakdown['subdomain'],$breakdown['domain']);
-        set_transient('allforwarders_'.$breakdown['blog_id'],$allforwarders);
+        set_transient('allforwarders_'.$breakdown['blog_id'],$allforwarders,DAY_IN_SECONDS);
     }
     //mail('david@carrcommunications.com','allforwarders 3',var_export($match,true)."\n".var_export($allforwarders,true));
     return $allforwarders;
@@ -300,6 +300,8 @@ return var_export(get_transient('allforwarders_109'),true);
 }
 
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
+    rsvpmaker_testlog('postmark_incoming_forwarders',$forwarders);
+    rsvpmaker_testlog('postmark_incoming_emailobj',$emailobj);
     //wp_suspend_cache_addition(true);
     $admin_email = postmark_admin_email();
     $result = '';
@@ -319,6 +321,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $sent = [];
     foreach($forwarders as $email) {
         $breakdown = rsvpmail_email_to_parts($email);
+        $testoutput .= "\n $email before filter\n";
         $email = apply_filters('rsvpmail_email_match',$email,$from,$breakdown,$emailobj);
         $testoutput .= "\n $email after filter\n";
         $testoutput .= sprintf("%s to %s\n",$email, var_export($breakdown,true));
@@ -326,7 +329,6 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         if($breakdown && empty($testrecipients[$breakdown['blog_id']]))
             $testrecipients[$breakdown['blog_id']] = rsvpmail_recipients_by_email_parts($breakdown);
         if(!empty($testrecipients[$breakdown['blog_id']][$email]) && is_array($testrecipients[$breakdown['blog_id']][$email])) {
-            update_option('testrecipients',$testrecipients[$breakdown['blog_id']][$email]);
             $testoutput .= "\n\nSelected list: ";
             $testoutput .= var_export($testrecipients[$breakdown['blog_id']][$email],true)."\n\n";
             $recipients = [];
@@ -341,8 +343,16 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
                     $result = rsvpmaker_postmark_batch_send($batch);
                     $testoutput .= "\nSEND\n".$result;    
                 }
-                else
+                else {
                     $testoutput .= "\nBLOCK\n";            
+                    $rmail['subject'] = 'BLOCKED '.$emailobj->Subject;
+                    $rmail['to'] = $from;
+                    $rmail['html'] = '<p>'.$from .' is not authorized to send to the '.$email." email list.</p>\n<p>Authorized senders include email addresses associated with member accounts, as well as addresses whitelisted by a website administrator.</p>";
+                    $rmail['from'] = get_option('admin_email');                
+                    $rmail['fromname'] = get_option('blogname');
+                    rsvpmailer($rmail);
+                }
+                $testoutput .= '<pre>'.var_export($breakdown,true).'</pre>';
             }
             else {
                 //go ahead and send
@@ -354,6 +364,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         else
             $testoutput .= "\n no match for testrecipients[".$breakdown['blog_id']."][".$email."] \n";
     }
+    rsvpmaker_testlog('postmark_incoming_output',$testoutput);
     return $testoutput;
 }
 

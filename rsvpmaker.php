@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 10.2.5
+Version: 10.2.6
 */
 
 function get_rsvpversion() {
-	return '10.2.5';
+	return '10.2.6';
 }
 
 global $wp_version;
@@ -531,7 +531,7 @@ function cpevent_activate() {
 
 	dbDelta( $sql );
 
-	$sql = 'SELECT post_title, event, meta_value FROM `' . $wpdb->prefix . "rsvpmaker` join $wpdb->posts ON " . $wpdb->prefix . "rsvpmaker.event=wp_posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = wp_postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
+	$sql = 'SELECT post_title, event, meta_value FROM `' . $wpdb->prefix . "rsvpmaker` join $wpdb->posts ON " . $wpdb->prefix . "rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = wp_postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
 
 	$results = $wpdb->get_results( $sql );
 

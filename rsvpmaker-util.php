@@ -2205,7 +2205,7 @@ esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" nam
 	{
 		foreach ($mytable as $t) 
 		{       
-			if(strpos($t,'rsvp') !== false)
+			if(strpos($t,$wpdb->prefix.'rsvp') !== false)
 			echo $t . "<br>";
 		}
 	}
@@ -4447,4 +4447,9 @@ function rsvpmaker_check_sametime($datetime,$post_id=0) {
 		}
 	}
 	return $dups;
+}
+
+function rsvpmaker_testlog($key,$data) {
+	if(function_exists('rsvpmaker_testing'))
+		set_transient($key,$data,DAY_IN_SECONDS);
 }
