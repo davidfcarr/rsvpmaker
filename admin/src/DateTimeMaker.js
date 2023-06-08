@@ -35,7 +35,7 @@ export default function DateTimeMaker(props) {
     function setDate(datestring) {
         const dateobj = new Date(datestring);
         const m = dateobj.getTime();
-        const m_end = m+elapsed;
+        const m_end = m+ (elapsed) ? elapsed : 0;
         //console.log('setDate value',dateobj);
         const newendDate = new Date();
         newendDate.setTime(m_end);

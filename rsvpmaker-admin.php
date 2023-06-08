@@ -3467,6 +3467,7 @@ $log = '';
 $meta_keys = array();
 $post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$source_id");
 $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
+$deadlinedays = $deadlinehours = $regdays = $reghours = 0;
 
 		if (count($post_meta_infos)!=0) {
 			foreach ($post_meta_infos as $meta_info) {

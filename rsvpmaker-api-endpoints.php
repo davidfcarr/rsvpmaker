@@ -2479,7 +2479,10 @@ function get_rsvpmaker_projected_api($t) {
 	$holidays = commonHolidays();
 	$return['action'] = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t );
 	$exists = [];
+	$now = time();
 	foreach($sched_result as $event) {
+		if($event->ts_start < $now)
+			continue;
 		$parts = explode(' ',$event->date);
 		$exists[] = $event->date;
 		$event->note = (isset($holidays[$parts[0]])) ? $holidays[$parts[0]]['name'] : '';
@@ -2494,6 +2497,8 @@ function get_rsvpmaker_projected_api($t) {
 	$projected = rsvpmaker_get_projected( get_template_sked( $t ) );
 	if ( $projected && is_array( $projected ) ) {
 		foreach ( $projected as $i => $ts ) {
+			if($ts < $now)
+				continue;
 			$year = rsvpmaker_date('Y',$ts);
 			$month = rsvpmaker_date('m',$ts);
 			$day = rsvpmaker_date('d',$ts);

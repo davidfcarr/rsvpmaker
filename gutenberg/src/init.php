@@ -118,7 +118,20 @@ register_meta( 'post', '_rsvp_currency', $args );
 	register_meta( 'post', 'rsvp_tx_template', $args );
 	register_meta( 'post', '_rsvp_start', $args );
 	register_meta( 'post', '_rsvp_deadline', $args );
-
+	$args = array(
+		'type'		=> 'string',
+		'single'	=> true,
+		'default' => '0',
+		'show_in_rest'	=> true,
+		'auth_callback' => function() {
+		   return current_user_can('edit_posts');
+	   }
+   );
+	register_meta( 'post', '_rsvp_deadline_daysbefore', $args );
+	register_meta( 'post', '_rsvp_deadline_hours', $args );
+	register_meta( 'post', '_rsvp_reg_daysbefore', $args );
+	register_meta( 'post', '_rsvp_reg_hours', $args );
+	
 	$args = array(
 		'type'		=> 'string',
 		'single'	=> true,

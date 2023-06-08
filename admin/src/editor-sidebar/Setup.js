@@ -113,8 +113,29 @@ metaKey="_rsvp_max"
 label={__('Form Instructions for User','rsvpmaker')}
 metaKey="_rsvp_instructions"
 />
-<MetaTimestampControl label="Registration Start Date (optional)" metaKey="_rsvp_start" />
-<MetaTimestampControl label="Registration Deadline (optional)" metaKey="_rsvp_deadline" />
+{(rsvpmaker.post_type == 'rsvpmaker') && <MetaTimestampControl label="Registration Start Date (optional)" metaKey="_rsvp_start" />}
+{(rsvpmaker.post_type == 'rsvpmaker') && <MetaTimestampControl label="Registration Deadline (optional)" metaKey="_rsvp_deadline" />}
+{(rsvpmaker.post_type == 'rsvpmaker_template') && <div>
+<h3>Registration Start Date (optional)</h3>
+<MetaTextControl
+label={__('Start Date, Days Before','rsvpmaker')}
+metaKey="_rsvp_reg_daysbefore"
+/>
+<MetaTextControl
+label={__('Start Date, Hours Before','rsvpmaker')}
+metaKey="_rsvp_reg_hours"
+/>
+<h3>Registration Deadline (optional)</h3>
+<MetaTextControl
+label={__('Deadline, Days Before','rsvpmaker')}
+metaKey="_rsvp_deadline_daysbefore"
+/>
+<MetaTextControl
+label={__('Deadline, Hours Before','rsvpmaker')}
+metaKey="_rsvp_deadline_hours"
+/>
+</div>}
+
 </div>
 <FormSetup />
     </div>
