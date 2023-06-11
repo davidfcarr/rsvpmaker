@@ -3510,19 +3510,15 @@ preg_match_all('|<iframe.+src="https://www.youtube.com/embed/([^\?"]+)|is',$cont
 return rsvpmaker_youtube_email($content);// htmlentities(var_export($matches,true));
 }
 
-
 function rsvpmaker_youtube_email($content) {
 	$iframe = '|<iframe.+src="https://www.youtube.com/embed/([^\?"]+).+</iframe>|is';
-	if(preg_match_all($iframe,$content,$matches)) {
-		foreach($matches[1] as $youtube_id) {
-			$link = 'https://youtu.be/'.$youtube_id;
-			$img = 'https://img.youtube.com/vi/'.$youtube_id.'/mqdefault.jpg';
-			$html = '<a href="'.$link.'" style="display: block; margin-left: auto; margin-right: auto; width: 500px; height:283px; background-image: url('.$img.'); background-size: contain; background-repeat: no-repeat;"><img style=" style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></a>';
-			return str_replace($matches[0],$html,$content);
-		}
-	}
-	else
-		$content = preg_replace( '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([a-zA-Z0-9_\-]+)/', '<a href="$0" style="display: block; margin-left: auto; margin-right: auto; width: 500px; height:283px; background-image: url(https://img.youtube.com/vi/$2/mqdefault.jpg); background-size: contain; background-repeat: no-repeat;"><img style="opacity: 0.8; margin-top: 15px; margin-left: 15px;" alt="watch on YouTube" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'" ></a>', $content );
+	$content = preg_replace_callback($iframe,function ($match) {
+		return empty($match[1]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[1])."\n\n";
+	},$content);
+	$pattern = '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/www.youtube.com\/embed\/|https:\/\/youtu.be\/)([^\s<]+)/';
+		$content = preg_replace_callback($pattern,function ($match) {
+			return empty($match[2]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[2])."\n\n";
+		},$content);
 	return $content;
 }
 

@@ -4305,6 +4305,17 @@ return sprintf('<select name="%s">%s</select>',$select,$o);
 
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
+if(isset($post->post_type) && 'rsvpemail' == $post->post_type) {
+	$args = array(
+		'parent'    => 'new-post',
+		'id' => 'email_to_post',
+		'title' => __('Copy to Post','rsvpmaker'),
+		'href'  => admin_url('edit.php?email_to_post='.intval($post->ID)),
+		'meta'  => array( 'class' => 'rsvpmaker')
+	);
+	$wp_admin_bar->add_node( $args );	
+}
+
 $args = array(
 	'parent'    => 'new-rsvpmaker',
 	'id' => 'rsvpmaker_setup_template',

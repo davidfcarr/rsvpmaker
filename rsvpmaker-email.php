@@ -1201,6 +1201,10 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				}
 				else
 					$content .= $post->post_content;
+				$pattern = '/<!-- wp:embed {"url":"(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^"]+).+\n.+\n.+\n.+\n<!-- \/wp:embed -->/';
+				$content = preg_replace_callback($pattern,function ($match) {
+					return empty($match[2]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[2])."\n\n";
+				},$content);
 				if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_post_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
@@ -1248,6 +1252,25 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 			exit;
 			}
 	}
+	if(!empty($_GET["email_to_post"])) {
+		$email = get_post(intval($_GET["email_to_post"]));
+		$pattern = '/<div.+class="wp-block-rsvpmaker-emailcontent">/';
+		$split = preg_split($pattern,$email->post_content);
+		$content = str_replace("</div>
+		<!-- /wp:rsvpmaker/emailcontent -->",'',$split[1]);
+		$content = trim(str_replace("<!-- wp:rsvpmaker/emailcontent -->","",$content));
+		$my_post['post_title'] = $email->post_title;
+		$my_post['post_content'] = $content;
+		$my_post['post_type'] = 'post';
+		$my_post['post_status'] = 'draft';
+		$my_post['post_author'] = $current_user->ID;
+		if($post_id = wp_insert_post( $my_post ) )
+			{
+			$loc = admin_url("post.php?action=edit&post=".$post_id);
+			wp_redirect($loc);
+			exit;
+			}
+}
 }
 
 
@@ -3987,8 +4010,6 @@ function rsvpmaker_included_styles () {
 	}
 	
 function rsvpmaker_template_inline($query_post_id = 0) {
-	//email_content_minfilters();
-	//no javascript
 		
 		global $post;
 		global $email_styles;
@@ -4060,6 +4081,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		<?php
 		$content = ob_get_clean();
 		$content = rsvpmaker_email_html($content,$post->ID);
+		$content = rsvpmaker_youtube_email($content);
 update_post_meta($post->ID,'_rsvpmail_text',rsvpmaker_text_version($content));
 $wp_query = $wp_query_backup;
 return $content;
@@ -4443,8 +4465,18 @@ function rsvpmail_filter_style_json() {
 function rsvpmail_filter_style($content) {
 	$content = preg_replace('/<style.+<\/style>/is','',$content);
 	$content = preg_replace('/width="[^"]+"/','',$content);
-	$content = preg_replace('/height="[^"]+"/','',$content);
-	$content = str_replace('<img ','<img style="object-fit: contain; max-width: 100%; max-height: 100%;"',$content);
+	$content = preg_replace('/height="[^"]+"/','',$content);	
+	$content = preg_replace_callback('/<img ([^\/]+)\/>/',function ($match) {
+		if(strpos($match[1],'style=')) {
+			if(!strpos($match[1],'object-fit'))
+				$match[1] = str_replace('style="','style="object-fit: contain;',$match[1]);
+		} 
+		else {
+			$match[1] .= ' style="object-fit: contain; max-width: 100%; max-height: 100%;"';
+		}
+		return '<img '.$match[1].' />';
+	},
+	$content);
 	$content = str_replace('<figcaption','<figcaption style="text-align: center; font-style: italic;" ',$content);
 	$content = str_replace('<table','<table style="width: 100%;" ',$content);
 	$content = str_replace('<td','<td style="border: thin solid #000;" ',$content);
@@ -5980,4 +6012,25 @@ $options = get_rsvpemail_from_settings();
 	<br><em>Providing a physical mailing address is recommended for compliance with mailing list regulations.</em>
 </p>
 <?php
+}
+
+function YouTubeEmailFormat($youtubelink) {
+    $id = '1234';
+    preg_match('/(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^?&]+)/',$youtubelink,$match);
+    if(!empty($match[2]))
+        $id = $match[2];
+    return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
+    <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
+    <!-- /wp:rsvpmaker/youtube-email -->';
+}
+
+function the_editor_content_youtube_email($content) {
+	global $post;
+	if('rsvpemail' == $post->post_type) {
+		$pattern = '/<!-- wp:embed {"url":"(https:\/\/www.youtube.com\/watch\?v=|https:\/\/www.youtube.com\/embed\/|https:\/\/youtu.be\/)([^"]+).+\n.+\n.+\n.+\n<!-- \/wp:embed -->/';
+		$content = preg_replace_callback($pattern,function ($match) {
+			return empty($match[2]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[2])."\n\n";
+		},$content);	
+	}
+	return $content;
 }

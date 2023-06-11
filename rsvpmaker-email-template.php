@@ -41,8 +41,6 @@ if ( $chosen ) {
 
 	$editorsnote['note'] = $note;
 
-
-
 	if ( ! empty( $editorsnote['add_to_head'] ) ) {
 
 		$subject .= ' - ' . $editorsnote['add_to_head'];

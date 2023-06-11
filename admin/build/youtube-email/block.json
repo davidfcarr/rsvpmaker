@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "rsvpmaker/youtube-email",
+  "version": "0.1.0",
+  "title": "YouTube Email",
+  "keywords": [
+    "youtube",
+    "video",
+    "email"
+  ],
+  "category": "widgets",
+  "icon": "video-alt3",
+  "description": "YouTube Preview/Link for RSVPMaker Email",
+  "supports": {
+    "html": false
+  },
+  "attributes": {
+    "youtubelink": {
+      "type": "string"
+    }
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css"
+}
