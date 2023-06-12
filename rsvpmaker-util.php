@@ -3511,7 +3511,8 @@ return rsvpmaker_youtube_email($content);// htmlentities(var_export($matches,tru
 }
 
 function rsvpmaker_youtube_email($content) {
-	$iframe = '|<iframe.+src="https://www.youtube.com/embed/([^\?"]+).+</iframe>|is';
+	//return $content;
+	$iframe = '|<iframe.+src="https://www.youtube.com/embed/([^\?"]+).+</iframe>|';
 	$content = preg_replace_callback($iframe,function ($match) {
 		return empty($match[1]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[1])."\n\n";
 	},$content);
