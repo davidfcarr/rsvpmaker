@@ -1202,9 +1202,6 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				else
 					$content .= $post->post_content;
 				$pattern = '/<!-- wp:embed {"url":"(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^"]+).+\n.+\n.+\n.+\n<!-- \/wp:embed -->/';
-				$content = preg_replace_callback($pattern,function ($match) {
-					return empty($match[2]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[2])."\n\n";
-				},$content);
 				if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_post_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
@@ -1222,8 +1219,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 					$content = '<!-- wp:rsvpmaker/event {"post_id":"'.$id.'","one_format":"button"} /-->';
 				$title = get_the_title($id);
 				$date = get_rsvp_date($id);		
-				if($date) {
-				
+				if($date) {				
 				$t = rsvpmaker_strtotime($date);
 				global $rsvp_options;
 				$title .= ' - '.rsvpmaker_date($rsvp_options["short_date"],$t);
@@ -4157,13 +4153,25 @@ position:absolute;
 {
 	display: block;
 }
+.editor-styles-wrapper h1.editor-post-title__input {
+	width: 95%;
+	max-width: 95%;
+	font-size: 28px;
+	margin-left:auto;
+	margin-right:auto;
+	background-color: #fff;
+	color: #000;
+}
+.editor-styles-wrapper, .editor-styles-wrapper div, .editor-styles-wrapper p {
+'.$subs['wp-block-rsvpmaker-emailbody'].'
+}
 ';
 	$upload_dir   = wp_upload_dir(); 
 	if ( ! empty( $upload_dir['basedir'] ) ) {
 		$fname = $upload_dir['basedir'].'/rsvpmailer-editor.css';
 		file_put_contents($fname, $output);
 		return $upload_dir['baseurl'].'/rsvpmailer-editor.css';
-	}	
+	}
 	return false;
 }
 
@@ -4172,19 +4180,14 @@ function rsvpmailer_gutenberg_editor_css()
 global $post;
 if('rsvpemail' != $post->post_type)
 	return;
+wp_deregister_style('wp-reset-editor-styles');
+wp_enqueue_style('wp-block-editor-styles', includes_url('css/dist/block-editor/style.css'));
+wp_enqueue_style('wp-edit-post-styles', includes_url('css/dist/edit-post/style.css'));
   $css = rsvpmaker_get_style_substitutions_file();
   $version = time();
-  wp_enqueue_style('rsvpmailer-editor-css', $css, [], $version);
+  wp_enqueue_style('rsvpmailer-editor-css', $css, [], get_rsvpversion());
 }
 add_action('enqueue_block_editor_assets', 'rsvpmailer_gutenberg_editor_css',999);
-
-add_shortcode('rsvpmaker_get_style_substitutions_file_test','rsvpmaker_get_style_substitutions_file_test');
-function rsvpmaker_get_style_substitutions_file_test() {
-	$output = '<pre>';
-	$output .= rsvpmaker_get_style_substitutions_file();
-	$output .= '</pre>';
-	return $output;
-}
 
 function rsvpmaker_get_style_substitutions() {
 	global $style_sub;
@@ -4466,7 +4469,7 @@ function rsvpmail_filter_style($content) {
 	$content = preg_replace('/<style.+<\/style>/is','',$content);
 	$content = preg_replace('/width="[^"]+"/','',$content);
 	$content = preg_replace('/height="[^"]+"/','',$content);	
-	$content = preg_replace_callback('/<img ([^\/]+)\/>/',function ($match) {
+	$content = preg_replace_callback('/<img ([^>]+)>/',function ($match) {
 		if(strpos($match[1],'style=')) {
 			if(!strpos($match[1],'object-fit'))
 				$match[1] = str_replace('style="','style="object-fit: contain;',$match[1]);
@@ -5957,7 +5960,7 @@ return $output;
 
 function get_rsvpemail_from_settings() {
 	$from = get_option('rsvpemail_from_settings');
-	if(!empty($from['email']))
+	if(!empty($from))
 		return $from;
 	$chimp = get_option('chimp');
 	if(!empty($chimp['email-from']))
@@ -5997,18 +6000,27 @@ $options = get_rsvpemail_from_settings();
 </div>
 <h3 id="newsletter-from">Newsletter Addressing</h3>
 <p>
-<?php esc_html_e("These apply to any of the supported email distriution methods.",'rsvpmaker');?></p>			
+<?php
+if(isset($_POST['rsvpemail_from_settings']))
+{
+	$from_options = stripslashes_deep($_POST['rsvpemail_from_settings']);
+	update_option('rsvpemail_from_settings',$from_options); 
+}
+else
+	$from_options = get_rsvpemail_from_settings();
+print_r($from_options);
+esc_html_e("These apply to any of the supported email distriution methods.",'rsvpmaker');?></p>			
 <p><?php esc_html_e('Email or ReplyTo Address for Sender','rsvpmaker');?>:<br> 
-	<input type="text" name="rsvpemail_from_settings[email-from]" id="email-from" value="<?php if(isset($options["email-from"])) echo esc_attr($options["email-from"]); ?>" />
+	<input type="text" name="rsvpemail_from_settings[email-from]" id="email-from" value="<?php if(isset($from_options["email-from"])) echo esc_attr($from_options["email-from"]); ?>" />
 </p>
 <p><?php esc_html_e('Email Name','rsvpmaker');?>: <br>
-	<input type="text" name="rsvpemail_from_settings[email-name]" id="email-name" value="<?php if(isset($options["email-name"])) echo esc_attr($options["email-name"]); ?>" />
+	<input type="text" name="rsvpemail_from_settings[email-name]" id="email-name" value="<?php if(isset($from_options["email-name"])) echo esc_attr($from_options["email-name"]); ?>" />
 </p>
 <p><?php esc_html_e('Company','rsvpmaker');?>: <br>
-	<input type="text" name="rsvpemail_from_settings[company]" id="company" value="<?php if(isset($options["company"])) echo esc_attr($options["company"]); ?>" />
+	<input type="text" name="rsvpemail_from_settings[company]" id="company" value="<?php if(isset($from_options["company"])) echo esc_attr($from_options["company"]); ?>" />
 </p>
 <p><?php esc_html_e('Mailing Address','rsvpmaker');?>:<br> 
-	<input type="text" name="rsvpemail_from_settings[mailing_address]" id="mailing_address" value="<?php if(isset($options["mailing_address"])) echo esc_attr($options["mailing_address"]); ?>" />
+	<input type="text" name="rsvpemail_from_settings[mailing_address]" id="mailing_address" value="<?php if(isset($from_options["mailing_address"])) echo esc_attr($from_options["mailing_address"]); ?>" />
 	<br><em>Providing a physical mailing address is recommended for compliance with mailing list regulations.</em>
 </p>
 <?php
@@ -6020,17 +6032,7 @@ function YouTubeEmailFormat($youtubelink) {
     if(!empty($match[2]))
         $id = $match[2];
     return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
-    <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
+    <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;overflow:hidden;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
     <!-- /wp:rsvpmaker/youtube-email -->';
 }
 
-function the_editor_content_youtube_email($content) {
-	global $post;
-	if('rsvpemail' == $post->post_type) {
-		$pattern = '/<!-- wp:embed {"url":"(https:\/\/www.youtube.com\/watch\?v=|https:\/\/www.youtube.com\/embed\/|https:\/\/youtu.be\/)([^"]+).+\n.+\n.+\n.+\n<!-- \/wp:embed -->/';
-		$content = preg_replace_callback($pattern,function ($match) {
-			return empty($match[2]) ? '' : "\n\n".YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[2])."\n\n";
-		},$content);	
-	}
-	return $content;
-}
