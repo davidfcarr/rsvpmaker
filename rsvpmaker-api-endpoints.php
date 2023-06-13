@@ -1187,7 +1187,7 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		global $default_tz, $rsvp_options, $post;
-		$time   = sanitize_text_field( $_POST['time'] );
+		$originaltime = $time   = sanitize_text_field( $_POST['time'] );
 		$end    = sanitize_text_field( $_POST['end'] );
 		$tz     = sanitize_text_field( $_POST['tzstring'] );
 		$format = sanitize_text_field( $_POST['format'] );
@@ -1195,14 +1195,16 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 		$post   = get_post( $_POST['post_id'] );
 		$time   = rsvpmaker_strtotime( $time );
 		$s3 = rsvpmaker_date( 'T', $time );
-		if($timezone_abbrev == $s3)
-			$times ['content'] = ''; // if city code is different but tz code is same
+		if ( $end ) {
+			$end = rsvpmaker_strtotime( $end );
+		}
+		date_default_timezone_set( $tz );
+		// strip off year
+		$times['new_time'] = date('Y-m-d H:i:s',$time);
+		$times['original_time'] = $originaltime;
+		if($times['new_time'] == $times['original_time'])
+			$times['content'] = '';
 		else {
-			if ( $end ) {
-				$end = rsvpmaker_strtotime( $end );
-			}
-			date_default_timezone_set( $tz );
-			// strip off year
 			$rsvp_options['long_date'] = str_replace( ', %Y', '', $rsvp_options['long_date'] );
 			$times['content']          = 'Or: ';
 			if ( $format == 'time' ) {
