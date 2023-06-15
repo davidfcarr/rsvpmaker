@@ -4165,6 +4165,13 @@ position:absolute;
 .editor-styles-wrapper, .editor-styles-wrapper div, .editor-styles-wrapper p {
 '.$subs['wp-block-rsvpmaker-emailbody'].'
 }
+.editor-styles-wrapper {
+background-color: #ffffff;
+color: #000000;
+}
+body {
+	--wp--preset--color--primary: #FFFFFF;--wp--preset--color--secondary: #000000;--wp--preset--color--tertiary: #F6F6F6;
+}
 ';
 	$upload_dir   = wp_upload_dir(); 
 	if ( ! empty( $upload_dir['basedir'] ) ) {
@@ -4175,14 +4182,26 @@ position:absolute;
 	return false;
 }
 
+function rsvpmail_wp_theme_json_data_user ($json) {
+	global $post;
+	if(empty($post) || empty($post->post_type) || ('rsvpemail' != $post->post_type))
+		return $json;
+	return new WP_Theme_JSON_Data();
+}
+add_filter('wp_theme_json_data_user','rsvpmail_wp_theme_json_data_user');
+
 function rsvpmailer_gutenberg_editor_css()
 {
 global $post;
 if('rsvpemail' != $post->post_type)
 	return;
 wp_deregister_style('wp-reset-editor-styles');
-wp_enqueue_style('wp-block-editor-styles', includes_url('css/dist/block-editor/style.css'));
-wp_enqueue_style('wp-edit-post-styles', includes_url('css/dist/edit-post/style.css'));
+wp_dequeue_style( 'global-styles' );
+global $wp_styles;
+//add back core styles
+wp_default_styles($wp_styles);
+//add_filter('wp_theme_json_data_theme',function() {return null;});
+//add_filter('wp_theme_json_data_user',function() {return null;});
   $css = rsvpmaker_get_style_substitutions_file();
   $version = time();
   wp_enqueue_style('rsvpmailer-editor-css', $css, [], get_rsvpversion());
