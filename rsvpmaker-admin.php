@@ -4356,7 +4356,7 @@ if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 		'meta'  => array( 'class' => 'rsvpmaker')
 	);
 	$wp_admin_bar->add_node( $args );
-	if($post->post_type != 'rsvmpaker')
+	if($post->post_type != 'rsvpmaker')
 	{
 		$args = array(
 			'parent'    => 'new-rsvpemail',

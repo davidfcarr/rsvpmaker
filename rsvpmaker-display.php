@@ -1291,13 +1291,21 @@ function rsvpmaker_template_events_where( $where ) {
 }
 
 // utility function, template tag
-function is_rsvpmaker() {
+function is_rsvpmaker($post_id = 0) {
 	global $post;
-	if ( $post->post_type == 'rsvpmaker' ) {
-		return true;
-	} else {
+	if($post_id)
+		$post = get_post($post_id);
+	if(is_null($post) || empty($post->post_type) )
 		return false;
-	}
+	return $post->post_type == 'rsvpmaker';
+}
+function is_rsvpemail($post_id = 0) {
+	global $post;
+	if($post_id)
+		$post = get_post($post_id);
+	if(is_null($post) || empty($post->post_type) )
+		return false;
+	return $post->post_type == 'rsvpemail';
 }
 
 function rsvpmaker_timed( $atts = array(), $content = '' ) {
@@ -1630,7 +1638,7 @@ END:VCALENDAR
 
 function rsvpmaker_to_gcal( $post, $datetime, $duration ) {
 
-	return sprintf( 'http://www.google.com/calendar/event?action=TEMPLATE&text=%s&dates=%s/%s&details=%s&location=&trp=false&sprop=%s&sprop=name:%s', urlencode( $post->post_title ), get_utc_ical( $datetime ), get_utc_ical( $duration ), urlencode( get_bloginfo( 'name' ) . ' ' . get_permalink( $post->ID ) ), get_permalink( $post->ID ), urlencode( get_bloginfo( 'name' ) ) );
+	return sprintf( 'http://www.google.com/calendar/event?action=TEMPLATE&amp;text=%s&amp;dates=%s/%s&amp;details=%s&amp;location=&amp;trp=false&amp;sprop=%s&amp;sprop=name:%s', urlencode( $post->post_title ), get_utc_ical( $datetime ), get_utc_ical( $duration ), urlencode( get_bloginfo( 'name' ) . ' ' . get_permalink( $post->ID ) ), get_permalink( $post->ID ), urlencode( get_bloginfo( 'name' ) ) );
 
 }
 
@@ -2769,6 +2777,59 @@ function embed_dateblock( $atts ) {
 	return $d['dateblock'];
 
 }
+
+function rsvp_date_block_email( $post_id ) {
+
+	global $rsvp_options;
+	global $last_time;
+	global $post;
+	$post = get_post($post_id);
+
+		$custom_fields = get_post_custom( $post_id );
+	$time_format = ' '.$rsvp_options['time_format'];
+	$dur = $tzbutton = '';
+	$firstrow = array();
+
+	if ( ! strpos( $time_format, 'T' ) && isset( $custom_fields['_add_timezone'][0] ) && $custom_fields['_add_timezone'][0] ) {
+		$time_format .= ' T';
+	}
+
+	$permalink = get_permalink( $post_id );
+	$event = get_rsvpmaker_event($post_id);
+	$dateblock = '<!-- wp:paragraph -->'."\n<p><strong>";
+	$t = $event->ts_start;
+	$dateblock .= utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+
+			if ( $event->display_type == 'set' ) {
+				$tzcode = strpos( $time_format, 'T' );
+
+				if ( $tzcode ) {
+
+					$time_format = str_replace( 'T', '', $time_format );
+				}
+
+				$dateblock .= rsvpmaker_date( $time_format, $event->ts_start );
+
+				$dateblock .= ' ' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end );
+
+				if ( $tzcode ) {
+
+					$dateblock .= ' ' . rsvpmaker_date( 'T', $t );
+				}
+
+			} elseif ( ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+				$dateblock .= rsvpmaker_date( ' ' . $time_format, $t );
+			}
+			$dateblock .= '</strong></p>'."\n<!-- /wp:paragraph -->\n\n";
+			$tzbutton = sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+			$dateblock .= "<!-- wp:paragraph -->\n<p>";
+			$end_time = $event->enddate;
+			$j = ( strpos( $permalink, '?' ) ) ? '&amp;' : '?';
+			$dateblock .= sprintf( '<a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), $permalink . $j . 'ical=1', $tzbutton );
+			$dateblock .= '</p>'."\n<!-- /wp:paragraph -->\n\n";
+		return $dateblock;
+}
+
 
 function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 

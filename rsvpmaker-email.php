@@ -1188,12 +1188,9 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				if($post->post_type == 'rsvpmaker')
 				{
 					$content .= sprintf("<!-- wp:heading -->\n<h2>%s</h2>\n<!-- /wp:heading -->\n",$post->post_title);
-					$block = rsvp_date_block($id);
-					if(!$block)
-						$block['dateblock'] = '';
-					$blockgraph = str_replace('</div><div class="rsvpcalendar_buttons">','<br />',$block['dateblock']);
-					$blockgraph = "<!-- wp:paragraph -->\n<p><strong>".strip_tags($blockgraph,'<br><a>').'</strong></p>'."\n<!-- /wp:paragraph -->";
-					$content .= $blockgraph;
+					$content .= rsvp_date_block_email($id);
+					set_transient('content for email',$content);
+					$content .= $post->content;
 				}
 				if(!empty($_GET['excerpt'])) {
 					$content .= sprintf("<!-- wp:heading -->\n".'<h2><a href="%s" class="article">%s</a></h2>'."\n<!-- /wp:heading -->\n",$permalink,$post->post_title);
@@ -1202,12 +1199,11 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				else
 					$content .= $post->post_content;
 				$pattern = '/<!-- wp:embed {"url":"(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^"]+).+\n.+\n.+\n.+\n<!-- \/wp:embed -->/';
-				if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_post_meta($post->ID,'_rsvp_on',true))
+					if( ( ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template') ) && get_post_meta($post->ID,'_rsvp_on',true))
 				{
 					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($id).'#rsvpnow');
 					$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
 				}
-
 				$title = $post->post_title;
 			}
 		else
@@ -4193,15 +4189,13 @@ add_filter('wp_theme_json_data_user','rsvpmail_wp_theme_json_data_user');
 function rsvpmailer_gutenberg_editor_css()
 {
 global $post;
-if('rsvpemail' != $post->post_type)
+if(!is_rsvpemail())
 	return;
 wp_deregister_style('wp-reset-editor-styles');
 wp_dequeue_style( 'global-styles' );
 global $wp_styles;
 //add back core styles
 wp_default_styles($wp_styles);
-//add_filter('wp_theme_json_data_theme',function() {return null;});
-//add_filter('wp_theme_json_data_user',function() {return null;});
   $css = rsvpmaker_get_style_substitutions_file();
   $version = time();
   wp_enqueue_style('rsvpmailer-editor-css', $css, [], get_rsvpversion());

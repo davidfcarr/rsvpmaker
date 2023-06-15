@@ -233,6 +233,8 @@ add_action( 'enqueue_block_assets', 'rsvpmaker_block_cgb_block_assets' );
  */
 function rsvpmaker_block_cgb_editor_assets() {
 	global $post, $rsvp_options, $current_user;
+	if(is_null($post))
+		return;
 	wp_enqueue_script(
 		'rsvpmaker_block-cgb-block-js', // Handle.
 		plugins_url( '/dist/blocks.build.js', dirname( __FILE__ ) ), // Block.build.js: We register the block here. Built with Webpack.
@@ -415,7 +417,7 @@ function rsvpmaker_block_cgb_editor_assets() {
 		array( 'wp-edit-blocks' ), // Dependency to include the CSS after it.
 		filemtime( plugin_dir_path( __DIR__ ) . 'dist/blocks.editor.build.css' )
 	);
-	if(($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template')  || ($post->post_type == 'rsvpemail') )
+	if(!empty($post) && !empty($post->post_type) && ($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template')  || ($post->post_type == 'rsvpemail') )
 	wp_enqueue_style(
 		'rsvpmaker_fullscreen', // Handle.
 		plugins_url( 'src/block/fullscreen.css', dirname( __FILE__ ) ), // Block editor CSS.
