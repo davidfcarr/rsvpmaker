@@ -6046,9 +6046,7 @@ function YouTubeEmailFormat($youtubelink) {
         $id = $match[2];
 	$src = rsvpmail_youtube_preview_image($id);
 	if($src) //successfully created image
-		return '<!-- wp:image {"align":"center","width":600,"sizeSlug":"large","linkDestination":"custom"} -->
-	<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'"><img src="'.$src.'" alt="" width="600"/></a></figure>
-	<!-- /wp:image -->';
+		return '<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'"><img src="'.$src.'" /></a></figure>';
 	else //placeholder - maybe still uploading?
 		return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
     <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;overflow:hidden;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
@@ -6073,11 +6071,20 @@ function rsvpmail_youtube_preview_image($id) {
 	$dest_height = imagesy($dest);
 	$xpos = ($dest_width / 2) - 50;
 	$ypos = $dest_height / 2;
-	imagecopymerge($dest, $src, $xpos, $ypos, 0,0,100, 70, 75);
+	rsvpmaker_imagecopymerge_alpha($dest, $src, $xpos, $ypos, 0,0,100, 70, 80);
 	$meta['file'] = preg_replace('/mqdefaul.+\.jpg/','youtube-'.$id.'.png',$meta['file']);
 	$file = str_replace('\\','/',$up['basedir']).'/'.$meta['file'];
+	if(file_exists($file))
+		unlink($file);
 	imagepng($dest,$file);
 	$image_url = $up['baseurl'].'/'.$meta['file'];
 	wp_delete_attachment($attach_id,true);//delete temp file
-	return $image_url;
+	return $image_url.'?t='.time();
 }
+
+function rsvpmaker_imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct){
+	$cut = imagecreatetruecolor($src_w, $src_h);
+	imagecopy($cut, $dst_im, 0, 0, $dst_x, $dst_y, $src_w, $src_h);
+	imagecopy($cut, $src_im, 0, 0, $src_x, $src_y, $src_w, $src_h);
+	imagecopymerge($dst_im, $cut, $dst_x, $dst_y, 0, 0, $src_w, $src_h, $pct);
+} 
