@@ -1515,7 +1515,6 @@ if ( ! function_exists( 'rsvp_notifications' ) ) {
 		rsvpmaker_tx_email( $post, $mail );
 
 		if ( isset( $post->ID ) ) { // not for replay
-
 			$mail['ical'] = rsvpmaker_to_ical_email( $post->ID, $rsvp_to, $rsvp['email'] );
 		}
 

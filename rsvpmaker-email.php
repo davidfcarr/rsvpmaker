@@ -3471,7 +3471,7 @@ $notification_body = $templates['notification']['body'];
 foreach($rsvpdata as $field => $value)
 	$notification_body = str_replace('['.$field.']',$value,$notification_body);
 	$notification_body = rsvpmaker_email_html($notification_body);
-
+	$notification_body .= "\n<p>".'<a href="'.esc_attr(admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$post->ID)).'">RSVP Report</a></p>';
 	$rsvp_to_array = explode(",", $rsvp_to);
 	$rsvp_to_array = apply_filters('rsvp_to_array',$rsvp_to_array);
 	foreach($rsvp_to_array as $to)
@@ -6044,8 +6044,40 @@ function YouTubeEmailFormat($youtubelink) {
     preg_match('/(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^?&]+)/',$youtubelink,$match);
     if(!empty($match[2]))
         $id = $match[2];
-    return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
+	$src = rsvpmail_youtube_preview_image($id);
+	if($src) //successfully created image
+		return '<!-- wp:image {"align":"center","width":600,"sizeSlug":"large","linkDestination":"custom"} -->
+	<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'"><img src="'.$src.'" alt="" width="600"/></a></figure>
+	<!-- /wp:image -->';
+	else //placeholder - maybe still uploading?
+		return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
     <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;overflow:hidden;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
     <!-- /wp:rsvpmaker/youtube-email -->';
 }
 
+function rsvpmail_youtube_preview_image($id) {
+	$post_id = 0;
+	$image = 'https://img.youtube.com/vi/'.$id.'/mqdefault.jpg';
+	require_once(ABSPATH . 'wp-admin/includes/media.php');
+    require_once(ABSPATH . 'wp-admin/includes/file.php');
+    require_once(ABSPATH . 'wp-admin/includes/image.php');
+    $attach_id = media_sideload_image($image, $post_id, 'youtube thumbnail for '.$image, 'id' );
+	$meta = wp_get_attachment_metadata($attach_id);
+	if(empty($meta['file']))
+		return '';
+	$src = imagecreatefrompng(plugin_dir_path( __FILE__ ) .'images/youtube-button-100px.png');
+	$up = wp_upload_dir();
+	$file = str_replace('\\','/',$up['basedir']).'/'.$meta['file'];
+	$dest = imagecreatefromjpeg($file);
+	$dest_width = imagesx($dest);
+	$dest_height = imagesy($dest);
+	$xpos = ($dest_width / 2) - 50;
+	$ypos = $dest_height / 2;
+	imagecopymerge($dest, $src, $xpos, $ypos, 0,0,100, 70, 75);
+	$meta['file'] = preg_replace('/mqdefaul.+\.jpg/','youtube-'.$id.'.png',$meta['file']);
+	$file = str_replace('\\','/',$up['basedir']).'/'.$meta['file'];
+	imagepng($dest,$file);
+	$image_url = $up['baseurl'].'/'.$meta['file'];
+	wp_delete_attachment($attach_id,true);//delete temp file
+	return $image_url;
+}
