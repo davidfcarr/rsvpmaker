@@ -4336,6 +4336,15 @@ foreach($templates as $template) {
 	$wp_admin_bar->add_node( $args );
 }
 
+$args = array(
+	'parent'    => 'new-rsvpemail',
+	'id' => 'rsvp_newsletter_builder',
+	'title' => __('Newsletter Builder','rsvpmaker'),
+	'href'  => admin_url('edit.php?post_type=rsvpemail&page=email_get_content'),
+	'meta'  => array( 'class' => 'rsvpmaker_newsletter')
+);	
+$wp_admin_bar->add_node( $args );
+
 if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 {
 	if($post->post_type == 'rsvpmaker') {

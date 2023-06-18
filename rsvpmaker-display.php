@@ -704,8 +704,6 @@ function rsvpmaker_upcoming( $atts = array() ) {
 
 			} elseif ( $format == 'button_only' ) {
 
-				// form only
-
 				echo get_rsvp_link( $post->ID );
 
 				continue;
@@ -727,8 +725,6 @@ function rsvpmaker_upcoming( $atts = array() ) {
 <h1 class="rsvpmaker-entry-title"><a class="rsvpmaker-entry-title-link" href="<?php the_permalink(); ?>"  itemprop="url"><span itemprop="name"><?php the_title(); ?></span></a></h1>
 
 <div class="rsvpmaker-entry-content">
-
-
 
 			<?php
 
@@ -1856,8 +1852,7 @@ function rsvpmaker_one( $atts = array() ) {
 	}
 
 	if ( empty( $atts['format'] ) ) {
-
-		$atts['format'] = 'with_form';
+		$atts['format'] = is_email_context() ? 'button' : 'with_form';
 	}
 
 	$atts['limit'] = 1;

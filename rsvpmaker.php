@@ -7,7 +7,7 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 10.3.5
+Version: 10.3.6
 */
 
 function get_rsvpversion() {

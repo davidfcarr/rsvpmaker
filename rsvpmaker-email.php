@@ -1185,6 +1185,8 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				$permalink = get_permalink($id);
 				$post = get_post($id);
 				$content = '';
+				//add read more if <!--more--> tag
+				$post->post_content = rsvpmail_split_on_more($post);
 				if($post->post_type == 'rsvpmaker')
 				{
 					$content .= sprintf("<!-- wp:heading -->\n<h2>%s</h2>\n<!-- /wp:heading -->\n",$post->post_title);
@@ -2419,7 +2421,7 @@ function my_rsvpemail_menu() {
 global $rsvp_options;
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Content for Email",'rsvpmaker');
+$page_title = __("Newsletter Builder",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "email_get_content";
@@ -2678,9 +2680,77 @@ wp_reset_query();
 }
 
 function email_get_content () {
-global $wpdb;
-;?>
-<?php rsvpmaker_admin_heading('Content for Email',__FUNCTION__); 
+global $wpdb, $current_user, $rsvp_options;
+rsvpmaker_admin_heading('Content for Email',__FUNCTION__); 
+
+if(isset($_POST['newsletter_choice'])) {
+	$newsletter_title = $content = '';
+	foreach($_POST['newsletter_choice'] as $choice) {
+		if(empty($choice))
+			continue;
+		if('upcoming' == $choice) {
+			$content .= '<!-- wp:paragraph -->
+			<p></p>
+			<!-- /wp:paragraph -->
+			
+			<!-- wp:rsvpmaker/upcoming /-->'."\n\n";
+		} 
+		else
+		{
+			$post = get_post(intval($choice));
+			$post->post_content = rsvpmail_split_on_more($post);
+			if($post) {
+				if(empty($newsletter_title)) {
+					$newsletter_title = 'Newsletter: '.$post->post_title;
+					if('rsvpmaker' == $post->post_type) {
+						$event = get_rsvpmaker_event($post->ID);
+						$newsletter_title .= ' '.rsvpmaker_date(str_replace(', Y','',$rsvp_options['long_date']),$event->ts_start);
+					}
+				}
+				if('post' == $post->post_type) {
+					if(strpos($post->post_content,'<!-- more -->')) {
+						$parts = explode('<!-- more -->');
+						$post->post_content = $parts[0].					$content .= '<!-- wp:paragraph -->
+						<p><a href="'.get_permalink($choice).'">'.__('Read More','rsvpmaker').'</a></p>
+						<!-- /wp:paragraph -->';
+					}
+					$content .= '<!-- wp:paragraph -->
+					<p></p>
+					<!-- /wp:paragraph -->
+					
+					<!-- wp:heading -->
+					<h2>'.esc_html($post->post_title).'</h2>
+					<!-- /wp:heading -->
+					'."\n\n".$post->post_content."\n\n";		
+				}
+				if('rsvpmaker' == $post->post_type) {
+					$content .= '<!-- wp:paragraph -->
+					<p></p>
+					<!-- /wp:paragraph -->
+					
+					<!-- wp:heading -->
+					<h2>'.esc_html($post->post_title).'</h2>
+					<!-- /wp:heading -->
+					'."\n\n".rsvp_date_block_email($choice)."\n\n"
+					.$post->post_content."\n\n";
+					$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($choice).'#rsvpnow');
+					$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";		
+				}
+		}
+	}
+	}
+	if(!empty($content)) {
+		$content = rsvpmailer_default_block_template_wrapper($content);
+		$newpost['post_title'] = $newsletter_title;
+		$newpost['post_content'] = $content;
+		$newpost['post_author'] = $current_user->ID;
+		$newpost['post_type'] = 'rsvpemail';
+		$newpost['post_status'] = 'publish';
+		$post_id = wp_insert_post($newpost);
+		if($post_id)
+			printf('<p>Newsletter created <a href="%s">Edit</a> | <a href="%s">View</a></p>',admin_url('post.php?action=edit&post='.$post_id),get_permalink($post_id));
+	}
+}
 
 $candidates = rsvpmail_candidate_templates();
 $options = '';
@@ -2695,12 +2765,7 @@ foreach($candidates as $candidate) {
 
 $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Previous Emails">'.$options.'</optgroup>';
 
-echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
-
-printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p>',admin_url('post-new.php'),$options,__('Load Content','rsvpmaker'));
-
-$event_options = $options = '<option value="">'.__('None selected','rsvpmaker').'</option>';
-$event_options .= '<option value="upcoming">'.__('Upcoming Events','rsvpmaker').'</option>';
+$event_options = '<option value="upcoming">'.__('Upcoming Events','rsvpmaker').'</option>';
 $posts = '';
 $future = get_future_events();
 if(is_array($future))
@@ -2708,9 +2773,9 @@ foreach($future as $event)
 	{
 	$event_options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',rsvpmaker_strtotime($event->datetime)));
 	}
+$event_options = '<optgroup label="Events">'.$event_options.'</optgroup>';
 
-
-$sql = "SELECT ID, post_title FROM $wpdb->posts WHERE post_status='publish' AND post_type='post' ORDER BY post_date DESC LIMIT 0, 50";
+$sql = "SELECT ID, post_title FROM $wpdb->posts WHERE post_status='publish' AND post_type='post' ORDER BY post_date DESC LIMIT 0, 10";
 $wpdb->show_errors();
 $results = $wpdb->get_results($sql, ARRAY_A);
 if($results)
@@ -2728,6 +2793,26 @@ foreach($pages as $page)
 	$po .= sprintf("<option value=\"%d\">%s</option>\n",$page->ID,substr($page->post_title,0,80));
 ?>
 
+<form action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>" method="post" style="padding: 5px; background-color:#fff;">
+<?php rsvpmaker_nonce(); 
+?>
+<h2><?php esc_html_e('Newsletter Builder','rsvpmaker');?></h2>
+<p>Choose multiple blog posts or events to include as starting points for your newsletter. A read more link will be added to blog posts that include the "more" tag.</p>
+<p><select name="newsletter_choice[]"><?php echo $posts. $event_options; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
+</select>
+</p>
+<button><?php esc_html_e('Create Newsletter','rsvpmaker');?></button>
+</form>	
+<?php
+echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
+
+printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p></form>',admin_url('post-new.php'),$options,__('Load Content','rsvpmaker'));
+?>
 <form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
 <?php rsvpmaker_nonce(); ?>
 <h2><?php esc_html_e('Email Based on Event','rsvpmaker');?></h2><p><select name="rsvpevent_to_email"><?php echo $event_options; ?></select>
@@ -2743,8 +2828,8 @@ foreach($pages as $page)
 </p>
 <button><?php esc_html_e('Load Content','rsvpmaker');?></button>
 </form>	
-<form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
-<?php rsvpmaker_nonce(); ?>
+
+
 <h2><?php esc_html_e('Email Based on Page','rsvpmaker');?></h2>
 <p><select name="post_to_email"><?php echo $po; ?></select>
 </select>
@@ -6088,3 +6173,14 @@ function rsvpmaker_imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x
 	imagecopy($cut, $src_im, 0, 0, $src_x, $src_y, $src_w, $src_h);
 	imagecopymerge($dst_im, $cut, $dst_x, $dst_y, 0, 0, $src_w, $src_h, $pct);
 } 
+
+function rsvpmail_split_on_more($post) {
+	global $rsvp_options;
+	$pattern = '/<!--[\swp\:]{0,6}more/';
+	if(preg_match($pattern,$post->post_content))
+	{
+		$parts = preg_split($pattern,$post->post_content);
+		$post->post_content = $parts[0]."\n\n<!-- wp:paragraph -->\n".'<p><a class="email-read-more" href="'.get_permalink($post->ID).'">'.__('Read More','rsvpmaker')."</a></p>\n<!-- /wp:paragraph -->";
+	}
+	return $post->post_content;
+}
