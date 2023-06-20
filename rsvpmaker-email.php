@@ -47,7 +47,7 @@ function rsvpmailer($mail, $description = '') {
 		$mail['text'] = rsvpmaker_personalize_email($mail['text'],$mail['to'],$description);
 
 	if(isset($mail['subject']))
-		$mail['subject'] = do_shortcode($mail['subject']);
+		$mail['subject'] = html_entity_decode(do_shortcode($mail['subject']));
 
 	if(isset($mail['html']))
 	{
@@ -2748,7 +2748,7 @@ if(isset($_POST['newsletter_choice'])) {
 		$newpost['post_status'] = 'publish';
 		$post_id = wp_insert_post($newpost);
 		if($post_id)
-			printf('<p>Newsletter created <a href="%s">Edit</a> | <a href="%s">View</a></p>',admin_url('post.php?action=edit&post='.$post_id),get_permalink($post_id));
+			printf('<div class="notice notice-success is-dismissible"><p>Newsletter created: %s <a href="%s">Edit</a> | <a href="%s">View</a></p></div>',$newpost['post_title'],admin_url('post.php?action=edit&post='.$post_id),get_permalink($post_id));
 	}
 }
 
@@ -6131,7 +6131,7 @@ function YouTubeEmailFormat($youtubelink) {
         $id = $match[2];
 	$src = rsvpmail_youtube_preview_image($id);
 	if($src) //successfully created image
-		return '<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'"><img src="'.$src.'" /></a></figure>';
+		return '<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'"><img src="'.$src.'" style="width:600px;" /></a></figure>';
 	else //placeholder - maybe still uploading?
 		return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
     <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;overflow:hidden;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
@@ -6182,5 +6182,6 @@ function rsvpmail_split_on_more($post) {
 		$parts = preg_split($pattern,$post->post_content);
 		$post->post_content = $parts[0]."\n\n<!-- wp:paragraph -->\n".'<p><a class="email-read-more" href="'.get_permalink($post->ID).'">'.__('Read More','rsvpmaker')."</a></p>\n<!-- /wp:paragraph -->";
 	}
+	$post = apply_filters('rsvpmail_post_for_email',$post);
 	return $post->post_content;
 }

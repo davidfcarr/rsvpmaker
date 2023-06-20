@@ -315,9 +315,9 @@ function rsvpmaker_get_timezone_string( $post_id = 0 ) {
 	}
 	$timezone = wp_timezone_string();
 	if ( $post_id ) {
-		$post_tz = get_post_meta( $post_id, '_rsvp_timezone_string', true );
-		if ( ! empty( $post_tz ) && ($post_tz != $timezone) ) {
-			$timezone = $post_tz;
+		$event = get_rsvpmaker_event($post_id);
+		if ( ! empty( $event ) ) {
+			$timezone = $event->timezone;
 		}
 	}
 	if(strpos($timezone,'/') || strpos($timezone,'TC'))

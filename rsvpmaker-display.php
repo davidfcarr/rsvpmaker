@@ -2937,9 +2937,8 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		}
 	}
 	elseif ( $event = get_rsvpmaker_event($post_id) ) {
-
 		$dateblock = '<span class="rsvp_date_block"></span>';
-
+		
 		global $last_time;
 
 			$last_time = $t = $event->ts_start;
@@ -2952,17 +2951,15 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 				$tzcode = strpos( $time_format, 'T' );
 
 				if ( $tzcode ) {
-
 					$time_format = str_replace( 'T', '', $time_format );
 				}
 
-				$dateblock .= '<span class="time">' . rsvpmaker_date( $time_format, $event->ts_start );
+				$dateblock .= '<span class="time">' . rsvpmaker_date( $time_format, $event->ts_start, $event->timezone );
 
-				$dateblock .= ' <span class="end_time">' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end ) . '</span>';
+				$dateblock .= ' <span class="end_time">' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end, $event->timezone ) . '</span>';
 
 				if ( $tzcode ) {
-
-					$dateblock .= ' ' . rsvpmaker_date( 'T', $t );
+					$dateblock .= ' ' . rsvpmaker_date( 'T', $t, $event->timezone );
 				}
 
 				$dateblock .= '</span>';

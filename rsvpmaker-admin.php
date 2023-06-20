@@ -4336,31 +4336,14 @@ foreach($templates as $template) {
 	$wp_admin_bar->add_node( $args );
 }
 
-$args = array(
-	'parent'    => 'new-rsvpemail',
-	'id' => 'rsvp_newsletter_builder',
-	'title' => __('Newsletter Builder','rsvpmaker'),
-	'href'  => admin_url('edit.php?post_type=rsvpemail&page=email_get_content'),
-	'meta'  => array( 'class' => 'rsvpmaker_newsletter')
-);	
-$wp_admin_bar->add_node( $args );
 
 if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 {
-	if($post->post_type == 'rsvpmaker') {
-		$args = array(
-			'parent'    => 'new-rsvpemail',
-			'id' => 'embed_to_email',
-			'title' => __('Embed Event in Email','rsvpmaker'),
-			'href'  => admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email='.intval($post->ID)),
-			'meta'  => array( 'class' => 'rsvpmaker_embed')
-		);	
-		$wp_admin_bar->add_node( $args );
-	}
+	$typelabel = ('rsvpmaker' == $post->post_type) ? 'Event' : ucfirst($post->post_type);
 	$args = array(
 		'parent'    => 'new-rsvpemail',
 		'id' => 'post_to_email',
-		'title' => __('Copy to Email','rsvpmaker'),
+		'title' => 'Copy '.$typelabel.' to Email',
 		'href'  => admin_url('edit.php?post_type=rsvpemail&post_to_email='.intval($post->ID)),
 		'meta'  => array( 'class' => 'rsvpmaker')
 	);
@@ -4377,6 +4360,15 @@ if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 		$wp_admin_bar->add_node( $args );	
 	}
 }
+
+$args = array(
+	'parent'    => 'new-rsvpemail',
+	'id' => 'rsvp_newsletter_builder',
+	'title' => __('Newsletter Builder','rsvpmaker'),
+	'href'  => admin_url('edit.php?post_type=rsvpemail&page=email_get_content'),
+	'meta'  => array( 'class' => 'rsvpmaker_newsletter')
+);	
+$wp_admin_bar->add_node( $args );
 
 $noview = true;
 $argarg = get_related_documents ();
