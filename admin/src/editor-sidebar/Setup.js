@@ -211,7 +211,6 @@ metaKey="_rsvp_confirmation_include_event"
 />
 <PanelRow>{__('Confirmation Message (exerpt)','rsvpmaker')}: {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
 {rsvpmaker_ajax.confirmation_links.map( function(x) {return <PanelRow><a href={x.href}>{x.title}</a></PanelRow>} )}
-<PanelRow><a href={rsvpmaker_ajax.reminders} >{__('Create / Edit Reminders')}</a></PanelRow>
 
 <PanelRow>
 <MetaSelectControl

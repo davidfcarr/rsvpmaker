@@ -2848,43 +2848,6 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 		'meta'   => array( 'class' => 'rsvpmenu' ),
 
 	);
-	if ( empty( $label ) || $label == ' (From Template)' ) {
-		$args[] = array(
-
-			'parent' => 'edit_confirm',
-
-			'id'     => 'default_form',
-
-			'title'  => 'RSVP confirmation -> Default',
-
-			'href'   => admin_url( "edit.php?title=Form&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz_default=rsvp_confirm&post_id=$post_id" ), // $formurl,
-
-			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-
-		);
-	}
-
-	if ( ! empty( $label ) ) {
-
-		// if inherited, provide option to customize
-
-		$confurl = rsvp_confirm_url( $post_id );
-
-		$args[] = array(
-
-			'parent' => 'edit_confirm', // $parent_tag,
-
-			'id'     => 'customize_confirmation',
-
-			'title'  => 'Confirmation -> Customize',
-
-			'href'   => admin_url( "edit.php?title=Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=_rsvp_confirm&post_id=$post_id&source=" . $confirm_id ),
-
-			'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-
-		);
-
-	}
 
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
 
@@ -2924,61 +2887,14 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 			);
 
-			if ( ! empty( $label ) ) {
-
-				$args[] = array(
-
-					'parent' => $identifier,
-
-					'id'     => $identifier . 'custom',
-
-					'title'  => $type . ' ' . $hours . ' hours -> Customize',
-
-					'href'   => admin_url( "edit.php?title=Reminder $hours&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=$meta_key&post_id=$post_id&source=" . $reminder->ID ),
-
-					'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-
-				);
-
-			}
 		}
 	}
-
-	$args[] = array(
-
-		'parent' => $parent_tag,
-
-		'id'     => 'payment_options',
-
-		'title'  => 'Pricing',
-
-		'href'   => admin_url( 'post.php?action=edit&tab=basics&post=' . $post_id ),
-
-		'meta'   => array( 'class' => 'edit-rsvpmaker-options' ),
-
-	);
 
 	$payconf = get_post_meta( $post_id, 'payment_confirmation_message', true );
 
 	$meta_key = 'payment_confirmation_message';
 
-	if ( empty( $payconf ) ) {
-
-		$args[] = array(
-
-			'parent' => $parent_tag,
-
-			'id'     => 'edit_payment_confirmation',
-
-			'title'  => 'Payment Confirmation',
-
-			'href'   => admin_url( "edit.php?title=Payment Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=$meta_key&post_id=$post_id" ),
-
-			'meta'   => array( 'class' => 'rsvpmenu' ),
-
-		);
-
-	} else {
+	if ( !empty( $payconf ) ) {
 
 		$payparent = rsvpmaker_parent( $payconf );
 
@@ -2997,30 +2913,9 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 			'meta'   => array( 'class' => 'rsvpmenu' ),
 
 		);
-
-		if ( ! empty( $label ) ) {
-
-			$args[] = array(
-
-				'parent' => 'edit_payment_confirmation',
-
-				'id'     => 'edit_payment_confirmation_custom',
-
-				'title'  => 'Payment Confirmation -> Customize',
-
-				'href'   => admin_url( "edit.php?title=Payment Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=$meta_key&post_id=$post_id&source=$payconf" ),
-
-				'meta'   => array( 'class' => 'rsvpmenu-custom' ),
-
-			);
-		}
 	}
-
 	return $args;
-
 }
-
-
 
 function get_more_related( $post, $post_id, $t, $parent_tag ) {
 
