@@ -1992,13 +1992,14 @@ echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 }
 ?>
 <div id="nonchimp">
-<div><input type="checkbox" name="preview" value="1" <?php if(!empty($cronpostvars['preview'])) echo 'checked="checked"'; ?> > <?php esc_html_e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $from_options["email-from"]; ?>" />
+<div><input type="checkbox" id="preview" name="preview" value="1" <?php if(!empty($cronpostvars['preview'])) echo 'checked="checked"'; ?> > <?php esc_html_e('Preview to','rsvpmaker');?>: <input type="text" name="previewto" id="previewto" value="<?php echo (isset($custom_fields["_email_preview_to"][0])) ? $custom_fields["_email_preview_to"][0] : $from_options["email-from"]; ?>" />
 <br><em>Send yourself a test first to check email formatting.</em>
 </div>
 <div><input type="checkbox" name="members" value="1" <?php if(isset($_GET['list']) && ($_GET['list'] == 'members') || !empty($cronpostvars['members'])) echo 'checked="checked"'; ?> > <?php esc_html_e('Website members','rsvpmaker');?></div>
 <div>
 <input type="checkbox" name="rsvp_guest_list" value="1" <?php if(!empty($cronpostvars['rsvp_guest_list'])) echo ' checked="checked" '; ?> > RSVP Mail Email List <?php rsvpmaker_email_segments_dropdown(); ?>
 </div>
+<div><input type="checkbox" name="attendees" id="attendees" value="1" <?php if(!empty($cronpostvars['attendees'])) echo ' checked="checked" '; ?> > <?php esc_html_e('Signed Up or Past Attendees','rsvpmaker');?> <select name="event" id="event"><option value=""><?php esc_html_e('Select Event','rsvpmaker');?></option><option value="any"><?php esc_html_e('Any event','rsvpmaker');?></option><?php echo $events_dropdown; ?></select></div>
 <div id="showmore_wrapper"><input type="checkbox" id="showmore" onclick="showMore();"> Show More Options</div>
 <div id="moreoptions" style="display: none;">
 <div><?php esc_html_e('Custom List','rsvpmaker');?><br /><textarea name="custom_list" rows="3" cols="80"></textarea></div>
@@ -2009,12 +2010,12 @@ echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 </div>
 <?php
 } ?>
-<div><input type="checkbox" name="attendees" value="1" <?php if(!empty($cronpostvars['attendees'])) echo ' checked="checked" '; ?> > <?php esc_html_e('Attendees','rsvpmaker');?> <select name="event"><option value=""><?php esc_html_e('Select Event','rsvpmaker');?></option><option value="any"><?php esc_html_e('Any event','rsvpmaker');?></option><?php echo $events_dropdown; ?></select></div>
 <div><input type="checkbox" name="rsvps_since" value="1" <?php if(!empty($cronpostvars['rsvps_since'])) echo ' checked="checked" '; ?> > <?php esc_html_e('RSVPs more recent than ','rsvpmaker');?> <input type="text" name="since" value="30" /> <?php esc_html_e('Days','rsvpmaker');?></div>
 <?php
 do_action("rsvpmaker_email_send_ui_options");
 ?>
-<p>For any of the above (not Mailchimp), send ONLY to list members who<br>
+<div style="padding: 10px; border: medium solid #000;">
+<p><strong>EXCLUDE Recipients</strong> For any of the above (not Mailchimp), send ONLY to list members who<br>
 <input type="radio" name="members_rsvp" value="1" <?php if(!empty($cronpostvars['members_rsvp']) && 1 == $cronpostvars['members_rsvp'] ) echo ' checked="checked" '; ?>>
 <?php esc_html_e('RSVP\'ed to the event specified below','rsvpmaker');?><br><input type="radio" name="members_rsvp" value="2" <?php if(!empty($cronpostvars['members_rsvp']) && 2 == $cronpostvars['members_rsvp'] ) echo ' checked="checked" '; ?> > <?php esc_html_e('DID NOT RSVP to the event specified below','rsvpmaker');?><br><input type="radio" name="members_rsvp" value="0" checked="checked" > N/A
 <br><select name="members_rsvp_event">
@@ -2024,6 +2025,7 @@ echo $events_dropdown;
 ?>
 </select>	
 </p>
+</div>
 </div><!--end more options -->
 </div><!--end nonchimp -->
 <p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> <input type="radio" name="send_when" value="now" <?php if(!isset($_GET['scheduling'])) echo 'checked="checked"'; ?>> Now <input type="radio" name="send_when" value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" <?php if(isset($_GET['scheduling'])) echo 'checked="checked"'; ?> > Advanced</p>
@@ -2053,15 +2055,8 @@ function showCron() {
 var x = document.getElementById("cron_schedule_options");
 x.style.display = "block";
 }
-
-$('#emailui').one('submit', function() {
-    $(this).find('button').attr('disabled', 'disabled');
-});
-
-$('#confirm').one('submit', function() {
-    $(this).find('button').attr('disabled', 'disabled');
-});
-
+document.getElementById("event").addEventListener("change", () => {document.getElementById("attendees").checked = true;});
+document.getElementById("previewto").addEventListener("change", () => {document.getElementById("preview").checked = true;});
 </script>
 <?php
 

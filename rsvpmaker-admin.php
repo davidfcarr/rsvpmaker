@@ -3326,8 +3326,8 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				if(!empty($cddate))
 					{
 					$parts = explode(' ',$cddate);
-					$cddate = $parts[0].' '.$template['hour'].':'.$template['minutes'].':00';		
-					update_rsvpmaker_date($target_id,$cddate,$duration,$end_time);				
+					$cddate = $parts[0].' '.$template['hour'].':'.$template['minutes'].':00';
+					update_rsvpmaker_date($target_id,$cddate,$duration,$end_time);
 					}
 				if(isset($rsvptypes))
 					wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
