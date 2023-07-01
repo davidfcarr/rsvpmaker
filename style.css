@@ -47,17 +47,6 @@ font-style: italic;
 .dateblock{
 padding-top: 1em; padding-bottom: 1em; font-weight: bold;
 }
-a.calendar_item {
-font-size: x-small;  line-height: 1;
-color: #fff;
-}
-a.calendar_item:visited,a.calendar_item:active,a.calendar_item:hover {
-font-size: x-small;  line-height: 1;
-color: #eee;
-}
-a.calendar_item:hover {
-text-decoration: underline;
-}
 .rsvp_validation_error {
 color: #F00;
 font-weight: bold;
@@ -104,6 +93,7 @@ max-width: 70%
     height: 1.25em !important;
     display: inline-block !important;
 }
+
 #cpcalendar td, #cpcalendar th {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -122,6 +112,9 @@ max-width: 70%
 table#cpcalendar {
 width: 100%;
 }
+#cpcalendar td.day {
+    color: #000;
+}
 #cpcalendar td.today {
 background-color: #FFFFDD;
 border: thin solid #AAA;
@@ -137,18 +130,21 @@ color: #fff;
 background-color:  #333;
 padding-left: 2px;
 }
-.calendar_item {
+#cpcalendar a.calendar_item, #cpcalendar a.calendar_item:visited,#cpcalendar a.calendar_item:active,#cpcalendar a.calendar_item:hover {
+font-size: x-small;  line-height: 1;
 display: block;
 width: 100%;
 text-decoration: none;
-color: #fff;
-background-color:  #333;
+color: var(--wp--preset--color--white) !important;
+background-color: var(--wp--preset--color--black) !important;
 padding: 2px;
 margin-bottom: 5px;
 }
+a.calendar_item:hover {
+text-decoration: underline;
+}
 #rsvpform {
     background: #FFF;
-    /*font: 12px Georgia, "Times New Roman", Times, serif;*/
     color: #111;
     border:none;
 }

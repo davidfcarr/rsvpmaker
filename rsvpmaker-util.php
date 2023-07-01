@@ -206,6 +206,19 @@ function get_rsvpmaker_event( $post_id ) {
 	$wpdb->show_errors();
 	$sql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id );
 	$row = $wpdb->get_row( $sql );
+	if(!$row)
+		return;
+	$row->ts_start = intval($row->ts_start);
+	$row->ts_end = intval($row->ts_end);
+	//sanity check
+	if($row->ts_start > $row->ts_end) {
+		$row->ts_end = intval($row->ts_start) + HOUR_IN_SECONDS;
+		if(empty($row->timezone))
+			$row->timezone = wp_timezone_string();
+		$row->enddate = rsvpmaker_date('Y-m-d H:i:s',$row->ts_end,$row->timezone );
+		$sql = $wpdb->prepare('UPDATE '.$wpdb->prefix . "rsvpmaker_event SET ts_end=%d, enddate=%s, timezone=%s WHERE event=" . intval( $post_id ),$row->ts_end,$row->enddate,$row->timezone);
+		$wpdb->query($sql);
+	}
 	if(is_single())
 	{
 		if(empty($row->ts_start) && !empty($row->date))
@@ -808,7 +821,7 @@ function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT 
 	global $wpdb;
 
 	$event_table = get_rsvpmaker_event_table();
-	$sql = "SELECT $wpdb->posts.ID, $wpdb->posts.post_title, $wpdb->posts.post_status, $wpdb->posts.post_author, $wpdb->posts.post_modified, $wpdb->posts.ID as postID, $event_table.*, $event_table.date as datetime FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN $event_table ON $event_table.event = $wpdb->posts.ID WHERE date > '" . get_sql_curdate() . "' AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=$template_id ORDER BY post_modified DESC, date " . $order;
+	$sql = "SELECT $wpdb->posts.ID, $wpdb->posts.post_title, $wpdb->posts.post_status, $wpdb->posts.post_author, $wpdb->posts.post_modified, $wpdb->posts.ID as postID, $event_table.*, $event_table.date as datetime FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN $event_table ON $event_table.event = $wpdb->posts.ID WHERE date > '" . get_sql_curdate() . "' AND post_status='publish' AND meta_key='_meet_recur' AND meta_value=$template_id ORDER BY date " . $order.", post_modified DESC";
 	$wpdb->show_errors();
 
 	return $wpdb->get_results( $sql, $output );
@@ -863,7 +876,7 @@ function rsvpmaker_get_templates( $criteria = '', $include_drafts = false ) {
 	global $wpdb;
 	$templates = array();
 	$status_sql = ($include_drafts) ? "(post_status='publish' OR post_status='draft')" : "post_status='publish'";
-	$sql       = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker_template' AND BINARY `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND $status_sql $criteria GROUP BY $wpdb->posts.ID ORDER BY post_title";
+	$sql       = "SELECT $wpdb->posts.*, meta_value as sked FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE post_type='rsvpmaker_template' AND `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND $status_sql $criteria GROUP BY $wpdb->posts.ID ORDER BY post_title";
 	$results   = $wpdb->get_results( $sql );
 	foreach ( $results as $template ) {
 		$templates[ $template->ID ] = $template;
@@ -2021,6 +2034,40 @@ if ( isset( $_POST['rsvpmaker_database_check'] )  && wp_verify_nonce(rsvpmaker_n
 	echo '<div class="notice notice-success"><p>Checking that '.$wpdb->prefix.'resvpmaker_event table is complete</p></div>';
 }
 
+if ( isset( $_POST['rsvpmaker_template_duplicates'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	echo '<div class="notice notice-success"><p>Checking for duplicates by template</p></div>';
+	$templates = rsvpmaker_get_templates(); 
+	if($templates)
+	{
+		foreach($templates as $template) {
+			printf('<p>Checking %s</p>',$template->post_title);
+			$sofar = get_events_by_template($template->ID);
+			if($sofar) {
+				$dupcheck = [];
+				foreach($sofar as $event) {
+					$dupcheck[$event->date][] = $event;
+				}
+				foreach($dupcheck as $date => $check) {
+					if(sizeof($check) > 1) {
+						$keep = array_pop($check);
+						foreach($check as $ch) {
+							$meta = get_post_meta($ch->ID);
+							foreach($meta as $key => $values) {
+								if(preg_match('/_[A-Z]/',$key) && !empty($values[0])) {
+									printf('<p><strong>%s %s</strong></p>',$key,$values[0]);
+									continue;
+								}
+							}
+							echo "<p>delete $ch->ID</p>";
+							wp_delete_post($ch->ID,true);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 	if ( isset( $_POST['reset_defaults'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 		$result = rsvpmaker_set_defaults_all( true );
@@ -2192,6 +2239,15 @@ esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" nam
 
 </form>
 
+
+<h2>Check RSVPMaker Templates for Duplicates</h2>
+
+<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+<?php rsvpmaker_nonce();
+?> <input type="hidden" name="rsvpmaker_template_duplicates" value="1" /> 
+		<?php submit_button( 'Check Now' ); ?>
+</form>
+
 <h2>Check RSVPMaker Database Tables</h2>
 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
@@ -2199,6 +2255,7 @@ esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" nam
 ?> <input type="hidden" name="rsvpmaker_database_check" value="1" /> 
 		<?php submit_button( 'Check Now' ); ?>
 </form>
+
 <?php
 	$tables = $wpdb->get_results('SHOW TABLES');
 	foreach ($tables as $mytable)
@@ -4318,7 +4375,7 @@ function rsvpmaker_check_sametime($datetime,$post_id=0) {
 	$parts = explode(' ',$datetime);
 	$dups = array('sametime' => [], 'sameday' => []);
 	$event_table = get_rsvpmaker_event_table();
-	$sql = $wpdb->prepare("select * from $event_table WHERE date=%s AND event != %d ",$datetime,$post_id);
+	$sql = $wpdb->prepare("select * from $event_table JOIN $wpdb->posts ON $wpdb->posts.ID = $event_table.event WHERE date=%s AND event != %d ",$datetime,$post_id);
 	$results = $wpdb->get_results($sql);
 	if($results) {
 		foreach($results as $row) {

@@ -59,6 +59,7 @@ export default function DateTimeMakerInner(props) {
             console.log('new end date error end',newendDate);
             console.log('new end date error date',date);
             alert('end date cannot be before start date');
+            newendDate.setTime(date.getTime()+60000);
             return;
         }
         const endsqldate = sqlDate(newendDate);

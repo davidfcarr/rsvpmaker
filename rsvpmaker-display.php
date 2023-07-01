@@ -1261,7 +1261,7 @@ function rsvpmaker_template_join( $join ) {
 }
 
 function rsvpmaker_template_where( $where ) {
-	return " AND (BINARY tmeta.`meta_key` REGEXP '_sked_[A-Z].+' AND tmeta.meta_value)";
+	return " AND (tmeta.`meta_key` REGEXP '_sked_[A-Z].+' AND tmeta.meta_value)";
 }
 
 function rsvpmaker_template_orderby( $orderby ) {
@@ -2557,7 +2557,7 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 
 			if ( is_email_context() ) {
 
-				$tzbutton = sprintf( '<a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+				$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
 
 			} else {
 
@@ -2584,7 +2584,7 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 
 			if ( is_email_context() ) {
 
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s</div>', rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ), $permalink . $j . 'ical=1', $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ), $permalink . $j . 'ical=1', $tzbutton );
 
 			} else {
 				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
@@ -2816,11 +2816,11 @@ function rsvp_date_block_email( $post_id ) {
 				$dateblock .= rsvpmaker_date( ' ' . $time_format, $t );
 			}
 			$dateblock .= '</strong></p>'."\n<!-- /wp:paragraph -->\n\n";
-			$tzbutton = sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
 			$dateblock .= "<!-- wp:paragraph -->\n<p>";
 			$end_time = $event->enddate;
 			$j = ( strpos( $permalink, '?' ) ) ? '&amp;' : '?';
-			$dateblock .= sprintf( '<a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> | %s', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), $permalink . $j . 'ical=1', $tzbutton );
+			$dateblock .= sprintf( '<a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), $permalink . $j . 'ical=1', $tzbutton );
 			$dateblock .= '</p>'."\n<!-- /wp:paragraph -->\n\n";
 		return $dateblock;
 }

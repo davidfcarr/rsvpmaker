@@ -3151,6 +3151,7 @@ $fts = 0;
 if(!empty($sofar))
 {
 	$farthest = array_pop($sofar);
+	echo "farthest $farthest->datetime<br>";
 	$fts = rsvpmaker_strtotime($farthest->datetime);
 }
 if($fts > (time() + (2 * MONTH_IN_SECONDS)) )
@@ -3183,6 +3184,7 @@ if($holiday_check) {
 }
 $post = get_post($template_id);
 $date = rsvpmaker_date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
+echo "add $date<br>";
 $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 } // end for loop
 
