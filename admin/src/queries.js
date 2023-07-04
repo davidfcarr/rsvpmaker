@@ -69,7 +69,7 @@ export function useRSVPDate(eventID) {
       }, refetchInterval: false });
 }
 
-export function useRSVPDateMutation(eventID, setError) {
+export function useRSVPDateMutation(eventID) {
     const queryClient = useQueryClient();
     console.log('useRSVPDateMutation called with');
     console.log('useRSVPDateMutation queryClient',queryClient);
@@ -94,6 +94,8 @@ export function useRSVPDateMutation(eventID, setError) {
                     data.display_type = update.display_type;
                 if(update.timezone)
                     data.timezone = update.timezone;
+                if(update.metaKey)
+                    data.meta[update.metaKey] = update.metaValue;
                 const newdata = {
                     data: data
                 };
@@ -107,18 +109,13 @@ export function useRSVPDateMutation(eventID, setError) {
             queryClient.invalidateQueries(['rsvp_event_date']);
         },
         onSuccess: (data, error, variables, context) => {
-            //queryClient.setQueryData(['rsvp_event_date'],data.data);
+            
             console.log('updated',data);
             queryClient.setQueryData(['rsvp_event_date'],data);
             queryClient.invalidateQueries(['rsvp_event_date']);
-            setError('');
         },
         onError: (err, variables, context) => {
-            alert('Error updating event date data on server');
-            setError('Error updating event date data on server');
-            //makeNotification('Error '+err.message);
             console.log('update dates error',err);
-            //queryClient.setQueryData(['rsvp_event_date'], context.previousValue);
         },    
     }
 )

@@ -7,6 +7,7 @@ const { withSelect, withDispatch } = wp.data;
 const { Fragment } = wp.element;
 import apiFetch from '@wordpress/api-fetch';
 import { inputToDate } from '@wordpress/utils';
+import {useRSVPDateMutation} from '../queries'
 
 import { __experimentalGetSettings } from '@wordpress/date';
 
@@ -460,6 +461,28 @@ var MetaFormToggle = wp.compose.compose(
 	}
 );
 
+export function RSVPMetaToggle(props) {
+	if(!props)
+		return <p>Reloading ...</p>
+	const {eventdata, metaKey, label} = props;
+	const {event,meta} = eventdata;
+	if(!meta)
+		return <p><em>Saving ...</em></p>
+	console.log('meta in RSVPMetaToggle',meta);
+	const value = (meta.hasOwnProperty(metaKey)) ? meta[metaKey] : false;
+    const {mutate:datemutate} = useRSVPDateMutation(event);
+
+	console.log('Toggle value',value);
+
+	return <div class="rsvpmaker_toggles"><FormToggle checked={value} 
+	onChange={ function(  ) {
+		const change = {'metaKey':metaKey,'metaValue':!value};
+		datemutate(change);
+			console.log( 'update toggle to', change );
+		} }	
+	/>&nbsp;{label} </div>
+}
+
 var MetaPrices = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
 		return {
@@ -516,12 +539,6 @@ var MetaEndDateTimeControl = wp.compose.compose(
 				{ label: 'End Time Not Displayed', value: '' },
 				{ label: 'Show End Time', value: 'set' },
 				{ label: 'All Day / Time Not Shown', value: 'allday' },
-				{ label: '2 Days / Time Not Shown', value: 'multi|2' },
-            { label: '3 Days / Time Not Shown', value: 'multi|3' },
-            { label: '4 Days / Time Not Shown', value: 'multi|4' },
-            { label: '5 Days / Time Not Shown', value: 'multi|5' },
-            { label: '6 Days / Time Not Shown', value: 'multi|6' },
-            { label: '7 Days / Time Not Shown', value: 'multi|7' },
 			] }
 			onChange={function( content ) {
 				props.setDisplay( content );
@@ -608,6 +625,42 @@ var RSVPEndDateControl = wp.compose.compose(
 		});
 	}
 );
+
+export function RSVPTimestampControl (props) {
+	const {metaKey, eventdata} = props;
+	const {meta} = eventdata;
+	const value = meta[metaKey];
+    const {mutate:datemutate} = useRSVPDateMutation(eventdata.event);
+
+	function pad(n) {
+		if(n < 10)
+			return '0'+n;
+		else
+			return n;
+	}
+
+	const sdate = new Date(eventdata.date);
+	//subtract from js calculated dates / 1000 to get server timestamp
+	const correction = sdate.getTime() - (eventdata.ts_start * 1000);
+	const metadate = new Date();
+	if(props.metaValue)
+		metadate.setTime((value * 1000)+correction);
+	const [date,setDate] = useState((value) ? metadate.getFullYear()+'-'+(pad(metadate.getMonth()+1))+'-'+pad(metadate.getDate()): '');
+	const [time,setTime] = useState((value) ? pad(metadate.getHours())+':'+pad(metadate.getMinutes()) : '');
+
+	function save() {
+		const sdate = new Date(date+' '+time);
+		datemutate({'metaKey':metaKey,'metaValue':(sdate.getTime()-correction)/1000});
+	}
+
+	return (
+		<div>
+			<label>{props.label}</label>
+			<p><input type="date" value={date} onChange={(e) => {setDate(e.target.value)}} /> <input type="time" value={time} onChange={(e) => {setTime(e.target.value)}} /> {date && time && <button onClick={save}>Set</button>}</p>
+			{((date && !time) || (time && !date)) && <p><em>Enter both date and time</em></p>}
+		</div>
+	);
+} 
 
 const MetaTimestampControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {

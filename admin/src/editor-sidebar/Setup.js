@@ -1,6 +1,6 @@
 import React, {useState} from "react"
 const { Modal, TabPanel, Guide,GuidePage,ToggleControl,Panel, PanelBody, PanelRow, Flex, FlexBlock, FlexItem } = wp.components;
-import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaRadioControl, MetaFormToggle, MetaTimeLord, MetaTimestampControl} from './metadata_components.js';
+import {RSVPTimestampControl, RSVPMetaToggle, MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaRadioControl, MetaFormToggle, MetaTimeLord, MetaTimestampControl} from './metadata_components.js';
 import DateTimeMaker from "../DateTimeMaker.js";
 import TemplateControl from './TemplateControl.js';
 import FormSetup from './FormSetup.js'
@@ -18,6 +18,19 @@ export default function Setup (props) {
     const start = (tab) ? tab : 'basics';
     console.log('setup start',start);
 
+    if(eventdata.status) {
+        wp.data.dispatch('core/notices').createNotice(
+            'success', // Can be one of: success, info, warning, error.
+            eventdata.status, // Text string to display.
+            {
+                id: 'rsvpemialnowsnack', //assigning an ID prevents the notice from being added repeatedly
+                isDismissible: true, // Whether the user can dismiss the notice.
+                // Any actions the user can perform.
+                type: 'snackbar',
+            }
+        );    
+    }
+    
     function close() {
         setOpen(false);
         if(props.setOpenModal)
@@ -33,6 +46,7 @@ return (
     <div>
     {!isOpen && <p><button onClick={open} >RSVP / Event Options</button><br /><em>Click to see more event options</em></p>}
     {isOpen && <Modal className="rsvpmaker-setup-modal" title="RSVP / Event Options" onRequestClose={ close } >
+    <div>{eventdata.status}</div>
 
         <TabPanel
             className="rsvpmaker-tab-panel"
@@ -66,14 +80,14 @@ return (
                 if('basics' == tab.name)
                     return <div className="rsvpsettings-tab-contents"><Basics eventdata={eventdata} /></div>
                 else if('form' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><Form form_id={rsvpmaker_ajax.form_id} event_id={rsvpmaker_ajax.event_id} /></div>
+                    return <div className="rsvpsettings-tab-contents"><Form form_id={rsvpmaker_ajax.form_id} event_id={rsvpmaker_ajax.event_id} eventdata={eventdata} /></div>
                 else if('confirmation' == tab.name)
                     return (
-                        <div className="rsvpsettings-tab-contents"><Confirmation /></div>
+                        <div className="rsvpsettings-tab-contents"><Confirmation eventdata={eventdata} /></div>
                     )
                     else if('pricing' == tab.name)
                     return (
-                        <div className="rsvpsettings-tab-contents"><Pricing /></div>
+                        <div className="rsvpsettings-tab-contents"><Pricing eventdata={eventdata} /></div>
                     )
         } }
         </TabPanel>
@@ -84,24 +98,29 @@ return (
 
 }
 
-function Form() {
+function Form(props) {
+    const {eventdata} = props;
     return (<div>
                 <div>{rsvpmaker_ajax.form_fields}</div>
 <div><em>{rsvpmaker_ajax.form_type}</em></div>
 <div>
-<MetaFormToggle
+<RSVPMetaToggle
 label={__("Login required to RSVP",'rsvpmaker')}
 metaKey="_rsvp_login_required"
+eventdata={eventdata}
 />
-<MetaFormToggle
+<RSVPMetaToggle
+ eventdata={eventdata}
 label={__("Captcha security challenge",'rsvpmaker')}
 metaKey="_rsvp_captcha"
 />
-<MetaFormToggle
+<RSVPMetaToggle
+ eventdata={eventdata}
 label={__("Show Yes/No Options on Registration Form",'rsvpmaker')}
 metaKey="_rsvp_yesno"
 />
-<MetaFormToggle
+<RSVPMetaToggle
+ eventdata={eventdata}
 label={__("Show Date and Time on Form",'rsvpmaker')}
 metaKey='_rsvp_form_show_date'
 />
@@ -113,8 +132,8 @@ metaKey="_rsvp_max"
 label={__('Form Instructions for User','rsvpmaker')}
 metaKey="_rsvp_instructions"
 />
-{(rsvpmaker.post_type == 'rsvpmaker') && <MetaTimestampControl label="Registration Start Date (optional)" metaKey="_rsvp_start" />}
-{(rsvpmaker.post_type == 'rsvpmaker') && <MetaTimestampControl label="Registration Deadline (optional)" metaKey="_rsvp_deadline" />}
+{(rsvpmaker.post_type == 'rsvpmaker') && <RSVPTimestampControl label="Registration Start Date (optional)" metaKey="_rsvp_start" eventdata={eventdata} />}
+{(rsvpmaker.post_type == 'rsvpmaker') && <RSVPTimestampControl label="Registration Deadline (optional)" metaKey="_rsvp_deadline" eventdata={eventdata} />}
 {(rsvpmaker.post_type == 'rsvpmaker_template') && <div>
 <h3>Registration Start Date (optional)</h3>
 <MetaTextControl
@@ -147,16 +166,17 @@ function Reminders() {
 }
 
 function Basics(props) {
+    const {eventdata} = props;
     return (
         <div className="guide-page-1-columns">
         <div className="rsvpguide-datetime">
         {(rsvpmaker.post_type == 'rsvpmaker') && <DateTimeMaker event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
-        {(rsvpmaker.post_type == 'rsvpmaker_template') && <TemplateControl />}
+        {(rsvpmaker.post_type == 'rsvpmaker_template') && <TemplateControl  event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
         </div>
         <div className="guide-options-column">
-        <MetaFormToggle
+        <RSVPMetaToggle
 label={__('Collect RSVPs','rsvpmaker')} 
-metaKey="_rsvp_on"/>
+metaKey="_rsvp_on" eventdata={props.eventdata} />
 
 <Panel>
 <PanelBody
@@ -164,21 +184,22 @@ title="Display"
 icon="admin-settings"
 initialOpen={ true }
 >
-<MetaFormToggle
+<RSVPMetaToggle
 label={__('"Show Add to Google/Outlook Calendar Icons" ','rsvpmaker')}
-metaKey="_calendar_icons"/>
+metaKey="_calendar_icons" eventdata={eventdata}/>
 
-<MetaFormToggle
+<RSVPMetaToggle
 label={__("Add Timezone to Date",'rsvpmaker')}
 metaKey="_add_timezone"
+eventdata={eventdata}
 />
-<MetaFormToggle
+<RSVPMetaToggle
 label={__("Show Timezone Conversion Button",'rsvpmaker')}
-metaKey="_convert_timezone"/>
+metaKey="_convert_timezone" eventdata={eventdata}/>
 
-<MetaFormToggle
+<RSVPMetaToggle
 label={__("Show RSVP Count",'rsvpmaker')} 
-metaKey="_rsvp_count"/>
+metaKey="_rsvp_count" eventdata={eventdata}/>
 
 <MetaSelectControl
 label={__("Display attendee names / RSVP note field",'rsvpmaker')}
@@ -197,18 +218,20 @@ icon="email"
 initialOpen={ false }
 >
 <MetaTextControl title={__("Send notifications to:",'rsvpmaker')} metaKey="_rsvp_to" />
-<MetaFormToggle
+<RSVPMetaToggle
 label={__("Send Confirmation Email",'rsvpmaker')}
 metaKey="_rsvp_rsvpmaker_send_confirmation_email"
+eventdata={eventdata}
 />
-<MetaFormToggle
+<RSVPMetaToggle
 label={__("Confirm AFTER Payment",'rsvpmaker')}
 metaKey="_rsvp_confirmation_after_payment"
+eventdata={eventdata}
 />
-<MetaFormToggle
+<RSVPMetaToggle
 label={__('"Include Event Content with Confirmation"','rsvpmaker')}
 metaKey="_rsvp_confirmation_include_event"
-/>
+eventdata={eventdata} />
 <PanelRow>{__('Confirmation Message (exerpt)','rsvpmaker')}: {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
 {rsvpmaker_ajax.confirmation_links.map( function(x) {return <PanelRow><a href={x.href}>{x.title}</a></PanelRow>} )}
 
@@ -222,45 +245,6 @@ options={ rsvpmaker_ajax.rsvp_tx_template_choices }
 <div>Venue:<br />
 <MetaTextControl title={__("Venue",'rsvpmaker')} metaKey="venue" />
 <br /><em>{__('A street address or web address to include on the calendar invite attachment included with confirmations. If not specifed, RSVPMaker includes a link to the event post.','rsvpmaker')}</em></div>
-</PanelBody>
- <PanelBody
-title="Related"
-icon="admin-links"
-initialOpen={ false }
->
-<ul>
-<li><a href={wp.data.select('core/editor').getPermalink()}>{__('View Event','rsvpmaker')}</a></li>
-{rsvpmaker_ajax.related_document_links.map( function (x) {return <li class={x.class}><a href={x.href}>{x.title}</a></li>} )}
-</ul>
-</PanelBody>
-<PanelBody
-title={__("Pricing",'rsvpmaker')}
-icon="smiley"
-initialOpen={ false }
->
-{(rsvpmaker_ajax.complex_pricing != '') && 
-<PanelRow>{rsvpmaker_ajax.complex_pricing}</PanelRow>
-}
-{(rsvpmaker_ajax.complex_pricing == '') && 
-<div>
-<MetaTextControl
-label={__("Label for Payments")}
-metaKey="simple_price_label"
-/>
-<MetaTextControl
-label={__("Price")}
-metaKey="simple_price"
-/>
-
-
-</div>
-}
-{
-(rsvpmaker_ajax.edit_payment_confirmation != '') && <p>See <strong>Confirmation/Notifications</strong> for paymment confirmation message.</p> 
-}
-{
-(rsvpmaker_ajax.edit_payment_confirmation == '') && <p>{__('Neither PayPal nor Stripe is active','rsvpmaker')}</p> 
-}
 </PanelBody>
 </Panel>
 </div>

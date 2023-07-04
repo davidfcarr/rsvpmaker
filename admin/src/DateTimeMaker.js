@@ -2,11 +2,13 @@ import React, {useState} from "react"
 import { DateTimePicker } from '@wordpress/components';
 import { SelectCtrl } from "./Ctrl";
 import {useRSVPDateMutation} from './queries.js'
+import {RSVPMetaToggle} from './editor-sidebar/metadata_components.js';
+const { __ } = wp.i18n; // Import __() from wp.i18n
 
 export default function DateTimeMaker(props) {
     const {event_id, eventdata, isLoadingDates} = props;
     const [error,setError] = useState('');
-    const {mutate:datemutate} = useRSVPDateMutation(event_id,setError);
+    const {mutate:datemutate} = useRSVPDateMutation(event_id);
     if(!eventdata.tzchoices)
         eventdata.tzchoices = [];
     console.log('props DateTimeMaker',props);
@@ -88,6 +90,9 @@ export default function DateTimeMaker(props) {
         </div>
         )}
         <SelectCtrl label="Time Zone" value={eventdata.timezone} options={eventdata.tzchoices.map((choice) => {return {'label':choice,'value':choice}})} onChange={(value) => { setOther('timezone',value); } } />
-   </div>
+        <RSVPMetaToggle
+label={__('Collect RSVPs','rsvpmaker')} 
+metaKey="_rsvp_on" eventdata={eventdata} />
+  </div>
     )
 }

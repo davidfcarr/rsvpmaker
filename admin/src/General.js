@@ -65,9 +65,7 @@ export default function General (props) {
     <p><a target="_blank" href={edit_url + rsvp_options.rsvp_confirm}>Edit Message</a></p>
 
     <h3>RSVP Button</h3>
-    <SanitizedHTML innerHTML={rsvp_options.rsvplink} />
-    <p><OptTextArea addChange={addChange} rsvp_options={rsvp_options} slug="rsvplink" />
-    </p>
+    <p><a target="_blank" href={rsvp_options.rsvplink_edit}>Edit Button Text and Colors</a></p>
 
     <p><label className="textlabel">Update Button Title</label>
     <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="update_rsvp" />

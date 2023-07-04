@@ -7,6 +7,8 @@ import apiClient from '../http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 
 export default function TemplateProjected (props) {
+    if(-1 == window.location.href.indexOf('post='))
+        return;//don't display if still under construction
     const [ isOpen, setOpen ] = useState( false );
     const [isCheckAll, setIsCheckAll] = useState(false);
     const [isCheck, setIsCheck] = useState([]);

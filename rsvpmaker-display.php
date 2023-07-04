@@ -1969,10 +1969,9 @@ function rsvpmaker_next_rsvps( $atts = array() ) {
 
 				$url = get_permalink( $post->ID );
 
-				$output .= '<h3 class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><a href="' . $url . '">' . get_the_title( $post ) . '</a></span></h3>';
+				$output .= '<h2 class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><a href="' . $url . '">' . get_the_title( $post ) . '</a></span></h2>';
 
 				$d = rsvp_date_block( $post->ID );
-
 				$output .= $d['dateblock'];
 
 				$output .= get_rsvp_link( $post->ID );
@@ -2441,11 +2440,34 @@ function rsvpmaker_author_page( $query ) {
 
 add_filter( 'pre_get_posts', 'rsvpmaker_author_page' );
 
-function get_rsvp_link( $post_id, $justlink = false, $email = '', $rsvp_id = 0 ) {
+function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id = 0 ) {
 
-	global $rsvp_options;
+	global $rsvp_options, $rsvp_link_template;
 
-	$rsvplink = get_permalink( $post_id );
+	if(empty($rsvp_link_template)) {
+		$link_template_post = get_option('rsvpmaker_link_template_post');
+		if($link_template_post) {
+			$tpost = get_post($link_template_post);
+			$rsvp_link_template = $tpost->post_content; 
+		}
+	}
+	if(empty($rsvp_link_template)) {
+		$rsvp_link_template = '<!-- wp:buttons -->
+		<div class="wp-block-buttons"><!-- wp:button {"style":{"color":{"background":"#f71b1b","text":"#ffffff"}},"className":"rsvplink"} -->
+		<div class="wp-block-button rsvplink"><a class="wp-block-button__link has-text-color has-background wp-element-button" style="color:#ffffff;background-color:#f71b1b" href="%s">RSVP Now!</a></div>
+		<!-- /wp:button --></div>
+		<!-- /wp:buttons -->';
+		$newpost['post_title'] = 'RSVP Now! button template';	
+		$newpost['post_type'] = 'rsvpmaker_form';
+		$newpost['post_status'] = 'publish';
+		$newpost['post_content'] = $rsvp_link_template;
+		$link_template_post = wp_insert_post($newpost);
+		update_option('rsvpmaker_link_template_post',$link_template_post);		
+	}
+	if(empty($post_id))
+		return $rsvp_link_template;
+
+	$rsvplink = ($post_id) ? get_permalink( $post_id ) : '%s';
 
 	if(empty($email))
 		$rsvplink = add_query_arg( 'e', '*|EMAIL|*', $rsvplink );
@@ -2465,8 +2487,7 @@ function get_rsvp_link( $post_id, $justlink = false, $email = '', $rsvp_id = 0 )
 
 		return $rsvplink; // just the link, otherwise return button
 	}
-
-	return sprintf( $rsvp_options['rsvplink'], $rsvplink );
+	return sprintf( $rsvp_link_template, $rsvplink );
 }
 
 function rsvpdateblock( $atts = array() ) {
@@ -2840,23 +2861,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 	}
 
 	if ( empty( $post_id ) ) {
-
 		$post_id = $post->ID;
-	}
-
-	if ( empty( $custom_fields ) ) {
-
-		$custom_fields = get_post_custom( $post_id );
-	}
-
-	if ( empty( $custom_fields['_rsvp_dates'][0] ) && ! rsvpmaker_is_template( $post_id ) ) {
-
-		return array(
-			'dateblock' => '',
-			'dur'       => null,
-			'last_time' => null,
-			'firstrow'  => array(),
-		);
 	}
 
 	$time_format = ' '.$rsvp_options['time_format'];

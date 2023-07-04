@@ -1,10 +1,7 @@
 import {useState} from 'react';
-//import './state.js';
-//const { withState } = wp.compose;
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
 const { Panel, PanelBody, PanelRow } = wp.components;
-import {MetaFormToggle, MetaTimeLord, MetaEndDateTimeControl} from './metadata_components.js';
 import DateOrTemplate from './DateOrTemplate.js';
 import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();
@@ -55,10 +52,6 @@ if(rsvpmaker_ajax.special)
 <div>
 <QueryClientProvider client={queryClient}>
 <DateOrTemplate />
-<MetaFormToggle
-label={__('Collect RSVPs','rsvpmaker')} 
-metaKey="_rsvp_on"/>
-
 {rsvpmaker_ajax.bottom_message}
 </QueryClientProvider>
 </div>

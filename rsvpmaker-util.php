@@ -123,6 +123,7 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 		$enddate = $end;
 	else
 		$enddate = rsvpmaker_make_end_date ($date,$type,$end);
+	printf('<p>%s to %s</p>',$end,$enddate);
 	$ts_end = strtotime($enddate);
 	$sql = $wpdb->prepare("INSERT INTO $event_table SET display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s, event=%s",$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
 	if(empty($post_title))
@@ -2545,10 +2546,7 @@ function get_template_sked( $post_id ) {
 
 	$day_array = get_day_array();
 
-	$singles = array( 'hour', 'minutes', 'duration', 'end', 'stop' );
-
 	$newsked = $wpdb->get_results( "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_sked_%' " );
-
 	if ( $newsked ) {
 
 		$dayofweek = array();
@@ -2574,7 +2572,6 @@ function get_template_sked( $post_id ) {
 			$sked[ $key ] = $row->meta_value;
 
 		}
-
 		if ( empty( $week ) && empty( $dayofweek ) ) {
 			return false; // not a valid template
 		}
@@ -2613,15 +2610,34 @@ function get_template_sked( $post_id ) {
 			}
 		}
 
-		if ( empty( $sked['hour'] ) ) {
-
-			$sked['hour'] = $rsvp_options['defaulthour'];
+		if(empty($sked['start_time']))
+		{
+			if(empty($sked['hour'])) {
+				$sked['start_time'] = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
+				$t = strtotime('today '.$sked['_sked_start_time']);
+				$sked['start_time'] = date('H:i:s',$t);
+				$sked['end'] = date('H:i:s',$t + HOUR_IN_SECONDS);
+			}
+			else {
+				$sked['start_time'] = $sked['hour'].':'.$sked['minutes'];
+				$t = strtotime('today '.$sked['start_time']);
+				$sked['start_time'] = date('H:i:s',$t);
+			}
 		}
-
-		if ( empty( $sked['minutes'] ) ) {
-
-			$sked['minutes'] = $rsvp_options['defaultmin'];
+		//sanity check
+		$t = strtotime($sked['start_time']);
+		$end = (empty($sked['end'])) ? 0 : strtotime($sked['end']);
+		if($t > $end)
+		{
+		$end = $t + HOUR_IN_SECONDS;
+		$sked['end'] = date('H:i:s',$end);
+		update_post_meta($post_id,'_sked_end',$sked['_sked_end']);
 		}
+		//backward compatability
+		$parts = explode(':',$sked['start_time']);
+		$sked['hour'] = $parts[0];
+		$sked['minutes'] = $parts[1];
+	
 		return $sked;
 
 	}

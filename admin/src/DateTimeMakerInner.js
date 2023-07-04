@@ -10,7 +10,7 @@ export default function DateTimeMakerInner(props) {
     const {data:bigdata,isLoading,isError} = useRSVPDate(event_id);
     if(isError)
         return <p>Error loading event date</p>
-    const {mutate:datemutate} = useRSVPDateMutation(event_id,setError);
+    const {mutate:datemutate} = useRSVPDateMutation(event_id);
     if(isLoading)
         return <p>Loading date and time ...</p>
     const d = new Date();

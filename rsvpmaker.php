@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 10.5
+Version: 10.5.3
 */
 
 function get_rsvpversion() {
-	return '10.5';
+	return '10.5.2';
 }
 
 global $wp_version;
@@ -90,8 +90,6 @@ function rsvp_options_defaults() {
 
 		'add_timezone'                      => 0,
 
-		'rsvplink'                          => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">' . __( 'RSVP Now!', 'rsvpmaker' ) . '</a></p>',
-
 		'rsvp_form_title'                   => __( 'RSVP Now!', 'rsvpmaker' ),
 
 		'defaulthour'                       => 19,
@@ -135,6 +133,8 @@ function rsvp_options_defaults() {
 			$rsvp_options[ $index ] = $rsvp_defaults[ $index ];
 		}
 	}
+	$rsvp_options['rsvplink'] = get_rsvp_link();
+	$rsvp_options['rsvplink_edit'] = admin_url('post.php?action=edit&post='.get_option('rsvpmaker_link_template_post'));
 
 	if ( empty( $rsvp_options['long_date'] ) || ( strpos( $rsvp_options['long_date'], '%' ) !== false ) ) {
 

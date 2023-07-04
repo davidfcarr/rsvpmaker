@@ -816,13 +816,13 @@ jQuery('#enlarge').click(function() {
 <?php
 rsvp_form_setup_form($options["rsvp_form"]);
 }
-?>
-	<br />
-					<h3><?php esc_html_e('RSVP Link','rsvpmaker'); ?>:</h3>
 
-  <textarea name="option[rsvplink]"  rows="5" cols="80" id="rsvplink"><?php if(isset($options["rsvplink"]) ) echo wp_kses_post($options["rsvplink"]);?></textarea>
-	<br />Example:
+$link_template_post = get_option('rsvpmaker_link_template_post');
+?>
+<br />
+<h3><?php esc_html_e('RSVP Button','rsvpmaker'); ?>:</h3>
 <?php if(isset($options["rsvplink"]) ) echo wp_kses_post($options["rsvplink"]);?>
+<p><a href="<?php echo admin_url('post.php?action=edit&post='.$link_template_post); ?>">Edit</a></p>
 <h3><?php esc_html_e('Label for Updates','rsvpmaker'); ?>:</h3>
   <input type="text" name="option[update_rsvp]"  rows="5" cols="80" id="update_rsvp" value="<?php if(isset($options["update_rsvp"]) ) echo esc_attr($options["update_rsvp"]);?>" />
 	<br />
@@ -2059,13 +2059,15 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 	elseif($week == '6')
 		return rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.rsvpmaker_date('Y-m',$t).' '.$template['hour'].':'.$template['minutes'].':00';
 	else
-	return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.rsvpmaker_date('F',$t).' '.rsvpmaker_date('Y',$t).' '.$template['hour'].':'.$template['minutes'].':00';
+		return $weektext.' '.rsvpmaker_day($dow,'rsvpmaker_strtotime').' of '.rsvpmaker_date('F',$t).' '.rsvpmaker_date('Y',$t).' '.$template['start_time'];
 }
 
 function rsvpmaker_get_projected($template) {
 
 if(!isset($template["week"]))
 	return;
+
+$th = strtotime($template['hour']);
 
 //backward compatability
 if(is_array($template["week"]))
@@ -2078,13 +2080,6 @@ else
 		$weeks[0] = $template["week"];
 		$dows[0] = isset($template["dayofweek"]) ? $template["dayofweek"] : 0;
 	}
-
-if(empty($template['hour']))
-	$template['hour'] = '00';
-if(empty($template['minutes']))
-	$template['minutes'] = '00';
-
-$th = (int) $template['hour'];
 
 $cy = date("Y");
 $cm = date("m");
@@ -2099,7 +2094,7 @@ if(empty($dows))
 foreach($weeks as $week)
 foreach($dows as $dow) {
 $i = 0;
-$startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
+$startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);
 $ts = rsvpmaker_strtotime($startdaytxt);
 if(!$ts) {
 	echo 'Error parsing '.$startdaytxt;
@@ -3183,7 +3178,7 @@ if($holiday_check) {
 	$hthis = $holiday_check['hwarn'];
 }
 $post = get_post($template_id);
-$date = rsvpmaker_date('Y-m-d',$ts).' '.$hour.':'.$minutes.':00';
+$date = rsvpmaker_date('Y-m-d',$ts).' '.$sked['start_time'];
 echo "add $date<br>";
 $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 } // end for loop

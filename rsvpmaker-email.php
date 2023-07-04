@@ -413,7 +413,9 @@ $options = get_rsvpmail_list_rsvpmodal_content();
 $title = $options['title'];
 $footer_text = $options['footer_text'];
 $checked = $rsvpmail_list_rsvpmodal_on ? 'checked="checked"' : '';
-$theme_colors = rsvpmail_filter_style_json();
+$theme_style = rsvpmail_filter_style_json();
+$theme_colors = empty($theme_style['colors']) ? array() : $theme_style['colors'];
+$theme_gradients = empty($theme_style['gradients']) ? array() : $theme_style['gradients'];
 printf('<p><input type="checkbox" name="rsvpmail_list_rsvpmodal_on" value="1" %s> Popup On <span="show_popup_options_checkbox"><input type="checkbox" onclick="showPopupOptions()"> Show Popup Options</span></p>',$checked);
 echo '<div id="show_popup_options" style="display:none;">';
 printf('<p>Title<br><input type="text" name="rsvpmail_list_rsvpmodal_content[title]" value="%s" ></p>',$title);
@@ -423,9 +425,13 @@ foreach($rsvpmail_list_rsvpmodal_css as $label => $content) {
 	printf('<p>CSS for %s<br><textarea rows="4" cols="80" name="rsvpmail_list_rsvpmodal_css[%s]">%s</textarea></p>',$label,$label,$content);
 }
 echo '<p>Examples of an additional CSS customization: .rsvpmodal-header h3 {font-size: 20px;} .rsvpmodal-body p {font-size: 18px;} .rsvpmodal-footer p {font-size: 12px;} </p>';
-echo '<div id="theme_colors">Colors used in your theme:<br>';
+echo '<h2 id="theme_colors">Colors used in your theme</h2>';
 foreach($theme_colors as $index => $color) {
 	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-color:%s"></div></div>',$index,$color,$color);
+}
+echo '<h2 id="theme_gradients">Gradients used in your theme</h2>';
+foreach($theme_gradients as $index => $color) {
+	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-gradient:%s"></div></div>',$index,$color,$color);
 }
 echo '</div></div>';
 ?>
@@ -1224,7 +1230,6 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 			return;
 		}
 		$content = rsvpmailer_default_block_template_wrapper($content);
-		set_transient('email_content_template',$content);
 		$my_post['post_title'] = $title;
 		$my_post['post_content'] = $content;
 		$my_post['post_type'] = 'rsvpemail';
@@ -1720,7 +1725,7 @@ function rsvpmailer_add_editors_note($post) {
 
 	if ( ! empty( $postparts[1] ) ) {
 
-		$note .= sprintf( '<p><a href="%s">%s</a>', rsvpemail_readmore_button(get_permalink($chosen)) );
+		$note .= sprintf( '<p><a href="%s">%s</a>', rsvpemail_readmore_button(get_permalink($chosen),$chosen) );
 	}
 
 	$note = '<h2>'.$editorsnote['add_to_head']."</h2>\n".$note;
@@ -2675,9 +2680,11 @@ rsvpmaker_admin_heading('Content for Email',__FUNCTION__);
 
 if(isset($_POST['newsletter_choice'])) {
 	$newsletter_title = $content = '';
+	$log = '';
 	foreach($_POST['newsletter_choice'] as $choice) {
 		if(empty($choice))
 			continue;
+		$log .= sprintf('<p>%s</p>',$choice);
 		if('upcoming' == $choice) {
 			$content .= '<!-- wp:paragraph -->
 			<p></p>
@@ -2718,8 +2725,11 @@ if(isset($_POST['newsletter_choice'])) {
 		else
 		{
 			$post = get_post(intval($choice));
+			$log .= sprintf('<pre>Post: %s</pre>',htmlentities(var_export($post,true)));
 			if($post) {
 				$content .= rsvpmail_post_format($post)."\n\n";
+				$log .= $content;
+				//wp_die($log);
 				if(empty($newsletter_title)) {
 					$newsletter_title = 'Newsletter: '.$post->post_title;
 					if('rsvpmaker' == $post->post_type) {
@@ -2780,6 +2790,12 @@ $postlists = '<option value="headlines10">'.__('10 Latest Blog Headline Links','
 $posts = '<optgroup label="'.__('Recent Posts','rsvpmaker').'">'.$postlists.$posts."</optgroup>\n";
 }
 
+$other = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE post_status='publish' AND post_type != 'post' AND post_type != 'rsvpmaker' AND post_type != 'rsvpmaker_template' AND post_type != 'rsvpmaker_form' AND post_type != 'rsvpemail'  AND post_type != 'attachment'  AND post_type != 'wp_navigation' AND post_type != 'wp_template' AND post_type != 'wp_template_part' ORDER BY post_modified DESC LIMIT 0,30");
+$oopt = '';
+foreach($other as $row)
+	$oopt .= sprintf("<option value=\"%d\">%s (%s)</option>\n",$row->ID,substr($row->post_title,0,80),$row->post_type);
+$oopt = '<optgroup label="'.__('Other Content','rsvpmaker').'">'.$oopt."</optgroup>\n";
+
 $po = '';
 $pages = get_pages();
 foreach($pages as $page)
@@ -2790,17 +2806,28 @@ foreach($pages as $page)
 <?php rsvpmaker_nonce(); 
 ?>
 <h2><?php esc_html_e('Newsletter Builder','rsvpmaker');?></h2>
-<p>Choose multiple blog posts or events to include as starting points for your newsletter. A read more link will be added to blog posts that include the "more" tag.</p>
-<p><select name="newsletter_choice[]"><?php echo $posts. $event_options; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options; ?></select>
-</select>
-</p>
-<button><?php esc_html_e('Create Newsletter','rsvpmaker');?></button>
+<p>Choose multiple blog posts or events to include as starting points for your newsletter.</p>
+<p><select name="newsletter_choice[]"><?php echo $posts. $event_options. $oopt; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
+<div id="emptychoice"><p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select></p></div>
+<div id="addhere"><a href="#" id="addchoice">+ More choices</a></div>
+<p><input type="checkbox" name="excerpt" value="1" checked="checked"> <strong>Use Excerpt</strong> Blog posts should include a Read More link* </p>
+<p><button><?php esc_html_e('Create Newsletter','rsvpmaker');?></button></p>
 </form>	
+<p><em>* For better control over what content will be chosen for the excerpt, use the <a target="_blank" href="https://rsvpmaker.com/knowledge-base/how-to-import-blog-and-event-content-into-invitation-emails-and-email-newsletters/#moreblock">More block</a> in the body of the blog post.</em></p>
+<script>
+	var choice = document.getElementById('emptychoice').innerHTML;
+	var el = document.getElementById('addchoice');
+var addChoice = function () {
+	let addhere = document.getElementById('addhere');
+	addhere.innerHTML = choice + choice + choice + choice +choice;
+}
+
+el.addEventListener('click', addChoice);
+</script>
 <?php
 echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
 
@@ -4487,7 +4514,8 @@ function rsvpmaker_get_style_substitutions() {
 						$colors[$index] = $color;
 					}
 			}
-			$theme_colors = rsvpmail_filter_style_json();
+			$theme_style = rsvpmail_filter_style_json();
+			$theme_colors = $theme_style['colors'];
 			if(!empty($theme_colors)) {
 				foreach($theme_colors as $index => $value) {
 					$colors[$index] = $value;
@@ -4515,6 +4543,11 @@ function rsvpmaker_get_style_substitutions() {
 				$style_sub['has-'.$index.'-color'] = 'color:'.$color;
 				$style_sub['has-'.$index.'-background-color'] = 'padding: 5px 30px 5px 30px;background-color:'.$color;
 			}
+			if(!empty($theme_style['gradients']))
+			foreach($theme_style['gradients'] as $index => $gradient)
+			{
+				$style_sub['has-'.$index.'-gradient-background'] = 'padding: 5px 30px 5px 30px;background-image:'.$gradient;
+			}
 
 			$custom_style_array = get_rsvpmail_custom_style_array();
 			if(!empty($custom_style_array)) {
@@ -4530,8 +4563,6 @@ function rsvpmaker_get_style_substitutions() {
 	return $style_sub;
 }
 
-
-
 function rsvpmaker_css_to_array($css) {
 	$custom_styles = array();
     $css = strtolower(str_replace("\n",'',$css));
@@ -4546,13 +4577,21 @@ function rsvpmaker_css_to_array($css) {
 }
 
 function rsvpmaker_filter_style_substititions ($classarray) {
+	global $counter;
+	if(!$counter)
+		$counter = 1;
+	else
+		$counter ++;
+	
 	$style_sub = rsvpmaker_get_style_substitutions();
 	$classes = explode(' ',$classarray[1]);
+	
 	$style = '';
 	$tag = $classarray[0];
 	foreach($classes as $class) {
-		if(!empty($style_sub[$class]))
+		if(!empty($style_sub[$class])) {
 			$style .= $style_sub[$class].'; ';
+		}
 	}
 	if( strpos($tag,'style=') )
 		$tag = str_replace('style="','style="'.$style,$tag);
@@ -4561,6 +4600,18 @@ function rsvpmaker_filter_style_substititions ($classarray) {
 		$tag = str_replace('>'," style=\"$style\">", $tag);
 	}
 	return $tag;
+}
+
+add_shortcode('json_explorer','json_explorer');
+
+function json_explorer() {
+	$theme_style = rsvpmail_filter_style_json();
+	$theme_colors = $theme_style['colors'];
+	$json = new WP_Theme_JSON_Resolver();
+	$jsondata = (array) $json->get_merged_data('theme');
+	$p = array_pop($jsondata);
+
+	return '<h2>Computed</h2><pre>'.var_export(rsvpmail_filter_style_json(),true).'</pre><h2>Test</h2><pre>'.var_export($p['settings']['color']['gradients']['default'],true).'</pre>';
 }
 
 function rsvpmail_filter_style_json() {
@@ -4576,16 +4627,24 @@ function rsvpmail_filter_style_json() {
 	else {
 		$theme = array();
 	}
+	$theme_style = array('colors' => array(), 'gradients' => array());
 	foreach($palette as $index => $item) {
 		if(isset($item['slug'])) {
-			$theme_colors[$item['slug']] = $item['color'];
+			$theme_style['colors'][$item['slug']] = $item['color'];
 		}
 	}
 	foreach($theme as $index => $item) {
 		if(isset($item['slug']))
-			$theme_colors[$item['slug']] = $item['color'];
+			$theme_style['colors'][$item['slug']] = $item['color'];
 	}
-	return $theme_colors;
+	if(isset($p['gradients']['default']))
+	foreach($p['gradients']['default'] as $item)
+		$theme_style['gradients'][$item['slug']] = $item['gradient'];
+	if(isset($p['gradients']['theme']))
+		foreach($p['gradients']['theme'] as $item)
+			$theme_style['gradients'][$item['slug']] = $item['gradient'];
+	
+	return $theme_style;
 }
 
 function rsvpmail_filter_style($content) {
@@ -5327,7 +5386,7 @@ if($thumburl)
 if(!strpos($excerpt,$permalink))
 {
 ?>
-<p class="email-read-more"><a href="<?php echo $permalink; ?>"><?php _e('Read More','rsvpmaker'); ?></a></p>
+<p class="email-read-more"><a href="<?php echo $permalink.'#more-'.$post->ID; ?>"><?php _e('Read More','rsvpmaker'); ?></a></p>
 <?php 
 }
 ?>
@@ -5406,20 +5465,6 @@ function rsvpmaker_email_add_name($email,$name) {
 }
 function rsvpmaker_queue_post_type() {
 	register_post_status('rsvpmessage',array('label'=>'Group Message','internal'=>true,'show_in_admin_status_list'=>true,'show_in_admin_all_list'=>false));
-}
-function rsvpmail_post_excerpt($post, $pcount = 5) {
-	$content = $post->post_content;
-	if(strpos($content,'<!-- wp:more -->')) {
-		$parts = explode('<!-- wp:more -->',$content);
-		$excerpt = $parts[0];
-	}
-	else {
-		$paragraphs = explode('<!-- wp:paragraph -->',$content);
-		$paragraphs = array_slice($paragraphs,0,$pcount);
-		$excerpt = implode('<!-- wp:paragraph -->',$paragraphs);
-	}
-	$excerpt .= rsvpemail_readmore_button(get_permalink($post->ID));
-	return $excerpt;
 }
 
 function rsvpmail_latest_post_promo($args = array()) {
@@ -5826,7 +5871,7 @@ $rsvpmail_editors_note = get_rsvpmail_editors_note($atts);
 if($rsvpmail_editors_note) {
 	if(strpos($rsvpmail_editors_note->post_content,'<!-- wp:more -->')) {
 		$parts = explode('<!-- wp:more -->',$rsvpmail_editors_note->post_content);
-		$rsvpmail_editors_note->post_content = $parts[0]."\n\n".sprintf("<!-- wp:paragraph -->\n<p><a href=\"%s\">Read More</a></p>\n<!-- /wp:paragraph -->\n\n",get_permalink($rsvpmail_editors_note->ID));
+		$rsvpmail_editors_note->post_content = $parts[0]."\n\n".sprintf("<!-- wp:paragraph -->\n<p><a href=\"%s#more-%d\">Read More</a></p>\n<!-- /wp:paragraph -->\n\n",get_permalink($rsvpmail_editors_note->ID),$rsvpmail_editors_note->ID);
 	}
 return '<h1>'.$rsvpmail_editors_note->post_title."</h1>\n".rsvpmaker_email_html($rsvpmail_editors_note->post_content);
 }
@@ -6212,16 +6257,6 @@ function rsvpmail_patterns() {
 		);
 	$events = get_future_events();
 	foreach($events as $post) {
-		/*
-		$post->post_content = '<!-- wp:heading -->
-		<h2 class="wp-block-heading"><a href="'.get_permalink($post->ID).'">'.esc_html($post->post_title).'</a></h2>
-		<!-- /wp:heading -->
-		'."\n\n".rsvp_date_block_email($post->ID)."\n\n"
-		.$post->post_content."\n\n";
-		$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($post->ID).'#rsvpnow');
-		$post->post_content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->";
-		*/
-		//$post->post_content = str_replace('class=','className=',$post->post_content);
 		register_block_pattern(
 			'rsvpmaker/email-'.$post->ID,
 			array(
@@ -6266,36 +6301,56 @@ function rsvpmail_patterns() {
 	}
 }
 
+function rsvpmail_post_excerpt($post, $pcount = 5) {
+	$content = $post->post_content;
+	if(strpos($content,'<!-- wp:more -->')) {
+		$parts = explode('<!-- wp:more -->',$content);
+		$excerpt = $parts[0];
+	}
+	else {
+		$paragraphs = explode('<!-- wp:paragraph -->',$content);
+		$paragraphs = array_slice($paragraphs,0,$pcount);
+		$excerpt = implode('<!-- wp:paragraph -->',$paragraphs);
+	}
+	$excerpt .= rsvpemail_readmore_button(get_permalink($post->ID),$post->ID);
+	return $excerpt;
+}
+
 function rsvpmail_post_format($epost) {
 	global $post, $rsvp_options, $email_context;
-	$email_context = true;
 	$backup = $post;
 	$post = $epost;
-	$content = (strpos($post->post_content,'wp4toastmasters/')) ? "\n\n".do_blocks($post->post_content)."\n\n" : $post->post_content;
-	$parts = preg_split('/<!--[wp:\s]*more/',$content);
-	if(!empty($parts[1])) {
-		$content = $parts[0]."\n\n".rsvpemail_readmore_button(get_permalink($post->ID));
+	$email_context = true;
+
+	if(isset($_REQUEST['excerpt']) && 'rsvpmaker' != $epost->post_type)
+		$content = rsvpmail_post_excerpt($epost);
+	else {
+		$content = (strpos($epost->post_content,'wp4toastmasters/')) ? "\n\n".do_blocks($post->post_content)."\n\n" : $post->post_content;
+		$parts = preg_split('/<!--[wp:\s]*more/',$content);
+		if(!empty($parts[1])) {
+			$content = $parts[0]."\n\n".rsvpemail_readmore_button(get_permalink($epost->ID),$epost->ID);
+		}	
 	}
-	if('rsvpmaker' == $post->post_type) {
-		$rsvp_on = (bool) get_post_meta($post->ID,'_rsvp_on',true);
-		$content = rsvp_date_block_email($post->ID)."\n\n"
+	if('rsvpmaker' == $epost->post_type) {
+		$rsvp_on = (bool) get_post_meta($epost->ID,'_rsvp_on',true);
+		$content = rsvp_date_block_email($epost->ID)."\n\n"
 		.$content."\n\n";
 		if($rsvp_on) {
-			$rsvplink = sprintf($rsvp_options['rsvplink'],get_permalink($post->ID).'#rsvpnow');
-			$content .= "\n\n<!-- wp:paragraph -->\n".$rsvplink."\n<!-- /wp:paragraph -->\n\n";	
+			$content .= get_rsvp_link($epost->ID);
 		}
 	}
 	$content = '<!-- wp:group {"layout":{"type":"constrained"}} -->
 	<div class="wp-block-group">
 	<!-- wp:heading -->
-	<h2 class="wp-block-heading"><a class="headline-link" href="'.get_permalink($post->ID).'">'.esc_html($post->post_title).'</a></h2>
+	<h2 class="wp-block-heading"><a class="headline-link" href="'.get_permalink($post->ID).'">'.esc_html($epost->post_title).'</a></h2>
 	<!-- /wp:heading -->'."\n\n".$content.'</div>
 	<!-- /wp:group -->'."\n\n";
 	$post = $backup;
 	return $content;
 }
 
-function rsvpemail_readmore_button ($link) {
+function rsvpemail_readmore_button ($link, $post_id = 0) {
+	$link .= '#more-'.$post_id;
 	$readmore = get_option('rsvpmail_button_label');
 	if(empty($readmore))
 		$readmore = __('Read More','rsvpmaker');
@@ -6305,3 +6360,4 @@ function rsvpemail_readmore_button ($link) {
 	<!-- /wp:button --></div>
 	<!-- /wp:buttons -->'."\n\n";
 }
+

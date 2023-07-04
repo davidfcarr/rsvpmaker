@@ -19,6 +19,8 @@
 	},
 	"dependencies": {
 		"dompurify": "^3.0.2",
-		"react-query": "^3.39.3"
+		"react-clock": "^4.2.0",
+		"react-query": "^3.39.3",
+		"react-time-picker": "^6.2.0"
 	}
 }

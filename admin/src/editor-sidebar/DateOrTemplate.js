@@ -15,7 +15,9 @@ export default function DateOrTemplate() {
     if(isError)
         return <p>Error loading event date</p>
 
-    const eventdata = (isLoading) ? rsvpmaker_ajax.eventdata : data.data;
+    if(isLoading) 
+        return <p><em>Loading event data</em></p>
+    const eventdata = data.data;
     console.log('eventdata DateOrTemplate',eventdata);
 
     return (
@@ -27,7 +29,7 @@ export default function DateOrTemplate() {
 {!openModal && (rsvpmaker.post_type == 'rsvpmaker') && <DateTimeMaker event_id={event_id} eventdata={eventdata} />}
 </div>
 )}
-{((rsvpmaker.post_type == 'rsvpmaker_template') && <TemplateControl />
+{((rsvpmaker.post_type == 'rsvpmaker_template') && <TemplateControl event_id={event_id} eventdata={eventdata} />
 )}
 </div>
 );
