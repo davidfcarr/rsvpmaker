@@ -5145,7 +5145,7 @@ function rsvpmaker_guest_list() {
 			$mail['fromname'] = get_option('blogname');
 			$mail['subject'] = 'Please confirm your subscription to the email list for '.$mail['fromname'];
 			foreach($_POST['resend'] as $id) {
-				$sql = "select email from $table where id = $id";
+				$sql = "select email from $table where id = ".intval($id);
 				$mail['to'] = $wpdb->get_var($sql);
 				$confirm = site_url('?rsvpmail_subscribe='.$mail['to']);
 				$mail['html'] = "<p>We have your email list signup on file but need confirmation before we can add you to our active list.</p>";
