@@ -1516,6 +1516,9 @@ if ( ! function_exists( 'rsvp_notifications' ) ) {
 
 		if ( isset( $post->ID ) ) { // not for replay
 			$mail['ical'] = rsvpmaker_to_ical_email( $post->ID, $rsvp_to, $rsvp['email'] );
+			$event_title = get_the_title($post->ID);
+			$dateblock = rsvp_date_block_email( $post->ID );
+			$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];	
 		}
 
 		$mail['to'] = $rsvp['email'];

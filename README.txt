@@ -8,13 +8,17 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.2.2
-Stable tag: 10.5.5
+Stable tag: 10.6
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
 == Description ==
 
 RSVPMaker is an event and email marketing tool. Use PayPal or Stripe to collect event payments. RSVPMaker handles scheduling, event marketing, and RSVP tracking. You can send email to small lists through your web server or take advantage of the integrations with Postmark and Mailchimp to scale up.
+
+When implemented in combination with Postmark for reliable email delivery, RSVPMaker can function as an alternative to Mailchimp or MailPoet that allows you to format messages in the WordPress editor and easily incorporate events (for invitations) and blog posts or excerpts from posts (for email newsletters and promotions).
+
+https://youtu.be/6zp_NaGb7qs
 
 Use RSVPMaker to:
 - Schedule and promote events of all sorts: conferences, classes, seminars, speaking events, parties and weddings are a few common uses.
@@ -23,14 +27,12 @@ Use RSVPMaker to:
 - Create webinars and other online events leveraging free resources like the YouTube Live service.
 - Create, format, and edit email newsletters within the WordPress block editor, rather than learning another content composer tool. Use dynamic blocks or shortcodes to incorporate dynamic content like lists of recent blog posts or upcoming events.
 - Power membership-oriented websites with tools for emailing all your members or just those who have or have not registered for a specific event.
-- Send email using your own web server, an SMTP plugin or the integration with Mailchimp.
-- New Postmark integration has the advantage of supporting both broadcast / mailing list and transactional messages (like RSVP Confirmations). Postmark integration turns the RSVP Mail tool more of a full-fledged alternative to Mailchimp or MailPoet.
-
-https://youtu.be/6zp_NaGb7qs
+- Send email using your own web server, an SMTP plugin or the integrations with Mailchimp and Postmark.
+- Postmark integration has the advantage of supporting both broadcast / mailing list and transactional messages (like RSVP Confirmations).
 
 ## Creating and Managing Events
 
-RSVPMaker events are created and edited just like blog posts in the WordPress editor, with the addition of parameters like event date (so the items can be listed chronologically and displayed on a calendar grid). Supports the Gutenberg editor as well as the classic WordPress editor.
+RSVPMaker events are created and edited just like blog posts in the WordPress editor, with the addition of parameters like event date (so the items can be listed chronologically and displayed on a calendar grid).
 
 You can use RSVPMaker for event announcements, or turn on the Collect RSVPs function and set additional options for sending email notifications, customizing confirmation and reminder messages, and setting a price or prices if you will be requesting online payments via PayPal.
 
@@ -44,9 +46,9 @@ The RSVP Mailer tool allows you to use the familiar WordPress editor to format e
 
 RSVPMaker is a free plugin that doesn't hold much back in terms of "premium" features.
 
-However, the plugin author is available to consult on customizations, but most generally useful enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
+The plugin author is available to consult on customizations, but most generally useful enhancements are folded back into the core plugin code. RSVPMaker also aims to be developer-friendly, allowing you to build event-centric applications on top of it.
 
-Hosting of pre-configured and integrated websites is available through [RSVPMaker.com](https://rsvpmaker.com/). RSVPMaker.com use Siteground hosting behind the scenes and can be provided with Postmark integration for the email marketing features.
+Hosting and support of pre-configured websites is available through [RSVPMaker.com](https://rsvpmaker.com/). RSVPMaker.com uses Siteground hosting behind the scenes and Postmark for reliable delivery of email newsletters and transactional messages.
 
 <a href="mailto:david@rsvpmaker.com?subject=RSVPMaker Postmark customizations">Contact the plugin author</a> for details about additional customizations for reselling Postmark services across WordPress multisite networks.
 
@@ -108,7 +110,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 == Credits ==
 
     RSVPMaker
-    Copyright (C) 2010-2021 David F. Carr
+    Copyright (C) 2010-2023 David F. Carr
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -127,6 +129,21 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 10.6 =
+
+* Fix calendar display issues (style conflicts with themes)
+
+= 10.5.8 =
+
+* Fix for setting event deadlines
+* Fix Create / Update modal and API code glitch producing duplicates
+* Display template for an event on post listing screen and DateTime UI in editor, with edit link
+
+= 10.5.7 =
+
+* Event title and date/time included in confirmation / reminder emails by default
+* Confirmation emails on by default unless you turn off per-event
 
 = 10.5.5 =
 

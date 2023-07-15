@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 10.5.5
+Version: 10.6
 */
 
 function get_rsvpversion() {
-	return '10.5.5';
+	return '10.6';
 }
 
 global $wp_version;
@@ -121,6 +121,8 @@ function rsvp_options_defaults() {
 		'show_screen_multiple'              => 0,
 
 		'dashboard_message'                 => '',
+		
+		'rsvpmaker_send_confirmation_email' => 1,
 
 		'update_rsvp'                       => __( 'Update RSVP', 'rsvpmaker' ),
 

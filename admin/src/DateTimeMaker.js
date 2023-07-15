@@ -93,6 +93,7 @@ export default function DateTimeMaker(props) {
         <RSVPMetaToggle
 label={__('Collect RSVPs','rsvpmaker')} 
 metaKey="_rsvp_on" eventdata={eventdata} />
+  {eventdata.has_template && <p><a href={eventdata.template_edit}>Based on Template {eventdata.has_template}</a></p>}
   </div>
     )
 }

@@ -1015,7 +1015,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 			$key = rsvpmaker_date( 'Y-m-d', $t );
 
-			$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
+			$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
 
 			if ( strpos( $duration_type, '|' ) ) {
 
@@ -1027,7 +1027,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 					$key = date( 'Y-m-d', strtotime( $key . ' +1 day' ) );
 
-					$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="calendar_item tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
+					$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
 
 				}
 			}

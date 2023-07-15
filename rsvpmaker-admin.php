@@ -1594,12 +1594,15 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 		$rsvp_on = get_post_meta($post_id,'_rsvp_on',true);
 		$convert_timezone = get_post_meta($post_id,'_convert_timezone',true);
 		$add_timezone = get_post_meta($post_id,'_add_timezone',true);
+		$template = get_post_meta($post_id,'_meet_recur',true);
 		if(!empty($rsvp_on))
 			echo '<br />RSVP On';
 		if(!empty($add_timezone))
 			echo '<br />Timezone code added to time';
 		if(!empty($convert_timezone))
 			echo '<br /><em>Show in my timezone</em> button displayed';
+		if($template)
+			printf('<br /><a href="%s">Template: %d</a>',admin_url('post.php?action=edit&post='.$template),$template);
 	}
     elseif( $column_name == 'event_dates' ) {
 
@@ -2475,7 +2478,11 @@ function rsvp_get_reminder($post_id,$hours) {
 	$conf_post = get_post($reminder_id);
 	if(empty($conf_post))
 		return;
+	$event_title = get_the_title($post_id);
+	$dateblock = rsvp_date_block_email( $post_id );
+
 	$conf_post->post_content = rsvpmaker_email_html($conf_post->post_content);
+	$conf_post->post_content = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$conf_post->post_content;
 	return $conf_post;
 }
 
@@ -3527,6 +3534,7 @@ function rsvpmaker_deadline_from_template($target_id,$deadlinedays,$deadlinehour
 		$t -= ($deadlinehours * 60 * 60);
 	update_post_meta($target_id,'_rsvp_deadline',$t);
 }
+
 function rsvpmaker_reg_from_template($target_id,$days,$hours) {
 	$t = get_rsvpmaker_timestamp($target_id);
 	if(!empty($days))

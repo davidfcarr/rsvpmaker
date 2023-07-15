@@ -138,9 +138,10 @@ function rsvpmaker_relay_queue() {
 			$mail['html'] = rsvpmaker_email_html($epost);
 			$sql = "select * from $wpdb->postmeta WHERE meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=$epost_id";
 			$meta = $wpdb->get_results($sql);
+			set_transient('group email meta',$meta);
 			foreach($meta as $row) {
 				if('rsvprelay_from' == $row->meta_key) {
-					$mail['from'] = $row->meta_value;
+					$mail['replyto'] = $mail['from'] = $row->meta_value;
 					$log .= 'from: '.$mail['from']."\n";
 				}
 				if('rsvprelay_fromname' == $row->meta_key)
@@ -149,6 +150,7 @@ function rsvpmaker_relay_queue() {
 					$mail['message_description'] = $row->meta_value;
 			}	
 		}
+		set_transient('group email mail',$mail);
 
 		if($hits == 1) {
 			$message_description = empty($message_description) ? '' : '<div class="rsvpexplain">' . $message_description . '</div>';

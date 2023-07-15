@@ -629,8 +629,11 @@ var RSVPEndDateControl = wp.compose.compose(
 export function RSVPTimestampControl (props) {
 	const {metaKey, eventdata} = props;
 	const {meta} = eventdata;
+	console.log('RSVPTimestampControl metaKey',metaKey);
+	console.log('RSVPTimestampControl meta',meta);
 	const value = meta[metaKey];
-    const {mutate:datemutate} = useRSVPDateMutation(eventdata.event);
+    console.log('RSVPTimestampControl value',value);
+	const {mutate:datemutate} = useRSVPDateMutation(eventdata.event);
 
 	function pad(n) {
 		if(n < 10)
@@ -643,8 +646,8 @@ export function RSVPTimestampControl (props) {
 	//subtract from js calculated dates / 1000 to get server timestamp
 	const correction = sdate.getTime() - (eventdata.ts_start * 1000);
 	const metadate = new Date();
-	if(props.metaValue)
-		metadate.setTime((value * 1000)+correction);
+	const set = (value * 1000)+correction;
+	metadate.setTime(set);
 	const [date,setDate] = useState((value) ? metadate.getFullYear()+'-'+(pad(metadate.getMonth()+1))+'-'+pad(metadate.getDate()): '');
 	const [time,setTime] = useState((value) ? pad(metadate.getHours())+':'+pad(metadate.getMinutes()) : '');
 

@@ -2103,8 +2103,8 @@ class RSVP_Event_Date extends WP_REST_Controller {
 		global $wpdb, $rsvp_options, $current_user;
 		$post_id = $event_id = intval($_GET['event_id']);
 		$type = get_post_type($post_id);
-		$rsvpmeta = array("_rsvp_to", "_rsvp_instructions", "simple_price", "simple_price_label", "venue", "_sked_minutes", "_sked_stop", "_sked_duration", "_payment_gateway", "_rsvp_currency", "_rsvp_start", "_rsvp_deadline", "_rsvp_end_display", "_sked_start_time", "_sked_end");
-		$rsvpnumber = array("_rsvp_max", "_template_start_hour", "_template_start_minutes", "_sked_hour", "rsvp_tx_template", "_rsvp_deadline_daysbefore", "_rsvp_deadline_hours", "_rsvp_reg_daysbefore", "_rsvp_reg_hours");
+		$rsvpmeta = array("_rsvp_to", "_rsvp_instructions", "simple_price", "simple_price_label", "venue", "_sked_minutes", "_sked_stop", "_sked_duration", "_payment_gateway", "_rsvp_currency", "_rsvp_end_display", "_sked_start_time", "_sked_end");
+		$rsvpnumber = array("_rsvp_max", "_template_start_hour", "_template_start_minutes", "_sked_hour", "rsvp_tx_template", "_rsvp_deadline_daysbefore", "_rsvp_deadline_hours", "_rsvp_reg_daysbefore", "_rsvp_reg_hours","_rsvp_start", "_rsvp_deadline");
 		$rsvpbool = array("_rsvp_on","_rsvp_show_attendees", "_rsvp_count_party", "_add_timezone", "_convert_timezone", "_calendar_icons", "_rsvp_rsvpmaker_send_confirmation_email", "_rsvp_confirmation_after_payment", "_rsvp_confirmation_include_event", "_rsvp_count", "_rsvp_yesno", "_rsvp_captcha", "_rsvp_login_required", "_rsvp_form_show_date","rsvpautorenew");
 		$templatemeta = array("_sked_Varies", "_sked_First", "_sked_Second", "_sked_Third", "_sked_Fourth", "_sked_Last", "_sked_Every", "_sked_Sunday", "_sked_Monday", "_sked_Tuesday", "_sked_Wednesday", "_sked_Thursday", "_sked_Friday", "_sked_Saturday", "rsvpautorenew");
 
@@ -2250,6 +2250,8 @@ class RSVP_Event_Date extends WP_REST_Controller {
 			}
 		}
 		$event->meta = $meta;
+		$event->has_template = rsvpmaker_has_template($event_id);
+		$event->template_edit = ($event->has_template) ? admin_url('post.php?action=edit&post='.$event->has_template) : '';
 
 		return new WP_REST_Response( $event , 200 );	
 	}
@@ -2577,6 +2579,7 @@ function get_rsvpmaker_projected_api($t) {
 	$return['action'] = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t );
 	$exists = [];
 	$now = time();
+	$checkdates = array();
 	foreach($sched_result as $event) {
 		if($event->ts_start < $now)
 			continue;
@@ -2586,7 +2589,8 @@ function get_rsvpmaker_projected_api($t) {
 		$template_update = get_post_meta( $event->event, '_updated_from_template', true );
 		$event->modified = ( ! empty( $template_update ) && ( $template_update != $event->post_modified ) ) ? __( 'Modified independently of template. Update could overwrite customizations.', 'rsvpmaker' ) : '';
 		$event->dups = rsvpmaker_check_sametime($event->date,$event->event);
-		$event->prettydate = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start);
+		$event->prettydate = rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start,$event->timezone);
+		$checkdates[] = rsvpmaker_date('Y-m-d',$event->ts_start,$event->timezone);
 		$event->id = $event->event;
 		$event->type = 'existing';
 		$return['dates'][] = $event;
@@ -2595,6 +2599,9 @@ function get_rsvpmaker_projected_api($t) {
 	if ( $projected && is_array( $projected ) ) {
 		foreach ( $projected as $i => $ts ) {
 			if($ts < $now)
+				continue;
+			$check = rsvpmaker_date('Y-m-d',$ts);
+			if(in_array($check,$checkdates))
 				continue;
 			$year = rsvpmaker_date('Y',$ts);
 			$month = rsvpmaker_date('m',$ts);
