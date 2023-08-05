@@ -564,13 +564,18 @@ function rsvpmaker_postmark_show_sent_log() {
         $results = $wpdb->get_results($sql);
         if($results) {
             echo '<h2>Monthly Volume</h2>';
-            if(!isset($_GET['by_volume']))
-                printf('<p>Sort <a href="%s">by volume</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'));
+            if(!isset($_GET['by_volume'])) {
+                $vlink = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1');
+                if(isset($_GET['blog_id']))
+                    $vlink .= '&blog_id='.intval($_GET['blog_id']);
+                printf('<p>Sort <a href="%s">by volume</a></p>',$vlink);
+            }
 
-            echo '<table class="wp-list-table widefat striped"><tr><th>Domain</th><th>Month</th><th>Total</th></tr>';
+            echo '<table class="wp-list-table widefat striped"><tr><th>Site</th><th>URL</th><th>Month</th><th>Total</th></tr>';
             foreach($results as $row) {
-                $site = get_site($row->blog_id);
-                printf('<tr><td>%s</td><td>%s</td><td>%s</td></tr>',$site->domain,$row->ym,$row->total);
+                $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
+                $home = (is_multisite()) ? get_blog_option($row->blog_id,'home') : get_option('home');
+                printf('<tr><td>%s</td><td><a href="%s">%s</a></td><td>%s</td><td>%s</td></tr>',$name,$home,$home,$row->ym,$row->total);
             }
             echo '</table>';    
         }

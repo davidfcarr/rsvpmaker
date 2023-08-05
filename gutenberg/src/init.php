@@ -257,8 +257,11 @@ function rsvpmaker_block_cgb_editor_assets() {
 	if(isset($_GET['post_type']))
 		$post_type = $_GET['post_type'];
 	wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
-	if($post_type == 'rsvpemail')
+	if($post_type == 'rsvpemail') {
 		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'related_documents', get_related_documents ($post->ID,'rsvpemail'));
+		$template = get_option('rsvpmailer_default_block_template');
+		wp_localize_script( 'rsvpmaker_block-cgb-block-js', 'rsvp_email_template', array('default' => $template,'edit_url' => admin_url('post.php?action=edit&post='.$template),'more'=>admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template')));
+	}
 	$template_id = 0;
 	if(is_admin() && (($post_type == 'rsvpmaker') || ($post_type == 'rsvpmaker_template')) ) //&& ( (isset($_GET['action']) && $_GET['action'] == 'edit') || strpos($_SERVER['REQUEST_URI'],'post-new.php') ) )
 		{

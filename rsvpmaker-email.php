@@ -1013,7 +1013,6 @@ echo mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen);
 if(current_user_can('publish_rsvpemails'))
 	rsvpmaker_cron_schedule_options();
 }
-
 function RSVPMaker_email_notice () {
 global $post;
 ?>

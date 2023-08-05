@@ -8,7 +8,8 @@ import { useState } from '@wordpress/element';
 const { subscribe } = wp.data;
 
 const RSVPEmailSidebarPlugin = function() {
-let type = wp.data.select( 'core/editor' ).getCurrentPostType();
+const type = wp.data.select( 'core/editor' ).getCurrentPostType();
+const post_id = wp.data.select( 'core/editor' ).getCurrentPostId();
 	if(type != 'rsvpemail')
 		return null;
 	return	el(
@@ -16,6 +17,10 @@ let type = wp.data.select( 'core/editor' ).getCurrentPostType();
 			{},
 <div><h3>{__('Email Editor','rsvpmaker')}</h3><p>{__('Use the WordPress editor to compose the body of your message, with the post title as your subject line. View post will display your content in an email template, with a user interface for addressing options.','rsvpmaker')}</p>
 <p><a href="https://rsvpmaker.com/knowledge-base/using-rsvp-mailer/" target="_blank">Documentation</a></p>
+<p><strong>Design Options</strong></p>
+{post_id == rsvp_email_template.default && <p>You are editing the default email template</p>}
+{post_id != rsvp_email_template.default && <p>To change the styling of messages or add branding, <a href={rsvp_email_template.edit_url}>edit the default template</a>.</p>}
+<p>Visit the <a href={rsvp_email_template.more}>Email Design Templates screen</a> to create alternate templates or customize the email CSS.</p>
 {related_documents.map( function (x) {return <li><a href={x.href}>{x.title}</a></li>} )}
 </div>
 );
