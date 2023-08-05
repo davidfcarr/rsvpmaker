@@ -549,18 +549,40 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
 
 function rsvpmaker_postmark_show_sent_log() {
     rsvpmaker_admin_heading('Postmark Email Log',__FUNCTION__);
-    echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
     global $wpdb;
     $table = $wpdb->base_prefix.'postmark_tally';
     $blog_id = get_current_blog_id();
     $days = isset($_GET['days']) ? intval($_GET['days']) : 31;
-    $grandtotal = 0;
     $where = ($blog_id > 1) ? ' AND blog_id='.$blog_id : '';
+    if(isset($_GET['monthly'])) {
+        if($blog_id > 1)
+            $where = ' WHERE blog_id='.$blog_id.' ';
+        else 
+            $where = ($_GET['blog_id']) ? ' WHERE blog_id='.intval($_GET['blog_id']) .' ' : '';
+        $order = (isset($_GET['by_volume'])) ? 'total DESC' : 'blog_id, ym DESC';
+        $sql = "SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM `$table` $where group by blog_id, ym order by $order";
+        $results = $wpdb->get_results($sql);
+        if($results) {
+            echo '<h2>Monthly Volume</h2>';
+            if(!isset($_GET['by_volume']))
+                printf('<p>Sort <a href="%s">by volume</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'));
+
+            echo '<table class="wp-list-table widefat striped"><tr><th>Domain</th><th>Month</th><th>Total</th></tr>';
+            foreach($results as $row) {
+                $site = get_site($row->blog_id);
+                printf('<tr><td>%s</td><td>%s</td><td>%s</td></tr>',$site->domain,$row->ym,$row->total);
+            }
+            echo '</table>';    
+        }
+    }
+    echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
+    printf('<p>See summary <a href="%s">by month</a> | <a href="%s">by volume</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'));
+    $grandtotal = 0;
     $sql = "SELECT sum(count) total, blog_id FROM `$table` WHERE time > DATE_SUB(NOW(), INTERVAL $days DAY) $where group by blog_id";
     $results = $wpdb->get_results($sql);
     foreach($results as $row) {
         $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
-        $text = sprintf('<strong>%s</strong>: %d ',$name,$row->total);
+        $text = sprintf('<strong>%s</strong>: %d (<a href="%s">monthly</a>)',$name,$row->total,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&blog_id='.$row->blog_id));
         $sums[$name] = $text;
         $grandtotal += $row->total;
     }

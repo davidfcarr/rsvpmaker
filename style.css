@@ -1,3 +1,7 @@
+.rsvplink {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 .daily-schedule-event-types {
     margin-top: 1em;
 }
@@ -109,11 +113,17 @@ max-width: 70%
 table#cpcalendar {
 width: 100%;
 }
+#cpcalendar th {
+    font-size:small;
+}
 #cpcalendar td.today {
-border: thin solid #000;
+border: medium solid yellow;
 }
 #cpcalendar td.past {
 border: thin solid #CCC;
+}
+#cpcalendar td.notaday {
+    border: none;
 }
 #cpcalendar td.future {
 border: thin solid #555;

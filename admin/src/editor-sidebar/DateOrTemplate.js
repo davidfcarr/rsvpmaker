@@ -19,7 +19,7 @@ export default function DateOrTemplate() {
         return <p><em>Loading event data</em></p>
     const eventdata = data.data;
     console.log('eventdata DateOrTemplate',eventdata);
-
+    
     return (
 <div className="date-or-template">
 {rsvpmaker_ajax.top_message}

@@ -4528,6 +4528,7 @@ function rsvpmaker_get_style_substitutions() {
 			}
 
 			$style_sub = array(
+				'has-text-align-center'=>'text-align: center',
 				'aligncenter'=>'text-align: center',
 				'alignright'=>'float: right; padding-left: 10px; margin-left: 10px;',
 				'alignleft'=>'float: left; padding-right:10px; margin-right: 10px;',

@@ -1,7 +1,5 @@
 <?php
 
-
-
 function rsvpmaker_create_post_type() {
 
 	global $rsvp_options;
