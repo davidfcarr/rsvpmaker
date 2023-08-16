@@ -1695,6 +1695,11 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) 
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
 	$epost = get_post($post_id);
+	if($epost->post_status != 'publish')
+		{
+			set_transient($epost->ID,'rsvpmailer_delayed_send','not sent, post status='.$epost->post_status);
+			return;
+		}
 	$html = rsvpmaker_email_html($epost);
 	$text = rsvpmaker_text_version($html);
 	ob_start();

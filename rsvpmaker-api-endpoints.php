@@ -1996,18 +1996,22 @@ class RSVP_Options_Json extends WP_REST_Controller {
 				if(!empty($stripe['pk']) && !empty($stripe['sk'])) {
 					$response['stripe']['sk'] = 'set';
 					$response['stripe']['pk'] = 'set';	
+					$response['stripe']['webhook'] = 'set';	
 				}
 				else {
 					$response['stripe']['sk'] = '';
 					$response['stripe']['pk'] = '';	
+					$response['stripe']['webhook'] = '';
 				}		
 				if(!empty($stripe['pk']) && !empty($stripe['sk'])) {
 					$response['stripe']['sandbox_sk'] = 'set';
 					$response['stripe']['sandbox_pk'] = 'set';	
+					$response['stripe']['sandbox_webhook'] = 'set';	
 				}
 				else {
 					$response['stripe']['sandbox_sk'] = '';
 					$response['stripe']['sandbox_pk'] = '';	
+					$response['stripe']['sandbox_webhook'] = '';	
 				}		
 				$response['stripe']['mode'] = (empty($stripe['mode'])) ? 'production' : $stripe['mode'];
 			}
@@ -2049,7 +2053,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		$response['rsvp_options'] = $rsvp_options;
 		$response['current_user_id'] = $current_user->ID;
 		$response['current_user_email'] = $current_user->user_email;
-		$response['edit_url'] = admin_url('https://delta.local/wp-admin/post.php?action=edit&post=');
+		$response['edit_url'] = admin_url('post.php?action=edit&post=');
 		$c = get_post($rsvp_options['rsvp_confirm']);
 		$c = ($c && !empty($c->post_content)) ? do_blocks($c->post_content) : '<p>Error retrieving message.</p>';
 		$response['confirmation_message'] = $c;

@@ -1334,33 +1334,30 @@ function count_recent_posts( $blog_weeks_ago = 1 ) {
 
 }
 
-
-
 function get_past_events( $where = '', $limit = '', $output = OBJECT ) {
 
 	global $wpdb;
+	$table = $wpdb->prefix.'rsvpmaker_event';
 
 	$wpdb->show_errors();
 
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(a1.meta_value,'%M %e, %Y') as date
+	$sql = "SELECT DISTINCT *
 
 	 FROM " . $wpdb->posts . '
 
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 JOIN ' . $table . ' ON ' . $wpdb->posts . ".ID = event 
 
-	 WHERE a1.meta_value < '" . get_sql_now() . "' AND (post_status='publish' OR post_status='draft') ";
+	 WHERE date < '" . get_sql_now() . "' AND post_status='publish' ";
 
 	if ( ! empty( $where ) ) {
 
 		$where = trim( $where );
 
-		$where = str_replace( 'datetime', 'a1.meta_value', $where );
-
 		$sql .= ' AND ' . $where . ' ';
 
 	}
 
-	$sql .= ' ORDER BY a1.meta_value DESC';
+	$sql .= ' ORDER BY date DESC';
 
 	if ( ! empty( $limit ) ) {
 
@@ -1370,8 +1367,6 @@ function get_past_events( $where = '', $limit = '', $output = OBJECT ) {
 	return $wpdb->get_results( $sql );
 
 }
-
-
 
 function get_events_dropdown() {
 
@@ -1384,7 +1379,6 @@ function get_events_dropdown() {
 		foreach ( $future as $event ) {
 
 			if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
-
 				$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', rsvpmaker_strtotime( $event->datetime ) ) );
 			}
 		}
@@ -1395,14 +1389,11 @@ function get_events_dropdown() {
 	$options .= '<optgroup label="' . __( 'Recent Events', 'rsvpmaker' ) . '">' . "\n";
 
 	$past = get_past_events( '', 50 );
-
 	if ( is_array( $past ) ) {
 
 		foreach ( $past as $event ) {
-
 			if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
-
-				$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", $event->ID, esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', rsvpmaker_strtotime( $event->datetime ) ) );
+				$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", $event->ID, esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', intval($event->ts_start) ) );
 			}
 		}
 	}
@@ -1600,6 +1591,10 @@ function get_rsvpmaker_stripe_keys_all() {
 			'notify'     => '',
 		);
 	}
+	if(!isset($keys['webhook']))
+		$keys['webhook'] = '';
+	if(!isset($keys['sandbox_webhook']))
+		$keys['sandbox_webhook'] = '';
 	return $keys;
 }
 

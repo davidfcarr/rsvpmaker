@@ -1261,7 +1261,9 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
             $recipients[$list_email.'_whitelist'] = $listvars['whitelist'];
     }
     }
-    return $recipients;
+	$admin_email = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'admin_email') : get_option('admin_option');
+    $recipients[$subdomain.$join.'admin@'.$domain] = array($admin_email);
+	return $recipients;
 }
 
 function rsvpmail_get_member_emails( $blog_id = 0 ) {

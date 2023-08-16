@@ -320,6 +320,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $testrecipients = [];
     $sent = [];
     foreach($forwarders as $email) {
+        add_post_meta(1,'forwarder_to_check',$email);
         $breakdown = rsvpmail_email_to_parts($email);
         $testoutput .= "\n $email before filter\n";
         $email = apply_filters('rsvpmail_email_match',$email,$from,$breakdown,$emailobj);
@@ -327,7 +328,8 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         $testoutput .= sprintf("%s to %s\n",$email, var_export($breakdown,true));
         //mail('david@carrcommunications.com','testoutput',$testoutput);
         if($breakdown && empty($testrecipients[$breakdown['blog_id']]))
-            $testrecipients[$breakdown['blog_id']] = rsvpmail_recipients_by_email_parts($breakdown);
+            $x = $testrecipients[$breakdown['blog_id']] = rsvpmail_recipients_by_email_parts($breakdown);
+        $testoutput .= "\n returned from rsvpmail_recipients_by_email_parts ".var_export($x,true);
         if(!empty($testrecipients[$breakdown['blog_id']][$email]) && is_array($testrecipients[$breakdown['blog_id']][$email])) {
             $testoutput .= "\n\nSelected list: ";
             $testoutput .= var_export($testrecipients[$breakdown['blog_id']][$email],true)."\n\n";
@@ -361,8 +363,10 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
                 $testoutput .= "\nSEND\n".$result;
             }
         }
-        else
+        else {
             $testoutput .= "\n no match for testrecipients[".$breakdown['blog_id']."][".$email."] \n";
+            $testoutput .= "\n test recipients".var_export($testrecipients,true);
+        }
     }
     rsvpmaker_testlog('postmark_incoming_output',$testoutput);
     return $testoutput;

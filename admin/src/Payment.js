@@ -47,11 +47,13 @@ export default function Payment (props) {
     <div className="production">
     {stripe.pk != 'set' && <TextControl label="Stripe Public Key" value={stripe.pk} onChange={(value) => {let prev = {...stripe}; prev.pk=value; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');} } /> }
     {stripe.pk != 'set' && <TextControl label="Stripe Secret Key" value={stripe.sk} onChange={(value) => {let prev = {...stripe}; prev.sk=value; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');} } />}
+    {stripe.pk != 'set' && <TextControl label="Stripe Webhook Key" value={stripe.webook} onChange={(value) => {let prev = {...stripe}; prev.webhook=value; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');} } />}
     {stripe.pk == 'set' && <p>Stripe Production Keys Set <button onClick={() => {let prev = {...stripe}; prev.pk=''; prev.sk=''; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');}}>Reset</button></p>}
     </div>
     <div className="sandbox">
     {stripe.sandbox_pk != 'set' && <TextControl label="Stripe Sandbox Public Key" value={stripe.sandbox_pk} onChange={(value) => {let prev = {...stripe}; prev.sandbox_pk=value; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');}} />}
     {stripe.sandbox_pk != 'set' && <TextControl label="Stripe Sandbox Secret Key" value={stripe.sandbox_sk} onChange={(value) => {let prev = {...stripe}; prev.sandbox_sk=value; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');}} />}
+    {stripe.sandbox_pk != 'set' && <TextControl label="Stripe Sandbox Webhook Key" value={stripe.sandbox_webhook} onChange={(value) => {let prev = {...stripe}; prev.sandbox_webhook=value; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');}} />}
     {stripe.sandbox_pk == 'set' && <p>Stripe Sandbox Keys Set <button onClick={() => {let prev = {...stripe}; prev.sandbox_pk=''; prev.sandbox_sk=''; setStripe(prev); addChange('rsvpmaker_stripe_keys',prev,'mergearray');}}>Reset</button></p>}
     </div>
     </div>
