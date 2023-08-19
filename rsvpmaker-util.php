@@ -2609,7 +2609,7 @@ function get_template_sked( $post_id ) {
 		{
 			if(empty($sked['hour'])) {
 				$sked['start_time'] = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
-				$t = strtotime('today '.$sked['_sked_start_time']);
+				$t = strtotime('today '.$sked['start_time']);
 				$sked['start_time'] = date('H:i:s',$t);
 				$sked['end'] = date('H:i:s',$t + HOUR_IN_SECONDS);
 			}
@@ -2626,7 +2626,7 @@ function get_template_sked( $post_id ) {
 		{
 		$end = $t + HOUR_IN_SECONDS;
 		$sked['end'] = date('H:i:s',$end);
-		update_post_meta($post_id,'_sked_end',$sked['_sked_end']);
+		update_post_meta($post_id,'_sked_end',$sked['end']);
 		}
 		//backward compatability
 		$parts = explode(':',$sked['start_time']);

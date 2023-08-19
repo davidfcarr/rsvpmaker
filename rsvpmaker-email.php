@@ -724,7 +724,6 @@ global $rsvp_options;
 global $post;
 if( empty( get_category_by_slug( 'rsvpmail-editors-note' ) ) )
 	wp_create_category( 'RSVPMail Editors Note' );
-
 ?>
 <div class="wrap">
 <?php rsvpmaker_admin_heading(__('Scheduled Email List','rsvpmaker'),__FUNCTION__); ?>
@@ -737,15 +736,6 @@ if( empty( get_category_by_slug( 'rsvpmail-editors-note' ) ) )
 		$post_id = (int) $_REQUEST['post_id'];
 		$permalink = get_permalink($post_id);
 		printf('<iframe width="%s" height="1000" src="%s"></iframe>','100%',add_query_arg('scheduling',1,$permalink));
-
-		/*
-		printf('<h3>Email Post: %s</h3><p><a href="post.php?action=edit&post=%s">Edit Post</a> | <a href="%s">View Post</a></p>',esc_html($post->post_title),esc_attr($post->ID),get_permalink($post->ID));
-		printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id=').$post->ID);
-		echo '<input type="hidden" name="post_id" value="'.$post->ID.'" />';
-		RSVPMaker_draw_blastoptions();
-		rsvpmaker_nonce();
-		echo '<button>Save</button></form>';
-		*/
 	}
 	elseif(isset($_GET['editor_note'])) {
 		rsvpmail_editors_note_ui(intval($_GET['editor_note']));
@@ -806,15 +796,31 @@ foreach($results as $row)
 						{
 						////print_r($property_array);
 						$post_id = $property_array["args"][0];
+
+						$signatures = get_post_meta($post_id,'signatures');
+						$cancel_links = '';
+						foreach($signatures as $signature) {
+							$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink($post_id)).'&timelord='.rsvpmaker_nonce('value');
+							$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
+							if($next) {
+								$cancel_links .= sprintf('<p>%s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+							}
+							$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
+							if($next) {
+								$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
+								$cancel_links .= sprintf('<p>%s %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+							}	
+						}		
+				
 						$user_id = $property_array["args"][1];
 						$post = get_post($post_id);
 						if(!empty($post))
 							{
-							printf('<tr><td>%s (%s)<br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>',$post->post_title,__('Delayed Send','rsvpmaker'),admin_url('post.php?post='.$post_id.'&action=edit'),__('Edit Post','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&timestamp='.$timestamp.'&cancel='.$post_id.'&user_id='.$user_id),__('Cancel','rsvpmaker'));
-							$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
+							printf('<tr><td>%s (%s)<br /><a href="%s">%s</a></td><td>%s</td></tr>',$post->post_title,__('Delayed Send','rsvpmaker'),admin_url('post.php?post='.$post_id.'&action=edit'),__('Edit Post','rsvpmaker'),$cancel_links);
+							//$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
 							
-							echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
-							echo '</td></tr>';
+							//echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
+							//echo '</td></tr>';
 							}
 						}
 					}
@@ -1697,7 +1703,7 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) 
 	$epost = get_post($post_id);
 	if($epost->post_status != 'publish')
 		{
-			set_transient($epost->ID,'rsvpmailer_delayed_send','not sent, post status='.$epost->post_status);
+			set_transient('rsvpmailer_delayed_send','not sent, post status='.$epost->post_status);
 			return;
 		}
 	$html = rsvpmaker_email_html($epost);
@@ -2029,10 +2035,11 @@ echo $events_dropdown;
 </div>
 </div><!--end more options -->
 </div><!--end nonchimp -->
-<p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> <input type="radio" name="send_when" value="now" <?php if(!isset($_GET['scheduling'])) echo 'checked="checked"'; ?>> Now <input type="radio" name="send_when" value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" <?php if(isset($_GET['scheduling'])) echo 'checked="checked"'; ?> > Advanced</p>
+<p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> <input type="radio" name="send_when" value="now" <?php if(!isset($_GET['scheduling'])) echo 'checked="checked"'; ?>> Now <input type="radio" name="send_when" <?php if(isset($_GET['scheduling'])) echo 'checked="checked"'; ?> value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <!--input type="radio" name="send_when" value="advanced" onclick="showCron()" > Advanced --></p>
 <?php 
 printf('<div id="cron_schedule_options" %s>',(isset($_GET['scheduling'])) ? '' : 'style="display:none"');
-//rsvpmaker_cron_schedule_options();
+if(isset($_GET['test'])) //issue with this?
+	rsvpmaker_cron_schedule_options();
 echo '</div>';
 ?>
 </form>

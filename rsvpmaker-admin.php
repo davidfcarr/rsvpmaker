@@ -1570,10 +1570,12 @@ function rsvpmaker_template_custom_column($column_name, $post_id) {
 }
 
 function rsvpmaker_custom_column($column_name, $post_id) {
-	global $wpdb, $rsvp_options, $event;
+	global $wpdb, $rsvp_options, $event, $post;
 	$event = get_rsvpmaker_event($post_id);
-	if(!$event)
-		return;
+	if(!$event && ('rsvpmaker_template' != $post->post_type) && ('rsvpemail' !=  $post->post_type)) {
+			return;
+	}
+		//return;
 	
     if( $column_name == 'rsvpmaker_end' ) {
 		if($event)
@@ -1658,7 +1660,8 @@ else
 	} // end event dates column
 	elseif($column_name == 'rsvpmaker_cron') {
 		//echo rsvpmaker_next_scheduled($post_id);
-		$signatures = get_post_meta($post_id,'signatures');
+		//echo 'test for chron';
+		$signatures = get_post_meta($post->ID,'signatures');
 		foreach($signatures as $signature) {
 			$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&timelord='.rsvpmaker_nonce('value');
 			$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
