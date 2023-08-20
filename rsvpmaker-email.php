@@ -710,7 +710,7 @@ function rsvpmaker_next_scheduled( $post_id, $returnint = false ) {
 						$query = array('cronemailpreview' => implode('-',$property_array["args"]),'timelord' => rsvpmaker_nonce('value'));
 						$preview = add_query_arg($query,get_permalink());
 						$note = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&editor_note='.$post_id);
-						return utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule . '<br><a href="'.$preview.'">Send Preview</a> ---- <a href="'.$cancel.'">Cancel</a>';
+						return utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule . '<br><a href="'.$preview.'">Send Preview</a> | <a href="'.$cancel.'">Cancel</a>';
 						}
 					}
 			}
@@ -735,7 +735,10 @@ if( empty( get_category_by_slug( 'rsvpmail-editors-note' ) ) )
 	{
 		$post_id = (int) $_REQUEST['post_id'];
 		$permalink = get_permalink($post_id);
-		printf('<iframe width="%s" height="1000" src="%s"></iframe>','100%',add_query_arg('scheduling',1,$permalink));
+		$post = get_post($post_id);
+		echo rsvpmaker_email_send_ui('', '');
+		echo '<p><a href="'.$permalink.'">View Controls with Content</a></p>';
+		//printf('<iframe width="%s" height="1000" src="%s"></iframe>','100%',add_query_arg('scheduling',1,$permalink));
 	}
 	elseif(isset($_GET['editor_note'])) {
 		rsvpmail_editors_note_ui(intval($_GET['editor_note']));
@@ -803,12 +806,12 @@ foreach($results as $row)
 							$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink($post_id)).'&timelord='.rsvpmaker_nonce('value');
 							$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 							if($next) {
-								$cancel_links .= sprintf('<p>%s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+								$cancel_links .= sprintf('<p>%s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
 							}
 							$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 							if($next) {
 								$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
-								$cancel_links .= sprintf('<p>%s %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+								$cancel_links .= sprintf('<p>%s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
 							}	
 						}		
 				
@@ -848,20 +851,20 @@ $notekey = get_rsvp_notekey();
 $ts = rsvpmaker_next_scheduled($post->ID);
 if(empty($ts))
 	{
-	echo '<p>Next broadcast: NOT SET</p>';
+	//echo '<p>Next broadcast: NOT SET</p>';
 	$timestamp = rsvpmaker_strtotime('+1 hour');
-	$day = (empty($cron["cron_active"])) ? (int) date('w',$timestamp) : $cron["cronday"];
-	$hour = (empty($cron["cron_active"])) ? (int) date('G',$timestamp)  : $cron["cronhour"];
+	$day = (empty($cron["cron_active"]) || empty($cron["cronday"])) ? (int) date('w',$timestamp) : $cron["cronday"];
+	$hour = (empty($cron["cron_active"]) || empty($cron["cronhour"])) ? (int) date('G',$timestamp)  : $cron["cronhour"];
 	}
 else
 	{
-	printf('<p>Next broadcast: %s</p>',$ts);
+	//printf('<p>Next broadcast: %s</p>',$ts);
 	$ts = rsvpmaker_next_scheduled($post->ID, true);//get the integer value
 	$day = date('w',$ts);
 	$hour = date('G',$ts);
 	}
 ?>
-<p><input type="radio" name="cron_active" value="1" <?php if(!empty($cron["cron_active"]) && ($cron['cron_active']) == '1') echo 'checked="checked"' ?> /> <?php echo __('Create schedule relative to this day/time','rsvpmaker');?>: <select name="cronday">
+<p><input type="hidden" name="cron_active" value="1" <?php if(!empty($cron["cron_active"]) && ($cron['cron_active']) == '1') echo 'checked="checked"' ?> /> <?php echo __('Create schedule relative to this day/time','rsvpmaker');?>: <select name="cronday">
 <?php
 $days = array(__('Sunday','rsvpmaker'),__('Monday','rsvpmaker'),__('Tuesday','rsvpmaker'),__('Wednesday','rsvpmaker'),__('Thursday','rsvpmaker'),__('Friday','rsvpmaker'),__('Saturday','rsvpmaker'));
 foreach($days as $index => $daytext)
@@ -904,6 +907,7 @@ foreach ($schedules as $sked)
 </p>
 
 <?php
+return;
 if($event_timestamp)
 {
 	$evopt = '';
@@ -1867,7 +1871,7 @@ if(!empty($postvars)) {
 	
 		if($cron["cron_active"] == '1')
 			{
-				$cron_fields = array("cronday", "cronhour", "cronrecur","cron_condition");
+				$cron_fields = array("cronday", "cronhour", "cronrecur"); //,"cron_condition"
 				foreach($cron_fields as $field)
 					$cron[$field] = sanitize_text_field($postvars[$field]);
 				$days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
@@ -2035,13 +2039,13 @@ echo $events_dropdown;
 </div>
 </div><!--end more options -->
 </div><!--end nonchimp -->
-<p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> <input type="radio" name="send_when" value="now" <?php if(!isset($_GET['scheduling'])) echo 'checked="checked"'; ?>> Now <input type="radio" name="send_when" <?php if(isset($_GET['scheduling'])) echo 'checked="checked"'; ?> value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <!--input type="radio" name="send_when" value="advanced" onclick="showCron()" > Advanced --></p>
+<p><input type="radio" name="send_when" value="now" <?php if(!isset($_GET['post_id'])) echo 'checked="checked"'; ?>> Send Now <input type="radio" name="send_when" <?php if(isset($_GET['post_id'])) echo 'checked="checked"'; ?> value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" > Advanced Scheduling </p>
 <?php 
 printf('<div id="cron_schedule_options" %s>',(isset($_GET['scheduling'])) ? '' : 'style="display:none"');
-if(isset($_GET['test'])) //issue with this?
-	rsvpmaker_cron_schedule_options();
+rsvpmaker_cron_schedule_options();
 echo '</div>';
 ?>
+<p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> </p>
 </form>
 <script>
 function hideControls() {
@@ -2084,12 +2088,12 @@ foreach($signatures as $signature) {
 	//
 	$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 	if($next) {
-		printf('<p>Scheduled send: %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+		printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
 	}
 	$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 	if($next) {
 		$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
-		printf('<p>Scheduled send: %s %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+		printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
 	}	
 }
 
@@ -2113,7 +2117,6 @@ if(isset($_GET['meta']) && current_user_can('manage_options')) {
 }
 return '<div id="control-wrapper" ><h5>RSVP Mail Controls</h5>'.ob_get_clean().'</div>';
 }
-
 
 function RSVPMaker_extract_email() {
 
@@ -3223,7 +3226,7 @@ function get_rsvp_notekey($epost_id = 0) {
 		$stamp = rsvpmaker_next_scheduled($epost_id, true);
 		if(empty($stamp))
 			return 'nonesuch';
-		wp_die($stamp);
+		//wp_die($stamp);
 		//$stamp = preg_replace('/M [a-z]+$/','M',$stamp);
 		$notekey = 'editnote'.rsvpmaker_date('Y-m-d',$stamp);//date('YmdH',rsvpmaker_strtotime($stamp));
 	}

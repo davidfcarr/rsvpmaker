@@ -1666,12 +1666,12 @@ else
 			$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&timelord='.rsvpmaker_nonce('value');
 			$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 			if($next) {
-				printf('<p>Scheduled send: %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+				printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
 			}
 			$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 			if($next) {
 				$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
-				printf('<p>Scheduled send: %s %s <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+				printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
 			}	
 		}		
 	}
