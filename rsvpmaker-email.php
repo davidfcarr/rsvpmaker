@@ -6119,7 +6119,11 @@ function rsvpmail_replace_email_placeholder($html, $email) {
 }
 
 function rsvpmail_contains_email($email) {
-	return preg_match ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $email, $match);
+	$test = preg_match ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $email, $match);
+	if($test)
+		return $match[0];
+	else
+		return false;
 }
 
 add_shortcode('rsvpmail_archive','rsvpmail_archive');

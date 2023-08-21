@@ -1517,8 +1517,9 @@ class RSVPMaker_Confirm_Email_Membership extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		global $wpdb;
-		$email = $request['email'];
-		if(rsvpmail_contains_email($email))
+		//patchstack fix, filter out anything other than email
+		$email = rsvpmail_contains_email($request['email']);
+		if($email)
 		{
 			$table = rsvpmaker_guest_list_table();
 			$sql = "select id from $table where email LIKE '$email' ";

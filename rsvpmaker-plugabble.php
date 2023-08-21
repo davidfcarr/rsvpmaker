@@ -921,7 +921,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			if ( isset( $_POST['note'] ) ) {
 
-				$note = sanitize_text_field( $_POST['note'] );
+				$note = sanitize_textarea_field( $_POST['note'] );
 
 			} else {
 				$note = '';
@@ -1074,8 +1074,11 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 			}
 
 			if ( empty( $rsvp_id ) ) {
+				//fix for patchstack report
+				$cleanfirst = preg_replace('/[^A-Za-z\s/]/','',$rsvp['first']);
+				$cleanlast = preg_replace('/[^A-Za-z\s/]/','',$rsvp['last']);
 
-				$duplicate_check = $wpdb->get_var( 'SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email='" . $rsvp['email'] . "' AND first='" . $rsvp['first'] . "' AND last='" . $rsvp['last'] . "' AND event=$post->ID " );
+				$duplicate_check = $wpdb->get_var( 'SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email='" . $rsvp['email'] . "' AND first='" . $cleanfirst . "' AND last='" . $cleanlast . "' AND event=$post->ID " );
 
 				if ( $duplicate_check ) {
 
@@ -1971,10 +1974,10 @@ if ( ! function_exists( 'event_content' ) ) {
 			// don't repeat form
 
 			$link = get_permalink();
-
+			//fix for patchstack report
 			$args = array(
-				'e'      => $_GET['e'],
-				'update' => $_GET['rsvp'],
+				'e'      => sanitize_text_field($_GET['e']),
+				'update' => sanitize_text_field($_GET['rsvp']),
 			);
 
 			$link = add_query_arg( $args, $link );
