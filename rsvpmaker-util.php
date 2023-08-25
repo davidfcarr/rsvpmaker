@@ -4396,7 +4396,7 @@ function rsvpmaker_check_sametime($datetime,$post_id=0) {
 			$dups['sametime'][] = $row;
 		}
 	}
-	$sql = $wpdb->prepare("select * from $event_table WHERE date!=%s AND event != %d AND date LIKE '".$parts[0]."%' ",$datetime,$post_id);
+	$sql = $wpdb->prepare("select * from $event_table JOIN $wpdb->posts ON $wpdb->posts.ID = $event_table.event WHERE post_status='publish' AND date!=%s AND event != %d AND date LIKE '".$parts[0]."%' ",$datetime,$post_id);
 	$results = $wpdb->get_results($sql);
 	if($results) {
 		foreach($results as $row) {

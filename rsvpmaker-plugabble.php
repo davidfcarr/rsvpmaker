@@ -1075,10 +1075,10 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			if ( empty( $rsvp_id ) ) {
 				//fix for patchstack report
-				$cleanfirst = preg_replace('/[^A-Za-z\s/]/','',$rsvp['first']);
-				$cleanlast = preg_replace('/[^A-Za-z\s/]/','',$rsvp['last']);
-
-				$duplicate_check = $wpdb->get_var( 'SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email='" . $rsvp['email'] . "' AND first='" . $cleanfirst . "' AND last='" . $cleanlast . "' AND event=$post->ID " );
+				$cleanfirst = preg_replace('/[^A-Za-z\./]/','',$rsvp['first']);
+				$cleanlast = preg_replace('/[^A-Za-z\./]/','',$rsvp['last']);
+				$sql = $wpdb->prepare('SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email=%s AND first=%s AND last=%s AND event=%d ", $rsvp['email'], $cleanfirst, $cleanlast, $post->ID);
+				$duplicate_check = $wpdb->get_var( $sql );
 
 				if ( $duplicate_check ) {
 
@@ -1094,8 +1094,8 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				$details = $wpdb->get_var( $sql );
 
 				if ( $details ) {
-
-					$contact = unserialize( $details );
+					//patchstack fix
+					$contact = unserialize( $details, array('allowed_classes' => false) );
 
 					if ( is_array( $contact ) ) {
 
@@ -6767,5 +6767,4 @@ function rsvpmaker_check_coupon_code( $price ) {
 	return $price;
 
 }
-
 

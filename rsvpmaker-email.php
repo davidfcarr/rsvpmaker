@@ -2621,9 +2621,10 @@ $results = $wpdb->get_results($sql);
 if(!empty($results))
 {
 printf('<form method="post" action="%s"><table><tr><th>Unblock</th><th>Email</th><th>Issue</th></tr>',$action);
+//patchstack fix
 foreach($results as $row)
 {
-	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s</td></tr>',$row->email,$row->email,$row->code);	
+	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s</td></tr>',esc_attr($row->email),esc_html($row->email),$row->code);	
 }
 echo '</table><p><input type="submit" value="Submit"></p>'.rsvpmaker_nonce('return').'</form>';
 }
@@ -5195,7 +5196,8 @@ function rsvpmaker_guest_list() {
 	if(isset($_GET['edit'])) {
 		$row = $wpdb->get_row("select * from $table where id=".intval($_GET['edit']));
 		printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'));
-		printf('<p>%s: Email <input type="text" name="edit_email" value="%s"> First Name <input type="text" name="first_name" value="%s"> Last Name <input type="text" name="last_name" value="%s"><input type="hidden" name="id" value="%d"> </p>',__('Edit','rsvpmaker'),$row->email,$row->first_name,$row->last_name,$row->id);
+		//patchstack fix
+		printf('<div>Email</div><div><input type="text" name="edit_email" value="%s"> ></div><div>First Name</div><div><input type="text" name="first_name" value="%s"></div><div>Last Name</div><div><input type="text" name="last_name" value="%s"></div><input type="hidden" name="id" value="%d"> </p>',__('Edit','rsvpmaker'),esc_attr($row->email),esc_attr($row->first_name),esc_attr($row->last_name),$row->id);
 		submit_button('Update');
 		rsvpmaker_nonce();
 		echo '</form>';	

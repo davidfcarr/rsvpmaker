@@ -1522,7 +1522,7 @@ class RSVPMaker_Confirm_Email_Membership extends WP_REST_Controller {
 		if($email)
 		{
 			$table = rsvpmaker_guest_list_table();
-			$sql = "select id from $table where email LIKE '$email' ";
+			$sql = "select id from $table where email LIKE '".esc_sql($email)."' ";
 			$result = ($wpdb->get_var($sql) > 0);
 		}
 		else
