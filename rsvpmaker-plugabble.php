@@ -1075,9 +1075,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			if ( empty( $rsvp_id ) ) {
 				//fix for patchstack report
-				$cleanfirst = preg_replace('/[^A-Za-z\./]/','',$rsvp['first']);
-				$cleanlast = preg_replace('/[^A-Za-z\./]/','',$rsvp['last']);
-				$sql = $wpdb->prepare('SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email=%s AND first=%s AND last=%s AND event=%d ", $rsvp['email'], $cleanfirst, $cleanlast, $post->ID);
+				$sql = $wpdb->prepare('SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email=%s AND first=%s AND last=%s AND event=%d ", $rsvp['email'], $rsvp['first'], $rsvp['last'], $post->ID);
 				$duplicate_check = $wpdb->get_var( $sql );
 
 				if ( $duplicate_check ) {

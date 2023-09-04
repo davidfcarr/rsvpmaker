@@ -80,7 +80,7 @@ return (
                 if('basics' == tab.name)
                     return <div className="rsvpsettings-tab-contents"><Basics eventdata={eventdata} /></div>
                 else if('form' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><Form form_id={rsvpmaker_ajax.form_id} event_id={rsvpmaker_ajax.event_id} eventdata={eventdata} /></div>
+                    return <div className="rsvpsettings-tab-contents"><Form form_id={eventdata.form_id} event_id={rsvpmaker_ajax.event_id} eventdata={eventdata} /></div>
                 else if('confirmation' == tab.name)
                     return (
                         <div className="rsvpsettings-tab-contents"><Confirmation eventdata={eventdata} /></div>
@@ -177,6 +177,8 @@ function Basics(props) {
         <RSVPMetaToggle
 label={__('Collect RSVPs','rsvpmaker')} 
 metaKey="_rsvp_on" eventdata={props.eventdata} />
+<p>RSVP Form: {eventdata.default_form && <span>Default</span>} {!eventdata.default_form && <span>Custom for event or template</span>}</p>
+<p>Confirmation Message: {eventdata.default_confirmation && <span>Default</span>} {!eventdata.default_confirmation && <span>Custom for event or template</span>}</p>
 
 <Panel>
 <PanelBody

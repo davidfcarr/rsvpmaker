@@ -238,8 +238,9 @@ const {mutate:formMutate} = useMutation(updateForm, {
     let isrsvp = true;
 
     return (<div className="rsvptab">
-    {!props.single_form && <SelectCtrl label="Choose Form" value={formId} options={formOptions} onChange={setFormId} />}
-    {formId != fetchedFormID && <p>Reloading ...</p>}
+    {data.data.is_default && <div><h3>Default Form Selected</h3><p>Changes you make below will apply to all events that use the default form. Switch to a custom form to make customizations for this event only. Forms can also be customized from an event template.</p></div>}
+    {data.data.is_inherited && <div><h3>Form Is Inherited</h3><p>This form is inherited from a template or another document. Changes you make below will apply to all events that use the same form. Switch to a custom form to make customizations for this event only. Forms can also be customized from an event template.</p></div>}
+    {!props.single_form && <SelectCtrl label="Choose Form" value={fetchedFormID} options={formOptions} onChange={setFormId} />}
     <ToggleControl label="Show Form Preview" checked={showPreview} onChange={() => {setShowPreview(!showPreview)} } />
     {showPreview && form.map((block, blockindex) => {
         isrsvp = block.blockName.indexOf('rsvpmaker') > -1;
@@ -291,10 +292,10 @@ const {mutate:formMutate} = useMutation(updateForm, {
     <p>You can also open this form <a href={'/wp-admin/post.php?action=edit&post='+formId}>in the WordPress editor</a>.</p>
 
     {!props.single_form && (<div>
-        <h3>Create Custom Form</h3>
+        <h3>Create Saved/Reusable Form</h3>
         <TextControl label="Form Title" value={newForm} onChange={setNewForm} />
         <p>The content of the currently selected form will be used as a starting point.</p>
-        <p><button onClick={(e) => {e.preventDefault(); formMutate(form)} }>Create Form</button></p>
+        <p><button onClick={(e) => {e.preventDefault(); formMutate(form); setNewForm('')} }>Create Form</button></p>
         </div>
     )}
 
