@@ -1,0 +1,77 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "rsvpmaker/upcoming",
+	"title": "RSVPMaker Upcoming Events", 
+	"icon": "calendar-alt", 
+	"category": "rsvpmaker",
+	"description": "Displays an RSVPMaker event listing and/or a calendar widget",
+	"keywords": [
+		 "RSVPMaker", 
+		 "Events", 
+		 "Calendar"
+	],
+       "attributes": {
+            "calendar": {
+                "type": "string",
+                "default": "0"
+            },
+            "excerpt": {
+                "type": "string",
+                "default": "0"
+            },
+            "nav": {
+                "type": "string",
+                "default": "bottom"
+            },
+            "days": {
+                "type": "string",
+                "default": "180"
+            },
+            "posts_per_page": {
+                "type": "string",
+                "default": "10"
+            },
+            "itemcolor": {
+                "type": "string",
+                "default": "#FFFFFF"
+            },
+			"itembg": {
+                "type": "string",
+                "default": "#000000"
+            },
+			"itemfontsize": {
+                "type": "string",
+                "default": "10"
+            },						
+            "type": {
+                "type": "string",
+                "default": ""
+			},
+            "exclude_type": {
+                "type": "string",
+                "default": ""
+            },			
+            "no_events": {
+                "type": "string",
+                "default": "No events listed"
+            },
+            "author": {
+                "type": "string",
+                "default": ""
+			},
+            "hideauthor": {
+                "type": "boolean",
+                "default": false
+            }
+        },
+	"version": "1",
+	"supports": {
+		"html": false
+	},
+	"textdomain": "rsvpmaker",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+    "render": "file:./render.php",
+	"style": "file:./style-index.css"
+}

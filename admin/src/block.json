@@ -11,7 +11,7 @@
 		"html": false
 	},
 	"textdomain": "admin",
-	"editorScript": "file:./index.js",
+	"editorScript": ["file:./index.js","file:./oldblocks/block.js"],
 	"editorStyle": "file:./index.css",
 	"style": "file:./style-index.css",
 	"viewScript": ["file:./adminui.js","file:./single-form.js","file:./event-options.js","file:./date-time.js","file:./editor-sidebar/sidebars.js","file:./metabox.js"]

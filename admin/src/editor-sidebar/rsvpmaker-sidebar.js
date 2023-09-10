@@ -59,7 +59,7 @@ if(rsvpmaker_ajax.special)
 	);
 }
 
-if(typeof rsvpmaker_ajax !== 'undefined')
+if((rsvpmaker.post_type == 'rsvpmaker') || (rsvpmaker.post_type == 'rsvpmaker_template'))
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {
 	render: RSVPMakerSidebarPlugin,
 } );	

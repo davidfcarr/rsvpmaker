@@ -48,7 +48,7 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 
 		if ( empty( $events ) ) {
 
-			return new WP_Error( 'empty_category', 'no future events listed', array( 'status' => 404 ) );
+			$events = [];
 
 		}
 

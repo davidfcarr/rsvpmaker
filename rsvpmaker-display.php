@@ -901,6 +901,10 @@ function rsvpmaker_calendar( $atts = array() ) {
 	global $startday;
 
 	global $rsvp_options;
+	$atts['itembg'] = (empty($atts['itembg'])) ? '#00000' : $atts['itembg'];
+	$atts['itemcolor'] = (empty($atts['itemcolor'])) ? '#FFFFFF' : $atts['itemcolor'];
+	$atts['itemfontsize'] = (empty($atts['itemfontsize'])) ? 'x-small' : $atts['itemfontsize'];
+	$itemstyle = sprintf('color:%s;background-color:%s;font-size:%spx',$atts['itemcolor'],$atts['itembg'],$atts['itemfontsize']);
 
 	$date_format = ( isset( $atts['date_format'] ) ) ? $atts['date_format'] : $rsvp_options['short_date'];
 
@@ -961,7 +965,6 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$eventarray = array();
 
 	if ( have_posts() ) {
-
 		while ( have_posts() ) :
 			the_post();
 
@@ -993,44 +996,28 @@ function rsvpmaker_calendar( $atts = array() ) {
 				$post->post_title = __( 'Title left blank', 'rsvpmaker' );
 			}
 
-			$t = rsvpmaker_strtotime( $post->datetime );
-
-			$duration_type = $post->display_type;
-
-			$end = $post->enddate;
-
-			$time = ( $duration_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $t );
-
-			if ( ( $duration_type == 'set' ) && ! empty( $end ) ) {
-
-				$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end ) );
-
+			$keys = array();
+			$t = $post->ts_start;
+			do {
+				$keys[] = rsvpmaker_date( 'Y-m-d', $t );
+				$t += DAY_IN_SECONDS;
+			} while ($t < $post->ts_end);
+			if(1 == sizeof($keys)) {
+				$time = ( $duration_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $t );
+				if ( ( $duration_type == 'set' ) && ! empty( $end )  ) {
+					$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end ) );	
+				}	
 			}
+			else 
+				$time = '<br>'.rsvpmaker_date($rsvp_options['short_date'],$post->ts_start) .' - '.rsvpmaker_date($rsvp_options['short_date'],$post->ts_end);
 
 			if ( isset( $_GET['debug'] ) ) {
 
 				$msg = sprintf( '%s %s %s', $post->post_title, $post->datetime, $post->meta_id );
 
 			}
-
-			$key = rsvpmaker_date( 'Y-m-d', $t );
-
-			$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
-
-			if ( strpos( $duration_type, '|' ) ) {
-
-				$parts = explode( '|', $duration_type );
-
-				$limit = (int) $parts[1];
-
-				for ( $extra = 1; $extra < $limit; $extra++ ) {
-
-					$key = date( 'Y-m-d', strtotime( $key . ' +1 day' ) );
-
-					$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
-
-				}
-			}
+			foreach($keys as $key)
+				$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a style="'.$itemstyle.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a  style="'.$itemstyle.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
 
 	endwhile;
 
@@ -1088,7 +1075,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 	}
 
 	$content .= '
-<table id="cpcalendar" width="100%" cellspacing="0" cellpadding="3"><caption>' . rsvpmaker_date( '<b>%B %Y</b>', $bom ) . "</caption>\n" . '<tr>' . "\n";
+<table id="cpcalendar" style="background-color: #fff; color: #000; margin: 5px;" width="100%" cellspacing="0" cellpadding="3"><caption>' . rsvpmaker_date( '<b>%B %Y</b>', $bom ) . "</caption>\n" . '<tr>' . "\n";
 
 	if ( isset( $atts['weekstart'] ) && ( $atts['weekstart'] == 'Monday' ) ) {
 		$content .= '<thead>
@@ -2448,7 +2435,7 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 		$link_template_post = get_option('rsvpmaker_link_template_post');
 		if($link_template_post) {
 			$tpost = get_post($link_template_post);
-			$rsvp_link_template = $tpost->post_content; 
+			$rsvp_link_template = (empty($tpost->post_content)) ? '' :  $tpost->post_content; 
 		}
 	}
 	if(empty($rsvp_link_template)) {

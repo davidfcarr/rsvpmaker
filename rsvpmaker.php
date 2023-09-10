@@ -7,11 +7,11 @@ Author: David F. Carr
 Author URI: http://www.carrcommunications.com
 Text Domain: rsvpmaker
 Domain Path: /translations
-Version: 10.6.9
+Version: 10.7.5
 */
 
 function get_rsvpversion() {
-	return '10.6.9';
+	return '10.7.5';
 }
 
 global $wp_version;
@@ -449,11 +449,11 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'rsvpmaker-postmark.php';
 	include $rsvpmaker_dir . 'holidays.php';
 	include $rsvpmaker_dir . '/admin/admin.php';
+	//include $rsvpmaker_dir . '/upcoming/upcoming.php';
 }
 
 $gateways = get_rsvpmaker_payment_options();
 if ( in_array( 'Stripe', $gateways ) ) {
-
 	require WP_PLUGIN_DIR . '/rsvpmaker/rsvpmaker-stripe.php';
 }
 
@@ -461,17 +461,6 @@ if ( in_array( 'PayPal REST API', $gateways ) ) {
 
 	require WP_PLUGIN_DIR . '/rsvpmaker/paypal-rest/paypal-rest.php';
 }	
-
-function rsvpmaker_gutenberg_check() {
-
-	global $carr_gut_test;
-
-	if ( function_exists( 'register_block_type' ) && ! isset( $carr_gut_test ) ) {
-
-		require_once plugin_dir_path( __FILE__ ) . 'gutenberg/src/init.php';
-	}
-
-}
 
 if ( version_compare( PHP_VERSION, '5.3.0' ) >= 0 ) {
 
@@ -488,7 +477,7 @@ function cpevent_activate() {
 
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-	$sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvpmaker` (
+	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmaker` (
   `id` int(11) NOT NULL auto_increment,
   `email` varchar(255)   CHARACTER SET utf8 COLLATE utf8_general_ci  default NULL,
   `yesno` tinyint(4) NOT NULL default '0',
@@ -507,9 +496,9 @@ function cpevent_activate() {
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 
-	dbDelta( $sql );
+	$wpdb->query( $sql );
 
-	$sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvpmaker_event` (
+	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmaker_event` (
 
   `event` int(11) NOT NULL default '0',
 
@@ -531,7 +520,7 @@ function cpevent_activate() {
 
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
-	dbDelta( $sql );
+	$wpdb->query( $sql );
 
 	$sql = 'SELECT post_title, event, meta_value FROM `' . $wpdb->prefix . "rsvpmaker` join $wpdb->posts ON " . $wpdb->prefix . "rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = wp_postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
 
@@ -548,7 +537,7 @@ function cpevent_activate() {
 		}
 	}
 
-	$sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvp_volunteer_time` (
+	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvp_volunteer_time` (
 
   `id` int(11) NOT NULL auto_increment,
 
@@ -564,9 +553,9 @@ function cpevent_activate() {
 
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 
-	dbDelta( $sql );
+	$wpdb->query( $sql );
 
-$sql = 'CREATE TABLE `' . $wpdb->prefix . "rsvpmailer_blocked` (
+$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmailer_blocked` (
 `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 `email` varchar(100) NOT NULL DEFAULT '',
 `code` varchar(50) NOT NULL DEFAULT '',
@@ -575,7 +564,7 @@ PRIMARY KEY (`ID`),
 KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
-dbDelta( $sql );
+$wpdb->query( $sql );
 
 rsvpmail_problem_init();
 
@@ -1100,7 +1089,7 @@ function rsvpmaker_server_block_render() {
 
 	register_block_type( 'rsvpmaker/event', array( 'render_callback' => 'rsvpmaker_one' ) );
 
-	register_block_type( 'rsvpmaker/upcoming', array( 'render_callback' => 'rsvpmaker_upcoming' ) );
+	//register_block_type( 'rsvpmaker/upcoming', array( 'render_callback' => 'rsvpmaker_upcoming' ) );
 
 	register_block_type( 'rsvpmaker/stripecharge', array( 'render_callback' => 'rsvpmaker_stripecharge' ) );
 

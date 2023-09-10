@@ -2982,7 +2982,7 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 
 		);
 	}
-	return $args;
+	return empty($args) ? [] : $args;
 }
 
 function get_more_related( $post, $post_id, $t, $parent_tag ) {

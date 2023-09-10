@@ -9,9 +9,9 @@ import apiFetch from '@wordpress/api-fetch';
 import { inputToDate } from '@wordpress/utils';
 import {useRSVPDateMutation} from '../queries'
 
-import { __experimentalGetSettings } from '@wordpress/date';
+import { getSettings } from '@wordpress/date';
 
-const settings = __experimentalGetSettings();
+const settings = getSettings();
 //experimental deprecated after WordPress 6.1 , switch to getSettings() : 
 
 const is12HourTime = /a(?!\\)/i.test(
@@ -381,7 +381,7 @@ var MetaDateControl = wp.compose.compose(
 		}
 	} ) )( function( props ) {
 
-		const settings = __experimentalGetSettings();
+		const settings = getSettings();
 		// To know if the current timezone is a 12 hour time with look for "a" in the time format
 		// We also make sure this a is not escaped by a "/"
 		const is12HourTime = /a(?!\\)/i.test(
@@ -602,7 +602,7 @@ var RSVPEndDateControl = wp.compose.compose(
 		}
 	} ) )( function( props ) {
 
-		const settings = __experimentalGetSettings();
+		const settings = getSettings();
 		// To know if the current timezone is a 12 hour time with look for "a" in the time format
 		// We also make sure this a is not escaped by a "/"
 		const is12HourTime = /a(?!\\)/i.test(

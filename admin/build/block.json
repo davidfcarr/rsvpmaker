@@ -11,7 +11,10 @@
     "html": false
   },
   "textdomain": "admin",
-  "editorScript": "file:./index.js",
+  "editorScript": [
+    "file:./index.js",
+    "file:./oldblocks/block.js"
+  ],
   "editorStyle": "file:./index.css",
   "style": "file:./style-index.css",
   "viewScript": [
