@@ -74,10 +74,10 @@ export default function Confirmation() {
         const ropt = [];
     
     return <div>
-    <h2>Confirmation Message: {messagedata.confirmation.post_title}</h2>
+    <h2>Confirmation Message</h2>
     <SanitizedHTML innerHTML={confirmation.html} />
     <p><a target="_blank" href={edit_url+confirmation.ID}>Edit</a></p>
-    {confirmation.post_parent != rsvpmaker_ajax.event_id && <p><button onClick={() => {messageMutate({'action':'customize','type':'confirmation','source':confirmation.ID,'event_id':rsvpmaker_ajax.event_id} ),setStatus('working ...');} }>Customize for this {rsvpmaker.post_type == 'rsvpmaker' ? 'event' : 'template'}</button> {status}</p> }
+    <p><em>The confirmation message for new posts will be either the default from the RSVPMaker Settings or a copy of the message from an event template. You can customize it as needed for a specific event.</em></p>
 
     <h2>Payment Confirmation {!messagedata.payment_confirmation && <span>:Not Set</span>}</h2>
     {!messagedata.payment_confirmation &&  <p><button onClick={() => {messageMutate({'action':'add_payment_confirmation','type':'payment confirmation','source':confirmation.ID,'event_id':rsvpmaker_ajax.event_id} ),setStatus('working ...');} }>Customize for this {rsvpmaker.post_type == 'rsvpmaker' ? 'event' : 'template'}</button> {status}<br />If you are charging for an event, you can add a separate payment confiration message that is only sent after payment is received.</p>}

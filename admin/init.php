@@ -195,13 +195,8 @@ function rsvpmaker_block_cgb_editor_assets() {
 		get_rsvpversion().'1',//filemtime( plugin_dir_path( 'rsvpmaker' ) . 'admin/dist/sidebars.js' ), // Version: filemtime — Gets file modification time.
 		true // Enqueue the script in the footer.
 	);
+	rsvpmaker_localize();
 
-	$post_type = (isset($post->post_type)) ? $post->post_type: '';
-	if(isset($_GET['post_type']))
-		$post_type = $_GET['post_type'];
-	wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
-	wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
-	wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_ajax',get_rsvpmaker_ajax());
 
 } // End function rsvpmaker_block_cgb_editor_assets().
 

@@ -5232,30 +5232,20 @@ ORDER BY meta_value LIMIT 0,100";
 
 		$event_options = '';
 
-		$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-
-FROM `" . $wpdb->postmeta . "`
-
-JOIN $wpdb->posts ON " . $wpdb->postmeta . ".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-
-WHERE meta_value >= DATE_SUB('" . get_sql_curdate() . "',INTERVAL 3 MONTH) AND $wpdb->posts.post_status = 'publish'
-
-ORDER BY meta_value LIMIT 0,100";
-
-		$results = $wpdb->get_results( $sql );
+		$results = get_future_events();
 
 		if ( is_array( $results ) ) {
 
 			foreach ( $results as $r ) {
 
-				$event_options .= sprintf( '<option value="%d">%s %s</option>', $r->postID, esc_html( $r->post_title ), $r->datetime );
+				$event_options .= sprintf( '<option value="%d">%s %s</option>', $r->ID, esc_html( $r->post_title ), $r->datetime );
 
 			}
 		}
 
 		$action = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' );
 
-		echo '<h3>Create Template Based on Existing Event</h3>';
+		echo '<h3 id="fromexisting">Create Template Based on Existing Event</h3>';
 
 		printf(
 			'<form method="post" action="%s"><p>%s <select name="event_to_template">%s</select>

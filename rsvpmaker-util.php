@@ -93,13 +93,46 @@ else
 }
 
 function rsvp_default_content_from_template($content) {
+	global $wpdb, $post;
 	if(isset($_GET['t'])) {
 		$t = intval($_GET['t']);
 		$tpl = get_post($t);
 		$content = $tpl->post_content;
 	}
 	return $content;
-} 
+}
+
+add_action('admin_init','copy_to_rsvp_template');
+
+function copy_to_rsvp_template() {
+	global $wpdb,$current_user;
+	if(isset($_GET['copy_to_rsvp_template'])) {
+		$from = intval($_GET['copy_to_rsvp_template']);
+		$source = get_post($from);
+		$new['post_content'] = $source->post_content;
+		$new['post_type'] = 'rsvpmaker_template';
+		$new['post_title'] = '';
+		$new['post_status'] = 'draft';
+		$new['post_author'] = $current_user->ID;
+		$post_id = wp_insert_post($new);
+
+		$from = intval($_GET['copy_to_rsvp_template']);
+		$sql = "select * from $wpdb->postmeta WHERE post_id=" . $from;
+		$results = $wpdb->get_results( $sql );
+		$docopy = array( '_add_timezone', '_convert_timezone', '_calendar_icons', 'tm_sidebar', 'sidebar_officers' );
+		if ( is_array( $results ) ) {
+			foreach ( $results as $row ) {
+				if ( ( strpos( $row->meta_key, 'rsvp' ) && ( $row->meta_key != '_rsvp_dates' ) ) || ( in_array( $row->meta_key, $docopy ) ) ) {
+					update_post_meta( $post_id, $row->meta_key, $row->meta_value );
+				}
+			}
+		}
+		$loc = admin_url("post.php?action=edit&post=".$post_id);
+		wp_redirect($loc);
+		exit;		
+	}
+}
+
 function rsvp_default_title_from_template($content) {
 	if(isset($_GET['t'])) {
 		$t = intval($_GET['t']);

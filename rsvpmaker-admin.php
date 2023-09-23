@@ -4344,7 +4344,17 @@ foreach($templates as $template) {
 	$wp_admin_bar->add_node( $args );
 }
 
-
+if(('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type))
+{
+	$args = array(
+		'parent'    => 'new-rsvpmaker_template',
+		'id' => 'copy_to_rsvp_template',
+		'title' => 'Copy to New Template',
+		'href'  => admin_url('?copy_to_rsvp_template='.intval($post->ID)),
+		'meta'  => array( 'class' => 'rsvpmaker')
+	);
+	$wp_admin_bar->add_node( $args );	
+}
 if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 {
 	$typelabel = ('rsvpmaker' == $post->post_type) ? 'Event' : ucfirst($post->post_type);

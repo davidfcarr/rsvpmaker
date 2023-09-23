@@ -1823,30 +1823,11 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$post_id = (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) ? 0 : intval($_GET['post_id']);
 		$template_id = ($post_id) ? get_post_meta($post_id,'_meet_recur',true) : 0;
 		$post = ($post_id) ? get_post($post_id) : null;
-		if(!empty($_GET['form_id'])) {
-			if('custom' == $_GET['form_id']) {
-				$form_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_type='rsvpmaker_form' post_parent=$post_id");
-				if(!$form_id) {
-				if($post_id)
-					$form_id = get_post_meta($post_id,'_rsvp_form',true);
-				else
-					$form_id = $rsvp_options['rsvp_form'];
-				$form = get_post($form_id);
-				$updated['post_title'] = 'Form:'.$post->post_title.' ('.$post_id.')';
-				$updated['post_type'] = 'rsvpmaker_form';
-				$updated['post_author'] = $current_user->ID;
-				$updated['post_content'] = $form->post_content;
-				$updated['post_status'] = 'publish';
-				$updated['post_parent'] = $post_id;
-				$form_id = wp_insert_post($updated);
-				} 
-			}
-			else
-				$form_id = intval($_GET['form_id']); 
-			if($post_id)
-				update_post_meta($post_id,'_rsvp_form',$form_id);
-		}
-		else
+		if(isset($_GET['form_id']))
+			$form_id = intval($_GET['form_id']);
+		elseif($post_id)
+			$form_id = get_post_meta($post_id,'_rsvp_form',true);
+		if(empty($form_id))
 			$form_id = $rsvp_options['rsvp_form'];
 		if(!empty($json)) {
 			if($post_id)
@@ -1892,23 +1873,26 @@ class RSVPMaker_Form extends WP_REST_Controller {
 			}
 		}
 		$form = get_post($form_id);
+		if($post_id && $post_id != $form->post_parent) {
+			$response['copied'] = $form->post_title;
+			$updated['post_title'] = 'Form:'.$post->post_title.' ('.$post_id.')';
+			$updated['post_type'] = 'rsvpmaker_form';
+			$updated['post_author'] = $current_user->ID;
+			$updated['post_content'] = $form->post_content;
+			$updated['post_status'] = 'publish';
+			$updated['post_parent'] = $post_id;
+			$form_id = wp_insert_post($updated);
+			$updated['ID'] = $form_id;
+			$form = (object) $updated;
+			update_post_meta($post_id,'_rsvp_form',$form_id);
+		}
 		$response['form_id'] = $form_id;
 		$response['form_title'] = $form->post_title;
 		$response['is_default'] = ($form_id == $rsvp_options['rsvp_form']);
 		$response['is_inherited'] = ($form->post_parent && ($form->post_parent != $post_id));
 		$response['form'] = parse_blocks($form->post_content);
-		$response['form_options'] = [];
-		$response['form_options'][] = array('value'=>$rsvp_options['rsvp_form'],'label'=>'Default');
-		if($form_id != $rsvp_options['rsvp_form']) {
-			if($template_id && $form->post_parent == $template_id)
-				$response['form_options'][] = array('value'=>$form_id,'label'=>'Inherited from Template');
-			if($form->post_parent == $post_id)
-				$response['form_options'][] = array('value'=>$form_id,'label'=>'Customized');
-			else
-				$response['form_options'][] = array('value'=>$form_id,'label'=>$form->post_title);
-		}
-		if($post_id && $form->post_parent != $post_id)
-			$response['form_options'][] = array('value'=>'custom','label'=>__('Customize'));
+		$response['form_options'][] = array('value'=>$form_id,'label'=>$form->post_title);
+		$response['form_options'][] = array('value'=>$rsvp_options['rsvp_form'],'label'=>'Default');		
 		$includedform = array($rsvp_options['rsvp_form'],$form_id);
 		$reusable = get_option('rsvpmaker_forms');
 		if(is_array($reusable)) {
@@ -2337,7 +2321,7 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
-		global $wpdb, $current_user;
+		global $wpdb, $current_user, $post;
 		$status = '';
 		$post_id= intval($_GET['event_id']);
 		$json = file_get_contents('php://input');
@@ -2394,8 +2378,22 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 				rsvpmaker_reminder_cron($hours, get_rsvp_date($post_id), $post_id);
 			}
 		}
+		$confirm_post = rsvp_get_confirm( $post_id, true );;
+		if($post_id && $post_id != $confirm_post->post_parent) {
+			$response['copied'] = $confirm_post->post_title;
+			$updated['post_title'] = 'Confirmation:'.$post->post_title.' ('.$post_id.')';
+			$updated['post_type'] = 'rsvpemail';
+			$updated['post_author'] = $current_user->ID;
+			$updated['post_content'] = $confirm_post->post_content;
+			$updated['post_status'] = 'publish';
+			$updated['post_parent'] = $post_id;
+			$confirm_id = wp_insert_post($updated);
+			$updated['ID'] = $confirm_id;
+			$confirm_post = (object) $updated;
+			update_post_meta($post_id,'_rsvp_confirm',$confirm_id);
+		}
 		
-$response["confirmation"] = rsvp_get_confirm( $post_id, true );
+$response["confirmation"] = $confirm_post;
 $response['confirmation']->html = do_blocks($response["confirmation"]->post_content);
 $response['reminder'] = [];
 $sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
