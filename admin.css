@@ -15,6 +15,10 @@
 #location-dialog-form fieldset { padding:0; border:0; margin-top:25px; }
 #location-dialog-form label {font-weight: bold;}
 
+.hidden-datetime {
+	display: none;
+}
+
 i.mce-i-rsvpmaker_upcoming:before {
 	font-family: "dashicons";
 	content: "\f508";

@@ -156,7 +156,7 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 		$enddate = $end;
 	else
 		$enddate = rsvpmaker_make_end_date ($date,$type,$end);
-	printf('<p>%s to %s</p>',$end,$enddate);
+	//printf('<p class="add_event_row">%s to %s</p>',$end,$enddate);
 	$ts_end = strtotime($enddate);
 	$sql = $wpdb->prepare("INSERT INTO $event_table SET display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s, event=%s",$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
 	if(empty($post_title))
@@ -4445,4 +4445,16 @@ function rsvpmaker_check_sametime($datetime,$post_id=0) {
 function rsvpmaker_testlog($key,$data) {
 	if(function_exists('rsvpmaker_testing'))
 		set_transient($key,$data,DAY_IN_SECONDS);
+}
+
+function rsvp_x_day_month($timestamp) {
+	global $rsvp_options;
+	$day = rsvpmaker_date('d', $timestamp);
+	$ofmonth = 1 + floor(($day - 1) / 7); // nth day of month
+	$suffix = 'th';
+	if(1 == $ofmonth)
+		$suffix = 'st';
+	elseif(2 == $ofmonth)
+		$suffix = 'nd';
+	return $ofmonth.$suffix .' '.rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$timestamp);
 }

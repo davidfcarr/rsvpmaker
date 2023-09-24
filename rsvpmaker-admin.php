@@ -1559,6 +1559,7 @@ function rsvpmaker_template_custom_column($column_name, $post_id) {
 		$sked = get_template_sked($post_id);
 		//echo var_export($sked,true).'<br>';
 		$output = '';
+		if(is_array($sked))
 		foreach($sked as $key => $value) {
 			if(!preg_match('/[A-Z]/',$key))
 				break;
@@ -1579,7 +1580,7 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	
     if( $column_name == 'rsvpmaker_end' ) {
 		if($event)
-		echo esc_html($event->enddate);
+		echo rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_end);
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
 		if(empty($event))
@@ -1616,7 +1617,8 @@ $s = $dateline = '';
 
 if($datetime)
 {
-		printf('<span class="rsvpmaker-date" id="rsvpmaker-date-%d">%s</span>',esc_attr($post_id),esc_attr($datetime));
+	echo rsvp_x_day_month($event->ts_start);
+	printf('<span class="rsvpmaker-date" style="display:none" id="rsvpmaker-date-%d">%s</span>',esc_attr($post_id),esc_attr($datetime));
 }
 elseif($template)
 	{
@@ -2944,7 +2946,6 @@ printf('%s <input type="time" name="%s" value="%s">',__('Time'),$fieldname,$time
 }
 
 function rsvpmaker_add_one () {
-
 if(!empty($_POST["rsvpmaker_add_one"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 {
 global $wpdb;
@@ -3288,7 +3289,6 @@ global $rsvp_options;
 }
 
 function rsvpmaker_template_checkbox_post () {
-
 if(empty($_POST) || empty($_REQUEST['t']) || empty($_REQUEST['page']) || ($_REQUEST['page'] != 'rsvpmaker_template_list'))
 	return;
 global $wpdb, $current_user;
@@ -3358,11 +3358,8 @@ if(isset($_POST["detach_from_template"])  && wp_verify_nonce(rsvpmaker_nonce_dat
 			$update_messages .= '<div class="updated">Detached from Template: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
 		}
 }
-
-
 if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 {
-
 	$my_post['post_title'] = $post->post_title;
 	$my_post['post_content'] = $post->post_content;
 	$my_post['post_status'] = (($_POST['newstatus'] == 'publish') && current_user_can('publish_rsvpmakers')) ? 'publish' : 'draft';
