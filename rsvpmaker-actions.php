@@ -4,14 +4,12 @@ add_action('init', 'rsvpmaker_init_router' );
 add_action('init', 'rsvp_options_defaults', 1 );
 add_action('init','rsvpmail_unsubscribe');
 add_action('init','rsvpmail_confirm_subscribe');
-add_action('init','rsvpmail_list_rsvpmodal_controller',1);
+//add_action('plugins_loaded','rsvpmail_list_rsvpmodal_controller',1); //trying to get this earlier than init
 add_action('init', 'remove_save_content_filters', 99 );
 add_action('init','rsvpmaker_create_nonce',1);
 add_action('init','rsvphoney_login',1);
 
 add_action('admin_init','rsvpmaker_queue_post_type');
-
-add_action( 'add_meta_boxes', 'rsvplanding_register_meta_boxes' );
 
 add_action( 'admin_bar_menu', 'toolbar_rsvpmaker', 99 );
 
@@ -54,7 +52,6 @@ add_action( 'rsvpmaker_email_list_okay', 'rsvpmaker_email_list_okay', 10, 1 );
 add_action( 'rsvpmaker_replay_email', 'rsvpmaker_replay_email', 10, 3 );
 add_action( 'rsvpmaker_send_reminder_email', 'rsvpmaker_send_reminder_email', 10, 2 );
 
-add_action( 'save_post', 'rsvplanding_save_meta_box' );
 add_action( 'save_post', 'rsvpmaker_save_calendar_data' );
 // stripe
 add_action( 'sc_after_charge', 'rsvpmaker_sc_after_charge' );
@@ -173,3 +170,10 @@ function rsvpmaker_filter_debug() {
 }
 
 add_filter('get_the_excerpt','rsvpmaker_excerpt_filter',1);
+
+add_filter('wp_headers','rsvpmaker_headers');
+
+function rsvpmaker_headers($headers) {
+	rsvpmail_list_rsvpmodal_controller();//get cookies in at same time as standard headers
+	return $headers;
+}

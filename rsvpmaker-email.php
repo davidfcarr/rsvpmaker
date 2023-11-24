@@ -831,12 +831,35 @@ foreach($results as $row)
     } // end cron loop
 	echo '</table>';
 	}
+	rsvpmailer_post_promo_summary();
 ?>
 <h3><?php esc_html_e('Shortcodes for Scheduled Email Newsletters','rsvpmaker');?></h3>
 <p><?php esc_html_e('Shortcodes you can include with scheduled email include [rsvpmaker_upcoming] (which should be used without the calendar grid) and these others, intended specifically for newsletter style messages. The attributes are optional and shown with the default values.','rsvpmaker');?></p>
 <p>[rsvpmaker_recent_blog_posts weeks=&quot;1&quot;] (<?php esc_html_e('shows blog posts published within the timeframe, default 1 week','rsvpmaker');?>)</p>
 <p>[rsvpmaker_looking_ahead days=&quot;30&quot; limit=&quot;10&quot;] (<?php esc_html_e('include after rsvpmaker_upcoming for a linked listing of just the headlines and dates of events farther out on the schedule','rsvpmaker');?>)</p>
 <?php
+}
+
+function rsvpmailer_post_promo_summary() {
+	global $wpdb, $rsvp_options;
+	if(isset($_GET['cancel_promo']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+	{
+		delete_post_meta(intval($_GET['cancel_promo']),'pending_post_promo');
+		echo '<p>Post promo cancelled</p>';
+	}
+	$promo_scheduled = wp_next_scheduled( 'rsvpmailer_post_promo' );
+	if($promo_scheduled) {
+	$results = $wpdb->get_results("select * from $wpdb->postmeta WHERE meta_key='pending_post_promo' ");
+	$titles = '';
+	foreach($results as $row) {
+		$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>$row->post_id);
+		$cancel_url = add_query_arg($cancel,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list'));
+		if($titles)
+			$titles .= ', ';
+		$titles .= '<strong>'.get_the_title($row->post_id).'</strong> (<a href="'.$cancel_url.'">cancel</a>)';
+	}
+	printf('<p>Promo of latest blog post scheduled to send at %s, %d waiting %s</p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$promo_scheduled),sizeof($results),$titles);
+	}
 }
 
 function rsvpmaker_cron_schedule_options() {
@@ -1403,6 +1426,10 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 			}
 	}
 	
+	if(isset($postvars['pending_post_promo']) || sizeof($recipients) > 10) {
+		delete_post_meta($post_id,'pending_post_promo');
+	}
+
 	if(!empty($postvars["mailchimp"]) )
 	{
 	$chimp_options = get_option('chimp');
@@ -1701,9 +1728,11 @@ function rsvpmaker_template_inline_test($atts) {
 	return $html . '<pre>'.$text.'</pre>';
 }
 
-function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null) {
+function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null, $type='') {
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
+	if('pending_post_promo' == $type)
+		$postvars['pending_post_promo'] = true;
 	$epost = get_post($post_id);
 	if($epost->post_status != 'publish')
 		{
@@ -2097,13 +2126,7 @@ foreach($signatures as $signature) {
 	}	
 }
 
-$promo_scheduled = wp_next_scheduled( 'rsvpmailer_post_promo' );
-if($promo_scheduled) {
-	$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>1);
-	printf('<p>Promo of latest blog post scheduled to send at %s (<a href="%s">cancel</a>)</p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$promo_scheduled),add_query_arg($cancel,get_permalink()));
-}
-elseif(isset($_GET['cancel_promo']))
-	echo '<p>Scheduled post promo canceled.</p>';
+rsvpmailer_post_promo_summary();
 
 rsvpmaker_cron_email_preview_now();
 $ts = rsvpmaker_next_scheduled($post->ID);
@@ -5485,8 +5508,9 @@ return ob_get_clean();
 function rsvpmaker_email_add_name($email,$name) {
 	if(empty($name) || strpos($email,'<')  || strpos($email,'"'))
 		return $email;
-	return "\"".addslashes($name)."\" <".$email.">";
+	return "\"". str_replace("&#039;","'",str_replace('"','\"',($name)))."\" <".$email.">";
 }
+
 function rsvpmaker_queue_post_type() {
 	register_post_status('rsvpmessage',array('label'=>'Group Message','internal'=>true,'show_in_admin_status_list'=>true,'show_in_admin_all_list'=>false));
 }
@@ -5525,12 +5549,14 @@ function rsvpmail_latest_post_promo($args = array()) {
     $parts = preg_split('/<\/div>\s+<!-- \/wp:rsvpmaker\/emailcontent -->/m',$rsvpmailer_default_block_template,2);
     if(!empty($parts[1]))
         $html = $parts[0].$html."</div>\n<!-- /wp:rsvpmaker/emailcontent -->".$parts[1];
-    $new['post_content'] = $html;
+	$html = rsvpmaker_email_html($html);
+	if(!empty($args['preview']))
+		return array('subject' => $featured->post_title,'html' => '<p>(Preview)</p>'.$html);
+	$new['post_content'] = $html;
     $new['post_type'] = 'rsvpemail';
     $new['post_status'] = 'publish';
 	$promo_id = wp_insert_post($new);
 	add_post_meta($featured->ID,'promo_email',$promo_id);
-	$html = rsvpmaker_email_html($html);
 	$schedule = '';
 	if(!empty($args['promo_type']) && 'auto' == $args['promo_type'])
 		{
@@ -5573,7 +5599,7 @@ function rsvpmailer_post_promo_cron() {
 	$promo_id = $wpdb->get_var("SELECT post_id FROM $wpdb->postmeta WHERE meta_key='pending_post_promo' ORDER BY post_id DESC ");
 	if($promo_id) {
 		$posthash = get_post_meta($promo_id,'rsvpmail_last_hash',true);
-		rsvpmailer_delayed_send($promo_id,0,$posthash);	
+		rsvpmailer_delayed_send($promo_id,0,$posthash,null,'pending_post_promo');	
 	}
 }
 
@@ -5610,6 +5636,7 @@ function rsvpmail_latest_posts_notification_setup() {
 		$args = array();
 		if(empty($args['additional_posts'])) $args['additional_posts'] = 4; 
 		if(empty($args['paragraphs'])) $args['paragraphs'] = 5;	
+		$args['preview'] = true;
 	}
 
 	$subject_html = rsvpmail_latest_post_promo($args);
@@ -5627,6 +5654,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	<p><em>Excerpts will include the specified number of paragraphs or all the text up to the content up to the &lt;-- more --&gt; tag block, if included in the featured post.</em></p>
 	<p>Auto send time <input type="time" name="rsvpmaker_new_post_promos[time]" value="<?php if(isset($args['time'])) echo esc_attr($args['time']); else echo '09:00' ?>" > (interpreted as this time tomorrow if the time is past for today)</p> 
 	<?php
+
 	echo '<p>Send to: ';
 	$segment = (isset($args['segment'])) ? $args['segment'] : '';
 	rsvpmaker_email_segments_dropdown('rsvpmaker_new_post_promos[segment]',true,$segment);
@@ -5634,6 +5662,8 @@ function rsvpmail_latest_posts_notification_setup() {
 	rsvpmaker_nonce();
 	submit_button();
 	echo '</form>';
+	rsvpmailer_post_promo_summary();
+
 	echo "<h3>New post promo:".$subject_html['subject'].'</h3>'.$subject_html['html'];
 }
 

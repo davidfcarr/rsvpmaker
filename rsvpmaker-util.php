@@ -1374,7 +1374,7 @@ function get_past_events( $where = '', $limit = '', $output = OBJECT ) {
 
 	$wpdb->show_errors();
 
-	$sql = "SELECT DISTINCT *
+	$sql = "SELECT DISTINCT *, date as datetime
 
 	 FROM " . $wpdb->posts . '
 
@@ -3834,8 +3834,7 @@ global $rsvp_options;
 		
 					$dateline = rsvpmaker_date( $date_format, $t ); // rsvpmaker_long_date($event->ID, isset($atts['time']), false);
 		
-					$listings .= sprintf( '<li><a href="%s">%s - %s</a></li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( $event->post_title ), $dateline );
-			
+					$listings .= sprintf( '<li><a href="%s">%s - %s</a></li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( strip_tags($event->post_title) ), $dateline );
 				}
 			$menu_html = str_replace($match[0][$index],$listings,$menu_html);
 			}	

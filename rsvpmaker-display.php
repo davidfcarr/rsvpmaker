@@ -178,7 +178,7 @@ function rsvpmaker_event_listing( $atts = array() ) {
 
 			$dateline = rsvpmaker_date( $date_format, $t ); // rsvpmaker_long_date($event->ID, isset($atts['time']), false);
 
-			$listings .= sprintf( '<li><a href="%s">%s</a> %s</li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( $event->post_title ), $dateline );
+			$listings .= sprintf( '<li><a href="%s">%s</a> %s</li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( strip_tags($event->post_title)  ), $dateline );
 
 			$test = var_export( $event, true );
 
@@ -2235,50 +2235,6 @@ function rsvp_report_this_post() {
 	return $o;
 }
 
-function rsvpmaker_hide_menu( $menu ) {
-	global $post;
-
-	if ( isset( $post->post_type ) && $post->post_type != 'page' ) {
-
-		return $menu;
-	}
-
-	if ( isset( $post->ID ) && get_post_meta( $post->ID, 'rsvpmaker_hide_menu', true ) ) {
-
-		return '';
-	}
-
-	return $menu;
-
-}
-
-add_filter( 'wp_nav_menu', 'rsvpmaker_hide_menu' );
-
-function rsvplanding_register_meta_boxes() {
-	add_meta_box( 'rsvplanding-box-id', __( 'Hide The Menu on This Page', 'rsvpmaker' ), 'rsvplanding_my_display_callback', 'page', 'advanced', 'low' );
-}
-
-function rsvplanding_my_display_callback( $post ) {
-
-	$on = get_post_meta( $post->ID, 'rsvpmaker_hide_menu', true );
-
-	$checked = ( $on ) ? ' checked="checked" ' : '';
-
-	printf( '<input type="checkbox" name="rsvpmaker_hide_menu" value="1" %s> Hide menu (<em>Turn a full-width page template into a landing page</em>)', $checked );
-	//wp_nonce_field( 'rsvpmaker_hide_menu_action', 'rsvpmaker_hide_menu_nonce' );
-	rsvpmaker_nonce();
-	// Display code/markup goes here. Don't forget to include nonces!
-}
-
-function rsvplanding_save_meta_box( $post_id ) {
-	
-	if ( isset( $_POST['rsvpmaker_hide_menu'] ) ) {
-		if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-			return;	
-		update_post_meta( $post_id, 'rsvpmaker_hide_menu', isset( $_POST['rsvpmaker_hide_menu'] ) );
-	}
-}
-
 function clear_rsvp_cookies() {
 	if ( isset( $_GET['clear'] ) ) {
 		if ( isset( $_COOKIE ) ) {
@@ -2292,8 +2248,6 @@ function clear_rsvp_cookies() {
 	}
 
 }
-
-
 
 function sked_to_text( $sked ) {
 

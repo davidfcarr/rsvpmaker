@@ -195,10 +195,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $fromname = get_bloginfo('name');
     $mail['From'] = rsvpmaker_email_add_name($mail['From'],$fromname);
     $client = new PostmarkClient($postmark_settings_key);
-    /*
-    if(!strpos($html,'rmail='))
-    	$html = preg_replace_callback('/href="([^"]+)/','add_rsvpmail_arg',$html);		
-    */
+
     foreach($recipients as $index => $to) {
         if(isset($recipient_names[$to]))
             $mail['To'] = rsvpmaker_email_add_name($to,$recipient_names[$to]);
@@ -283,6 +280,14 @@ function rsvpmaker_postmark_send($mail) {
     return $result;
 }
 
+function rsvpmail_clear_allforwarders($blog_id) {
+    if($blog_id != 1)
+        switch_to_blog(1);
+    delete_transient('allforwarders_'.$blog_id);
+    if($blog_id != 1)
+        switch_to_blog($blog_id);    
+}
+
 function rsvpmail_recipients_by_email_parts($breakdown) {
     $allforwarders = get_transient('allforwarders_'.$breakdown['blog_id']);
     if(empty($allforwarders)) {
@@ -326,6 +331,13 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         $email = apply_filters('rsvpmail_email_match',$email,$from,$breakdown,$emailobj);
         $testoutput .= "\n $email after filter\n";
         $testoutput .= sprintf("%s to %s\n",$email, var_export($breakdown,true));
+        $blacklist = (1 == $breakdown['blog_id']) ? get_option('rsvpmail_blacklist') : get_blog_option($breakdown['blog_id'], 'rsvpmail_blacklist');
+        if(is_array($blacklist) && in_array($from,$blacklist))
+            {   
+                $testoutput .= "$from on rvspmail_blacklist\n";
+                rsvpmaker_testlog('postmark_incoming_output',$testoutput);
+                return;
+            }
         //mail('david@carrcommunications.com','testoutput',$testoutput);
         if($breakdown && empty($testrecipients[$breakdown['blog_id']]))
             $x = $testrecipients[$breakdown['blog_id']] = rsvpmail_recipients_by_email_parts($breakdown);

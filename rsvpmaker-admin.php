@@ -4341,7 +4341,7 @@ foreach($templates as $template) {
 	$wp_admin_bar->add_node( $args );
 }
 
-if(('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type))
+if($post && (('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type)))
 {
 	$args = array(
 		'parent'    => 'new-rsvpmaker_template',

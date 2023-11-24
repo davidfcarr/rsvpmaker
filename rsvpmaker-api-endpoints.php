@@ -1447,6 +1447,12 @@ foreach($ccFull as $cf) {
 	$cclist[] = $tf->Email;
 }
 
+//todo more flexible blacklist system
+$blacklist = ['tmtpres@gmail.com'];
+if(in_array($data->From,$blacklist)) {
+	return;
+}
+
 $origin = sprintf("<p>Forwarded message, originally <br />From <a href=\"mailto:%s\">%s</a><br />To: %s<br />Cc: %s<br /><a href=\"mailto:%s?cc=%s&subject=Re: %s\">Reply All</a></p>",$data->From,$data->From,htmlentities($data->To),htmlentities($data->Cc),$data->From,implode(',',$audience),$data->Subject);
 $origin = '<div class="postmark-origin" style="padding:10px; background-color:#efefef">'.$origin.'</div>';
 $check = implode('|',$audience).$data->Subject;
