@@ -774,35 +774,22 @@ if ( ! function_exists( 'save_replay_rsvp' ) ) {
 
 			$yesno = ( $future ) ? 1 : 2;// 2 for replay
 
-			$rsvp_sql = $wpdb->prepare( ' SET first=%s, last=%s, email=%s, yesno=%d, event=%d, note=%s, details=%s, participants=%d, user_id=%d ', $rsvp['first'], $rsvp['last'], $rsvp['email'], $yesno, $event, $note, serialize( $rsvp ), 1, $current_user->ID );
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID);
 
 			capture_email( $rsvp );
 
 			$rsvp_id = ( isset( $_POST['rsvp_id'] ) ) ? (int) $_POST['rsvp_id'] : 0;
 
 			if ( $rsvp_id ) {
-
-				$rsvp_sql = 'UPDATE ' . $wpdb->prefix . 'rsvpmaker ' . $rsvp_sql . " WHERE id=$rsvp_id";
-
-				$wpdb->show_errors();
-
-				$wpdb->query( $rsvp_sql );
-
+				$wpdb->update($wpdb->prefix . 'rsvpmaker',$nv,array('id'=>$rsvp_id));
 			} else {
-
-				$rsvp_sql = 'INSERT INTO ' . $wpdb->prefix . 'rsvpmaker ' . $rsvp_sql;
-
-				$wpdb->show_errors();
-
-				$wpdb->query( $rsvp_sql );
-
+				$wpdb->insert($wpdb->prefix . 'rsvpmaker',$nv);
 				$rsvp_id = $wpdb->insert_id;
 
 				$sql = 'SELECT date FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$event ";
 
 				if ( empty( $wpdb->get_var( $sql ) ) ) {
-					$sql = $wpdb->prepare( 'INSERT INTO  ' . $wpdb->prefix . 'rsvpmaker_event SET event=%d, post_title=%s, date=%s', $event, $post->post_title, get_rsvp_date( $event ) );
-					$wpdb->query( $sql );
+					$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event' => $event, 'post_title' => $post->post_title, 'date',get_rsvp_date( $event )));
 				}
 			}
 
@@ -1235,18 +1222,13 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				$rsvp['coupon'] = $rsvpmaker_coupon_message;
 			}
 
-			$rsvp_sql = $wpdb->prepare( ' SET first=%s, last=%s, email=%s, yesno=%d, event=%d, note=%s, details=%s, participants=%d, user_id=%d ', $rsvp['first'], $rsvp['last'], $rsvp['email'], $yesno, $event, $note, serialize( $rsvp ), $participants, $current_user->ID );
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID);
 
 			capture_email( $rsvp );
 
 			if ( $rsvp_id ) {
-
-				$rsvp_sql = 'UPDATE ' . $wpdb->prefix . 'rsvpmaker ' . $rsvp_sql . " WHERE id=$rsvp_id";
-
+				$wpdb->update($wpdb->prefix . 'rsvpmaker',$nv,array('id'=>$rsvp_id));
 				$wpdb->show_errors();
-
-				$wpdb->query( $rsvp_sql );
-
 			} else {
 
 				$count++;
@@ -1258,28 +1240,18 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 					$rsvp_id = 0;
 
 				} else {
-
-					$rsvp_sql = 'INSERT INTO ' . $wpdb->prefix . 'rsvpmaker ' . $rsvp_sql;
-
-					$wpdb->show_errors();
-
-					$wpdb->query( $rsvp_sql );
-
+					$wpdb->insert($wpdb->prefix . 'rsvpmaker',$nv);
 					$rsvp_id = $wpdb->insert_id;
 
 					$sql = 'SELECT date FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$event ";
 
 					if ( empty( $wpdb->get_var( $sql ) ) ) {
-
-						$sql = $wpdb->prepare( 'INSERT INTO  ' . $wpdb->prefix . 'rsvpmaker_event SET event=%d, post_title=%s, date=%s', $event, $post->post_title, get_rsvp_date( $event ) );
-						$wpdb->query( $sql );
-
+						$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event'=>$event, 'post_title'=>$post->post_title, 'date'=> get_rsvp_date( $event )));
 					}
 				}
 			}
 
 			if ( ! empty( $rsvp_options['send_payment_reminders'] ) && isset( $price ) && ( $price > 0 ) ) {
-
 				rsvpmaker_payment_reminder_cron( $rsvp_id );
 			}
 
@@ -1338,7 +1310,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 					$last = ( !empty( $_POST['guest']['last']) && !empty($_POST['guest']['last'][ $index ]) ) ? sanitize_text_field($_POST['guest']['last'][ $index ]) : '';
 					if ( ! empty( $first ) ) {
-						$guest_sql[ $index ] = $wpdb->prepare( ' SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s', $event, $yesno, $rsvp_id, $guestof, $first, $last );
+						$guestnv[$index] = array('event'=>$event, 'yesno'=>$yesno, 'master_rsvp'=>$rsvp_id, 'guestof'=>$guestof, 'first' => $first, 'last' => $last);
 						$guest_text[ $index ] = sprintf( "Guest: %s %s\n", $first, $last );
 						$guest_list[ $index ] = sprintf( '%s %s', $first, $last );
 						$lastguest = $index;
@@ -1353,9 +1325,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 					$index = $i + 100;
 
 					$tbd = $i + 1;
-
-					$guest_sql[ $index ] = $wpdb->prepare( ' SET event=%d, yesno=%d, `master_rsvp`=%d, `guestof`=%s, `first` = %s, `last` = %s', $event, $yesno, $rsvp_id, $guestof, 'Placeholder', 'Guest TBD ' . $tbd );
-
+					$guestnv[$index] = array('event'=>$event, 'yesno'=>$yesno, 'master_rsvp'=>$rsvp_id, 'guestof'=>$guestof, 'first' => 'Placeholder', 'last' =>$tbd);
 					$guest_text[ $index ] = sprintf( "Guest: %s %s\n", 'Placeholder', 'Guest TBD ' . $tbd );
 
 					$guest_list[ $index ] = sprintf( '%s %s', 'Placeholder', 'Guest TBD ' . $tbd );
@@ -1367,7 +1337,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				}
 			}
 
-			if ( sizeof( $guest_sql ) ) {
+			if ( sizeof( $guestnv ) ) {
 				foreach ( $_POST['guest'] as $field => $column ) {
 					foreach ( $column as $index => $value ) {
 						if ( empty( $guest_text[ $index ] ) ) {
@@ -1385,11 +1355,11 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				}
 			}
 
-			if ( sizeof( $guest_sql ) ) {
+			if ( sizeof( $guestnv ) ) {
 
-				foreach ( $guest_sql as $index => $sql ) {
+				foreach ( $guestnv as $index => $nv ) {
 
-					$sql .= $wpdb->prepare( ', `details`=%s ', serialize( $newrow[ $index ] ) );
+					$nv['details'] = serialize( $newrow[ $index ] );
 
 					$id = ( isset( $_POST['guest']['id'][ $index ] ) ) ? (int) $_POST['guest']['id'][ $index ] : 0;
 
@@ -1406,27 +1376,14 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 						$wpdb->query( $sql );
 
 					} elseif ( $id ) {
-
-						$sql = 'UPDATE ' . $wpdb->prefix . 'rsvpmaker ' . $sql . ' WHERE id=' . $id;
-
-						$wpdb->query( $sql );
-
+						$wpdb->update($wpdb->prefix . 'rsvpmaker', $nv,array('id'=>$id));// $sql = 'UPDATE ' . $wpdb->prefix . 'rsvpmaker ' . $sql . ' WHERE id=' . $id;
 					} else {
-
 						$count++;
-
 						if ( $rsvp_max && ( $count > $rsvp_max ) ) {
-
 							$guest_text[ $index ] = '<div style="color:red;">' . __( 'Max RSVP count limit reached, entry not added for:', 'rsvpmaker' ) . "\n" . $guest_text[ $index ] . '</div>';
-
 							$guest_list[ $index ] = '<div style="color:red;">' . __( 'Max RSVP count limit reached, entry not added for:', 'rsvpmaker' ) . "\n" . $guest_text[ $index ] . '</div>';
-
 						} else {
-
-							$sql = 'INSERT INTO ' . $wpdb->prefix . 'rsvpmaker ' . $sql;
-
-							$wpdb->query( $sql );
-
+							$wpdb->insert($wpdb->prefix . 'rsvpmaker', $nv);
 						}
 					}
 				}

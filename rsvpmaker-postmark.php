@@ -362,6 +362,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
                     $rmail['subject'] = 'BLOCKED '.$emailobj->Subject;
                     $rmail['to'] = $from;
                     $rmail['html'] = '<p>'.$from .' is not authorized to send to the '.$email." email list.</p>\n<p>Authorized senders include email addresses associated with member accounts, as well as addresses whitelisted by a website administrator.</p>";
+                    //$rmail['html'] .= '<pre>'.var_export($testrecipients[$breakdown['blog_id']],true).'</pre>';
                     $rmail['from'] = get_option('admin_email');                
                     $rmail['fromname'] = get_option('blogname');
                     rsvpmailer($rmail);

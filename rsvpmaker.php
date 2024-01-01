@@ -1,17 +1,20 @@
 <?php
 /*
-Plugin Name: RSVPMaker
-Plugin URI: http://www.rsvpmaker.com
-Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. Online payments with PayPal or Stripe can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together. <a href="options-general.php?page=rsvpmaker-admin.php">Options</a>
-Author: David F. Carr
-Author URI: http://www.carrcommunications.com
-Text Domain: rsvpmaker
-Domain Path: /translations
-Version: 10.7.9
+* Plugin Name: RSVPMaker
+* Plugin URI: http://www.rsvpmaker.com
+* Description: Schedule events, send invitations to your mailing list and track RSVPs. You get all your familiar WordPress editing tools with extra options for setting dates and RSVP options. Online payments with PayPal or Stripe can be added with a little extra configuration. Email invitations can be sent through MailChimp or to members of your website community who have user accounts. Recurring events can be tracked according to a schedule such as "First Monday" or "Every Friday" at a specified time, and the software will calculate future dates according to that schedule and let you track them together. <a href="options-general.php?page=rsvpmaker-admin.php">Options</a>
+* Author: David F. Carr
+* Author URI: http://www.carrcommunications.com
+* Text Domain: rsvpmaker
+* Domain Path: /translations
+* Requires at least: 5.2
+* License:           GPL v2 or later
+* License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+* Version: 10.8.1
 */
 
 function get_rsvpversion() {
-	return '10.7.9';
+	return '10.8.1';
 }
 
 global $wp_version;

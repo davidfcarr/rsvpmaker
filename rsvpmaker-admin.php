@@ -2848,19 +2848,15 @@ if($results)
 foreach($results as $row)
 	{
 	$data = unserialize($row->meta_value);
+	$nv = array();
 	if(is_array($data))
 	foreach($data as $newrow)
 	{
-	$sql = "INSERT INTO ".$wpdb->prefix.'rsvpmaker SET ';
-	$count = 0;
 	foreach($newrow as $key => $value)
 		{
-		if($count)
-			$sql .= ', ';
-		$sql .= $wpdb->prepare("`$key` = %s",$value);
-		$count++;
+		$nv[$key] = $value;
 		}
-	$wpdb->query($sql);
+	$wpdb->insert($wpdb->prefix.'rsvpmaker',$nv);
 	}
 	
 	}
@@ -2870,23 +2866,19 @@ $wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_key='_export_rsvpmaker' ");
 $results = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE meta_key='_export_rsvp_volunteer_time' ");
 if($results)
 {
+$table = $wpdb->prefix.'rsvp_volunteer';
 foreach($results as $row)
 	{
 	$data = unserialize($row->meta_value);
 	foreach($data as $newrow)
 	{
-	$sql = "INSERT INTO ".$wpdb->prefix.'rsvp_volunteer_time SET ';
-	$count = 0;
+	$nv = array();
 	foreach($newrow as $key => $value)
 		{
-		if($count)
-			$sql .= ', ';
-		$sql .= $wpdb->prepare("`$key` = %s",$value);
-		$count++;
+		$nv[$key] = $value;
 		}
-	$wpdb->query($sql);
-	}
-	
+	$wpdb->insert($table,$nv);
+	}	
 	}
 $wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_key='_export_rsvp_volunteer_time' ");
 }

@@ -1071,7 +1071,7 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
 				$recipients[] = $email;
 			}
 		}
-		$recipients = array_merge($recipients,$additional_recipients);
+		$recipients = array_merge($recipients,$additional_recipients,$whitelist);
 		if(!in_array(strtolower($from),$recipients))
 			return 'BLOCKED'; //NOT FROM A RECOGNIZED MEMBER ADDRESS
 		set_transient('recipient_names',$recipient_names);
@@ -1231,7 +1231,7 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
         foreach($listvars['additional'] as $email) {
             $recipients[$list_email][] = $email;
         }
-        $listvars[$list_email.'_whitelist'] = $listvars['whitelist'];
+        $recipients[$list_email.'_whitelist'] = $listvars['whitelist'];
     }
 
     if($officers_on) {
@@ -1259,7 +1259,7 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
                 $recipients[$list_email][] = $email;
             }
             $recipients[$list_email.'_whitelist'] = $listvars['whitelist'];
-    }
+		}
     }
 	$admin_email = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'admin_email') : get_option('admin_option');
     $recipients[$subdomain.$join.'admin@'.$domain] = array($admin_email);

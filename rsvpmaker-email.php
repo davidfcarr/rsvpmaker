@@ -5018,22 +5018,20 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		$active = $confirmed = $row->active;
 	}
 
+	$values = array('email'=>$email,'first_name'=>$first_name,'last_name'=>$last_name,'active'=>$active);
 	if($id) 
 	{
-		$sql = $wpdb->prepare("UPDATE $table SET email=%s, first_name=%s, last_name=%s, active=%d WHERE id=%d ",$email,$first_name,$last_name,$active, $id);
-		$result = $wpdb->query($sql);
+		$wpdb->update($table,$values,array('id'=>$id));
 	}
 	else {
-		$sql = $wpdb->prepare("INSERT INTO $table SET email=%s, first_name=%s, last_name=%s, active=%d ",$email,$first_name,$last_name,$active);
-		$result = $wpdb->query($sql);
+		$wpdb->insert($table,$values);
 		$id = $wpdb->insert_id;
 	}
 	if($id && !empty($segment)) {
 		$sql = $wpdb->prepare("SELECT * from ".$table."_meta WHERE guest_id=%d AND meta_key='segment' AND meta_value=%s",$id,$segment);
 		$row = $wpdb->get_row($sql);
 		if(!$row) {
-			$sql = "insert into ".$table."_meta SET guest_id='$id', meta_key='segment', meta_value='$segment' ";
-			$wpdb->query($sql);	
+			$wpdb->insert($table,array('guest_id'=>$id,'meta_key'=>'segment','meta_value'=>$segment));
 		}
 	}
 
@@ -6297,9 +6295,12 @@ function rsvpmaker_imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x
 	imagecopymerge($dst_im, $cut, $dst_x, $dst_y, 0, 0, $src_w, $src_h, $pct);
 } 
 
-add_action('admin_init','rsvpmail_patterns');
+//todo - blocks to be inserted must be validated to avoid editor errors
+//add_action('admin_init','rsvpmail_patterns');
 function rsvpmail_patterns() {
 	global $post,$rsvp_options;
+	if(strpos($SERVER['REQUEST_URI'],'site-editor'))// || (empty($post->post_type) || 'rsvpemail' != $post->post_type))
+		return;
 		register_block_pattern_category(
 			'rsvpemail-content',
 			array( 'label' => __( 'Email', 'rsvpmaker' ) )

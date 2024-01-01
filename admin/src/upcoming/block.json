@@ -67,7 +67,10 @@
         },
 	"version": "1",
 	"supports": {
-		"html": false
+		"html": false,
+        "color": {
+            "link": true
+        }
 	},
 	"textdomain": "rsvpmaker",
 	"editorScript": "file:./index.js",

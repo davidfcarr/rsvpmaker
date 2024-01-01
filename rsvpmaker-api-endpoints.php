@@ -1462,7 +1462,10 @@ if($check == $last) {
 	return;
 }
 set_transient('postmark_last_incoming',$check,time()+30);
-$data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
+if(empty($data->HtmlBody))
+	$data->HtmlBody = '<html><body>'.nl2br($data->TextBody).$origin.'</body></html>';
+else
+	$data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
 $mail['subject'] = $qpost['post_title'] = $data->Subject;
 $mail['html'] = $qpost['post_content'] = $data->HtmlBody;
 if(strpos($qpost['post_content'],'</head>'))

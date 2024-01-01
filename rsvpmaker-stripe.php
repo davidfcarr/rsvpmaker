@@ -819,27 +819,23 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 		$check                         = $wpdb->get_var( $sql );
 		// echo '<div>check: '.$sql.'<br />'.$check.'</div>';
 		if ( ! $check ) {
-			$sql = $wpdb->prepare(
-				"INSERT INTO $stripetable SET name=%s,email=%s,description=%s,amount=%s,fee=%s,date=%s,status='Stripe',transaction_id=%s, user_id=%d",
-				$name,
-				$email,
-				$description,
-				$amount,
-				$fee,
-				$date,
-				$data->id,
-				$user_id
-			);
-			// echo '<div>'.$sql.'</div>';
-			$wpdb->query( $sql );
+			$snv = array(
+				'name'=>$name,
+				'email'=>$email,
+				'description'=>$description,
+				'amount'=>$amount,
+				'fee'=>$fee,
+				'date'=>$date,
+				'status'=>'Stripe',
+				'transaction_id'=>$data->id, 
+				'user_id'=>$user_id);
+			$wpdb->insert($stripetable,$snv);
 		}
 		if ( $data->fee ) {
-
 			$fees[ $data->id ] = $fee;
 		}
 
 		if ( $data->reporting_category == 'refund' ) {
-
 			$refunds[ $data->id ] = array(
 				'amount' => $amount,
 				'date'   => $date,

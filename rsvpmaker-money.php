@@ -45,17 +45,16 @@ function rsvpmaker_money_tx($atts) {
     $fee = (isset($atts['fee'])) ? $atts['fee'] : '';
     $tracking_key = (isset($atts['tracking_key'])) ? $atts['tracking_key'] : '';
     $tracking_value = (isset($atts['tracking_value'])) ? $atts['tracking_value'] : '';
-    $sql = $wpdb->prepare("INSERT INTO $money_table	SET `name` = %s,
-    `email`  = %s,
-    `description`  = %s,
-    `date`  = %s,
-    `status`  = %s,
-    `transaction_id`  = %s,
-    `user_id`  = %s,
-    `metadata`  = %s,
-    `amount`  = %s,
-    `fee`  = %s,
-    `tracking_key` = %s,
-    `tracking_value` = %s",$name,$email,$description,$date,$status,$transaction_id,$user_id,$metadata,$amount,$fee,$tracking_key,$tracking_value);
-    $wpdb->query($sql);
+    $wpdb->insert($money_table,array('name'=>$name,
+    'email'  => $email,
+    'description'  => $description,
+    'date'  => $date,
+    'status'  => $status,
+    'transaction_id'  => $transaction_id,
+    'user_id'  => $user_id,
+    'metadata'  => $metadata,
+    'amount'  => $amount,
+    'fee'  => $fee,
+    'tracking_key' => $tracking_key,
+    'tracking_value' => $tracking_value));
 }

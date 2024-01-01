@@ -97,11 +97,14 @@ max-width: 70%
     height: 1.25em !important;
     display: inline-block !important;
 }
-
+#cpcalendar {
+    margin-left: auto;
+    margin-right: auto;
+}
 #cpcalendar td, #cpcalendar th {
     text-overflow: ellipsis;
     white-space: nowrap;
-	width: 10%;
+	width: 14%;
 	max-width: 40px;
 	overflow: hidden;
 	padding-right: 0;
@@ -109,9 +112,6 @@ max-width: 70%
 }
 #jumpform input {
 	width: 100px;
-}
-table#cpcalendar {
-width: 100%;
 }
 #cpcalendar th {
     font-size:small;

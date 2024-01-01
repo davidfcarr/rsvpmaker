@@ -46,11 +46,12 @@ function add_rsvpmaker_event($post_id,$date,$enddate='',$display_type='',$tz='')
 	}
 	if(!$tz)
 		$tz = get_option('timezone_string');
-	if($wpdb->get_var('SELECT event from '.$wpdb->prefix."rsvpmaker_event where event=$post_id"))
-		$sql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET ts_start=%d, ts_end=%d, date=%s, enddate=%s, display_type='', timezone=%s where event=%d",$ts_start,$ts_end,$date,$enddate,$tz,$post_id);
+	$values = array('ts_start' => $ts_start,'ts_end' => $ts_end, 'date' => $date, 'enddate' => $enddate, 'display_type' => '', 'timezone' => $timezone);
+
+	if($wpdb->get_var('SELECT event from '.$wpdb->prefix."rsvpmaker_event where event=$post_id") )
+		$wpdb->update($wpdb->prefix."rsvpmaker_event",$values,array('event' => $post_id));
 	else
-		$sql = $wpdb->prepare("INSERT INTO ".$wpdb->prefix."rsvpmaker_event SET event=%d, ts_start=%d, ts_end=%d, date=%s, enddate=%s, display_type='', timezone=%s ",$post_id,$ts_start,$ts_end,$date,$enddate,$tz);
-	$wpdb->query($sql);
+		$wpdb->insert($wpdb->prefix."rsvpmaker_event",$values);
 }
 
 add_action('save_post','add_rsvpmaker_new_event_defaults',12,3);
@@ -75,8 +76,8 @@ function add_rsvpmaker_new_event_defaults($post_id,$post,$is_update) {
 	$time = rsvpmaker_strtotime($tstring);
 	$endtime = $time + HOUR_IN_SECONDS;
 	$tz = get_option('timezone_string');
-	$sql = $wpdb->prepare("INSERT INTO ".$wpdb->prefix."rsvpmaker_event SET event=%d, ts_start=%d, ts_end=%d, date=%s, enddate=%s, display_type='', timezone=%s ",$post_id,$time,$endtime,rsvpmaker_date('Y-m-d H:i:s',$time),rsvpmaker_date('Y-m-d H:i:s',$endtime),$tz);
-	$wpdb->query($sql);
+	$nv = array('event'=>$post_id, 'ts_start'=>$time, 'ts_end'=>$endtime, 'date'=>rsvpmaker_date('Y-m-d H:i:s',$time), 'enddate'=>rsvpmaker_date('Y-m-d H:i:s',$endtime), 'display_type'=>'', 'timezone'=>$tz);
+	$wpdb->insert($wpdb->prefix."rsvpmaker_event",$nv);
 }
 else
 {
@@ -85,9 +86,8 @@ else
 	$time = rsvpmaker_strtotime($tstring);
 	$endtime = $time + HOUR_IN_SECONDS;
 	$tz = get_option('timezone_string');
-	$sql = $wpdb->prepare("INSERT INTO ".$wpdb->prefix."rsvpmaker_event SET event=%d, ts_start=%d, ts_end=%d, date=%s, enddate=%s, display_type='', timezone=%s ",$post_id,$time,$endtime,rsvpmaker_date('Y-m-d H:i:s',$time),rsvpmaker_date('Y-m-d H:i:s',$endtime),$tz);
-	
-	$wpdb->query($sql);
+	$nv = array('event'=>$post_id, 'ts_start'=>$time, 'ts_end'=>$endtime, 'date'=>rsvpmaker_date('Y-m-d H:i:s',$time), 'enddate'=>rsvpmaker_date('Y-m-d H:i:s',$endtime), 'display_type'=>'', 'timezone'=>$tz);
+	$wpdb->insert($wpdb->prefix."rsvpmaker_event",$nv);
 	rsvpmaker_defaults_for_post($post_id);	
 }
 }
@@ -158,11 +158,10 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 		$enddate = rsvpmaker_make_end_date ($date,$type,$end);
 	//printf('<p class="add_event_row">%s to %s</p>',$end,$enddate);
 	$ts_end = strtotime($enddate);
-	$sql = $wpdb->prepare("INSERT INTO $event_table SET display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s, event=%s",$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
 	if(empty($post_title))
 		$post_title = get_the_title($post_id);
-	$sql .= ", post_title='".addslashes($post_title)."'";
-	$wpdb->query($sql);
+	$nv = array('display_type'=>$type, 'date'=>$date, 'enddate'=>$enddate, 'ts_start'=>$ts_start, 'ts_end'=>$ts_end, 'timezone'=>$timezone, 'event'=>$post_id,'post_title'=>$post_title);	
+	$wpdb->insert($event_table,$nv);
 	return (object) array('event' => $post_id, 'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 }
 
@@ -187,11 +186,18 @@ function rsvpmaker_update_event_row ($post_id) {
 	$ts_start = rsvpmaker_strtotime($date);
 	$ts_end = rsvpmaker_strtotime($enddate);
 	$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$post_id" );
+	$nv = array(
+		'post_title'=> $post->post_title,
+		'display_type'=>$type, 
+		'date'=>$date, 
+		'enddate'=>$enddate, 
+		'ts_start'=>$ts_start, 
+		'ts_end'=>$ts_end, 
+		'timezone'=>$timezone);
 	if($event)
-		$sql = $wpdb->prepare("UPDATE $event_table SET post_title=%s, display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d ",$post->post_title,$type,$date,$enddate,$ts_start,$ts_end,$timezone,$post_id);
+		$wpdb->update($event_table,$nv,array('event'=>$post_id));
 	else
-		$sql = $wpdb->prepare("INSERT INTO $event_table SET post_title=%s, display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s, event=%d",$post->post_title,$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
-	$wpdb->query($sql);
+		$wpdb->insert($event_table,$nv);
 	return (object) array('event' => $post_id, 'post_title'=> $post->post_title,'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 }
 
@@ -3736,7 +3742,7 @@ function rsvpmail_add_problem($email,$code) {
 	$email = trim(strtolower($email));
 	$sql = $wpdb->prepare("SELECT code from $table where email=%s",$email);
 	if(! $wpdb->get_var($sql) )
-		$wpdb->query("INSERT INTO $table SET email='".$email."',code='".$code."' ");
+		$wpdb->insert($table,array('email'=>$email,'code'=>$code));
 	do_action('rsvpmail_add_problme',$email,$code);
 }
 
@@ -4457,3 +4463,5 @@ function rsvp_x_day_month($timestamp) {
 		$suffix = 'nd';
 	return $ofmonth.$suffix .' '.rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$timestamp);
 }
+
+

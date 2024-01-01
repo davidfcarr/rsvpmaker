@@ -1065,17 +1065,17 @@ function rsvpmaker_calendar( $atts = array() ) {
 	// $Id: cal.php,v 1.47 2003/12/31 13:04:27 goba Exp $
 	// Begin the calendar table
 
-	$content = '';
+	$content = '<h3 style="text-align: center">' . rsvpmaker_date( '<b>%B %Y</b>', $bom ) . '</h3>';
 
 	if ( ( $nav == 'top' ) || ( $nav == 'both' ) ) { // either it's top or both
 
 		$content .= '<div class="rsvpmaker_nav"><span class="navprev">' . $prev_link . '</span> ' . $current_link . ' <span class="navnext">' .
-
-		'' . $next_link . '</span></div>';
+		$next_link . '</span></div>';
 	}
 
 	$content .= '
-<table id="cpcalendar" style="background-color: #fff; color: #000; margin: 5px;" width="100%" cellspacing="0" cellpadding="3"><caption>' . rsvpmaker_date( '<b>%B %Y</b>', $bom ) . "</caption>\n" . '<tr>' . "\n";
+<div class="calendarwrapper" style="background-color: #fff; color: #000; margin-bottom: 5px; width: 95%; margin-left: auto; margin-right: auto;" >
+<table id="cpcalendar" style="width: 100%" cellspacing="0" cellpadding="3">' . "\n";
 
 	if ( isset( $atts['weekstart'] ) && ( $atts['weekstart'] == 'Monday' ) ) {
 		$content .= '<thead>
@@ -1230,7 +1230,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 	// jump form
 
 	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), $page_id );
-
+	$content .= '<div>';
 	$post = $post_backup;
 
 	return $content;
