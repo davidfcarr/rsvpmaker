@@ -1303,6 +1303,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			$guestof = (empty($rsvp['first'])) ? '' : $rsvp['first'] . ' ';
 			$guestof .=  (empty($rsvp['last'])) ? '' : $rsvp['last'];
+			$guestnv = array();
 
 			if ( isset( $_POST['guest']['first'] ) ) {
 

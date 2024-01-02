@@ -41,12 +41,12 @@ function add_rsvpmaker_event($post_id,$date,$enddate='',$display_type='',$tz='')
 		$ts_end = rsvpmaker_strtotime($enddate);
 	}
 	else {
-		$ts_end = $time + HOUR_IN_SECONDS;
+		$ts_end = $ts_start + HOUR_IN_SECONDS;
 		$enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end);
 	}
 	if(!$tz)
 		$tz = get_option('timezone_string');
-	$values = array('ts_start' => $ts_start,'ts_end' => $ts_end, 'date' => $date, 'enddate' => $enddate, 'display_type' => '', 'timezone' => $timezone);
+	$values = array('event' => $post_id, 'ts_start' => $ts_start,'ts_end' => $ts_end, 'date' => $date, 'enddate' => $enddate, 'display_type' => '', 'timezone' => $tz);
 
 	if($wpdb->get_var('SELECT event from '.$wpdb->prefix."rsvpmaker_event where event=$post_id") )
 		$wpdb->update($wpdb->prefix."rsvpmaker_event",$values,array('event' => $post_id));
