@@ -80,10 +80,11 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='
 	$ical[] = 'BEGIN:VEVENT';
 
 	$ical[] = 'DTSTAMP:' . $dtstamp;
-
+	if($from_email)
 	$ical[] = 'ORGANIZER;SENT-BY="MAILTO:' . $from_email . '":MAILTO:' . $from_email;
 	//$ical[] = 'ORGANIZER;CN=' . get_bloginfo('name') . '":MAILTO:' . $from_email;
 
+	if($rsvp_email)
 	$ical[] = 'ATTENDEE;CN=' . $rsvp_email . ';ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;' . 'RSVP=TRUE:mailto:' . $from_email;
 
 	$ical[] = 'UID:' . strtoupper( md5( $event_id ) ) . '@rsvpmaker.com';

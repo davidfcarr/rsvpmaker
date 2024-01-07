@@ -46,7 +46,7 @@ function add_rsvpmaker_event($post_id,$date,$enddate='',$display_type='',$tz='')
 	}
 	if(!$tz)
 		$tz = get_option('timezone_string');
-	$values = array('event' => $post_id, 'ts_start' => $ts_start,'ts_end' => $ts_end, 'date' => $date, 'enddate' => $enddate, 'display_type' => '', 'timezone' => $tz);
+	$values = array('event' => $post_id, 'post_title' => get_the_title($post_id), 'ts_start' => $ts_start,'ts_end' => $ts_end, 'date' => $date, 'enddate' => $enddate, 'display_type' => '', 'timezone' => $tz);
 
 	if($wpdb->get_var('SELECT event from '.$wpdb->prefix."rsvpmaker_event where event=$post_id") )
 		$wpdb->update($wpdb->prefix."rsvpmaker_event",$values,array('event' => $post_id));

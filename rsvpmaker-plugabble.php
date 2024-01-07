@@ -5408,9 +5408,9 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 		$template = get_template_sked( $t );
 
-		$weeks = $template['week'];
+		$weeks = empty($template['week']) ? 0 : $template['week'];
 
-		$dows = $template['dayofweek'];
+		$dows = empty($template['dayofweek']) ? 0 : $template['dayofweek'];
 
 		$hour = ( isset( $template['hour'] ) ) ? (int) $template['hour'] : 17;
 
@@ -5437,7 +5437,7 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 		$schedule = '';
 
-		if ( $weeks[0] == 0 ) {
+		if ( empty($weeks) || $weeks[0] == 0 ) {
 
 			$schedule = __( 'Schedule Varies', 'rsvpmaker' );
 
@@ -5466,9 +5466,9 @@ if ( ! function_exists( 'rsvp_template_checkboxes' ) ) {
 
 		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><a href="%s">%s</a></blockquote>', __( 'Template', 'rsvpmaker' ), esc_html( $post->post_title ), $schedule, admin_url( 'post.php?action=edit&post=' . $t ), __( 'Edit Template', 'rsvpmaker' ) );
 
-		$hour = (int) $template['hour'];
+		$hour = (empty($template['hour'])) ? 12 : (int) $template['hour'];
 
-		$minutes = $template['minutes'];
+		$minutes = empty($template['minutes']) ? '00' : $template['minutes'];
 
 		$his = ( $hour < 10 ) ? '0' . $hour : $hour;
 

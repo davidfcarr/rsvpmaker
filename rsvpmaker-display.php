@@ -1546,86 +1546,19 @@ function rsvpmaker_to_ical() {
 		return;
 	}
 
+
 	header( 'Content-type: text/calendar; charset=utf-8' );
 
 	header( 'Content-Disposition: attachment; filename=' . $post->post_name . '.ics' );
-
-	$event = get_rsvpmaker_event( $post->ID );
-	$datetime = $event->date;
-	$end_time = $event->enddate;
-
-	$ical_end = get_utc_ical( $datetime . ' +1 hour' );
-	$ical_end = get_utc_ical( $end_time );
-
-	$start = get_utc_ical( $datetime );
-
-	$hangout = get_post_meta( $post->ID, '_hangout', true );
-
-	$url = ( ! empty( $hangout ) ) ? $hangout : get_permalink( $post->ID );
-
-	$desc = '';
-
-	if ( ! empty( $hangout ) ) {
-
-		$desc = 'Google Hangout: ' . $hangout . ' ';
-	}
-
-	$desc .= 'Event info: ' . get_permalink( $post->ID );
-
-	$desc = rsvp_ical_split( 'DESCRIPTION:', esc_attr( $desc ) );
-
-	printf(
-		'BEGIN:VCALENDAR
-
-VERSION:2.0
-
-PRODID:-//hacksw/handcal//NONSGML v1.0//EN
-
-CALSCALE:GREGORIAN
-
-BEGIN:VEVENT
-
-DTEND:%s
-
-UID:%s
-
-DTSTAMP:%s
-
-DESCRIPTION:%s
-
-URL;VALUE=URI:%s
-
-SUMMARY:%s
-
-DTSTART:%s
-
-ORGANIZER;CN=%s:MAILTO:%s
-
-END:VEVENT
-
-END:VCALENDAR
-
-',
-		$ical_end,
-		$start . '-' . $post->ID . '@' . sanitize_text_field($_SERVER['SERVER_NAME']),
-		date( 'Ymd\THis\Z' ),
-		$desc,
-		$url,
-		$post->post_title,
-		$start,
-		get_bloginfo( 'name' ),
-		$rsvp_options['rsvp_to']
-	);
+	echo rsvpmaker_to_ical_email($post->ID);//call without email parameters to get core content
 	exit;
 }
 
 function rsvpmaker_to_gcal( $post, $datetime, $duration ) {
-
-	return sprintf( 'http://www.google.com/calendar/event?action=TEMPLATE&amp;text=%s&amp;dates=%s/%s&amp;details=%s&amp;location=&amp;trp=false&amp;sprop=%s&amp;sprop=name:%s', urlencode( $post->post_title ), get_utc_ical( $datetime ), get_utc_ical( $duration ), urlencode( get_bloginfo( 'name' ) . ' ' . get_permalink( $post->ID ) ), get_permalink( $post->ID ), urlencode( get_bloginfo( 'name' ) ) );
-
+	$venue_meta = get_post_meta( $post->ID, 'venue', true );
+	$venue = ( empty( $venue_meta ) ) ? 'See: ' . get_permalink( $post->ID ) : $venue_meta;
+	return sprintf( 'http://www.google.com/calendar/event?action=TEMPLATE&amp;text=%s&amp;dates=%s/%s&amp;details=%s&amp;location=%s&amp;trp=false&amp;sprop=%s&amp;sprop=name:%s', urlencode( $post->post_title ), get_utc_ical( $datetime ), get_utc_ical( $duration ), urlencode( get_bloginfo( 'name' ) . ' ' . get_permalink( $post->ID ) ), $venue, get_permalink( $post->ID ), urlencode( get_bloginfo( 'name' ) ) );
 }
-
-
 
 function get_utc_ical( $timestamp ) {
 

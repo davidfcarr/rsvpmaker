@@ -23,16 +23,9 @@ export default function Payment (props) {
     console.log(data.data.stripe);
     const [stripe,setStripe] = useState(data.data.stripe);
     const [paypal,setPaypal] = useState(data.data.paypal);
-    //const [paypalCs,setPaypalCs] = useState(data.data.paypal.client_secret);
-    //const [stripeSandboxPk,setStripeSandboxPk] = useState(data.data.stripe.sandbox_pk);
-    //const [stripeSandboxSk,setStripeSandboxSk] = useState(data.data.stripe.sandbox_sk);
-    //const [paypalSandboxCi,setPaypalSandboxCi] = useState(data.data.paypal.sandbox_client_id);
-    //const [paypalSandboxCs,setPaypalSandboxCs] = useState(data.data.paypal.sandbox_client_secret);
-    //const [stripeMode,setStripeMode] = useState(data.data.stripe.mode);
-    //const [paypalMode,setPaypalMode] = useState(data.data.paypal.sandbox ? 'sandbox': 'production');
-    //const [stripeNotify,setStripeNotify] = useState(data.data.stripe.notify);
     const [chosenGateway,setChosenGateway] = useState(data.data.chosen_gateway);
     const [currency,setCurrency] = useState(data.data.rsvp_options.paypal_currency);
+    const [minimum_payment,setMinimum] = useState((data.data.rsvp_options.minimum_payment) ? data.data.rsvp_options.minimum_payment : '5.00');
     const [currencyFormat,setCurrencyFormat] = useState(data.data.rsvp_options.currency_decimal+'|'+data.data.rsvp_options.currency_thousands);
     const cformats = [{'label':'1,000.00','value':'.|,'},{'label':'1.000,00','value':',|.'},{'label':'1 000,00','value':',| '}];
     const modeoptions = [{'label':'Production','value':'production'},{'label':'Sandbox','value':'sandbox'}];
@@ -41,6 +34,7 @@ export default function Payment (props) {
     <div className={(isSaving) ? "rsvptab-saving": ""}>
     <TextControl label="Currency" className="payment" value={currency} onChange={(value) => {setCurrency(value); addChange('paypal_currency',value);}} /> <p><a href="https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_currency_codes">(list of currency codes)</a></p>
     <SelectControl className="payment" label="Currency Format" value={currencyFormat} options={cformats} onChange={(value) => {setCurrencyFormat(value); const split = value.split('|'); addChange('currency_decimal',split[0]); addChange('currency_thousands',split[1]); } } />
+    <TextControl label="Minimum Transaction" className="payment" value={minimum_payment} onChange={(value) => {setMinimum(value); addChange('minimum_payment',value);}} />
 
     <h3>Stripe</h3>
     <div className="key-inputs">
