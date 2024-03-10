@@ -577,12 +577,12 @@ function rsvpmaker_time_format( $post_id, $end_time = false ) {
 	return $time;
 }
 
-function rsvpmaker_timestamp_to_time( $t, $add_tz = false ) {
+function rsvpmaker_timestamp_to_time( $t, $add_tz = false, $tz_string ) {
 	global $rsvp_options, $wpdb, $post;
 	if ( ! strpos( $rsvp_options['time_format'], 'T' ) && ( $add_tz || get_post_meta( $post->ID, '_add_timezone', true ) ) ) {
 		$rsvp_options['time_format'] .= ' T';
 	}
-	return rsvpmaker_date( $rsvp_options['time_format'], $t );
+	return rsvpmaker_date( $rsvp_options['time_format'], $t, $tz_string );
 }
 
 function rsvpmaker_date( $date_format = '', $t = 0, $tzstring = '') {
@@ -3750,7 +3750,7 @@ function rsvpmail_remove_problem($email) {
 	global $wpdb;
 	$table = $wpdb->prefix . "rsvpmailer_blocked";
 	$email = trim(strtolower($email));
-	$wpdb->query("DELETE from $table where email='".$email."' ");
+	$wpdb->query("DELETE from $table where email LIKE '".$email."' ");
 	do_action('rsvpmail_remove_problme',$email);
 }
 

@@ -1019,6 +1019,7 @@ function hosts_and_subs_test () {
 
 function rsvpmaker_get_hosts_and_subdomains() {
     global $wpdb, $hosts_and_subdomains;
+	$hostalias = [];
 	if(!empty($hosts_and_subdomains))
 		return $hosts_and_subdomains;
 	if(is_multisite()) {
@@ -1037,10 +1038,23 @@ function rsvpmaker_get_hosts_and_subdomains() {
 			if(strpos($site->domain,$basedomain)) {
 				$hosts_and_subdomains['subdomains'][$site->blog_id] = str_replace('.'.$basedomain,'',$site->domain);
 			}
-			else
+			else {
 	            $hosts_and_subdomains['hosts'][$site->blog_id] = $site->domain;
+				$parts = explode('.',$site->domain);
+				//if base is toastmost.org and domain is tragicomedy.org, then tragicomedy@toastmost.org should still be recognized
+				$hostalias[$site->blog_id] = $parts[0];
+			}
         }
         restore_current_blog();
+		if(sizeof($hostalias))
+		{	
+				//print_r($hostalias);
+			foreach($hostalias as $blog_id => $h) {
+				if(!in_array($h, $hosts_and_subdomains['subdomains'])) {
+					$hosts_and_subdomains['subdomains'][$blog_id] = $h;
+				}	
+			}
+		}
     return $hosts_and_subdomains;
 }
 
@@ -1088,7 +1102,6 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 	$eparts = explode('@',$email);
 	if(is_multisite()) {
 		$message_blog_id = array_search($eparts[1],$hosts_and_subdomains['hosts']);
-		printf('<p>%s %d %s</p>',$eparts[1],$message_blog_id,var_export($hosts_and_subdomains['hosts'],true));
 		if($message_blog_id) {
 			return array('slug' => $eparts[0],'blog_id' => $message_blog_id, 'forwarder' => $email);
 		}
@@ -1145,8 +1158,11 @@ function rsvpmail_email_to_parts($email) {
 	global $wpdb;
 	preg_match('/([^@-]+)-{0,1}(.*)@(.+)/',$email,$match);
 	if(is_multisite()) {
-		$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
-		$blog_id = $wpdb->get_var($sql);
+		$blog_id = get_blog_option(1,'old_email_subdomain_'.$match[1]);
+		if(!$blog_id) {
+			$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
+			$blog_id = $wpdb->get_var($sql);	
+		}
 		if($blog_id) {
 			$fkey = empty($match[2]) ? 'members' : $match[2];
 			return array('subdomain'=>$match[1],'fwdkey'=>$fkey,'domain'=>$match[3],'blog_id'=>$blog_id);
@@ -1157,7 +1173,13 @@ function rsvpmail_email_to_parts($email) {
 			$blog_id = $wpdb->get_var($sql);
 			if($blog_id)	
 				return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>$blog_id);
-		}
+			else {
+				$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=www.%s",$match[3]);
+				$blog_id = $wpdb->get_var($sql);
+				if($blog_id)	
+					return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>$blog_id);	
+			}
+			}
 		return false;
 	}
 	//not multisite
@@ -1263,6 +1285,7 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
     }
 	$admin_email = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'admin_email') : get_option('admin_option');
     $recipients[$subdomain.$join.'admin@'.$domain] = array($admin_email);
+	$recipients = apply_filters('rsvpmaker_consolidated_forwarders',$recipients, $blog_id);
 	return $recipients;
 }
 

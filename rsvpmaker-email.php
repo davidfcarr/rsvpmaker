@@ -1396,7 +1396,7 @@ $content = str_replace('*|CURRENT_YEAR|*',date('Y'),$content);
 if(isset($post->ID))
 $content = str_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
 $content = preg_replace('/<a .+FORWARD.+/','',$content);
-$content = preg_replace('/\*.+\*/','',$content); // not recognized, get rid of it.
+$content = preg_replace('/\*\|.+\|\*/','',$content); // not recognized, get rid of it.
 return $content;
 }
 
@@ -1845,11 +1845,27 @@ if(!empty($postvars)) {
 	$manage_network = current_user_can('manage_network');
 	$recipients = rsvpmaker_postvars_to_recipients($postvars);
 	$size = sizeof($recipients);
+	if($size > 20) {
+		$sample = implode(', ',array_slice($recipients, 0, 20)).' ... ';
+	}
+	else
+		$sample = implode(', ',$recipients);
 	if($size > 100 && empty($_POST['bigsend'])) {
 		//better get confirmation
 		$bigsend_prompt = '<div style="border: medium solid red; padding: 10px; margin-bottom: 20px;">';
-		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>Email broadcasts to more than 100 emails require confirmation (this list is %d). Do you wish to proceed?</p>',sizeof($recipients));
+		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>Email broadcasts to more than 100 emails require confirmation. This list is %d, including %s. Do you wish to proceed?</p>',$size,$sample);
 		$bigsend_prompt .= sprintf('<form id="confirmation" method="post" action="%s"><input type="hidden" name="bigsend" value="1"><button onclick="this.style=\'display:none;\';document.getElementById(\'status\').innerHTML=\'Sending ...\';">Confirm</button><div id="status"></div>',get_permalink());
+		$bigsend_prompt .= rsvpmaker_nonce('field');
+		$bigsend_prompt .= '</form>';
+		$bigsend_prompt .= '</div>';
+		$bigsend_prompt = apply_filters('rsvpmail_bigsend_prompt',$bigsend_prompt,get_current_blog_id(),$size);
+		echo $bigsend_prompt;
+	}
+	elseif($postvars["send_check"] && empty($_POST['send_confirmed'])) {
+		//better get confirmation
+		$bigsend_prompt = '<div style="border: medium solid red; padding: 10px; margin-bottom: 20px;">';
+		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>If confirmed, this email will be sent to %d recipients including %s. Do you wish to proceed?</p>',$size,$sample);
+		$bigsend_prompt .= sprintf('<form id="confirmation" method="post" action="%s"><input type="hidden" name="send_confirmed" value="1"><button onclick="this.style=\'display:none;\';document.getElementById(\'status\').innerHTML=\'Sending ...\';">Confirm</button><div id="status"></div>',get_permalink());
 		$bigsend_prompt .= rsvpmaker_nonce('field');
 		$bigsend_prompt .= '</form>';
 		$bigsend_prompt .= '</div>';
@@ -2068,6 +2084,7 @@ echo $events_dropdown;
 </div>
 </div><!--end more options -->
 </div><!--end nonchimp -->
+<div><input type="checkbox" name="send_check" value="1"> Prompt for list confirmation before sending</div>
 <p><input type="radio" name="send_when" value="now" <?php if(!isset($_GET['post_id'])) echo 'checked="checked"'; ?>> Send Now <input type="radio" name="send_when" <?php if(isset($_GET['post_id'])) echo 'checked="checked"'; ?> value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo rsvpmaker_date('Y-m-d'); ?>"> <input name="send_time" type="time" value="<?php echo rsvpmaker_date('H:i',strtotime('+1 hour')); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" > Advanced Scheduling </p>
 <?php 
 printf('<div id="cron_schedule_options" %s>',(isset($_GET['scheduling'])) ? '' : 'style="display:none"');
@@ -2618,9 +2635,15 @@ function unsubscribed_list () {
 global $wpdb;
 $table = $wpdb->prefix . "rsvpmailer_blocked";
 $action = admin_url('edit.php?post_type=rsvpemail&page=unsubscribed_list');
+$ignore = get_option('ignore_postmark_supressions');
+
 if(isset($_POST['remove']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	if(!$ignore)
+		$ignore = array();
 	foreach($_POST['remove'] as $email) {
 		rsvpmail_remove_problem($email);
+		if(rsvpmaker_postmark_is_live())
+			postmark_delete_supression($email);
 	}
 }
 
@@ -2649,8 +2672,10 @@ foreach($results as $row)
 {
 	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s</td></tr>',esc_attr($row->email),esc_html($row->email),$row->code);	
 }
-echo '</table><p><input type="submit" value="Submit"></p>'.rsvpmaker_nonce('return').'</form>';
 }
+
+if(is_array($ignore))
+	printf('<p>Ignoring postmark supressions for %s</p>',implode(', ',$ignore));
 
 printf('<h2>Add Email Addresses as Unsubscribed Or Blocked</h2><form method="post" action="%s">
 <p>
@@ -4980,9 +5005,9 @@ function get_rsvpmaker_email_segment($segment, $active = true) {
 	$table = rsvpmaker_guest_list_table();
 	$table_meta = $table.'_meta';
 	if($active)
-		$sql = "SELECT *, email as user_email, meta_value as segment FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE active=1 AND meta_value='$segment' ORDER BY last_name, first_name";
+		$sql = "SELECT $table.*, email as user_email, meta_value as segment, $table_meta.id as segment_id FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE active=1 AND meta_value='$segment' ORDER BY last_name, first_name";
 	else
-		$sql = "SELECT *, email as user_email, meta_value as segment FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE meta_value='$segment' ORDER BY last_name, first_name";
+		$sql = "SELECT $table.*, email as user_email, meta_value as segment, $table_meta.id as segment_id FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE meta_value='$segment' ORDER BY last_name, first_name";
 	return $wpdb->get_results($sql);
 }
 
@@ -5031,7 +5056,9 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		$sql = $wpdb->prepare("SELECT * from ".$table."_meta WHERE guest_id=%d AND meta_key='segment' AND meta_value=%s",$id,$segment);
 		$row = $wpdb->get_row($sql);
 		if(!$row) {
-			$wpdb->insert($table,array('guest_id'=>$id,'meta_key'=>'segment','meta_value'=>$segment));
+			$add = array('guest_id'=>$id,'meta_key'=>'segment','meta_value'=>$segment);
+			$wpdb->show_errors();
+			$wpdb->insert($table.'_meta',$add);
 		}
 	}
 
@@ -5128,7 +5155,7 @@ function rsvpmaker_guest_list() {
 		$segment = '';
 		if(isset($_POST['newsegment'])) {
 			$segment = sanitize_text_field($_POST['newsegment']);
-			$segmentindex = preg_replace('[^a-z0-9]','_',strtolower($segment));
+			$segmentindex = preg_replace('/[^a-z0-9]/',' ',trim(strtolower($segment)));
 			$segmentindex = trim($segmentindex);
 			if(!empty($segmentindex)) {
 				$segments[$segmentindex] = $segment;
@@ -5151,6 +5178,7 @@ function rsvpmaker_guest_list() {
 			}
 		}
 
+
 		if(isset($_POST['add_to_segment']) && !empty($_POST['segment'])) {
 			$segment = sanitize_text_field($_POST['segment']);
 			foreach($_POST['add_to_segment'] as $id) {
@@ -5158,6 +5186,15 @@ function rsvpmaker_guest_list() {
 				rsvpmaker_add_contact_segment(intval($id), $segment);
 			}
 		}
+
+		if(isset($_POST['unsegment'])) {
+			$metatable = $table.'_meta';
+			foreach($_POST['unsegment'] as $id => $segment) {
+				$sql = $wpdb->prepare("delete from $metatable where guest_id=%d AND meta_key='segment' AND meta_value=%s",$id,$segment);
+				$wpdb->query($sql);
+			}
+		}
+
 
 		if(isset($_POST['mailpoet'])) {
 			$segment = sanitize_text_field($_POST['segment']);
@@ -5263,11 +5300,25 @@ function rsvpmaker_guest_list() {
 		$search = (isset($_GET['s'])) ? sanitize_text_field($_GET['s']) : '';
 		if(isset($_GET['unconfirmed']))
 			$list = $wpdb->get_results("SELECT * from $table WHERE active=0");
+		elseif(isset($_GET['segment_list'])) {
+			$segment_list = sanitize_text_field($_GET['segment_list']);
+			$list = get_rsvpmaker_email_segment($segment_list);
+		}
 		else
 			$list = get_rsvpmaker_guest_list($start, 500, 0, $search);
 		printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><input type="hidden" name="page" value="rsvpmaker_guest_list"><input type="text" name="s"><button>Search</button> or <a href="%s&unconfirmed=1">show unconfirmed</a></form>',admin_url('edit.php'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'));
 		$nextprev = rsvpmaker_guestlist_nextprev($start);
-		echo "<p>$nextprev</p>";
+		echo "<p>$nextprev";
+		if($segments) {
+			echo '<br />View / Edit Segments: ';
+			$seg = [];
+			foreach($segments as $key => $segment)
+				$seg[] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&segment_list='.$key),$segment);
+			if(isset($_GET['segment_list']))
+				$seg[] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'),'All');
+			echo implode(' | ',$seg);
+		}
+		echo '</p>';
 		if(empty($list))
 			echo '<p>Empty</p>';
 		else {
@@ -5280,7 +5331,11 @@ function rsvpmaker_guest_list() {
 				$prompt = rsvpmail_is_problem($item->email) ? '<br><strong>Unsubscribed or Error</strong>' : '';
 				if(empty($prompt))
 					$prompt = ($item->active) ? '' : '<br><strong>Not confirmed.</strong> <input type="checkbox" name="resend[]" value="'.$item->id.'"> Resend confirmation prompt? <button>Submit</button>';
-				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit='.$item->id),$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$item->id);
+				$segment_remove = '';
+				if($segment_list && strpos($item->segment,$segment_list) !== false) {
+					$segment_remove = sprintf('<br><input type="checkbox" name="unsegment[%d]" value="%s" /> Remove from %s',$item->id,$segment_list,$segment_list);
+				}
+				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit='.$item->id),$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$segment_remove,$item->id);
 			}
 			echo '</table>';
 			rsvpmaker_nonce();
@@ -5320,6 +5375,7 @@ function rsvpmaker_email_textarea($segment = '') {
 
 function rsvpmaker_email_upload_to_array($segment = '') {
 	$csv_array  = array();
+
 	if ( ! empty( $_FILES['upload_file']['tmp_name'] ) ) {
 		$file = fopen( $_FILES['upload_file']['tmp_name'], 'r' );
 		if ( $file ) {
@@ -5332,6 +5388,7 @@ function rsvpmaker_email_upload_to_array($segment = '') {
 	}
 
 	if ( ! empty( $csv_array ) ) {
+		$segments = get_option('rsvpmail_segments');
 		foreach ( $csv_array as $linenumber => $cells ) {
 				$email = $cells[0];
 				if(rsvpmail_contains_email($email)) {
@@ -5339,6 +5396,14 @@ function rsvpmaker_email_upload_to_array($segment = '') {
 					$last_name = empty($cells[2]) ? '' : sanitize_text_field($cells[2]);
 					$active = (isset($cells[3])) ? intval($cells[3]) : 1;
 					$segment = (isset($cells[4])) ? sanitize_text_field($cells[4]) : '';
+					if($segment && empty($segments[$segment])) {//new segment or capitalized
+						$segment = preg_replace('/[^a-z0-9]/',' ',trim(strtolower($segment)));
+						if(empty($segments[$segment])) {
+							$segments[$segment] = ucwords($segment);
+							ksort($segments);
+							update_option('rsvpmail_segments',$segments);
+						}
+					}
 					rsvpmaker_guest_list_add($email, $first_name, $last_name,$segment,$active);
 				}
 		}
@@ -5682,7 +5747,7 @@ add_action( 'transition_post_status', 'rsvpmail_latest_posts_notification',10,3)
 
 function rsvpmail_replace_placeholders($content,$description='') {
 	$from_options = get_rsvpemail_from_settings();
-	$address = !empty($from_options['mailing_address']) ? $from_options['mailing_address'] : '<strong>NOT SET</strong>';
+	$address = !empty($from_options['mailing_address']) ? $from_options['mailing_address'] : '';
 	$company = !empty($from_options['company']) ? $from_options['company'] : get_bloginfo('name');
 	$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe=*|EMAIL|*&rmail=1'),$content);
 	$content = str_replace('*|REWARDS|*','',$content);

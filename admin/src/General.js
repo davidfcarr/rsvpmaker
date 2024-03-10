@@ -52,10 +52,9 @@ export default function General (props) {
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Login Required to Register" slug="login_required" />
     <p>Default Email for RSVP Notifications <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="rsvp_to" value={rsvp_options.rsvp_to} /></p>
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Email RSVPs To Event Author Instead" slug="rsvp_to_current" />
-    <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Simple Captcha on RSVP Form" slug="rsvp_captcha" />
-    <p><strong>Or use Google ReCaptcha (v2) </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a> for API key and secret
+    <p><strong>Form spam protection: Google ReCaptcha (v2) </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a> for API key and secret
     <br />Key <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="rsvp_recaptcha_site_key" /> Secret <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="rsvp_recaptcha_secret" /></p>    
-
+    <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Simple Captcha on RSVP Form (legacy version, not recommended)" slug="rsvp_captcha" />
     <h3>Instructions for RSVP Form</h3>
     <p>
     <OptTextArea addChange={addChange} rsvp_options={rsvp_options} slug="rsvp_instructions" />

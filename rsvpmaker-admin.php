@@ -732,16 +732,13 @@ if(!empty($options["default_content"])) {
 <br />
 <input type="checkbox" name="option[rsvp_on]" value="1" <?php if(isset($options["rsvp_on"]) && $options["rsvp_on"]) echo ' checked="checked" ';?> /> <strong><?php esc_html_e('RSVP On','rsvpmaker'); ?></strong>
 <?php esc_html_e('check to turn on by default','rsvpmaker'); ?>	<br />    
-
-<input type="checkbox" name="option[rsvp_captcha]" value="1" <?php if(isset($options["rsvp_captcha"]) && $options["rsvp_captcha"]) echo ' checked="checked" ';?> /> <strong><?php esc_html_e('RSVP CAPTCHA On','rsvpmaker'); ?></strong> <?php esc_html_e('check to turn on by default','rsvpmaker'); ?><br />
-<?php
-if(function_exists('rsvpmaker_recaptcha_output'))
-{
-?>
-<strong>Or use Google ReCaptcha (v2) </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a><br />
+<strong>Use Google ReCaptcha (v2) </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a><br />
 ReCaptcha (v2) Site Key: <input type="text" name="option[rsvp_recaptcha_site_key]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_site_key"]) echo esc_attr($options["rsvp_recaptcha_site_key"]);?>"><br />
 ReCaptcha (v2) Secret: <input type="text" name="option[rsvp_recaptcha_secret]" value="<?php if(isset($options["rsvp_recaptcha_site_key"]) && $options["rsvp_recaptcha_secret"]) echo esc_attr($options["rsvp_recaptcha_secret"]);?>"><br />
-<?php
+<?php if(isset($options["rsvp_captcha"]) && $options["rsvp_captcha"]) {
+	?>
+	<input type="checkbox" name="option[rsvp_captcha]" value="1" checked="checked" /> <strong><?php esc_html_e('Standalone legacy CAPTCHA, not recommended','rsvpmaker'); ?></strong> <?php esc_html_e('uncheck to deactivate','rsvpmaker'); ?><br />
+	<?php
 }
 ?>
 <input type="checkbox" name="option[login_required]" value="1" <?php if(isset($options["login_required"]) && $options["login_required"]) echo ' checked="checked" ';?> /> <strong><?php esc_html_e('Login Required to RSVP','rsvpmaker'); ?></strong> <?php esc_html_e('check to turn on by default','rsvpmaker'); ?>

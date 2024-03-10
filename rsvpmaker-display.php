@@ -819,6 +819,7 @@ function rsvpmaker_upcoming( $atts = array() ) {
 		$listings = str_replace( '><a', '> <a', $listings ); // todo preg replace
 
 	}
+
 	return $listings;
 }
 
@@ -907,6 +908,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$itemstyle = sprintf('color:%s;background-color:%s;font-size:%spx',$atts['itemcolor'],$atts['itembg'],$atts['itemfontsize']);
 
 	$date_format = ( isset( $atts['date_format'] ) ) ? $atts['date_format'] : $rsvp_options['short_date'];
+	$debug = '';
 
 	if ( isset( $atts['startday'] ) ) {
 
@@ -968,6 +970,17 @@ function rsvpmaker_calendar( $atts = array() ) {
 		while ( have_posts() ) :
 			the_post();
 
+			if(isset($_GET['debug'])) {
+				$post->post_content = '';
+				$debug .= var_export($post,true)."\n\n";
+				$checktime = rsvpmaker_strtotime($post->datetime);
+				if($checktime != $post->ts_start)
+					$debug .= "MISMATCH TIME $checktime != $post->ts_start \n\n";
+				else
+					$debug .= "$checktime == $post->ts_start \n\n";
+					
+			}
+
 			if ( ! empty( $atts['exclude_type'] ) ) {
 
 				$termscheck = array();
@@ -1003,13 +1016,18 @@ function rsvpmaker_calendar( $atts = array() ) {
 				$t += DAY_IN_SECONDS;
 			} while ($t < $post->ts_end);
 			if(1 == sizeof($keys)) {
-				$time = ( $duration_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $t );
-				if ( ( $duration_type == 'set' ) && ! empty( $end )  ) {
-					$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end ) );	
+				$time = ( $post->display_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $t, false, $post->timezone );
+				if ( ( $post->display_type == 'set' ) && ! empty( $end )  ) {
+					$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end, false, $post->timezone ) );	
 				}	
 			}
 			else 
-				$time = '<br>'.rsvpmaker_date($rsvp_options['short_date'],$post->ts_start) .' - '.rsvpmaker_date($rsvp_options['short_date'],$post->ts_end);
+				$time = '<br>'.rsvpmaker_date($rsvp_options['short_date'],$post->ts_start, $post->timezone) .' - '.rsvpmaker_date($rsvp_options['short_date'],$post->ts_end, $post->timezone);
+
+			if(isset($_GET['debug'])) {
+				$debug .= $time."\n\n";
+				$time .= $duration_type;
+			}
 
 			if ( isset( $_GET['debug'] ) ) {
 
@@ -1232,6 +1250,9 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), $page_id );
 	$content .= '<div>';
 	$post = $post_backup;
+
+	if(isset($_GET['debug']))
+		$content .= "<pre>$debug</pre>";
 
 	return $content;
 
@@ -1557,7 +1578,7 @@ function rsvpmaker_to_ical() {
 function rsvpmaker_to_gcal( $post, $datetime, $duration ) {
 	$venue_meta = get_post_meta( $post->ID, 'venue', true );
 	$venue = ( empty( $venue_meta ) ) ? 'See: ' . get_permalink( $post->ID ) : $venue_meta;
-	return sprintf( 'http://www.google.com/calendar/event?action=TEMPLATE&amp;text=%s&amp;dates=%s/%s&amp;details=%s&amp;location=%s&amp;trp=false&amp;sprop=%s&amp;sprop=name:%s', urlencode( $post->post_title ), get_utc_ical( $datetime ), get_utc_ical( $duration ), urlencode( get_bloginfo( 'name' ) . ' ' . get_permalink( $post->ID ) ), $venue, get_permalink( $post->ID ), urlencode( get_bloginfo( 'name' ) ) );
+	return sprintf( 'http://www.google.com/calendar/event?action=TEMPLATE&amp;text=%s&amp;dates=%s/%s&amp;details=%s&amp;location=%s&amp;trp=false&amp;sprop=%s&amp;sprop=name:%s', urlencode( $post->post_title ), get_utc_ical( $datetime ), get_utc_ical( $duration ), urlencode( get_bloginfo( 'name' ) . ' ' . get_permalink( $post->ID ) ), urlencode($venue), get_permalink( $post->ID ), urlencode( get_bloginfo( 'name' ) ) );
 }
 
 function get_utc_ical( $timestamp ) {
