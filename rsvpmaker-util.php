@@ -577,7 +577,7 @@ function rsvpmaker_time_format( $post_id, $end_time = false ) {
 	return $time;
 }
 
-function rsvpmaker_timestamp_to_time( $t, $add_tz = false, $tz_string ) {
+function rsvpmaker_timestamp_to_time( $t, $add_tz = false, $tz_string = '' ) {
 	global $rsvp_options, $wpdb, $post;
 	if ( ! strpos( $rsvp_options['time_format'], 'T' ) && ( $add_tz || get_post_meta( $post->ID, '_add_timezone', true ) ) ) {
 		$rsvp_options['time_format'] .= ' T';

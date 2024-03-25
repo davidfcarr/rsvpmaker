@@ -327,6 +327,26 @@ function rsvpemail_error_log($errors,$mail = array()) {
           // handle the options page
           function handle_options()
           {
+			if(isset($_POST["add_cap"])  && rsvpmaker_verify_nonce())
+			{
+				foreach($_POST["add_cap"] as $role => $type)
+					{
+						$role = sanitize_text_field($role);
+						if($type == 'publish')
+							add_rsvpemail_caps_role($role, true);
+						else
+							add_rsvpemail_caps_role($role);								
+					}
+			}
+
+		if(isset($_POST["remove_cap"]) && rsvpmaker_verify_nonce())
+			{
+				foreach($_POST["remove_cap"] as $role => $type)
+					{
+						remove_rsvpemail_caps_role(sanitize_text_field($role));								
+					}
+			}
+
 			if(isset($_POST['rsvpmailer_list_confirmation_message']) || isset($_POST['rsvpmail_list_rsvpmodal_css']) && rsvpmaker_verify_nonce()) {
 				update_option('rsvpmailer_list_confirmation_message',wp_kses_post(stripslashes($_POST['rsvpmailer_list_confirmation_message'])));
 				update_option('rsvpmail_list_rsvpmodal_on',isset($_POST['rsvpmail_list_rsvpmodal_on']));
@@ -351,26 +371,6 @@ function rsvpemail_error_log($errors,$mail = array()) {
 				  if(empty($_POST['chimp_add_new_users']))
 					 $options['chimp_add_new_users'] = false;
                   update_option($this->db_option, $options);
-
-				if(isset($_POST["add_cap"]))
-					{
-						foreach($_POST["add_cap"] as $role => $type)
-							{
-								$role = sanitize_text_field($role);
-								if($type == 'publish')
-									add_rsvpemail_caps_role($role, true);
-								else
-									add_rsvpemail_caps_role($role);								
-							}
-					}
-
-				if(isset($_POST["remove_cap"]))
-					{
-						foreach($_POST["remove_cap"] as $role => $type)
-							{
-								remove_rsvpemail_caps_role(sanitize_text_field($role));								
-							}
-					}
                   
                   echo '<div class="updated fade"><p>'.__('Plugin settings saved - mailing list.','rsvpmaker').'</p></div>';
               }
@@ -396,7 +396,18 @@ remove_script_host : false,
 </script>
 <div class="wrap" style="max-width:950px !important;">
 <?php rsvpmaker_admin_heading(__('RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
-<p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="#postmark_integration">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations. RSVPMaker also integrates with <a href="#mailchimp">Mailchimp</a>, provides limited support for <a href="#mailpoet">MailPoet</a>, and allows you to set <a href="#smtpetc">SMTP Mail Server options</a>.</p>
+<p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="#postmark_integration">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations.</p>
+<h3>Postmark Integration</h3>
+<?php
+if(!is_multisite() || current_user_can('manage_network') )
+	rsvpmaker_postmark_options();
+else {
+	if(rsvpmaker_postmark_is_live())
+		echo '<p>Postmark integration is active on this website, ensuring reliable email delivery.</p>';	
+	echo '<p>Postmark settings are controlled by the network administrator on WordPress multisite installations.</p>';
+}
+?>
+<!--  RSVPMaker also integrates with <a href="#mailchimp">Mailchimp</a>, provides limited support for <a href="#mailpoet">MailPoet</a>, and allows you to set <a href="#smtpetc">SMTP Mail Server options</a>. -->
 <form method="post" action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>">
 <?php
 rsvpemail_from_settings();
@@ -433,7 +444,7 @@ echo '<h2 id="theme_gradients">Gradients used in your theme</h2>';
 foreach($theme_gradients as $index => $color) {
 	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-gradient:%s"></div></div>',$index,$color,$color);
 }
-echo '</div></div>';
+//echo '</div>';
 ?>
 <h3>Add to Mailing List Checkbox for RSVP Forms</h3>
 <p>You can include an "Add me to your email list" checkbox on your RSVP forms to enlist people when they sign up for your events. This works with both MailChimp and MailPoet.</p>
@@ -453,172 +464,7 @@ $form = rsvpmail_signup_form();
 printf('<p>This snippet of code can be embedded in any external site from which you accept email list signups.</p><pre>%s</pre>',htmlentities($form));
 ?>
 </form>
-<div id="postmark_integration">
-<h3>Postmark Integration</h3>
-<?php
-if(!is_multisite() || current_user_can('manage_network') )
-	rsvpmaker_postmark_options();
-else {
-	if(rsvpmaker_postmark_is_live())
-		echo '<p>Postmark integration is active on this website, ensuring reliable email delivery.</p>';	
-	echo '<p>Postmark settings are controlled by the network administrator on WordPress multisite installations.</p>';
-}
-$options = get_option('chimp');
-?>
-</div>
-<h3 id="mailchimp">Mailchimp Integration</h3>
-<p><?php esc_html_e("These settings are related to integration with the MailChimp broadcast email service, as well as RSVPMaker's own functions for broadcasting email to website members or people who have registered for your events.",'rsvpmaker');?></p>			
-	<div id="poststuff" style="margin-top:10px;">
-	 <div id="mainblock" style="width:710px">
-	<div class="dbx-content">
-		 	<form name="EmailOptions" action="<?php echo esc_attr($action_url); ?>" method="post">
-			 <?php rsvpmaker_nonce(); ?>
-<input type="hidden" name="tab" value="email">
-					<input type="hidden" name="emailsubmitted" value="1" /> 
-					
-                    <p><?php esc_html_e('Email From','rsvpmaker');?>: 
-                      <input type="text" name="email-from" id="email-from" value="<?php if(isset($options["email-from"])) echo esc_attr($options["email-from"]); ?>" />
-                    </p>
-                    <p><?php esc_html_e('Email Name','rsvpmaker');?>: 
-                      <input type="text" name="email-name" id="email-name" value="<?php if(isset($options["email-name"])) echo esc_attr($options["email-name"]); ?>" />
-                    </p>
-                    <p><?php esc_html_e('MailChimp API-Key','rsvpmaker');?>: 
-                      <input type="text" name="chimp-key" id="chimp-key" value="<?php if(isset($options["chimp-key"])) echo esc_attr($options["chimp-key"]); ?>" />
-                    <br /><a target="_blank" href="http://kb.mailchimp.com/integrations/api-integrations/about-api-keys"><?php esc_html_e('Get an API key for MailChimp','rsvpmaker');?></a>
-                    </p>
-                    <p><?php
-					if(isset($options["chimp-key"])) {
-
-					esc_html_e('Default List','rsvpmaker');?>: 
-                      <select name="chimp-list" id="chimp-list" ><?php echo mailchimp_list_dropdown($options["chimp-key"], $options["chimp-list"]); ?></select>
-                    </p>
-                    <p><?php
-					}
-					esc_html_e('Attempt to Subscribe New WordPress user emails','rsvpmaker');?>: 
-                      <input type="checkbox" name="chimp_add_new_users" id="chimp_add_new_users" value="1" <?php echo (!empty($options["chimp_add_new_users"])) ? ' checked="checked" ' : ''; ?> />
-                    </p>
-                    <p><?php esc_html_e('Email to notify on API listSubscribe success/failure (optional)','rsvpmaker');?>: 
-                      <input type="text" name="add_notify" id="add_notify" value="<?php if(isset($options["add_notify"])) echo esc_attr($options["add_notify"]); ?>" />
-                    </p>
-
-                    <p><?php esc_html_e('Mailing Address','rsvpmaker');?>: 
-                      <input type="text" name="mailing_address" id="mailing_address" value="<?php if(isset($options["mailing_address"])) echo esc_attr($options["mailing_address"]); ?>" />
-                    </p>
-                    <p><?php esc_html_e('Company','rsvpmaker');?>: 
-                      <input type="text" name="company" id="company" value="<?php if(isset($options["company"])) echo esc_attr($options["company"]); ?>" />
-                    </p>
-<h3><?php esc_html_e('Who Can Publish and Send Email?','rsvpmaker');?></h3>
-<p><?php esc_html_e('By default, only the administrator has this right, but you can add it to other roles.','rsvpmaker');?></p>
-<?php $allroles = get_editable_roles(  ); 
-foreach($allroles as $slug => $properties)
-{
-if($slug == 'administrator')
-	continue;
-	echo esc_html($properties["name"]);
-	if(isset($properties["capabilities"]['publish_rsvpemails']))
-		printf(' %s <input type="checkbox" name="remove_cap[%s]" value="1" /> %s <br />',__('can publish and send broadcasts','rsvpmaker'),$slug,__('Remove','rsvpmaker'));
-	elseif(isset($properties["capabilities"]['edit_rsvpemails']))
-		printf(' %s <input type="checkbox" name="remove_cap[%s]" value="1" /> %s <br />',__('can edit draft emails','rsvpmaker'),$slug,__('Remove','rsvpmaker'));
-	else
-		printf(' %s <input type="radio" name="add_cap[%s]" value="edit" /> %s <input type="radio" name="add_cap[%s]" value="publish" /> %s <br />',__('grant right to','rsvpmaker'),$slug,__('Edit','rsvpmaker'),$slug,__('Publish and Send','rsvpmaker'));
-}
-submit_button();
-?>
-</form>
 <p>See also: <a target="_blank" href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>">Email Template</a></p>
-				
-	 </div>
-
-	</div>
-</div>
-
-<div id="mailpoet">
-<?php rsvpmaker_admin_heading('MailPoet Integration','mailpoet'); ?>
-<h2>MailPoet Integration</h2>
-<p>MailPoet is a WordPress plugin and web service for sending email newsletters and other mass email, with the permission of the recipients.</p>
-<p>You can add RSVPMaker events or event listings to the content of a MailPoet newsletter using a modified versions of the RSVPMaker Shortcodes (see the <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>">Content for Email</a> screen and the <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker Shortcodes Documentation</a>).</p>
-<?php
-	if (class_exists(\MailPoet\API\API::class)) {
-		$mailpoet_api = \MailPoet\API\API::MP('v1');
-		$lists = $mailpoet_api->getLists();
-		if(isset($_POST['rsvpmaker_mailpoet_list'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-		{
-			$listok = (int) $_POST['rsvpmaker_mailpoet_list'];
-			update_option('rsvpmaker_mailpoet_list',$listok);
-			echo '<div class="notice notice-success"><p>MailPoet List Set</p></div>';
-		}
-		else
-			$listok = get_option('rsvpmaker_mailpoet_list');
-		$o = '<option value="">Choose List</option>';
-		foreach($lists as $list) {
-			$s = ($list['id'] == $listok) ? ' selected="selected" ' : '';
-			$o .= sprintf('<option value="%d" %s>%s</option>',$list['id'], $s, $list['name']);
-		}
-	printf('<form method="post" action="%s"><p>List to use with "Add me to your email list" checkbox <select name="rsvpmaker_mailpoet_list">%s</select><button>Update</button></p>%s</form>',site_url(sanitize_text_field($_SERVER['REQUEST_URI'])),$o,rsvpmaker_nonce());
-	}
-	else
-		echo '<p>MailPoet not enabled</p>';
-?>
-
-<h2 id="smtpetc">Email Server Settings</h3>
-<form name="notify_options" action="<?php echo esc_attr($action_url);?>" method="post">
-<?php rsvpmaker_nonce(); ?>
-<?php do_action('rsvpmaker_email_settings'); ?>
-<p><?php esc_html_e('These settings are related to transactional emails, such as registration confirmation messages. If you are using the Postmark integration or another plugin that improves the delivery of other WordPress generated emails such as password resets, you may be able to leave these settings at their defaults.','rsvpmaker'); ?></p>
-
-<p>
-<?php esc_html_e('From Email Address for All Notifications','rsvpmaker'); ?><br />
-<input type="text" name="enotify_option[from_always]" value="<?php if(!empty($options["from_always"])) echo esc_attr($options["from_always"]); elseif(!empty($options["smtp_useremail"])) echo esc_attr($options["smtp_useremail"]);?>" size="15" />
-</p>
-<h3 id="smtp"><?php esc_html_e('SMTP for Notifications','rsvpmaker'); ?></h3>
-<p><?php esc_html_e('For more reliable delivery of email notifications, enable delivery through the SMTP email protocol. Standard server parameters will be used for Gmail and the SendGrid service, or specify the server port number and security protocol','rsvpmaker'); ?>.</p>
-<p><?php esc_html_e('If you are using another plugin that improves the delivery of email notifications, such one of the <a href="https://wordpress.org/plugins/sendgrid-email-delivery-simplified/">SendGrid plugin</a> (which uses the SendGrid API rather than SMTP), leave this set to "None - use wp_mail()."','rsvpmaker'); ?>.</p>
-  <select name="enotify_option[smtp]" id="smtp">
-  <option value="" <?php if(isset($options["smtp"]) && ($options["smtp"] == '' )) {echo ' selected="selected" ';}?> ><?php esc_html_e('None - use wp_mail()','rsvpmaker'); ?></option>
-  <option value="gmail" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'gmail')) {echo ' selected="selected" ';}?> >Gmail</option>
-  <option value="sendgrid" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'sendgrid')) {echo ' selected="selected" ';}?> >SendGrid (SMTP)</option>
-  <option value="other" <?php if(isset($options["smtp"]) && ($options["smtp"] == 'other')) {echo ' selected="selected" ';}?> ><?php esc_html_e('Other SMTP (specified below)','rsvpmaker'); ?></option>
-  </select>
-<br />
-<?php esc_html_e('Email Account for Notifications','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_useremail]" value="<?php if(isset($options["smtp_useremail"])) echo esc_attr($options["smtp_useremail"]);?>" size="15" />
-<br />
-<?php esc_html_e('Email Username','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_username]" value="<?php if(isset($options["smtp_username"])) echo esc_attr($options["smtp_username"]);?>" size="15" />
-<br />
-<?php esc_html_e('Email Password','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_password]" value="<?php if(isset($options["smtp_password"])) echo esc_attr($options["smtp_password"]);?>" size="15" />
-<br />
-<?php esc_html_e('Server (parameters below not necessary if you specified Gmail or SendGrid)','rsvpmaker'); ?><br />
-<input type="text" name="enotify_option[smtp_server]" value="<?php if(isset($options["smtp_server"])) echo esc_attr($options["smtp_server"]);?>" size="15" />
-<br />
-<?php esc_html_e('SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)','rsvpmaker'); ?> 
-<br />
-<input type="text" name="enotify_option[smtp_prefix]" value="<?php if(isset($options["smtp_prefix"])) echo esc_attr($options["smtp_prefix"]);?>" size="15" />
-<br />
-<?php esc_html_e('SMTP Port','rsvpmaker'); ?>
-<br />
-<input type="text" name="enotify_option[smtp_port]" value="<?php if(isset($options["smtp_port"])) echo esc_attr($options["smtp_port"]);?>" size="15" />
-<br />
-
-<p><?php echo _e('See <a href="http://www.wpsitecare.com/gmail-smtp-settings/">this article</a> for additional guidance on using Gmail (requires a tweak to security settings in your Google account). If you have trouble getting Gmail or ssl or tls connections to work, an unencrypted port 25 connection to an email account on the same server that hosts your website should be reasonably secure since no data will be passed over the network.','rsvpmaker');?></p>
-
-<?php 
-if(!empty($options["smtp"]))
-	{
-?>
-<a href="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php&smtptest=1'); ?>"><?php esc_html_e('Send SMTP Test to RSVP To address','rsvpmaker'); ?></a>
-<?php
-	}
-?>
-<input type="hidden" name="tab" value="email">
-
-<?php submit_button(); ?>
-</div>
-</form>
 
 <?php              
           }
@@ -672,7 +518,7 @@ $result = $MailChimp->post("lists/$listId/members", array(
 }
 
 function RSVPMaker_register_chimpmail($user_id) {
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp', array());
 //attempt to add people who register with website, if specified on user form
 if(empty($chimp_options["chimp_add_new_users"]))
 	return;
@@ -1002,7 +848,7 @@ foreach($conditions as $slug => $text)
 
 function RSVPMaker_draw_blastoptions() {
 global $post;
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp', array());
 if(empty($chimp_options["email-from"]))
 	{
 	printf('<p>%s: <a href="%s">%s</a></p>',__('You must fill in the RSVP Mailer settings before first use','rsvpmaker'),admin_url('options-general.php?page=rsvpmaker-email.php'),__('Settings','rsvpmaker'));
@@ -1378,7 +1224,7 @@ return $text;
 }
 
 function rsvpmaker_personalize_email($content,$to,$description = '', $post_id = 0) {
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp', array());
 if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] = apply_filters('rsvpmaker_mailing_address','[not set in RSVPMaker Mailing List settings]');
 global $post;
 if($post_id)
@@ -1432,7 +1278,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 
 	if(!empty($postvars["mailchimp"]) )
 	{
-	$chimp_options = get_option('chimp');
+	$chimp_options = get_option('chimp', array());
 	$MailChimp = new MailChimpRSVP($chimp_options["chimp-key"]);
 	$listID = sanitize_text_field($postvars["mailchimp_list"]);
 	update_post_meta($post_id, "_email_list",$listID);
@@ -1797,7 +1643,7 @@ wp_admin_bar_render();
 
 if(!empty($rsvpmaker_cron_context))
 	return;
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp', array());
 $from_options = get_rsvpemail_from_settings();
 
 $post_id = $post->ID;
@@ -2165,7 +2011,7 @@ $inchimp = '';
 if(isset($_POST["emails"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 	{
 
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp',array());
 
 $apikey = $chimp_options["chimp-key"];
 $listId = $chimp_options["chimp-list"];
@@ -2316,7 +2162,7 @@ if(!empty($alts)) {
 echo "</p>\n";
 rsvpmaker_nonce();
 global $rsvp_options;
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp',array());
 if(empty($chimp_options['mailing_address']))
 	printf('<p><strong>%s</strong></p>',__('A physical mailing address should be entered in in RSVPMaker Mailing List settings.','rsvpmaker'));
 ?>
@@ -3385,7 +3231,7 @@ else
 	rsvpmail_add_problem($e,'unsubscribed');
 	echo '<p>'.__('Unsubscribed <strong>'.$e.'</strong> from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
-	$chimp_options = get_option('chimp');
+	$chimp_options = get_option('chimp', array());
 	if(!empty($chimp_options) && !empty($chimp_options["chimp-key"]))
 	{
 	$apikey = $chimp_options["chimp-key"];
@@ -3570,7 +3416,7 @@ rsvpmaker_admin_page_bottom($hook);
 function get_rsvpmaker_notification_templates () {
 global $email_context;
 $email_context = true;
-$templates = get_option('rsvpmaker_notification_templates');
+$templates = get_option('rsvpmaker_notification_templates', array());
 //$template_forms represents the defaults
 $template_forms['notification'] = array('subject' => 'RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "Just signed up:\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>");
 $template_forms['confirmation'] = array('subject' => 'Confirming RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
@@ -3821,6 +3667,8 @@ function previewtest () {
 
 function check_mailchimp_email ($email) {
 $chimp_options = get_option('chimp');
+if(!$chimp_options)
+	return;
 $apikey = $chimp_options["chimp-key"];
 $listId = $chimp_options["chimp-list"];
 $email = trim(strtolower($email));
@@ -3941,7 +3789,7 @@ function event_title_link () {
 }
 
 function rsvpmaker_mailchimp_init() {
-$chimp_options = get_option('chimp');
+$chimp_options = get_option('chimp',array());
 if(empty($chimp_options["chimp-key"]))
 	return;
 $apikey = $chimp_options["chimp-key"];
@@ -6292,7 +6140,6 @@ if(isset($_POST['rsvpemail_from_settings']))
 }
 else
 	$from_options = get_rsvpemail_from_settings();
-print_r($from_options);
 esc_html_e("These apply to any of the supported email distriution methods.",'rsvpmaker');?></p>			
 <p><?php esc_html_e('Email or ReplyTo Address for Sender','rsvpmaker');?>:<br> 
 	<input type="text" name="rsvpemail_from_settings[email-from]" id="email-from" value="<?php if(isset($from_options["email-from"])) echo esc_attr($from_options["email-from"]); ?>" />

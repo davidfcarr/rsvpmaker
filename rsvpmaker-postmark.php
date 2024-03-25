@@ -328,7 +328,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     foreach($forwarders as $email) {
         add_post_meta(1,'forwarder_to_check',$email);
         $breakdown = rsvpmail_email_to_parts($email);
-        $testoutput .= "\n $email before filter\n";
+        $testoutput .= date('r')."\n $email before filter\n";
         $email = apply_filters('rsvpmail_email_match',$email,$from,$breakdown,$emailobj);
         $testoutput .= "\n $email after filter\n";
         $testoutput .= sprintf("%s to %s\n",$email, var_export($breakdown,true));

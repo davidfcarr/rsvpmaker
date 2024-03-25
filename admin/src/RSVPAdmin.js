@@ -36,7 +36,7 @@ export default function RSVPAdmin (props) {
                 return [].push(value);
             console.log('changeset start',ch);
             console.log('changeset new value',value);
-            const exists = ch.findIndex( (item) => item.key==key );
+            const exists = ch.findIndex( (item) => (item.key==key && item.type==type) );
             console.log('changeset exists test',exists);
             if(exists > -1)
                 ch[exists].value = value;
@@ -74,6 +74,11 @@ export default function RSVPAdmin (props) {
                     title: 'Forms',
                     className: 'nav-tab',
                 },
+                {
+                    name: 'email',
+                    title: 'Email',
+                    className: 'nav-tab',
+                },
             ] }
         >
             { ( tab ) => {
@@ -85,6 +90,8 @@ export default function RSVPAdmin (props) {
                     return <Payment  addChange={addChange} setChanges={setChanges} changes={changes} />
                 if('forms' == tab.name)
                     return <Forms form_id={props.form_id} addChange={addChange} setChanges={setChanges} changes={changes} />
+                if('email' == tab.name)
+                    return <Email addChange={addChange} setChanges={setChanges} changes={changes} />
                else
                 return <section><p>{ tab.title }</p></section>
         } }

@@ -5,12 +5,9 @@
 namespace Stripe\Radar;
 
 /**
- * Value list items allow you to add specific values to a given Radar value list,
- * which can then be used in rules.
+ * Value list items allow you to add specific values to a given Radar value list, which can then be used in rules.
  *
- * Related guide: <a
- * href="https://stripe.com/docs/radar/lists#managing-list-items">Managing List
- * Items</a>.
+ * Related guide: <a href="https://stripe.com/docs/radar/lists#managing-list-items">Managing list items</a>
  *
  * @property string $id Unique identifier for the object.
  * @property string $object String representing the object's type. Objects of the same type share the same value.
@@ -20,12 +17,12 @@ namespace Stripe\Radar;
  * @property string $value The value of the item.
  * @property string $value_list The identifier of the value list this item belongs to.
  */
-class ValueListItem extends \Stripe\ApiResource {
+class ValueListItem extends \Stripe\ApiResource
+{
+    const OBJECT_NAME = 'radar.value_list_item';
 
-	const OBJECT_NAME = 'radar.value_list_item';
-
-	use \Stripe\ApiOperations\All;
-	use \Stripe\ApiOperations\Create;
-	use \Stripe\ApiOperations\Delete;
-	use \Stripe\ApiOperations\Retrieve;
+    use \Stripe\ApiOperations\All;
+    use \Stripe\ApiOperations\Create;
+    use \Stripe\ApiOperations\Delete;
+    use \Stripe\ApiOperations\Retrieve;
 }

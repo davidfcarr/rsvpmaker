@@ -9,8 +9,8 @@ namespace Stripe;
  * created. These requirements can differ depending on the account's country. The
  * Country Specs API makes these rules available to your integration.
  *
- * You can also view the information from this API call as <a
- * href="/docs/connect/required-verification-information">an online guide</a>.
+ * You can also view the information from this API call as <a href="/docs/connect/required-verification-information">an online
+ * guide</a>.
  *
  * @property string $id Unique identifier for the object. Represented as the ISO country code for this country.
  * @property string $object String representing the object's type. Objects of the same type share the same value.
@@ -21,10 +21,10 @@ namespace Stripe;
  * @property string[] $supported_transfer_countries Countries that can accept transfers from the specified country.
  * @property \Stripe\StripeObject $verification_fields
  */
-class CountrySpec extends ApiResource {
+class CountrySpec extends ApiResource
+{
+    const OBJECT_NAME = 'country_spec';
 
-	const OBJECT_NAME = 'country_spec';
-
-	use ApiOperations\All;
-	use ApiOperations\Retrieve;
+    use ApiOperations\All;
+    use ApiOperations\Retrieve;
 }

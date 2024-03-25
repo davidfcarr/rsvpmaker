@@ -9,16 +9,17 @@ namespace Stripe\Service\Sigma;
  *
  * @property ScheduledQueryRunService $scheduledQueryRuns
  */
-class SigmaServiceFactory extends \Stripe\Service\AbstractServiceFactory {
+class SigmaServiceFactory extends \Stripe\Service\AbstractServiceFactory
+{
+    /**
+     * @var array<string, string>
+     */
+    private static $classMap = [
+        'scheduledQueryRuns' => ScheduledQueryRunService::class,
+    ];
 
-	/**
-	 * @var array<string, string>
-	 */
-	private static $classMap = array(
-		'scheduledQueryRuns' => ScheduledQueryRunService::class,
-	);
-
-	protected function getServiceClass( $name ) {
-		return \array_key_exists( $name, self::$classMap ) ? self::$classMap[ $name ] : null;
-	}
+    protected function getServiceClass($name)
+    {
+        return \array_key_exists($name, self::$classMap) ? self::$classMap[$name] : null;
+    }
 }

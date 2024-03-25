@@ -80,7 +80,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 	$scheduled_email = get_post_meta( $post->ID, 'scheduled_email', true );
 
-	$chimp_options = get_option( 'chimp' );
+	$chimp_options = get_option( 'chimp', array() );
 
 	if ( ! empty( $scheduled_email ) ) {
 

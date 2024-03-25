@@ -9,8 +9,7 @@ namespace Stripe;
  * individual top-ups, as well as list all top-ups. Top-ups are identified by a
  * unique, random ID.
  *
- * Related guide: <a href="https://stripe.com/docs/connect/top-ups">Topping Up your
- * Platform Account</a>.
+ * Related guide: <a href="https://stripe.com/docs/connect/top-ups">Topping up your platform account</a>
  *
  * @property string $id Unique identifier for the object.
  * @property string $object String representing the object's type. Objects of the same type share the same value.
@@ -24,39 +23,40 @@ namespace Stripe;
  * @property null|string $failure_message Message to user further explaining reason for top-up failure if available.
  * @property bool $livemode Has the value <code>true</code> if the object exists in live mode or the value <code>false</code> if the object exists in test mode.
  * @property \Stripe\StripeObject $metadata Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
- * @property \Stripe\Source $source <p><code>Source</code> objects allow you to accept a variety of payment methods. They represent a customer's payment instrument, and can be used with the Stripe API just like a <code>Card</code> object: once chargeable, they can be charged, or can be attached to customers.</p><p>Related guides: <a href="https://stripe.com/docs/sources">Sources API</a> and <a href="https://stripe.com/docs/sources/customers">Sources &amp; Customers</a>.</p>
+ * @property null|\Stripe\Source $source The source field is deprecated. It might not always be present in the API response.
  * @property null|string $statement_descriptor Extra information about a top-up. This will appear on your source's bank statement. It must contain at least one letter.
  * @property string $status The status of the top-up is either <code>canceled</code>, <code>failed</code>, <code>pending</code>, <code>reversed</code>, or <code>succeeded</code>.
  * @property null|string $transfer_group A string that identifies this top-up as part of a group.
  */
-class Topup extends ApiResource {
+class Topup extends ApiResource
+{
+    const OBJECT_NAME = 'topup';
 
-	const OBJECT_NAME = 'topup';
+    use ApiOperations\All;
+    use ApiOperations\Create;
+    use ApiOperations\Retrieve;
+    use ApiOperations\Update;
 
-	use ApiOperations\All;
-	use ApiOperations\Create;
-	use ApiOperations\Retrieve;
-	use ApiOperations\Update;
+    const STATUS_CANCELED = 'canceled';
+    const STATUS_FAILED = 'failed';
+    const STATUS_PENDING = 'pending';
+    const STATUS_REVERSED = 'reversed';
+    const STATUS_SUCCEEDED = 'succeeded';
 
-	const STATUS_CANCELED  = 'canceled';
-	const STATUS_FAILED    = 'failed';
-	const STATUS_PENDING   = 'pending';
-	const STATUS_REVERSED  = 'reversed';
-	const STATUS_SUCCEEDED = 'succeeded';
+    /**
+     * @param null|array $params
+     * @param null|array|string $opts
+     *
+     * @throws \Stripe\Exception\ApiErrorException if the request fails
+     *
+     * @return \Stripe\Topup the canceled topup
+     */
+    public function cancel($params = null, $opts = null)
+    {
+        $url = $this->instanceUrl() . '/cancel';
+        list($response, $opts) = $this->_request('post', $url, $params, $opts);
+        $this->refreshFrom($response, $opts);
 
-	/**
-	 * @param null|array        $params
-	 * @param null|array|string $opts
-	 *
-	 * @throws \Stripe\Exception\ApiErrorException if the request fails
-	 *
-	 * @return Topup the canceled topup
-	 */
-	public function cancel( $params = null, $opts = null ) {
-		$url                   = $this->instanceUrl() . '/cancel';
-		list($response, $opts) = $this->_request( 'post', $url, $params, $opts );
-		$this->refreshFrom( $response, $opts );
-
-		return $this;
-	}
+        return $this;
+    }
 }

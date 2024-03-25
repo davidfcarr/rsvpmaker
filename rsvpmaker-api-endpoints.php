@@ -1868,9 +1868,7 @@ class RSVPMaker_Form extends WP_REST_Controller {
 						$form_id = wp_insert_post($updated);
 						if($data->event_id)
 							update_post_meta($data->event_id,'_rsvp_form',$form_id);
-						$reusable = get_option('rsvpmaker_forms');
-						if(!is_array($reusable))
-							$reusable = array();
+						$reusable = get_option('rsvpmaker_forms', array());
 						$reusable[$form_id] = $updated['post_title'];
 						update_option('rsvpmaker_forms',$reusable);
 				}
@@ -1977,14 +1975,14 @@ class RSVP_Options_Json extends WP_REST_Controller {
 						}
 						elseif('rsvp_options' == $o->type)
 						{
-							$status[] = "rsvp option change $o->key $o->value";
+							$status[] = "rsvp option change $o->key"; // $o->value
 							$rsvp_options[$o->key] = sanitize_rsvpopt($o->value);
 							$changes++;
 						}
 						elseif('mergearray' == $o->type)
 						{
-							$p = get_option($o->key);
-							if(!$p)
+							$p = get_option($o->key, array());
+							if(empty($p) && (strpos($o->key,'stripe') || strpos($o->key,'paypal')))
 								$p = array('pk'=>'','sk'=>'','sandbox_pk'=>'','sandbox_sk'=>'');
 							$changes = (array) $o->value;
 							foreach($changes as $chkey => $change) {
@@ -1996,20 +1994,14 @@ class RSVP_Options_Json extends WP_REST_Controller {
 							update_option($o->key,$p);
 						}
 					}
-					//else
-						//$rsvp_options[$o->key] = $o->value;
 				}
 			}
-			//else
-				//$rsvp_options[$data->key] = $data->value;
 			if($changes)
 				update_option( 'RSVPMAKER_Options',$rsvp_options );
 			$response = array('changes'=>$changes,'actions'=>$actions,'data'=>$data,'status'=>$status);
 			return new WP_REST_Response( $response , 200 );	
 		}
 
-		//if(isset($_GET['tab']) && 'payment' == $_GET['tab'])
-		//{
 			$response['gateways'] = array();
 			$gateways = get_rsvpmaker_payment_options ();
 			foreach($gateways as $gateway)
@@ -2035,7 +2027,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 					$response['stripe']['pk'] = '';	
 					$response['stripe']['webhook'] = '';
 				}		
-				if(!empty($stripe['pk']) && !empty($stripe['sk'])) {
+				if(!empty($stripe['sandbox_pk']) && !empty($stripe['sandbox_sk'])) {
 					$response['stripe']['sandbox_sk'] = 'set';
 					$response['stripe']['sandbox_pk'] = 'set';	
 					$response['stripe']['sandbox_webhook'] = 'set';	
@@ -2046,6 +2038,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 					$response['stripe']['sandbox_webhook'] = '';	
 				}		
 				$response['stripe']['mode'] = (empty($stripe['mode'])) ? 'production' : $stripe['mode'];
+				$response['stripe']['notify'] = (empty($stripe['notify'])) ? '' : $stripe['notify'];
 			}
 			$pp = get_option('rsvpmaker_paypal_rest_keys');
 			if(!is_array($pp))
@@ -2080,9 +2073,25 @@ class RSVP_Options_Json extends WP_REST_Controller {
 				}
 				$response['paypal']['mode'] = ($pp['sandbox']) ? 'sandbox' : 'production';
 			}	
-		//}
 
 		$response['rsvp_options'] = $rsvp_options;
+		$email = get_option('admin_email');
+		$blogname = get_bloginfo('name');
+		// default values
+		$options = array(
+		'email-from' => $email
+		,'email-name' => $blogname
+		,'reply-to' => $email
+		,'chimp-key' => ''
+		,'chimp-list' => ''
+		,'mailing_address' => ''
+		,'chimp_add_new_users' => ''
+		,'company' => $blogname
+		,"add_notify" => $email
+		);
+		$response['chimp'] = get_option('chimp',$options);
+		$response['smtp_test'] = admin_url('options-general.php?page=rsvpmaker-admin.php&smtptest=1');
+		$response['mailing_list_settings'] = admin_url('options-general.php?page=rsvpmaker-admin.php');
 		$response['current_user_id'] = $current_user->ID;
 		$response['current_user_email'] = $current_user->user_email;
 		$response['edit_url'] = admin_url('post.php?action=edit&post=');
