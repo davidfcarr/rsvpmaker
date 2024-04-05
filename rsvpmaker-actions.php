@@ -39,9 +39,8 @@ add_action( 'current_screen', 'rsvp_print', 999 );
 add_action( 'export_wp', 'export_rsvpmaker' );
 add_action( 'import_end', 'import_rsvpmaker' );
 add_action( 'log_paypal', 'log_paypal' );
-add_action( 'loop_end', 'rsvpmaker_archive_loop_end' );
 add_action( 'manage_posts_extra_tablenav', 'rsvpmaker_sort_message' );
-add_action( 'pre_get_posts', 'rsvpmaker_archive_pages' );
+//add_action( 'pre_get_posts', 'rsvpmaker_archive_pages' );
 add_action( 'plugins_loaded', 'rsvpmaker_load_plugin_textdomain' );
 
 add_action( 'rsvp_daily_reminder_event', 'rsvp_daily_reminder' );

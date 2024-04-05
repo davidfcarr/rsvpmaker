@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "rsvpmaker/loop-excerpt",
+  "title": "RSVPMaker Query Loop Excerpt",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Displays Date/Time above and optional RSVP button below the excerpt",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "Excerpt"
+  ],
+  "attributes": {
+    "show_rsvp_button": {
+      "type": "boolean",
+      "default": false
+    },
+    "hide_excerpt": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "usesContext": [
+    "postId"
+  ],
+  "version": "1",
+  "supports": {
+    "html": false
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

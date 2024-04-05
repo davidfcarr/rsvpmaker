@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "rsvpmaker/calendar",
+  "title": "RSVPMaker Calendar",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Displays the calendar grid for RSVPMaker events",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "Excerpt"
+  ],
+  "attributes": {
+    "date_format": {
+      "type": "string",
+      "default": ""
+    },
+    "nav": {
+      "type": "string",
+      "default": "bottom"
+    },
+    "itembg": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "itemcolor": {
+      "type": "string",
+      "default": "#FFFFFF"
+    },
+    "itemfontsize": {
+      "type": "string",
+      "default": "x-small"
+    },
+    "type": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "1",
+  "supports": {
+    "html": false
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

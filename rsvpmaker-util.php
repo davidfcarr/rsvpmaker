@@ -2060,7 +2060,79 @@ function rsvpmaker_cleanup() {
 <h1>RSVPMaker Cleanup</h1>
 
 	<?php
+		$sites = get_sites();
+		foreach($sites as $site) {
+			$sql   = 'SELECT count(*) FROM ' . $wpdb->base_prefix.$site->blog_id . "_posts WHERE post_type='attachment' ";
+			$count = $wpdb->get_var($sql);
+			$sortable[$count] = $site->blog_id.':'.$site->domain;
+			printf('<h3>%d %s %d files</h3>',$site->blog_id,$site->domain,$count);
+		}
+		krsort($sortable);
+		foreach($sortable as $count => $item) {
+			if($count > 50)
+			printf('<p>%d %s</p>',$count,$item);
+		}
 
+if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && current_user_can('manage_network') && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+	if(isset($_POST['multisite_remove'])) {
+		$rows_removed = 0;
+		foreach($_POST['multisite_remove'] as $item) {
+			$parts = explode(':',$item);
+			$sql = "SELECT ID FROM ".$wpdb->base_prefix.$parts[0].'_posts WHERE ID='.$parts[1];
+			if($wpdb->get_var($sql)) {
+				$sql = "DELETE FROM ".$wpdb->base_prefix.$parts[0].'_posts WHERE ID='.$parts[1];
+				$r = $wpdb->query($sql);
+				$rows_removed++;	
+			}
+			$sql = "SELECT count(*) FROM ".$wpdb->base_prefix.$parts[0].'_postmeta WHERE post_id='.$parts[1];
+			$meta_count = $wpdb->get_var($sql);
+			if($meta_count) {
+				$rows_removed += $meta_count;
+				$sql = "DELETE FROM ".$wpdb->base_prefix.$parts[0].'_postmeta WHERE post_id='.$parts[1];
+				$r = $wpdb->query($sql);	
+			}
+		}
+		printf('<p>Rows removed: %d </p>',$rows_removed);
+	}
+	else {
+		$older = sanitize_text_field($_POST['older_than']);
+		$regex = '/^\d{4}-\d{2}-\d{2}$/';
+		if ( ! preg_match( $regex, $older ) ) {
+			die( 'invalid date' );
+		}
+			?>
+		<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+		
+		<input type="hidden" name="confirm_network_delete" value="1" />
+		
+					<?php submit_button( 'Confirm Delete' ); ?>
+		<?php
+		rsvpmaker_nonce();
+		$sites = get_sites();
+		foreach($sites as $site) {
+			printf('<h3>%d %s</h3>',$site->blog_id,$site->domain);
+			/*
+			if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+				$wpdb->query( 'DELETE FROM ' . $wpdb->base_prefix . "rsvpmaker WHERE timestamp < '$older' " );
+				printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', $older );
+			} else {
+			*/
+				$sql   = 'SELECT * FROM ' . $wpdb->base_prefix.$site->blog_id . "_rsvpmaker_event WHERE date < '$older' ";
+				echo $sql;
+				$results = $wpdb->get_results( $sql );
+				printf( '<p style="color: red;">%d RSVP events older than %s </p>', sizeof($results), esc_html( $older ) );
+				echo '<p>';
+				foreach($results as $event)
+					printf('<input type="hidden" name="multisite_remove[]" value="%d:%d" /> ',$site->blog_id,$event->event);
+				echo '</p>';
+					//}		
+		}
+	?>
+	</form>
+	<?php			
+	}
+}
 
 if ( isset( $_POST['rsvpmaker_database_check'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 	cpevent_activate();
@@ -2237,8 +2309,13 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 <form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
 <?php rsvpmaker_nonce();
 esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
+<?php 
 
-		<?php submit_button( 'Delete' ); ?>
+if(is_multisite() && current_user_can('manage_network')) {
+	printf('<p><input type="checkbox" name="multisite_clean" value="1"> Apply to all sites in multisite network.</p>');
+}
+
+submit_button( 'Delete' ); ?>
 
 </form>
 

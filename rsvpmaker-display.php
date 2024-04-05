@@ -245,9 +245,15 @@ function get_next_events_link( $label = '', $no_events = '' ) {
 }
 
 
+add_filter('posts_fields','rsvpmaker_select',99,2);
+add_filter('posts_distinct','rsvpmaker_distinct',99,2);
+add_filter('posts_join','rsvpmaker_join',99,2);
+add_filter('posts_where','rsvpmaker_where',99,2);
+add_filter('posts_orderby','rsvpmaker_orderby',99,2);
 
-function rsvpmaker_select( $select ) {
-
+function rsvpmaker_select( $select, $query = null ) {
+	if(!is_rsvpmaker_query($query))
+		return $select;
 	global $wpdb;
 
 	$select .= ", ID as postID, rsvpdates.date as datetime, date_format(rsvpdates.date,'%M %e, %Y') as date, rsvpdates.enddate, rsvpdates.display_type, rsvpdates.ts_start, rsvpdates.ts_end, rsvpdates.timezone";
@@ -256,22 +262,27 @@ function rsvpmaker_select( $select ) {
 
 }
 
-function rsvpmaker_join( $join ) {
+function is_rsvpmaker_query($query) {
+	return ( strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker'));
+}
 
-	global $wpdb;
-
-	if ( strpos( $join, 'rsvpdates' ) ) {
-
-		return $join; // don't add twice
+function rsvpmaker_join( $join, $query = null ) {
+	if( is_rsvpmaker_query($query) )
+	{
+		global $wpdb;
+		if ( strpos( $join, 'rsvpdates' ) ) {
+			return $join; // don't add twice
+		}
+		$join .= ' JOIN ' . $wpdb->prefix . "rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";	
 	}
-
-	return $join . ' JOIN ' . $wpdb->prefix . "rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";
-
+	return $join;
 }
 
 
 
-function rsvpmaker_groupby( $groupby ) {
+function rsvpmaker_groupby( $groupby, $query = null) {
+	if(!is_rsvpmaker_query($query))
+		return $groupby;
 
 	global $wpdb;
 
@@ -281,25 +292,28 @@ function rsvpmaker_groupby( $groupby ) {
 
 
 
-function rsvpmaker_distinct( $distinct ) {
+function rsvpmaker_distinct( $distinct, $query = null ) {
+	if(!is_rsvpmaker_query($query))
+		return $distinct;
 
 	return 'DISTINCT';
 
 }
 
-
-
 function rsvpmaker_where_schedule( $where ) {
-
 	$where .= " AND rsvpdates.date > CURDATE( ) AND post_content NOT LIKE '%rsvpmaker/schedule%' ";
-
 	return $where;
-
 }
 
+function rsvpmaker_where( $where, $query = null ) {
+	if(!is_rsvpmaker_query($query))
+		return $where;
+	global $rsvpmaker_atts;
 
-
-function rsvpmaker_where( $where ) {
+	if ( (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"]) || (isset( $rsvpmaker_atts['past'] ) && $rsvpmaker_atts['past']) )
+		return rsvpmaker_where_past($where);
+	if ( isset( $rsvpmaker_atts['afternow'] ) && $rsvpmaker_atts['afternow'] )
+		return rsvpmaker_where_afternow($where);		
 
 	global $startday;
 	global $datelimit;
@@ -374,13 +388,13 @@ function rsvpmaker_where_afternow( $where ) {
 
 
 
-function rsvpmaker_orderby( $orderby ) {
-
-	return ' rsvpdates.date';
-
+function rsvpmaker_orderby( $orderby, $query = NULL ) {
+	if(!is_rsvpmaker_query($query))
+		return $orderby;
+	global $rsvpmaker_atts;
+	$order = (!empty($rsvpmaker_atts['past']) || (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"])) ? 'DESC' : 'ASC';
+	return ' rsvpdates.date '.$order;
 }
-
-
 
 // if listing past dates
 
@@ -420,11 +434,11 @@ function rsvpmaker_orderby_past( $orderby ) {
 
 }
 
-
-
 function rsvpmaker_upcoming_query( $atts = array() ) {
 
-	global $wpdb, $dataloop;
+	global $wpdb, $dataloop, $rsvpmaker_upcoming_loop, $rsvpmaker_atts;
+	$rsvpmaker_atts = $atts;
+	$rsvpmaker_upcoming_loop = true;
 
 	if ( isset( $_GET['debug_query'] ) ) {
 
@@ -450,40 +464,12 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 	} else {
 		$datelimit = '180 DAY';
 	}
-
+	
 	$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 
-	add_filter( 'posts_join', 'rsvpmaker_join' );
-
-	add_filter( 'posts_groupby', 'rsvpmaker_groupby' );
-
-	add_filter( 'posts_distinct', 'rsvpmaker_distinct' );
-
-	add_filter( 'posts_fields', 'rsvpmaker_select' );
-
-	if ( isset( $atts['past'] ) && $atts['past'] ) {
-
-		add_filter( 'posts_where', 'rsvpmaker_where_past' );
-
-		add_filter( 'posts_orderby', 'rsvpmaker_orderby_past' );
-
-	} elseif ( isset( $atts['afternow'] ) ) {
-
-		add_filter( 'posts_where', 'rsvpmaker_where_afternow' );
-
-		add_filter( 'posts_orderby', 'rsvpmaker_orderby' );
-
-	} else {
-
-		add_filter( 'posts_where', 'rsvpmaker_where' );
-
-		add_filter( 'posts_orderby', 'rsvpmaker_orderby' );
-
-		if ( $paged == 1 ) {
-			cache_rsvp_dates( $limit + 20 );
-		}
+	if ( $paged == 1 ) {
+		cache_rsvp_dates( $limit + 20 );
 	}
-
 
 	$queryarg = array(
 		'post_type'   => 'rsvpmaker',
@@ -546,28 +532,7 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 	//add_filter('posts_request','rsvpmaker_modify_query');
 	$wp_query = new WP_Query( $queryarg );
 
-	// clean up so this doesn't interfere with other operations
-
-	remove_filter( 'posts_join', 'rsvpmaker_join' );
-
-	remove_filter( 'posts_groupby', 'rsvpmaker_groupby' );
-
-	remove_filter( 'posts_distinct', 'rsvpmaker_distinct' );
-
-	remove_filter( 'posts_fields', 'rsvpmaker_select' );
-
-	remove_filter( 'posts_where', 'rsvpmaker_where_past' );
-
-	remove_filter( 'posts_orderby', 'rsvpmaker_orderby_past' );
-
-	remove_filter( 'posts_where', 'rsvpmaker_where_afternow' );
-
-	remove_filter( 'posts_where', 'rsvpmaker_where' );
-
-	remove_filter( 'posts_orderby', 'rsvpmaker_orderby' );
-
 	return $wp_query;
-
 }
 
 function rsvpmaker_upcoming( $atts = array() ) {
@@ -885,7 +850,8 @@ function rsvpmaker_item_class( $post_id, $post_title ) {
 }
 
 function rsvpmaker_calendar( $atts = array() ) {
-	if ( is_admin() || wp_is_json_request() ) {
+	
+	if (empty($atts['calendar_block']) && ( is_admin() || wp_is_json_request() )) {
 		return;
 	}
 
@@ -924,12 +890,9 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	// removing groupby, which interferes with display of multi-day events
 
-	add_filter( 'posts_join', 'rsvpmaker_join' );
-	add_filter( 'posts_where', 'rsvpmaker_calendar_where', 99 );
-	add_filter( 'posts_orderby', 'rsvpmaker_orderby' );
+	add_filter( 'posts_where', 'rsvpmaker_calendar_where', 101, 2 );
 	add_filter( 'posts_groupby', 'rsvpmaker_calendar_clear' );
 	add_filter( 'posts_distinct', 'rsvpmaker_calendar_clear' );
-	add_filter( 'posts_fields', 'rsvpmaker_select' );
 
 	$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 
@@ -950,19 +913,10 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	$wp_query = new WP_Query( $querystring );
 
+	$testquery = $wp_query;
 	// clean up so this doesn't interfere with other operations
 
-	remove_filter( 'posts_join', 'rsvpmaker_join' );
-
-	remove_filter( 'posts_where', 'rsvpmaker_calendar_where', 99 );
-
-	remove_filter( 'posts_orderby', 'rsvpmaker_orderby' );
-
-	remove_filter( 'posts_groupby', 'rsvpmaker_calendar_clear' );
-
-	remove_filter( 'posts_distinct', 'rsvpmaker_calendar_clear' );
-
-	remove_filter( 'posts_fields', 'rsvpmaker_select' );
+	remove_filter( 'posts_where', 'rsvpmaker_calendar_where', 101, 2 );
 
 	$eventarray = array();
 
@@ -1627,8 +1581,6 @@ function rsvpmaker_type_dateorder( $sql ) {
 
 }
 
-
-
 function rsvpmaker_archive_pages( $query ) {
 
 	if ( is_admin() || wp_is_json_request() ) {
@@ -1638,17 +1590,17 @@ function rsvpmaker_archive_pages( $query ) {
 
 	if ( is_archive() && $query->is_main_query() && isset( $query->query['post_type'] ) && ( $query->query['post_type'] == 'rsvpmaker' ) ) {
 
-		add_filter( 'posts_join', 'rsvpmaker_join' );
+		add_filter( 'posts_join', 'rsvpmaker_join', 99, 2 );
 
-		add_filter( 'posts_groupby', 'rsvpmaker_groupby' );
+		add_filter( 'posts_groupby', 'rsvpmaker_groupby', 99, 2 );
 
-		add_filter( 'posts_distinct', 'rsvpmaker_distinct' );
+		add_filter( 'posts_distinct', 'rsvpmaker_distinct', 99, 2 );
 
-		add_filter( 'posts_fields', 'rsvpmaker_select' );
+		add_filter( 'posts_fields', 'rsvpmaker_select', 99, 2 );
 
-		add_filter( 'posts_where', 'rsvpmaker_where' );
+		add_filter( 'posts_where', 'rsvpmaker_where', 99, 2 );
 
-		add_filter( 'posts_orderby', 'rsvpmaker_orderby' );
+		add_filter( 'posts_orderby', 'rsvpmaker_orderby', 99, 2 );
 
 		if ( isset( $_GET['debug_query'] ) ) {
 
@@ -1658,17 +1610,17 @@ function rsvpmaker_archive_pages( $query ) {
 
 	if ( is_archive() && $query->is_main_query() && ! empty( $query->query['rsvpmaker-type'] ) ) {
 
-		add_filter( 'posts_join', 'rsvpmaker_join' );
+		add_filter( 'posts_join', 'rsvpmaker_join', 99, 2 );
 
-		add_filter( 'posts_groupby', 'rsvpmaker_groupby' );
+		add_filter( 'posts_groupby', 'rsvpmaker_groupby', 99, 2 );
 
-		add_filter( 'posts_distinct', 'rsvpmaker_distinct' );
+		add_filter( 'posts_distinct', 'rsvpmaker_distinct', 99, 2 );
 
-		add_filter( 'posts_fields', 'rsvpmaker_select' );
+		add_filter( 'posts_fields', 'rsvpmaker_select', 99, 2 );
 
-		add_filter( 'posts_where', 'rsvpmaker_where' );
+		add_filter( 'posts_where', 'rsvpmaker_where', 99, 2 );
 
-		add_filter( 'posts_orderby', 'rsvpmaker_orderby' );
+		add_filter( 'posts_orderby', 'rsvpmaker_orderby', 99, 2 );
 
 		if ( isset( $_GET['debug_query'] ) ) {
 
@@ -1678,20 +1630,21 @@ function rsvpmaker_archive_pages( $query ) {
 
 	if(is_archive() && !$query->is_main_query() ) {
 
-		remove_filter( 'posts_join', 'rsvpmaker_join' );
+		remove_filter( 'posts_join', 'rsvpmaker_join', 99, 2 );
 
-		remove_filter( 'posts_groupby', 'rsvpmaker_groupby' );
+		remove_filter( 'posts_groupby', 'rsvpmaker_groupby', 99, 2 );
 
-		remove_filter( 'posts_distinct', 'rsvpmaker_distinct' );
+		remove_filter( 'posts_distinct', 'rsvpmaker_distinct', 99, 2 );
 
-		remove_filter( 'posts_fields', 'rsvpmaker_select' );
+		remove_filter( 'posts_fields', 'rsvpmaker_select', 99, 2 );
 
-		remove_filter( 'posts_where', 'rsvpmaker_where' );
+		remove_filter( 'posts_where', 'rsvpmaker_where', 99, 2 );
 
-		remove_filter( 'posts_orderby', 'rsvpmaker_orderby' );
+		remove_filter( 'posts_orderby', 'rsvpmaker_orderby', 99, 2 );
 	}
 
 }
+
 
 function get_rsvpmaker_archive_link( $page = 1 ) {
 
@@ -2127,31 +2080,6 @@ function rsvpmaker_replay_form( $event_id ) {
 
 	<?php
 	return ob_get_clean();
-}
-
-function rsvpmaker_archive_loop_end() {
-
-	global $wp_query;
-
-	global $rsvpwidget;
-
-	global $dataloop;
-
-	if ( ! empty( $dataloop ) ) {
-
-		return;// don't do this for rsvpmaker_upcoming_data
-	}
-
-	if ( ! empty( $rsvpwidget ) || empty( $wp_query->query['post_type'] ) ) {
-
-		return;
-	}
-
-	if ( is_archive() && ( $wp_query->query['post_type'] == 'rsvpmaker' ) ) {
-		?>
-<div class="navigation"><p><?php posts_nav_link( ' | ', '&laquo; ' . __( 'Previous Events', 'rsvpmaker' ), __( 'More Events', 'rsvpmaker' ) . ' &raquo;' ); ?></p></div>
-		<?php
-	}
 }
 
 // keep jetpack from messing up
@@ -2994,4 +2922,19 @@ function rsvpmaker_404_message ($args) {
 
 add_action('pre_get_search_form','rsvpmaker_404_message');
 
-?>
+add_shortcode('rsvpmaker_loop_excerpt','rsvpmaker_loop_excerpt');
+
+function rsvpmaker_loop_excerpt($atts) {
+	global $post;
+	$parts = explode('</p>',$post->post_content);
+	$excerpt = trim(strip_tags($parts[0]));
+	return $excerpt;
+}
+
+/*
+add_filter('edit_post_excerpt','rsvpmaker_edit_excerpt');
+
+function rsvpmaker_edit_post_excerpt($excerpt) {
+	return '--'.$excerpt;
+}
+*/

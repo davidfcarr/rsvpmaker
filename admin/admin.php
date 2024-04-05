@@ -18,6 +18,8 @@ include 'init.php';
 function create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build' );
 	register_block_type( __DIR__ . '/build/upcoming' );
+	register_block_type( __DIR__ . '/build/loop_excerpt_block' );
+	register_block_type( __DIR__ . '/build/calendar' );
 }
 add_action( 'init', 'create_block_admin_block_init' );
 

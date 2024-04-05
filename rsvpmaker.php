@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 10.8.6
+* Version: 10.8.7
 */
 
 function get_rsvpversion() {
-	return '10.8.6';
+	return '10.8.7';
 }
 
 global $wp_version;
@@ -99,11 +99,11 @@ function rsvp_options_defaults() {
 
 		'defaultmin'                        => 0,
 
-		'long_date'                         => '%A %B %e, %Y',
+		'long_date'                         => 'l F j, Y',
 
-		'short_date'                        => '%B %e',
+		'short_date'                        => 'M j',
 
-		'time_format'                       => '%l:%M %p',
+		'time_format'                       => 'g:i A',
 
 		'smtp'                              => '',
 

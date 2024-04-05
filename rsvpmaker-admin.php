@@ -1458,10 +1458,19 @@ $( document ).on( 'click', '.rsvpmaker-notice .notice-dismiss', function () {
 }
 
 function set_rsvpmaker_order_in_admin( $wp_query ) {
-if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker') ) // don't mess with front end or other post types
-	return $wp_query;
+global $current_user, $rsvpmaker_upcoming_loop;
+if(strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker') && !$rsvpmaker_upcoming_loop) {
+	//editor behavior, for example query loop block
+	add_filter('posts_join', 'rsvpmaker_join',99, 2 );
+	add_filter('posts_groupby', 'rsvpmaker_groupby',99, 2 );	
+	add_filter('posts_where', 'rsvpmaker_where',99, 2 );
+	add_filter('posts_orderby', 'rsvpmaker_orderby',99, 2 );						
+}
 
-global $current_user;
+if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker') ) // don't mess with front end or other post types
+	{
+		return $wp_query;
+	}
 
 if(isset($_GET["rsvpsort"])) {
 	$sort = sanitize_text_field($_GET["rsvpsort"]);
@@ -1481,33 +1490,33 @@ if($sort == 'all')
 	return;
 
 if(($sort == "past") || ($sort == "future")) {
-	add_filter('posts_join', 'rsvpmaker_join',99 );
-	add_filter('posts_groupby', 'rsvpmaker_groupby',99 );
+	add_filter('posts_join', 'rsvpmaker_join',99, 2 );
+	add_filter('posts_groupby', 'rsvpmaker_groupby',99, 2 );
 	}
 if($sort == 'past')
 	{
-	add_filter('posts_where', 'rsvpmaker_where_past',99 );
-	add_filter('posts_orderby', 'rsvpmaker_orderby_past',99 );
+	add_filter('posts_where', 'rsvpmaker_where_past',99, 2 );
+	add_filter('posts_orderby', 'rsvpmaker_orderby_past',99, 2 );
 	}
 elseif($sort == 'special')
 	{
-	add_filter('posts_join', 'rsvpmaker_join_special',99 );
-	add_filter('posts_where', function($content) {return ' AND post_type="rsvpmaker" ';}, 99 );
-	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
+	add_filter('posts_join', 'rsvpmaker_join_special',99, 2 );
+	add_filter('posts_where', function($content) {return ' AND post_type="rsvpmaker" ';}, 99, 2 );
+	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99, 2 );
 	}
 elseif($sort == 'all')
 	{
 	add_filter('posts_where', function($content) {return " AND post_type='rsvpmaker' AND (wp_posts.post_status = 'publish' OR wp_posts.post_status = 'future' OR wp_posts.post_status = 'draft' OR wp_posts.post_status = 'pending' OR wp_posts.post_status = 'private')";}, 99 );
-	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99  );
+	add_filter('posts_orderby', function($content) {return ' ID DESC ';}, 99, 2  );
 	}
 else
 	{
-	add_filter('posts_where', 'rsvpmaker_where',99 );
-	add_filter('posts_orderby', 'rsvpmaker_orderby',99 );
+	add_filter('posts_where', 'rsvpmaker_where',99, 2 );
+	add_filter('posts_orderby', 'rsvpmaker_orderby',99, 2 );
 	}
 }
 add_filter('pre_get_posts', 'set_rsvpmaker_order_in_admin',1 );
-add_filter('posts_orderby', function($content) { if(isset($_GET['post_type']) && 'rsvpmaker_template' == $_GET['post_type']) return ' post_title ASC '; return $content;}, 99  );
+add_filter('posts_orderby', function($content) { if(isset($_GET['post_type']) && 'rsvpmaker_template' == $_GET['post_type']) return ' post_title ASC '; return $content;}, 99, 2  );
 
 function rsvpmaker_admin_months_dropdown($bool, $post_type) {
 return ($post_type == 'rsvpmaker');
@@ -4703,3 +4712,12 @@ function rsvpmaker_quick_edit_save( $post_id ){
 		rsvpmaker_update_start_time (intval($_POST['post_ID']), $datetime);
 	}
 }
+/*
+add_filter('query','rsvpmaker_debug_query');
+
+function rsvpmaker_debug_query($query) {
+	if(strpos($query,'rsvpmaker'))// && strpos($query,'join'))
+		mail('d@c.com','query',$query);
+	return $query;
+}
+*/
