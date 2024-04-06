@@ -75,6 +75,7 @@ export default function Edit(props) {
                         <div dangerouslySetInnerHTML={{__html: excerptobj.dateblock}} />
                         {!hide_excerpt && <p>{excerptobj.excerpt}</p>}
                         {show_rsvp_button && excerptobj.rsvp_on && <div dangerouslySetInnerHTML={{__html: excerptobj.rsvp_on}} />}
+                        {excerptobj.types && <p className="rsvpmeta" dangerouslySetInnerHTML={{__html: excerptobj.types}} />}
                         </>
                         )}
                         {!excerptobj.dateblock && (

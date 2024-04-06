@@ -12,5 +12,9 @@ if(empty($attributes['hide_excerpt'])) {
 }
 if(!empty($attributes['show_rsvp_button']) && get_post_meta($post->ID,'_rsvp_on',true))
     echo get_rsvp_link( $post->ID );
+$terms = get_the_term_list( $post->ID, 'rsvpmaker-type', '', ', ', ' ' );
+    if ( $terms && is_string( $terms ) ) {
+        echo '<p class="rsvpmeta">' . __( 'Event Types', 'rsvpmaker' ) . ': ' . $terms . '</p>';
+    }
 ?>
 </div>

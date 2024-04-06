@@ -244,7 +244,6 @@ function get_next_events_link( $label = '', $no_events = '' ) {
 
 }
 
-
 add_filter('posts_fields','rsvpmaker_select',99,2);
 add_filter('posts_distinct','rsvpmaker_distinct',99,2);
 add_filter('posts_join','rsvpmaker_join',99,2);
@@ -263,7 +262,9 @@ function rsvpmaker_select( $select, $query = null ) {
 }
 
 function is_rsvpmaker_query($query) {
-	return ( strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker'));
+	if(is_single())
+		return false;
+	return ( strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
 }
 
 function rsvpmaker_join( $join, $query = null ) {
@@ -278,8 +279,6 @@ function rsvpmaker_join( $join, $query = null ) {
 	return $join;
 }
 
-
-
 function rsvpmaker_groupby( $groupby, $query = null) {
 	if(!is_rsvpmaker_query($query))
 		return $groupby;
@@ -287,9 +286,7 @@ function rsvpmaker_groupby( $groupby, $query = null) {
 	global $wpdb;
 
 	return " $wpdb->posts.ID ";
-
 }
-
 
 
 function rsvpmaker_distinct( $distinct, $query = null ) {
@@ -306,6 +303,8 @@ function rsvpmaker_where_schedule( $where ) {
 }
 
 function rsvpmaker_where( $where, $query = null ) {
+	if(is_single())
+		return $where;
 	if(!is_rsvpmaker_query($query))
 		return $where;
 	global $rsvpmaker_atts;
@@ -326,7 +325,7 @@ function rsvpmaker_where( $where, $query = null ) {
 
 		if ( ! empty( $datelimit ) ) {
 
-			$where .= "AND rsvpdates.date < DATE_ADD('" . $date . "',INTERVAL $datelimit) ";
+			$where .= " AND rsvpdates.date < DATE_ADD('" . $date . "',INTERVAL $datelimit) ";
 		}
 
 		return $where;
@@ -881,7 +880,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 		$startday = $atts['startday'];
 	}
 
-	$self = $req_uri = get_permalink();
+	$self = $req_uri = site_url(preg_replace('/\?cm.+/','',$_SERVER['REQUEST_URI']));
 
 	$req_uri .= ( strpos( $req_uri, '?' ) ) ? '&' : '?';
 

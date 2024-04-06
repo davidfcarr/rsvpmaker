@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.5
-Stable tag: 10.8.7
+Stable tag: 10.8.9
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
@@ -85,8 +85,8 @@ Translators please reach out to me if you want an updated POT source file
 1. Activate the plugin through the 'Plugins' menu in WordPress.
 1. Visit the RSVPMaker options page to configure default values for RSVP email notifications, etc.
 1. Check that you have set the timezone for your site on the Settings -> General WordPress admin screen
-1. Add the Gutenberg block for the RSVPMaker events listing to a page on your site. For the Classic Editor, see the documentation for shortcodes you can use to create an events listing page, or a list of event headlines for the home page. Use the RSVPMaker widget if you would like to add an events listing to your WordPress sidebar.
-1. OPTIONAL: Depending on your theme, you may want to create a single-rsvpmaker.php template to prevent confusion between the post date and the event date (move the post date display code to the bottom or just remove it). A sample for the Twentyten theme is included with this distribution.
+1. Create and customize your events listing page. Embed the RSVPMaker Upcoming block or the RSVPMaker Query Loop block (a variation on WordPress's standard Query Loop). The RSVPMaker Calendar block displays a calendar grid. These blocks can also be used to customize the standard archive page displayed at /rsvpmaker/ on your site.
+1. OPTIONAL: Depending on your theme, you may want to create a single-rsvpmaker template to prevent confusion between the the event date and the post publication date (move the post publication date to the bottom or just remove it).
 1. OPTIONAL: To enable online payments for events, obtain the necessary credentials from PayPal or Stripe to enter into RSVPMaker settings.
 
 For basic usage, you can also have a look at the [plugin homepage](http://www.rsvpmaker.com/).
@@ -129,6 +129,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 10.8.8 =
+
+* Tweaks to RSVPMaker Query block variation
+* Prevent rsvpmaker_where filter on single event posts to allow display of past events
 
 = 10.8.7 =
 

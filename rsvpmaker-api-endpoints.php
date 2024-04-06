@@ -2561,6 +2561,12 @@ class RSVP_Editor_Loop_Excerpt extends WP_REST_Controller {
 	$post = get_post($post_id);
 	$response['post_id'] = $post_id;
 	$response['rsvp_on'] = (get_post_meta($post_id,'_rsvp_on',true)) ? '<div class="rsvp_button">'.get_rsvp_link( $post_id ).'</div>' : '';
+	$terms = get_the_term_list( $post_id, 'rsvpmaker-type', '', ', ', ' ' );
+	if ( $terms && is_string( $terms ) ) {
+		$response['types'] = __( 'Event Types', 'rsvpmaker' ).': '.$terms;
+	}
+	else
+		$response['types'] = '';
 	$d = rsvp_date_block( $post_id, get_post_custom( $post_id ) );
 	$response['dateblock'] = $d['dateblock'];
 	if($post->post_excerpt) {
@@ -2614,6 +2620,7 @@ class RSVP_Calendar extends WP_REST_Controller {
 	$atts = $_GET;
 	$atts['calendar_block'] = true;
 	$response['calendar'] = rsvpmaker_calendar($atts);
+	$response['calendar'] = preg_replace('/href="[^"]+"/','href="#"',$response['calendar']); //disable links in editor preview
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
 }//end class
