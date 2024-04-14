@@ -1897,7 +1897,7 @@ if ( ! function_exists( 'event_content' ) ) {
 		if('rsvpmaker_template' == $post->post_type)
 			$dateblock = rsvpmaker_format_event_dates( $post->ID, true ); //'<p><em>Template Preview</em></p>';
 		else {
-		$dateblock = ( strpos( $post->post_content, 'rsvpdateblock]' ) ) ? '' : rsvpmaker_format_event_dates( $post->ID );
+		$dateblock = ( strpos( $post->post_content, 'rsvpdateblock]' ) || strpos( $post->post_content, 'wp:rsvpmaker/rsvpdateblock' ) ) ? '' : rsvpmaker_format_event_dates( $post->ID );
 		$event     = get_rsvpmaker_event( $post->ID );
 		if ( $event ) {
 			$dur       = $event->display_type;
@@ -2144,7 +2144,6 @@ if ( ! function_exists( 'event_content' ) ) {
 				}
 				
 				$pricing = rsvp_get_pricing($post->ID);
-				//print_r($pricing);
 				if ($pricing && ($pricing[0]->price != '0.00')) {
 
 					$pf = '';
@@ -2183,7 +2182,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 						$number_prices = sizeof( $display );
 
-						if ( $number_prices && $display[0] ) {
+						if ( $number_prices ) {
 
 							if ( $number_prices == 1 ) { // don't show options, just one choice
 

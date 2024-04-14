@@ -957,41 +957,6 @@ show &&
 	},
 } );
 
-registerBlockType( 'rsvpmaker/rsvpdateblock', {
-	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
-	title: __( 'RSVPMaker Dateblock' ), // Block title.
-	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
-	description: __('Changes the display of the date / time block from the default (top of the post)'),
-	keywords: [
-		__( 'RSVPMaker' ),
-		__( 'Event' ),
-		__( 'Calendar' ),
-	],
-	edit: function( props ) {
-
-			return (
-			<div className={ props.className }>
-				<p class="dashicons-before dashicons-clock">Changes placement of date/time block from default (top of the post)
-				</p>
-				</div>
-			);
-	},
-
-	/**
-	 * The save function defines the way in which the different attributes should be combined
-	 * into the final markup, which is then serialized by Gutenberg into post_content.
-	 *
-	 * The "save" property must be specified and must be a valid function.
-	 *
-	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
-	save: function() {
-		// server render
-		return null;
-	},
-} );
-
 registerBlockType( 'rsvpmaker/placeholder', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'Placeholder' ), // Block title.

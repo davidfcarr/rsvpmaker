@@ -12,14 +12,17 @@
 		"lint:js": "wp-scripts lint-js",
 		"packages-update": "wp-scripts packages-update",
 		"plugin-zip": "wp-scripts plugin-zip",
-		"start": "wp-scripts start"
+		"start": "dotenv -e .env.development wp-scripts start",
+		"dev": "dotenv -e .env.development wp-scripts build"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^27.5.0"
+		"@wordpress/scripts": "^27.5.0",
+		"dotenv-cli": "^7.4.1"
 	},
 	"dependencies": {
 		"@wordpress/icons": "^9.29.0",
 		"dompurify": "^3.0.2",
+		"dotenv": "^16.4.5",
 		"react-clock": "^4.2.0",
 		"react-query": "^3.39.3",
 		"react-time-picker": "^6.2.0"

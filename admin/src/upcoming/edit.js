@@ -11,10 +11,12 @@ import { __ } from '@wordpress/i18n';
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
  */
+import React, { useState, useEffect } from 'react';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 const { Component, Fragment } = wp.element;
-const { Panel, PanelBody, SelectControl, TextControl, ColorPalette, FontSizePicker } = wp.components;
+const { Panel, PanelBody, SelectControl, RadioControl, TextControl, ColorPalette, FontSizePicker } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
+import { addQueryArgs } from '@wordpress/url';
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -33,67 +35,51 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes: { calendar, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author, itemcolor, itembg, itemfontsize }, setAttributes, isSelected } = props;
-    const rsvptypes = [{value: '', label: 'None selected (optional)'}];
-    apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
-        if(Array.isArray(types))
-                types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
-            else {
-                var typesarray = Object.values(types);
-                typesarray.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
-            }
-    }).catch(err => {
-        console.log(err);
-    });	
-    
-    const rsvpauthors = [{value: '', label: 'Any'}];
-    apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( authors => {
-        if(Array.isArray(authors))
-                authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
-            else {
-                authors = Object.values(authors);
-                authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
-            }
-    }).catch(err => {
-        console.log(err);
-    });	
+	const { attributes } = props;
+    const [rsvptypes, setTypes] = useState([]);
+    const [rsvpauthors, setAuthors] = useState([]);
+    const [preview, setPreview] = useState(null);
+
+    useEffect(() => {
+        const t = [{value: '', label: 'None selected (optional)'}];
+        apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
+            if(Array.isArray(types))
+                    types.map( function(type) { if(type.slug && type.name) t.push({value: type.slug, label: type.name }) } );
+                else {
+                    var typesarray = Object.values(types);
+                    typesarray.map( function(type) { if(type.slug && type.name) t.push({value: type.slug, label: type.name }) } );
+                    console.log(type.slug);
+                    console.log(typeof type.slug);
+                    console.log(type.name);
+                    console.log(typeof type.name);
+                }
+        }).catch(err => {
+            console.log(err);
+        });
+        setTypes(t);
+
+        const a = [{value: '', label: 'Any'}];
+        apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( authors => {
+            if(Array.isArray(authors))
+                    authors.map( function(author) { if(author.ID && author.name) a.push({value: author.ID, label: author.name }) } );
+                else {
+                    authors = Object.values(authors);
+                    authors.map( function(author) { if(author.ID && author.name) a.push({value: author.ID, label: author.name }) } );
+                }
+        }).catch(err => {
+            console.log(err);
+        });	
+        setAuthors(a);
+    }, []);
+
+    useEffect(() => {
+        apiFetch( {path: addQueryArgs('/rsvpmaker/v1/upcoming_preview/', attributes) } ).then( ( p ) => {
+            if(p.calendar)
+            setPreview(p.calendar);
+        } );
+    }, [attributes]);
 
 
-    function showSampleCalendar () {
-        return <div><p><em>Sample Calendar</em></p>
-            <table id="cpcalendar" style={{"backgroundColor": '#fff', "color": "#000", "margin": "5px"}} width="100%" cellspacing="0" cellpadding="3">
-            <caption><b>September 2023</b></caption>
-        <tr>        
-        <th>Sunday</th> 
-        
-        <th>Monday</th> 
-        
-        <th>Tuesday</th> 
-        
-        <th>Wednesday</th> 
-        
-        <th>Thursday</th> 
-        
-        <th>Friday</th> 
-        
-        <th>Saturday</th> 
-        
-        </tr>
-        
-        <tr id="rsvprow1"><td class="notaday">&nbsp;</td><td class="notaday">&nbsp;</td><td class="notaday">&nbsp;</td><td class="notaday">&nbsp;</td><td class="notaday">&nbsp;</td><td valign="top" class="day past"><div class="day past">1</div><p>&nbsp;</p></td><td valign="top" class="day past"><div class="day past">2</div><p>&nbsp;</p></td></tr>
-        <tr id="rsvprow2"><td valign="top" class="day past"><div class="day past">3</div><p>&nbsp;</p></td><td valign="top" class="day past"><div class="day past">4</div><p>&nbsp;</p></td><td valign="top" class="day past">5<div><a  style={{"color":itemcolor,"backgroundColor":itembg,"fontSize":itemfontsize+"px"}} class="rsvpmaker-item rsvpmaker-tooltip Two_Day" href="http://delta.local/rsvpmaker/weekend/" title="Two Day">Two Day<br />&nbsp;7:00 PM EDT</a></div>
-        </td><td valign="top" class="day past"><div class="day past">6</div><p>&nbsp;</p></td><td valign="top" class="day past"><div class="day past">7</div><p>&nbsp;</p></td><td valign="top" class="day past">8<div><a  style={{"color":itemcolor,"backgroundColor":itembg,"fontSize":itemfontsize+"px"}} class="rsvpmaker-item rsvpmaker-tooltip Multday_Event" href="http://delta.local/rsvpmaker/multday-event/" title="Multday Event">Multday Event<br />&nbsp;7:00 PM EDT</a></div>
-        </td><td valign="top" class="today day"><div class="today day">9</div><p>&nbsp;</p></td></tr>
-        <tr id="rsvprow3"><td valign="top" class="day future"><div class="day future">10</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">11</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">12</div><p>&nbsp;</p></td><td valign="top" class="day future">13<div><a  style={{"color":itemcolor,"backgroundColor":itembg,"fontSize":itemfontsize+"px"}} class="rsvpmaker-item rsvpmaker-tooltip This_is_a_test" href="http://delta.local/rsvpmaker/this-is-a-test/" title="This is a test">This is a test<br />&nbsp;7:00 PM EDT</a></div>
-        </td><td valign="top" class="day future"><div class="day future">14</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">15</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">16</div><p>&nbsp;</p></td></tr>
-        <tr id="rsvprow4"><td valign="top" class="day future"><div class="day future">17</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">18</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">19</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">20</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">21</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">22</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">23</div><p>&nbsp;</p></td></tr>
-        <tr id="rsvprow5"><td valign="top" class="day future"><div class="day future">24</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">25</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">26</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">27</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">28</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">29</div><p>&nbsp;</p></td><td valign="top" class="day future"><div class="day future">30</div><p>&nbsp;</p></td></tr>
-        <tr id="rsvprow6">
-        </tr>
-        
-        </table>
-        </div>;
-    }
     
         class UpcomingInspector extends Component {
 	
@@ -122,6 +108,8 @@ export default function Edit(props) {
                     }
                 ];
                 const fallbackFontSize = 10;
+                console.log('type',type);
+                console.log('types',rsvptypes);
                     return (
                         <div>
                     <InspectorControls key="upcominginspector">
@@ -131,7 +119,7 @@ export default function Edit(props) {
                 label={__("Display Calendar",'rsvpmaker')}
                 value={ calendar }
                 options={ [{value: 1, label: __('Yes - Calendar plus events listing')},{value: 0, label:  __('No - Events listing only')},{value: 2, label: __('Calendar only')}] }
-                onChange={ ( calendar ) => { console.log('calendar choice '+typeof calendar); setAttributes( { calendar: calendar } ) } }
+                onChange={ ( calendar ) => { console.log('calendar choice '+typeof calendar); console.log(calendar); setAttributes( { calendar: calendar } ) } }
             />
                             <SelectControl
                 label={__("Format",'rsvpmaker')}
@@ -166,23 +154,25 @@ export default function Edit(props) {
                     {value: 366, label: '1 Year'}] }
                 onChange={ ( days ) => { setAttributes( { days: days } ) } }
             />
-                            <SelectControl
+                    <SelectControl
                 label={__("Event Type",'rsvpmaker')}
+                selected={ type }
                 value={ type }
                 options={ rsvptypes }
                 onChange={ ( type ) => { setAttributes( { type: type } ) } }
+            />
+                            <SelectControl
+                label={__("EXCLUDE Event Type",'rsvpmaker')}
+                selected={ exclude_type }
+                value={ exclude_type }
+                options={ rsvptypes }
+                onChange={ ( exclude_type ) => { setAttributes( { exclude_type: exclude_type } ) } }
             />
                             <SelectControl
                 label={__("Author",'rsvpmaker')}
                 value={ author }
                 options={ rsvpauthors }
                 onChange={ ( author ) => { setAttributes( { author: author } ) } }
-            />
-                            <SelectControl
-                label={__("Exclude Event Type",'rsvpmaker')}
-                value={ exclude_type }
-                options={ rsvptypes }
-                onChange={ ( exclude_type ) => { setAttributes( { exclude_type: exclude_type } ) } }
             />
                             <SelectControl
                 label={__("Calendar Navigation",'rsvpmaker')}
@@ -248,12 +238,8 @@ export default function Edit(props) {
 				<Fragment>
                 <div { ...useBlockProps() }>
                         <UpcomingInspector {...props}/>
-                    <p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker</strong>: Add an Events Listing and/or Calendar Display
-                    </p>
-                    <p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
-                    { isSelected && ( <p><strong>{__('Set options from properties sidebar.','rsvpmaker')}</strong></p> ) }
-                    { (calendar > 0) && showSampleCalendar() }
-                    { (!calendar || 1 == calendar) && <p><em>Events will be displayed here.</em></p> }
+                    {preview && <div dangerouslySetInnerHTML={{__html: preview}}></div>}
+                    {!preview && <p>RSVPMaker Upcoming loading ...</p>}
                    </div>
                  </Fragment>
     );

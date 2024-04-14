@@ -1211,7 +1211,30 @@ function rsvpmaker_excerpt_filter($excerpt) {
 	if(isset($post->post_type) && (('rsvpmaker' == $post->post_type) || ('rsvpmaker_template' == $post->post_type))) {
 		$block = rsvp_date_block($post->ID);
 		$excerpt = !empty($block['dateblock']) ? $block['dateblock'] : '';// htmlentities(var_export($block,true)); //get_rsvp_date($post->ID);
-		$excerpt .= ' '.substr(strip_tags($post->post_content),0,200) . ' ....';	
+		$excerpt .= ' '.rsvpmaker_excerpt_body($post);	
+	}
+	return $excerpt;
+}
+
+function rsvpmaker_excerpt_body($post) {
+	$excerpt = '';
+	if ( strpos( $post->post_content, '<!--more-->' ) ) {
+		$morelink = true;
+		$p        = explode( '<!--more-->', $post->post_content );
+		$excerpt  .= do_blocks( $p[0] );
+	} 
+	elseif($post->post_excerpt) 
+		$excerpt .= '<p>'.esc_html($post->post_excerpt).'</p>';
+	else {
+		$content = str_replace("<",' <',$post->post_content);
+		$content   = strip_tags($content);
+		$content = str_replace("\n",' ',$content);
+		$content = preg_replace('/\s{2,}/',' ',$content);
+		if(strlen($content) > 200) {
+			$content = substr($content,0,200).' ...';
+			$morelink = true;
+		}
+		$excerpt .= '<p>'.$content.'</p>';
 	}
 	return $excerpt;
 }
@@ -1220,19 +1243,7 @@ function rsvpmaker_excerpt( $post ) {
 	global $rsvp_options, $post;
 	$rsvp_on = get_post_meta( $post->ID, '_rsvp_on', true );
 	$excerpt = rsvpdateblock();
-	if ( strpos( $post->post_content, '<!--more-->' ) ) {
-		$morelink = true;
-		$p        = explode( '<!--more-->', $post->post_content );
-		$excerpt  = do_blocks( $p[0] );
-	} else {
-		$content   = rsvpmaker_email_html( $post->post_content );
-		$blocks    = explode( '<p', $content );
-		$fullsize  = sizeof( $blocks );
-		$blocks    = array_slice( $blocks, 0, 3 );
-		$excerpt  .= implode( '<p', $blocks );
-		$shortened = sizeof( $blocks );
-		$morelink  = ( $fullsize > $shortened );
-	}
+	$excerpt .= rsvpmaker_excerpt_body($post);
 	$permalink = get_permalink( $post->ID );
 	$rsvplink  = add_query_arg( 'e', '*|EMAIL|*', $permalink ) . '#rsvpnow';
 	if ( $morelink ) {

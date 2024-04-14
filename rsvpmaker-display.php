@@ -307,9 +307,12 @@ function rsvpmaker_where( $where, $query = null ) {
 		return $where;
 	if(!is_rsvpmaker_query($query))
 		return $where;
+	
+	//mail('d@cc.com','rsvpmaker where clause',$where);
+
 	global $rsvpmaker_atts;
 
-	if ( (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"]) || (isset( $rsvpmaker_atts['past'] ) && $rsvpmaker_atts['past']) )
+	if ( (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"]) || (isset( $rsvpmaker_atts['past'] ) && $rsvpmaker_atts['past']) || (!empty($query->query_vars['eventOrder']) && $query->query_vars['eventOrder'] == 'past') )
 		return rsvpmaker_where_past($where);
 	if ( isset( $rsvpmaker_atts['afternow'] ) && $rsvpmaker_atts['afternow'] )
 		return rsvpmaker_where_afternow($where);		
@@ -391,7 +394,7 @@ function rsvpmaker_orderby( $orderby, $query = NULL ) {
 	if(!is_rsvpmaker_query($query))
 		return $orderby;
 	global $rsvpmaker_atts;
-	$order = (!empty($rsvpmaker_atts['past']) || (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"])) ? 'DESC' : 'ASC';
+	$order = (!empty($rsvpmaker_atts['past']) || (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"]) || (!empty($query->query_vars['eventOrder']) && $query->query_vars['eventOrder'] == 'past') ) ? 'DESC' : 'ASC';
 	return ' rsvpdates.date '.$order;
 }
 
@@ -432,6 +435,15 @@ function rsvpmaker_orderby_past( $orderby ) {
 	return ' rsvpdates.date DESC';
 
 }
+
+/* rest queries from editor */
+function rsvpmaker_custom_query_params( $args, $request ) {
+////mail('d@cc.com','rsvpmaker query params',var_export($args,true)."\n\nparams:".$request->get_param('eventOrder')."\n\nGET:".var_export($request['params']['GET'],true)."\n\nEvent order:".$request['params']['GET']['eventOrder']);//var_export($request,true));
+$order = $request->get_param('eventOrder');
+$args['eventOrder'] = $order;
+return $args;
+}
+add_filter( 'rest_rsvpmaker_query', 'rsvpmaker_custom_query_params', 10, 2 );
 
 function rsvpmaker_upcoming_query( $atts = array() ) {
 
@@ -532,6 +544,35 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 	$wp_query = new WP_Query( $queryarg );
 
 	return $wp_query;
+}
+
+function rsvpmaker_posts_to_exclude($target) {
+	global $post, $wp_query;
+	$backup = $post;
+	$backup_query = $wp_query;
+	$wp_query = rsvpmaker_upcoming_query( array() );
+	$exclude = [];
+	if ( have_posts() ) {
+		while ( have_posts() ) {
+				the_post();
+				$termscheck = array();
+				$terms = get_the_terms( $post->ID, 'rsvpmaker-type' );
+				if ( $terms ) {
+
+					foreach ( $terms as $term ) {
+
+						$termscheck[] = $term->slug;
+
+					}
+				}
+				if ( in_array( $target, $termscheck ) ) {
+					$exclude[] = $post->ID;
+				}
+			}
+		}
+		$post = $backup;
+		$wp_query = $backup_query;
+	return $exclude;
 }
 
 function rsvpmaker_upcoming( $atts = array() ) {
@@ -639,7 +680,6 @@ function rsvpmaker_upcoming( $atts = array() ) {
 				}
 
 				if ( in_array( $atts['exclude_type'], $termscheck ) ) {
-
 					continue;
 				}
 			}
@@ -1659,7 +1699,7 @@ function rsvpmaker_examine_query( $request ) {
 
 	$log = var_export( $request, true );
 
-	mail( 'david@carrcommunications.com', 'query test', $log );
+	//mail( 'david@carrcommunications.com', 'query test', $log );
 
 	return $request;
 
@@ -2314,8 +2354,11 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 
 function rsvpdateblock( $atts = array() ) {
 	global $post;
+	if(isset($atts['post_id']))
+		$post = get_post(intval($atts['post_id']));
 	$dateblock = rsvpmaker_format_event_dates( $post->ID );
-	return '<div class="dateblock">' . $dateblock . "\n</div>\n";
+	$alignclass = (empty($atts['alignment'])) ? '' : 'has-text-align-'.$atts['alignment'];
+	return '<div class="dateblock '.$alignclass.'">' . $dateblock . "\n</div>\n";
 }
 
 function rsvpmaker_format_event_dates( $post_id, $template = false ) {
@@ -2882,8 +2925,6 @@ function future_rsvp_links( $atts = array() ) {
 
 		$event->post_content = '';
 
-		// $output .= '<li>'.var_export($event,true).'</li>';
-
 	}
 
 	$output .= '</ul>';
@@ -2921,19 +2962,88 @@ function rsvpmaker_404_message ($args) {
 
 add_action('pre_get_search_form','rsvpmaker_404_message');
 
-add_shortcode('rsvpmaker_loop_excerpt','rsvpmaker_loop_excerpt');
-
-function rsvpmaker_loop_excerpt($atts) {
+function rsvpmaker_loop_excerpt_render($attributes) {
 	global $post;
-	$parts = explode('</p>',$post->post_content);
-	$excerpt = trim(strip_tags($parts[0]));
-	return $excerpt;
+	$output = '';
+	if(empty($attributes['hide_date'])) {
+		$d = rsvp_date_block($post->ID);
+		$output .= $d['dateblock'];
+	}
+	if(empty($attributes['hide_excerpt'])) {
+		$output .= rsvpmaker_excerpt_body($post); 
+	}
+	if(!empty($attributes['show_rsvp_button']) && get_post_meta($post->ID,'_rsvp_on',true))
+		$output .=  get_rsvp_link( $post->ID );
+	$terms = get_the_term_list( $post->ID, 'rsvpmaker-type', '', ', ', ' ' );
+		if ( $terms && is_string( $terms ) ) {
+			$output .= '<p class="rsvpmeta">' . __( 'Event Types', 'rsvpmaker' ) . ': ' . $terms . '</p>';
+		}
+	return $output;
 }
 
-/*
-add_filter('edit_post_excerpt','rsvpmaker_edit_excerpt');
+add_filter('pre_render_block','rsvpmaker_query_loop_filter',10,2);
 
-function rsvpmaker_edit_post_excerpt($excerpt) {
-	return '--'.$excerpt;
+add_action('pre_get_posts','rsvpmaker_pre_get_posts');
+
+function rsvpmaker_pre_get_posts($query) {
+	if(isset($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') {
+		if(isset($_GET['excludeType']))
+			$query->query['excludeType'] = $_GET['excludeType'];
+		if(!empty($query->query['excludeType'])) {
+		$tax_query = array('taxonomy' => 'rsvpmaker-type',
+		'field'    => 'slug',
+		'terms'    => [ $query->query['excludeType'] ],
+		'operator' => 'NOT IN');
+		$query->tax_query->queries[] = $tax_query;
+		$query->query_vars['tax_query'] = $query->tax_query->queries;
+		$query->set('tax_query',$query->tax_query->queries);
+		}
+	}
 }
-*/
+
+function rsvpmaker_query_loop_filter($pre_render, $parsed_block) {
+	global $wp_query, $newqueryargs, $rsvpmakers_displayed;
+	if ( isset( $parsed_block['attrs']['namespace'] ) && strpos($parsed_block['attrs']['namespace'],'rsvpmaker-loop') ) {
+		if(empty($parsed_block['attrs']['query']['eventOrder']) && empty($parsed_block['attrs']['query']['excludeType']))
+			{
+				return $pre_render;
+			}
+		$newqueryargs['eventOrder'] = (empty($parsed_block['attrs']['query']['eventOrder'])) ? 'future' : $parsed_block['attrs']['query']['eventOrder'];
+		$newqueryargs['excludeType'] = (empty($parsed_block['attrs']['query']['excludeType'])) ? '' : $parsed_block['attrs']['query']['excludeType'];
+		// Hijack the global query. It's a hack, but it works.
+		if ( isset( $parsed_block['attrs']['query']['inherit'] ) && true === $parsed_block['attrs']['query']['inherit'] ) {
+			$query_args = array_merge(
+				$wp_query->query_vars,
+				$newqueryargs
+			);
+			//mail('d@cc.com','new query args',var_export($query_args,true));
+			$wp_query = new WP_Query( $query_args  );
+		} else {		
+			add_filter(
+				'query_loop_block_query_vars',
+				function( $default_query, $block ) {
+					global $wp_query;
+					// Retrieve the query from the passed block context.
+					$block_query = $block->context['query'];
+					if(!empty($block_query['eventOrder']))
+						$newqueryargs['eventOrder'] = $block_query['eventOrder'];
+					if(!empty($block_query['excludeType'])) {
+						if(!empty($block_query['excludeType']))
+						{
+							$newqueryargs['excludeType'] = $block_query['excludeType'];
+						}
+					}
+			
+					$modified_query = array_merge(
+						$default_query,
+						$newqueryargs
+					);
+					return $modified_query;
+				},
+				10,
+				2
+			);
+		}
+	}
+	return $pre_render;
+}

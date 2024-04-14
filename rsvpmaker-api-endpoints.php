@@ -2569,16 +2569,7 @@ class RSVP_Editor_Loop_Excerpt extends WP_REST_Controller {
 		$response['types'] = '';
 	$d = rsvp_date_block( $post_id, get_post_custom( $post_id ) );
 	$response['dateblock'] = $d['dateblock'];
-	if($post->post_excerpt) {
-		$excerpt = $post->post_excerpt;
-	}
-	else {
-		$parts = explode('</p>',$post->post_content);
-		$excerpt = trim(strip_tags($parts[0]));
-		if(strlen($excerpt) > 150)
-			$excerpt = substr($excerpt,0,150). ' ...';	
-	}
-	$response["excerpt"] = $excerpt;
+	$response["excerpt"] = strip_tags(rsvpmaker_excerpt_body($post));
 	$post = $backup;
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
@@ -2620,6 +2611,86 @@ class RSVP_Calendar extends WP_REST_Controller {
 	$atts = $_GET;
 	$atts['calendar_block'] = true;
 	$response['calendar'] = rsvpmaker_calendar($atts);
+	$response['calendar'] = preg_replace('/href="[^"]+"/','href="#"',$response['calendar']); //disable links in editor preview
+	return new WP_REST_Response( $response, 200 );
+	}//end handle
+}//end class
+
+class RSVP_Date_Block extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'dateblock';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+	global $wp_query;
+	$atts = $_GET;
+	$response['dateblock'] = rsvpdateblock($atts);
+	return new WP_REST_Response( $response, 200 );
+	}//end handle
+}//end class
+
+class RSVP_Preview extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'upcoming_preview';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+	global $wp_query;
+	$atts = $_GET;
+	$atts['calendar_block'] = true;
+	$response['calendar'] = rsvpmaker_upcoming($atts);
 	$response['calendar'] = preg_replace('/href="[^"]+"/','href="#"',$response['calendar']); //disable links in editor preview
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
@@ -2860,5 +2931,9 @@ add_action('rest_api_init',
 		$excerpt->register_routes();
 		$calendar = new RSVP_Calendar();
 		$calendar->register_routes();
+		$preview = new RSVP_Preview();
+		$preview->register_routes();
+		$dateblock = new RSVP_Date_Block();
+		$dateblock->register_routes();
 	}
 );

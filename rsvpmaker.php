@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 10.8.9
+* Version: 10.9.1
 */
 
 function get_rsvpversion() {
-	return '10.8.9';
+	return '10.9.1';
 }
 
 global $wp_version;
@@ -1115,8 +1115,6 @@ function rsvpmaker_server_block_render() {
 	register_block_type( 'rsvpmaker/stripe-form-wrapper', array( 'render_callback' => 'stripe_form_wrapper' ) );
 
 	register_block_type( 'rsvpmaker/eventlisting', array( 'render_callback' => 'rsvpmaker_event_listing' ) );
-
-	register_block_type( 'rsvpmaker/rsvpdateblock', array( 'render_callback' => 'rsvpdateblock' ) );
 
 	register_block_type( 'rsvpmaker/upcoming-by-json', array( 'render_callback' => 'rsvpjsonlisting' ) );
 

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "rsvpmaker/button",
+  "title": "RSVPMaker Button",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Use for custom placement of the date / time block",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "Button"
+  ],
+  "attributes": {
+    "alignment": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "1",
+  "supports": {
+    "html": false
+  },
+  "usesContext": [
+    "postId"
+  ],
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}
