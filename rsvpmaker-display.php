@@ -3033,7 +3033,8 @@ function rsvpmaker_query_loop_filter($pre_render, $parsed_block) {
 							$newqueryargs['excludeType'] = $block_query['excludeType'];
 						}
 					}
-			
+					if(empty($newqueryargs))
+						return $defaultquery;
 					$modified_query = array_merge(
 						$default_query,
 						$newqueryargs

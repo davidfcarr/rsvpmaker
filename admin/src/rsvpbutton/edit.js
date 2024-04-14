@@ -37,7 +37,7 @@ export default function Edit(props) {
     const blockProps = useBlockProps();
 	const innerBlocksProps = useInnerBlocksProps(blockProps, {
 		allowedBlocks: ["core/buttons","core/button"],
-		template: [['core/buttons', { }, [['core/button',{"style":{"color":{"background":"#f71b1b"}},"text":"RSVP Now!","url":"#rsvpnow"}]]] ],
+		template: [['core/buttons', { }, [['core/button',{"style":{"color":{"background":"#f71b1b"},"className":"rsvplink"},"text":"RSVP Now!","url":"#rsvpnow"}]]] ],
 	});
     
     return (

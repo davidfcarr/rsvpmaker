@@ -1360,9 +1360,9 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				foreach ( $guestnv as $index => $nv ) {
 
-					$nv['details'] = serialize( $newrow[ $index ] );
+					$nv['details'] = (empty($newrow) || empty($newrow[$index])) ? '' : serialize( $newrow[ $index ] );
 
-					$id = ( isset( $_POST['guest']['id'][ $index ] ) ) ? (int) $_POST['guest']['id'][ $index ] : 0;
+					$id = ( isset( $_POST['guest']) && isset( $_POST['guest']['id']) && isset( $_POST['guest']['id'][ $index ] ) ) ? (int) $_POST['guest']['id'][ $index ] : 0;
 
 					if ( isset( $_POST['guestdelete'][ $id ] ) ) {
 
@@ -2003,17 +2003,14 @@ if ( ! function_exists( 'event_content' ) ) {
 				}
 			}
 			elseif ( ( $rsvp_on && is_admin() && isset( $_GET['page'] ) && ( $_GET['page'] != 'rsvp' ) ) || ( $rsvp_on && is_email_context() ) || ( $rsvp_on && isset( $_GET['load'] ) ) ) { // when loaded into editor
-
-				$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
-
+				if(!strpos($post->post_content,'rsvplink') && !strpos($post->post_content,'rsvpmaker/button'))//if button not already displayed
+					$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
 			} elseif ( $rsvp_on && $login_required && ! is_user_logged_in() ) { // show button, coded to require login
-
-				$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
-
+				if(!strpos($post->post_content,'rsvplink') && !strpos($post->post_content,'rsvpmaker/button'))//if button not already displayed
+					$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
 			} elseif ( $rsvp_on && ! is_admin() && ! $formonly && ( ! is_single() || $showbutton ) ) { // show button
-
-				$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
-
+				if(!strpos($post->post_content,'rsvplink') && !strpos($post->post_content,'rsvpmaker/button'))//if button not already displayed
+					$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
 			} elseif ( $rsvp_on && ( is_single() || is_admin() || $formonly ) ) {
 
 				ob_start();
