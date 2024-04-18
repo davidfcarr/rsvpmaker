@@ -264,7 +264,7 @@ function rsvpmaker_select( $select, $query = null ) {
 function is_rsvpmaker_query($query) {
 	if(is_single())
 		return false;
-	return ( strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
+	return ( (strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') && !strpos($_SERVER['REQUEST_URI'],'template')) || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
 }
 
 function rsvpmaker_join( $join, $query = null ) {

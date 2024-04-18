@@ -6,7 +6,7 @@
 	"title": "Admin",
 	"category": "widgets",
 	"icon": "smiley",
-	"description": "Example block scaffolded with Create Block tool.",
+	"description": "Collection of editor customizations for RSVPMaker content.",
 	"supports": {
 		"html": false
 	},

@@ -5,7 +5,7 @@
   "title": "RSVPMaker Upcoming Events",
   "icon": "calendar-alt",
   "category": "rsvpmaker",
-  "description": "Displays an RSVPMaker event listing and/or a calendar widget",
+  "description": "Displays an RSVPMaker event listing and/or a calendar widget. (Alternative: use the RSVPMaker Query Loop block variation)",
   "keywords": [
     "RSVPMaker",
     "Events",
