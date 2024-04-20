@@ -542,15 +542,15 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
 		$postmark['postmark_mode'] = '';
 		update_option('rsvpmaker_postmark',$postmark);
 	}
-    if($sent_lately > 50) {
+    if($sent_lately > 150) {
         $overloadmessage = '';
         $score = 0;
         $sql = "SELECT `count`, recipients, subject FROM `".$wpdb->base_prefix."postmark_tally` WHERE time > DATE_SUB(NOW(), INTERVAL 15 MINUTE) group by recipients";
         $results = $wpdb->get_results($sql);
         foreach($results as $row) {
-            $overloadmessage .= sprintf('%d %s %s'."\n",$row->count, $row->email,$row->subject);
-            if($row->tally > 20)
-                $score += $row->tally;
+            $overloadmessage .= sprintf('%d %s %s'."\n",$row->count, $row->recipients,$row->subject);
+            if($row->count > 20)
+                $score += $row->count;
         }
         if($score > 50)
         {

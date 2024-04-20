@@ -147,7 +147,7 @@ if ( ! function_exists( 'draw_eventdates' ) ) {
 			echo "\n<div class=\"event_dates\"> \n";
 
 			if ( $rsvp_options['long_date'] ) {
-				echo utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+				echo mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 			}
 
 			$dur = $event->display_type;
@@ -1742,7 +1742,7 @@ if ( ! function_exists( 'event_content' ) ) {
 		$rsvp_id = intval($_GET['rsvp']);
 		$rsvpconfirm .= rsvpmaker_guestparty($rsvp_id,true);
 
-		} elseif ( isset( $_COOKIE[ 'rsvp_for_' . $post->ID ] ) && ! $email_context ) {
+		} elseif ( isset( $_COOKIE[ 'rsvp_for_' . $post->ID ] ) && ! $email_context && is_single() ) {
 
 			$rsvp_confirm = rsvp_get_confirm( $post->ID );
 
@@ -1991,7 +1991,7 @@ if ( ! function_exists( 'event_content' ) ) {
 			} 
 			elseif ( isset( $rsvpstart ) && ( $now < $rsvpstart ) ) {
 
-				$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs accepted starting: ', 'rsvpmaker' ) . utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $rsvpstart  ) ) ) . '</p>';
+				$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs accepted starting: ', 'rsvpmaker' ) . mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $rsvpstart  ), 'UTF-8' ) ) . '</p>';
 
 			} elseif ( isset( $too_many ) ) {
 
@@ -3263,7 +3263,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 																$dateblock .= '<div itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
-																$dateblock .= utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+																$dateblock .= mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
 																$dur = $row['duration'];
 
@@ -6221,7 +6221,7 @@ if ( ! function_exists( 'next_or_recent' ) ) {
 
 			$t = rsvpmaker_strtotime( $row->datetime );
 
-			$neatdate = utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+			$neatdate = mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
 			$event = sprintf( '<a href="%s">%s: %s</a>', get_post_permalink( $row->postID ), __( 'Next Event', 'rsvpmaker' ), $neatdate );
 
@@ -6243,7 +6243,7 @@ if ( ! function_exists( 'next_or_recent' ) ) {
 
 				$t = rsvpmaker_strtotime( $row->datetime );
 
-				$neatdate = utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], $t ) );
+				$neatdate = mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
 				$event = sprintf( '<a style="color:#333;" href="%s">%s: %s</a>', get_post_permalink( $row->postID ), __( 'Most Recent', 'rsvpmaker' ), $neatdate );
 
@@ -6562,7 +6562,7 @@ if ( ! function_exists( 'rsvpmaker_dashboard_widget_function' ) ) {
 
 				$draft = ( $row->post_status == 'draft' ) ? ' (draft)' : '';
 
-				printf( '<p><a href="%s">(' . __( 'Edit', 'rsvpmaker' ) . ')</a> <a href="%s">%s %s%s</a></p>', admin_url( 'post.php?action=edit&post=' . $row->ID ), get_post_permalink( $row->ID ), esc_html( $row->post_title ), utf8_encode( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $row->datetime ) ) ), $draft );
+				printf( '<p><a href="%s">(' . __( 'Edit', 'rsvpmaker' ) . ')</a> <a href="%s">%s %s%s</a></p>', admin_url( 'post.php?action=edit&post=' . $row->ID ), get_post_permalink( $row->ID ), esc_html( $row->post_title ), mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $row->datetime ) ), 'UTF-8' ), $draft );
 
 				if ( $index == 10 ) {
 

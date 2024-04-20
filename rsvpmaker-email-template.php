@@ -239,7 +239,9 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 	}
 }
-$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
+$html = preg_replace('/srcset="[^"]+"/m','',$html);
+$html = preg_replace('/sizes="[^"]+"/m','',$html);
+//$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
 $html = preg_replace('/<\/{0,1}noscript>/','',$html);
 
 $preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $html );

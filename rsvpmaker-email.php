@@ -556,7 +556,7 @@ function rsvpmaker_next_scheduled( $post_id, $returnint = false ) {
 						$query = array('cronemailpreview' => implode('-',$property_array["args"]),'timelord' => rsvpmaker_nonce('value'));
 						$preview = add_query_arg($query,get_permalink());
 						$note = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&editor_note='.$post_id);
-						return utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule . '<br><a href="'.$preview.'">Send Preview</a> | <a href="'.$cancel.'">Cancel</a>';
+						return mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp),'UTF-8').' '.$schedule . '<br><a href="'.$preview.'">Send Preview</a> | <a href="'.$cancel.'">Cancel</a>';
 						}
 					}
 			}
@@ -634,7 +634,7 @@ foreach($results as $row)
 						printf('<tr><td>%s <br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>',$post->post_title,admin_url('post.php?post='.$post_id.'&action=edit'),__('Edit Post','rsvpmaker'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id='.$post_id),__('Schedule Options','rsvpmaker'));
 						$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
 						
-						echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
+						echo mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp),'UTF-8').' '.$schedule;
 						echo '</td></tr>';
 						}
 					}
@@ -666,10 +666,6 @@ foreach($results as $row)
 						if(!empty($post))
 							{
 							printf('<tr><td>%s (%s)<br /><a href="%s">%s</a></td><td>%s</td></tr>',$post->post_title,__('Delayed Send','rsvpmaker'),admin_url('post.php?post='.$post_id.'&action=edit'),__('Edit Post','rsvpmaker'),$cancel_links);
-							//$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
-							
-							//echo utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp)).' '.$schedule;
-							//echo '</td></tr>';
 							}
 						}
 					}
@@ -3783,7 +3779,7 @@ function event_title_link () {
 		$time_format .= ' T';
 		}
 	$t = get_rsvpmaker_timestamp($post->ID);
-	$display_date = utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$time_format,$t));
+	$display_date = mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$time_format,$t),'UTF-8');
 	$permalink = get_permalink($post->ID);
 	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink,esc_html($post->post_title),esc_html($display_date));
 }
@@ -4456,6 +4452,13 @@ function rsvpmaker_get_style_substitutions() {
 				'has-small-font-size' => 'font-size: small;',
 				'wp-block-pullquote' => 'font-size: xx-large;text-align:center; font-style: normal;',
 				'wp-block-columns' => 'display: block',
+				'wp-block-post-template' => 'list-style-type: none',
+				'columns-2' => 'display: grid; grid-template-columns: 45% 45%; column-gap: 5%;',
+				'columns-3' => 'display: grid; grid-template-columns: 30% 30% 30%; column-gap: 5%;',
+				/*
+				'wp-block-cover' => 'align-items: center;background-position: 50%;box-sizing: border-box;display: flex;justify-content: center;min-height: 430px;overflow: hidden;overflow: clip;padding: 1em;position: relative;',
+				'wp-block-cover__inner-container' => 'color: inherit;width: 100%;z-index: 1',
+				*/
 			);			
 		foreach($colors as $index => $color)
 			{
@@ -4568,12 +4571,14 @@ function rsvpmail_filter_style_json() {
 
 function rsvpmail_filter_style($content) {
 	$content = preg_replace('/<style.+<\/style>/is','',$content);
+	$content = preg_replace('/<span class="screen-reader-text"[^<]+<\/span>/is','',$content);
 	$content = preg_replace('/width="[^"]+"/','',$content);
 	$content = preg_replace('/height="[^"]+"/','',$content);	
 	$content = preg_replace_callback('/<img ([^>]+)\/>/',function ($match) {
 		if(strpos($match[1],'style=')) {
-			if(!strpos($match[1],'object-fit'))
-				$match[1] = str_replace('style="','style="object-fit: contain;',$match[1]);
+			//if(!strpos($match[1],'object-fit'))
+				$match[1] = str_replace('style="','style="object-fit: contain; max-width: 100%;',$match[1]);
+				$match[1] = str_replace('cover','contain',$match[1]);
 		} 
 		else {
 			$match[1] .= ' style="object-fit: contain; max-width: 100%; max-height: 100%;"';
@@ -4672,10 +4677,12 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		$post = get_post($post_id);
 		if($post)
 			$content = $post->post_content;
-		else
+		else {
 			$content = 0;
+		}
 	}
-	elseif(empty($content)) {
+	//if not set or failed to retrieve
+	if(empty($content)) {
 		$content = '<!-- wp:rsvpmaker/emailbody -->
 		<div style="background-color:#efefef;color:#000;padding:5px" class="wp-block-rsvpmaker-emailbody">
 		<!-- wp:paragraph -->
@@ -4701,19 +4708,19 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		<!-- /wp:paragraph --></div>
 		<!-- /wp:rsvpmaker/emailcontent --></div>
 		<!-- /wp:rsvpmaker/emailbody -->';
-		$post['post_title'] = 'Default Email Template';
-		$post['post_type'] = 'rsvpemail';
-		$post['post_status'] = 'publish';
-		$post['post_content'] = $content;
-		$post_id = wp_insert_post($post);
+		$new['post_title'] = 'Default Email Template';
+		$new['post_type'] = 'rsvpemail';
+		$new['post_status'] = 'publish';
+		$new['post_content'] = $content;
+		$post_id = wp_insert_post($new);
 		update_option('rsvpmailer_default_block_template', $post_id);
 	}
 	else {
-		$post['post_title'] = 'Default Email Template';
-		$post['post_type'] = 'rsvpemail';
-		$post['post_status'] = 'publish';
-		$post['post_content'] = $content;
-		$post_id = wp_insert_post($post);
+		$new['post_title'] = 'Default Email Template';
+		$new['post_type'] = 'rsvpemail';
+		$new['post_status'] = 'publish';
+		$new['post_content'] = $content;
+		$post_id = wp_insert_post($new);
 		update_option('rsvpmailer_default_block_template', $post_id);
 	}
 	if($edit)
@@ -5613,6 +5620,8 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 		$html = $post_or_html->post_content;
 		$post_id = $post_or_html->ID;
 	}
+	$html = preg_replace('/srcset="[^"]+"/m','test=""',$html);
+	$html = preg_replace('/sizes="[^"]+"/m','',$html);
 	if(is_array($post_or_html) && isset($post_or_html['post_content']))
 		$html = $post_or_html['post_content'];
 	if(is_string($post_or_html))
@@ -5627,7 +5636,7 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 	$html = str_replace('loading="lazy"','',$html);
 	$html = preg_replace('/<(figure|figcaption)/','<div',$html);
 	$html = preg_replace('/<\/(figure|figcaption)/','</div',$html);
-	$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
+	//$html = preg_replace('/<img [^>]+srcset[^>]+>/m','',$html);
 	$html = preg_replace('/<img [^>]+data-lazy-src[^>]+>/m','',$html);
 	$html = preg_replace('/<\/{0,1}noscript>/','',$html);
 	$html = rsvpmail_replace_placeholders($html);

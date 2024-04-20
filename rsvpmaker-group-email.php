@@ -1229,8 +1229,8 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
     $custom_forwarders = (is_multisite()) ? get_blog_option($blog_id,'custom_forwarders') : get_option('custom_forwarders');
     if(!empty($custom_forwarders))
     {
-        $recipients[$forwarder] = [];
         foreach($custom_forwarders as $forwarder => $emails) {
+			$recipients[$forwarder] = [];
             foreach($emails as $email) {
                 if(!empty($recipients[$email])) {
                     $recipients[$forwarder] = array_merge($recipients[$forwarder], $recipients[$email]);

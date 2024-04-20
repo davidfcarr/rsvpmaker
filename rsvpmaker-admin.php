@@ -1854,7 +1854,7 @@ global $current_user;
 		
 		$event = get_post($post_id);
 		$start_time = $date = get_rsvp_date($post_id);
-		$date = utf8_encode(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options['time_format'],rsvpmaker_strtotime($date)));
+		$date = mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options['time_format'],rsvpmaker_strtotime($date)),'UTF-8');
 		$landing["post_type"] = 'rsvpmaker';
 		$landing["post_title"] = __('Live','rsvpmaker').': '.$event->post_title;
 		$landing["post_content"] = __('The event starts','rsvpmaker').' '.$date."\n\n".$ylive;

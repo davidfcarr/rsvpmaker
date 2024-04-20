@@ -1218,12 +1218,7 @@ function rsvpmaker_excerpt_filter($excerpt) {
 
 function rsvpmaker_excerpt_body($post) {
 	$excerpt = '';
-	if ( strpos( $post->post_content, '<!--more-->' ) ) {
-		$morelink = true;
-		$p        = explode( '<!--more-->', $post->post_content );
-		$excerpt  .= do_blocks( $p[0] );
-	} 
-	elseif($post->post_excerpt) 
+if($post->post_excerpt) 
 		$excerpt .= '<p>'.esc_html($post->post_excerpt).'</p>';
 	else {
 		$content = str_replace("<",' <',$post->post_content);
@@ -1454,19 +1449,13 @@ function get_events_dropdown() {
 
 }
 
-
-
 function is_rsvpmaker_future( $event_id, $offset_hours = 0 ) {
 
 	global $wpdb;
+	$table = get_rsvpmaker_event_table();
+	$now = get_sql_now();
 
-	if ( $offset_hours ) {
-
-		$sql = 'SELECT meta_value FROM ' . $wpdb->postmeta . " WHERE meta_key='_rsvp_dates' AND meta_value + INTERVAL $offset_hours HOUR > '" . get_sql_now() . "' AND post_id=" . $event_id;
-
-	} else {
-		$sql = 'SELECT meta_value FROM ' . $wpdb->postmeta . " WHERE meta_key='_rsvp_dates' AND meta_value > '" . get_sql_now() . "' AND post_id=" . $event_id;
-	}
+	$sql = 'SELECT date FROM ' . $table . " WHERE (date > '" . $now . "' OR enddate > '" . $now . "') AND event=" . $event_id;
 
 	$date = $wpdb->get_var( $sql );
 
