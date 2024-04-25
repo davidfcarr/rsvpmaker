@@ -14,7 +14,7 @@ import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import apiFetch from '@wordpress/api-fetch';
 const { Component, Fragment } = wp.element;
-const { Panel, PanelBody, ToggleControl } = wp.components;
+const { Panel, PanelBody, ToggleControl, RangeControl } = wp.components;
 import React, { useState, useEffect } from 'react';
 
 /**
@@ -34,21 +34,21 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes: { show_rsvp_button, hide_excerpt, hide_date, hide_type }, setAttributes, context, isSelected } = props;
+	const { attributes: { hide_type,max }, setAttributes, context, isSelected } = props;
     const {postId} = context;
     const [excerptobj, setExcerptobj] = useState({});
     console.log(props);
 
     useEffect(() => {
-        apiFetch( {path: '/rsvpmaker/v1/excerpt/'+postId+'?show_button=='+show_rsvp_button} ).then( ( excerpt ) => {
+        apiFetch( {path: '/rsvpmaker/v1/excerpt/'+postId+'?max='+max} ).then( ( excerpt ) => {
             setExcerptobj(excerpt);
         } );
-    }, []);
+    }, [max]);
 
     class ExcerptInspector extends Component {
 	
             render() {
-                const { attributes: { show_rsvp_button, hide_excerpt, hide_date, hide_type }, setAttributes, isSelected } = this.props;
+                const { attributes: { hide_type, max }, setAttributes, isSelected } = this.props;
                 if (typeof hide_type == 'undefined')
                     hide_type = false;
                 
@@ -56,29 +56,19 @@ export default function Edit(props) {
                         <div>
                     <InspectorControls key="excerptinspector">
                     <PanelBody title={ __( 'RSVPMaker Excerpt', 'rsvpmaker' ) } >
-                    <p>Optionally, the excerpt can display the date and RSVP registration button. Use the separate RSVPMaker Date Block and RSVPMaker Button blocks for more formatting control of those elements.</p>
-                    <h3>Elements shown by default</h3>
-                    <ToggleControl
-                label={__("Hide Event Date/Time",'rsvpmaker')}
-                checked={ hide_date }
-                onChange={ ( hide_date ) => { setAttributes( { hide_date } ) } }
-            />
+                    <RangeControl
+            label="Max Number of Words"
+            value={ max }
+            onChange={ ( value ) => setAttributes( {'max':value} ) }
+            min={ 10 }
+            max={ 110 }
+        />
             <ToggleControl
                 label={__("Hide Event Type",'rsvpmaker')}
                 checked={ hide_type }
                 onChange={ ( hide_type ) => { setAttributes( { hide_type } ) } }
             />
-                    <ToggleControl
-                label={__("Hide Excerpt",'rsvpmaker')}
-                checked={ hide_excerpt }
-                onChange={ ( hide_excerpt ) => { setAttributes( { hide_excerpt } ) } }
-            />
-            <h3>Optional Elements</h3>
-                    <ToggleControl
-                label={__("Show RSVP Button",'rsvpmaker')}
-                checked={ show_rsvp_button }
-                onChange={ ( show_rsvp_button ) => { setAttributes( { show_rsvp_button } ) } }
-            />
+            <p><em>By default, any RSVPMaker Event Types that have been set will be shown beneath the excerpt. An Event Type is similar to a blog post category.</em></p>
             </PanelBody>
             </InspectorControls>
             </div>
@@ -87,15 +77,13 @@ export default function Edit(props) {
 				<Fragment>
                 <div { ...useBlockProps() }>
                         <ExcerptInspector {...props}/>
-                        {excerptobj.dateblock && (
+                        {excerptobj.excerpt && (
                         <>
-                        {!hide_date && <div dangerouslySetInnerHTML={{__html: excerptobj.dateblock}} />}
-                        {!hide_excerpt && <p>{excerptobj.excerpt}</p>}
-                        {show_rsvp_button && excerptobj.rsvp_on && <div dangerouslySetInnerHTML={{__html: excerptobj.rsvp_on}} />}
-                        {!hide_type && excerptobj.types && <p className="rsvpmeta" dangerouslySetInnerHTML={{__html: excerptobj.types}} />}
+                        <p>{excerptobj.excerpt}</p>
+                        {!hide_type && excerptobj.types && <p className="rsvpmeta" dangerouslySetInnerHTML={{__html: excerptobj.types}} />}                       
                         </>
                         )}
-                        {!excerptobj.dateblock && (
+                        {!excerptobj.excerpt && (
                         <>
                         <p>Loading ...</p>
                         </>

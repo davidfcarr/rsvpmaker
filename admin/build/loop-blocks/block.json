@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/loop-blocks",
+  "version": "1.0.0",
+  "title": "RSVPMaker Loop Blocks",
+  "category": "rsvpmaker",
+  "description": "A container for blocks representing the date, excerpt, RSVP Now! registration button.",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css"
+}

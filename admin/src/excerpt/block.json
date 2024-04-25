@@ -1,32 +1,24 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
-	"name": "rsvpmaker/loop-excerpt",
-	"title": "RSVPMaker Excerpt+Date+Button", 
+	"name": "rsvpmaker/excerpt",
+	"title": "RSVPMaker Excerpt", 
 	"icon": "calendar-alt", 
 	"category": "rsvpmaker",
-	"description": "Displays Date/Time above and optional RSVP button below the excerpt",
+	"description": "Simple excerpt of an RSVPMaker event",
 	"keywords": [
 		 "RSVPMaker", 
 		 "Events", 
 		 "Excerpt"
 	],
        "attributes": {
-            "show_rsvp_button": {
-                "type": "boolean",
-                "default": false
-            },
-			"hide_date": {
-                "type": "boolean",
-                "default": false
-            },
-			"hide_excerpt": {
-                "type": "boolean",
-                "default": false
-            },
 			"hide_type": {
                 "type": "boolean",
                 "default": false
+            },
+			"max": {
+                "type": "integer",
+                "default": 55
             }
         },
 	"usesContext": [ "postId" ],

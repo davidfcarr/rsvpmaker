@@ -2569,7 +2569,8 @@ class RSVP_Editor_Loop_Excerpt extends WP_REST_Controller {
 		$response['types'] = '';
 	$d = rsvp_date_block( $post_id, get_post_custom( $post_id ) );
 	$response['dateblock'] = $d['dateblock'];
-	$response["excerpt"] = strip_tags(rsvpmaker_excerpt_body($post));
+	$max = (isset($_GET['max'])) ? intval($_GET['max']) : 55;
+	$response["excerpt"] = strip_tags(rsvpmaker_excerpt_body($post, $max));
 	$post = $backup;
 	return new WP_REST_Response( $response, 200 );
 	}//end handle

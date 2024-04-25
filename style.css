@@ -49,7 +49,7 @@ color: #FF0000;
 font-style: italic;
 }
 .dateblock{
-padding-top: 1em; padding-bottom: 1em; font-weight: bold;
+padding-top: .5em; padding-bottom: .5em; font-weight: bold;
 }
 .rsvp_validation_error {
 color: #F00;

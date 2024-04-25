@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.5.2
-Stable tag: 10.9.4
+Stable tag: 10.9.8
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
@@ -130,9 +130,17 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 10.9.7 =
+
+* Block transform from excerpt to RSVPMaker Loop Blocks block (contains templated elements as InnerBlocks)
+
+= 10.9.5 =
+
+* Block transform from RSVPMaker Upcoming to Query Loop variation.
+
 = 10.9.4 =
 
-* Refinements to Query Block support
+* Refinements to Query Loop block support
 * Remove deprecated PHP code for UTF-8 encoding
 
 = 10.9.1 =

@@ -2302,6 +2302,22 @@ function rsvpmaker_author_page( $query ) {
 
 add_filter( 'pre_get_posts', 'rsvpmaker_author_page' );
 
+//works with rsvpmaker/button block
+function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ) {
+	global $rsvp_options;
+	$rsvp_link_template = str_replace('#rsvpnow','%s#rsvpnow', $rsvp_link_template);
+	$rsvplink = get_permalink( $post_id );
+	$rsvp_id = empty($_COOKIE[ 'rsvp_for_' . $post_id ]) ? 0 : (int) $_COOKIE[ 'rsvp_for_' . $post_id ];
+	if($rsvp_id) {
+		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
+		$rsvp_link_template = preg_replace('/>[^<]+<\/a>/','>'.$rsvp_options['update_rsvp'].'</a>',$rsvp_link_template);
+	}
+	if ( ! is_user_logged_in() && get_post_meta( $post_id, '_rsvp_login_required', true ) ) {
+		$rsvplink = wp_login_url( $rsvplink );
+	}
+	return sprintf( $rsvp_link_template, $rsvplink );
+}
+
 function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id = 0 ) {
 
 	global $rsvp_options, $rsvp_link_template;
@@ -2336,8 +2352,10 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 	else
 		$rsvplink = add_query_arg( 'e', $email, $rsvplink );
 
-	if($rsvp_id)
+	if($rsvp_id) {
 		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
+		$rsvp_link_template = preg_replace('/>[^<]+</a>/','>'.$rsvp_options['rsvp_update'].'</a>',$rsvp_link_template);
+	}
 	$rsvplink .= '#rsvpnow';
 
 	if ( ! is_user_logged_in() && get_post_meta( $post_id, '_rsvp_login_required', true ) ) {
@@ -2962,22 +2980,24 @@ function rsvpmaker_404_message ($args) {
 
 add_action('pre_get_search_form','rsvpmaker_404_message');
 
-function rsvpmaker_loop_excerpt_render($attributes) {
+function rsvpmaker_loop_excerpt_render($attributes, $extras = true) {
 	global $post;
 	$output = '';
-	if(empty($attributes['hide_date'])) {
+	if($extras && empty($attributes['hide_date'])) {
 		$d = rsvp_date_block($post->ID);
 		$output .= $d['dateblock'];
 	}
 	if(empty($attributes['hide_excerpt'])) {
 		$output .= rsvpmaker_excerpt_body($post); 
 	}
-	if(!empty($attributes['show_rsvp_button']) && get_post_meta($post->ID,'_rsvp_on',true) && is_rsvpmaker_future($post->ID))
+	if($extras && !empty($attributes['show_rsvp_button']) && get_post_meta($post->ID,'_rsvp_on',true) && is_rsvpmaker_future($post->ID))
 		$output .=  get_rsvp_link( $post->ID );
-	$terms = get_the_term_list( $post->ID, 'rsvpmaker-type', '', ', ', ' ' );
+	if(empty($attributes['hide_type'])) {
+		$terms = get_the_term_list( $post->ID, 'rsvpmaker-type', '', ', ', ' ' );
 		if ( $terms && is_string( $terms ) ) {
 			$output .= '<p class="rsvpmeta">' . __( 'Event Types', 'rsvpmaker' ) . ': ' . $terms . '</p>';
 		}
+	}
 	return $output;
 }
 

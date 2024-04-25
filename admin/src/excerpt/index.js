@@ -3,7 +3,6 @@
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
  */
-import './loop-variations/index.js';
 import { registerBlockType, createBlock } from '@wordpress/blocks';
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.

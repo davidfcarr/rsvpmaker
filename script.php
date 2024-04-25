@@ -2,7 +2,7 @@
 /*
 * Load JS and Css
 */
-$scriptversion = get_rsvpversion().'.3';
+$scriptversion = defined( 'CARR_DEV') ? time() : get_rsvpversion();
 
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce;
@@ -18,6 +18,7 @@ function rsvpmaker_rest_array() {
 }
 
 function rsvpmaker_admin_enqueue( $hook ) {
+	global $post, $scriptversion, $rsvpscript;
 	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
 	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');
 	if($rsvpmailer_editor_stylesheet)
@@ -25,7 +26,6 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	if(is_network_admin())
 		return;
 	rsvpmaker_event_scripts(); // want the front end scripts, too
-	global $post, $scriptversion, $rsvpscript;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
 	if ( ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) ) || ( isset( $_GET['post_type'] ) && (( $_GET['post_type'] == 'rsvpmaker' ) || ( $_GET['post_type'] == 'rsvpmaker_template' )) ) || ( ( isset( $_GET['page'] ) &&
 	( ( strpos( $_GET['page'], 'rsvp_report' ) !== false ) || ( strpos( $_GET['page'], 'rsvpmaker-admin.php' ) !== false ) || ( strpos( $_GET['page'], 'toast' ) !== false ) ) ) ) ) {
@@ -43,7 +43,6 @@ function rsvpmaker_admin_enqueue( $hook ) {
 
 function rsvpmaker_event_scripts($frontend = true) {
 	global $post, $scriptversion,$rsvpmaker_nonce;
-	$scriptversion = time();
 	$post_id       = isset( $post->ID ) ? $post->ID : 0;
 	global $rsvp_options;
 	wp_enqueue_script( 'jquery' );

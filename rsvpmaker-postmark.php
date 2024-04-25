@@ -552,7 +552,7 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
             if($row->count > 20)
                 $score += $row->count;
         }
-        if($score > 50)
+        if($score > 500)
         {
             switch_to_blog(1);
             $postmark = get_option('rsvpmaker_postmark');

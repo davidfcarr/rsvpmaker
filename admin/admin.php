@@ -19,9 +19,11 @@ function create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build' );
 	register_block_type( __DIR__ . '/build/upcoming' );
 	register_block_type( __DIR__ . '/build/loop_excerpt_block' );
+	register_block_type( __DIR__ . '/build/excerpt' );
 	register_block_type( __DIR__ . '/build/calendar' );
 	register_block_type( __DIR__ . '/build/rsvpdateblock' );
 	register_block_type( __DIR__ . '/build/rsvpbutton' );
+	register_block_type( __DIR__ . '/build/loop-blocks' );
 }
 add_action( 'init', 'create_block_admin_block_init' );
 

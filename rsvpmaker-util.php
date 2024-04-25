@@ -1216,18 +1216,17 @@ function rsvpmaker_excerpt_filter($excerpt) {
 	return $excerpt;
 }
 
-function rsvpmaker_excerpt_body($post) {
+function rsvpmaker_excerpt_body($post, $max = 55) {
 	$excerpt = '';
 if($post->post_excerpt) 
 		$excerpt .= '<p>'.esc_html($post->post_excerpt).'</p>';
 	else {
-		$content = str_replace("<",' <',$post->post_content);
-		$content   = strip_tags($content);
-		$content = str_replace("\n",' ',$content);
-		$content = preg_replace('/\s{2,}/',' ',$content);
-		if(strlen($content) > 200) {
-			$content = substr($content,0,200).' ...';
-			$morelink = true;
+		preg_match_all('/<(p|h1|h2|h3)[^>]*>(.+)<\/(p|h1|h2|h3)>/',$post->post_content,$matches);
+		$content = implode(' ',$matches[2]);
+		if(str_word_count($content) > $max) {
+			$words = explode(' ',$content);
+			array_splice($words,$max);
+			$content = implode(' ',$words).' ...';
 		}
 		$excerpt .= '<p>'.$content.'</p>';
 	}
