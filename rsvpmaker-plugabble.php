@@ -2007,7 +2007,7 @@ if ( ! function_exists( 'event_content' ) ) {
 					$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
 			} elseif ( $rsvp_on && $login_required && ! is_user_logged_in() ) { // show button, coded to require login
 				if(!strpos($post->post_content,'rsvplink') && !strpos($post->post_content,'rsvpmaker/button'))//if button not already displayed
-					$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
+					$content .= sprintf( $rsvp_options['rsvplink'], wp_login_url($rsvplink) );
 			} elseif ( $rsvp_on && ! is_admin() && ! $formonly && ( ! is_single() || $showbutton ) ) { // show button
 				if(!strpos($post->post_content,'rsvplink') && !strpos($post->post_content,'rsvpmaker/button'))//if button not already displayed
 					$content .= sprintf( $rsvp_options['rsvplink'], $rsvplink );

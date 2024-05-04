@@ -73,7 +73,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 		[
 			'core/post-template',
 			{"layout":{"type":"grid","columnCount":2}},
-			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/rsvpdateblock'], [ 'rsvpmaker/excerpt' ], ['core/read-more',{"content":"Read More \u003e\u003e","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], ['rsvpmaker/button'] ],
+			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/loop-blocks'] ],
 		],
 		[ 'core/query-pagination' ],
 		[ 'core/query-no-results', {}, [['core/paragraph', {"content": "No events found."}] ]],
@@ -149,7 +149,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 		[
 			'core/post-template',
 			{"layout":{"type":"grid","columnCount":2}},
-			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/rsvpdateblock'], [ 'rsvpmaker/excerpt' ], ['core/read-more',{"content":"Read More \u003e\u003e","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], ['rsvpmaker/button'] ],
+			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/loop-blocks'] ],
 		],
 		[ 'core/query-pagination' ],
 		[ 'core/query-no-results', {}, [ ['core/paragraph', {"content": "No events found."}] ] ],

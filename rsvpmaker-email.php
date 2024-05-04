@@ -39,7 +39,7 @@ function rsvpmailer($mail, $description = '') {
 			$message = $mail['to'].' blocks messages of the type: '.$rsvpmaker_message_type;
 			rsvpemail_error_log($message,$mail);
 			return $message;
-		}	
+		}
 	}
 
 	$mail['html'] = rsvpmaker_personalize_email($mail['html'],$mail['to'],$description);
@@ -47,8 +47,10 @@ function rsvpmailer($mail, $description = '') {
 		$mail['text'] = rsvpmaker_personalize_email($mail['text'],$mail['to'],$description);
 
 	if(isset($mail['subject']))
-		$mail['subject'] = html_entity_decode(do_shortcode($mail['subject']));
-
+		{
+			//$mail['subject'] = str_replace('&#039;',"'",html_entity_decode(do_shortcode($mail['subject'])));
+			$mail['subject'] = wp_specialchars_decode(do_shortcode($mail['subject']),ENT_QUOTES);
+		}
 	if(isset($mail['html']))
 	{
 		$mail['html'] = do_shortcode($mail['html']);
@@ -2960,6 +2962,26 @@ if (is_array($retval)){
 	}
 }
 return $options;
+}
+
+function mailchimp_list_array($apikey) {
+	if(empty($apikey))
+		return [];
+	try {
+		$MailChimp = new MailChimpRSVP($apikey);
+	} catch (Exception $e) {
+		return [];
+	}
+	
+	$retval = $MailChimp->get('lists');
+	
+	$options = [['value'=>'','label'=>'None']];
+	if (is_array($retval)){
+		foreach ($retval["lists"] as $list){
+			$options[] = array('value'=>$list['id'],'label'=>$list['name']);
+		}
+	}
+	return $options;
 }
 
 function event_to_embed($post_id, $event_post = NULL, $context = '') {

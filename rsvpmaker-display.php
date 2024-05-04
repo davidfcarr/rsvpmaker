@@ -264,7 +264,7 @@ function rsvpmaker_select( $select, $query = null ) {
 function is_rsvpmaker_query($query) {
 	if(is_single())
 		return false;
-	return ( (strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') && !strpos($_SERVER['REQUEST_URI'],'template')) || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
+	return ( (strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') && !strpos($_SERVER['REQUEST_URI'],'template')  && !strpos($_SERVER['REQUEST_URI'],'form')) || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
 }
 
 function rsvpmaker_join( $join, $query = null ) {
@@ -2304,9 +2304,28 @@ add_filter( 'pre_get_posts', 'rsvpmaker_author_page' );
 
 //works with rsvpmaker/button block
 function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ) {
-	global $rsvp_options;
-	$rsvp_link_template = str_replace('#rsvpnow','%s#rsvpnow', $rsvp_link_template);
+	global $rsvp_options, $wpdb;
+	$login_required = get_post_meta($post_id,'_rsvp_login_required',true);
+	$rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
+	$rsvp_start = (int) get_post_meta($post_id,'_rsvp_start',true);
+	if ( !is_rsvpmaker_deadline_future( $post_id) ) {
+		return '<p class="rsvp_status">' . __( 'RSVP deadline is past', 'rsvpmaker' ) . '</p>';
+	} 	
+	if($rsvp_max) {
+		$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$post_id AND yesno=1";
+		$total = $wpdb->get_var( $sql );
+		if( $total >= $rsvp_max )
+			return '<p class="rsvp_status">' . esc_html( __( 'RSVPs are closed', 'rsvpmaker' ) ) . '</p>';	
+	}
+	$now = time();
+	if($rsvp_start && ($now < $rsvp_start))
+		return '<p class="rsvp_status">' . esc_html( __( 'RSVPs accepted starting: ', 'rsvpmaker' ) . mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $rsvp_start  ), 'UTF-8' ) ) . '</p>';
+
+	$rsvp_link_template = preg_replace('/href="[^"]+"/','href="%s#rsvpnow"', $rsvp_link_template);
 	$rsvplink = get_permalink( $post_id );
+	if($login_required && !is_user_logged_in())
+		$rsvplink = wp_login_url($rsvplink);
+
 	$rsvp_id = empty($_COOKIE[ 'rsvp_for_' . $post_id ]) ? 0 : (int) $_COOKIE[ 'rsvp_for_' . $post_id ];
 	if($rsvp_id) {
 		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
@@ -2354,7 +2373,7 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 
 	if($rsvp_id) {
 		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
-		$rsvp_link_template = preg_replace('/>[^<]+</a>/','>'.$rsvp_options['rsvp_update'].'</a>',$rsvp_link_template);
+		$rsvp_link_template = preg_replace('/>[^<]+<\/a>/','>'.$rsvp_options['update_rsvp'].'</a>',$rsvp_link_template);
 	}
 	$rsvplink .= '#rsvpnow';
 
@@ -2377,6 +2396,28 @@ function rsvpdateblock( $atts = array() ) {
 	$dateblock = rsvpmaker_format_event_dates( $post->ID );
 	$alignclass = (empty($atts['alignment'])) ? '' : 'has-text-align-'.$atts['alignment'];
 	return '<div class="dateblock '.$alignclass.'">' . $dateblock . "\n</div>\n";
+}
+
+function rsvptitledate($atts) {
+	global $post, $rsvp_options;
+	$separator = (empty($atts['separator'])) ? ' - ' : $atts['separator'];
+	$event = get_rsvpmaker_event($post->ID);
+	$date = rsvpmaker_date($rsvp_options['long_date'],$event->ts_start,$event->timezone);
+	$time = rsvpmaker_date($rsvp_options['time_format'],$event->ts_start,$event->timezone);
+	$permalink = get_permalink($post->ID);
+	$title = esc_html($post->post_title).$separator.$date;
+	$style = 'display:block;';
+	if(!empty($atts['bold']))
+		$style .= 'font-weight: bold;';
+	if(!empty($atts['italic']))
+		$style .= 'font-style: italic;';
+	$alignclass = (empty($atts['align'])) ? '' : 'class="has-text-align-'.esc_attr($atts['align']).'"';
+
+	if($style)
+		$style = ' style="'.$style.'" ';
+	if(!empty($atts['show_time']))
+		$title .= ' '.$time;
+	printf('<a href="%s" %s %s>%s</a>',$permalink,$style,$alignclass,$title);
 }
 
 function rsvpmaker_format_event_dates( $post_id, $template = false ) {
@@ -2502,6 +2543,74 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 
 	return $dateblock;// .'<span class="format_function">test<span></div>';
 
+}
+
+function rsvpmaker_date_element( $atts = array() ) {
+	global $post, $rsvp_options;
+	if(empty($atts['show']))
+		return;
+	if(empty($post->ts_start)) {
+		$event = get_rsvpmaker_event($post->ID);
+		$post->ts_start = $event->ts_start;
+		$post->ts_end = $event->ts_end;
+		$post->timezone = $event->timezone;
+		$post->date = $event->date;
+		$post->enddate = $event->enddate;
+	}
+	$style = (isset($atts['align'])) ? 'style="text-align: '.$atts['align'].'" ' : '';
+	if(('start' == $atts['show']) || ('end' == $atts['show']) || ('start_and_end' == $atts['show'])) {
+		$start_format = (empty($atts['start_format'])) ? $rsvp_options['long_date'].' '.$rsvp_options['time_format'] : $atts['start_format'];
+		$end_format = (empty($atts['end_format'])) ? $rsvp_options['time_format'] : $atts['end_format'];
+		$post_id = $post->ID;
+		$separator = (isset($atts['separator'])) ? $atts['separator'] : ' - ';
+		$permalink = get_permalink( $post_id );
+		$custom_fields = get_post_custom( $post_id );
+		$time_format = $rsvp_options['time_format'];	
+		$timezone = (isset($atts['timezone'])) ?  (!empty($atts['timezone']) && $atts['timezone'] != 'false') : isset($custom_fields['_add_timezone'][0]);
+		$output = '';
+		if('start_and_end' == $atts['show'])
+			$output = rsvpmaker_date($start_format,$post->ts_start,$post->timezone).$separator.rsvpmaker_date($end_format,$post->ts_end,$post->timezone);
+		elseif('start' == $atts['show'])
+			$output = rsvpmaker_date($start_format,$post->ts_start,$post->timezone);
+		elseif('end' == $atts['show'])
+			$output = rsvpmaker_date($end_format,$post->ts_end,$post->timezone);
+		if($timezone)
+			$output .= rsvpmaker_date(' T',$post->ts_end);
+		return '<div '.$style.'>'.$output.'</div>';
+	}
+	elseif('icons' == $atts['show']) {
+		$output = '';
+		$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
+
+		if ( is_email_context() ) {
+			$output = sprintf( '<div '.$style.' class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a></div>', rsvpmaker_to_gcal( $post, $post->date, $post->enddate ), $permalink . $j . 'ical=1' );
+		} else {
+			$output = sprintf( '<div '.$style.' class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a></div>', rsvpmaker_to_gcal( $post, $post->date, $post->enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ) );
+		}
+		return $output;
+	}
+	elseif('tz_convert' == $atts['show']) {
+		$output = '';
+		if ( is_email_context() ) {
+			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+
+		} 
+		elseif(isset($atts['editor']))
+			$tzbutton = '<a href="#">Show in My timezone</a>';
+		else {
+
+			$atts['time'] = $post->date;
+			if ( ! empty( $post->display_type ) ) {
+				$atts['end'] = $post->enddate;
+			}
+			$atts['abbrev'] = rsvpmaker_date('T',$t);
+			$atts['timezone'] = $post->timezone;
+			$tzbutton = rsvpmaker_timezone_converter( $atts );
+		}
+		$output .= '<div><span id="timezone_converted' . $post_id . '"></span><span id="extra_timezone_converted' . $post_id . '"></span></div>';
+		$output .= '<div class="tz_button" '.$style.'>' . $tzbutton . '</div>';
+		return $output;
+	}
 }
 
 function rsvpmaker_hide_time_posted( $time ) {
@@ -2960,7 +3069,7 @@ function rsvpmaker_timezone_converter( $atts ) {
 		return;
 	}
 	$abbrev = (isset($atts['abbrev'])) ? $atts['abbrev'] : '';
-	$server_timezone = rsvpmaker_get_timezone_string();
+	$server_timezone = (isset($atts['timezone'])) ? $atts['timezone'] : rsvpmaker_get_timezone_string();
 	$time            = $atts['time'];
 	$id              = 'convert' . strtotime( $time ) . rand();
 	$end             = ( isset( $atts['end'] ) ) ? $atts['end'] : '';

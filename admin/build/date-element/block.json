@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "rsvpmaker/date-element",
+  "title": "RSVPMaker Date Element",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Allows independent access to date display components, including formatted date, calendar icons, and timezone conversion",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "Date"
+  ],
+  "version": "1",
+  "attributes": {
+    "show": {
+      "type": "string",
+      "default": "start_and_end"
+    },
+    "start_format": {
+      "type": "string",
+      "default": "l F j, Y g:i A"
+    },
+    "end_format": {
+      "type": "string",
+      "default": "g:i A"
+    },
+    "separator": {
+      "type": "string",
+      "default": " - "
+    },
+    "align": {
+      "type": "string",
+      "default": ""
+    },
+    "timezone": {
+      "type": "boolean",
+      "default": false
+    },
+    "bold": {
+      "type": "boolean",
+      "default": false
+    },
+    "italic": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true
+    },
+    "color": {
+      "link": true,
+      "text": true,
+      "background": true
+    }
+  },
+  "usesContext": [
+    "postId"
+  ],
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

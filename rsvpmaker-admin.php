@@ -459,7 +459,7 @@ class RSVPMAKER_Options
           function admin_menu()
           {
 			add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin', 17);
-			add_options_page('RSVPMaker Email', 'RSVPMaker Email', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 18);
+			add_options_page('RSVPMaker Postmark + Advanced Email', 'RSVPMaker Postmark + Advanced Email', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 18);
           }
                     
           // handle plugin options
@@ -2685,7 +2685,6 @@ if($holiday_check) {
 }
 $post = get_post($template_id);
 $date = rsvpmaker_date('Y-m-d',$ts).' '.$sked['start_time'];
-echo "add $date<br>";
 $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 } // end for loop
 

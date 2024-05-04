@@ -1,23 +1,35 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
-	"name": "rsvpmaker/rsvpdateblock",
-	"title": "RSVPMaker Date Block", 
+	"name": "rsvpmaker/title-date",
+	"title": "RSVPMaker Title + Date",
 	"icon": "calendar-alt", 
 	"category": "rsvpmaker",
-	"description": "Use for custom placement of the date / time block",
+	"description": "One-line link to event with title and date",
 	"keywords": [
 		 "RSVPMaker", 
 		 "Events", 
-		 "Calendar"
+		 "Listing"
 	],
-       "attributes": {
-		"alignment": {
+	"version": "1",
+	"attributes": {
+		"show_time": {
+			"type": "boolean",
+			"default": false
+		},
+		"align": {
 			"type": "string",
 			"default": ""
+		},
+		"bold": {
+			"type": "boolean",
+			"default": false
+		},
+		"italic": {
+			"type": "boolean",
+			"default": false
 		}
         },
-	"version": "1",
 	"supports": {
 		"html": false,
 		"spacing": {
@@ -29,9 +41,9 @@
 			"lineHeight": true
 		},
 		"color": {
-			"text": true,
-			"background": true,
-			"link": true
+			"link": true,
+			"text": false,
+			"background": true
 		}
 	},
 	"usesContext": [ "postId" ],

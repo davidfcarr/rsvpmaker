@@ -48,7 +48,7 @@ registerBlockType( metadata.name, {
 						[
 							'core/post-template',
 							{"layout":{"type":"grid","columnCount":2}},
-							[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], [ 'rsvpmaker/loop-excerpt', {"show_rsvp_button":true} ], [ 'core/read-more', {"content":"Read More \u003e\u003e"} ] ],
+							[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], [ 'rsvpmaker/loop-blocks' ], [ 'core/read-more', {"content":"Read More \u003e\u003e"} ] ],
 						],
 						[ 'core/query-pagination' ],
 						[ 'core/query-no-results', {}, [['core/paragraph', {"content": "No events found."}] ]],
@@ -56,7 +56,7 @@ registerBlockType( metadata.name, {
 						[
 							'core/post-template',
 							{"layout":{"type":"grid","columnCount":2}},
-							[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], [ 'rsvpmaker/loop-excerpt', {"show_rsvp_button":true} ], [ 'core/read-more', {"content":"Read More \u003e\u003e"} ] ],
+							[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], [ 'rsvpmaker/loop-blocks' ], [ 'core/read-more', {"content":"Read More \u003e\u003e"} ] ],
 						],
 						[ 'core/query-pagination' ],
 						[ 'core/query-no-results', {}, [['core/paragraph', {"content": "No events found."}] ]],

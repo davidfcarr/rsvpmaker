@@ -9,6 +9,9 @@ export default function Email (props) {
     const {data,isLoading,isError} = useOptions('general');
     if(isError)
         return <p>Error loading options</p>
+    if(isLoading)
+        return <p>Loading ...</p>
+
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
     const [chimp,setChimp] = useState(data.data.chimp);
     const [rsvp_options,setRSVP] = useState(data.data.rsvp_options);
@@ -16,11 +19,9 @@ export default function Email (props) {
     const [showSMTP,setShowSMTP] = useState(data.data.rsvp_options['smtp'] != '');
     const [chimpAdd,setChimpAdd] = useState(data.data.chimp['chimp_add_new_users']);
     const [chimpList,setChimpList] = useState(data.data.chimp['chimp-list']);
-    const chimp_lists = [{'label':'None','value':''},{'label':'Test','value':'test'}];
+    const chimp_lists = data.data.chimp_lists;
     const smtp_options = [{'label':'None - use wp_mail()','value':''},{'label':'Custom','value':'other'},{'label':'Gmail','value':'gmail'},{'label':'Sendgrid','value':'sendgrid'}];
 
-    if(isLoading)
-        return <p>Loading ...</p>
     //const rsvp_options = data.data.rsvp_options;
 
     return <div className="rsvptab">

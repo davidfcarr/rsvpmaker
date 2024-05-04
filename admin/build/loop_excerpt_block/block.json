@@ -2,14 +2,12 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 2,
   "name": "rsvpmaker/loop-excerpt",
-  "title": "RSVPMaker Excerpt+Date+Button",
+  "title": "RSVPMaker Query Loop Combo (Single Block)",
   "icon": "calendar-alt",
   "category": "rsvpmaker",
-  "description": "Displays Date/Time above and optional RSVP button below the excerpt",
+  "description": "Displays excerpt plus date and optional RSVP button. Single block version.",
   "keywords": [
-    "RSVPMaker",
-    "Events",
-    "Excerpt"
+    "RSVPMaker"
   ],
   "attributes": {
     "show_rsvp_button": {

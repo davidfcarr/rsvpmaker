@@ -502,7 +502,7 @@ function remove_save_content_filters() {
 }
 
 function rsvpmaker_get_forms() {
-	global $post;
+	global $post, $rsvp_options;
 	$post_id = empty( $post->ID ) ? 0 : $post->ID;
 	$forms   = get_option( 'rsvpmaker_forms' );
 	if ( empty( $forms['webinar'] ) || empty( get_post( $forms['webinar'] ) ) || empty( $forms['simple'] ) || empty( get_post( $forms['simple'] ) ) ) {

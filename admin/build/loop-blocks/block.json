@@ -7,6 +7,21 @@
   "category": "rsvpmaker",
   "description": "A container for blocks representing the date, excerpt, RSVP Now! registration button.",
   "textdomain": "rsvpmaker",
+  "supports": {
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true
+    },
+    "color": {
+      "link": true,
+      "text": true,
+      "background": true
+    }
+  },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
   "style": "file:./style-index.css"
