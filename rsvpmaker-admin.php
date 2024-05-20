@@ -2450,6 +2450,10 @@ $t = (int) $_POST["template"];
 $post = get_post($t);
 $template = get_template_sked($t);
 
+$timezone = get_post_meta($t,'_timezone',true);
+if(!$timezone)
+	$timezone = wp_timezone_string();
+
 $hour = (isset($template["hour"]) ) ? (int) $template["hour"] : 17;
 $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 
@@ -2488,7 +2492,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 // Insert the post into the database
   			if($post_id = wp_insert_post( $my_post ) )
 				{
-				add_rsvpmaker_date($post_id,$cddate,$duration);				
+				add_rsvpmaker_date($post_id,$cddate,$duration, $timezone);				
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
 				update_post_meta($post_id,"_updated_from_template",$ts);
@@ -2708,6 +2712,9 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') 
 	if($post->post_status != 'publish')
 		return;
 	$t = $post->ID;
+	$timezone = get_post_meta($t,'_timezone',true);
+	if(!$timezone)
+		$timezone = wp_timezone_string();
 	$my_post['post_title'] = $post->post_title;
 	$my_post['post_content'] = $post->post_content;
 	$my_post['post_status'] = 'publish';
@@ -2733,7 +2740,7 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') 
 				{
 				$prettydate = rsvpmaker_date($rsvp_options['long_date'],$ts);
 				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> %s</p>',$prettydate,get_permalink($post_id),__('View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),__('Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),__('Trash','rsvpmaker'),$hthis);
-				add_rsvpmaker_date($post_id,$date,$duration);				
+				add_rsvpmaker_date($post_id,$date,$duration,$timezone);
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$upts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
 				update_post_meta($post_id,"_updated_from_template",$upts);
@@ -2795,6 +2802,9 @@ if($template['hour'] < 10)
 $hour = $sked['hour'];
 $minutes = $sked['minutes'];
 $update_messages = '';
+$timezone = get_post_meta($t,'_timezone',true);
+if(!$timezone)
+	$timezone = wp_timezone_string();
 	
 if(!empty($_POST['trash_template']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 	foreach($_POST['trash_template'] as $id)
@@ -2897,7 +2907,7 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
   			if($post_id = wp_insert_post( $my_post ) )
 				{
 				$end_time = (empty($template['end'])) ? '' : $template['end'];	
-				$timezone = rsvpmaker_get_timezone_string($t);
+				//$timezone = rsvpmaker_get_timezone_string($t);
 				rsvpmaker_add_event_row ($post_id, $cddate, $end_time, $duration,$timezone,$my_post['post_title']);
 				if($my_post["post_status"] == 'publish')
 					$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';
@@ -2947,7 +2957,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 // Insert the post into the database
   			if($post_id = wp_insert_post( $my_post ) )
 				{
-				add_rsvpmaker_date($post_id,$cddate,'allday');
+				add_rsvpmaker_date($post_id,$cddate,'allday','',0,$timezone);
 				$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';	
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				}

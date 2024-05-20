@@ -305,9 +305,32 @@ function allforwarders() {
 return var_export(get_transient('allforwarders_109'),true);
 }
 
+function rsvpmaker_postmark_incoming_list_signup($emailobj, $forwarders) {
+    set_transient('postmark_incoming_list_input',$emailobj,DAY_IN_SECONDS);
+    $email = $emailobj->From;
+    $name = (empty($emailobj->FromFull->Name)) ? '' : $emailobj->FromFull->Name;
+    if(empty($name)) {
+        $first = $last = '';
+    }
+    else
+        {
+            $parts = explode(' ',$name);
+            $last = array_pop($parts);
+            $first = implode(' ',$parts);
+        }
+    $result = rsvpmaker_guest_list_add($email, $first, $last, 'incoming_email_signup', false);
+    mail('david@carrcommunications.com','rsvpmaker_postmark_incoming_list_signup result',$result.' '.var_export($emailobj,true));
+}
+
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
-    rsvpmaker_testlog('postmark_incoming_forwarders',$forwarders);
+    set_transient('postmark_incoming_emailobj',$emailobj,DAY_IN_SECONDS);
+
     rsvpmaker_testlog('postmark_incoming_emailobj',$emailobj);
+    if(strpos($emailobj->Subject,'Add me to your email list') !== false) {
+        rsvpmaker_postmark_incoming_list_signup($emailobj, $forwarders);
+        return;
+    }
+    rsvpmaker_testlog('postmark_incoming_forwarders',$forwarders);
     //wp_suspend_cache_addition(true);
     $admin_email = postmark_admin_email();
     $result = '';
@@ -319,6 +342,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         mail($admin_email,'postmark deactivated',date('r'));
     }
     $postmark_settings = get_rsvpmaker_postmark_options();
+
 
     //test new approach
     $from = strtolower($emailobj->From);
@@ -554,11 +578,12 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
         }
         if($score > 500)
         {
-            switch_to_blog(1);
-            $postmark = get_option('rsvpmaker_postmark');
-            $postmark['postmark_mode'] = '';
-            update_option('rsvpmaker_postmark',$postmark);
-            wp_mail(postmark_admin_email(),'Shutting down RSVPMaker/Postmark email delivery service because of overload',"Heavy use, $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
+            //switch_to_blog(1);
+            //$postmark = get_option('rsvpmaker_postmark');
+            //$postmark['postmark_mode'] = '';
+            //update_option('rsvpmaker_postmark',$postmark);
+            wp_mail(postmark_admin_email(),'Heavy email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
+            //wp_mail(postmark_admin_email(),'Shutting down RSVPMaker/Postmark email delivery service because of overload',"Heavy use, $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
         }
         elseif(!empty($postmark['volume_warning']) && !empty($overloadmessage))
             wp_mail(postmark_admin_email(),'Recent email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);

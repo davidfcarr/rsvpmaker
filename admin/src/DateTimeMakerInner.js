@@ -19,7 +19,8 @@ export default function DateTimeMakerInner(props) {
     const date = new Date(eventdata.date);
     const endDate = new Date(eventdata.enddate);
     const elapsed = endDate.getTime() - date.getTime();
-    console.log('elapsed',elapsed);
+    if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
+        eventdata.tzchoices = [];
 
     function sqlDate(date) {
         console.log(typeof date);
@@ -48,8 +49,6 @@ export default function DateTimeMakerInner(props) {
         const endsqldate = sqlDate(newendDate);
         setLocal((prev) => { return (prev.date) ? {...prev,'date':sqldate,'enddate':endsqldate} : {...eventdata,'date':sqldate,'enddate':endsqldate} } );
         datemutate({'date':sqldate,'enddate':endsqldate});
-        console.log('local after set date',local);
-        //setEndDate(newendDate);
     }
 
     function setEndDate(datestring) {

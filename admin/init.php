@@ -120,6 +120,16 @@ register_meta( 'post', '_rsvp_currency', $args );
 	   }
    );
    register_meta( 'post', '_rsvp_count_party', $args );
+   $args = array(
+	'type'		=> 'string',
+	'single'	=> true,
+	'default' => wp_timezone_string(),
+	'show_in_rest'	=> true,
+	'auth_callback' => function() {
+	   return current_user_can('edit_posts');
+   	}
+	);
+	register_meta( 'post', '_timezone', $args );
 
 	$args = array(
 			 'type'		=> 'boolean',

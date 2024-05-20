@@ -18,7 +18,8 @@ export default function DateOrTemplate() {
     if(isLoading) 
         return <p><em>Loading event data</em></p>
     const eventdata = data.data;
-    console.log('eventdata DateOrTemplate',eventdata);
+    if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
+        eventdata.tzchoices = [];
     
     return (
 <div className="date-or-template">

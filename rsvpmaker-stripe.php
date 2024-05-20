@@ -189,6 +189,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 }
 
 function rsvpmaker_stripe_validate($public, $secret) {
+	if(!class_exists('\Stripe\StripeClient'))
 	require_once 'stripe-php/init.php';
 	try {
 		$stripe = new \Stripe\StripeClient($secret);
@@ -275,7 +276,7 @@ function rsvpmaker_stripe_checkout() {
 		$vars['note'] = sanitize_text_field($_GET['stripenote']);
 
 	update_option( $idempotency_key, $vars );
-	
+	if(!class_exists('\Stripe\StripeClient'))
 	require_once 'stripe-php/init.php';
 
 	if ( ! empty( $vars['email'] ) ) {
@@ -666,8 +667,11 @@ function rsvpmaker_stripe_report() {
 
 	rsvpmaker_admin_heading(__('Stripe and PayPal Charges','rsvpmaker'),__FUNCTION__,'');
 
+	$detail = '';
+
 	if ( isset( $_GET['history'] ) ) {
-		stripe_balance_history( (int) $_GET['history'] );
+		$detail = stripe_balance_history( (int) $_GET['history'] );
+		echo '<p><em>See below for more detail.</em></p>';
 	}
 	$keys = get_rsvpmaker_stripe_keys();
 	if ( !empty( $keys ) && isset( $keys['pk'] ) ) {
@@ -678,17 +682,7 @@ function rsvpmaker_stripe_report() {
 	
 		<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_stripe_report" />
 	
-		Up to <select name="history">
-	
-		<option value="10">10</option>
-	
-		<option value="20" selected="selected">20</option>
-	
-		<option value="50">50</option> 
-	
-		<option value="100">100</option> 
-	
-		</select>transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
+		Up to <input name="history" type="number" value="100" /> transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
 		%s
 		<button>Get</button></form></div>',
 			admin_url( 'edit.php' ),
@@ -696,13 +690,14 @@ function rsvpmaker_stripe_report() {
 		);
 	}
 
-	$tx = rsvpmaker_stripe_transactions( 100 );
+	$tx = rsvpmaker_stripe_transactions( );
 	echo wp_kses_post( $tx['content'] );
 	echo '<h3>Export Format</h3>
 	<p>Formatted for copy-paste into Excel or other spreadsheet program
 	<br />
 	<textarea rows="20" style="width: 100%">' . $tx['export'] . '</textarea></p>';
-
+	if(!empty($detail))
+		echo '<h2>Detailed Output from Stripe API</h2>'.$detail;	
 }
 
 function stripe_latest_logged() {
@@ -749,8 +744,9 @@ function stripe_balance_history_cron() {
 	stripe_balance_history( 20, false );
 }
 
-function stripe_balance_history( $limit = 20, $output = true ) {
+function stripe_balance_history( $limit = 20 ) {
 	global $wpdb;
+	ob_start();
 	$keys = get_rsvpmaker_stripe_keys();
 	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
 		return;
@@ -761,7 +757,7 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 	$stripetable = rsvpmaker_money_table();
 
 	rsvpmaker_debug_log( 'call to stripe_balance_history' );
-
+	if(!class_exists('\Stripe\StripeClient'))
 	require_once 'stripe-php/init.php';
 	\Stripe\Stripe::setApiKey( $secret );
 
@@ -841,13 +837,7 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 				'date'   => $date,
 			);
 		}
-		if ( $output ) {
-			printf( '<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>', esc_html( $name ), esc_html( $date ), number_format( ( $data->amount / 100 ), 2 ), number_format( ( $data->fee / 100 ), 2 ), esc_html( $data->reporting_category ), esc_html( $data->id ) );
-		}
-	}
-
-	if ( ! $output ) {
-		return;
+		printf( '<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>', esc_html( $name ), esc_html( $date ), number_format( ( $data->amount / 100 ), 2 ), number_format( ( $data->fee / 100 ), 2 ), esc_html( $data->reporting_category ), esc_html( $data->id ) );
 	}
 
 	if ( ! empty( $tablerow ) ) {
@@ -878,11 +868,12 @@ function stripe_balance_history( $limit = 20, $output = true ) {
 		}
 		printf( '<p>Total Refunds: %s</p>', esc_html( $rtotal ) );
 	}
-
+	return ob_get_clean();
 }
 
 function rsvpmaker_stripe_transactions() {
-	$transactions = rsvpmaker_stripe_transactions_list();
+	$limit = isset($_GET['history']) ? intval($_GET['history']) : 50;
+	$transactions = rsvpmaker_stripe_transactions_list($limit);
 	if ( $transactions ) {
 		$transaction = (array) $transactions[0];
 		$th                   = '<tr>';
@@ -923,7 +914,7 @@ function rsvpmaker_stripe_transactions() {
 		krsort( $lines );
 		$export .= implode( "\n", $lines );
 		return array(
-			'content' => '<h3>50 Most Recent Payments</h3><table>' . $th . $td . '</table>',
+			'content' => '<h3>'.$limit.' Most Recent Payments</h3><table>' . $th . $td . '</table>',
 			'export'  => $export,
 		);
 	}

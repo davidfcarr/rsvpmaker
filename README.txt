@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.5.2
-Stable tag: 11.0.4
+Tested up to: 6.5.3
+Stable tag: 11.0.5
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
@@ -129,6 +129,12 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 11.0.5 =
+
+* More responsive email CSS for columns (fluid 2 columns grid template)
+* Option to set timezone in event template
+* Removed filters wp_theme_json_data_user and wp_theme_json_data_theme
 
 = 11.0.4 =
 

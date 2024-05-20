@@ -1578,15 +1578,23 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 	public function get_items( $request ) {
 		global $wpdb;
 		$email = '';
+		return new WP_REST_Response( array('message'=>'Something went wrong, sorry'), 200 );
 		if(isset($_POST['em']))
 			$email = trim($_POST['em']);
 		elseif(isset($_POST['email']))
 			$email = trim($_POST['email']);
-		if(is_email($email))
+		
+		if(check_ajax_referer('rsvp_mailing_list','rsvp_mailing_list', false))
+			{
+				$result['message'] = 'Security check failed '.$_POST['rsvp_mailing_list'];
+			}
+		elseif(!empty($_POST['extra_special_discount_code']))
+			$result['message'] = 'Something went wrong, sorry';
+		elseif(is_email($email))
 		{   
 			$first = isset($_POST['first']) ? sanitize_text_field($_POST['first']) : '';
 			$last = isset($_POST['last']) ? sanitize_text_field($_POST['last']) : '';
-			$result['message'] = rsvpmaker_guest_list_add($email,$first,$last,'',0);
+			$result['message'] = strip_tags(rsvpmaker_guest_list_add($email,$first,$last,'',0));
 			$result['success'] = true;
 			$result['code'] = urldecode($request['code']);
 			$result['key'] = get_rsvpmail_signup_key();
@@ -1596,6 +1604,7 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 			$result['success'] = false;
 		}
 		$result['postwas'] = $_POST;
+		add_post_meta(1,'rsvpmail_signup',var_export($_POST,true)."\n\n".var_export($_SERVER,true)."\n\n".var_export($result,true));
 		return new WP_REST_Response( $result, 200 );
 	}
 }
@@ -2199,10 +2208,14 @@ class RSVP_Event_Date extends WP_REST_Controller {
 				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET display_type=%s WHERE event=%d",$data->display_type,$event_id);
 				$status = __('Updated display','rsvpmaker').': '.$data->display_type;
 			}
-			elseif(isset($data->timezone)) // end date set independently
+			elseif(isset($data->timezone))
 			{
-				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET timezone=%s WHERE event=%d",$data->timezone,$event_id);
-				$status = __('Updated timezone','rsvpmaker').': '.$data->timezone;
+				if ('rsvpmaker_template' == $type) {
+					update_post_meta($event_id,'timezone',$data->timezone);
+				} else {
+					$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET timezone=%s WHERE event=%d",$data->timezone,$event_id);
+					$status = __('Updated timezone','rsvpmaker').': '.$data->timezone;	
+				}
 			}
 			elseif(isset($data->metaKey) && isset($data->metaValue)) {
 				$status = 'updated '.$data->metaKey;
@@ -2304,6 +2317,13 @@ class RSVP_Event_Date extends WP_REST_Controller {
 			$end = $t + HOUR_IN_SECONDS;
 			$meta['_sked_end'] = date('H:i:s',$end);
 			update_post_meta($post_id,'_sked_end',$meta['_sked_end']);
+			}
+		}
+		if ('rsvpmaker_template' == $type) {
+			$event->timezone = get_post_meta($event_id,'_timezone',true);
+			if(empty($event->timezone)) {
+				$event->timezone = wp_timezone_string();
+				update_post_meta($event_id,'_timezone',$event->timezone);
 			}
 		}
 		$event->meta = $meta;

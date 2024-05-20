@@ -3,11 +3,12 @@ import {useState} from 'react';
 import {RSVPMetaToggle, MetaEndDateControl, MetaSelectControl} from './metadata_components.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
 import RSVPTimePicker from './RSVPTimePicker.js';
+import { SelectCtrl } from "../Ctrl";
 
 export default function TemplateControl (props) {
 	if(!props)
 		return <p>Reloading ...</p>
-	console.log('props for TemplateControl',props);
+	const [local,setLocal] = useState({});
 	const {eventdata, event_id} = props;
 
     return (<div>
@@ -61,6 +62,9 @@ export default function TemplateControl (props) {
 			<RSVPTimePicker eventdata={eventdata} metaKey="_sked_start_time" label="Start Time" />
 			<RSVPTimePicker eventdata={eventdata} metaKey="_sked_end" label="End Time" />
 			<MetaEndDateControl type="template" statusKey="_sked_duration" timeKey="_sked_end" eventdata={eventdata} />
+
+			<MetaSelectControl label="Time Zone" metaKey="_timezone" value={eventdata.timezone} options={eventdata.tzchoices.map((choice) => {return {'label':choice,'value':choice}})}  />
+
 			<p><RSVPMetaToggle
 		label="Auto Add Dates" 
 		metaKey="rsvpautorenew"

@@ -1351,6 +1351,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 
 function rsvpmaker_postvars_to_recipients($postvars) {
 	global $wpdb, $rsvpmaker_cron_context;
+	$sending_to = [];
 	if(1 == $rsvpmaker_cron_context) // preview
 	{
 		$recipients[] = $postvars["previewto"];
@@ -4234,31 +4235,6 @@ body {
 	return false;
 }
 
-add_shortcode('jsontest','jsontest');
-function jsontest() {
-	$serial = 'a:3:{s:7:"version";i:2;s:8:"settings";a:9:{s:15:"appearanceTools";b:0;s:29:"useRootPaddingAwareAlignments";b:0;s:6:"border";a:4:{s:5:"color";b:0;s:6:"radius";b:0;s:5:"style";b:0;s:5:"width";b:0;}s:5:"color";a:12:{s:10:"background";b:1;s:6:"custom";b:1;s:13:"customDuotone";b:1;s:14:"customGradient";b:1;s:14:"defaultDuotone";b:1;s:16:"defaultGradients";b:1;s:14:"defaultPalette";b:1;s:7:"duotone";a:1:{s:7:"default";a:8:{i:0;a:3:{s:4:"name";s:14:"Dark grayscale";s:6:"colors";a:2:{i:0;s:7:"#000000";i:1;s:7:"#7f7f7f";}s:4:"slug";s:14:"dark-grayscale";}i:1;a:3:{s:4:"name";s:9:"Grayscale";s:6:"colors";a:2:{i:0;s:7:"#000000";i:1;s:7:"#ffffff";}s:4:"slug";s:9:"grayscale";}i:2;a:3:{s:4:"name";s:17:"Purple and yellow";s:6:"colors";a:2:{i:0;s:7:"#8c00b7";i:1;s:7:"#fcff41";}s:4:"slug";s:13:"purple-yellow";}i:3;a:3:{s:4:"name";s:12:"Blue and red";s:6:"colors";a:2:{i:0;s:7:"#000097";i:1;s:7:"#ff4747";}s:4:"slug";s:8:"blue-red";}i:4;a:3:{s:4:"name";s:8:"Midnight";s:6:"colors";a:2:{i:0;s:7:"#000000";i:1;s:7:"#00a5ff";}s:4:"slug";s:8:"midnight";}i:5;a:3:{s:4:"name";s:18:"Magenta and yellow";s:6:"colors";a:2:{i:0;s:7:"#c7005a";i:1;s:7:"#fff278";}s:4:"slug";s:14:"magenta-yellow";}i:6;a:3:{s:4:"name";s:16:"Purple and green";s:6:"colors";a:2:{i:0;s:7:"#a60072";i:1;s:7:"#67ff66";}s:4:"slug";s:12:"purple-green";}i:7;a:3:{s:4:"name";s:15:"Blue and orange";s:6:"colors";a:2:{i:0;s:7:"#1900d8";i:1;s:7:"#ffa96b";}s:4:"slug";s:11:"blue-orange";}}}s:9:"gradients";a:1:{s:7:"default";a:12:{i:0;a:3:{s:4:"name";s:31:"Vivid cyan blue to vivid purple";s:8:"gradient";s:65:"linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)";s:4:"slug";s:31:"vivid-cyan-blue-to-vivid-purple";}i:1;a:3:{s:4:"name";s:36:"Light green cyan to vivid green cyan";s:8:"gradient";s:63:"linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%)";s:4:"slug";s:36:"light-green-cyan-to-vivid-green-cyan";}i:2;a:3:{s:4:"name";s:45:"Luminous vivid amber to luminous vivid orange";s:8:"gradient";s:67:"linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%)";s:4:"slug";s:45:"luminous-vivid-amber-to-luminous-vivid-orange";}i:3;a:3:{s:4:"name";s:34:"Luminous vivid orange to vivid red";s:8:"gradient";s:64:"linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%)";s:4:"slug";s:34:"luminous-vivid-orange-to-vivid-red";}i:4;a:3:{s:4:"name";s:35:"Very light gray to cyan bluish gray";s:8:"gradient";s:65:"linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%)";s:4:"slug";s:35:"very-light-gray-to-cyan-bluish-gray";}i:5;a:3:{s:4:"name";s:21:"Cool to warm spectrum";s:8:"gradient";s:144:"linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%)";s:4:"slug";s:21:"cool-to-warm-spectrum";}i:6;a:3:{s:4:"name";s:18:"Blush light purple";s:8:"gradient";s:65:"linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%)";s:4:"slug";s:18:"blush-light-purple";}i:7;a:3:{s:4:"name";s:14:"Blush bordeaux";s:8:"gradient";s:81:"linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%)";s:4:"slug";s:14:"blush-bordeaux";}i:8;a:3:{s:4:"name";s:13:"Luminous dusk";s:8:"gradient";s:83:"linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%)";s:4:"slug";s:13:"luminous-dusk";}i:9;a:3:{s:4:"name";s:10:"Pale ocean";s:8:"gradient";s:85:"linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%)";s:4:"slug";s:10:"pale-ocean";}i:10;a:3:{s:4:"name";s:14:"Electric grass";s:8:"gradient";s:65:"linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%)";s:4:"slug";s:14:"electric-grass";}i:11;a:3:{s:4:"name";s:8:"Midnight";s:8:"gradient";s:60:"linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%)";s:4:"slug";s:8:"midnight";}}}s:4:"link";b:0;s:7:"palette";a:1:{s:7:"default";a:12:{i:0;a:3:{s:4:"name";s:5:"Black";s:4:"slug";s:5:"black";s:5:"color";s:7:"#000000";}i:1;a:3:{s:4:"name";s:16:"Cyan bluish gray";s:4:"slug";s:16:"cyan-bluish-gray";s:5:"color";s:7:"#abb8c3";}i:2;a:3:{s:4:"name";s:5:"White";s:4:"slug";s:5:"white";s:5:"color";s:7:"#ffffff";}i:3;a:3:{s:4:"name";s:9:"Pale pink";s:4:"slug";s:9:"pale-pink";s:5:"color";s:7:"#f78da7";}i:4;a:3:{s:4:"name";s:9:"Vivid red";s:4:"slug";s:9:"vivid-red";s:5:"color";s:7:"#cf2e2e";}i:5;a:3:{s:4:"name";s:21:"Luminous vivid orange";s:4:"slug";s:21:"luminous-vivid-orange";s:5:"color";s:7:"#ff6900";}i:6;a:3:{s:4:"name";s:20:"Luminous vivid amber";s:4:"slug";s:20:"luminous-vivid-amber";s:5:"color";s:7:"#fcb900";}i:7;a:3:{s:4:"name";s:16:"Light green cyan";s:4:"slug";s:16:"light-green-cyan";s:5:"color";s:7:"#7bdcb5";}i:8;a:3:{s:4:"name";s:16:"Vivid green cyan";s:4:"slug";s:16:"vivid-green-cyan";s:5:"color";s:7:"#00d084";}i:9;a:3:{s:4:"name";s:14:"Pale cyan blue";s:4:"slug";s:14:"pale-cyan-blue";s:5:"color";s:7:"#8ed1fc";}i:10;a:3:{s:4:"name";s:15:"Vivid cyan blue";s:4:"slug";s:15:"vivid-cyan-blue";s:5:"color";s:7:"#0693e3";}i:11;a:3:{s:4:"name";s:12:"Vivid purple";s:4:"slug";s:12:"vivid-purple";s:5:"color";s:7:"#9b51e0";}}}s:4:"text";b:1;}s:6:"layout";a:1:{s:11:"definitions";a:3:{s:7:"default";a:5:{s:4:"name";s:7:"default";s:4:"slug";s:4:"flow";s:9:"className";s:14:"is-layout-flow";s:10:"baseStyles";a:3:{i:0;a:2:{s:8:"selector";s:13:" > .alignleft";s:5:"rules";a:3:{s:5:"float";s:4:"left";s:19:"margin-inline-start";s:1:"0";s:17:"margin-inline-end";s:3:"2em";}}i:1;a:2:{s:8:"selector";s:14:" > .alignright";s:5:"rules";a:3:{s:5:"float";s:5:"right";s:19:"margin-inline-start";s:3:"2em";s:17:"margin-inline-end";s:1:"0";}}i:2;a:2:{s:8:"selector";s:15:" > .aligncenter";s:5:"rules";a:2:{s:11:"margin-left";s:15:"auto !important";s:12:"margin-right";s:15:"auto !important";}}}s:13:"spacingStyles";a:2:{i:0;a:2:{s:8:"selector";s:4:" > *";s:5:"rules";a:2:{s:18:"margin-block-start";s:1:"0";s:16:"margin-block-end";s:1:"0";}}i:1;a:2:{s:8:"selector";s:8:" > * + *";s:5:"rules";a:2:{s:18:"margin-block-start";N;s:16:"margin-block-end";s:1:"0";}}}}s:11:"constrained";a:5:{s:4:"name";s:11:"constrained";s:4:"slug";s:11:"constrained";s:9:"className";s:21:"is-layout-constrained";s:10:"baseStyles";a:5:{i:0;a:2:{s:8:"selector";s:13:" > .alignleft";s:5:"rules";a:3:{s:5:"float";s:4:"left";s:19:"margin-inline-start";s:1:"0";s:17:"margin-inline-end";s:3:"2em";}}i:1;a:2:{s:8:"selector";s:14:" > .alignright";s:5:"rules";a:3:{s:5:"float";s:5:"right";s:19:"margin-inline-start";s:3:"2em";s:17:"margin-inline-end";s:1:"0";}}i:2;a:2:{s:8:"selector";s:15:" > .aligncenter";s:5:"rules";a:2:{s:11:"margin-left";s:15:"auto !important";s:12:"margin-right";s:15:"auto !important";}}i:3;a:2:{s:8:"selector";s:60:" > :where(:not(.alignleft):not(.alignright):not(.alignfull))";s:5:"rules";a:3:{s:9:"max-width";s:38:"var(--wp--style--global--content-size)";s:11:"margin-left";s:15:"auto !important";s:12:"margin-right";s:15:"auto !important";}}i:4;a:2:{s:8:"selector";s:13:" > .alignwide";s:5:"rules";a:1:{s:9:"max-width";s:35:"var(--wp--style--global--wide-size)";}}}s:13:"spacingStyles";a:2:{i:0;a:2:{s:8:"selector";s:4:" > *";s:5:"rules";a:2:{s:18:"margin-block-start";s:1:"0";s:16:"margin-block-end";s:1:"0";}}i:1;a:2:{s:8:"selector";s:8:" > * + *";s:5:"rules";a:2:{s:18:"margin-block-start";N;s:16:"margin-block-end";s:1:"0";}}}}s:4:"flex";a:6:{s:4:"name";s:4:"flex";s:4:"slug";s:4:"flex";s:9:"className";s:14:"is-layout-flex";s:11:"displayMode";s:4:"flex";s:10:"baseStyles";a:2:{i:0;a:2:{s:8:"selector";s:0:"";s:5:"rules";a:2:{s:9:"flex-wrap";s:4:"wrap";s:11:"align-items";s:6:"center";}}i:1;a:2:{s:8:"selector";s:4:" > *";s:5:"rules";a:1:{s:6:"margin";s:1:"0";}}}s:13:"spacingStyles";a:1:{i:0;a:2:{s:8:"selector";s:0:"";s:5:"rules";a:1:{s:3:"gap";N;}}}}}}s:6:"shadow";a:2:{s:14:"defaultPresets";b:1;s:7:"presets";a:1:{s:7:"default";a:5:{i:0;a:3:{s:4:"name";s:7:"Natural";s:4:"slug";s:7:"natural";s:6:"shadow";s:30:"6px 6px 9px rgba(0, 0, 0, 0.2)";}i:1;a:3:{s:4:"name";s:4:"Deep";s:4:"slug";s:4:"deep";s:6:"shadow";s:33:"12px 12px 50px rgba(0, 0, 0, 0.4)";}i:2;a:3:{s:4:"name";s:5:"Sharp";s:4:"slug";s:5:"sharp";s:6:"shadow";s:30:"6px 6px 0px rgba(0, 0, 0, 0.2)";}i:3;a:3:{s:4:"name";s:8:"Outlined";s:4:"slug";s:8:"outlined";s:6:"shadow";s:65:"6px 6px 0px -3px rgba(255, 255, 255, 1), 6px 6px rgba(0, 0, 0, 1)";}i:4;a:3:{s:4:"name";s:5:"Crisp";s:4:"slug";s:5:"crisp";s:6:"shadow";s:28:"6px 6px 0px rgba(0, 0, 0, 1)";}}}}s:7:"spacing";a:6:{s:8:"blockGap";N;s:6:"margin";b:0;s:7:"padding";b:0;s:17:"customSpacingSize";b:1;s:5:"units";a:6:{i:0;s:2:"px";i:1;s:2:"em";i:2;s:3:"rem";i:3;s:2:"vh";i:4;s:2:"vw";i:5;s:1:"%";}s:12:"spacingScale";a:5:{s:8:"operator";s:1:"*";s:9:"increment";d:1.5;s:5:"steps";i:7;s:10:"mediumStep";d:1.5;s:4:"unit";s:3:"rem";}}s:10:"typography";a:9:{s:14:"customFontSize";b:1;s:7:"dropCap";b:1;s:9:"fontSizes";a:1:{s:7:"default";a:4:{i:0;a:3:{s:4:"name";s:5:"Small";s:4:"slug";s:5:"small";s:4:"size";s:4:"13px";}i:1;a:3:{s:4:"name";s:6:"Medium";s:4:"slug";s:6:"medium";s:4:"size";s:4:"20px";}i:2;a:3:{s:4:"name";s:5:"Large";s:4:"slug";s:5:"large";s:4:"size";s:4:"36px";}i:3;a:3:{s:4:"name";s:11:"Extra Large";s:4:"slug";s:7:"x-large";s:4:"size";s:4:"42px";}}}s:9:"fontStyle";b:1;s:10:"fontWeight";b:1;s:13:"letterSpacing";b:1;s:10:"lineHeight";b:0;s:14:"textDecoration";b:1;s:13:"textTransform";b:1;}s:6:"blocks";a:2:{s:11:"core/button";a:1:{s:6:"border";a:1:{s:6:"radius";b:1;}}s:14:"core/pullquote";a:1:{s:6:"border";a:4:{s:5:"color";b:1;s:6:"radius";b:1;s:5:"style";b:1;s:5:"width";b:1;}}}}s:6:"styles";a:2:{s:8:"elements";a:2:{s:6:"button";a:4:{s:5:"color";a:2:{s:4:"text";s:4:"#fff";s:10:"background";s:7:"#32373c";}s:7:"spacing";a:1:{s:7:"padding";s:39:"calc(0.667em + 2px) calc(1.333em + 2px)";}s:10:"typography";a:4:{s:8:"fontSize";s:7:"inherit";s:10:"fontFamily";s:7:"inherit";s:10:"lineHeight";s:7:"inherit";s:14:"textDecoration";s:4:"none";}s:6:"border";a:1:{s:5:"width";s:1:"0";}}s:4:"link";a:1:{s:10:"typography";a:1:{s:14:"textDecoration";s:9:"underline";}}}s:7:"spacing";a:2:{s:8:"blockGap";s:4:"24px";s:7:"padding";a:4:{s:3:"top";s:3:"0px";s:5:"right";s:3:"0px";s:6:"bottom";s:3:"0px";s:4:"left";s:3:"0px";}}}}';
-	$data = unserialize($serial);
-	//$data['settings']['color']['link']
-	return '<pre>'.var_export($data['settings']['color'],true).'</pre>';
-}
-
-function rsvpmail_wp_theme_json_data ($json) {
-	global $post;
-	if(empty($post) || empty($post->post_type) || ('rsvpemail' != $post->post_type))
-		return $json;
-	return new WP_Theme_JSON_Data();
-	/* potential approach to getting customizations into editor
-	$data = array('version'=>2,'settings'=>array('colors'=>array(
-		'link' => array('name' => 'Vivid cyan blue',
-		'slug' => 'vivid-cyan-blue',
-		'color' => '#0693e3',))
-	));
-	return new WP_Theme_JSON_Data($data,'user');
-	*/
-}
-add_filter('wp_theme_json_data_user','rsvpmail_wp_theme_json_data');
-add_filter('wp_theme_json_data_theme','rsvpmail_wp_theme_json_data');
-
 function rsvpmailer_gutenberg_editor_css()
 {
 global $post;
@@ -4463,7 +4439,6 @@ function rsvpmaker_get_style_substitutions() {
 				'aligncenter'=>'text-align: center',
 				'alignright'=>'float: right; padding-left: 10px; margin-left: 10px;',
 				'alignleft'=>'float: left; padding-right:10px; margin-right: 10px;',
-				'wp-block-column'=>'display:inline-block; box-sizing: border-box; width: 45%; padding-left: 4%; padding-right: 4%; margin-left: 0; margin-right: 0;vertical-align: top;', // support for 2 columns, not 3 or more
 				'wp-block-media-text' => 'direction: ltr;display: grid;grid-template-columns: 50% 1fr;grid-template-rows: auto;grid-column: 1;grid-row: 1;margin: 0;align-self: center;',
 				'wp-block-media-text__media'=>'grid-column: 1;grid-row: 1;margin: 0;align-self: center;', 
 				'wp-block-media-text__content'=>'direction: ltr;grid-column: 2;grid-row: 1;padding: 0 8%;align-self:center;word-break: break-word;',
@@ -4473,14 +4448,8 @@ function rsvpmaker_get_style_substitutions() {
 				'has-huge-font-size' => 'font-size: xx-large;',
 				'has-small-font-size' => 'font-size: small;',
 				'wp-block-pullquote' => 'font-size: xx-large;text-align:center; font-style: normal;',
-				'wp-block-columns' => 'display: block',
+				'wp-block-columns' => 'display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 5px;',
 				'wp-block-post-template' => 'list-style-type: none',
-				'columns-2' => 'display: grid; grid-template-columns: 45% 45%; column-gap: 5%;',
-				'columns-3' => 'display: grid; grid-template-columns: 30% 30% 30%; column-gap: 5%;',
-				/*
-				'wp-block-cover' => 'align-items: center;background-position: 50%;box-sizing: border-box;display: flex;justify-content: center;min-height: 430px;overflow: hidden;overflow: clip;padding: 1em;position: relative;',
-				'wp-block-cover__inner-container' => 'color: inherit;width: 100%;z-index: 1',
-				*/
 			);			
 		foreach($colors as $index => $color)
 			{
@@ -4945,11 +4914,14 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 	elseif(!$active && $list_active) {
 		//confirmation required
 		$mail['to'] = $email;
-		$mail['subject'] = 'Please confirm your subscription to the email list';
+		//test
+		$mail['bcc'] = 'david@carrcommunications.com';
+		$mail['subject'] = 'Please confirm your subscription to the email list for '.$email;
 		$mail['from'] = get_bloginfo('admin_email');
 		$mail['fromname'] = get_option('blogname');
 		$confirm = site_url('?rsvpmail_subscribe='.$email);
-		$mail['html'] = sprintf('<p>Please <a href="%s">confirm your subscription</a> to the email list.</p><p>Follow this link to confirm<br><a href="%s">%s</a></p><p>If you did not initiate a subscription request, please ignore this note and accept our apologies.</p>',$confirm,$confirm,$confirm);
+		$trace = $_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'] . ' '.$_SERVER['REMOTE_ADDR'];
+		$mail['html'] = sprintf('<p>Please <a href="%s">confirm your subscription</a> to the email list.</p><p>Follow this link to confirm<br><a href="%s">%s</a></p><p>If you did not initiate a subscription request, please ignore this note and accept our apologies.</p><p style="margin-top:50px;">%s</p>',$confirm,$confirm,$confirm,$trace);
 		rsvpmailer($mail);
 		$output .= 'Please check your email for a message asking you to confirm your subscription.';
 		if($exists)
@@ -5769,10 +5741,14 @@ function get_rsvpmail_signup_key () {
 function rsvpmail_signup_form( $atts = array() ) {
 $key = get_rsvpmail_signup_key();
 $rand = rand();
-if(isset($_POST['em']) && isset($_POST['code'])) {
+if(isset($_POST['em']) && isset($_POST['code']) ) {
 	$email = trim($_POST['em']);
 	if($_POST['code'] != $key )
 		$result['message'] = 'Error';
+	elseif(!wp_verify_nonce($_REQUEST['rsvp_mailing_list'],'rsvp_mailing_list'))
+	{
+		$result['message'] = 'Something went wrong';
+	}
 	elseif(rsvpmail_contains_email($email))
 	{
 		$first = isset($_POST['first']) ? sanitize_text_field($_POST['first']) : '';
@@ -5781,9 +5757,10 @@ if(isset($_POST['em']) && isset($_POST['code'])) {
 		$result['success'] = true;
 		$result['code'] = urldecode($request['code']);
 		$result['key'] = get_rsvpmail_signup_key();
+		add_post_meta(1,'rsvpmail_signup',var_export($_POST,true)."\n\n".var_export($_SERVER,true));
 	}
 	else {
-		$result['message'] = 'Please enter a valid email address.';
+		$result['message'] = 'Please enter a valid email address!';
 		$result['success'] = false;
 	}
 	printf('<div style="margin: 20px; padding: 20px; border: medium solid gray">%s</div>',$result['message']);
@@ -5792,7 +5769,7 @@ if(isset($_POST['em']) && isset($_POST['code'])) {
 if(empty($atts['fields']))
 {
 	$fields = '<p>Email<br>
-	<input name="em"></p>
+	<input name="em"> *</p>
 	<p>First Name<br>
 	<input name="first"></p>
 	<p>Last Name<br>
@@ -5815,6 +5792,7 @@ elseif('email' == $atts['fields'])
 }
 
 $fields .= rsvphoney_ui(true);
+$fields .= wp_nonce_field( 'rsvp_mailing_list', 'rsvp_mailing_list', false, false );
 
 $url = rest_url('rsvpmaker/v1/rsvpmailer_signup/'.$key);
 return "

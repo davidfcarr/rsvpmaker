@@ -9,16 +9,13 @@ export default function DateTimeMaker(props) {
     const {event_id, eventdata, isLoadingDates} = props;
     const [error,setError] = useState('');
     const {mutate:datemutate} = useRSVPDateMutation(event_id);
-    if(!eventdata.tzchoices || Array.isArray(eventdata.tzchoices))
+    if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
         eventdata.tzchoices = [];
-    console.log('props DateTimeMaker',props);
-    console.log('eventdata DateTimeMaker',eventdata);
     const d = new Date();
     const is12Hour = true;
     const date = new Date(eventdata.date);
     const endDate = new Date(eventdata.enddate);
     const elapsed = endDate.getTime() - date.getTime();
-    console.log('elapsed',elapsed);
 
     function sqlDate(date) {
         console.log(typeof date);
