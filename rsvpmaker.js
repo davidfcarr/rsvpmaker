@@ -339,6 +339,74 @@ jQuery( document ).ready(
 
 			}
 		);
+
+		const dropdowns = document.getElementsByClassName( "rsvpmaker_menu_dropdown" );
+		if(dropdowns && dropdowns.length) {
+			let inner;
+			const uls = [];
+			const inners = [];
+			let index = 0;
+			Array.prototype.filter.call(
+				dropdowns,
+				(dropdown, dropindex) => {
+					if(dropdown.className.includes('rsvpmaker_menu_dropdown')) {
+						index++;
+						console.log('dropdown',dropdown);
+						console.log('dropdown children',dropdown.children);
+						if(dropdown.className.includes('rsvpmaker_menu_type')) {
+							const match = dropdown.className.match(/rsvpmaker_menu_type_([^\s]+)/);
+							if(match && match[1]) {
+								fetch('/wp-json/rsvpmaker/v1/type/'+match[1]).then((response) => {
+									return response.json(); 
+								} ).then((json) => {
+									inners.push('');
+									if(Array.isArray(json))
+									json.forEach(
+										(event) => {
+											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.date+'</span></a></li>';
+										}
+									);
+								
+									if(inners[inners.length - 1]) {
+										Array.prototype.filter.call(
+											dropdown.children,
+											(child) => {
+												if(child.nodeName == 'UL')
+													child.innerHTML = child.innerHTML + inners[inners.length - 1];
+										});						
+									}											
+								});
+								
+							}
+						}
+						else {
+							fetch('/wp-json/rsvpmaker/v1/future').then((response) => {
+								return response.json(); 
+							} ).then((json) => {
+								inners.push('');
+								console.log(json);
+								if(Array.isArray(json))
+								json.forEach(
+									(event) => {
+										inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.date+'</span></a></li>';
+									}
+								);
+							
+								if(inners[inners.length - 1]) {
+									Array.prototype.filter.call(
+										dropdown.children,
+										(child) => {
+											if(child.nodeName == 'UL')
+												child.innerHTML = child.innerHTML + inners[inners.length - 1];
+									});						
+								}											
+			});
+
+						}
+					}
+				}
+			);
+		}
 		
 	}
 );

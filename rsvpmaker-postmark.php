@@ -64,6 +64,7 @@ function rsvpmaker_postmark_options() {
         $postmark_settings['limited'] = (empty($_POST['limited'])) ? 0 : intval($_POST['limited']);
         $postmark_settings['site_admin_message'] = !empty($_POST['site_admin_message']) ? wp_kses_post(stripslashes($_POST['site_admin_message'])) : '';
         $postmark_settings['sandbox_only'] = (isset($_POST['sandbox_only'])) ? array_map('intval',$_POST['sandbox_only']) : array();
+        $postmark_settings['postmark_load_alert_emails'] = sanitize_text_field($_POST['postmark_load_alert_emails']);
         if(is_multisite())
             update_blog_option(1,'rsvpmaker_postmark',$postmark_settings);
         else
@@ -100,6 +101,8 @@ function rsvpmaker_postmark_options() {
             $postmark_settings['limited'] = '0';
         if(empty($postmark_settings['sandbox_only']))
             $postmark_settings['sandbox_only'] = array();
+        if(empty($postmark_settings['postmark_load_alert_emails']))
+            $postmark_settings['postmark_load_alert_emails'] = postmark_admin_email();
     echo '<p>To fill in these variables, first <a href="https://account.postmarkapp.com/sign_up" target="_blank">create a Postmark account</a>. Postmark provides reliable email deliver for both broadcast / mailing list messages and transactional messages such as RSVP confirmations. Premium add-ons and customization services for managing email forwarding and metered access for multisite site owners are available from <a href="mailto:david@rsvpmaker.com" target="_blank">david@rsvpmaker.com</a>.</p>';        
     printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker-admin.php&tab=email'));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
@@ -110,6 +113,7 @@ function rsvpmaker_postmark_options() {
     printf('<p><input type="radio" name="postmark_mode" value="production" %s> Production, Key <input type="text" name="postmark_production_key" value="%s"></p>',$checked, $postmark_settings['postmark_production_key']);
     printf('<p>Transactional Messages From: <input type="text" name="postmark_tx_from" value="%s"> Stream ID <input type="text" name="postmark_tx_slug" value="%s"></p>',$postmark_settings['postmark_tx_from'],$postmark_settings['postmark_tx_slug']);
     printf('<p>Broadcast Messages From: <input type="text" name="postmark_broadcast_from" value="%s"> Stream ID <input type="text" name="postmark_broadcast_slug" value="%s"></p>',$postmark_settings['postmark_broadcast_from'],$postmark_settings['postmark_broadcast_slug']);
+    printf('<p>Heavy Load Alerts Email: <input type="text" name="postmark_load_alert_emails" value="%s"><br />Alert to a high volume of emails sent</p>',$postmark_settings['postmark_load_alert_emails']);
     $code = (empty($postmark_settings['handle_incoming'])) ? wp_create_nonce('handle_incoming') : $postmark_settings['handle_incoming'];
     $url = rest_url('rsvpmaker/v1/postmark_incoming/'.$code);
     $ckyes = (!empty($postmark_settings['handle_incoming'])) ? ' checked="checked" ' : '';
@@ -578,15 +582,11 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
         }
         if($score > 500)
         {
-            //switch_to_blog(1);
-            //$postmark = get_option('rsvpmaker_postmark');
-            //$postmark['postmark_mode'] = '';
-            //update_option('rsvpmaker_postmark',$postmark);
-            wp_mail(postmark_admin_email(),'Heavy email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
-            //wp_mail(postmark_admin_email(),'Shutting down RSVPMaker/Postmark email delivery service because of overload',"Heavy use, $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);    
+            wp_mail($postmark['postmark_load_alert_emails'],'Heavy email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
         }
-        elseif(!empty($postmark['volume_warning']) && !empty($overloadmessage))
-            wp_mail(postmark_admin_email(),'Recent email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
+        elseif(!empty($postmark['volume_warning']) && !empty($overloadmessage)){
+            wp_mail($postmark['postmark_load_alert_emails'],'Recent email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
+        }
     }
 }
 

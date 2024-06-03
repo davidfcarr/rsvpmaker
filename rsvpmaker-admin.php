@@ -4234,7 +4234,7 @@ function rsvpmaker_export_screen () {
 	<h1>Import/Export RSVPMaker Events</h1>
 	<?php
 	?>
-	<p>RSVPMaker posts are excluded from the standard WordPress export function because event posts require special handling, particularly those that have the same title but different dates (which by default WordPress rejects as duplicate posts).</p>
+	<p>This is an alternative to the standard WordPress export / import functions, allowing you to make a connection between two live websites.</p>
 	<h3>Export Events</h3>
 <?php
 if(isset($_GET['resetrsvpcode'])) {

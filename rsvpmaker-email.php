@@ -4706,6 +4706,7 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		$post_id = wp_insert_post($new);
 		update_option('rsvpmailer_default_block_template', $post_id);
 	}
+	/*
 	else {
 		$new['post_title'] = 'Default Email Template';
 		$new['post_type'] = 'rsvpemail';
@@ -4714,6 +4715,7 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		$post_id = wp_insert_post($new);
 		update_option('rsvpmailer_default_block_template', $post_id);
 	}
+	*/
 	if($edit)
 		$content = sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit")).$content;
 	else {
@@ -5428,7 +5430,7 @@ function rsvpmaker_queue_post_type() {
 }
 
 function rsvpmail_latest_post_promo($args = array()) {
-	global $rsvp_options;
+	global $rsvp_options, $wpdb;
 	if(empty($args['additional_posts'])) $args['additional_posts'] = 4; 
 	if(empty($args['paragraphs'])) $args['paragraphs'] = 5; 
     $posts = query_posts( array('posts_per_page'=>$args['additional_posts']+1,'post_type'=>'post','post_status'=>'publish') );
@@ -5508,10 +5510,11 @@ add_action('rsvpmailer_post_promo','rsvpmailer_post_promo_cron');
 
 function rsvpmailer_post_promo_cron() {
 	global $wpdb;
-	$promo_id = $wpdb->get_var("SELECT post_id FROM $wpdb->postmeta WHERE meta_key='pending_post_promo' ORDER BY post_id DESC ");
+	//added date check to avoid resending old entries, even if pending_post_promo was not deleted
+	$promo_id = $wpdb->get_var("SELECT post_id FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='pending_post_promo' and post_date > DATE_SUB(NOW(), INTERVAL 48 HOUR) ORDER BY post_id DESC ");
 	if($promo_id) {
 		$posthash = get_post_meta($promo_id,'rsvpmail_last_hash',true);
-		rsvpmailer_delayed_send($promo_id,0,$posthash,null,'pending_post_promo');	
+		rsvpmailer_delayed_send($promo_id,0,$posthash,null,'pending_post_promo');
 	}
 }
 

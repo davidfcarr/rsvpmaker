@@ -2,7 +2,6 @@
 /*
 * Load JS and Css
 */
-$scriptversion = defined( 'CARR_DEV') ? time() : get_rsvpversion();
 
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce;
@@ -18,7 +17,9 @@ function rsvpmaker_rest_array() {
 }
 
 function rsvpmaker_admin_enqueue( $hook ) {
-	global $post, $scriptversion, $rsvpscript;
+	global $post, $rsvpscript;
+	$scriptversion = get_rsvpversion();
+
 	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
 	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');
 	if($rsvpmailer_editor_stylesheet)
@@ -42,7 +43,8 @@ function rsvpmaker_admin_enqueue( $hook ) {
 }
 
 function rsvpmaker_event_scripts($frontend = true) {
-	global $post, $scriptversion,$rsvpmaker_nonce;
+	$scriptversion = get_rsvpversion();
+	global $post, $rsvpmaker_nonce;
 	$post_id       = isset( $post->ID ) ? $post->ID : 0;
 	global $rsvp_options;
 	wp_enqueue_script( 'jquery' );

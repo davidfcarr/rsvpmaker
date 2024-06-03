@@ -51,6 +51,9 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 			$events = [];
 
 		}
+		foreach($events as $index => $post) {
+			$events[$index]->permalink = get_permalink($post->ID);
+		}
 
 		return new WP_REST_Response( $events, 200 );
 
@@ -208,10 +211,13 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 
-		$wp_query = rsvpmaker_upcoming_query();
+		$wp_query = rsvpmaker_upcoming_query(array('type'=>$request['type']));
 		$posts    = $wp_query->get_posts();
 		if ( empty( $posts ) ) {
 			return new WP_Error( 'empty_category', 'there is no post in this category ' . $querystring, array( 'status' => 404 ) );
+		}
+		foreach($posts as $index => $post) {
+			$posts[$index]->permalink = get_permalink($post->ID);
 		}
 		return new WP_REST_Response( $posts, 200 );
 	}

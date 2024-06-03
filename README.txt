@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.5.3
-Stable tag: 11.0.5
+Stable tag: 11.0.8
 
 RSVPMaker is an event and email marketing and management platform. Schedule events, send invitations, track RSVPs, and collect payment via PayPal or Stripe. Send newsletters, including event and blog post roundups.
 
@@ -129,6 +129,17 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     the HTML of email messages provided by the [Emogrifier](https://github.com/MyIntervals/emogrifier) library.
 
 == Changelog ==
+
+= 11.0.8 =
+
+* Improved support for the WordPress native import / export tools (WXR file method)
+* Prevent event templates, forms, and other internal post types from being displayed in search results
+* Support for dynamic menu items. In the site editor, you can add class name "rsvpmaker_menu_dropdown" to menu item with a submenu specified to have a future events listing added to the submenu. Or use "rsvpmaker_menu_dropdown rsvmpaker_menu_type_featured-event" to get a listing of events tagged with the featured-event event type (substitute any other event type for 'featured-event')
+
+= 11.0.7 =
+
+* Fixed bug with regenerating default email template
+* Option for sending Postmark heavy message volume alerts to a different email (other than admin)
 
 = 11.0.5 =
 

@@ -10,11 +10,12 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.0.5
+* Version: 11.0.8
 */
 
 function get_rsvpversion() {
-	return '11.0.5';
+	//return time(); //uncomment for testing
+	return '11.0.8';
 }
 
 global $wp_version;

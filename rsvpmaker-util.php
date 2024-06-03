@@ -1228,7 +1228,7 @@ if($post->post_excerpt)
 			array_splice($words,$max);
 			$content = implode(' ',$words).' ...';
 		}
-		$excerpt .= '<p>'.$content.'</p>';
+		$excerpt .= '<p>'.strip_tags($content).'</p>';
 	}
 	return $excerpt;
 }
@@ -1240,16 +1240,11 @@ function rsvpmaker_excerpt( $post ) {
 	$excerpt .= rsvpmaker_excerpt_body($post);
 	$permalink = get_permalink( $post->ID );
 	$rsvplink  = add_query_arg( 'e', '*|EMAIL|*', $permalink ) . '#rsvpnow';
-	if ( $morelink ) {
-		$excerpt .= sprintf( '<p style="text-align: right;"><a href="%s">%s</a></p>', $permalink, __( 'Read More', 'rsvpmaker' ) );
-	}
 	if ( $rsvp_on ) {
 		$excerpt .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
 	}
 	return $excerpt;
 }
-
-add_shortcode( 'future_events_test', 'future_events_test' );
 
 function get_future_events( $where_or_atts = '', $limit = 0, $output = OBJECT, $offset_hours = 0 ) {
 	global $offset_hours;
@@ -1299,14 +1294,6 @@ function get_future_events_by_meta( $kv, $limit = '', $output = OBJECT, $offset_
 		//rsvpmaker_debug_log( $sql, 'meta lookup test' );
 
 		return $wpdb->get_results( $sql, $output );
-}
-
-function future_events_test() {
-	$events = get_future_events();
-	foreach ( $events as $event ) {
-		echo esc_html($event->post_title);
-	}
-	return var_export( $events, true );
 }
 
 function get_future_dates( $limit ) {
@@ -4540,4 +4527,35 @@ function rsvp_x_day_month($timestamp) {
 	return $ofmonth.$suffix .' '.rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$timestamp);
 }
 
+function rsvpmaker_export_wp() {
+	global $wpdb;
+	$events_table = $wpdb->prefix.'rsvpmaker_event';
+	$results = $wpdb->get_results("SELECT $events_table.event, $events_table.post_title, $events_table.display_type,$events_table.date,$events_table.enddate, $events_table.ts_start, $events_table.ts_end,$events_table.timezone FROM $wpdb->posts JOIN $events_table ON $wpdb->posts.ID=$events_table.event", ARRAY_A);
+	foreach($results as $row) {
+		$id = $row['event'];
+		unset($row['event']);
+		update_post_meta($id,'rsvpmaker_event',$row);
+	}
+}
+/*
+re-create events table
+*/
+function rsvpmaker_import_end() {
+	global $wpdb;
+	$events_table = $wpdb->prefix.'rsvpmaker_event';
+	$sql = "SELECT ID, meta_value FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id LEFT JOIN $events_table ON $wpdb->posts.ID=$events_table.event WHERE event IS NULL and meta_key='rsvpmaker_event' ";
+	$results = $wpdb->get_results($sql);
+	foreach($results as $row) {
+		$values = unserialize($row->meta_value);
+		$values['event'] = $row->ID;
+		$wpdb->insert($events_table,$values);
+	}
+}
 
+//apply_filters( 'wp_import_existing_post', $post_exists, $post );
+add_filter('wp_import_existing_post','rsvpmaker_wp_import_existing_post',10,2);
+function rsvpmaker_wp_import_existing_post($post_exists, $post) {
+	if($post['post_type'] != 'rsvpmaker')
+		return $post_exists;
+	return false; // don't exclude multiple events with same tite/post date (may have been created from a template)
+}

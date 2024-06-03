@@ -31,7 +31,7 @@ function rsvpmaker_create_post_type() {
 
 			'public'             => true,
 
-			'can_export'         => false,
+			'can_export'         => true,
 
 			'publicly_queryable' => true,
 
@@ -79,10 +79,10 @@ function rsvpmaker_create_post_type() {
 			),
 
 			'menu_icon'          => 'dashicons-calendar-alt',
+			'exclude_from_search' => true,
 
 			'public'             => true,
-
-			'can_export'         => false,
+			'can_export'         => true,
 
 			'publicly_queryable' => true,
 
@@ -138,7 +138,7 @@ function rsvpmaker_create_post_type() {
 
 			'public'             => true,
 
-			'can_export'         => false,
+			'can_export'         => true,
 
 			'publicly_queryable' => true,
 
@@ -210,7 +210,6 @@ function rsvpmaker_create_post_type() {
 			'show_ui'      => true,
 
 			'show_in_rest' => true,
-
 			'query_var'    => true,
 
 		)
@@ -264,6 +263,7 @@ function create_rsvpemail_post_type() {
           ),
         'public' => true,
         'exclude_from_search' => true,
+		'can_export' => true,
         'publicly_queryable' => true,
         'show_ui' => true, 
         'query_var' => true,

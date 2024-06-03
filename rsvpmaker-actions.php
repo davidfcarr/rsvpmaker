@@ -24,6 +24,8 @@ add_action('admin_init', 'rsvpmaker_editors' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvp_csv' );
 add_action('admin_init', 'additional_editors_setup' );
+add_action('admin_init', 'cpevent_activate' );
+
 //add_action('admin_init', 'rsvpmaker_setup_post' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 
@@ -132,7 +134,11 @@ add_action( 'manage_posts_custom_column', 'rsvpmaker_custom_column', 99, 2 );
 add_action( 'manage_posts_custom_column', 'rsvpmaker_template_custom_column', 99, 2 );
 add_action( 'save_post', 'rsvpmaker_quick_edit_save', 1 );
 
+add_action('export_wp','rsvpmaker_export_wp');
+add_action('import_end','rsvpmaker_import_end');
+
 function rsvpmaker_init_router() {
+	global $post;
 	add_rsvpmaker_roles();
 	rsvpmaker_create_post_type();
 	create_rsvpemail_post_type();
@@ -152,6 +158,14 @@ function rsvpmaker_init_router() {
 	}
 	if ( isset( $_GET['show_rsvpmaker_included_styles'] ) ) {
 		show_rsvpmaker_included_styles();
+	}
+	if(isset($_GET['reset_rsvpmaker_cookies'])) {
+		$output = '';
+		foreach($_COOKIE as $index => $c) {
+			if((strpos($index,'rsvp_for') !== false) || (strpos($index,'rsvp_for') !== false)) {
+				setcookie( $index, 0, time() + 60 * 60 * 24 * 90, '/', sanitize_text_field($_SERVER['SERVER_NAME']) );
+			}
+		}
 	}
 }
 
