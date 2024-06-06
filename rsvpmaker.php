@@ -526,7 +526,7 @@ function cpevent_activate() {
 
 	$wpdb->query( $sql );
 
-	$sql = 'SELECT post_title, event, meta_value FROM `' . $wpdb->prefix . "rsvpmaker` join $wpdb->posts ON " . $wpdb->prefix . "rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = wp_postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
+	$sql = 'SELECT post_title, event, meta_value FROM `' . $wpdb->prefix . "rsvpmaker` join $wpdb->posts ON " . $wpdb->prefix . "rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
 
 	$results = $wpdb->get_results( $sql );
 
