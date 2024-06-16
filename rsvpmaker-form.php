@@ -280,8 +280,9 @@ function rsvp_add_guest_field( $content, $slug ) {
 }
 
 function rsvp_form_guests( $atts, $content ) {
+	global $wpdb, $blanks_allowed,$master_rsvp,$is_rsvp_report;
 
-	if ( is_admin() ) {
+	if ( is_admin() && empty($_GET['page']) ) {
 		return $content;
 	}
 
@@ -294,24 +295,27 @@ function rsvp_form_guests( $atts, $content ) {
 	$shared = '';
 
 	$label = ( isset( $atts['label'] ) ) ? $atts['label'] : __( 'Guest', 'rsvpmaker' );
+	global $blanks_allowed;
+	$max_party = ( isset( $atts['max_party'] ) ) ? (int) $atts['max_party'] : 0;
+	$count = ($master_rsvp) ? $wpdb->get_var('SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $master_rsvp) : 0;
+	$max_guests = $blanks_allowed + $count;
+
+	if ( $max_party ) {
+		$max_guests = ( $max_party > $max_guests ) ? $max_guests : $max_party; // use the lower limit
+	}
 
 	if ( is_array( $guestfields ) ) {
 
 		foreach ( $guestfields as $slug => $field ) {
-
 			$shared .= $field;
 		}
 	}
+	$template = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n";
 
-	$template = '<div class="guest_blank" id="first_blank"><p><strong>' . __( 'Guest', 'rsvpmaker' ) . ' ###</strong></p>' . $shared . $content . '</div>';// fields shared from master form, plus added fields
+	$template .= '<div class="guest_blank" id="first_blank"><p><strong>' . __( 'Guest', 'rsvpmaker' ) . ' ###</strong></p>' . $shared . $content . '</div>';// fields shared from master form, plus added fields
 
 	$addmore = ( isset( $atts['addmore'] ) ) ? $atts['addmore'] : __( 'Add more guests', 'rsvpmaker' );
 
-	global $wpdb;
-
-	global $blanks_allowed;
-
-	global $master_rsvp;
 
 	// $master_rsvp = 4;//test data
 
@@ -375,25 +379,26 @@ function rsvp_form_guests( $atts, $content ) {
 	}
 
 	// now the blank field
+	if(!$is_rsvp_report) {
+		if ( $max_guests && $blanks_allowed < 1 ) {
 
-	if ( $blanks_allowed < 1 ) {
-
-		return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // if event is full, no additional guests
-
-	} elseif ( $count > $max_guests ) {
-
-		return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
-
-	} elseif ( $max_guests && ( $count >= $max_guests ) ) {
-
-		return $output . '<p><em>' . esc_html( __( 'No room for additional guests (max per party)', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
+			return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // if event is full, no additional guests
+	
+		} elseif (  $blanks_allowed && $count > $max_guests ) {
+	
+			return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
+	
+		} elseif ( $blanks_allowed && $max_guests && ( $count >= $max_guests ) ) {
+	
+			return $output . '<p><em>' . esc_html( __( 'No room for additional guests (max per party)', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
+		}	
 	}
 
 	$output = '<div id="guest_section" tabindex="-1">' . "\n" . $output . '</div>' . '<!-- end of guest section-->';
 
-	if ( $max_guests > ( $count + 1 ) ) {
+	if ( $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
 
-		$output .= '<p><a href="#guest_section" id="add_guests" name="add_guests">(+) ' . $addmore . "</a><!-- end of guest section--></p>\n";
+		$output .= '<p><a href="#guest_section" id="add_guests" name="add_guests">(+) ' . $addmore . '</a> <input type="number" id="number_to_add" name="number_to_add" min="1" value="1" style="width: 50px;" ><!-- end of guest section--></p>'."\n";
 	}
 
 	$output .= '<script type="text/javascript"> var guestcount =' . $count . '; </script>';

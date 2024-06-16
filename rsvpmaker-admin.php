@@ -2823,11 +2823,15 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 						$update_messages .= '<div class="updated">Error</div>';
 						break;
 					}
+				if(!empty($_POST['metadata_only'])) {
+					rsvpmaker_copy_metadata($t, $target_id);
+					$update_messages .= '<div class="updated">Updated: metadata for event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
+					continue;
+				}
 				$update_post['ID'] = $target_id;
 				$update_post['post_title'] = $post->post_title;
 				$update_post['post_content'] = $post->post_content;
 				wp_update_post($update_post);
-				rsvpmaker_copy_metadata($t, $target_id);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				$duration = (empty($template["duration"])) ? '' : $template["duration"];
@@ -2976,6 +2980,9 @@ $meta_keys = array();
 $post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$source_id");
 $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
 $deadlinedays = $deadlinehours = $regdays = $reghours = 0;
+$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur','_rsvp_dates');
+if(isset($_POST['metadata_only']))
+	$meta_protect[] = '_thumbnail_id';
 
 		if (count($post_meta_infos)!=0) {
 			foreach ($post_meta_infos as $meta_info) {
@@ -2983,7 +2990,6 @@ $deadlinedays = $deadlinehours = $regdays = $reghours = 0;
 				if(in_array($meta_key,$meta_keys))
 					continue;
 				$meta_keys[] = $meta_key;
-				$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur','_rsvp_dates');
 				if(in_array($meta_key, $meta_protect) || strpos($meta_key,'sked') ) // should filter out _sked_Monday etc
 				{
 					$log .= 'Skip '.$meta_key.'<br />';

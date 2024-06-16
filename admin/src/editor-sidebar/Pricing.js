@@ -113,16 +113,21 @@ export default function Pricing() {
 
             mutatePricing({'update':'coupon_codes','change':{'coupon_codes':codes,'coupon_discounts':discounts,'coupon_methods':methods}});
             setCode('');
-            setMethod('');
-            setDiscount('percent');
+            setMethod('percent');
+            setDiscount(0.0);
             setCodeToUpdate(-1);
         }
 
         function displayDiscount(discount,method) {
+            if(isNaN(discount))
+                return;
+            discount = parseFloat(discount);
             if('percent' == method)
-                return (discount * 100)+'% off';
+                return (discount * 100).toFixed(2)+'% off, example 5 x $50 = $250, $'+(250 - (250 * discount)).toFixed(2)+' after discount';
+            else if('totalamount' == method)
+                return discount.toFixed(2) +' off total, example 5 x $50 = $250, $'+(250 - discount).toFixed(2)+' after discount';
             else
-                return discount +' discount';
+                return discount.toFixed(2) +' off each, example 5 x $50 = $250, $'+(250 - (discount * 5) ).toFixed(2)+' after discount';
         }
 
         const pricingdata = (isLoading) ? null : data.data;
@@ -156,6 +161,8 @@ export default function Pricing() {
             (code, index) => {
                 let method = coupon_methods[index];
                 let discount = coupon_discounts[index];
+                if(isNaN(discount))
+                    discount = 0.0;
                 return (
                     <div>Code: {code} {displayDiscount(discount,method)} <span><button onClick={() => { console.log('click on index',index); setCodeToUpdate(index); setCode(code); setMethod(method); setDiscount(discount); } }>Edit</button> <button onClick={() => {deleteCode(index)} }>Delete</button></span> </div>
                 )
@@ -165,8 +172,8 @@ export default function Pricing() {
         }
         <div>
         <TextControl label="Coupon Code" value={code} onChange={(value) => {setCode(value)} } />
-        <RadioControl label="Method" selected={method} options={[{'label':'Discount Amount','value':'amount'},{'label':'Discount Percent','value':'percent'}]} onChange={(value) => {setMethod(value)} } />
-        <TextControl label="Discount" value={discount} onChange={(value) => {setDiscount(value)} } />
+        <RadioControl label="Method" selected={method} options={[{'label':'Discount Percent (enter decimal, 0.5 = 50%)','value':'percent'},{'label':'Discount Amount off Each','value':'amount'},{'label':'Discount Off Total','value':'totalamount'}]} onChange={(value) => {setMethod(value)} } />
+        <TextControl label="Discount" value={discount} onChange={(value) => {if('percent' == method && value > 1.0) value=1.0; else if(isNaN(value)) value=0.0; setDiscount(value)} } />
         <p>{displayDiscount(discount,method)}</p>
         <p><button disabled={isLoading} onClick={postCode}>{(codeToUpdate > -1) ? 'Update Code' : 'Add Code'}</button> {status}</p>
         </div>

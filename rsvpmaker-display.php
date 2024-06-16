@@ -2656,7 +2656,7 @@ function rsvpmaker_form( $atts = array(), $form_content = '' ) {
 		$output = event_content( $form_content, true ) . rsvp_form_jquery();
 	}
 	$post = $backup;
-	return $output;
+	return $output.' post '.$post->ID;
 }
 
 function rsvpmaker_daily_schedule( $atts ) {

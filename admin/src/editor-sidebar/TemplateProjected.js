@@ -118,6 +118,7 @@ return (
     <form id="create-update-form" style={{'width': '800px','paddingBottom': '100px'}} method="post" action={tdata.action}>
     <div id="create-update-controls" style={{'width': '150px','position': 'sticky','float':'right','backgroundColor':'#ffffff'}}>
     <p>New post status<br /><input type="radio" name="newstatus" value="publish" checked="checked" /> Published <br /><input type="radio" name="newstatus" value="draft" /> Draft</p>
+ 
     <input type="hidden" name="timelord" value={rsvpmaker_rest.timelord} />
     <button>Create/Update</button>
     </div>
@@ -129,6 +130,7 @@ return (
         isChecked={isCheckAll}
         value={1}
       /> Check all
+    <div><input type="checkbox" name="metadata_only" value="1" /> Update Metadata Only (price, form etc. but not title or content)</div>
     <div className="dates">{catalog}</div>
 </form>}
 

@@ -150,7 +150,8 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 	$event_table = $wpdb->prefix . 'rsvpmaker_event';
 	if(empty($timezone))
 		$timezone = wp_timezone_string();
-	date_default_timezone_set( $timezone );
+	if($timezone != '+00:00')
+		date_default_timezone_set( $timezone );
 	$ts_start = strtotime($date);
 	if(strpos($end,'-'))
 		$enddate = $end;
@@ -4143,7 +4144,7 @@ function rsvpmailer_bot_shortcode() {
 function rsvpmaker_guestparty($rsvp_id, $master = false) {
 	global $wpdb;
 	$guestparty = '';
-	$exclude = array('first','last','id','email','yesno','event','owed','amountpaid','master_rsvp','guestof','note','participants','user_id','timestamp','payingfor');
+	$exclude = array('first','last','id','email','yesno','event','owed','amountpaid','master_rsvp','guestof','note','participants','user_id','timestamp','payingfor','fee_total','pricechoice');
 	if($master) {
 		$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $rsvp_id . ' ORDER BY id';
 		$row = $wpdb->get_row($guestsql, ARRAY_A);

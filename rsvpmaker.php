@@ -10,12 +10,12 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.0.8
+* Version: 11.0.9
 */
 
 function get_rsvpversion() {
 	//return time(); //uncomment for testing
-	return '11.0.8';
+	return '11.0.9';
 }
 
 global $wp_version;
@@ -501,7 +501,11 @@ function cpevent_activate() {
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
 
 	$wpdb->query( $sql );
-
+	$sql = 'show columns from '. $wpdb->prefix . "rsvpmaker LIKE 'fee_total' ";
+	$row = $wpdb->get_row($sql);
+	if(!$row)
+		$wpdb->query( "ALTER TABLE `" . $wpdb->prefix . "rsvpmaker` ADD COLUMN `fee_total` float(6,2) NOT NULL default '0.00'" );
+	
 	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmaker_event` (
 
   `event` int(11) NOT NULL default '0',
@@ -594,7 +598,7 @@ rsvpmail_problem_init();
 
 	$wpdb->query( $sql );
 
-	$rsvp_options['dbversion'] = 19;
+	$rsvp_options['dbversion'] = 25;
 
 	update_option( 'RSVPMAKER_Options', $rsvp_options );
 
@@ -603,7 +607,7 @@ rsvpmail_problem_init();
 register_activation_hook( __FILE__, 'cpevent_activate' );
 
 // upgrade database if necessary
-if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 19 ) ) {
+if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 25 ) ) {
 	cpevent_activate();
 }
 

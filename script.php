@@ -129,10 +129,8 @@ function rsvp_form_jquery() {
 	
 	<?php
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
-	if ( ! empty( $hide ) ) {
-		printf( 'var hide = %s;', wp_json_encode( $hide ) );
-		echo "\n";
-		?>
+	printf( "var hide = '%s';\n", empty($hide) ? '' : wp_json_encode( $hide ) );
+	?>
 	
 	$('#guest_count_pricing select').change(function() {
 	  //reset hidden fields
@@ -151,36 +149,52 @@ function rsvp_form_jquery() {
 	});
 	  
 	});
-	
-		<?php
-	}
-	?>
 	var max_guests = $('#max_guests').val();
+	console.log('max guests ',max_guests);
+	var last;
 	var blank = $('#first_blank').html();
+	console.log('initial blank',blank);
 	var firstblank_hidden = true;
+	let number_to_add = 0;
+	let guestline = '';
 	if(blank)
 		{
-		$('#first_blank').html(blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount) );
+		//let firstblank = blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount);
+		//console.log('firstblank',firstblank);
 		$('#first_blank').hide();
-		guestcount++;
 		}
 	$('#add_guests').click(function(event){
 		event.preventDefault();
+		number_to_add = parseInt($('#number_to_add').val());
+		last = $('#last').val();
+		console.log('number to add',number_to_add);
+		console.log('guestcount',guestcount);
 		if(firstblank_hidden) {
 			firstblank_hidden = false;
+			let firstblank = blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount);
+			firstblank = firstblank.replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last);
+			$('#first_blank').html(firstblank);
 			$('#first_blank').show();
-			return;
+			guestcount++;
+			number_to_add--;
+			if(!number_to_add)
+				return;
 		}
-	if(guestcount >= max_guests)
+	for(let i = 0; i < number_to_add; i++) {
+		if(guestcount >= max_guests)
 		{
 		$('#first_blank').append('<p><em><?php esc_html_e( 'Guest limit reached', 'rsvpmaker' ); ?></em></p>');
 		return;
 		}
-	var guestline = '<' + 'div class="guest_blank">' +
-		blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount) +
-		'<' + '/div>';
+	console.log('guestline loop',i);
+	console.log('guestline number to add',number_to_add);
+	console.log('guestline guestcount',guestcount);
+	guestline = '<div class="guest_blank">' +
+		blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount).replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last) +
+		'</div>';
 	guestcount++;
 	$('#first_blank').append(guestline);
+	}
 	
 	if(hide)
 	{
