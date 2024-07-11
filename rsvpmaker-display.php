@@ -262,8 +262,6 @@ function rsvpmaker_select( $select, $query = null ) {
 }
 
 function is_rsvpmaker_query($query) {
-	if(is_single())
-		return false;
 	return ( (strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') && !strpos($_SERVER['REQUEST_URI'],'template')  && !strpos($_SERVER['REQUEST_URI'],'form')) || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
 }
 
@@ -303,13 +301,11 @@ function rsvpmaker_where_schedule( $where ) {
 }
 
 function rsvpmaker_where( $where, $query = null ) {
-	if(is_single())
+	if(strpos($where,'ID') || strpos($where,'post_name'))//request for single event
 		return $where;
 	if(!is_rsvpmaker_query($query))
 		return $where;
 	
-	//mail('d@cc.com','rsvpmaker where clause',$where);
-
 	global $rsvpmaker_atts;
 
 	if ( (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"]) || (isset( $rsvpmaker_atts['past'] ) && $rsvpmaker_atts['past']) || (!empty($query->query_vars['eventOrder']) && $query->query_vars['eventOrder'] == 'past') )
@@ -1699,8 +1695,6 @@ function rsvpmaker_examine_query( $request ) {
 
 	$log = var_export( $request, true );
 
-	//mail( 'david@carrcommunications.com', 'query test', $log );
-
 	return $request;
 
 }
@@ -1919,16 +1913,15 @@ function rsvpmaker_next_rsvps( $atts = array() ) {
 				}
 
 				$url = get_permalink( $post->ID ) . '#rsvpnow';
-
-				$t = rsvpmaker_strtotime( $post->datetime );
-
-				$datetime = rsvpmaker_date( '', $t );
+				if(empty($post->ts_start)) {
+					$event = get_rsvpmaker_event($post->ID);
+					$post->ts_start = $event->ts_start;
+				}
+				$datetime = rsvpmaker_date( '', $post->ts_start );
 
 				$list .= sprintf( '<li><a href="%s">%s</a></li>', esc_url_raw( $url ), esc_html( $post->post_title . '&#8212;' . $datetime ) );
 
 			}
-
-			// printf('<p>Additional %s</p>',$post->post_title);
 
 		endwhile;
 
@@ -2111,7 +2104,7 @@ function rsvpmaker_replay_form( $event_id ) {
 	echo '<div id="jqerror"></div><input type="hidden" name="required" id="required" value="' . implode( ',', $rsvp_required_field ) . '" />';
 	?>
 		<p>
-		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
+		  <input type="submit" id="rsvpsubmit" style="<?php echo esc_attr(get_rsvp_submit_button_css()); ?>" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
 		</p> 
 <input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo esc_attr( $event_id ); ?>" /><input type="hidden" name="landing_id" value="<?php echo esc_attr( $post->ID ); ?>" /><?php rsvpmaker_nonce(); ?>
 
@@ -2303,7 +2296,7 @@ function rsvpmaker_author_page( $query ) {
 add_filter( 'pre_get_posts', 'rsvpmaker_author_page' );
 
 //works with rsvpmaker/button block
-function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ) {
+function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ='' ) {
 	global $rsvp_options, $wpdb;
 	$login_required = get_post_meta($post_id,'_rsvp_login_required',true);
 	$rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
@@ -2387,6 +2380,13 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 		return $rsvplink; // just the link, otherwise return button
 	}
 	return sprintf( $rsvp_link_template, $rsvplink );
+}
+
+function get_rsvp_submit_button_css() {
+	$css = get_option('rsvpmaker_submit_button_css');
+	if(!$css) 
+		$css = 'box-shadow: rgb(230, 122, 115) 0px 39px 0px -24px inset; background-color: rgb(228, 104, 93); border-radius: 4px; border: 1px solid rgb(255, 255, 255); display: inline-block; cursor: pointer; color: rgb(255, 255, 255); font-size: 20px; padding: 6px 15px; text-decoration: none; text-shadow: rgb(178, 62, 53) 0px 1px 0px;';
+	return $css;
 }
 
 function rsvpdateblock( $atts = array() ) {
@@ -2499,10 +2499,9 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 		$dateblock .= '</div>';// end startdate div
 
 		if ( isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) {
-
 			if ( is_email_context() ) {
-
-				$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+				$tz_url = esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ));
+				$tzbutton = sprintf( ' | <a href="%s">%s</a>', $tz_url, __( 'Show in my timezone', 'rsvpmaker' ) );
 
 			} else {
 
@@ -3064,6 +3063,8 @@ add_action( 'wp_footer', 'rsvpmaker_timezone_footer' );
 
 function rsvpmaker_timezone_converter( $atts ) {
 	global $post;
+	$tz_url = add_query_arg( 'tz', $post->ID, get_permalink( $post_id ) );
+
 	$post_id = ( empty( $post->ID ) ) ? 0 : $post->ID;
 	if ( ! isset( $atts['time'] ) ) {
 		return;
@@ -3075,7 +3076,7 @@ function rsvpmaker_timezone_converter( $atts ) {
 	$end             = ( isset( $atts['end'] ) ) ? $atts['end'] : '';
 	$format          = ( isset( $atts['format'] ) ) ? $atts['format'] : '';
 	$nofluxbutton = (isset($atts['nofluxbutton'])) ? ' nofluxbutton="1" ' : '';
-	return sprintf( '<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d" timezone_abbrev="%s" %s></div>', esc_attr( $id ), esc_attr( $time ), esc_attr( $end ), esc_attr( $format ), esc_attr( $server_timezone ), esc_attr( $post_id ), esc_attr($abbrev), $nofluxbutton );
+	return sprintf( '<div class="tz_converter" id="%s" time="%s" end="%s" format="%s" server_timezone="%s" post_id="%d" timezone_abbrev="%s" tz_url="%s" %s></div>', esc_attr( $id ), esc_attr( $time ), esc_attr( $end ), esc_attr( $format ), esc_attr( $server_timezone ), esc_attr( $post_id ), esc_attr($abbrev), esc_attr($tz_url), $nofluxbutton );
 }
 
 add_shortcode( 'timezone_converter', 'rsvpmaker_timezone_converter' );

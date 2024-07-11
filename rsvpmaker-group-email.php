@@ -1132,7 +1132,7 @@ function rsvpmaker_expand_recipients($email) {
         $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
         $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id);
     }
-    if($recipients)
+    if(isset($recipients))
         return $recipients;
     else
         return $email;
@@ -1191,7 +1191,7 @@ function rsvpmail_email_to_parts($email) {
 
 function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
     $join = ($subdomain) ? '-' : '';
-    $slug_ids = get_officer_slug_ids($blog_id);
+    $slug_ids = (function_exists('get_officer_slug_ids')) ? get_officer_slug_ids($blog_id) : '';
     if($slug_ids) {
         foreach($slug_ids as $slug => $slug_id) {
         foreach($slug_id as $user_id) {

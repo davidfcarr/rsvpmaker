@@ -174,6 +174,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(sizeof($recipients) > 200) {
         $chunks = array_chunk($recipients,200);
         echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
+        error_log('rsvpmaker_postmark_broadcast '.$log);
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
             add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
@@ -323,7 +324,6 @@ function rsvpmaker_postmark_incoming_list_signup($emailobj, $forwarders) {
             $first = implode(' ',$parts);
         }
     $result = rsvpmaker_guest_list_add($email, $first, $last, 'incoming_email_signup', false);
-    mail('david@carrcommunications.com','rsvpmaker_postmark_incoming_list_signup result',$result.' '.var_export($emailobj,true));
 }
 
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {

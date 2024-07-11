@@ -10,7 +10,7 @@ const { Fragment } = wp.element;
 const { InnerBlocks, BlockControls } = wp.editor;
 const { Component } = wp.element;
 const { InspectorControls } = wp.blockEditor;
-const { PanelBody, SelectControl, TextControl, ToggleControl, RadioControl } = wp.components;
+const { PanelBody, SelectControl, TextControl, TextareaControl, ToggleControl, RadioControl } = wp.components;
 
 registerBlockType( 'rsvpmaker/formfield', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
@@ -336,17 +336,21 @@ registerBlockType( 'rsvpmaker/formradio', {
             type: 'boolean',
             default: false,
             },
-        },
+            defaultToFirst: {
+				type: 'boolean',
+				default: false,
+				},
+			},
 	edit: function( props ) {
 		// Creates a <p class='w-p-block-cgb-block-toast-block'></p>.
-	const { attributes: { label, slug, choicearray, guestform }, setAttributes, isSelected } = props;
+	const { attributes: { label, slug, choicearray, guestform, defaultToFirst }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
 			<ChoiceInspector {...props} />
 			<div className={ props.className }>
 <p><label>{label}:</label> <span>{choicearray.map(function(opt, i){
-                    return <span><input type="radio" className={slug} name={profilename} id={slug} value={opt} /> {opt} </span>;
+                    return <div className="rsvp-form-radio"><input type="radio" className={slug} name={profilename} id={slug} value={opt} checked={defaultToFirst && i == 0} /> {opt} </div>;
                 })}</span></p>
 {isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }
 			</div>
@@ -362,17 +366,21 @@ registerBlockType( 'rsvpmaker/formradio', {
 class ChoiceInspector extends Component {
 	render() {
 	const { attributes, setAttributes, className } = this.props;
-	const choices =attributes.choicearray.join(',');
+	const choices =attributes.choicearray.join('\n');
 	function setLabel(label) {
-		let simpleSlug = label.replace(/[^A-Za-z0-9]+/g,'_');
-		simpleSlug = simpleSlug.trim().toLowerCase();
+		let simpleSlug = label.trim().toLowerCase();
+		simpleSlug = simpleSlug.replace(/[^a-z0-9]+/g,'_');
+		if('first_name' == simpleSlug)
+			simpleSlug = 'first';
+		if('last_name' == simpleSlug)
+			simpleSlug = 'last';
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});
 		setAttributes({guestform: true});
 	}
 		
 	function setChoices(choices) {
-		setAttributes({choicearray: choices.split(',')});
+		setAttributes({choicearray: choices.split('\n')});
 	}
 		return (
 			<InspectorControls key="choiceinspector">
@@ -382,19 +390,25 @@ class ChoiceInspector extends Component {
 				value={ attributes.label }
 				onChange={ ( label ) => setLabel(label) }
 			/>
-			<TextControl
+			<TextareaControl
 				label={ __( 'Choices', 'rsvpmaker' ) }
 				value={ choices }
 				onChange={ ( choices ) => setChoices( choices  ) }
 			/>
-				<div><em>Separate choices with a comma</em></div>
+				<div><em>Enter each choice on a separate line</em></div>
 			<ToggleControl
 				label={ __( 'Include on Guest Form', 'rsvpmaker' ) }
 				checked={ attributes.guestform }
-				help={ attributes.required ? 'Included' : 'Not included' } 
+				help={ attributes.guestform ? 'Included' : 'Not included' } 
 				onChange={ ( guestform ) => {setAttributes( {guestform: guestform} ) }}
 			/>
-				</PanelBody>
+			<ToggleControl
+				label={ __( 'Check first choice by default', 'rsvpmaker' ) }
+				checked={ attributes.defaultToFirst }
+				help={ attributes.defaultToFirst ? 'First item selected by default' : 'No default' } 
+				onChange={ ( defaultToFirst ) => {setAttributes( {defaultToFirst: defaultToFirst} ) }}
+			/>
+	</PanelBody>
 				</InspectorControls>
 		);	} }
 
@@ -421,23 +435,10 @@ class ChoiceInspector extends Component {
 	return (
 <div className={className} >
 <h3>{__("Guest Fields",'rsvpmaker')}</h3>
-    <SelectControl
+    <TextControl
         label="Limit (if any)"
         value={ attributes.limit }
-        options={ [
-             { label: __('No limit','rsvpmaker'), value: '' },
-           { label: '1', value: '1' },
-            { label: '2', value: '2' },
-            { label: '3', value: '3' },
-            { label: '4', value: '4' },
-            { label: '5', value: '5' },
-            { label: '6', value: '6' },
-            { label: '7', value: '7' },
-            { label: '8', value: '8' },
-            { label: '9', value: '9' },
-            { label: '10', value: '10' },
-        ] }
-        onChange={ ( limit ) => { setAttributes( { limit: limit } ) } }
+        onChange={ ( limit ) => { setAttributes( { limit: (limit) ? parseInt(limit) : 0 } ) } }
     />
 <div className="guestnote">{__('Guests section will include fields you checked off above (such as First Name, Last Name), plus any others you embed below (information to be collected about guests ONLY).','rsvpmaker')}<ul><li>{__('You MUST check "Include on Guest Form"','rsvpmaker')}</li><li>{__('"Required" checkbox does not work in guest fields','rsvpmaker')}</li><li>{__('This block is not intended for use outside of an RSVPMaker RSVP Form document','rsvpmaker')}</li></ul></div>
 	<InnerBlocks />

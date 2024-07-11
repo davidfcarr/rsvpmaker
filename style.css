@@ -1,3 +1,17 @@
+.add_guests_button {
+    background-color: #555;
+    color: white;
+    padding: 5px 15px;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.plusguests {
+    font-size: x-large;
+    font-weight: bold;
+}
+
 .rsvplink {
     margin-top: 20px;
     margin-bottom: 20px;
@@ -7,7 +21,7 @@
 }
 .rsvploginrequired {
     position: absolute;
-    left: -1492px;
+    left: -3492px;
 }
 article.rsvpmaker div.entry-meta {
 	display: none;

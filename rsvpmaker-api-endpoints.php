@@ -214,7 +214,7 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 		$wp_query = rsvpmaker_upcoming_query(array('type'=>$request['type']));
 		$posts    = $wp_query->get_posts();
 		if ( empty( $posts ) ) {
-			return new WP_Error( 'empty_category', 'there is no post in this category ' . $querystring, array( 'status' => 404 ) );
+			return new WP_Error( 'empty_category', 'there is no post in this category ' . $request['type'], array( 'status' => 404 ) );
 		}
 		foreach($posts as $index => $post) {
 			$posts[$index]->permalink = get_permalink($post->ID);
@@ -1847,10 +1847,49 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$post_id = (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) ? 0 : intval($_GET['post_id']);
 		$template_id = ($post_id) ? get_post_meta($post_id,'_meet_recur',true) : 0;
 		$post = ($post_id) ? get_post($post_id) : null;
-		if(isset($_GET['form_id']))
-			$form_id = intval($_GET['form_id']);
-		elseif($post_id)
+		if(!empty($_GET['form_id'])) {
+			if((strpos($_GET['form_id'],'clone') !== false) && current_user_can('edit_post',$post_id))
+			{
+				$reusable_name = '';
+				$form_id = $_GET['form_id'];
+				if(strpos($form_id,'|'))
+				{
+					$parts = explode('|',$form_id);
+					$form_id = $parts[0];
+					$reusable_name = sanitize_text_field($parts[1]);
+				}
+				$form_id = intval(str_replace('clone','',$form_id));
+				$form = get_post($form_id);
+				if($form) {
+					$response['copied'] = $form->post_title;
+					$updated['post_title'] = ($reusable_name) ? 'Form:'.$reusable_name : 'Form for Post '.$post_id;
+					$updated['post_type'] = 'rsvpmaker_form';
+					$updated['post_author'] = $current_user->ID;
+					$updated['post_content'] = $form->post_content;
+					$updated['post_status'] = 'publish';
+					$updated['post_parent'] = $post_id;
+					$form_id = wp_insert_post($updated);
+					$updated['ID'] = $form_id;
+					$form = (object) $updated;
+					update_post_meta($post_id,'_rsvp_form',$form_id);
+					$response['form_changed'] = $form_id;
+					if($reusable_name) {
+						$reusable = get_option('rsvpmaker_forms', array());
+						$reusable[$form_id] = $updated['post_title'];
+						update_option('rsvpmaker_forms',$reusable);
+					}
+				}
+			}
+			else {
+				$form_id = intval($_GET['form_id']);
+				if($post_id && current_user_can('edit_post',$post_id))
+					update_post_meta($post_id,'_rsvp_form',$form_id);	
+			}
+		}
+		elseif($post_id) {
 			$form_id = get_post_meta($post_id,'_rsvp_form',true);
+			$response['form_id_from_meta'] = $form_id;
+		}
 		if(empty($form_id))
 			$form_id = $rsvp_options['rsvp_form'];
 		if(!empty($json)) {
@@ -1864,9 +1903,9 @@ class RSVPMaker_Form extends WP_REST_Controller {
 				return new WP_REST_Response( array('status' => 'User lacks administrative rights'), 401 );
 			}
 			$data = json_decode(trim($json));
-			if($data->start && $post_id)
+			if(!empty($data->start) && $post_id)
 				update_post_meta($post_id,'_rsvp_start',rsvpmaker_strtotime($data->start));
-			if($data->deadline && $post_id)
+			if(!empty($data->deadline) && $post_id)
 				update_post_meta($post_id,'_rsvp_start',rsvpmaker_strtotime($data->deadline));
 			if(isset($data->form) && is_array($data->form)) {
 				$output = '';
@@ -1885,6 +1924,7 @@ class RSVPMaker_Form extends WP_REST_Controller {
 							update_post_meta($data->event_id,'_rsvp_form',$form_id);
 						$reusable = get_option('rsvpmaker_forms', array());
 						$reusable[$form_id] = $updated['post_title'];
+						$response['form_changed'] = $form_id;
 						update_option('rsvpmaker_forms',$reusable);
 				}
 				else {
@@ -1901,41 +1941,63 @@ class RSVPMaker_Form extends WP_REST_Controller {
 			$response['attempted_reset'] = true;
 		}
 
-		if($post_id && $post_id != $form->post_parent) {
-			$response['copied'] = $form->post_title;
-			$updated['post_title'] = 'Form:'.$post->post_title.' ('.$post_id.')';
-			$updated['post_type'] = 'rsvpmaker_form';
-			$updated['post_author'] = $current_user->ID;
-			$updated['post_content'] = $form->post_content;
-			$updated['post_status'] = 'publish';
-			$updated['post_parent'] = $post_id;
-			$form_id = wp_insert_post($updated);
-			$updated['ID'] = $form_id;
-			$form = (object) $updated;
-			update_post_meta($post_id,'_rsvp_form',$form_id);
-		}
 		$response['form_id'] = $form_id;
+		$response['post_status'] = $post->post_status;
 		$response['form_title'] = $form->post_title;
+		$response['form_parent'] = ($form->post_parent) ? $form->post_parent : 0;
+		$response['default_form'] = $rsvp_options['rsvp_form'];
+		$custom_form = ($post_id && ($post_id == $form->post_parent));
+		$event_template = ($post_id) ? get_post_meta($post_id,'_rsvp_recur',true) : 0;
+		$template_form = ($event_template) ? intval(get_post_meta($event_template,'_rsvp_form',true)) : 0;
+		$response['default_form'] = $rsvp_options['rsvp_form'];
 		$response['is_default'] = ($form_id == $rsvp_options['rsvp_form']);
-		$response['is_inherited'] = ($form->post_parent && ($form->post_parent != $post_id));
+		$response['is_inherited'] = ($form_id == $template_form);
 		$response['form'] = parse_blocks($form->post_content);
-		$response['form_options'][] = array('value'=>$form_id,'label'=>$form->post_title);
-		$response['form_options'][] = array('value'=>$rsvp_options['rsvp_form'],'label'=>'Default');		
-		$includedform = array($rsvp_options['rsvp_form'],$form_id);
-		$reusable = get_option('rsvpmaker_forms');
+		$response['form_options'][] = array('value'=>'','label'=>__('Select Form to Edit','rsvpmaker'));
+		
+		if($custom_form)
+			$response['form_options'][] = array('value'=>$form_id,'label'=>__('Custom Form for This Event','rsvpmaker'));
+		$includedform = array($rsvp_options['rsvp_form']);
+		if($template_form)
+		{
+			$response['form_options'][] = array('value'=>$template_form,'label'=>__('Edit Form for Event Template','rsvpmaker'));
+			if($post_id)
+				$response['form_options'][] = array('value'=>'clone'.$template_form,'label'=>__('Clone Form for Event Template','rsvpmaker'));
+			$includedform[] = $template_form;
+		}
+		$response['form_options'][] = array('value'=>$rsvp_options['rsvp_form'],'label'=>__('Edit Default Form','rsvpmaker'));
+		if($post_id)
+			$response['form_options'][] = array('value'=>'clone'.$rsvp_options['rsvp_form'],'label'=>__('Clone Default Form','rsvpmaker'));
+		if(empty($reusable))
+			$reusable = get_option('rsvpmaker_forms');
+		$response['reusable'] = $reusable;
 		if(is_array($reusable)) {
 			$reusable_filtered = array();
 			foreach($reusable as $value => $label) {
 				if('publish' == get_post_status($value)) {
 					$reusable_filtered[$value] = $label;
-				if(!in_array($value,$includedform))
-					$response['form_options'][] = array('value'=>$value,'label'=>$label);
+				if(!in_array($value,$includedform)) {
+					$label = str_replace('Form:','',$label);
+					$response['form_options'][] = array('value'=>$value,'label'=>'Edit '.$label);
+					if($post_id)
+						$response['form_options'][] = array('value'=>'clone'.$value,'label'=>'Clone '.$label);
+					if($value == $form_id)
+						$response['is_reusable'] = 'Reusable Form: '.$label;
+				}
 				$includedform[] = $value;
 				}
 			}
 			if(sizeof($reusable) != sizeof($reusable_filtered))
 				update_option('reusable_forms',$reusable_filtered);
 		}
+		if($response['is_default'])
+			$response['current_form'] = 'Default';
+		elseif($response['is_inherited'])
+			$response['current_form'] = 'Inherited from Template';
+		elseif(!empty($response['is_reusable']))
+			$response['current_form'] = $response['is_reusable'];
+		else
+			$response['current_form'] = 'Custom';
 		$response['tweaked'] = 'test';
 		$response['updated'] = $updated;
 		return new WP_REST_Response( $response, 200 );
@@ -2533,6 +2595,9 @@ class RSVP_Pricing extends WP_REST_Controller {
 				$status .= 'change: '.var_export($change, true);
 				update_post_meta($post_id,'pricing',$change);
 			}
+			if('item_prices' == $data->update) {
+				update_post_meta($post_id,'_rsvp_item_prices',$data->change);
+			}
 			if('coupon_codes' == $data->update) {
 				$status .= 'change: '.var_export($data->change, true);
 				delete_post_meta( $post_id, '_rsvp_coupon_code' );
@@ -2550,6 +2615,10 @@ class RSVP_Pricing extends WP_REST_Controller {
 		$pricing = rsvp_get_pricing($post_id);
 		//if(sizeof($pricing) && $pricing[0]->price)
 		$response['pricing'] = $pricing;
+		$form = get_post(get_post_meta($post_id,'_rsvp_form',true));
+		if($form and isset($form->post_content))		
+		$response['form_fields'] = rsvpmaker_data_from_document($form->post_content);	
+		$response['item_prices'] = rsvpmaker_item_pricing($post_id);
 		$coupon_codes = get_post_meta( $post_id, '_rsvp_coupon_code' );
 		$coupon_methods = get_post_meta( $post_id, '_rsvp_coupon_method' );
 		$coupon_discounts = get_post_meta( $post_id, '_rsvp_coupon_discount' );		
@@ -2868,7 +2937,7 @@ function rsvp_pricing_date_time($row) {
 	}
 	else
 		$row->deadlineDate = $row->deadlineTime = '';
-	$row->price = number_format((float) $row->price,2);
+	$row->price = number_format((float) $row->price,2,'.','');
 	$row->filtered= true;
 	return $row;
 }
@@ -2998,6 +3067,42 @@ function get_rsvpmaker_projected_api($t) {
 	return $return;
 }
 
+class RSVP_Report_API extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'rsvp_report';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return ($_GET['code'] == get_option('rsvp_report_api_code'));// check for code
+	}
+
+	public function get_items( $request ) {
+	$response = rsvp_report_api();
+	return new WP_REST_Response( $response, 200 );
+	}//end handle
+}//end class
+
 add_action('rest_api_init',
 	function () {
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -3082,5 +3187,7 @@ add_action('rest_api_init',
 		$date_element->register_routes();
 		$titledate = new RSVP_Title_Date();
 		$titledate->register_routes();
+		$report = new RSVP_Report_API();
+		$report->register_routes();
 	}
 );

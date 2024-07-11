@@ -206,17 +206,29 @@ function rsvp_form_radio( $atts, $content = '' ) {
 	$label   = $atts['label'];
 	$choices = '';
 
+	$pricing = rsvpmaker_item_pricing($post->ID);
+	$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
+	if ( $currency == 'usd' ) {
+		$currency = '$';
+	} elseif ( $currency == 'eur' ) {
+		$currency = '€';
+	}
+	else {
+		$currency = strtoupper($currency).' ';
+	}
+
 	if ( isset( $atts['choicearray'] ) && ! empty( $atts['choicearray'] ) && is_array( $atts['choicearray'] ) ) {
 
-		foreach ( $atts['choicearray'] as $choice ) {
-
-			$choices .= sprintf( '<span class="rsvp-form-radio"><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s"/> %s </span>', esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $choice ), esc_html( $choice ) );
+		foreach ( $atts['choicearray'] as $i => $choice ) {
+			$is_checked = (isset($atts['defaultToFirst']) && !empty($atts['defaultToFirst']) && 0 == $i) ? ' checked="checked" ' : ''; 
+			$pricelabel = (!empty($pricing) && !empty($pricing->$slug) && !empty($pricing->$slug->$choice)) ? ' +'.$currency.$pricing->$slug->$choice : '';
+			$choices .= sprintf( '<div class="rsvp-form-radio"><input type="radio" class="%s" name="profile[%s]" id="%s" value="%s" %s/> %s </div>', esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $choice ), $is_checked, esc_html( $choice.$pricelabel ) );
 		}
 	}
 
 	$required = '';
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formradio %srsvpblock"><p><label>%s:</label> %s</p></div>', esc_attr( $required ), esc_html( $label ), $choices );
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formradio %s rsvpblock"><p><label>%s:</label> %s</p></div>', esc_attr( $required ), esc_html( $label ), $choices );
 
 	return rsvp_form_field( $atts, $content );
 
@@ -312,9 +324,9 @@ function rsvp_form_guests( $atts, $content ) {
 	}
 	$template = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n";
 
-	$template .= '<div class="guest_blank" id="first_blank"><p><strong>' . __( 'Guest', 'rsvpmaker' ) . ' ###</strong></p>' . $shared . $content . '</div>';// fields shared from master form, plus added fields
+	$template .= '<div class="guest_blank" id="first_blank" style="display:none"><p><strong>' . __( 'Guest', 'rsvpmaker' ) . ' ###</strong></p>' . $shared . $content . '</div>';// fields shared from master form, plus added fields
 
-	$addmore = ( isset( $atts['addmore'] ) ) ? $atts['addmore'] : __( 'Add more guests', 'rsvpmaker' );
+	$addmore = ( isset( $atts['addmore'] ) ) ? $atts['addmore'] : __( 'Add Guests', 'rsvpmaker' );
 
 
 	// $master_rsvp = 4;//test data
@@ -398,7 +410,7 @@ function rsvp_form_guests( $atts, $content ) {
 
 	if ( $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
 
-		$output .= '<p><a href="#guest_section" id="add_guests" name="add_guests">(+) ' . $addmore . '</a> <input type="number" id="number_to_add" name="number_to_add" min="1" value="1" style="width: 50px;" ><!-- end of guest section--></p>'."\n";
+		$output .= '<p><span class="plusguests">+</span> <input type="number" id="number_to_add" name="number_to_add" min="1" value="1" style="width: 50px;" > <a href="#guest_section" id="add_guests" class="add_guests_button" name="add_guests">' . $addmore . '</a> <!-- end of guest section--></p>'."\n";
 	}
 
 	$output .= '<script type="text/javascript"> var guestcount =' . $count . '; </script>';
@@ -674,4 +686,53 @@ $mail['to'] = $rsvp_options['rsvp_to'];
 $result = rsvpmailer($mail);
 $message = empty($result) ? '<span style="border: medium solid red;padding:10px;">Unknown error</span>' : '<span style="border: medium solid green;padding:10px;">Message sent</span>';
 return array('message' => 'Submitted: '.$message);
+}
+
+function rsvpmaker_item_pricing($post_id) {
+	$form = get_post(get_post_meta($post_id,'_rsvp_form',true));
+	$exclude = ['phone_type'];
+	$item_prices = get_post_meta($post_id,'_rsvp_item_prices',true);
+	if(!$item_prices)
+		$item_prices = (object) [];
+	//testing
+	//if(!sizeof($item_prices))
+		//$item_prices->meal_choice->Steak = 15.00;
+	if($form and isset($form->post_content)) {
+		$fields = rsvpmaker_data_from_document($form->post_content);
+		foreach($fields as $field) {
+			if(in_array($field->slug,$exclude))
+				continue;
+			$slug = $field->slug;
+			if(isset($field->choicearray)) {
+				$slugdata = null;
+				foreach($field->choicearray as $choice) {
+					if(empty($slugdata)) {	
+						if(!isset($item_prices->$slug))
+							$slugdata = array($choice => 0);
+						else 
+							$slugdata = (array) $item_prices->$slug;
+					}
+					
+					if(!isset($item_prices->$slug->$choice)) {
+						$slugdata[$choice] = 0;
+					}
+				}
+				$item_prices->$slug = (object) $slugdata;
+			}		
+		}
+	}
+	return $item_prices;
+}
+
+function rsvpmaker_form_field_labels($post_id) {
+	$form = get_post(get_post_meta($post_id,'_rsvp_form',true));
+	$field_labels = [];
+	if($form and isset($form->post_content)) {
+		$fields = rsvpmaker_data_from_document($form->post_content);
+		foreach($fields as $field) {
+			if(isset($field->slug) && isset($field->label))
+				$field_labels[$field->slug] = $field->label;
+		}
+	}
+	return $field_labels;
 }

@@ -191,6 +191,7 @@ jQuery( document ).ready(
 					var post_id         = $( this ).attr( 'post_id' );
 					var server_timezone = $( this ).attr( 'server_timezone' );
 					var timezone_abbrev = $( this ).attr( 'timezone_abbrev' );
+					var tz_url = $( this ).attr( 'tz_url' );
 					var nofluxbutton = $( this ).attr( 'nofluxbutton' );
 					console.log('post '+id+' noflux '+nofluxbutton);
 					console.log(timezone_abbrev);
@@ -202,12 +203,14 @@ jQuery( document ).ready(
 								 $( this ).css( 'display','inline-block' );
 								 fluxbutton[id]                = document.createElement( "A" );
 								 fluxbutton[id].innerHTML      = 'Show in My Timezone';
+								 fluxbutton[id].href      = tz_url;
 								 fluxbutton[id].className      = 'tzbutton';
 								 fluxbutton[id].style.fontSize = 'small';
 								 document.getElementById( id ).appendChild( fluxbutton[id] );
 								fluxbutton[id].addEventListener(
 									'click',
 									(event) => {
+										event.preventDefault();
 										fluxbutton[id].style.display = 'none';
 										var tz                       = jstz.determine();
 										var tzstring                 = tz.name();

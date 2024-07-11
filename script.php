@@ -157,12 +157,6 @@ function rsvp_form_jquery() {
 	var firstblank_hidden = true;
 	let number_to_add = 0;
 	let guestline = '';
-	if(blank)
-		{
-		//let firstblank = blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount);
-		//console.log('firstblank',firstblank);
-		$('#first_blank').hide();
-		}
 	$('#add_guests').click(function(event){
 		event.preventDefault();
 		number_to_add = parseInt($('#number_to_add').val());
@@ -172,7 +166,8 @@ function rsvp_form_jquery() {
 		if(firstblank_hidden) {
 			firstblank_hidden = false;
 			let firstblank = blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount);
-			firstblank = firstblank.replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last);
+			let defaultlast = (last != '') ? last : 'TBD';
+			firstblank = firstblank.replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+defaultlast);
 			$('#first_blank').html(firstblank);
 			$('#first_blank').show();
 			guestcount++;

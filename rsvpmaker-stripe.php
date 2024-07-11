@@ -161,7 +161,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 
 	update_option( $idempotency_key, $vars );
 
-	$url = get_permalink( $rsvpmaker_stripe_checkout_page_id );
+	$url = rsvpmaker_stripe_checkout_get_url();
 	$sandbox = empty($vars['sandbox']) ? 0 : 1; // sandbox set at block level
 	$keys = get_rsvpmaker_stripe_keys($sandbox);
 	if(empty($keys['pk']) && $keys['sandbox_pk'])
@@ -186,6 +186,45 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 
 	return $output;
 
+}
+
+function rsvpmaker_stripe_checkout_get_url( ) {
+	global $rsvp_options;
+
+	global $post, $rsvp_options, $current_user, $button, $rsvpmaker_stripe_form, $wpdb;
+	$rsvpmaker_stripe_checkout_page_id = get_option( 'rsvpmaker_stripe_checkout_page_id' );
+	$ck = ($rsvpmaker_stripe_checkout_page_id) ? get_post($rsvpmaker_stripe_checkout_page_id) : false;
+	//wp_die(var_export($ck,true));
+	if(!$rsvpmaker_stripe_checkout_page_id || !$ck || ($ck->post_type == 'rsvpmaker')) {
+
+		$postvar['post_content'] = '<!-- wp:shortcode -->
+
+	[rsvpmaker_stripe_checkout]
+
+	<!-- /wp:shortcode -->
+
+	<!-- wp:paragraph -->
+
+<p>Secure payment processing by <a href="https://stripe.com/" target="_blank">Stripe</a>.</p>
+
+<!-- /wp:paragraph -->
+
+';
+
+		$postvar['post_title'] = 'Checkout';
+
+		$postvar['post_status'] = 'publish';
+
+		$postvar['post_author'] = 1;
+
+		$postvar['post_type'] = 'page';
+
+		$rsvpmaker_stripe_checkout_page_id = wp_insert_post( $postvar );
+
+		update_post_meta( $rsvpmaker_stripe_checkout_page_id, '_rsvpmaker_special', 'Payment checkout page for Stripe' );
+		update_option( 'rsvpmaker_stripe_checkout_page_id',$rsvpmaker_stripe_checkout_page_id );
+	}
+	return get_permalink($rsvpmaker_stripe_checkout_page_id);
 }
 
 function rsvpmaker_stripe_validate($public, $secret) {
@@ -389,8 +428,7 @@ function rsvpmaker_stripe_checkout() {
 	<?php
 
 	if ( strpos( $public, 'test' ) && ! isset( $_GET['hidetest'] ) ) {
-
-		printf( '<p>%s</p>', __( 'Stripe is in TEST mode. To simulate a transaction, use:<br />Credit card 4111 1111 1111 1111<br />Any future date<br />Any three digit CVC code<br />Any 5-digit postal code', 'rsvpmaker' ) );
+		printf( '<p class="stripe-sandbox-mode">%s</p>', __( 'Stripe is in TEST mode. To simulate a transaction, use:<br />Credit card 4111 1111 1111 1111<br />Any future date<br />Any three digit CVC code<br />Any 5-digit postal code', 'rsvpmaker' ) );
 	}
 
 	?>

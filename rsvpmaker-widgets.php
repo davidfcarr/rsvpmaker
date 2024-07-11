@@ -62,7 +62,11 @@ class CPEventsWidget extends WP_Widget {
 					echo "\n<ul>\n";
 
 					foreach ( $events as $event ) {
-						$date = rsvpmaker_date( $dateformat, rsvpmaker_strtotime( $event->datetime ) );
+						if(empty($event->ts_start)) {
+							$ev = get_rsvpmaker_event($event->ID);
+							$event->ts_start = $ev->ts_start;
+						}
+						$date = rsvpmaker_date( $dateformat, $event->ts_start );
 						printf( '<li class="rsvpmaker-widget-li"><span class="rsvpmaker-widget-title"><a href="%s">%s</a></span>%s<span class="rsvpmaker-widget-date">%s</span></li>', get_permalink( $event->ID ), esc_html( $event->post_title ), $break, esc_html( $date ) );
 					}
 

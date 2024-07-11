@@ -879,6 +879,19 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 		global $rsvp_id;
 
 		global $rsvpdata;
+		$payment_details = '';
+
+		$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
+		if ( $currency == 'usd' ) {
+			$currency = '$';
+		} elseif ( $currency == 'eur' ) {
+			$currency = '€';
+		}
+		else {
+			$currency = strtoupper($currency).' ';
+		}
+	
+		$rsvp['fee_total'] = 0;
 
 		$rsvp_id = ( isset( $_POST['rsvp_id'] ) ) ? (int) $_POST['rsvp_id'] : 0;
 
@@ -1099,7 +1112,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			if ( isset( $_POST['payingfor'] ) && is_array( $_POST['payingfor'] ) ) {
 
-				$rsvp['total'] = 0;
+				$rsvp['fee_total'] = 0;
 
 				$participants = 0;
 
@@ -1115,9 +1128,9 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 					$cost = $value * $price;
 
-					$rsvp['payingfor'] .= " $value $unit @ " . number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'];
+					$rsvp['payingfor'] .= "<div>$value $unit @ " .$currency. number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency']."</div>\n";
 
-					$rsvp['total'] += $cost;
+					$rsvp['fee_total'] += $cost;
 
 					$participants += $value;
 
@@ -1153,14 +1166,11 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 					foreach ( $_POST['guest']['first'] as $first ) {
 
 						if ( $first ) {
-
 							$participants++;
 						}
 					}
 				}
-
 				if ( isset( $_POST['guestdelete'] ) ) {
-
 					$participants -= sizeof( $_POST['guestdelete'] );
 				}
 			}
@@ -1184,28 +1194,29 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				$multiple = ( isset( $per[ $index ]->price_multiple ) ) ? (int) $per[ $index ]->price_multiple : 1;
 
-				if ( $multiple == 1 ) { // coupon codes not applied to multiple admission "table" pricing
-					$price = rsvpmaker_check_coupon_code( $price );
-				}
-
 				if ( $multiple > 1 ) {
-					$rsvp['total'] = $price;
+					$rsvp['fee_total'] = $price;
 					if ( $participants > $multiple ) {
-
-						$multiple_warning = '<div style="color:red;">' . "Warning: party of $participants exceeds table size" . '</div>';
-
+						$rsvp['payingfor'] .= '<div>'.$per[$index]->unit.'</div>';
+						if($per[$index]->extra_guest_price) {
+							$extra_guests = $participants - $multiple;
+							$extra_fee = $per[$index]->extra_guest_price * $extra_guests;
+							$rsvp['payingfor'] .= '<div>'.$extra_guests.' additional guests @ '.$per[$index]->extra_guest_price.'</div>';
+							$rsvp['fee_total'] += $per[$index]->extra_guest_price * ($participants - $multiple);
+						}
+						else {
+							$multiple_warning = '<div style="color:red;">' . "Warning: party of $participants exceeds reservation size" . '</div>';
+							$rsvp['payingfor'] .= $multiple_warning;
+						}
 					} else {
-
 						$padguests = $multiple - $participants;
-
 						$participants = $multiple;
-
 					}
 				} else {
-					$rsvp['total'] = $price * $participants;
+					$rsvp['fee_total'] = $price * $participants;
 				}
 
-				$rsvp['payingfor'] .= "$participants $unit @ " . number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] );
+				$rsvp['payingfor'] .= "<div>$participants $unit @ " .$currency. number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] )."</div>\n";
 
 				$rsvp['pricechoice'] = $index;
 
@@ -1217,7 +1228,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 			$owed = 0;
 			$paid = 0;
-			if(!empty($rsvp['total'])) {
+			if(!empty($rsvp['fee_total'])) {
 				if($rsvp_id) {
 					$paid_amounts = get_post_meta( $event, '_paid_' . $rsvp_id );
 
@@ -1229,18 +1240,82 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 						}
 					}	
 				}
-				$pricewas = $rsvp['total'];
-				$rsvp['total'] = rsvpmaker_check_coupon_code( $rsvp['total'], true );
-				if($pricewas != $rsvp['total'])
-					$rsvp['payingfor'] .= ', with coupon';
-				$owed = $rsvp['total'] - $paid;				
+				$pricewas = $rsvp['fee_total'];
 			}
 			if ( ! empty( $rsvpmaker_coupon_message ) ) {
 				$rsvp['coupon'] = $rsvpmaker_coupon_message;
 			}
 
-			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'amountpaid'=>$paid,'owed'=>$owed,'fee_total'=>$rsvp['total']);
+			$item_pricing = rsvpmaker_item_pricing($post->ID);
+			$itemlog = '';
+			if(sizeof(((array) $item_pricing))) {
+				$field_labels = rsvpmaker_form_field_labels($post->ID);
+				$pricing_vars = get_object_vars($item_pricing);
+				$item_fees = [];
+				$item_count = [];
+				foreach($pricing_vars as $index => $slugv) {
+					$slugv = (array) $slugv;
+					if(sizeof($slugv))
+					foreach($slugv as $slugindex => $v) {
+						$item_count[$index.':'.$slugindex] = 0;
+					}
+				}
+				foreach($rsvp as $rsvpkey => $rsvpvalue) {
+					$itemlog .= $rsvpkey . ' ' . $rsvpvalue.' '; 
+					if(!empty($item_pricing->$rsvpkey))
+						$itemlog .= ' pricing key match for '.$rsvpkey.' ';
+					if(!empty($item_pricing->$rsvpkey) && !empty($item_pricing->$rsvpkey->$rsvpvalue))
+						{
+							$item_count[$rsvpkey.':'.$rsvpvalue] = (empty($item_count[$rsvpkey.':'.$rsvpvalue])) ? 1 : $item_count[$rsvpkey.':'.$rsvpvalue] + 1;
+							$item_fees[$rsvpkey.':'.$rsvpvalue] = floatval($item_pricing->$rsvpkey->$rsvpvalue);
+							$rsvp['fee_total'] += floatval($item_pricing->$rsvpkey->$rsvpvalue);
+						}
+				}
+			}
 
+			if ( isset( $_POST['guest'] ) ) {
+				foreach($_POST['guest'] as $key => $gv) {
+					foreach($gv as $index => $value) {
+						if(empty($gvs[$index]))
+							$gvs[$index] = array();
+						$gvs[$index][$key] = $value;
+					}
+				}
+			}
+
+			if ( !empty($gvs) && !empty(sizeof((array) $item_pricing)) ) {
+				foreach($gvs as $key => $gv) {
+					foreach($gv as $rsvpkey => $rsvpvalue) {
+						if(!empty($item_pricing->$rsvpkey) && !empty($item_pricing->$rsvpkey->$rsvpvalue))
+						{
+						$item_count[$rsvpkey.':'.$rsvpvalue] = (empty($item_count[$rsvpkey.':'.$rsvpvalue])) ? 1 : $item_count[$rsvpkey.':'.$rsvpvalue] + 1;
+						$item_fees[$rsvpkey.':'.$rsvpvalue] = floatval($item_pricing->$rsvpkey->$rsvpvalue);
+						$price_before = $rsvp['fee_total'];
+						$rsvp['fee_total'] += floatval($item_pricing->$rsvpkey->$rsvpvalue);
+						}
+					}
+				}
+			}
+			if(!empty($item_count) && sizeof($item_count)) {
+				foreach($item_count as $rsvpkey => $count) {
+					if($count) {
+						$parts = explode(':',$rsvpkey);
+						$label = (empty($field_labels[$parts[0]])) ? $parts[0] : $field_labels[$parts[0]];
+						$rsvp['payingfor'] .= '<div>'.$label.':'.$parts[1]." $count @ ".$currency.$item_fees[$rsvpkey]."</div>";
+					}
+				}
+			}
+
+			if(!empty($rsvp['fee_total'])) {
+				$pricewas = $rsvp['fee_total'];
+				$rsvp['fee_total'] = rsvpmaker_check_coupon_code( $rsvp['fee_total'], true );
+				if($pricewas != $rsvp['fee_total'])
+					$rsvp['payingfor'] .= sprintf("<div>Before coupon %s%s</div><div>Coupon discount - %s%s</div>",$currency,number_format($pricewas,2),$currency,number_format($pricewas - $rsvp["fee_total"],2));
+				$owed = $rsvp['fee_total'] - $paid;
+				$rsvp['payingfor'] .= '<div class="payment_details_total"><strong>= ' .$currency. number_format( $rsvp['fee_total'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']) . "</strong></div>\n";
+			}
+
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'amountpaid'=>$paid,'owed'=>$owed,'fee_total'=>$rsvp['fee_total']);
 			capture_email( $rsvp );
 
 			if ( $rsvp_id ) {
@@ -1321,16 +1396,6 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 			$guestof = (empty($rsvp['first'])) ? '' : $rsvp['first'] . ' ';
 			$guestof .=  (empty($rsvp['last'])) ? '' : $rsvp['last'];
 			$guestnv = array();
-
-			if ( isset( $_POST['guest'] ) ) {
-				foreach($_POST['guest'] as $key => $gv) {
-					foreach($gv as $index => $value) {
-						if(empty($gvs[$index]))
-							$gvs[$index] = array();
-						$gvs[$index][$key] = $value;
-					}
-				}
-			}
 
 			if ( isset( $_POST['guest']['first'] ) ) {
 
@@ -1444,6 +1509,14 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 
 				}
 
+
+				if($rsvp['fee_total']) {
+					$url = get_permalink($post->ID);
+					$url = add_query_arg('rsvp',$rsvp_id,$url);
+					$url = add_query_arg('e',$rsvp['email'],$url);
+					$cleanmessage = sprintf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>'."\n",$url,$url).$cleanmessage;	
+				}
+	
 				$rsvpdata['rsvpdetails'] = $cleanmessage;
 
 				$rsvpdata['rsvpmessage'] = $rsvp_confirm; // confirmation message from editor
@@ -1464,9 +1537,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 			}
 
 			do_action( 'rsvp_recorded', $rsvp );
-
-			header( 'Location: ' . $req_uri . '&rsvp=' . $rsvp_id .'&timelord='.rsvpmaker_nonce('value').'#rsvpmaker_top' );
-
+			header( 'Location: ' . $req_uri . '&rsvp=' . $rsvp_id .'&timelord='.rsvpmaker_nonce('value').'&ts='.time().'#rsvpmaker_top' );
 			exit();
 
 		}
@@ -1635,7 +1706,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 	function event_content( $content, $formonly = false, $form = '' ) {
 		global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
-
+		$payment_details = '';
 		if ( is_admin() && !isset($_GET['page']) ) { // || !in_the_loop()
 
 			return $content;
@@ -1645,6 +1716,15 @@ if ( ! function_exists( 'event_content' ) ) {
 
 		if (empty($post->post_type) || ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) {
 			return $content;
+		}
+		$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
+		if ( $currency == 'usd' ) {
+			$currency = '$';
+		} elseif ( $currency == 'eur' ) {
+			$currency = '€';
+		}
+		else {
+			$currency = strtoupper($currency).' ';
 		}
 
 		$rsvpconfirm = $rsvp_confirm = '';
@@ -1760,9 +1840,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 			$rsvp_confirm .= "\n\n" . wpautop( get_post_meta( $post->ID, '_rsvp_' . $e, true ) );
 
-			$rsvpconfirm = '<h3>' . esc_html( __( 'RSVP Recorded', 'rsvpmaker' ) ) . '</h3>	
-
-' . $rsvp_confirm;
+			$rsvpconfirm = $rsvp_confirm;
 		$rsvp_id = intval($_GET['rsvp']);
 		$rsvpconfirm .= rsvpmaker_guestparty($rsvp_id,true);
 
@@ -1788,7 +1866,6 @@ if ( ! function_exists( 'event_content' ) ) {
 		if ( ( ( $e && isset( $_GET['rsvp'] ) ) || ( is_user_logged_in() && ! $email_context ) ) ) {
 
 			if ( $rsvprow && is_single() ) {
-
 				$master_rsvp = $rsvprow['id'];
 
 				$rsvpwithdraw = sprintf( '<div><input type="checkbox" checked="checked" name="withdraw[]" value="%d"> %s %s</div>', esc_attr( $rsvprow['id'] ), esc_html( $rsvprow['first'] ), esc_html( $rsvprow['last'] ) );
@@ -1798,7 +1875,9 @@ if ( ! function_exists( 'event_content' ) ) {
 				$rsvpconfirm .= '<div class="rsvpdetails"><p>' . __( 'Your RSVP', 'rsvpmaker' ) . ": $answer</p>\n";
 
 				$profile = $details = rsvp_row_to_profile( $rsvprow );
-				if ( isset( $details['total'] ) && $details['total'] ) {
+				if ( isset( $details['fee_total'] ) && $details['fee_total'] ) {
+
+					$payment_details = '';
 
 					$invoice_id = (int) get_post_meta( $post->ID, '_open_invoice_' . $rsvp_id, true );
 
@@ -1814,9 +1893,9 @@ if ( ! function_exists( 'event_content' ) ) {
 						}
 					}
 
-					$charge = $details['total'] - $paid;
+					$charge = $details['fee_total'] - $paid;
 
-					$price_display = ( $charge == $details['total'] ) ? $details['total'] : $details['total'] . ' - ' . $paid . ' = ' . $charge;
+					$price_display = ( $charge == $details['fee_total'] ) ? $details['fee_total'] : $details['fee_total'] . ' - ' . $paid . ' = ' . $charge;
 
 					if ( $invoice_id ) {
 
@@ -1830,19 +1909,21 @@ if ( ! function_exists( 'event_content' ) ) {
 
 					}
 
-					$rsvpconfirm .= '<p><strong>' . __( 'Pay for ', 'rsvpmaker' ) . ' ' . esc_html( $details['payingfor'] ) . ' = ' . number_format( $details['total'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] . ' ' . $rsvp_options['paypal_currency'] ) . '</strong></p>';
+					$payment_details .= '<div class="payment_details"><strong>' . __( 'Event Fees', 'rsvpmaker' ) . '</strong> <div class="payment_details_itemized">' . wp_kses_post( $details['payingfor'] ) . '</div></div>';
 
-					if ( $charge != $details['total'] ) {
+					if ( $charge != $details['fee_total'] ) {
 
-						$rsvpconfirm .= '<p><strong>' . __( 'Previously Paid', 'rsvpmaker' ) . ' ' . number_format( $paid, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] . '</strong></p>';
+						$payment_details .= '<p><strong>' . __( 'Previously Paid', 'rsvpmaker' ) . ' ' . number_format( $paid, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] . '</strong></p>';
 
-						$rsvpconfirm .= '<p><strong>' . __( 'Balance Owed', 'rsvpmaker' ) . ' ' . number_format( $charge, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] . '</strong></p>';
+						$payment_details .= '<p><strong>' . __( 'Balance Owed', 'rsvpmaker' ) . ' ' . number_format( $charge, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] . '</strong></p>';
 
 					}
 
 					if ( $charge > 0 ) {
 
 						$gateway = get_rsvpmaker_payment_gateway();
+						if($gateway && $gateway != 'Cash or Custom')
+							$payment_details = '<p>To complete your registration, please pay now.</p>'.$payment_details;
 
 						$currency = get_post_meta($post->ID,'_rsvp_currency',true);
 						if(empty($currency))
@@ -1852,20 +1933,20 @@ if ( ! function_exists( 'event_content' ) ) {
 							$rsvprow['amount'] = $charge;
 							$rsvprow['rsvp_id'] = $rsvp_id;
 							$rsvprow['currency'] = strtolower($currency);
-							$rsvpconfirm .= rsvpmaker_to_stripe( $rsvprow );
+							$payment_details .= rsvpmaker_to_stripe( $rsvprow );
 						} 
 						elseif ( $gateway == 'Both Stripe and PayPal' ) {
 							$rsvprow['amount'] = $charge;
 							$rsvprow['rsvp_id'] = $rsvp_id;
 							$rsvprow['currency'] = strtolower($currency);
-							$rsvpconfirm .= rsvpmaker_to_stripe( $rsvprow );
-							$rsvpconfirm .= '<p>'. __('Credit card processing by Stripe','rsvpmaker').'</p>';
-							$rsvpconfirm .= '<p>'. __('Or pay with PayPal','rsvpmaker').'</p>';
-							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $currency, $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
+							$payment_details .= rsvpmaker_to_stripe( $rsvprow );
+							$payment_details .= '<p>'. __('Credit card processing by Stripe','rsvpmaker').'</p>';
+							$payment_details .= '<p>'. __('Or pay with PayPal','rsvpmaker').'</p>';
+							$payment_details .= rsvpmaker_paypal_button( $charge, $currency, $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
 						} 
 						elseif ( $gateway == 'Stripe via WP Simple Pay' ) {
 
-							$rsvpconfirm .= '<p>' . do_shortcode( '[stripe amount="' . ( $charge * 100 ) . '" description="' . htmlentities( $post->post_title ) . ' ' . esc_html( $details['payingfor'] ) . '" ]' ) . '</p>';
+							$payment_details .= '<p>' . do_shortcode( '[stripe amount="' . ( $charge * 100 ) . '" description="' . htmlentities( $post->post_title ) . ' ' . esc_html( $details['payingfor'] ) . '" ]' ) . '</p>';
 
 						} elseif ( $gateway == 'Cash or Custom' ) {
 
@@ -1873,14 +1954,13 @@ if ( ! function_exists( 'event_content' ) ) {
 
 							do_action( 'rsvpmaker_cash_or_custom', $charge, $invoice_id, $rsvp_id, $details, $profile, $post );
 
-							$rsvpconfirm .= ob_get_clean();
+							$payment_details .= ob_get_clean();
 
 						} elseif ( $gateway == 'PayPal REST API' ) {
 
-							$rsvpconfirm .= rsvpmaker_paypal_button( $charge, $currency, $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
+							$payment_details .= rsvpmaker_paypal_button( $charge, $currency, $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) );
 
-						} 
-					
+						}					
 					}
 				}
 
@@ -1932,15 +2012,13 @@ if ( ! function_exists( 'event_content' ) ) {
 		}
 		}
 
-		if ( ! empty( $rsvpconfirm ) ) {
-
-			$rsvpconfirm = '<div id="rsvpconfirm">' . $rsvpconfirm . '</div>';
+		if ( ! empty( $rsvpconfirm ) || !empty($payment_details) ) {
+			$rsvpconfirm = '<div id="rsvpconfirm"><h3>' . esc_html( __( 'Registration Saved', 'rsvpmaker' ) ) . "</h3>\n" . $payment_details . $rsvpconfirm . '</div>';
 		}
 
 		// $content = '<div>'.$content;
 
 		if ( ! $formonly && ! empty( $dateblock ) ) {
-
 			$content = $dateblock . $content;
 		}
 
@@ -2220,7 +2298,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 								}
 
-								printf( '<div id="guest_count_pricing">' . __( 'Options', 'rsvpmaker' ) . ': <select name="guest_count_price"  id="guest_count_price">%s</select></div>', $options );
+								printf( '<div id="guest_count_pricing"><label>' . __( 'Pricing Options', 'rsvpmaker' ) . ':</label> <select name="guest_count_price"  id="guest_count_price">%s</select></div>', $options );
 
 							}
 						}
@@ -2254,7 +2332,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 					if ( ! empty( $custom_fields['_rsvp_coupon_code'][0] ) ) {
 
-						printf( '<p>Coupon Code: <input type="text" name="coupon_code" size="10" /><br /><em>If you have a coupon code, enter it above</em>.</p>' );
+						printf( '<p><label>Coupon Code:</label> <input type="text" name="coupon_code" size="10" /><br /><em>If you have a coupon code, enter it above</em>.</p>' );
 					}
 				}
 
@@ -2302,7 +2380,7 @@ if ( ! function_exists( 'event_content' ) ) {
 
 		<p> 
 
-		  <input type="submit" id="rsvpsubmit" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
+		  <input type="submit" id="rsvpsubmit" style="<?php echo esc_attr(get_rsvp_submit_button_css()); ?>" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
 
 		</p> 
 
@@ -2387,8 +2465,6 @@ function rsvp_report_shortcode( $atts ) {
 	return str_replace( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp' ), $permalink, $report );
 
 }
-
-
 
 if ( ! function_exists( 'rsvp_report' ) ) {
 
@@ -2511,6 +2587,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 			$eventid   = (int) $_GET['event'];
 			$permalink = get_permalink( $eventid );
+			$pricing = get_post_meta($eventid,'pricing',true);
 
 			$event_row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$eventid" );
 
@@ -2597,7 +2674,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 					$profile = $details = rsvp_row_to_profile( $rsvprow );
 
-					if ( isset( $details['total'] ) && $details['total'] ) {
+					if ( isset( $details['fee_total'] ) && $details['fee_total'] ) {
 
 						$rsvp_id = (int) $_GET['rsvp'];
 
@@ -2605,9 +2682,9 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 						$paid = $rsvprow['amountpaid'];
 
-						$charge = $details['total'] - $paid;
+						$charge = $details['fee_total'] - $paid;
 
-						$price_display = ( $charge == $details['total'] ) ? $details['total'] : $details['total'] . ' - ' . $paid . ' = ' . $charge;
+						$price_display = ( $charge == $details['fee_total'] ) ? $details['fee_total'] : $details['fee_total'] . ' - ' . $paid . ' = ' . $charge;
 
 						if ( $invoice_id ) {
 
@@ -2621,9 +2698,9 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 
 						}
 
-						$rsvpconfirm .= '<p><strong>' . esc_html( __( 'Event Fee', 'rsvpmaker' ) . ' ' . esc_html( $details['payingfor'] ) . ' = ' . number_format( $details['total'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] ) . '</strong></p>';
+						$rsvpconfirm .= '<p><strong>' . esc_html( __( 'Event Fee', 'rsvpmaker' ) . ' ' . esc_html( $details['payingfor'] ) . ' = ' . number_format( $details['fee_total'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] ) . '</strong></p>';
 
-						if ( $charge != $details['total'] ) {
+						if ( $charge != $details['fee_total'] ) {
 
 							$rsvpconfirm .= '<p><strong>' . esc_html( __( 'Previously Paid', 'rsvpmaker' ) . ' ' . number_format( $paid, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'] ) . '</strong></p>';
 						}
@@ -2684,7 +2761,7 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 				$future = get_future_events( '', $limit );
 
 			} else {
-				$future = get_past_events( '', $limit );
+				$future = get_past_rsvp_events( '', $limit );
 			}
 
 			$all_emails = array();
@@ -2842,12 +2919,30 @@ if ( ! function_exists( 'rsvp_report' ) ) {
 				echo '<h2>' . esc_html( __( 'Events', 'rsvpmaker' ) ) . "</h2>\n" . $eventlist;
 			}
 		}
-
+	$rsvp_report_api_code = get_option('rsvp_report_api_code');
+	if(isset($_GET['enable_api'])) {
+		$rsvp_report_api_code = wp_generate_password(20,false);
+		update_option('rsvp_report_api_code',$rsvp_report_api_code);
 	}
+echo '<div style="background-color: #fff; padding: 10px; margin-top: 20px;">';
+?>
+
+<h3>RSVP Report API access for Google Sheets or Your Own Scripts</h3>
+<p>See the <a href="https://rsvpmaker.com/knowledge-base/rsvp-report-google-sheet-with-api-access/">Google Sheets example</a>.</p>
+<?php
+	if($rsvp_report_api_code) {
+		printf('<p id="api_link">API access URL: <a href="%s">%s</a></p>',site_url('/wp-json/rsvpmaker/v1/rsvp_report?code='.$rsvp_report_api_code),site_url('/wp-json/rsvpmaker/v1/rsvp_report?code='.$rsvp_report_api_code));
+		printf('<p id="api_link"><a href="%s">Reset API Access Key</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&enable_api=1#api_link'));
+	}
+	else
+		printf('<p id="api_link"><a href="%s">Enable API Access</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&enable_api=1#api_link'));
+echo '</div>';
+	}
+
 } // end rsvp report
 
-function format_rsvp_row($row, $fields) {
-	global $rsvpmaker_additional_fields;
+function format_rsvp_row($row, $fields, $pricing = null) {
+	global $post, $rsvpmaker_additional_fields;
 	$owed_list = '';
 	echo '<h3 id="rsvprow'.$row['id'].'">' . esc_html( $row['yesno'] . ' ' . $row['first'] . ' ' . $row['last'] . ' ' . $row['email'] );
 
@@ -2857,7 +2952,7 @@ function format_rsvp_row($row, $fields) {
 	}
 	
 	echo '</h3>';
-	
+
 	if ( $row['master_rsvp'] ) {
 	
 		if ( isset( $guestcount[ $row['master_rsvp'] ] ) ) {
@@ -2875,20 +2970,20 @@ function format_rsvp_row($row, $fields) {
 		$details = unserialize( $row['details'] );
 	}
 	
-	if ( isset( $details['total'] ) ) {
-		echo '<div style="font-weight: bold;">' . __( 'Total', 'rsvpmaker' ) . ': ' . esc_html( number_format($details['total'],2) ) . '</div>';
+	if ( $pricing && isset( $details['fee_total'] ) ) {
+		echo '<div style="font-weight: bold;">' . __( 'fee_total', 'rsvpmaker' ) . ': ' . esc_html( number_format($details['fee_total'],2) ) . '</div>';
 	}
 	
 	if ( ! empty( $details['payingfor'] ) ) {
-		echo '<div style="font-weight: bold;">' . __( 'Paying For', 'rsvpmaker' ) . ': ' . esc_html( $details['payingfor'] ) . '</div>';
+		echo '<div style="font-weight: bold;">' . __( 'Paying For', 'rsvpmaker' ) . ': ' . wp_kses_post( $details['payingfor'] ) . '</div>';
 	}
 	
 	if ( $row['amountpaid'] > 0 ) {
 		echo '<div style="color: #006400;font-weight: bold;">' . __( 'Paid', 'rsvpmaker' ) . ': ' . esc_html( $row['amountpaid'] ) . '</div>';
 	}
 	
-	if ( isset( $details['total'] ) ) {
-		$owed = $details['total'] - $row['amountpaid'];
+	if ( isset( $details['fee_total'] ) ) {
+		$owed = $details['fee_total'] - $row['amountpaid'];
 		if ( $owed ) {
 			echo '<div style="color: red;font-weight: bold;">' . __( 'Owed', 'rsvpmaker' ) . ': ' . number_format($owed,2) . '</div>';
 			$url = get_permalink($row['event']);
@@ -2919,7 +3014,8 @@ function format_rsvp_row($row, $fields) {
 					if ( $label ) {
 						$name = $label;
 					}
-					echo esc_attr($name) . ': ' . esc_attr( $value ) . '<br />';
+					if('payingfor' != $name)//already displayed
+						echo esc_attr($name) . ': ' . esc_attr( $value ) . '<br />';
 	
 					$field                = preg_replace( '/[^a-z0-9_]/', '_', strtolower( $name ) );
 					$newdetails[ $field ] = $value;
@@ -2944,6 +3040,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 	function format_rsvp_details( $results, $editor_options = true, $check_guests = false ) {
 
 		global $rsvp_options, $wpdb, $post, $rsvpmaker_additional_fields;
+		$pricing = get_post_meta($post->ID,'pricing',true);
 		$update      = false;
 		
 		$missing = $owed_list = '';
@@ -2971,7 +3068,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 			} else {
 				$nonmembers++;
 			}
-			$owed_list .= format_rsvp_row($row,$fields);
+			$owed_list .= format_rsvp_row($row,$fields, $pricing);
 
 			if($check_guests) {
 				$sql = $wpdb->prepare("select * from ".$wpdb->prefix."rsvpmaker where master_rsvp=%d ORDER by last, first",$row['id']);
@@ -2982,7 +3079,7 @@ if ( ! function_exists( 'format_rsvp_details' ) ) {
 					foreach($g as $grow) {
 						$grow['yesno'] = '';
 						$grow['guestof'] = '';
-						format_rsvp_row($grow,$guestfields);
+						format_rsvp_row($grow,$guestfields,$pricing);
 					}
 					echo '</blockquote>';
 				}
@@ -3546,7 +3643,7 @@ function admin_edit_rsvp( $id, $event ) {
 										
 																		}
 										
-																		printf( '<div id="guest_count_pricing">' . __( 'Options', 'rsvpmaker' ) . ': <select name="guest_count_price"  id="guest_count_price">%s</select></div>', $options );
+																		printf( '<div id="guest_count_pricing"><label>' . __( 'Options', 'rsvpmaker' ) . ':</label><select name="guest_count_price"  id="guest_count_price">%s</select></div>', $options );
 										
 																	}
 																}
@@ -3580,7 +3677,7 @@ function admin_edit_rsvp( $id, $event ) {
 										
 															if ( ! empty( $custom_fields['_rsvp_coupon_code'][0] ) ) {
 										
-																printf( '<p>Coupon Code: <input type="text" name="coupon_code" size="10" /><br /><em>If you have a coupon code, enter it above</em>.</p>' );
+																printf( '<p><label>Coupon Code:</label> <input type="text" name="coupon_code" size="10" /><br /><em>If you have a coupon code, enter it above</em>.</p>' );
 															}
 														}
 										
@@ -3692,20 +3789,16 @@ if ( ! function_exists( 'rsvp_csv' ) ) {
 				if ( $row['details'] ) {
 
 					$details = unserialize( $row['details'] );
-
 					$row = array_merge( $row, $details );
 
 				}
-
 				$newrow = array();
 
 				if ( is_array( $fields ) ) {
 
 					foreach ( $fields as $column => $name ) {
-
 						if ( isset( $row[ $name ] ) ) {
-
-							$newrow[] = $row[ $name ];
+							$newrow[] = strip_tags($row[ $name ]);
 
 						} else {
 							$newrow[] = '';
@@ -3725,6 +3818,39 @@ if ( ! function_exists( 'rsvp_csv' ) ) {
 	}
 } // end rsvp_csv
 
+
+function rsvp_report_api () {
+	global $wpdb;
+	$events_table = $wpdb->prefix.'rsvpmaker_event';
+	$rsvp_table = $wpdb->prefix.'rsvpmaker';
+	$sql = "select $events_table.post_title, $events_table.date, $rsvp_table.first, $rsvp_table.last, $rsvp_table.email, $rsvp_table.fee_total, $rsvp_table.amountpaid, $rsvp_table.owed, $rsvp_table.details, $rsvp_table.note, $rsvp_table.guestof, $rsvp_table.master_rsvp from $events_table JOIN $rsvp_table ON $events_table.event = $rsvp_table.event WHERE yesno && enddate > NOW() order by ts_start, master_rsvp, first, last";
+	$results = $wpdb->get_results($sql, ARRAY_A);
+	$eventrows = [];
+	$fields = ['first','last','email','fee_total','amountpaid','owed'];
+	foreach($results as $row) {
+		if ( $row['details'] ) {
+			$details = unserialize( $row['details'] );
+			$row = array_merge( $row, $details );
+		}
+		unset($row['id']);
+		unset($row['yesno']);
+		unset($row['user_id']);
+		unset($row['details']);
+		unset($row['ts_start']);
+		unset($row['participants']);
+		$row['payingfor'] = str_replace("\n",'',str_replace('</',' </',$row['payingfor']));
+		$row['payingfor'] = strip_tags($row['payingfor']);
+		$parts = explode(' ',$row['date']);
+		$row['date'] = $parts[0];
+		foreach($row as $field => $value) {
+			if(!in_array($field, $fields) && !in_array($field,['post_title','date']))
+				$fields[] = $field;
+		}
+		$eventrows[] = $row;
+	}
+
+	return array('rsvp'=>$eventrows,'fields'=>$fields);
+}
 
 
 function rsvp_report_table() {
@@ -3813,7 +3939,7 @@ text-align: left;
 
 					if ( isset( $row[ $name ] ) ) {
 
-						printf( '<td>%s</td>', esc_html( $row[ $name ] ) );
+						printf( '<td>%s</td>', strip_tags( $row[ $name ] ) );
 
 					} else {
 						echo '<td></td>';
@@ -4262,7 +4388,7 @@ if ( ! function_exists( 'rsvpguests' ) ) {
 
 			$output .= '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n";
 
-			$output .= '<div class="guest_blank" id="first_blank"><p><strong>' . $label . ' ###</strong></p>' . "\n";
+			$output .= '<div class="guest_blank" id="first_blank" ><p><strong>' . $label . ' ###</strong></p>' . "\n";
 
 			$output .= guestfield( array( 'textfield' => 'first' ), array(), '' );
 
@@ -4291,8 +4417,6 @@ if ( ! function_exists( 'rsvpguests' ) ) {
 
 	}
 }
-
-
 
 if ( ! function_exists( 'rsvpprofiletable' ) ) {
 

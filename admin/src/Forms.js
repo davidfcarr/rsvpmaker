@@ -1,4 +1,4 @@
-import React, {useState, useEffect, Suspense} from "react"
+import React, {useState, useEffect} from "react"
 import { ToggleControl, TextControl, RadioControl, TextareaControl } from '@wordpress/components';
 import {SelectCtrl} from './Ctrl.js'
 import { SanitizedHTML } from "./SanitizedHTML.js";
@@ -19,9 +19,15 @@ export default function Forms (props) {
     const event_id = wp?.data?.select("core/editor")?.getCurrentPostId();
     console.log('Forms props',props);
     console.log('Forms formId',formId);
+    const [editForm,setEditForm] = useState('');
 
 function fetchForms() {
-    return apiClient.get('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId());
+    let name = newForm;
+    if(name) {
+        setEditForm('');
+        setNewForm('');
+    }
+    return apiClient.get('rsvp_form?form_id='+formId+name+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId());
 }
 const {data,isLoading,isError} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
     if(!formId)
@@ -36,6 +42,7 @@ if(isError)
 
 const queryClient = useQueryClient();
 async function updateForm (form) {
+    console.log('updateForm');
     return await apiClient.post('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId(), {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});
 }
 
@@ -71,14 +78,15 @@ const {mutate:formMutate} = useMutation(updateForm, {
         queryClient.setQueryData(['rsvp_form',formId], context.previousValue);
     },    
 });
-
+    
     if(isLoading)
         return <p>Loading ...</p>
+       
     const form = data.data.form.filter((block) => block.blockName);
     const formOptions = data.data.form_options;
-    const fetchedFormID = data.data.form_id;
+    console.log('formOptions',formOptions);
     let lastblock = form.length - 1;
-
+    
     function toServerTs(datestr) {
         const newdate = new Date(datestr);
         return newdate.getTime()-correction;
@@ -98,7 +106,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
             break;
         }
     };
-    const addfields = [{'label':'Choose Field Type','value':''},{'label':'Text Field','value':'rsvpmaker/formfield'},{'label':'Text Area','value':'rsvpmaker/formtextarea'},{'label':'Select','value':'rsvpmaker/formselect'},{'label':'Radio Buttons','value':'rsvpmaker/formradio'},{'label':'Add to Email List Checkbox','value':'rsvpmaker/formchimp'}];
+    const addfields = [{'label':'Choose Field Type','value':''},{'label':'Text Field','value':'rsvpmaker/formfield'},{'label':'Text Area','value':'rsvpmaker/formtextarea'},{'label':'Select','value':'rsvpmaker/formselect'},{'label':'Radio Buttons (Multiple Choice)','value':'rsvpmaker/formradio'},{'label':'Add to Email List Checkbox','value':'rsvpmaker/formchimp'}];
     let hasguests = false;
     let hasnote = false;
     for(let i = 0; i < form.length; i++) {
@@ -167,7 +175,12 @@ const {mutate:formMutate} = useMutation(updateForm, {
                 alert('a field label is required');
                 return;
             }
-            newfield = {'blockName':addfield,'innerHTML':'','innerBlocks':[],'innerContent':[],'attrs':{'label':addfieldLabel,'slug':addfieldLabel.toLowerCase().replace(/[^a-z0-0]/,'')}};
+            let slug = addfieldLabel.toLowerCase().replace(/[^a-z0-9]/,'_');
+            if('first_name' == slug)
+                slug = 'first';
+            if('last_name' == slug)
+                slug = 'last';
+            newfield = {'blockName':addfield,'innerHTML':'','innerBlocks':[],'innerContent':[],'attrs':{'label':addfieldLabel,'slug':slug}};
         }
         if(addfieldChoices)
             newfield.attrs.choicearray = addfieldChoices.split('\n');
@@ -198,13 +211,15 @@ const {mutate:formMutate} = useMutation(updateForm, {
         const [req,setReq] = useState(props.attrs.required);
         const [label,setLabel] = useState(props.attrs.label);
         const [guestform,setGuestform] = useState(props.attrs.guestform);
+        const [defaultToFirst,setDefaultToFirst] = useState(props.attrs.defaultToFirst);
         return (
         <div className="formAtts">
         {['rsvpmaker/formfield','rsvpmaker/formselect','rsvpmaker/formradio','rsvpmaker/formtextarea'].includes(props.blockName) && <p><label>Field Label</label> <input type="text" value={label} onChange={(e) => { setLabel(e.target.value); } } onBlur={() => {setFormItemAttr(blockindex,'label',label)} } /></p>}
-        {choices && <p>Choices<br /><textarea value={choices.join('\n')} onChange={(e) => { let newchoices = e.target.value.split('\n'); setChoices(newchoices); setFormItemAttr(blockindex,'choicearray',newchoices); } } onBlur={() => {setFormItemAttr(blockindex,'choicearray',choices)} } /><br /><em>Enter one choice per line</em></p>}
+        {props.attrs.choicearray && <p>Choices<br /><textarea rows="5" value={choices.join('\n')} onChange={(e) => { let newchoices = e.target.value.split('\n'); setChoices(newchoices); }} onBlur={() => {setFormItemAttr(blockindex,'choicearray',choices)} } /><br /><em>Enter one choice per line</em></p>}
         {['rsvpmaker/formfield','rsvpmaker/formselect','rsvpmaker/formradio','rsvpmaker/formtextarea'].includes(props.blockName) && (props.attrs.slug != 'email') && <ToggleControl label="Required" checked={req == 'required'} onChange={() => { let newr = (req=='required') ? '' : 'required'; setReq(newr); setFormItemAttr(blockindex,'required',newr) }} />}
         {(props.attrs.slug == 'email') && <p><em>Email is always required</em></p>}
         {['rsvpmaker/formfield','rsvpmaker/formselect','rsvpmaker/formradio','rsvpmaker/formtextarea'].includes(props.blockName) && <ToggleControl label="Include on Guest Form" checked={guestform} onChange={() => { let newg = !guestform; setGuestform(newg); setFormItemAttr(blockindex,'guestform',newg); }} />}
+        {['rsvpmaker/formradio'].includes(props.blockName) && <ToggleControl label="Default to First Item" checked={defaultToFirst} onChange={() => { let newg = !defaultToFirst; setDefaultToFirst(newg); setFormItemAttr(blockindex,'defaultToFirst',newg); }} />}
         </div>)
     }
 
@@ -261,7 +276,15 @@ const {mutate:formMutate} = useMutation(updateForm, {
         );
     })}
     <h4>Form Editing Controls</h4>
-    {form.map((block, blockindex) => {
+    {!props.single_form && <div><SelectCtrl label="Switch Form" value={editForm} options={formOptions} onChange={(id) => {
+        if(id.toString().includes('clone')) {
+            setNewForm(prompt('Name for reusable form? (optional)'));
+        }        
+         setFormId(id); setEditForm(id); console.log('new form id '+id); 
+         }} /> Currently Selected: {data.data.current_form}</div>}
+    {(editForm || ('Custom' == data.data.current_form) || data.data.current_form.includes('Reusable')) &&  <p>You can also edit this form as a separate document <a target="_blank" href={'/wp-admin/post.php?action=edit&post='+formId}>in the WordPress editor</a>.</p>}
+    {(editForm || ('Custom' == data.data.current_form) || data.data.current_form.includes('Reusable')) &&
+        form.map((block, blockindex) => {
         fieldlabel = block.blockName.replace(/^[^/]+\//,'');
         isrsvp = block.blockName.indexOf('rsvpmaker') > -1;
         if('formchimp' == fieldlabel)
@@ -284,21 +307,14 @@ const {mutate:formMutate} = useMutation(updateForm, {
             </div>
  
     </div>)
-    })}      
-    <p>Add a form field <SelectCtrl label="Type" options={addfields} value={addfield} onChange={((value) => {setAddfield(value);})} /> {!['rsvpmaker/formnote','rsvpmaker/guests','rsvpmaker/formchimp'].includes(addfield) && <TextControl label="Field Label" value={addfieldLabel} onChange={((value) => {setAddfieldLabel(value);})} />} </p>
-    {['rsvpmaker/formselect','rsvpmaker/formradio'].includes(addfield) && <p><label>Choices</label><br /><textarea value={addfieldChoices} onChange={(e) => { setAddfieldChoices(e.target.value); }} /><br /><em>Enter one choice per line</em></p> }
-    <p><button onClick={addFieldNow}>Add</button></p>
-    <p>You can also open this form <a href={'/wp-admin/post.php?action=edit&post='+formId}>in the WordPress editor</a>.</p>
-    {!props.single_form && <SelectCtrl label="Switch Form" value={fetchedFormID} options={formOptions} onChange={setFormId} />}
-    {data.data.copied && <p>Copied <strong>{data.data.copied}</strong></p>}
-    
-    {!props.single_form && (<div>
-        <h3>Save as Reusable Form</h3>
-        <TextControl label="Form Title" value={newForm} onChange={setNewForm} />
-        <p>You can save the form so it can also be used with other events.</p>
-        <p><button onClick={(e) => {e.preventDefault(); formMutate(form); setNewForm('')} }>Create Form</button></p>
-        </div>
-    )}
-
+    })}
+    {editForm && <div>
+    <h3>Add a form field</h3><p><SelectCtrl label="Type" options={addfields} value={addfield} onChange={((value) => {setAddfield(value);})} /> {!['rsvpmaker/formnote','rsvpmaker/guests','rsvpmaker/formchimp'].includes(addfield) && <TextControl label="Field Label" value={addfieldLabel} onChange={((value) => {setAddfieldLabel(value);})} />} </p>
+   {['rsvpmaker/formselect','rsvpmaker/formradio'].includes(addfield) && <p><label>Choices</label><br /><textarea value={addfieldChoices} onChange={(e) => { setAddfieldChoices(e.target.value); }} /><br /><em>Enter one choice per line</em></p> }
+   <p><button onClick={addFieldNow}>Add</button></p>
+   {data.data.copied && <p>Copied <strong>{data.data.copied}</strong></p>}
+    </div>
+    }
+ 
     </div>);
 }

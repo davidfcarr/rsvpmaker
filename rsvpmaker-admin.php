@@ -347,9 +347,7 @@ if(isset($_POST["unit"]))
 			$per["price_multiple"][$index] = sanitize_text_field($_POST["price_multiple"][$index]);
 		if(!empty($_POST["price_deadline"][$index]))
 			{
-			
-			$per["price_deadline"][$index] = rsvpmaker_strtotime(sanitize_text_field($_POST["price_deadline"][$index]));
-			
+			$per["price_deadline"][$index] = rsvpmaker_strtotime(sanitize_text_field($_POST["price_deadline"][$index]));			
 			}
 		if(isset($_POST['showhide'][$index]))
 			{

@@ -1400,6 +1400,36 @@ function get_past_events( $where = '', $limit = '', $output = OBJECT ) {
 
 }
 
+function get_past_rsvp_events( $where = '', $limit = '', $output = OBJECT ) {
+
+	global $wpdb;
+	$table = $wpdb->prefix.'rsvpmaker_event';
+
+	$wpdb->show_errors();
+
+	$sql = "SELECT DISTINCT *, date as datetime, event as ID
+
+	 FROM " . $table . " WHERE date < '" . get_sql_now() . "'";
+
+	if ( ! empty( $where ) ) {
+
+		$where = trim( $where );
+
+		$sql .= ' AND ' . $where . ' ';
+
+	}
+
+	$sql .= ' ORDER BY date DESC';
+
+	if ( ! empty( $limit ) ) {
+
+		$sql .= ' LIMIT 0,' . $limit . ' ';
+	}
+	$results = $wpdb->get_results( $sql );
+	return $results;
+
+}
+
 function get_events_dropdown() {
 
 	$options = '<optgroup label="' . __( 'Future Events', 'rsvpmaker' ) . '">' . "\n";
@@ -1644,7 +1674,7 @@ function get_rsvpmaker_stripe_keys($sandbox = false) {
 			'sk'     => $keys['sk'],
 			'pk'     => $keys['pk'],
 			'mode'   => 'production',
-			'notify' => $keys['notify'],
+			'notify' => empty($keys['notify']) ? '' : $keys['notify'],
 		);
 
 	} elseif ( ! empty( $keys['mode'] ) && ( $keys['mode'] == 'sandbox' ) && ! empty( $keys['sandbox_sk'] ) ) {
@@ -1653,7 +1683,7 @@ function get_rsvpmaker_stripe_keys($sandbox = false) {
 			'sk'     => $keys['sandbox_sk'],
 			'pk'     => $keys['sandbox_pk'],
 			'mode'   => 'sandbox',
-			'notify' => $keys['notify'],
+			'notify' => empty($keys['notify']) ? '' : $keys['notify'],
 		);
 
 	} else {
@@ -4559,4 +4589,17 @@ function rsvpmaker_wp_import_existing_post($post_exists, $post) {
 	if($post['post_type'] != 'rsvpmaker')
 		return $post_exists;
 	return false; // don't exclude multiple events with same tite/post date (may have been created from a template)
+}
+
+function rsvpmaker_data_from_document($content) {
+    $results = [];
+    preg_match_all('/wp\:([a-z0-9\-\/]+)[^>]+(\{[^\}]+\})/',$content,$matches);
+    if($matches[2])
+    foreach($matches[0] as $index => $m)
+        {
+            $data = json_decode($matches[2][$index]);
+            $data->block_signature = $matches[1][$index];
+            $results[] = $data;
+        }
+    return $results;
 }
