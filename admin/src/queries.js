@@ -69,6 +69,18 @@ export function useRSVPDate(eventID) {
       }, refetchInterval: false });
 }
 
+export function useCopyDefaults() {
+    function fetchCopyDefaults(queryobj) {
+        return apiClient.get('copy_defaults');
+    }
+    return useQuery([], fetchCopyDefaults, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
+        alert('Copied to '+data.data.updated.substring(0,200));
+        console.log('copy defaults',data);
+    }, onError: (err, variables, context) => {
+       console.log('error copy defaults',err);
+      }, refetchInterval: false });
+}
+
 export function useRSVPDateMutation(eventID) {
     const queryClient = useQueryClient();
     console.log('useRSVPDateMutation called with');

@@ -91,6 +91,15 @@ function rsvpmailer($mail, $description = '') {
 
 	if(function_exists('rsvpmailer_override'))
 		return rsvpmailer_override($mail);
+	if(empty($mail['from'])) {
+		$rto = $rsvp_options['rsvp_to'];
+		if(strpos($rto,','))
+		{
+			$parts = explode(',',$rto);
+			$rto = trim($parts[0]);
+		}
+		$mail['from'] = $rto;
+	}
 	if(!empty($rsvp_options['from_always']) && ($rsvp_options['from_always'] != $mail['from']))
 	{
 		if(empty($mail['replyto']))
@@ -1268,7 +1277,6 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	if(!empty($recipients)) {
 		if(rsvpmaker_postmark_is_active()) {
 			$result = rsvpmaker_postmark_broadcast($recipients,$post_id);
-			error_log('rsvpmailer_submitted rsvpmaker_postmark_broadcast result '.$result);
 			add_post_meta($post_id,'rsvprelay_sending',$recipients);
 		}
 		else {
@@ -2880,7 +2888,7 @@ function rsvpmaker_tx_email($event_post, $mail) {
 //used with rsvpmaker_email_content shortcode in template
 global $rsvpmaker_tx_content;
 $rsvpmaker_tx_content = rsvpmailer_default_block_template_wrapper($mail["html"],true);
-$rsvpmaker_tx_content = rsvpmail_filter_style($rsvpmaker_tx_content);
+$mail["html"] = rsvpmail_filter_style($rsvpmaker_tx_content);
 $rsvpfooter_text = '
 
 ==============================================
@@ -3447,15 +3455,12 @@ $templates = get_option('rsvpmaker_notification_templates', array());
 $template_forms['notification'] = array('subject' => 'RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "Just signed up:\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>");
 $template_forms['confirmation'] = array('subject' => 'Confirming RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
 $template_forms['confirmation_after_payment'] = array('subject' => 'Confirming payment for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
+$template_forms['receipt'] = array('subject' => 'Receipt for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>");
 $template_forms['payment_reminder'] = array('subject' => 'Payment Required: [rsvptitle] on [rsvpdate]','body' => "We received your registration, but it is not complete without a payment. Please follow the link below to complete your registration and payment.
 
 [rsvpupdate]
 
 <div class=\"rsvpdetails\">[rsvpdetails]<div>");
-if(isset($_GET['reset']))
-	{
-
-	}
 
 $template_forms = apply_filters('rsvpmaker_notification_template_forms',$template_forms);
 if(empty($templates))
@@ -3500,6 +3505,19 @@ if($rsvp_max)
 return '<p class="signed_up">'.$output.'</p>';
 }
 
+function rsvp_message_via_template ($rsvpdata,$slug,$event) {
+	global $rsvp_options;
+	$templates = get_rsvpmaker_notification_templates();
+	$mail['subject'] = $templates[$slug]['subject']; 
+	$mail['html'] = $templates[$slug]['body']; 
+	foreach($rsvpdata as $field => $value) {
+		$mail['subject'] = str_replace('['.$field.']',$value,$mail['subject']);
+		$mail['html'] = str_replace('['.$field.']',$value,$mail['html']);
+	}
+	$mail['to'] = $rsvpdata['email'];
+	rsvpmaker_tx_email($event, $mail);
+}	
+
 function rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata) {
 global $post;
 global $rsvp_options;
@@ -3538,7 +3556,7 @@ $confirmation_subject = $templates['confirmation']['subject'];
 foreach($rsvpdata as $field => $value)
 	$confirmation_subject = str_replace('['.$field.']',$value,$confirmation_subject);
 
-$confirmation_body = $templates['confirmation']['body']; 
+$confirmation_body = $templates['confirmation']['body'];
 foreach($rsvpdata as $field => $value)
 	$confirmation_body = str_replace('['.$field.']',$value,$confirmation_body);
 	$confirmation_body = rsvpmaker_email_html($confirmation_body);
@@ -3561,6 +3579,28 @@ foreach($rsvpdata as $field => $value)
 
 }
 
+add_action('rsvp_nonpayment_delete','rsvp_nonpayment_delete', 10, 1);
+
+function rsvp_nonpayment_delete($rsvp_id) {
+	global $post;
+	global $rsvp_options;
+	global $wpdb;
+	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
+	$rsvp = (array) $wpdb->get_row($sql);
+	if(!$rsvp['fee_total'] || intval($rsvp['amountpaid']))
+		return;
+	$count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
+	$archive = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
+	add_post_meta($rsvp['event'],'_rsvp_archive_'.$rsvp_id,$archive);
+	$event = $wpdb->get_row("SELECT post_title, date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$rsvp['event']);
+	$sql = "DELETE FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+	$wpdb->query($sql);
+	$mail['to'] = $mail['from'] = $rsvp_options['rsvp_to'];
+	$mail['subject'] = "RSVP Deleted for Nonpayment ".$event->post_title.' '.$event->date;
+	$mail['html'] = sprintf("<p>Deleted %d registrations associated with %s %s %s</p>",$count,$rsvp["first"],$rsvp["last"],$rsvp['email']);
+	rsvpmailer($mail);
+}
+
 function rsvp_payment_reminder ($rsvp_id) {
 global $post;
 global $rsvp_options;
@@ -3571,8 +3611,14 @@ $post = get_post($rsvp['event']);
 $rsvpdata = unserialize($rsvp['details']);
 if($rsvp['fee_total'] <= $rsvp['amountpaid'])
 	return;
-	
+
 $details = '';
+
+if(!empty($rsvp_options['cancel_unpaid_hours'])) {
+	$details = __('Registrations will be deleted if not paid within','rsvpmaker').' '.intval($rsvp_options['cancel_unpaid_hours']).' '.__('hours','rsvpmaker')."\n\n";
+	wp_schedule_single_event(time() + ($rsvp_options['cancel_unpaid_hours'] * HOUR_IN_SECONDS) - 1800,'rsvp_nonpayment_delete',array($rsvp_id));
+}
+
 foreach($rsvpdata as $label => $value)
 	$details .= sprintf('%s: %s'."\n",$label,$value);;
 
@@ -3621,18 +3667,8 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 		$rsvpdata['rsvpdate'] = get_rsvp_date($rsvp['event'],'long_date');
 	elseif(strpos($rsvpdata['rsvpdate'],':'))
 		$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],rsvpmaker_strtotime($rsvpdata['rsvpdate']));
-
-	$guests = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=$rsvp_id");
-	if($guests) {
-		foreach($guests as $guestrow) {
-			$guestarr[] = $guestrow->first.' '.$guestrow->last;
-		}
-		$rsvpdata['guests'] = implode(', ',$guestarr);
-	}
 		
-	$details = '';
-	foreach($rsvpdata as $label => $value)
-		$details .= sprintf('%s: %s'."\n",$label,$value);
+	$details = rsvpmaker_guestparty($rsvp_id, true);
 
 	$templates = get_rsvpmaker_notification_templates();
 	$rsvp_to = get_post_meta($post->ID,'_rsvp_to',true);
@@ -4923,7 +4959,6 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		//confirmation required
 		$mail['to'] = $email;
 		//test
-		$mail['bcc'] = 'david@carrcommunications.com';
 		$mail['subject'] = 'Please confirm your subscription to the email list for '.$email;
 		$mail['from'] = get_bloginfo('admin_email');
 		$mail['fromname'] = get_option('blogname');
@@ -5442,7 +5477,6 @@ function rsvpmail_latest_post_promo_check() {
     $featured = array_shift($posts);
 	if(!$featured)
 		return;
-	error_log('checking whether post promo already sent, post ID '.$featured->ID.' '.$featured->post_title);
 	$promo_id = get_post_meta($featured->ID,'promo_email',true);
 	$retry = false;
 	if($promo_id) {
@@ -5459,26 +5493,22 @@ function rsvpmail_latest_post_promo_check() {
 
 	if($retry) {
 		$args = get_option('rsvpmaker_new_post_promos');
-		error_log('rsvpmail_latest_posts_notification args '.var_export($args));
 		if(empty($args) || (empty($args['notify']) && empty($args['promo_type'])))
 			return;
 		$args['time'] = '+1 minutes';
 		$args['retry'] = true;
 		$subject_html = rsvpmail_latest_post_promo($args);
 		$message = 'rsvpmail retry for '.$subject_html['subject'];
-		error_log($message);
 		return $message;
 	}
 	else {
 		$message = 'already sent promo, post ID '.$featured->ID.' '.$featured->post_title;
-		error_log($message);
 		return $message;
 	}
 }
 
 function rsvpmail_latest_post_promo($args = array()) {
 	global $rsvp_options, $wpdb;
-	error_log('rsvpmail_latest_post_promo begins '.var_export($args,true));
 	if(empty($args['additional_posts'])) $args['additional_posts'] = 4; 
 	if(empty($args['paragraphs'])) $args['paragraphs'] = 5; 
     $posts = query_posts( array('posts_per_page'=>$args['additional_posts']+1,'post_type'=>'post','post_status'=>'publish') );
@@ -5520,7 +5550,6 @@ function rsvpmail_latest_post_promo($args = array()) {
 	$promo_id = wp_insert_post($new);
 	add_post_meta($featured->ID,'promo_email',$promo_id);
 	$schedule = '';
-	error_log('rsvpmail_latest_posts_promo '.var_export($args,true).' featured->ID '.$featured->ID.' promo id '.$promo_id);
 	if(!empty($args['promo_type']) && 'auto' == $args['promo_type'])
 		{
 			$chimp_options = get_option('chimp');
@@ -5552,7 +5581,7 @@ function rsvpmail_latest_post_promo($args = array()) {
 			$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>1);
 			$schedule = sprintf('<p><em>Scheduling to send at %s to %s mailing list. Options: <a href="%s">Edit</a> | <a href="%s">cancel</a>.</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t), $segment, admin_url("post.php?post=$promo_id&action=edit"), add_query_arg($cancel,get_permalink($promo_id)) );
 			$html = $schedule.$html;
-			error_log($postvars['subject'].' scheduling to run at '.rsvpmaker_date($rsvp_options['time_format'],$t));
+			//error_log($postvars['subject'].' scheduling to run at '.rsvpmaker_date($rsvp_options['time_format'],$t));
 		}
 	else
 		$html = sprintf('<p><a href="%s">Preview/Send Now</a></p>
@@ -5571,7 +5600,7 @@ function rsvpmailer_post_promo_cron() {
 		$posthash = get_post_meta($promo_id,'rsvpmail_last_hash',true);
 		rsvpmailer_delayed_send($promo_id,0,$posthash,null,'pending_post_promo');
 	}
-	error_log('rsvpmailer_post_promo_cron promo found id '.$promo_id .' hash '.$posthash);
+	//error_log('rsvpmailer_post_promo_cron promo found id '.$promo_id .' hash '.$posthash);
 }
 
 function rsvpmail_latest_posts_notification_setup() {
@@ -5655,7 +5684,7 @@ add_action( 'transition_post_status', 'rsvpmail_latest_posts_notification',10,3)
 function rsvpmail_latest_posts_notification($new_status, $old_status, $post ) {
 	if('post' != $post->post_type)
 		return;
-	error_log('rsvpmail_latest_posts_notification new/old '.$new_status.' / '.$old_status.' '.$post->post_title);
+	//error_log('rsvpmail_latest_posts_notification new/old '.$new_status.' / '.$old_status.' '.$post->post_title);
 	if($new_status != $old_status && 'publish' == $new_status && 'post' == $post->post_type) {
 		$args = get_option('rsvpmaker_new_post_promos');
 		error_log('rsvpmail_latest_posts_notification args '.var_export($args));
@@ -5666,9 +5695,8 @@ function rsvpmail_latest_posts_notification($new_status, $old_status, $post ) {
 		$mail['subject'] = 'New post promo: '.$post->post_title;
 		$mail['html'] = $subject_html['html'];
 		rsvpmailer($mail);
-		error_log('rsvpmail_latest_post_promo triggered for args '.var_export($args));
+		//error_log('rsvpmail_latest_post_promo triggered for args '.var_export($args));
 	}
-	error_log('rsvpmail_latest_posts_notification N/A ');
 }
 
 function rsvpmail_replace_placeholders($content,$description='') {

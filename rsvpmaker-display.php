@@ -124,14 +124,9 @@ function rsvp_url_date_query( $direction = '' ) {
 
 	$date = '';
 
-	if ( ! isset( $_GET['cy'] ) || ! isset( $_GET['cm'] ) ) {
+	$date .= empty($_GET['cy']) ? date('Y') : (int) $_GET['cy'];
 
-		return '';
-	}
-
-	$date .= (int) $_GET['cy'];
-
-	$cm = (int) $_GET['cm'];
+	$cm = ( empty( $_GET['cm'] ) ) ? date('m') : (int) $_GET['cm'];
 
 	$date .= ( $cm < 10 ) ? '-0' . $cm : '-' . $cm;
 
@@ -272,7 +267,7 @@ function rsvpmaker_join( $join, $query = null ) {
 		if ( strpos( $join, 'rsvpdates' ) ) {
 			return $join; // don't add twice
 		}
-		$join .= ' JOIN ' . $wpdb->prefix . "rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";	
+		$join .= ' JOIN '.$wpdb->prefix."rsvpmaker_event rsvpdates ON rsvpdates.event = $wpdb->posts.ID ";	
 	}
 	return $join;
 }
@@ -2321,7 +2316,7 @@ function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ='' ) {
 
 	$rsvp_id = empty($_COOKIE[ 'rsvp_for_' . $post_id ]) ? 0 : (int) $_COOKIE[ 'rsvp_for_' . $post_id ];
 	if($rsvp_id) {
-		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
+		$rsvplink = add_query_arg(array('update'=>$rsvp_id,'t'=>time()),$rsvplink);
 		$rsvp_link_template = preg_replace('/>[^<]+<\/a>/','>'.$rsvp_options['update_rsvp'].'</a>',$rsvp_link_template);
 	}
 	if ( ! is_user_logged_in() && get_post_meta( $post_id, '_rsvp_login_required', true ) ) {
@@ -2365,7 +2360,7 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 		$rsvplink = add_query_arg( 'e', $email, $rsvplink );
 
 	if($rsvp_id) {
-		$rsvplink = add_query_arg('update',$rsvp_id,$rsvplink);
+		$rsvplink = add_query_arg(array('update'=>$rsvp_id,'t'=>time()),$rsvplink);
 		$rsvp_link_template = preg_replace('/>[^<]+<\/a>/','>'.$rsvp_options['update_rsvp'].'</a>',$rsvp_link_template);
 	}
 	$rsvplink .= '#rsvpnow';
@@ -3063,7 +3058,7 @@ add_action( 'wp_footer', 'rsvpmaker_timezone_footer' );
 
 function rsvpmaker_timezone_converter( $atts ) {
 	global $post;
-	$tz_url = add_query_arg( 'tz', $post->ID, get_permalink( $post_id ) );
+	$tz_url = add_query_arg( 'tz', $post->ID, get_permalink( $post->ID ) );
 
 	$post_id = ( empty( $post->ID ) ) ? 0 : $post->ID;
 	if ( ! isset( $atts['time'] ) ) {
@@ -3177,4 +3172,62 @@ function rsvpmaker_query_loop_filter($pre_render, $parsed_block) {
 		}
 	}
 	return $pre_render;
+}
+
+function get_rsvpmaker_multiple_event_page() {
+	$id = intval(get_option('rsvpmaker_multiple_event_page'));
+	if($id) {
+		$page = get_post($id);
+		if(!$page)
+			{
+				$id = wp_insert_post(array('post_title'=>__('Multiple Event Registration','rsvpmaker'),'post_type'=>'rsvpmaker_form','post_status'=>'publish'));
+			}
+	}
+	else
+		$id = wp_insert_post(array('post_title'=>__('Multiple Event Registration','rsvpmaker'),'post_type'=>'rsvpmaker_form','post_status'=>'publish'));
+	update_option('rsvpmaker_multiple_event_page',$id);
+	return $id;
+}
+
+add_shortcode('rsvpmaker_multi_event','rsvpmaker_multi_event');
+function rsvpmaker_multi_event($atts = array()) {
+	global $rsvp_options;
+	if(empty($atts['discount_amount']) && empty($atts['full_price']))
+		return '<p>Error: you must specify a discount (percent or amount) and the full price</p>';
+	if(empty($atts['discount_method']))
+		$atts['discount_method'] = 'percent';
+	$price = ('percent' == $atts['discount_method']) ? ($atts['full_price'] * $atts['discount_amount']) : ($atts['full_price'] - $atts['discount_amount']);
+	$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
+	if ( $currency == 'usd' ) {
+		$currency = '$';
+	} elseif ( $currency == 'eur' ) {
+		$currency = '€';
+	}
+	else {
+		$currency = strtoupper($currency).' ';
+	}
+	ob_start();
+	global $rsvp_options, $blanks_allowed;
+	$blanks_allowed = 10000000;
+	$page_id = get_rsvpmaker_multiple_event_page();
+	printf('<p>Multi-event discount: %s%s per person, per event. Full price: %s%s</p>',$currency,number_format($price,2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']),$currency,number_format($atts['full_price'],2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']));
+	printf('<form id="rsvpform" method="post" action="%s">',get_permalink($page_id));
+	$future_events = get_future_events($atts);
+	$options = '<option>Choose Event</option>';
+	foreach($future_events as $event)
+		$options .= sprintf('<option value="%d">%s %s</option>',$event->ID,$event->post_title,$event->date);
+	$eventcount = empty($atts['eventcount']) ? 4 : intval($atts['eventcount']);
+	for($i = 0; $i < $eventcount; $i++)
+		printf('<p><select name="rsvpmultievent[]">%s</select></p>',$options);
+	basic_form( $rsvp_options['rsvp_form'] );
+	printf('<input type="hidden" name="discount_price" value="%s" />',$price);
+	printf('<input type="hidden" name="coupon_code" value="%s" /><input type="hidden" name="multievent_discount_amount" value="%s" /><input type="hidden" name="full_price" value="%s" />', get_rsvpmaker_multievent_discount_code() ,floatval($atts['discount_amount']),floatval($atts['full_price']));
+	printf('<input type="hidden" name="multievent_discount_method" value="%s" />',$atts['discount_method']);
+
+	?>
+	<input type="submit" id="rsvpsubmit" style="<?php echo esc_attr(get_rsvp_submit_button_css()); ?>" name="Submit" value="<?php esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
+	</form>
+	<?php
+	echo rsvp_form_jquery();
+	return ob_get_clean();
 }

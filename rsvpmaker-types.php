@@ -239,14 +239,71 @@ function rsvpmaker_create_post_type() {
 add_filter('the_content','rsvpmaker_form_single');
 
 function rsvpmaker_form_single($content) {
-	global $post;
-	if(isset($post->post_type) && ('rsvpmaker_form' == $post->post_type)) {
+	global $post, $rsvp_options;
+	if(!isset($post->post_type) && ('rsvpmaker_form' != $post->post_type))
+		return $content.' failed check '.var_export($_REQUEST,true);
+
+	if(strpos($post->post_content,'wp:rsvpmaker/formfield')) {
 		if(current_user_can('edit_post',$post->ID)) {
 			return '<p><em>This form is meant for use as part of an event, but you can edit it here.</em></p><div id="rsvpmaker-single-form" form_id="'.$post->ID.'">Loading form editor ...</div>';
 		}
 		$add_to_top = '<div><h2>Form Preview</h2></div>';
 		$content = $add_to_top."\n".$content;
 	}
+	elseif(isset($_POST['rsvpmultievent']))
+	{
+		ob_start();
+		$currency = $rsvp_options['paypal_currency'];
+ 
+		$currency_symbol = '';
+
+		if ( $currency == 'USD' ) {
+
+		$currency_symbol = '$';
+
+		} elseif ( $currency == 'EUR' ) {
+
+		$currency_symbol = '€';
+		}
+
+		$blanks = 0;
+		$events = [];
+		foreach($_POST['rsvpmultievent'] as $post_id) {
+			if(intval($post_id)) {
+				$event = get_post($post_id);
+				$events[] = $event->post_title;	
+			}
+			else
+				$blanks++;
+		}
+
+		if($blanks)
+			return sprintf('<p>%d %s</p>',$blanks,__('events left blank','rsvpmaker'));
+
+		$postdata = $_POST;
+		$atts['discount_price'] = floatval($_POST['discount_price']);
+		$rsvpmulti = 'rsvpmulti'.time();
+		$party = 1;
+		if($_POST['guest'])
+		{
+			foreach($_POST['guest']['first'] as $first)
+			{
+				if(!empty($first))
+					$party++;
+			}
+		}
+		$events_count = sizeof($events);
+		$postdata['multi_event_price'] = $party * $atts['discount_price'];
+		$atts['rsvpmulti'] = $rsvpmulti;
+		$atts['amount'] = $postdata['multi_event_price'] * $events_count;
+		$priceline = $currency_symbol.number_format($atts['discount_price'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']).' '.$currency;
+		$atts['description'] = __('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
+		$atts['showdescription'] = 'yes';
+		echo rsvpmaker_paypay_button_embed($atts);
+		set_transient($rsvpmulti, $postdata, time() + HOUR_IN_SECONDS);
+		return ob_get_clean().$content.'<div style="margin-top:500px;"></div>';
+	}
+
 	return $content;
 }
 

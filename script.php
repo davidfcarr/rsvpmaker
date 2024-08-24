@@ -131,6 +131,8 @@ function rsvp_form_jquery() {
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
 	printf( "var hide = '%s';\n", empty($hide) ? '' : wp_json_encode( $hide ) );
 	?>
+	$('#coupon_field').hide();
+	$('#coupon_field_add').click(() => {$('#coupon_field').show(); $('#coupon_field_prompt').hide(); });
 	
 	$('#guest_count_pricing select').change(function() {
 	  //reset hidden fields
@@ -160,6 +162,7 @@ function rsvp_form_jquery() {
 	$('#add_guests').click(function(event){
 		event.preventDefault();
 		number_to_add = parseInt($('#number_to_add').val());
+		console.log('number_to_add',number_to_add);
 		last = $('#last').val();
 		console.log('number to add',number_to_add);
 		console.log('guestcount',guestcount);
@@ -176,8 +179,11 @@ function rsvp_form_jquery() {
 				return;
 		}
 	for(let i = 0; i < number_to_add; i++) {
-		if(guestcount >= max_guests)
+		if(guestcount > max_guests)
 		{
+		console.log('guest limit reached');
+		console.log('guest count',guestcount);
+		console.log('max_guests',max_guests);
 		$('#first_blank').append('<p><em><?php esc_html_e( 'Guest limit reached', 'rsvpmaker' ); ?></em></p>');
 		return;
 		}

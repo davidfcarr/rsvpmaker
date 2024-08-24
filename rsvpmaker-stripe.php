@@ -656,9 +656,7 @@ function rsvpmaker_stripe_notify( $vars ) {
 
 	if ( ! empty( $vars['rsvp_id'] ) ) {
 		rsvp_confirmation_after_payment( intval($vars['rsvp_id']) );
-
 		return;
-
 	}
 
 	$keys = get_rsvpmaker_stripe_keys();
@@ -794,7 +792,7 @@ function stripe_balance_history( $limit = 20 ) {
 
 	$stripetable = rsvpmaker_money_table();
 
-	rsvpmaker_debug_log( 'call to stripe_balance_history' );
+	error_log( 'call to stripe_balance_history' );
 	if(!class_exists('\Stripe\StripeClient'))
 	require_once 'stripe-php/init.php';
 	\Stripe\Stripe::setApiKey( $secret );
@@ -808,8 +806,10 @@ function stripe_balance_history( $limit = 20 ) {
 	$stripe = new \Stripe\StripeClient( $secret );
 
 	$history = $stripe->balanceTransactions->all( array( 'limit' => $limit ) );
+	error_log('balance transactions '.var_export($history,true));
 
 	$charges = $stripe->charges->all( array( 'limit' => $limit * 5 ) );
+	error_log('charges '.var_export($charges,true));
 
 	foreach ( $charges->data as $charge ) {
 		$names[ $charge->balance_transaction ]        = $charge->billing_details->name;
@@ -912,6 +912,7 @@ function stripe_balance_history( $limit = 20 ) {
 function rsvpmaker_stripe_transactions() {
 	$limit = isset($_GET['history']) ? intval($_GET['history']) : 50;
 	$transactions = rsvpmaker_stripe_transactions_list($limit);
+	$yield = '';
 	if ( $transactions ) {
 		$transaction = (array) $transactions[0];
 		$th                   = '<tr>';

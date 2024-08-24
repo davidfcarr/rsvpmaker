@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.6
-Stable tag: 11.2.2
+Tested up to: 6.6.1
+Stable tag: 11.2.6
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -128,6 +128,21 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 11.2.6 =
+
+* PayPal support improvements
+* Multiple sender addresses for Postmark forwarding
+* RSVP Report format update, fix for deleting registrations
+
+= 11.2.4 =
+
+* Updates to PayPal payments support. Option to add payment services like Venmo or exclude services like PayLater from buttons displayed.
+* Button on Settings -> RSVPMaker screen for copying current defaults to existing events and templates.
+
+= 11.2.3 =
+
+* More form and pricing UI improvements
 
 = 11.2.2 =
 

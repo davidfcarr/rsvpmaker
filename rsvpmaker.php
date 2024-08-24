@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.2.2
+* Version: 11.2.6
 */
 
 function get_rsvpversion() {
-	return '11.2.2';
+	return '11.2.6';
 }
 
 global $wp_version;
@@ -78,6 +78,7 @@ function rsvp_options_defaults() {
 		'rsvp_yesno'                        => 1,
 
 		'send_payment_reminders'            => 1,
+		'cancel_unpaid_hours'            => 0,
 
 		'rsvp_on'                           => 0,
 
@@ -461,8 +462,7 @@ if ( in_array( 'Stripe', $gateways ) ) {
 }
 
 if ( in_array( 'PayPal REST API', $gateways ) ) {
-
-	require WP_PLUGIN_DIR . '/rsvpmaker/paypal-rest/paypal-rest.php';
+	require WP_PLUGIN_DIR . '/rsvpmaker/paypal-rest.php';
 }	
 
 if ( version_compare( PHP_VERSION, '5.3.0' ) >= 0 ) {

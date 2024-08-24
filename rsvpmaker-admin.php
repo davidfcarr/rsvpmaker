@@ -1912,7 +1912,7 @@ function rsvpmaker_template_reminder_add($hours,$post_id) {
 
 function rsvp_get_confirm($post_id, $return_post = false) {
 	global $rsvp_options, $post, $wpdb, $wp_styles;
-	$content = get_post_meta($post_id,'_rsvp_confirm',true);
+	$content = ($post_id) ? get_post_meta($post_id,'_rsvp_confirm',true) : $rsvp_options['rsvp_confirm'];
 	if(empty($content))
 		$content = $rsvp_options['rsvp_confirm'];
 	if(is_numeric($content))
@@ -3002,6 +3002,12 @@ if(isset($_POST['metadata_only']))
 				{
 					$log .= 'Copy '.$meta_key.': '.$meta_info->meta_value.'<br />';			
 				}
+				if('_rsvp_coupons' == $meta_key && !empty($meta_info->meta_value) ) {
+					$coupons = unserialize($meta_info->meta_value);
+					continue;
+				}
+				elseif(strpos($meta_key,'coupon'))
+					continue;
 				if(is_serialized($meta_info->meta_value))
 					update_post_meta($target_id,$meta_key,unserialize($meta_info->meta_value));
 				else
@@ -3016,6 +3022,18 @@ if(isset($_POST['metadata_only']))
 					$reghours = $meta_info->meta_value;		
 			}
 		}
+
+if(!empty($coupons)) {
+	delete_post_meta($target_id,'_rsvp_coupon_code');
+	delete_post_meta($target_id,'_rsvp_coupon_discount');
+	delete_post_meta($target_id,'_rsvp_coupon_method');
+	foreach($coupons['coupon_codes'] as $code)
+		add_post_meta($target_id,'_rsvp_coupon_code',$code);
+	foreach($coupons['coupon_discounts'] as $code)
+		add_post_meta($target_id,'_rsvp_coupon_discount',$code);
+	foreach($coupons['coupon_methods'] as $code)
+		add_post_meta($target_id,'_rsvp_coupon_method',$code);
+}
 
 if(!empty($deadlinedays) || !empty($deadlinehours))
 	rsvpmaker_deadline_from_template($target_id,$deadlinedays,$deadlinehours);

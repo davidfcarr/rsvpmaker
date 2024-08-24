@@ -41,6 +41,12 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 			);
 			$newform = false;
 		}
+		elseif($rsvp_form_post != $rsvp_options['rsvp_form']) {
+			//if custom form is missing, return default form if possible
+			$post = get_post($rsvp_options['rsvp_form']);
+			if($post)
+				return $rsvp_options['rsvp_form'];
+		}
 	}
 
 	if ( $newform ) {
@@ -53,9 +59,10 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 				'post_parent'  => 0,
 			)
 		);
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
-		update_post_meta( $rsvp_options['rsvp_form'], '_rsvpmaker_special', 'RSVP Form' );
 	}
+	error_log('upgrade form '.$rsvp_options['rsvp_form']);
+	update_option( 'RSVPMAKER_Options', $rsvp_options );
+	update_post_meta( $rsvp_options['rsvp_form'], '_rsvpmaker_special', 'RSVP Form' );
 
 	if ( $future ) {
 		$results = get_future_events();
@@ -291,8 +298,8 @@ function rsvp_add_guest_field( $content, $slug ) {
 	$guestfields[ $slug ] = rsvp_guest_content( $content );
 }
 
-function rsvp_form_guests( $atts, $content ) {
-	global $wpdb, $blanks_allowed,$master_rsvp,$is_rsvp_report;
+function rsvp_form_guests( $atts, $content = '' ) {
+	global $wpdb, $blanks_allowed,$master_rsvp,$is_rsvp_report, $post;
 
 	if ( is_admin() && empty($_GET['page']) ) {
 		return $content;
@@ -307,7 +314,6 @@ function rsvp_form_guests( $atts, $content ) {
 	$shared = '';
 
 	$label = ( isset( $atts['label'] ) ) ? $atts['label'] : __( 'Guest', 'rsvpmaker' );
-	global $blanks_allowed;
 	$max_party = ( isset( $atts['max_party'] ) ) ? (int) $atts['max_party'] : 0;
 	$count = ($master_rsvp) ? $wpdb->get_var('SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $master_rsvp) : 0;
 	$max_guests = $blanks_allowed + $count;
@@ -391,7 +397,7 @@ function rsvp_form_guests( $atts, $content ) {
 	}
 
 	// now the blank field
-	if(!$is_rsvp_report) {
+	if(isset($post->post_type) && strpos($post->post_type,'svpmaker') && !$is_rsvp_report) {
 		if ( $max_guests && $blanks_allowed < 1 ) {
 
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // if event is full, no additional guests
@@ -408,7 +414,7 @@ function rsvp_form_guests( $atts, $content ) {
 
 	$output = '<div id="guest_section" tabindex="-1">' . "\n" . $output . '</div>' . '<!-- end of guest section-->';
 
-	if ( $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
+	if ( !strpos($post->post_type,'svpmaker') || $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
 
 		$output .= '<p><span class="plusguests">+</span> <input type="number" id="number_to_add" name="number_to_add" min="1" value="1" style="width: 50px;" > <a href="#guest_section" id="add_guests" class="add_guests_button" name="add_guests">' . $addmore . '</a> <!-- end of guest section--></p>'."\n";
 	}
@@ -700,7 +706,7 @@ function rsvpmaker_item_pricing($post_id) {
 	if($form and isset($form->post_content)) {
 		$fields = rsvpmaker_data_from_document($form->post_content);
 		foreach($fields as $field) {
-			if(in_array($field->slug,$exclude))
+			if(empty($field->slug) || in_array($field->slug,$exclude))
 				continue;
 			$slug = $field->slug;
 			if(isset($field->choicearray)) {

@@ -154,7 +154,7 @@ function rsvpmaker_init_router() {
 		save_replay_rsvp();
 	}
 	if ( isset( $_POST['yesno'] ) || isset( $_POST['withdraw'] ) ) {
-		save_rsvp();
+		save_rsvp($_POST);
 	}
 	if ( isset( $_GET['show_rsvpmaker_included_styles'] ) ) {
 		show_rsvpmaker_included_styles();

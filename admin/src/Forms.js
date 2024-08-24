@@ -32,6 +32,8 @@ function fetchForms() {
 const {data,isLoading,isError} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
     if(!formId)
         setFormId(data.data.form_id);
+    else if(data.data.form_changed)
+        setFormId(data.data.form_id);//strip off 'clone'
     console.log('rsvp forms query',data);
 }, onError: (err, variables, context) => {
     console.log('error retrieving rsvp forms',err);
@@ -278,7 +280,11 @@ const {mutate:formMutate} = useMutation(updateForm, {
     <h4>Form Editing Controls</h4>
     {!props.single_form && <div><SelectCtrl label="Switch Form" value={editForm} options={formOptions} onChange={(id) => {
         if(id.toString().includes('clone')) {
-            setNewForm(prompt('Name for reusable form? (optional)'));
+            let name = prompt('Name for reusable form? (optional)');
+            if(name)
+                name = '|'+name;
+            setNewForm(name);
+            console.log('new form name ',name);
         }        
          setFormId(id); setEditForm(id); console.log('new form id '+id); 
          }} /> Currently Selected: {data.data.current_form}</div>}
@@ -290,7 +296,16 @@ const {mutate:formMutate} = useMutation(updateForm, {
         if('formchimp' == fieldlabel)
             fieldlabel = 'Add to Email List Checkbox';
         else if('formnote' == fieldlabel)
-            fieldlabel = 'Note';
+            fieldlabel = 'NOTE';
+        else if('formfield' == fieldlabel)
+            fieldlabel = 'TEXT FIELD';
+        else if('formselect' == fieldlabel)
+            fieldlabel = 'SELECT';
+        else if('formradio' == fieldlabel)
+            fieldlabel = 'CHOICE';
+        else
+            fieldlabel = fieldlabel.toUpperCase();
+
         if(null == block.blockName)
             return;
         return (
@@ -301,6 +316,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
                 {'rsvpmaker/guests'== block.blockName && <p><em>Gathers information about guests.</em></p>}
                 {'rsvpmaker/formnote'== block.blockName && <p><em>A free text entry note at the bottom of the form.</em></p>}
                 {'rsvpmaker/formchimp'== block.blockName && <p><em>Displays an Add to Email List checkbox on the form</em></p>}
+                {'rsvpmaker/formradio'== block.blockName && <p><em>Multiple choice. Prices for options can be set on the Pricing tab for an event.</em></p>}
                 {!isrsvp && block.innerHTML && <div><SanitizedHTML innerHTML={block.innerHTML} /> <br /><em><a href={'/wp-admin/post.php?action=edit&post='+formId}>Open in the WordPress editor</a></em></div>}
                 <FormItem attrs={block.attrs} blockName={block.blockName} blockindex={blockindex} setFormItemAttr={setFormItemAttr} />
                 </div>
@@ -308,7 +324,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
  
     </div>)
     })}
-    {editForm && <div>
+    {(editForm || ('Custom' == data.data.current_form) || data.data.current_form.includes('Reusable')) && <div>
     <h3>Add a form field</h3><p><SelectCtrl label="Type" options={addfields} value={addfield} onChange={((value) => {setAddfield(value);})} /> {!['rsvpmaker/formnote','rsvpmaker/guests','rsvpmaker/formchimp'].includes(addfield) && <TextControl label="Field Label" value={addfieldLabel} onChange={((value) => {setAddfieldLabel(value);})} />} </p>
    {['rsvpmaker/formselect','rsvpmaker/formradio'].includes(addfield) && <p><label>Choices</label><br /><textarea value={addfieldChoices} onChange={(e) => { setAddfieldChoices(e.target.value); }} /><br /><em>Enter one choice per line</em></p> }
    <p><button onClick={addFieldNow}>Add</button></p>

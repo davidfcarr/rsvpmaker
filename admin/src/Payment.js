@@ -25,6 +25,8 @@ export default function Payment (props) {
     const [paypal,setPaypal] = useState(data.data.paypal);
     const [chosenGateway,setChosenGateway] = useState(data.data.chosen_gateway);
     const [currency,setCurrency] = useState(data.data.rsvp_options.paypal_currency);
+    const [send_payment_reminders,setSendPaymentReminders] = useState(data.data.rsvp_options.send_payment_reminders);
+    const [cancel_unpaid_hours,setCancelUnpaidHours] = useState(parseInt(data.data.rsvp_options.cancel_unpaid_hours));
     const [minimum_payment,setMinimum] = useState((data.data.rsvp_options.minimum_payment) ? data.data.rsvp_options.minimum_payment : '5.00');
     const [currencyFormat,setCurrencyFormat] = useState(data.data.rsvp_options.currency_decimal+'|'+data.data.rsvp_options.currency_thousands);
     const cformats = [{'label':'1,000.00','value':'.|,'},{'label':'1.000,00','value':',|.'},{'label':'1 000,00','value':',| '}];
@@ -67,8 +69,15 @@ export default function Payment (props) {
     {paypal.sandbox_client_id == 'set' && <p>PayPal Sandbox Keys Set <button onClick={() => {let prev = {...paypal}; prev.sandbox_client_id=''; prev.sandbox_client_secret=''; setPaypal(prev);addChange('rsvpmaker_paypal_rest_keys',prev,'mergearray');}}>Reset</button></p>}
     </div>
     </div>
+    <TextControl className="payment"  label="PayPal Additional Funding Sources" value={paypal.funding_sources} onChange={(value) => {let prev = {...paypal}; prev.funding_sources=value; setPaypal(prev); addChange('rsvpmaker_paypal_rest_keys',prev,'mergearray');}} />
+    <p><em>Example: "venmo" to add Venmo button - leave blank for defaults</em></p>
+    <TextControl className="payment"  label="PayPal Excluded Funding Sources" value={paypal.excluded_funding_sources} onChange={(value) => {let prev = {...paypal}; prev.excluded_funding_sources=value; setPaypal(prev); addChange('rsvpmaker_paypal_rest_keys',prev,'mergearray');}} />    
+    <p><em>Example: "paylater,card" to remove Pay Later and Credit Card buttons - leave blank for defaults</em></p>
+    
     <RadioControl label="PayPal Mode" selected={paypal.mode} options={modeoptions} onChange={(value) => {let prev={...paypal}; prev.mode = value; setPaypal(prev); addChange('rsvpmaker_paypal_rest_keys',prev,'mergearray'); }} />
     <SelectControl label="Chosen Gateway" value={chosenGateway} options={data.data.gateways} onChange={(value) => {setChosenGateway(value); addChange('payment_gateway',value); } } />
+    <RadioControl label="Send Payment Reminder" selected={send_payment_reminders} options={[{'label':'Yes','value':1},{'label':'No','value':0}]} onChange={(value) => {value=parseInt(value); setSendPaymentReminders(value); addChange('send_payment_reminders',value); }} />
+    <TextControl label="Delete Unpaid RSVPs? Enter Deadline as Number of Hours or 0 for None" value={cancel_unpaid_hours} onChange={(value) => {value = parseInt(value); setCancelUnpaidHours(value); addChange('cancel_unpaid_hours',value); }} />
 
     </div>
     <SaveControls changes={changes} setChanges={setChanges} />

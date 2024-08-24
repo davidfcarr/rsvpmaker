@@ -1,13 +1,29 @@
 import React, {useState, useEffect, Suspense} from "react"
-import {useOptions, useOptionsMutation} from './queries.js'
+import {useOptions, useOptionsMutation, useCopyDefaults} from './queries.js'
 import { __experimentalNumberControl as NumberControl, SelectControl, ToggleControl, TextControl, RadioControl } from '@wordpress/components';
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import { OptionsToggle,OptRadio,OptSelect,OptText,OptTextArea } from "./OptionControls.js";
+import apiClient from './http-common.js';
+
+async function myCopyDefaults() {
+    let answer = await apiClient.get('copy_defaults');
+    if(answer.data.updated) {
+        console.log(answer);
+        let updated = answer.data.updated;
+        if(updated.length > 500)
+            updated = update.substring(0,500)+' ...';
+        alert(updated);    
+    }
+    else {
+        alert('Nothing updated');
+    }
+}
 
 export default function General (props) {
     const {changes,addChange,setChanges} = props;
     const {data,isLoading,isError} = useOptions('general');
+
     if(isError)
         return <p>Error loading general options</p>
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
@@ -39,6 +55,7 @@ export default function General (props) {
     {isSaving && <h1>Saving ...</h1>}
     <div className={(isSaving) ? "rsvptab-saving": ""}>
     <h3>Defaults for New Events</h3>
+    <p><button onClick={() => {myCopyDefaults();}}>Copy to Exisiting Events and Templates</button> - copies basic settings, default confirmation message, default form</p>
     <p>Start Time: <Time addChange={addChange} time={rsvp_options.defaulthour+':'+rsvp_options.defaultmin} /> </p>
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Collect RSVPs" slug="rsvp_on" />
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Display Add to Calendar Icons" slug="calendar_icons" />

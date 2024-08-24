@@ -274,7 +274,6 @@ if(isset($_GET['cancel_promo']) && rsvpmaker_verify_nonce())
 	wp_unschedule_hook('rsvpmailer_post_promo');
 
 if ( isset( $_GET['template_preview'] ) ) {
-
 		$preview = rsvpmaker_personalize_email( $preview, 'david@carrcommunications.com', '<div class="rsvpexplain">This message is a demo.</div>' );
 
 } elseif ( current_user_can( 'publish_rsvpemails' ) ) {

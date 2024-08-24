@@ -102,6 +102,8 @@ function paypal_verify_rest () {
           else
             $status .= " ERROR processing multi-event registration";
         }
+        if($rsvp_id)
+          rsvpmaker_confirm_payment($rsvp_id);
         return array('status'=>$status,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing);
 }
 
@@ -192,6 +194,9 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
           }
           console.log(result);
           document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p><p>'+result+'</p></div>';
+          const d = document.getElementById("rsvp_payment_details_prompt");
+          if(d)
+            d.innerHTML = ''; // get rid of language about unpaid balance
         });
         });
       },
@@ -209,7 +214,6 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   }
 
 function rsvpmaker_paypay_button_embed($atts) {
-//rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) )
 global $rsvp_options;
 global $paypal_rest_keys, $post;
 if(!$paypal_rest_keys)
@@ -218,6 +222,7 @@ if(!$paypal_rest_keys)
 $currency = 'USD';
 if(isset($atts['currencyCode']))
   $currency = sanitize_text_field($atts['currencyCode']);
+
 elseif(isset($rsvp_options['paypal_currency']))
   $currency = $rsvp_options['paypal_currency'];
 
@@ -231,6 +236,12 @@ if ( isset( $atts['paymentType'] ) && ( $atts['paymentType'] == 'donation' ) ) {
 }
 if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id']))
   return 'client ID not set';
+
+if('schedule' == $atts['paymentType']) {
+  $month_index = strtolower(date('F'));
+  $atts['amount'] = $atts[$month_index];
+}
+
 if(empty($atts['amount']) || !is_numeric($atts['amount']))
   return 'amount not set';
  

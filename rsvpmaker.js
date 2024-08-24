@@ -388,13 +388,20 @@ jQuery( document ).ready(
 							} ).then((json) => {
 								inners.push('');
 								console.log(json);
+								let showmore = false;
 								if(Array.isArray(json))
 								json.forEach(
-									(event) => {
-										inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.date+'</span></a></li>';
+									(event, index) => {
+										if(index < 12)
+											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.date+'</span></a></li>';
+										else
+											showmore = true;
 									}
 								);
-							
+
+								if(showmore)
+									inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="/rsvpmaker/page/2/"><span class="wp-block-navigation-item__label">More Events</span></a></li>';
+								
 								if(inners[inners.length - 1]) {
 									Array.prototype.filter.call(
 										dropdown.children,

@@ -1068,6 +1068,12 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
 	$from = $emailobj->From;
 	$recipients = array();
 	$recipient_names = array();
+	if(is_numeric($slug_and_id['slug'])) {
+		$user = get_userdata($slug_and_id['slug']);
+		if($user && !empty($user->user_email)) {
+			return array($user->user_email);
+		}
+	}
 	$recipients = apply_filters('rsvpmail_recipients_from_forwarders',$recipients,$slug_and_id,$from,$addresses);
 
 	if(empty($recipients) && ('members' == $slug_and_id['slug']) && get_option('rsvpmaker_discussion_active')) {
@@ -1101,12 +1107,15 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 		return $slug_and_id;
 	$eparts = explode('@',$email);
 	if(is_multisite()) {
-		$message_blog_id = array_search($eparts[1],$hosts_and_subdomains['hosts']);
+		//error_log('$eparts[1] '.$eparts[1]);
+		$message_blog_id = (is_numeric($eparts[1])) ? $eparts[1] : array_search($eparts[1],$hosts_and_subdomains['hosts']);
+		//error_log('message_blog id '.$message_blog_id);
 		if($message_blog_id) {
 			return array('slug' => $eparts[0],'blog_id' => $message_blog_id, 'forwarder' => $email);
 		}
 		$nameparts = explode('-',$eparts[0]);
-		$message_blog_id = array_search($nameparts[0],$hosts_and_subdomains['subdomains']);
+		$message_blog_id = (is_numeric($nameparts[0])) ? intval($nameparts[0]) : array_search($nameparts[0],$hosts_and_subdomains['subdomains']);
+		//error_log('message_blog id '.$message_blog_id);
 		if($message_blog_id && ($eparts[1] == $hosts_and_subdomains['basedomain'])) {
 			$slug = (empty($nameparts[1])) ? 'members' : $nameparts[1];
 			return array('slug' => $slug,'blog_id' => $message_blog_id, 'forwarder' => $email);
@@ -1121,6 +1130,7 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 add_shortcode('hosts_and_subs_test','hosts_and_subs_test');
 
 function rsvpmaker_expand_recipients($email) {
+	$email = strtolower($email);
 	global $expand_done;
 	if($expand_done)
 		return $email;// don't get caught in loops
@@ -1132,6 +1142,7 @@ function rsvpmaker_expand_recipients($email) {
         $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
         $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id);
     }
+	//error_log('rsvpmaker-group-email.php 1138 $emailparts '.var_export($emailparts));
     if(isset($recipients))
         return $recipients;
     else
@@ -1156,13 +1167,20 @@ function rsvpmaker_recipients_no_problems($recipients) {
 
 function rsvpmail_email_to_parts($email) {
 	global $wpdb;
+	$email = strtolower($email);
 	preg_match('/([^@-]+)-{0,1}(.*)@(.+)/',$email,$match);
+	if('forwardto' == $match[1])
+		return array('subdomain'=>'forwardto','fwdkey'=>$match[2],'domain'=>$match[3],'blog_id'=>1);
 	if(is_multisite()) {
 		$blog_id = get_blog_option(1,'old_email_subdomain_'.$match[1]);
+		if(is_numeric($match[1]))
+			$blog_id = $match[1];
 		if(!$blog_id) {
 			$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
-			$blog_id = $wpdb->get_var($sql);	
+			$blog_id = $wpdb->get_var($sql);
 		}
+		//error_log('email '.$email.var_export($match,true));
+		//error_log('blog id group email 1172 '.$blog_id);
 		if($blog_id) {
 			$fkey = empty($match[2]) ? 'members' : $match[2];
 			return array('subdomain'=>$match[1],'fwdkey'=>$fkey,'domain'=>$match[3],'blog_id'=>$blog_id);
@@ -1191,6 +1209,11 @@ function rsvpmail_email_to_parts($email) {
 
 function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
     $join = ($subdomain) ? '-' : '';
+	if(is_numeric($subdomain)) {
+		$home = get_blog_option($blog_id,'home');
+		$match = preg_match('/\/\/([^.]+)/',$home,$match);
+		$subdomain = $match[1];
+	}
     $slug_ids = (function_exists('get_officer_slug_ids')) ? get_officer_slug_ids($blog_id) : '';
     if($slug_ids) {
         foreach($slug_ids as $slug => $slug_id) {
@@ -1286,6 +1309,12 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
 	$admin_email = (is_multisite() && $blog_id) ? get_blog_option($blog_id,'admin_email') : get_option('admin_option');
     $recipients[$subdomain.$join.'admin@'.$domain] = array($admin_email);
 	$recipients = apply_filters('rsvpmaker_consolidated_forwarders',$recipients, $blog_id);
+	foreach($recipients as $key => $values) {
+		$key = preg_replace('/^'.$subdomain.'-/',$blog_id.'-',$key);
+		$key = preg_replace('/^'.$subdomain.'@/',$blog_id.'@',$key);
+		$recipients[$key] = $values;
+	}
+	//error_log('consolidated forwarders '.var_export($recipients,true));
 	return $recipients;
 }
 
