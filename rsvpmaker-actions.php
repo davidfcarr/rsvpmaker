@@ -159,6 +159,9 @@ function rsvpmaker_init_router() {
 	if ( isset( $_GET['show_rsvpmaker_included_styles'] ) ) {
 		show_rsvpmaker_included_styles();
 	}
+	if(isset($_GET['new'])) {
+		setcookie('rsvp_for_' . intval($_GET['new']), 0, time() - 3600, '/', sanitize_text_field($_SERVER['SERVER_NAME']));
+	}
 	if(isset($_GET['reset_rsvpmaker_cookies'])) {
 		$output = '';
 		foreach($_COOKIE as $index => $c) {

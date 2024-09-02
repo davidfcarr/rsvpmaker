@@ -208,7 +208,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $mail['ReplyTo'] = $meta['rsvprelay_from'][0];
     $mail['From'] = ($message_stream == $postmark_settings['postmark_tx_slug']) ? $postmark_settings['postmark_tx_from'] : $postmark_settings['postmark_broadcast_from'];
     //error_log('sender domains '.var_export($postmark_settings['sender_domains'],true));
-    if(!empty($postmark_settings['sender_domains'])) {
+    if(!empty($postmark_settings['sender_domains']) && isset($mail['ReplyTo'])) {
         $rparts = explode('@',$mail['ReplyTo']);
         //error_log('rparts '.var_export($rparts,true));
         $good_domains = $postmark_settings['sender_domains'];
@@ -228,7 +228,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
             $mail['To'] = rsvpmaker_email_add_name($to,$recipient_names[$to]);
         else
             $mail['To'] = $to;
-        $mail['HtmlBody'] = str_replace('*|EMAIL|*',$to,$html);
+        $mail['HtmlBody'] = rsvpmaker_personalize_email($html,$to);
         $mail['TextBody'] = str_replace('*|EMAIL|*',$to,$text);
         $mail['Headers'] = array('X-Auto-Response-Suppress' => 'OOF'); //tells Exchange not to send out of office auto replies
         $batch[] = $mail;
@@ -447,7 +447,7 @@ function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_
     //wp_suspend_cache_addition(true);
     global $via, $custom_from;
     $slug = '';
-    if('forwardto' == $slug_and_id['subdomain'])
+    if(is_array($slug_and_id) && 'forwardto' == $slug_and_id['subdomain'])
         $slug = '[fwd] ';
     elseif(is_array($slug_and_id) && !empty($slug_and_id['slug']))
         $slug = '['.$slug_and_id['slug'].'] ';
@@ -509,7 +509,7 @@ function rsvpmaker_postmark_array_from($from,$slug_and_id,$reply_to,$postmark_se
 	{	
 		$from = $reply_to;
 	}
-	else {
+	elseif(is_array($slug_and_id)) {
 		$user = get_user_by('email',$reply_to);
 		if($user) {
 			$from = 'forwardto-'.$user->user_login.'@'.$slug_and_id['domain'];
@@ -527,7 +527,7 @@ function rsvpmaker_postmark_array_from($from,$slug_and_id,$reply_to,$postmark_se
 
 function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
 
-    error_log('rsvpmaker_postmark_batch slug and id '.var_export($slug_and_id,true));
+    //error_log('rsvpmaker_postmark_batch slug and id '.var_export($slug_and_id,true));
     //wp_suspend_cache_addition(true);
     if(!is_array($recipients))
         $recipients = array($recipients);
@@ -546,7 +546,7 @@ function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
         }
         else {
             $mail['HtmlBody'] = rsvpmaker_personalize_email($mail['HtmlBody'],$to);
-            $mail['TextBody'] = (empty($mail['TextBody'])) ? rsvpmaker_text_version($mail['HtmlBody']) : rsvpmaker_text_version($mail['TextBody']);    
+            $mail['TextBody'] = (empty($mail['TextBody'])) ? rsvpmaker_text_version($mail['HtmlBody']) : rsvpmaker_text_version($mail['TextBody']);
         }
         $mail['To'] = (isset($recipient_names[$to])) ? rsvpmaker_email_add_name($to,$recipient_names[$to]) : $to;
         $batch[] = $mail;

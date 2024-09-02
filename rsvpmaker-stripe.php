@@ -792,7 +792,7 @@ function stripe_balance_history( $limit = 20 ) {
 
 	$stripetable = rsvpmaker_money_table();
 
-	error_log( 'call to stripe_balance_history' );
+	//error_log( 'call to stripe_balance_history' );
 	if(!class_exists('\Stripe\StripeClient'))
 	require_once 'stripe-php/init.php';
 	\Stripe\Stripe::setApiKey( $secret );
@@ -806,10 +806,10 @@ function stripe_balance_history( $limit = 20 ) {
 	$stripe = new \Stripe\StripeClient( $secret );
 
 	$history = $stripe->balanceTransactions->all( array( 'limit' => $limit ) );
-	error_log('balance transactions '.var_export($history,true));
+	//error_log('balance transactions '.var_export($history,true));
 
 	$charges = $stripe->charges->all( array( 'limit' => $limit * 5 ) );
-	error_log('charges '.var_export($charges,true));
+	//error_log('charges '.var_export($charges,true));
 
 	foreach ( $charges->data as $charge ) {
 		$names[ $charge->balance_transaction ]        = $charge->billing_details->name;

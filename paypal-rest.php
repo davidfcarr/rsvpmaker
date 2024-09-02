@@ -57,13 +57,15 @@ function paypal_verify_rest () {
         $rsvp_id = (empty($saved['rsvp'])) ? 0 : $saved['rsvp'];
         $paidnow = floatval($saved['amount']);
         $status = $data->status.' payment of '.number_format( $paidnow, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'].' from '.$data->payer->name->given_name.' '.$data->payer->name->surname;
+        $event_id = 0;
         if($rsvp_id) {
-          $row = $wpdb->get_row("SELECT fee_total, amountpaid FROM $rsvptable WHERE id=$rsvp_id");       
+          $row = $wpdb->get_row("SELECT * FROM $rsvptable WHERE id=$rsvp_id");       
           $paidbefore = (empty($row->amountpaid)) ? 0 : floatval($row->amountpaid);
           $paid = ($paidbefore) ? $paidbefore + $paidnow : $paidnow;
           $fee_total = floatval($row->fee_total);
           $calculation = "$fee_total - $paid";
           $owed = $fee_total - $paid;
+          $event_id = $row->event;
           $updatesql = "UPDATE $rsvptable SET amountpaid='$paid', owed='$owed' WHERE id=$rsvp_id";
           $wpdb->query($updatesql);  
         }
@@ -102,9 +104,17 @@ function paypal_verify_rest () {
           else
             $status .= " ERROR processing multi-event registration";
         }
-        if($rsvp_id)
+        $rsvp_receipt_link = '';
+        if($rsvp_id) {
           rsvpmaker_confirm_payment($rsvp_id);
-        return array('status'=>$status,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing);
+          $receipt_code = get_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,true);
+          if(!$receipt_code) {
+            $receipt_code = wp_generate_password(20,false,false);
+            update_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
+          }
+          $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($event_id));
+        }
+        return array('status'=>$status,'receipt_link'=>$rsvp_receipt_link,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing);
 }
 
 add_shortcode('rsvpmaker_paypal_button_invoice','rsvpmaker_paypal_button_invoice');
@@ -184,19 +194,20 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       return response.json();
     })
     .then(function(myJson) {
-      console.log(myJson.result);
       if(myJson.status)
           {
               result = '<p>'+myJson.status+'</p>';
+              if(myJson.receipt_link)
+                result += '<p><a href="'+myJson.receipt_link+'">Print Receipt</a></p>';
           }
           else {
               result = 'Transaction error';
           }
-          console.log(result);
-          document.getElementById("paypal-button-container").innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p><p>'+result+'</p></div>';
-          const d = document.getElementById("rsvp_payment_details_prompt");
-          if(d)
-            d.innerHTML = ''; // get rid of language about unpaid balance
+          const confirmblock = document.getElementById("rsvpconfirm");
+          if(confirmblock && confirmblock.innerHTML) // removes the language saying money is still owed
+            confirmblock.innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
+          else
+            document.getElementById("paypal-button-container").innerHTML  = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
         });
         });
       },
@@ -205,6 +216,11 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     // Show an error page here, when an error occurs
       }
     }).render('#paypal-button-container');
+
+    let interval = 30*60000;
+    setTimeout(() => {
+      document.getElementById("paypal-button-container").innerHTML = '<h1>Time to pay expired</h1>';
+    }, interval);//30 minutes
 
   </script>
   <div id="paypal-error-container" style="color: red; font-weight: bold;"></div>
@@ -237,7 +253,7 @@ if ( isset( $atts['paymentType'] ) && ( $atts['paymentType'] == 'donation' ) ) {
 if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id']))
   return 'client ID not set';
 
-if('schedule' == $atts['paymentType']) {
+if(isset($atts['paymentType']) && 'schedule' == $atts['paymentType']) {
   $month_index = strtolower(date('F'));
   $atts['amount'] = $atts[$month_index];
 }

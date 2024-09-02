@@ -3024,15 +3024,24 @@ if(isset($_POST['metadata_only']))
 		}
 
 if(!empty($coupons)) {
+	$new_coupons = array('coupon_codes'=>array(),'coupon_discounts'=>array(),'coupon_methods'=>array());
 	delete_post_meta($target_id,'_rsvp_coupon_code');
 	delete_post_meta($target_id,'_rsvp_coupon_discount');
 	delete_post_meta($target_id,'_rsvp_coupon_method');
-	foreach($coupons['coupon_codes'] as $code)
+	foreach($coupons['coupon_codes'] as $code) {
+		$code = str_replace('post_id',$target_id,$code);
+		$new_coupons['coupon_codes'][] = $code;
 		add_post_meta($target_id,'_rsvp_coupon_code',$code);
-	foreach($coupons['coupon_discounts'] as $code)
+	}
+	foreach($coupons['coupon_discounts'] as $code) {
+		$new_coupons['coupon_discounts'][] = $code;
 		add_post_meta($target_id,'_rsvp_coupon_discount',$code);
-	foreach($coupons['coupon_methods'] as $code)
+	}
+	foreach($coupons['coupon_methods'] as $code) {
+		$new_coupons['coupon_methods'][] = $code;
 		add_post_meta($target_id,'_rsvp_coupon_method',$code);
+	}
+	add_post_meta($target_id,'_rsvp_coupons',$new_coupons);
 }
 
 if(!empty($deadlinedays) || !empty($deadlinehours))

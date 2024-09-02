@@ -1230,6 +1230,9 @@ if(!empty($matches))
 			$content .= $link ."\n\n";
 			}
 	}
+	$content = str_replace('<div',"\r\n<div",$content);
+	$content = str_replace('<h',"\r\n<h",$content);
+	$content = str_replace('<p',"\r\n<p",$content);
 $text = trim(strip_tags($content));
 $text = preg_replace("/[\r\n]{3,}/","\n\n",$text);
 
@@ -1257,11 +1260,12 @@ if(isset($post->ID))
 $content = str_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
 $content = preg_replace('/<a .+FORWARD.+/','',$content);
 $content = preg_replace('/\*\|.+\|\*/','',$content); // not recognized, get rid of it.
+$content = apply_filters('rsvpmaker_personalize_email',$content,$to);
 return $content;
 }
 
 function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
-	global $wpdb,$rsvp_options;
+	global $wpdb,$rsvp_options, $current_user;
 	$sender_user = get_userdata($user_id);
 	$recipients = array();
 	$post = get_post($post_id);
@@ -1528,11 +1532,11 @@ foreach($guests as $guest)
 	$sending_to[] = 'guest list';
 }
 
-if(!empty($postvars["network_members"]) && user_can('manage_network',$user_id) )
+if(!empty($postvars["network_members"]) && user_can($current_user->ID,'manage_network') )
 {
 $from = (isset($postvars["user_email"])) ? $sender_user->user_email : $postvars["from_email"];
 update_post_meta($post_id,'rsvprelay_fromname',sanitize_text_field(stripslashes($postvars["from_name"])));
-$users = get_users('blog='.get_current_blog_id());
+$users = $wpdb->get_results("SELECT user_email FROM $wpdb->users");
 $sending_to[] = 'website network members';
 printf('<p>Looking up website members</p>',sizeof($users));
 foreach($users as $user)
@@ -3506,6 +3510,7 @@ return '<p class="signed_up">'.$output.'</p>';
 }
 
 function rsvp_message_via_template ($rsvpdata,$slug,$event) {
+	include_once 'rsvpmaker-ical.php';
 	global $rsvp_options;
 	$templates = get_rsvpmaker_notification_templates();
 	$mail['subject'] = $templates[$slug]['subject']; 
@@ -3514,7 +3519,13 @@ function rsvp_message_via_template ($rsvpdata,$slug,$event) {
 		$mail['subject'] = str_replace('['.$field.']',$value,$mail['subject']);
 		$mail['html'] = str_replace('['.$field.']',$value,$mail['html']);
 	}
+	$event_title = get_the_title($rsvpdata['event_id']);
+	$dateblock = rsvp_date_block_email( $rsvpdata['event_id'] );
+	$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];
+
 	$mail['to'] = $rsvpdata['email'];
+	$rsvp_id = isset($rsvpdata['rsvp_id']) ? intval($rsvpdata['rsvp_id']) : 0;
+	$mail["ical"] = rsvpmaker_to_ical_email ($rsvpdata['event_id'], $mail['to'], $rsvp["email"], rsvpmaker_text_version($mail['html']), $rsvpdata['rsvp_id']);
 	rsvpmaker_tx_email($event, $mail);
 }	
 
@@ -3522,6 +3533,11 @@ function rsvp_notifications_via_template ($rsvp,$rsvp_to,$rsvpdata) {
 global $post;
 global $rsvp_options;
 include_once 'rsvpmaker-ical.php';
+
+$confirm_on_payment = get_post_meta($post->ID,'_rsvp_confirmation_after_payment',true);
+if($confirm_on_payment)
+	return;
+$send_confirmation = get_post_meta($post->ID,'_rsvp_rsvpmaker_send_confirmation_email',true);
 
 $templates = get_rsvpmaker_notification_templates();
 
@@ -3546,9 +3562,6 @@ foreach($rsvpdata as $field => $value)
 	$mail["html"] = wpautop($notification_body);
 	rsvpmaker_tx_email($post, $mail);
 	}
-
-$send_confirmation = get_post_meta($post->ID,'_rsvp_rsvpmaker_send_confirmation_email',true);
-$confirm_on_payment = get_post_meta($post->ID,'_rsvp_confirmation_after_payment',true);
 
 if(($send_confirmation ||!is_numeric($send_confirmation)) && $rsvpdata['yesno'] && empty($confirm_on_payment) )//if it hasn't been set to 0, send it
 {
@@ -3587,18 +3600,41 @@ function rsvp_nonpayment_delete($rsvp_id) {
 	global $wpdb;
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
 	$rsvp = (array) $wpdb->get_row($sql);
-	if(!$rsvp['fee_total'] || intval($rsvp['amountpaid']))
+	//error_log('nonpayment_delete check '.var_export($row));
+	if($rsvp['fee_total'] <= $rsvp['amountpaid']) {
+		//error_log($rsvp['fee_total'].' <= '.$rsvp['amountpaid']);
 		return;
-	$count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
-	$archive = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
-	add_post_meta($rsvp['event'],'_rsvp_archive_'.$rsvp_id,$archive);
-	$event = $wpdb->get_row("SELECT post_title, date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$rsvp['event']);
-	$sql = "DELETE FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
-	$wpdb->query($sql);
-	$mail['to'] = $mail['from'] = $rsvp_options['rsvp_to'];
-	$mail['subject'] = "RSVP Deleted for Nonpayment ".$event->post_title.' '.$event->date;
-	$mail['html'] = sprintf("<p>Deleted %d registrations associated with %s %s %s</p>",$count,$rsvp["first"],$rsvp["last"],$rsvp['email']);
-	rsvpmailer($mail);
+	}
+	if($rsvp['amountpaid'] < 0.01) {
+		$count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
+		$archive = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
+		add_post_meta($rsvp['event'],'_rsvp_archive_'.$rsvp_id,$archive);
+		$event = $wpdb->get_row("SELECT post_title, date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$rsvp['event']);
+		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+		add_post_meta($rsvp['event'],'rsvpmaker_unpaid',$wpdb->get_results($sql));
+		$sql = "DELETE FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+		$wpdb->query($sql);
+		$mail['to'] = $mail['from'] = get_option('admin_email');
+		$mail['subject'] = "RSVP Deleted for Nonpayment ".$event->post_title.' '.$event->date;
+		$mail['html'] = sprintf("<p>Deleted %d registrations associated with %s %s %s</p>",$count,$rsvp["first"],$rsvp["last"],$rsvp['email']);
+		rsvpmailer($mail);
+	} else {
+		//paid something, but not enough
+		$snapshot = get_post_meta($rsvp['event'],'_rsvp_snapshot_'.$rsvp['amountpaid'],true); //snapshot from when rsvp was fully paid
+		//error_log('snapshot retrieved '.var_export($snapshot,true));
+		$snapshot_text = var_export($snapshot,true);
+		$snap = (array) array_shift($snapshot);
+		$wpdb->update($wpdb->prefix.'rsvpmaker',$snap,array('id'=>$rsvp_id));
+		$wpdb->delete($wpdb->prefix.'rsvpmaker',array('master_rsvp'=>$rsvp_id));
+		foreach($snapshot as $snap) {
+			$snap = (array) $snap;
+			$wpdb->insert($wpdb->prefix.'rsvpmaker',$snap);
+		}
+		$mail['to'] = $mail['from'] = get_option('admin_email');
+		$mail['subject'] = "RSVP Updated Entries Deleted for Nonpayment ".$event->post_title.' '.$event->date;
+		$mail['html'] = sprintf("<p>Record restored to previous status</p><pre>%s</pre>",$snapshot_text);
+		rsvpmailer($mail);	
+	}
 }
 
 function rsvp_payment_reminder ($rsvp_id) {
@@ -3615,8 +3651,12 @@ if($rsvp['fee_total'] <= $rsvp['amountpaid'])
 $details = '';
 
 if(!empty($rsvp_options['cancel_unpaid_hours'])) {
-	$details = __('Registrations will be deleted if not paid within','rsvpmaker').' '.intval($rsvp_options['cancel_unpaid_hours']).' '.__('hours','rsvpmaker')."\n\n";
-	wp_schedule_single_event(time() + ($rsvp_options['cancel_unpaid_hours'] * HOUR_IN_SECONDS) - 1800,'rsvp_nonpayment_delete',array($rsvp_id));
+	$details = __('If not paid, your registration will expire at','rsvpmaker').' '.rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t)."\n\n";
+	$t = wp_next_scheduled( 'rsvp_nonpayment_delete',array($rsvp_id) );
+	if($t)
+		wp_unschedule_event($t,'rsvp_nonpayment_delete',array($rsvp_id));
+	$t = time() + ($rsvp_options['cancel_unpaid_hours'] * HOUR_IN_SECONDS);
+	wp_schedule_single_event($t,'rsvp_nonpayment_delete',array($rsvp_id));
 }
 
 foreach($rsvpdata as $label => $value)
@@ -3716,7 +3756,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 add_action('rsvp_payment_reminder','rsvp_payment_reminder',10,1);
 
 function rsvpmaker_payment_reminder_cron ($rsvp_id) {
-	$time = rsvpmaker_strtotime('+30 minutes');
+	$time = rsvpmaker_strtotime('+10 minutes');
 	wp_clear_scheduled_hook( 'rsvp_payment_reminder',array($rsvp_id) );
 	wp_schedule_single_event($time,'rsvp_payment_reminder',array($rsvp_id));
 }

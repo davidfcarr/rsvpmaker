@@ -119,7 +119,7 @@ importRSVP(importnowurl,data);
 	<?php
 }
 
-function rsvp_form_jquery() {
+function rsvp_form_jquery( $atts = null) {
 	global $rsvp_required_field;
 	global $post;
 	ob_start();
@@ -130,6 +130,22 @@ function rsvp_form_jquery() {
 	<?php
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
 	printf( "var hide = '%s';\n", empty($hide) ? '' : wp_json_encode( $hide ) );
+	if(is_array($atts) && $atts['events_to_add']) {
+		printf("var events_to_add=%d;\n",$atts['events_to_add']);
+		printf("var options='%s';\n",str_replace("'","\'",$atts['options']));
+		?>
+		$('#rsvp_more_events_click').click(
+			() => {
+				if(events_to_add > 0) {
+				$('#more_rsvp_events').append('<p><select name="rsvpmultievent[]">'+options+'</select></p>');
+				}
+				else if(0 == events_to_add)
+				$('#more_rsvp_events').append('<p>Reached limit</p>');
+				events_to_add--;
+			}
+		);
+		<?php
+	}
 	?>
 	$('#coupon_field').hide();
 	$('#coupon_field_add').click(() => {$('#coupon_field').show(); $('#coupon_field_prompt').hide(); });

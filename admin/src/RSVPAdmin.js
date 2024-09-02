@@ -4,7 +4,6 @@ import General from './General.js'
 import Security from './Security.js'
 import Payment from './Payment.js'
 import Email from './Email.js'
-import GroupEmail from './GroupEmail.js'
 import Forms from './Forms.js'
 
 export default function RSVPAdmin (props) {

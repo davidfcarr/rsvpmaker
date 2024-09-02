@@ -742,3 +742,60 @@ function rsvpmaker_form_field_labels($post_id) {
 	}
 	return $field_labels;
 }
+
+function rsvpmaker_contact_form_output($attributes) {
+global $current_user, $rsvp_options;
+$user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
+?>
+<form id="rsvpmaker_contact_form">
+<?php
+$subject_label = (empty($attributes['subject_label'])) ? 'Subject' : $attributes['subject_label'];
+printf('<div class="wp-block-rsvpmaker-formfield"><label>%s:</label><input type="text" name="contact_subject"></div>',$subject_label);
+//print_r($attributes);
+//print_r($atts);
+rsvphoney_ui();
+echo rsvpmaker_basic_form( $attributes['form_id'] );
+wp_nonce_field('rsvpmaker_contact','contact_confidential');
+printf('<input type="hidden" name="user_id" value="%d" >',$user_id);
+if (! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) )
+{
+	rsvpmaker_recaptcha_output();
+}
+?>
+<p><button id="rsvpmaker_contact_send">Send</button></p>
+</form>
+<script>
+const form = document.querySelector("#rsvpmaker_contact_form");
+console.log(form);
+
+async function sendData() {
+  // Associate the FormData object with the form element
+  const formData = new FormData(form);
+
+  try {
+    const response = await fetch("/wp-json/rsvpmaker/v1/contact_form", {
+      method: "POST",
+      // Set the FormData instance as the request body
+      body: formData,
+    });
+	const json = await response.json();
+	console.log('senddata response',json);
+	if(json.no_note)
+		form.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">Note field left blank</div>';
+    if(json.sending)
+		form.innerHTML = '<div style="color:green;border: thin solid green; padding: 15px; margin: 15px;">Sent</div>';
+	if(json.error)
+		form.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">'+json.error+'</div>';
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Take over form submission
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  sendData();
+});
+</script>
+<?php
+}

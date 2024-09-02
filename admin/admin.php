@@ -26,6 +26,7 @@ function create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build/loop-blocks' );
 	register_block_type( __DIR__ . '/build/title-date' );
 	register_block_type( __DIR__ . '/build/date-element' );
+	register_block_type( __DIR__ . '/build/rsvp-contact' );
 }
 add_action( 'init', 'create_block_admin_block_init' );
 

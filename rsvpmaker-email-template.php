@@ -275,10 +275,10 @@ if(isset($_GET['cancel_promo']) && rsvpmaker_verify_nonce())
 
 if ( isset( $_GET['template_preview'] ) ) {
 		$preview = rsvpmaker_personalize_email( $preview, 'david@carrcommunications.com', '<div class="rsvpexplain">This message is a demo.</div>' );
-
 } elseif ( current_user_can( 'publish_rsvpemails' ) ) {
 		$preview = str_replace('<!-- controls go here -->',rsvpmaker_email_send_ui( $html, $text ),$preview);
 }
-$preview = rsvpmaker_personalize_email($preview,'rsvpmaker@example.com');
+$test_address = (isset($_GET['personalize'])) ? sanitize_text_field(($_GET['personalize'])) : 'rsvpmaker@example.com';
+$preview = rsvpmaker_personalize_email($preview,$test_address);
 /* cannot be escaped because of embedded form content. Escaping belongs in the functions that create this output variable */
 echo $preview;

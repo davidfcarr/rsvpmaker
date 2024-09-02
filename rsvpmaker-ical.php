@@ -1,6 +1,6 @@
 <?php
 
-function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='', $description = '' ) {
+function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='', $description = '', $rsvp_id=0 ) {
 	global $post;
 	$backslash = '\\';
 
@@ -18,24 +18,16 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='
 		return;
 	}
 
-	$dates    = get_rsvp_dates( $post_id );
-	$date     = $dates[0];
-	$datetime = $date['datetime'];
-	$end_time = $date['end_time'];
-
-	if ( sizeof( $dates ) > 1 ) {
-		$lastdate    = array_pop( $dates );
-		$duration_ts = rsvpmaker_strtotime( $lastdate['datetime'] );
-	} elseif ( empty( $end_time ) ) {
-		$duration_ts = rsvpmaker_strtotime( $datetime . ' +1 hour' );
-	} else {
-		$p           = explode( ' ', $datetime );
-		$duration_ts = rsvpmaker_strtotime( $p[0] . ' ' . $end_time );
+	$event = get_rsvpmaker_event( $post_id );
+	if($rsvp_id) {
+		$receipt_code = get_post_meta($event->ID,'rsvpmaker_receipt_'.$rsvp_id,true);
+		if(!$receipt_code) {
+		  $receipt_code = wp_generate_password(20,false,false);
+		  update_post_meta($event->ID,'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
+		}	
+		$rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($event->ID));
+		$description = "See receipt ".$rsvp_receipt_link;
 	}
-
-	$start_ts = rsvpmaker_strtotime( $datetime );
-
-	$hangout = get_post_meta( $post->ID, '_hangout', true );
 
 	if ( ! empty( $hangout ) ) {
 
@@ -53,13 +45,13 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='
 
 	$dtstamp = gmdate( 'Ymd' ) . 'T' . gmdate( 'His' ) . 'Z';
 
-	$start = gmdate( 'Ymd', $start_ts );
+	$start = gmdate( 'Ymd', $event->ts_start );
 
-	$start_time = gmdate( 'His', $start_ts );
+	$start_time = gmdate( 'His', $event->ts_start );
 
-	$end = gmdate( 'Ymd', $duration_ts );
+	$end = gmdate( 'Ymd', $event->ts_end );
 
-	$end_time = gmdate( 'His', $duration_ts );
+	$end_time = gmdate( 'His', $event->ts_end );
 
 	$event_id = $post->ID;
 
@@ -103,6 +95,7 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='
 
 	$ical[] = 'DESCRIPTION:' . rsvpmaker_ical_escape($description);
 
+	/*
 	$ical[] = 'BEGIN:VALARM';
 
 	$ical[] = 'TRIGGER:-PT15M';
@@ -110,7 +103,8 @@ function rsvpmaker_to_ical_email( $post_id = 0, $from_email = '', $rsvp_email ='
 	$ical[] = 'ACTION:DISPLAY';
 
 	$ical[] = 'END:VALARM';
-
+	*/
+	
 	$ical[] = 'END:VEVENT';
 
 	$ical[] = 'END:VCALENDAR';

@@ -12,7 +12,7 @@ export default function Forms (props) {
     const [addfield,setAddfield] = useState('rsvpmaker/formfield');
     const [addfieldLabel,setAddfieldLabel] = useState('');
     const [addfieldChoices,setAddfieldChoices] = useState('');
-    const [showPreview,setShowPreview] = useState(false);
+    const [showPreview,setShowPreview] = useState(props.contact);
     const [newForm,setNewForm] = useState('');
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
     const {changes,addChange,setChanges} = props;
@@ -27,7 +27,7 @@ function fetchForms() {
         setEditForm('');
         setNewForm('');
     }
-    return apiClient.get('rsvp_form?form_id='+formId+name+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId());
+    return apiClient.get('rsvp_form?form_id='+formId+name+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId()+'&contact='+props.contact);
 }
 const {data,isLoading,isError} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
     if(!formId)
@@ -173,7 +173,7 @@ const {mutate:formMutate} = useMutation(updateForm, {
         else if('rsvpmaker/guests' == addfield)
             newfield = {"blockName":"rsvpmaker/guests","attrs":[],"innerBlocks":[{"blockName":"core/paragraph","attrs":[],"innerBlocks":[],"innerHTML":"\n<p><\/p>\n","innerContent":["\n<p><\/p>\n"]}],"innerHTML":"\n<div class=\"wp-block-rsvpmaker-guests\"><\/div>\n","innerContent":["\n<div class=\"wp-block-rsvpmaker-guests\">",null,"</div>\n"]};
         else {
-            if(!addfieldLabel) {
+            if(!addfieldLabel && 'rsvpmaker/formchimp' != addfield) {
                 alert('a field label is required');
                 return;
             }

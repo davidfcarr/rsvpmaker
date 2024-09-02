@@ -268,6 +268,8 @@ function rsvpmaker_form_single($content) {
 
 		$blanks = 0;
 		$events = [];
+		if(count($_POST['rsvpmultievent']) != count(array_unique($_POST['rsvpmultievent'])))
+			return '<p>Error: Duplicate events selected</p>';
 		foreach($_POST['rsvpmultievent'] as $post_id) {
 			if(intval($post_id)) {
 				$event = get_post($post_id);

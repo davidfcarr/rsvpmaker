@@ -89,8 +89,7 @@ max-width: 90%;
     line-height: 1;
 }    
 #rsvpform label, .wp-block-rsvpmaker-formfield label {
-display: inline-block;
-width: 30%;
+display: block;
 }
 
 .rsvpmaker-flexible-form button {

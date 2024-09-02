@@ -1870,6 +1870,30 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$post_id = (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) ? 0 : intval($_GET['post_id']);
 		$template_id = ($post_id) ? get_post_meta($post_id,'_meet_recur',true) : 0;
 		$post = ($post_id) ? get_post($post_id) : null;
+		$reusable = get_option('rsvpmaker_forms', array());
+		if(isset($_GET['contact']) && 'undefined' != $_GET['contact']) {
+			if(!in_array('Form:Contact',$reusable))
+			{
+				$updated['post_title'] = 'Form:Contact';
+				$updated['post_type'] = 'rsvpmaker_form';
+				$updated['post_author'] = $current_user->ID;
+				$updated['post_content'] = '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
+
+<!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
+
+<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+
+<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone"} /-->
+
+<!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} /-->
+
+<!-- wp:rsvpmaker/formnote /-->';
+				$updated['post_status'] = 'publish';
+				$form_id = wp_insert_post($updated);
+				$reusable[$form_id] = 'Form:Contact';
+				update_option('rsvpmaker_forms',$reusable);
+		}
+	}
 		if(!empty($_GET['form_id'])) {
 			if((strpos($_GET['form_id'],'clone') !== false) && (current_user_can('manage_options') || current_user_can('edit_post',$post_id)))
 			{
@@ -1905,7 +1929,6 @@ class RSVPMaker_Form extends WP_REST_Controller {
 					update_post_meta($post_id,'_rsvp_form',$form_id);
 					$response['form_changed'] = $form_id;
 					if($reusable_name) {
-						$reusable = get_option('rsvpmaker_forms', array());
 						$reusable[$form_id] = $updated['post_title'];
 						update_option('rsvpmaker_forms',$reusable);
 					}
@@ -1921,8 +1944,13 @@ class RSVPMaker_Form extends WP_REST_Controller {
 			$form_id = get_post_meta($post_id,'_rsvp_form',true);
 			$response['form_id_from_meta'] = $form_id;
 		}
-		if(empty($form_id))
-			$form_id = $rsvp_options['rsvp_form'];
+		if(empty($form_id)) {
+			if(isset($_GET['contact']) && 'undefined' != $_GET['contact']) {
+				$form_id = array_search('Form:Contact',$reusable);
+			}
+			else
+				$form_id = $rsvp_options['rsvp_form'];
+		}
 		if(!empty($json)) {
 			if($post_id)
 			{
@@ -3170,6 +3198,7 @@ class RSVP_PayPalPaid extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+		//error_log('PayPalPaid '.var_export($request->get_params(),true));
 		$response = paypal_verify_rest ();
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
@@ -3207,7 +3236,7 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		global $wpdb;
-		$params = $request->get_params();
+		$params = $request->get_json_params();
 		if(!empty($params)) {
 			$type = $params['event_type'];
 			if('PAYMENT.CAPTURE.COMPLETED' == $type) {
@@ -3215,11 +3244,13 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : $params['resource']['seller_receivable_breakdown']['paypal_fee']['value'];
 				$gross = (empty($params['resource']['seller_receivable_breakdown']['gross_amount']['value'])) ? '' : $params['resource']['seller_receivable_breakdown']['gross_amount']['value'];
 				$rsvpmaker_money = $wpdb->prefix.'rsvpmaker_money';
-				$existing = $wpdb->get_row("SELECT * FROM $rsvpmaker_money WHERE transaction_id='$order_id'");
+				$sql_check = "SELECT * FROM $rsvpmaker_money WHERE transaction_id='$order_id'";
+				$existing = $wpdb->get_row($sql_check);
 				if($existing)
-				$wpdb->query("UPDATE $rsvpmaker_money SET fee=$fee WHERE transaction_id='$order_id'");
+				$sql = "UPDATE $rsvpmaker_money SET fee=$fee WHERE transaction_id='$order_id'";
 				else
-				$wpdb->query("INSERT INTO $rsvpmaker_money SET amount='$gross', fee='$fee', name='added from webhook', transaction_id='$order_id' ");
+				$sql = "INSERT INTO $rsvpmaker_money SET amount='$gross', fee='$fee', name='added from webhook', transaction_id='$order_id' ";
+				$wpdb->query($sql);
 			}
 		} 
 	return new WP_REST_Response( [], 200 );
@@ -3277,6 +3308,109 @@ class RSVP_CopyDefaults extends WP_REST_Controller {
 	}//end handle
 }//end class
 
+class RSVP_Contact_Form extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'contact_form';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+	}
+
+	public function get_items_permissions_check( $request ) {
+		global $current_user;
+		$current_user = get_userdata(intval($_POST['user_id']));
+		return (empty($_POST['extra_special_discount_code']) && wp_verify_nonce( $_POST['contact_confidential'], 'rsvpmaker_contact' ));
+	}
+
+	public function get_items( $request ) {
+		global $wpdb, $current_user, $rsvp_options;
+		$postdata = $_POST;
+		$rsvp['subject'] = sanitize_text_field($postdata['contact_subject']);
+		foreach ( $postdata['profile'] as $name => $value ) {
+			$rsvp[ $name ] = sanitize_text_field( $value );
+		}
+		$note = sanitize_textarea_field($postdata['note']);
+		if(!$note)
+			return new WP_REST_Response(array('no_note'=>1), 200 );
+		if ( ! is_admin() && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) ) {
+			if ( ! rsvpmaker_recaptcha_check( $rsvp_options['rsvp_recaptcha_site_key'], $rsvp_options['rsvp_recaptcha_secret'] ) ) {
+				return new WP_REST_Response(array('error'=>'Failed security check'), 200 );
+			}
+		}
+
+		if ( isset( $postdata['required'] ) || empty( $rsvp['email'] ) ) {
+			if(isset( $postdata['required'] ))
+			$required = explode( ',', $postdata['required'] );
+			else
+			$required = array();
+
+			if ( ! in_array( 'email', $required ) ) {
+				$required[] = 'email';
+			}
+
+			$missing = '';
+
+			if(!empty($required))
+			foreach ( $required as $r ) {
+				$r = sanitize_text_field($r);
+				if ( empty( $rsvp[ $r ] ) ) {
+					$missing .= $r . ' ';
+				}
+			}
+
+			if ( $missing != '' ) {
+				return new WP_REST_Response(array('error'=>'missing fields: '.$missing), 200 );
+			}
+		}
+		if ( ! isset( $rsvp['first'] ) ) {
+
+			$rsvp['first'] = '';
+		}
+
+		if ( ! isset( $rsvp['last'] ) ) {
+			$rsvp['last'] = '';
+		}
+		if ( !is_email($rsvp['email']) ) {
+			return new WP_REST_Response(array('error'=>'not a valid email: '.$rsvp['email']), 200 );
+		}
+		$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'event'=>0, 'note' => $note, 'details'=>serialize( $rsvp ),'user_id'=>$current_user->ID,'note'=>$note);
+		$id = $wpdb->insert($wpdb->prefix.'rsvpmaker',$nv);
+		$sitename = get_option('sitename');
+		$mail['html'] = '<p>Contact form submission from '.$sitename.'</p>';
+		foreach($rsvp as $key => $item) {
+			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$key,$item);
+		}
+		$mail['html'] .= '<p>'.nl2br($note).'</p>';
+		$mail['from'] = $rsvp['email'];
+		$mail['fromname'] = $rspv['first'].' '.$rsvp['last'].' via '.$_SERVER['SERVER_NAME'];
+		$mail['subject'] = $rsvp['subject'].' (Contact: '.$_SERVER['SERVER_NAME'].')';
+		$recipients = explode(",",$rsvp_options['rsvp_to']);
+		foreach($recipients as $recipient) {
+			$mail['to'] = trim($recipient);
+			rsvpmailer($mail);
+		}
+		$response = $postdata;
+	return new WP_REST_Response(array('sending'=>$id,'mail'=>$mail), 200 );
+	}//end handle
+}//end class
 
 add_action('rest_api_init',
 	function () {
@@ -3370,5 +3504,7 @@ add_action('rest_api_init',
 		$pphook->register_routes();
 		$copy = new RSVP_CopyDefaults();
 		$copy->register_routes();
+		$contact = new RSVP_Contact_Form();
+		$contact->register_routes();
 	}
 );
