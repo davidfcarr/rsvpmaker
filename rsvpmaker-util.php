@@ -852,7 +852,7 @@ function get_next_rsvp_on() {
 		),
 		1
 	);
-	return $events[0];
+	return (is_array($events)) ? $events[0] : null;
 }
 
 function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT ) {
@@ -1708,6 +1708,11 @@ function rsvpmaker_is_post_meta( $post_id, $field ) {
 }
 
 
+add_action('admin_init','rsvpmaker_trigger_data_check');
+function rsvpmaker_trigger_data_check() {
+	if(isset($_GET['datacheck']))
+		rsvpmaker_data_check();
+}
 
 // a data integrity check run on wp_login. prevents null values from being passed to Gutenberg
 
@@ -1715,6 +1720,7 @@ function rsvpmaker_data_check() {
 
 	global $rsvp_options, $wpdb;
 
+	/*
 	$last_data_check = (int) get_option( 'rsvpmaker_last_data_check2' );
 
 	$last_data_check = 0;
@@ -1726,7 +1732,9 @@ function rsvpmaker_data_check() {
 	}
 
 	update_option( 'rsvpmaker_last_data_check2', rsvpmaker_strtotime( '+1 week' ) );
+	*/
 
+	error_log('start rsvpmaker_data_check');
 	$wpdb->query( "UPDATE $wpdb->postmeta SET meta_value=1 WHERE meta_key='_rsvp_rsvpmaker_send_confirmation_email' AND meta_value='on' " );
 
 	$wpdb->query( "UPDATE $wpdb->posts SET post_type='rsvpmaker' WHERE post_title LIKE 'Form:%' AND post_type='post' " );
@@ -1853,12 +1861,11 @@ function rsvpmaker_data_check() {
 		}
 	}
 
+	error_log('allones'.var_export($allones,true));
 	if ( $allones ) {
 			rsvpmaker_set_defaults_all();
 	}
-
 }
-
 
 
 function rsvpmaker_set_defaults_all( $display = false ) {
@@ -2934,8 +2941,6 @@ function get_rsvp_email() {
 
 	global $current_user;
 
-	if(isset($_GET['new']))
-		return;
 	if ( isset( $_GET['e'] ) ) {
 
 			$email = sanitize_text_field($_GET['e']);
@@ -4257,7 +4262,7 @@ function rsvpmaker_confirm_payment($rsvp_id) {
 function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 	global $post, $wpdb, $rsvp_options;
 	$guestparty = '';
-	$exclude = array('first','last','id','email','yesno','event','owed','amountpaid','master_rsvp','guestof','note','participants','user_id','timestamp','payingfor','fee_total','pricechoice');
+	$exclude = array('first','last','id','yesno','event','owed','amountpaid','master_rsvp','guestof','participants','user_id','timestamp','payingfor','fee_total','pricechoice');
 	if($master) {
 		$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $rsvp_id . ' ORDER BY id';
 		$row = $wpdb->get_row($guestsql, ARRAY_A);

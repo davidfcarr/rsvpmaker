@@ -2454,6 +2454,7 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 		$occur = array('Varies','First','Second','Third','Fourth','Last','Every');
 		$schedule = '';
 		$day = 'tomorrow';
+		if(is_array($sked))
 		foreach($sked as $index => $value) {
 			if(in_array($index,$occur) && $value)
 				$schedule .= ' '.$index;

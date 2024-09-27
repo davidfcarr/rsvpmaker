@@ -1241,11 +1241,15 @@ return $text;
 }
 
 function rsvpmaker_personalize_email($content,$to,$description = '', $post_id = 0) {
+if(!strpos($content,'*|'))
+	return $content;
 $chimp_options = get_option('chimp', array());
 if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] = apply_filters('rsvpmaker_mailing_address','[not set in RSVPMaker Mailing List settings]');
 global $post;
-if($post_id)
+if($post_id) {
 	$post = get_post($post_id);
+	$content = str_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
+}
 $content = rsvpmail_replace_email_placeholder($content, $to);
 $content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe='.$to),$content);
 $content = str_replace('*|REWARDS|*','',$content);
@@ -1256,8 +1260,6 @@ $content = str_replace('*|HTML:LIST_ADDRESS_HTML|*',$chimp_options['mailing_addr
 $company = isset($chimp_options['company']) ? esc_attr($chimp_options['company']) : get_bloginfo('name'); 
 $content = str_replace('*|LIST:COMPANY|*',$company,$content);
 $content = str_replace('*|CURRENT_YEAR|*',date('Y'),$content);
-if(isset($post->ID))
-$content = str_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
 $content = preg_replace('/<a .+FORWARD.+/','',$content);
 $content = preg_replace('/\*\|.+\|\*/','',$content); // not recognized, get rid of it.
 $content = apply_filters('rsvpmaker_personalize_email',$content,$to);
@@ -3600,9 +3602,9 @@ function rsvp_nonpayment_delete($rsvp_id) {
 	global $wpdb;
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
 	$rsvp = (array) $wpdb->get_row($sql);
-	//error_log('nonpayment_delete check '.var_export($row));
-	if($rsvp['fee_total'] <= $rsvp['amountpaid']) {
-		//error_log($rsvp['fee_total'].' <= '.$rsvp['amountpaid']);
+	error_log('nonpayment_delete check '.var_export($row));
+	if($rsvp['fee_total'] == $rsvp['amountpaid']) {
+		error_log($rsvp['fee_total'].' == '.$rsvp['amountpaid']);
 		return;
 	}
 	if($rsvp['amountpaid'] < 0.01) {
@@ -3621,7 +3623,7 @@ function rsvp_nonpayment_delete($rsvp_id) {
 	} else {
 		//paid something, but not enough
 		$snapshot = get_post_meta($rsvp['event'],'_rsvp_snapshot_'.$rsvp['amountpaid'],true); //snapshot from when rsvp was fully paid
-		//error_log('snapshot retrieved '.var_export($snapshot,true));
+		error_log('snapshot retrieved '.var_export($snapshot,true));
 		$snapshot_text = var_export($snapshot,true);
 		$snap = (array) array_shift($snapshot);
 		$wpdb->update($wpdb->prefix.'rsvpmaker',$snap,array('id'=>$rsvp_id));

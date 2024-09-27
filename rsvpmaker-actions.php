@@ -8,7 +8,6 @@ add_action('init','rsvpmail_confirm_subscribe');
 add_action('init', 'remove_save_content_filters', 99 );
 add_action('init','rsvpmaker_create_nonce',1);
 add_action('init','rsvphoney_login',1);
-
 add_action('admin_init','rsvpmaker_queue_post_type');
 
 add_action( 'admin_bar_menu', 'toolbar_rsvpmaker', 99 );
@@ -72,6 +71,7 @@ if(('rsvpmaker' == $post_after->post_type) && $post_after->post_title != $post_b
 },10,3);
 
 add_action( 'user_register', 'RSVPMaker_register_chimpmail' );
+/*
 add_action(
 	'widgets_init',
 	function() {
@@ -90,6 +90,7 @@ add_action(
 		return register_widget( 'RSVPMakerByJSON' );
 	}
 );
+*/
 add_action('wp', 'clear_rsvp_cookies' );
 add_action('wp', 'rsvp_reminder_activation' );
 
@@ -128,7 +129,6 @@ add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 
 add_action('init', 'rsvpmaker_submission_post' );
 
-add_action( 'wp_login', 'rsvpmaker_data_check' );
 add_action( 'quick_edit_custom_box', 'rsvpmaker_quick_edit_fields', 10, 2 );
 add_action( 'manage_posts_custom_column', 'rsvpmaker_custom_column', 99, 2 );
 add_action( 'manage_posts_custom_column', 'rsvpmaker_template_custom_column', 99, 2 );

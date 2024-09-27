@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.2.8
+* Version: 11.3.8
 */
 
 function get_rsvpversion() {
-	return '11.2.8';
+	return '11.3.8';
 }
 
 global $wp_version;
@@ -466,113 +466,73 @@ if ( in_array( 'PayPal REST API', $gateways ) ) {
 }	
 
 if ( version_compare( PHP_VERSION, '5.3.0' ) >= 0 ) {
-
 	include WP_PLUGIN_DIR . '/rsvpmaker/rsvpmaker-recaptcha.php';
-
 }
 
 // make sure new rules will be generated for custom post type - flush for admin but not for regular site visitors
 function cpevent_activate() {
+	global $wpdb, $rsvp_options;
 
-	global $wpdb;
+//load dbDelta
+require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-	global $rsvp_options;
-
-	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmaker` (
-  `id` int(11) NOT NULL auto_increment,
+$sql = "CREATE TABLE `{$wpdb->prefix}rsvpmaker` (
+  `id` int NOT NULL auto_increment,
   `email` varchar(255)   CHARACTER SET utf8 COLLATE utf8_general_ci  default NULL,
   `yesno` tinyint(4) NOT NULL default '0',
   `first` varchar(255)  CHARACTER SET utf8 COLLATE utf8_general_ci  NOT NULL default '',
   `last` varchar(255)  CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default '',
   `details` text  CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  `event` int(11) NOT NULL default '0',
+  `event` int NOT NULL default '0',
   `owed` float(6,2) NOT NULL default '0.00',
   `amountpaid` float(6,2) NOT NULL default '0.00',
-  `master_rsvp` int(11) NOT NULL default '0',
+  `fee_total` float(6,2) NOT NULL default '0.00',
+  `master_rsvp` int NOT NULL default '0',
   `guestof` varchar(255)   CHARACTER SET utf8 COLLATE utf8_general_ci  default NULL,
   `note` text   CHARACTER SET  utf8 COLLATE utf8_general_ci NOT NULL,
   `participants` INT NOT NULL DEFAULT '0',
   `user_id` INT NOT NULL DEFAULT '0',
   `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
-
-	$wpdb->query( $sql );
-	$sql = 'show columns from '. $wpdb->prefix . "rsvpmaker LIKE 'fee_total' ";
-	$row = $wpdb->get_row($sql);
-	if(!$row)
-		$wpdb->query( "ALTER TABLE `" . $wpdb->prefix . "rsvpmaker` ADD COLUMN `fee_total` float(6,2) NOT NULL default '0.00'" );
-	
-	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmaker_event` (
-
-  `event` int(11) NOT NULL default '0',
-
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+CREATE TABLE `{$wpdb->prefix}rsvpmaker_event` (
+  `event` int NOT NULL default '0',
   `post_title` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
-
   `display_type` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
-
   `date` datetime,
-
   `enddate` datetime,
-
-  `ts_start` int(11) NOT NULL default '0',
-
-  `ts_end` int(11) NOT NULL default '0',
-
+  `ts_start` int NOT NULL default '0',
+  `ts_end` int NOT NULL default '0',
   `timezone` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL,
-
   PRIMARY KEY  (`event`)
-
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
-
-	$wpdb->query( $sql );
-
-	$sql = 'SELECT post_title, event, meta_value FROM `' . $wpdb->prefix . "rsvpmaker` join $wpdb->posts ON " . $wpdb->prefix . "rsvpmaker.event=$wpdb->posts.ID join $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='_rsvp_dates' group by event";
-
-	$results = $wpdb->get_results( $sql );
-
-	if ( $results ) {
-
-		foreach ( $results as $row ) {
-
-			$sql = $wpdb->prepare( 'REPLACE INTO `' . $wpdb->prefix . 'rsvpmaker_event` SET event=%d, post_title=%s, date=%s ', $row->event, $row->post_title, $row->meta_value );
-
-			$wpdb->query( $sql );
-
-		}
-	}
-
-	$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvp_volunteer_time` (
-
-  `id` int(11) NOT NULL auto_increment,
-
-  `event` int(11) NOT NULL default '0',
-
-  `rsvp` int(11) NOT NULL default '0',
-
-  `time` int(11) default '0',
-
-  `participants` int(11) NOT NULL default '0',
-
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+CREATE TABLE `{$wpdb->prefix}rsvp_volunteer_time` (
+  `id` int NOT NULL auto_increment,
+  `event` int NOT NULL default '0',
+  `rsvp` int NOT NULL default '0',
+  `time` int default '0',
+  `user_id` int default '0',
+  `participants` int NOT NULL default '0',
   PRIMARY KEY  (`id`)
-
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
-
-	$wpdb->query( $sql );
-
-$sql = 'CREATE TABLE IF NOT EXISTS `' . $wpdb->prefix . "rsvpmailer_blocked` (
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+CREATE TABLE `{$wpdb->prefix}rsvpmailer_blocked` (
 `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 `email` varchar(100) NOT NULL DEFAULT '',
 `code` varchar(50) NOT NULL DEFAULT '',
 `timestamp` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-PRIMARY KEY (`ID`),
+PRIMARY KEY  (`ID`),
 KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+";
+$dbversion = hash('sha256', $sql);
+if(!empty($rsvp_options['dbversion']) || ($dbversion == $rsvp_options['dbversion']) )
+	{
+		return;
+	}
+$rsvp_options['dbversion'] = $dbversion;
 
-$wpdb->query( $sql );
-
+$result = dbDelta($sql);
+error_log('rsvpmaker dbDelata '.var_export($result,true));
 rsvpmail_problem_init();
 
 	$sql = 'SELECT slug FROM ' . $wpdb->prefix . 'terms JOIN `' . $wpdb->prefix . 'term_taxonomy` on ' . $wpdb->prefix . 'term_taxonomy.term_id= ' . $wpdb->prefix . "terms.term_id WHERE taxonomy='rsvpmaker-type' AND slug='featured'";
@@ -592,23 +552,11 @@ rsvpmail_problem_init();
 		);
 
 	}
-
-	$sql = "UPDATE $wpdb->posts SET post_type='rsvpemail' WHERE post_type='rsvpmaker' AND post_parent != 0 ";
-
-	$wpdb->query( $sql );
-
-	$rsvp_options['dbversion'] = 25;
-
+	//update dbversion
 	update_option( 'RSVPMAKER_Options', $rsvp_options );
-
 }
 
 register_activation_hook( __FILE__, 'cpevent_activate' );
-
-// upgrade database if necessary
-if ( isset( $rsvp_options['dbversion'] ) && ( $rsvp_options['dbversion'] < 25 ) ) {
-	cpevent_activate();
-}
 
 function rsvpmaker_deactivate() {
 

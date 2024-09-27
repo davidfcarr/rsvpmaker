@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.6.1
-Stable tag: 11.2.8
+Tested up to: 6.6.2
+Stable tag: 11.3.8
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -128,11 +128,6 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
-
-= 11.2.8 =
-
-* Added Contact Form (RSVPMaker) block - a basic contact form that works with the RSVPMaker form builder. Track general inquiries as well as RSVPs through the RSVP Report.
-* RSVP Report updated to let you see all contacts, whether or not they are associated with an event.
 
 = 11.2.6 =
 
