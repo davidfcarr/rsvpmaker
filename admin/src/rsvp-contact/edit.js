@@ -77,12 +77,14 @@ export default function Edit(props) {
             <SelectCtrl label="Switch Form" value={form_id} options={formOptions} onChange={(id) => {
             setAttributes({'form_id':id});
          }} />
-         <p>{__('To customize forms or create new ones, see RSVPMaker Settings','rsvpmaker')}: <a target="_blank" href="/wp-admin/options-general.php?page=rsvpmaker_settings&tab=forms">Forms</a></p>
+         <p><a target="_blank" href={"/wp-admin/post.php?post="+form_id+"&action=edit"}>{__('Edit form','rsvpmaker')}</a></p>
+         <p>{__('To create new forms, see RSVPMaker Settings','rsvpmaker')}: <a target="_blank" href="/wp-admin/options-general.php?page=rsvpmaker_settings&tab=forms">Forms</a></p>
             </PanelBody>
         </InspectorControls>
-        {!form.length && <p>Loading form</p>}
-        {form.length && <TextControl label='Subject' />}
-        {form.length &&
+        {form.length == 0 && <p>Loading form</p>}
+        {isSelected && <div>See sidebar for form options</div>}
+        {form.length > 0 && <TextControl label='Subject' />}
+        {form.length > 0 &&
         form.map((block, blockindex) => {
             const isrsvp = block.blockName && block.blockName.indexOf('rsvpmaker') > -1;
             console.log('block',block);
@@ -104,7 +106,7 @@ export default function Edit(props) {
             );
         })
         }
-        {form.length && <p><button>Send</button></p>}
+        {form.length > 0 && <p><button>Send</button></p>}
         </div>
     );
 }

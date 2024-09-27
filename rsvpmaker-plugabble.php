@@ -573,17 +573,12 @@ function rsvp_form_setup_form( $rsvp_form ) {
 
 if ( ! function_exists( 'capture_email' ) ) {
 
-	function capture_email( $rsvp ) {
-
+	function rsvpmaker_capture_email( $rsvp ) {
 		// placeholder function, may be overriden to sign person up for email list
-
 		// or use this action, triggered by email_list_ok parameter in form
-
 		if ( isset( $rsvp['email_list_ok'] ) && $rsvp['email_list_ok'] ) {
-
 			do_action( 'rsvpmaker_email_list_okay', $rsvp );
 		}
-
 	}
 } // end capture email
 
@@ -774,7 +769,7 @@ if ( ! function_exists( 'save_replay_rsvp' ) ) {
 
 			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID);
 
-			capture_email( $rsvp );
+			rsvpmaker_capture_email( $rsvp );
 
 			$rsvp_id = ( isset( $_POST['rsvp_id'] ) ) ? (int) $_POST['rsvp_id'] : 0;
 
@@ -1311,7 +1306,7 @@ if ( ! function_exists( 'save_rsvp' ) ) {
 				$nv['owed'] = 0;
 			}
 
-			capture_email( $rsvp );
+			rsvpmaker_capture_email( $rsvp );
 
 			if ( $rsvp_id ) {
 				if($owed) {
@@ -2980,8 +2975,10 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 	
 	echo '</h3>';
 
+	$permalink = get_permalink($row['event']);
+
 	if ( $row['master_rsvp'] ) {
-	
+
 		if ( isset( $guestcount[ $row['master_rsvp'] ] ) ) {
 	
 			$guestcount[ $row['master_rsvp'] ]++;
@@ -2991,6 +2988,12 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 		}
 	} else {
 		$master_row[ $row['id'] ] = $row['first'] . ' ' . $row['last'];
+		if(empty($_GET['rsvp_print'])) {
+			$url = add_query_arg('update',$row['id'],$permalink);
+			$url = add_query_arg('e',$row['email'],$url);
+			$url = add_query_arg('t',time(),$url).'#rsvpnow';							
+			printf('<p>Update link: <a href="%s" target="_blank">%s</a></p><p><em>Share with users who want to update their details or add guests.</em></p>',$url,$url);	
+		}
 	}
 	
 	if ( $row['details'] ) {

@@ -3381,7 +3381,6 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 			}
 		}
 		if ( ! isset( $rsvp['first'] ) ) {
-
 			$rsvp['first'] = '';
 		}
 
@@ -3394,13 +3393,14 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 		$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'event'=>0, 'note' => $note, 'details'=>serialize( $rsvp ),'user_id'=>$current_user->ID,'note'=>$note);
 		$id = $wpdb->insert($wpdb->prefix.'rsvpmaker',$nv);
 		$sitename = get_option('sitename');
+		rsvpmaker_capture_email( $rsvp );
 		$mail['html'] = '<p>Contact form submission from '.$sitename.'</p>';
 		foreach($rsvp as $key => $item) {
 			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$key,$item);
 		}
 		$mail['html'] .= '<p>'.nl2br($note).'</p>';
 		$mail['from'] = $rsvp['email'];
-		$mail['fromname'] = $rspv['first'].' '.$rsvp['last'].' via '.$_SERVER['SERVER_NAME'];
+		$mail['fromname'] = $rsvp['first'].' '.$rsvp['last'].' (Contact Form)';
 		$mail['subject'] = $rsvp['subject'].' (Contact: '.$_SERVER['SERVER_NAME'].')';
 		$recipients = explode(",",$rsvp_options['rsvp_to']);
 		foreach($recipients as $recipient) {
