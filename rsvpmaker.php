@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.3.8
+* Version: 11.3.9
 */
 
 function get_rsvpversion() {
-	return '11.3.8';
+	return '11.3.9';
 }
 
 global $wp_version;
@@ -472,6 +472,8 @@ if ( version_compare( PHP_VERSION, '5.3.0' ) >= 0 ) {
 // make sure new rules will be generated for custom post type - flush for admin but not for regular site visitors
 function cpevent_activate() {
 	global $wpdb, $rsvp_options;
+	if(!$rsvp_options)
+		$rsvp_options = rsvp_options_defaults();
 
 //load dbDelta
 require_once ABSPATH . 'wp-admin/includes/upgrade.php';
