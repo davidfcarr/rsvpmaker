@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.3.9
+* Version: 11.4.1
 */
 
 function get_rsvpversion() {
-	return '11.3.9';
+	return '11.4.1'; 
 }
 
 global $wp_version;
@@ -527,7 +527,7 @@ KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ";
 $dbversion = hash('sha256', $sql);
-if(!empty($rsvp_options['dbversion']) || ($dbversion == $rsvp_options['dbversion']) )
+if(!empty($rsvp_options['dbversion']) && ($dbversion == $rsvp_options['dbversion']) )
 	{
 		return;
 	}

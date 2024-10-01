@@ -30,7 +30,7 @@ if(!function_exists('get_rsvpmaker_timestamp')) {
 	function get_rsvpmaker_timestamp( $post_id ) {
 		$event = get_rsvpmaker_event($post_id);
 		return intval($event->ts_start);
-	}	
+	}
 }
 
 function add_rsvpmaker_event($post_id,$date,$enddate='',$display_type='',$tz='') {
