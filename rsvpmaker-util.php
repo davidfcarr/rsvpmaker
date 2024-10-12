@@ -1,4 +1,5 @@
-<?php
+<?php 
+ 
 /*
 utilities
 */
@@ -703,23 +704,41 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 	}
 
 	echo '<p><label>' . __( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
-	?>
-<option value=""><?php echo __( 'Not set (optional)', 'rsvpmaker' ); ?></option>
+	 
+?>
+
+<option value=""><?php 
+  echo __( 'Not set (optional)', 'rsvpmaker' );  
+?>
+</option>
 
 <option value="set" 
-	<?php
+	<?php 
+ 
 	if ( $duration_type == 'set' ) {
 		echo ' selected="selected" ';}
-	?>
- ><?php echo __( 'Set end time', 'rsvpmaker' ); ?></option>
+	 
+?>
+
+ ><?php 
+  echo __( 'Set end time', 'rsvpmaker' );  
+?>
+</option>
 
 <option value="allday" 
-	<?php
+	<?php 
+ 
 	if ( $duration_type == 'allday' ) {
 		echo ' selected="selected" ';}
-	?>
-><?php echo __( 'All day/time not shown', 'rsvpmaker' ); ?></option>
-<?php
+	 
+?>
+
+><?php 
+  echo __( 'All day/time not shown', 'rsvpmaker' );  
+?>
+</option>
+<?php 
+ 
 	echo '</select>';
 	echo '</p>';
 }
@@ -727,24 +746,42 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 function rsvpmaker_duration_select_2021( $duration_type ) {
 
 	echo '<p><label>' . __( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
-	?>
-<option value=""><?php echo __( 'Not set (optional)', 'rsvpmaker' ); ?></option>
+	 
+?>
+
+<option value=""><?php 
+  echo __( 'Not set (optional)', 'rsvpmaker' );  
+?>
+</option>
 
 <option value="set" 
-	<?php
+	<?php 
+ 
 	if ( $duration_type == 'set' ) {
 		echo ' selected="selected" ';}
-	?>
- ><?php echo __( 'Set end time', 'rsvpmaker' ); ?></option>
+	 
+?>
+
+ ><?php 
+  echo __( 'Set end time', 'rsvpmaker' );  
+?>
+</option>
 
 <option value="allday" 
-	<?php
+	<?php 
+ 
 	if ( $duration_type == 'allday' ) {
 		echo ' selected="selected" ';}
-	?>
-><?php echo __( 'All day/time not shown', 'rsvpmaker' ); ?></option>
+	 
+?>
 
-	<?php
+><?php 
+  echo __( 'All day/time not shown', 'rsvpmaker' );  
+?>
+</option>
+
+	<?php 
+ 
 	for ( $i = 2; $i < 8; $i++ ) {
 		$multi = 'multi|' . $i;
 		$s     = ( $duration_type == $multi ) ? ' selected="selected" ' : '';
@@ -852,7 +889,7 @@ function get_next_rsvp_on() {
 		),
 		1
 	);
-	return (is_array($events)) ? $events[0] : null;
+	return (is_array($events) && !empty($events[0])) ? $events[0] : null;
 }
 
 function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT ) {
@@ -2079,11 +2116,14 @@ function rsvpmaker_cleanup() {
 
 	);
 
-	?>
+	 
+?>
+
 
 <h1>RSVPMaker Cleanup</h1>
 
-	<?php
+	<?php 
+ 
 		$sites = get_sites();
 		foreach($sites as $site) {
 			$sql   = 'SELECT count(*) FROM ' . $wpdb->base_prefix.$site->blog_id . "_posts WHERE post_type='attachment' ";
@@ -2125,13 +2165,22 @@ if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && cu
 		if ( ! preg_match( $regex, $older ) ) {
 			die( 'invalid date' );
 		}
-			?>
-		<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+			 
+?>
+
+		<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
 		
 		<input type="hidden" name="confirm_network_delete" value="1" />
 		
-					<?php submit_button( 'Confirm Delete' ); ?>
-		<?php
+					<?php 
+  submit_button( 'Confirm Delete' );  
+?>
+
+		<?php 
+ 
 		rsvpmaker_nonce();
 		$sites = get_sites();
 		foreach($sites as $site) {
@@ -2152,9 +2201,12 @@ if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && cu
 				echo '</p>';
 					//}		
 		}
-	?>
+	 
+?>
+
 	</form>
-	<?php			
+	<?php 
+ 			
 	}
 }
 
@@ -2237,21 +2289,33 @@ if ( isset( $_POST['rsvpmaker_template_duplicates'] )  && wp_verify_nonce(rsvpma
 
 		if ( ! isset( $_POST['confirm'] ) ) {
 
-			?>
+			 
+?>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
 
 <input type="hidden" name="confirm" value="1" />
 
-<input type="hidden" name="older_than" value="<?php echo esc_attr( $older ); ?>" /> 
+<input type="hidden" name="older_than" value="<?php 
+  echo esc_attr( $older );  
+?>
+" /> 
 rsvpmaker_nonce();
-			<?php submit_button( 'Confirm Delete' ); ?>
+			<?php 
+  submit_button( 'Confirm Delete' );  
+?>
+
 
 </form>
 
 <div>Preview</div>
 
-			<?php
+			<?php 
+ 
 
 		}
 
@@ -2296,19 +2360,31 @@ rsvpmaker_nonce();
 
 		if ( ! isset( $_POST['confirm'] ) ) {
 
-			?>
+			 
+?>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
+
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
 rsvpmaker_nonce();
 <input type="hidden" name="confirm" value="1" />
 
-RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo esc_attr( $older ); ?>" /> 
+RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php 
+  echo esc_attr( $older );  
+?>
+" /> 
 
-			<?php submit_button( 'Confirm Delete' ); ?>
+			<?php 
+  submit_button( 'Confirm Delete' );  
+?>
+
 
 </form>
 
-			<?php
+			<?php 
+ 
 
 		}
 
@@ -2326,73 +2402,148 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php echo 
 		printf( '<p><a href="%s">Reload form</a></p>', admin_url( 'tools.php?page=rsvpmaker_cleanup' ) );
 	} else {
 		$minus30 = strtotime( '30 days ago' );
-		?>
+		 
+?>
 
-<h2><?php esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' ); ?></h2>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-<?php rsvpmaker_nonce();
-esc_html_e( 'Delete events older than', 'rsvpmaker' ); ?> <input type="date" name="older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
+<h2><?php 
+  esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' );  
+?>
+</h2>
+
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
 <?php 
+  rsvpmaker_nonce();
+esc_html_e( 'Delete events older than', 'rsvpmaker' );  
+?>
+ <input type="date" name="older_than" value="<?php 
+  echo date( 'Y-m-d', $minus30 );  
+?>
+" /> 
+<?php 
+  
 
 if(is_multisite() && current_user_can('manage_network')) {
 	printf('<p><input type="checkbox" name="multisite_clean" value="1"> Apply to all sites in multisite network.</p>');
 }
 
-submit_button( 'Delete' ); ?>
+submit_button( 'Delete' );  
+?>
+
 
 </form>
 
-<h2><?php esc_html_e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' ); ?></h2>
+<h2><?php 
+  esc_html_e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' );  
+?>
+</h2>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-<?php rsvpmaker_nonce(); ?>
-		<?php esc_html_e( 'Delete RSVP event registrations older than', 'rsvpmaker' ); ?> <input type="date" name="rsvps_older_than" value="<?php echo date( 'Y-m-d', $minus30 ); ?>" /> 
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
+<?php 
+  rsvpmaker_nonce();  
+?>
 
-		<?php submit_button( 'Delete' ); ?>
+		<?php 
+  esc_html_e( 'Delete RSVP event registrations older than', 'rsvpmaker' );  
+?>
+ <input type="date" name="rsvps_older_than" value="<?php 
+  echo date( 'Y-m-d', $minus30 );  
+?>
+" /> 
+
+		<?php 
+  submit_button( 'Delete' );  
+?>
+
 
 </form>
 
-<h2><?php esc_html_e( 'Apply Defaults', 'rsvpmaker' ); ?></h2>
+<h2><?php 
+  esc_html_e( 'Apply Defaults', 'rsvpmaker' );  
+?>
+</h2>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-<?php rsvpmaker_nonce(); ?>
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
+<?php 
+  rsvpmaker_nonce();  
+?>
 
-<p><?php esc_html_e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' ); ?></p>
 
-<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php esc_html_e( 'All fields', 'rsvpmaker' ); ?></div>
+<p><?php 
+  esc_html_e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' );  
+?>
+</p>
 
-		<?php
+<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php 
+  esc_html_e( 'All fields', 'rsvpmaker' );  
+?>
+</div>
+
+		<?php 
+ 
 
 		foreach ( $defaults as $index => $field ) {
 
 			printf( '<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>', esc_attr( $index ), esc_html( $field ) );
 		}
 
-		?>
+		 
+?>
 
-		<?php submit_button( 'Reset' ); ?>
+
+		<?php 
+  submit_button( 'Reset' );  
+?>
+
 
 </form>
 
 
 <h2>Check RSVPMaker Templates for Duplicates</h2>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-<?php rsvpmaker_nonce();
-?> <input type="hidden" name="rsvpmaker_template_duplicates" value="1" /> 
-		<?php submit_button( 'Check Now' ); ?>
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
+<?php 
+  rsvpmaker_nonce();
+ 
+?>
+ <input type="hidden" name="rsvpmaker_template_duplicates" value="1" /> 
+		<?php 
+  submit_button( 'Check Now' );  
+?>
+
 </form>
 
 <h2>Check RSVPMaker Database Tables</h2>
 
-<form method="post" action="<?php echo admin_url( 'tools.php?page=rsvpmaker_cleanup' ); ?>">
-<?php rsvpmaker_nonce();
-?> <input type="hidden" name="rsvpmaker_database_check" value="1" /> 
-		<?php submit_button( 'Check Now' ); ?>
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>
+">
+<?php 
+  rsvpmaker_nonce();
+ 
+?>
+ <input type="hidden" name="rsvpmaker_database_check" value="1" /> 
+		<?php 
+  submit_button( 'Check Now' );  
+?>
+
 </form>
 
-<?php
+<?php 
+ 
 	$tables = $wpdb->get_results('SHOW TABLES');
 	foreach ($tables as $mytable)
 	{
@@ -2402,7 +2553,9 @@ submit_button( 'Delete' ); ?>
 			echo $t . "<br>";
 		}
 	}
+ 
 ?>
+
 
 <script>
 
@@ -2420,7 +2573,8 @@ $(document).on( 'click', '.default_field', function() {
 
 </script>
 
-		<?php
+		<?php 
+ 
 	}
 	// end initial form
 }
@@ -4021,12 +4175,15 @@ function rsvpmaker_number_events_ui($t) {
 			*/
 		}
 	}
-	?>
+	 
+?>
+
 	<h3>Number Events</h3>
 	<p><em>This feature is for sequential numbering of events, for example class sessions or meetings since a Toastmasters club was chartered.</em></p>
 	<p>To use it, use the form below to set the number of the next event or a selected upcoming event.</p>
 	<p>Include the shortcode (placeholder) <code>[rsvpmaker_numbered]</code> with the square brackets included in the text of your event template document, as part of a paragraph or heading (but not the main post title). When you go through the Create / Update routine, that code will then be copied to the event posts for specific dates, each of which will have an event number set. When displayed on the website, that code will be replaced with the event number.</p>
-	<?php	
+	<?php 
+ 	
 	printf('<form method="post" action="%s"><p>Starting number <input type="number" name="start_number" value="%d"><p>Starting with <select name="starting_with">%s</select></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t), $isset, $defaultoption.$options);
 	submit_button('Add Numbering');
 	echo '</form>';
@@ -4142,17 +4299,26 @@ add_filter('rsvpmaker-admin-heading-help','rsvpmaker_admin_heading_help',1,2);
 function rsvpmaker_admin_heading($headline, $function, $tag='', $sidebar = '') {
 if(!empty($tag))
 	$function .= '_'.$tag;
+ 
 ?>
+
 <div class="rsvpmaker-admin-heading">
-<?php
+<?php 
+ 
 $help = apply_filters('rsvpmaker-admin-heading-help','',$function,$tag);
 $help .= $sidebar;
 if(!empty($help)) 
 	echo '<div class="rsvpmaker-admin-heading-help" style="float: right; margin-left: 20px; width: 300px; background-color: #FFFFE0; padding-left: 10px; border: thin dotted #000;"><p><strong>Help Resources</strong></p>'.$help.'</div>';
+ 
 ?>
-<div class="rsvpmaker-admin-heading-headline" ><h1><?php echo $headline; ?></h1></div>
+
+<div class="rsvpmaker-admin-heading-headline" ><h1><?php 
+  echo $headline;  
+?>
+</h1></div>
 </div>
-<?php
+<?php 
+ 
 }
 
 //add_action('admin_footer','rsvpmaker_update_help');
@@ -4214,36 +4380,53 @@ function rsvpmaker_print_format($content, $context = '', $title='') {
 global $post;
 if(!$title && isset($post))
 	$title = $post->post_title;
+ 
 ?>
+
 <html>
 <head>
-	<title><?php echo esc_html($title); ?></title>
+	<title><?php 
+  echo esc_html($title);  
+?>
+</title>
 	<style>
 		body {padding: 10px;}
 		a {text-decoration: none; color: black;}
 		.noprint {display: none;}
 	</style>
-	<?php do_action('rsvpmaker_print_format_head',$context); ?>
+	<?php 
+  do_action('rsvpmaker_print_format_head',$context);  
+?>
+
 </head>
 <body>
-<?php
+<?php 
+ 
 do_action('rsvpmaker_print_format_top',$context);
 echo wp_kses_post($content);
 do_action('rsvpmaker_print_format_top',$context);
+ 
 ?>
+
 </body>
 </html>
-<?
+<?php
 exit();
 }
 
 function rsvpmaker_confirm_payment($rsvp_id) {
 	global $wpdb, $rsvp_options;
 	$row = $wpdb->get_row('SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $rsvp_id);
-	$event = get_rsvpmaker_event($row->event);
 	$rsvpdata['rsvpmessage'] = rsvpmaker_guestparty($rsvp_id,true,true);
-	$rsvpdata['rsvptitle'] = $event->post_title;
-	$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],intval($row->ts_start));
+	if($row->event) {
+		$event = get_rsvpmaker_event($row->event);
+		$rsvpdata['rsvptitle'] = $event->post_title;
+		$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],intval($event->ts_start));
+	}
+	else {
+		$rsvpdata['rsvptitle'] = (strpos($rsvpdata['rsvpmessage'],'Gift Certificate')) ? 'Gift Certificate' : 'Payment';
+		$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date']);
+	}
 	$rsvpdata['email'] = $row->email;
 	$rsvpdata['event_id'] = $row->event;
 	$rsvpdata['rsvp_id'] = $rsvp_id;
@@ -4288,6 +4471,9 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 			else {
 				$currency = strtoupper($currency).' ';
 			}
+			if(isset($_GET['showrow']))
+				$guestparty .= var_export($row,true);
+	
 			$guestparty .= '<p><strong>Paid: '.$currency.number_format($row['amountpaid'],2).'</strong></p>';
 			if($row['owed'] > 0) {
 				$guestparty .= '<p style="color:red;"><strong>Owed: '.$currency.number_format($row['owed'],2).'</strong></p>';
@@ -4305,8 +4491,12 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 			$guestparty .= '<br>'.ucwords(str_replace('_',' ',$key)).': '.$value;
 		}
 		$guestparty .= '</p>';
-		$guestparty .= sprintf('<p class="noprint"><a class="wp-block-button__link" style="background-color: green;" href="%s#rsvpnow">%s</a></p>',add_query_arg(array('update'=>$rsvp_id,'e'=>urlencode($row['email']),'t'=>time()),get_permalink($row['event'])),__('Update RSVP','rsvpmaker'));
-}
+		if($row['event'])
+			$guestparty .= sprintf('<p class="noprint"><a class="wp-block-button__link" style="background-color: green;" href="%s#rsvpnow">%s</a></p>',add_query_arg(array('update'=>$rsvp_id,'e'=>urlencode($row['email']),'t'=>time()),get_permalink($row['event'])),__('Update RSVP','rsvpmaker'));
+		if(isset($row['gift_certificate']))
+			$guestparty .= sprintf('<h1>Gift Certificate Code:<br />%s<h1>',$row['gift_certificate']);
+		//$guestparty .= var_export($row,true);
+	}
 
 	$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $rsvp_id . ' ORDER BY id';
 
@@ -4719,3 +4909,30 @@ function rsvpmaker_data_from_document($content) {
     return $results;
 }
 
+function rsvpmaker_gift_certificate($rsvp) {
+	if(!empty($rsvp['coupon_code']) && strpos($rsvp['coupon_code'],'GIFT') !== false ) {
+		$gift = get_option($rsvp['coupon_code']);
+		if($gift)
+			$gift = floatval($gift);
+		if(empty($rsvp['amountpaid']))
+			$rsvp['amountpaid'] = 0.00;
+		$owed = $rsvp['fee_total'] - $rsvp['amountpaid'];
+		if($owed > $gift)
+		{
+			$add = $gift;
+			$newvalue = 0;
+		}
+		else {
+			//gift certificate is more than amount owed
+			$newvalue = $gift - $owed;
+			$add = $owed;
+		}
+		if($newvalue)
+			update_option($rsvp['coupon_code'],$newvalue);
+		else
+			delete_option($rsvp['coupon_code']);
+		$rsvp['amountpaid'] += $add;
+		error_log('rsvpmaker_gift_certificate apply '.$add.' new value '.$newvalue);
+	}
+	return $rsvp;
+}

@@ -179,7 +179,7 @@ class FieldInspector extends Component {
 			setAttributes({label: label});
 			return;
 			}
-		let simpleSlug = label.replace(/[^A-Za-z0-9]+/g,'_');
+		let simpleSlug = label.replaceAll(/[^A-Za-z0-9]+/g,'_');
 		simpleSlug = simpleSlug.trim().toLowerCase();
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});
@@ -218,7 +218,7 @@ class TextAreaInspector extends Component {
 	const { attributes, setAttributes, className } = this.props;
 	function setLabel(label) {
 		const slug = attributes.slug;
-		let simpleSlug = label.replace(/[^A-Za-z0-9]+/g,'_');
+		let simpleSlug = label.replaceAll(/[^A-Za-z0-9]+/g,'_');
 		simpleSlug = simpleSlug.trim().toLowerCase();
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});

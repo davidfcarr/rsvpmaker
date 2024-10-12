@@ -208,7 +208,7 @@ class RSVPMaker_iCal {
 
 			echo "BEGIN:VCALENDAR\r\n";
 			echo "VERSION:2.0\r\n";
-			echo 'PRODID:-//DIGITAL FACTORY//EVENTS MAKER V' . get_option( 'RSVPMaker_version' ) . "//EN\r\n";
+			echo 'PRODID:-//DIGITAL FACTORY//EVENTS MAKER V' . esc_attr(get_option( 'RSVPMaker_version' )) . "//EN\r\n";
 			echo "CALSCALE:GREGORIAN\r\n";
 
 			// all events data

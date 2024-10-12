@@ -65,13 +65,10 @@ if ( ! wp_is_json_request() ) {
 
 }
 
+add_filter( 'the_content', 'event_content', 5 );
 
-
-// event_content defined in rsvpmaker-pluggable.php to allow for variations
-
-add_filter( 'the_content', 'rsvpmaker_event_content_anchor', 50 );
-
-function rsvpmaker_event_content_anchor( $content ) {
+//rsvpmaker_event_content_anchor
+add_filter( 'the_content', function ( $content ) {
 
 	global $post;
 
@@ -82,11 +79,10 @@ function rsvpmaker_event_content_anchor( $content ) {
 
 	return '<div id="rsvpmaker_top"></div>' . $content;
 
-}
+}, 50 );
 
-add_filter( 'the_content', 'event_content', 5 );
-
-function event_js( $content ) {
+//event_js
+add_filter( 'the_content', function ( $content ) {
 
 	global $post;
 
@@ -113,10 +109,7 @@ function event_js( $content ) {
 	return $content . rsvp_form_jquery();
 
 }
-
-
-
-add_filter( 'the_content', 'event_js', 15 );
+, 15 );
 
 
 
@@ -410,7 +403,7 @@ function rsvpmaker_where_past( $where ) {
 
 	} elseif ( isset( $_GET['startday'] ) ) {
 
-		$t = rsvpmaker_strtotime( $_GET['startday'] );
+		$t = rsvpmaker_strtotime( sanitize_text_field($_GET['startday']) );
 
 		$d = date( 'Y-m-d', $t );
 
@@ -836,7 +829,7 @@ function rsvpmaker_calendar_where( $where ) {
 
 	} elseif ( isset( $_GET['startday'] ) ) {
 
-		$t = rsvpmaker_strtotime( $_GET['startday'] );
+		$t = rsvpmaker_strtotime( sanitize_text_field($_GET['startday']) );
 
 		$d = "'" . rsvpmaker_date( 'Y-m-d', $t ) . "'";
 
@@ -911,7 +904,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 		$startday = $atts['startday'];
 	}
 
-	$self = $req_uri = site_url(preg_replace('/\?cm.+/','',$_SERVER['REQUEST_URI']));
+	$self = $req_uri = site_url(preg_replace('/\?cm.+/','',sanitize_text_field($_SERVER['REQUEST_URI'])));
 
 	$req_uri .= ( strpos( $req_uri, '?' ) ) ? '&' : '?';
 
@@ -1574,9 +1567,7 @@ function get_utc_ical( $timestamp ) {
 
 
 function rsvp_row_to_profile( $row ) {
-
 	if ( empty( $row['details'] ) ) {
-
 		$profile = array();
 
 	} else {
@@ -1584,21 +1575,12 @@ function rsvp_row_to_profile( $row ) {
 	}
 
 	if ( is_array( $row ) ) {
-
 		foreach ( $row as $field => $value ) {
-
-			if ( isset( $profile[ $field ] ) || ( $field == 'details' ) ) {
-
-				continue;
-
-			} else {
+			if('details' != $field)
 				$profile[ $field ] = $value;
-			}
 		}
 	}
-
 	return $profile;
-
 }
 
 
@@ -2058,7 +2040,7 @@ function rsvpmaker_replay_form( $event_id ) {
 	$rsvp_instructions = get_post_meta( $event_id, '_rsvp_instructions', true );
 	ob_start();
 	if ( isset( $_GET['err'] ) ) {
-		echo '<div style="padding: 10px; margin: 10px; width: 100%; border: medium solid red;">' . htmlentities( $_GET['err'] ) . '</div>';
+		echo '<div style="padding: 10px; margin: 10px; width: 100%; border: medium solid red;">' . htmlentities( sanitize_text_field($_GET['err']) ) . '</div>';
 	}
 	?>
 
@@ -2718,7 +2700,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 				$termslugs[] = $term->slug;
 
-				$term_links[] = '<a href="' . esc_attr( get_term_link( $term->slug, 'rsvpmaker-type' ) ) . '">' . __( $term->name ) . '</a>';
+				$term_links[] = '<a href="' . esc_attr( get_term_link( $term->slug, 'rsvpmaker-type' ) ) . '">' . $term->name . '</a>';
 			}
 		}
 
@@ -3125,7 +3107,7 @@ add_action('pre_get_posts','rsvpmaker_pre_get_posts');
 function rsvpmaker_pre_get_posts($query) {
 	if(isset($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') {
 		if(isset($_GET['excludeType']))
-			$query->query['excludeType'] = $_GET['excludeType'];
+			$query->query['excludeType'] = sanitize_text_field(wp_unslash($_GET['excludeType']));
 		if(!empty($query->query['excludeType'])) {
 		$tax_query = array('taxonomy' => 'rsvpmaker-type',
 		'field'    => 'slug',

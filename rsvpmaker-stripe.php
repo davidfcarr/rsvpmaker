@@ -913,6 +913,8 @@ function rsvpmaker_stripe_transactions() {
 	$limit = isset($_GET['history']) ? intval($_GET['history']) : 50;
 	$transactions = rsvpmaker_stripe_transactions_list($limit);
 	$yield = '';
+	//$temp_memory = fopen( 'php://output', 'w' );
+
 	if ( $transactions ) {
 		$transaction = (array) $transactions[0];
 		$th                   = '<tr>';
@@ -923,7 +925,7 @@ function rsvpmaker_stripe_transactions() {
 		}
 		$th    .= '</tr>';
 		$export = implode( ',', $columns ) . "\n";
-		fputcsv( $temp_memory, $columns );
+		//fputcsv( $temp_memory, $columns );
 		foreach ( $transactions as $index => $transaction ) {
 			$row         = array();
 			$line        = '';

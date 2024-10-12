@@ -21,14 +21,3 @@ export function NumberCtrl (props) {
         </div>
     )
 }
-/*
-export function RadioCtrl (props) {
-    const buttonDisplay = {'display': (props.buttonDisplay) ? props.buttonDisplay : 'inline-block' };
-    return (
-        <div onChange={(e) => props.onChange(e.target.value)}>
-            <label style={{'display':'block','fontSize':'11px','textTransform':'uppercase'}}>{props.label}</label>
-            <input type="number" value={(props.value) ? props.value : 0} onChange={(e) => props.onChange(e.target.value)} />
-        </div>
-    )
-}
-*/

@@ -3015,7 +3015,7 @@ function rsvp_get_pricing($post_id) {
 	else {
 		$pricing = [];
 		$per = get_post_meta($post_id,'_per',true);
-		if($per) {
+		if(!empty($per) && !empty($per['unit'])) {
 			foreach($per['unit'] as $index => $unit)
 			{
 				$price = $per['price'][$index];
@@ -3344,18 +3344,19 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 		global $wpdb, $current_user, $rsvp_options;
 		$postdata = $_POST;
 		$rsvp['subject'] = sanitize_text_field($postdata['contact_subject']);
+		$post_id = intval($postdata['post_id']);
+		$is_order = empty($postdata['is_order']) ? false : sanitize_text_field($postdata['is_order']);
 		foreach ( $postdata['profile'] as $name => $value ) {
 			$rsvp[ $name ] = sanitize_text_field( $value );
 		}
-		$note = sanitize_textarea_field($postdata['note']);
-		if(!$note)
+		$note = (empty($postdata['note'])) ? '' : sanitize_textarea_field($postdata['note']);
+		if(!$note && !$is_order)
 			return new WP_REST_Response(array('no_note'=>1), 200 );
 		if ( ! is_admin() && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) ) {
 			if ( ! rsvpmaker_recaptcha_check( $rsvp_options['rsvp_recaptcha_site_key'], $rsvp_options['rsvp_recaptcha_secret'] ) ) {
 				return new WP_REST_Response(array('error'=>'Failed security check'), 200 );
 			}
 		}
-
 		if ( isset( $postdata['required'] ) || empty( $rsvp['email'] ) ) {
 			if(isset( $postdata['required'] ))
 			$required = explode( ',', $postdata['required'] );
@@ -3391,13 +3392,26 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 			return new WP_REST_Response(array('error'=>'not a valid email: '.$rsvp['email']), 200 );
 		}
 		$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'event'=>0, 'note' => $note, 'details'=>serialize( $rsvp ),'user_id'=>$current_user->ID,'note'=>$note);
-		$id = $wpdb->insert($wpdb->prefix.'rsvpmaker',$nv);
+		$wpdb->insert($wpdb->prefix.'rsvpmaker',$nv);
+		$id = $wpdb->insert_id;
 		$sitename = get_option('sitename');
 		rsvpmaker_capture_email( $rsvp );
 		$mail['html'] = '<p>Contact form submission from '.$sitename.'</p>';
 		foreach($rsvp as $key => $item) {
-			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$key,$item);
+			if($is_order && (strpos($key,$is_order) !== false) && (strpos($item,':') !== false)) {
+				$purchase = explode(':',$item);
+				$purchase[1] = trim($purchase[1]);
+				$purchase_code = 'rsvp_purchase_'.time();
+				set_transient($purchase_code,$purchase);
+			}
+			$label = ucfirst(str_replace('_',' ',$key));		
+			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$key,$label);
 		}
+		if($post_id && !empty($purchase_code)) {
+			$purchase_link = add_query_arg(array('purchase_code'=>$purchase_code,'rsvp_id'=>$id),get_permalink($post_id));
+			return new WP_REST_Response(array('sending'=>$id,'purchase_link'=>$purchase_link), 200 );
+		}
+
 		$mail['html'] .= '<p>'.nl2br($note).'</p>';
 		$mail['from'] = $rsvp['email'];
 		$mail['fromname'] = $rsvp['first'].' '.$rsvp['last'].' (Contact Form)';

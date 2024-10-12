@@ -59,15 +59,31 @@ function paypal_verify_rest () {
         $status = $data->status.' payment of '.number_format( $paidnow, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'].' from '.$data->payer->name->given_name.' '.$data->payer->name->surname;
         $event_id = 0;
         if($rsvp_id) {
-          $row = $wpdb->get_row("SELECT * FROM $rsvptable WHERE id=$rsvp_id");       
+          $row = $wpdb->get_row("SELECT * FROM $rsvptable WHERE id=$rsvp_id");
+          $details = unserialize($row->details);
           $paidbefore = (empty($row->amountpaid)) ? 0 : floatval($row->amountpaid);
           $paid = ($paidbefore) ? $paidbefore + $paidnow : $paidnow;
           $fee_total = floatval($row->fee_total);
           $calculation = "$fee_total - $paid";
           $owed = $fee_total - $paid;
+          if($details['gift_certificate']) {
+            $gift = get_option($details['gift_certificate']);
+            $balance_was = $fee_total - $paidbefore;
+          }
           $event_id = $row->event;
           $updatesql = "UPDATE $rsvptable SET amountpaid='$paid', owed='$owed' WHERE id=$rsvp_id";
-          $wpdb->query($updatesql);  
+          $wpdb->query($updatesql);
+        }
+        $gift_certificate = '';
+        if(!empty($saved['purchase_code'])) {
+          $purchase = get_transient($saved['purchase_code']);
+          if(!empty($purchase[0]) && strpos('Gift',$purchase[0]) !== false) {
+            $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
+            $details['gift_certficate'] = $gift_certificate;
+            $sql = $wpdb->prepare("UPDATE $rsvptable set details=%s WHERE id=$rsvp_id",serialize($details));
+            $wpdb->query($sql);
+            add_option($gift_certificate,str_replace('$','',$purchase[1]));
+          }
         }
         $atts['name'] = $data->payer->name->given_name.' '.$data->payer->name->surname;
         $atts['email'] = $data->payer->email_address;
@@ -77,7 +93,7 @@ function paypal_verify_rest () {
         $atts['description'] = $data->purchase_units[0]->description;
         $atts['status'] = 'PayPal';
         $existing = rsvpmaker_money_tx($atts);
-        do_action('rsvpmaker_paypal_confirmation_tracking',$data);
+        do_action('rsvpmaker_paypal_confirmation_tracking',$data,$saved);
         $postdata = null;
         if(isset($saved['rsvpmulti'])) {
           $postdata = get_transient($saved['rsvpmulti']);
@@ -114,13 +130,60 @@ function paypal_verify_rest () {
           }
           $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($event_id));
         }
-        return array('status'=>$status,'receipt_link'=>$rsvp_receipt_link,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing);
+  return array('status'=>$status,'receipt_link'=>$rsvp_receipt_link,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing,'gift_certificate'=>$gift_certificate);
 }
 
 add_shortcode('rsvpmaker_paypal_button_invoice','rsvpmaker_paypal_button_invoice');
 function rsvpmaker_paypal_button_invoice($atts) {
   $vars['invoice_id'] = 'dues-123';
   return rsvpmaker_paypal_button (40, 'USD', 'test transaction with invoice', $vars);
+}
+
+add_shortcode('rsvpmaker_paypal_choice','rsvpmaker_paypal_choice');
+function rsvpmaker_paypal_choice($atts = []) {
+  $output = '';
+  $permalink = get_permalink();
+  $ch = isset($atts['choices']) ? explode(';',$atts['choices']) : ['description:test,amount:40.00','description:test2,amount:50.00'];
+  $choices = [];
+  foreach($ch as $item) {
+    $vars = [];
+    $itemparts = explode(',',$item);
+    foreach($itemparts as $ip) {
+      $kv = explode(':',$ip);
+      $vars[$kv[0]] = $kv[1];
+    }
+    $choices[] = $vars;
+  }
+  if(isset($_GET['paypal_choice']) && !empty($choices)) {
+    $index = intval($_GET['paypal_choice']);
+    if(!empty($choices[$index])) {
+      $vars = $choices[$index];
+      $vars['showdescription'] = 'yes';
+      $currency = (empty($vars['currency'])) ? 'USD' : sanitize_text_field($vars['currency']);
+      $output .= rsvpmaker_paypal_button ($vars['amount'], $currency, $vars['description'], $vars);
+      $currency_symbol = '';
+      if ( $currency == 'USD' ) {
+        $currency_symbol = '$';
+      } elseif ( $currency == 'EUR' ) {
+        $currency_symbol = '€';
+      }
+      $output .= sprintf( '<p>%s %s<br />%s</p>', esc_html( $currency_symbol.$vars['amount'] ), esc_html( $currency ), esc_html( $vars['description'] ) );
+    }
+  } else {
+    $output .= sprintf('<p>%s:</p>',__('Choices','rsvpmaker'));
+    foreach($choices as $index => $choice) {
+      $currency = (empty($choice['currency'])) ? 'USD' : sanitize_text_field($choice['currency']);
+      $currency_symbol = '';
+      if ( $currency == 'USD' ) {
+        $currency_symbol = '$';
+      } elseif ( $currency == 'EUR' ) {
+        $currency_symbol = '€';
+      }
+      $output .= sprintf('<p><a href="%s">%s - %s%s %s</a></p>',add_query_arg('paypal_choice',$index,$permalink),$choice['description'],$currency_symbol,$choice['amount'],$currency);
+    }
+  }
+  
+  return $output; 
 }
 
 //rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) )
@@ -144,6 +207,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     $verify .= '&'.$key.'='.$value;
   $vars['amount'] = $amount;
   $vars['description'] = $description;
+  $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
   $transaction_code = wp_generate_password(20,false,false);
   set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,time()+(15 * MINUTE_IN_SECONDS));
@@ -197,6 +261,11 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       if(myJson.status)
           {
               result = '<p>'+myJson.status+'</p>';
+              if(myJson.gift_certificate) {
+                console.log('gift certificate');
+                console.log(myJson);
+                result += '<h1>'+myJson.gift_certificate+'</h1><p>Give this code to the recipient of your gift. To redeem, enter into the coupon field of the registration form for any event on this site.</p>';
+              }
               if(myJson.receipt_link)
                 result += '<p><a href="'+myJson.receipt_link+'">Print Receipt</a></p>';
           }

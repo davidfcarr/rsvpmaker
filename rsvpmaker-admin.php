@@ -2693,7 +2693,7 @@ $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 if($notify && !empty($added))
 	{
 		$admin = get_option('admin_email');
-		$mail['subject'] = __('Dates added for '.$post->post_title,'rsvpmaker');
+		$mail['subject'] = __('Dates added for ','rsvpmaker').$post->post_title;
 		if(!empty($htext)) 
 			$mail['subject'] .= ' - check overlap with holidays';
 		$mail['html'] = "<p>Dates added according to recurring event schedule.</p>\n".$added.$htext;

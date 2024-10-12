@@ -19,6 +19,10 @@
     "subject_label": {
       "type": "string",
       "default": "Subject"
+    },
+    "order": {
+      "type": "string",
+      "default": ""
     }
   },
   "version": "1",

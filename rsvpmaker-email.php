@@ -1363,7 +1363,10 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	
 	// $unsubscribed is global, can be modified by action above
 	if(!empty($unsubscribed))
+	{
+		/* translators: placeholder for number unsubscribed */
 		printf(__('Skipped %d unsubscribed emails','rsvpmaker'),count($unsubscribed) );
+	}
 	
 	//if any messages queued, make sure group email schedule is set
 	if(get_post_meta($post->ID,'rsvprelay_to',true) && !wp_get_schedule('rsvpmaker_relay_init_hook') && !rsvpmaker_postmark_is_live())
@@ -3269,7 +3272,7 @@ if(!rsvpmail_contains_email($e))
 else
 	{
 	rsvpmail_add_problem($e,'unsubscribed');
-	echo '<p>'.__('Unsubscribed <strong>'.$e.'</strong> from website email lists','rsvpmaker').'</p>';
+	echo '<p>'.__('Unsubscribed','rsvpmaker').'<strong>'.$e.'</strong> '.__('from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
 	$chimp_options = get_option('chimp', array());
 	if(!empty($chimp_options) && !empty($chimp_options["chimp-key"]))
@@ -3521,9 +3524,11 @@ function rsvp_message_via_template ($rsvpdata,$slug,$event) {
 		$mail['subject'] = str_replace('['.$field.']',$value,$mail['subject']);
 		$mail['html'] = str_replace('['.$field.']',$value,$mail['html']);
 	}
-	$event_title = get_the_title($rsvpdata['event_id']);
-	$dateblock = rsvp_date_block_email( $rsvpdata['event_id'] );
-	$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];
+	if($rsvpdata['event_id']) {
+		$event_title = get_the_title($rsvpdata['event_id']);
+		$dateblock = rsvp_date_block_email( $rsvpdata['event_id'] );
+		$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];	
+	}
 
 	$mail['to'] = $rsvpdata['email'];
 	$rsvp_id = isset($rsvpdata['rsvp_id']) ? intval($rsvpdata['rsvp_id']) : 0;
@@ -5311,7 +5316,7 @@ function rsvpmaker_email_upload_to_array($segment = '') {
 	$csv_array  = array();
 
 	if ( ! empty( $_FILES['upload_file']['tmp_name'] ) ) {
-		$file = fopen( $_FILES['upload_file']['tmp_name'], 'r' );
+		$file = fopen( sanitize_text_field($_FILES['upload_file']['tmp_name']), 'r' );
 		if ( $file ) {
 			while ( ( $line = fgetcsv( $file ) ) !== false ) {
 				// $line is an array of the csv elements

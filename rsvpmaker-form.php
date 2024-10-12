@@ -122,13 +122,14 @@ function rsvp_form_text( $atts, $content ) {
 	$label = $atts['label'];
 
 	$required = '';
-
+	$required_marker = '';
 	if ( isset( $atts['required'] ) || isset( $atts['require'] ) ) {
 		$rsvp_required_field[ $slug ] = $slug;
 		$required                     = 'required';
+		$required_marker = ' <span class="rsvprequiredfield">*</span>';
 	}
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>', esc_attr( $required ), esc_html( $label ), esc_attr( $required ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ) );
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:%s</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>', esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ) );
 
 	if ( $slug == 'email' ) {
 
@@ -648,7 +649,7 @@ function rsvpmail_signup_page_add() {
 	if($results) {
 		echo '<p><strong>Email Signup Form is Published Here:</strong> ';
 		foreach($results as $row) 
-			printf('<a href="%s">%s</a> &nbsp;',get_permalink($row->ID),$row->post_title);
+			printf('<a href="%s">%s</a> &nbsp;',esc_attr(get_permalink($row->ID)),esc_html($row->post_title));
 		echo '</p>';
 	}
 	else {
@@ -678,7 +679,12 @@ if(!is_email($postvars['email']))
 	return array('message' => 'Missing required field, email');
 global $rsvp_options;
 $mail['html'] = '';
+$purchase_link = null;
 foreach($postvars as $index => $value) {
+	if($index == 'post_id') {
+		$post_id = $value;
+		continue;
+	}
 	$value = stripslashes($value);
 	$label = ucfirst(str_replace('_',' ',$index));
 	$mail['html'] .= sprintf("<p><strong>%s</strong><br>%s</p>",$label,$value);
@@ -743,20 +749,46 @@ function rsvpmaker_form_field_labels($post_id) {
 	return $field_labels;
 }
 
+add_shortcode('rsvpmaker_contact_form_output','rsvpmaker_contact_form_capture_output');
+function rsvpmaker_contact_form_capture_output($attributes) {
+	if(isset($_GET['check_coupon']))
+		return '<p>'.get_option($_GET['check_coupon']).'</p>';
+	ob_start();
+	rsvpmaker_contact_form_output($attributes);
+	return ob_get_clean();
+}
+
+function rsvpmaker_contact_form_order($lookup) {
+	global $wpdb;
+	$purchase = get_transient($lookup['purchase_code']);
+	$rsvprow = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=".intval($lookup['rsvp_id']));
+	$description=$purchase[0].' '.$purchase[1];
+	return rsvpmaker_paypal_button (str_replace('$','',$purchase[1]), $currency_code = 'USD', $description, array('purchase_code'=>$lookup['purchase_code'],'rsvp'=>$lookup['rsvp_id'])).'<p>'.$description.'</p>';
+	//return 'lookup'.var_export($lookup,true).' '.var_export($purchase,true).'<br>'.var_export($rsvprow,true);
+}
+
 function rsvpmaker_contact_form_output($attributes) {
-global $current_user, $rsvp_options;
+	if(isset($_GET['purchase_code'])) {
+		echo rsvpmaker_contact_form_order($_GET);
+		return;
+	}
+
+global $current_user, $rsvp_options, $post;
 $user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
 ?>
-<form id="rsvpmaker_contact_form">
+<form id="rsvpmaker_contact_form"><input type="hidden" name="post_id" value="<?php echo esc_attr($post->ID); ?>" />
 <?php
-$subject_label = (empty($attributes['subject_label'])) ? 'Subject' : $attributes['subject_label'];
-printf('<div class="wp-block-rsvpmaker-formfield"><label>%s:</label><input type="text" name="contact_subject"></div>',$subject_label);
-//print_r($attributes);
-//print_r($atts);
+if(empty($attributes['order']))
+{
+	$subject_label = (empty($attributes['subject_label'])) ? 'Subject' : $attributes['subject_label'];
+	printf('<div class="wp-block-rsvpmaker-formfield"><label>%s:</label><input type="text" name="contact_subject"></div>',esc_html($subject_label));	
+}
+else
+	printf('<input type="hidden" name="is_order" value="%s" />',esc_attr($attributes['order']));
 rsvphoney_ui();
 echo rsvpmaker_basic_form( $attributes['form_id'] );
 wp_nonce_field('rsvpmaker_contact','contact_confidential');
-printf('<input type="hidden" name="user_id" value="%d" >',$user_id);
+printf('<input type="hidden" name="user_id" value="%d" >',esc_attr($user_id));
 if (! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) )
 {
 	rsvpmaker_recaptcha_output();
@@ -780,12 +812,19 @@ async function sendData() {
     });
 	const json = await response.json();
 	console.log('senddata response',json);
+	if(json.purchase_link) {
+		console.log('attempt redirect to '+json.purchase_link);
+		form.innerHTML += '<div style="color:green;border: thin solid red; padding: 15px; margin: 15px;">Redirecting to '+json.purchase_link+'</div>';
+		location.assign(json.purchase_link);
+	}
+	else {
 	if(json.no_note)
 		form.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">Note field left blank</div>';
     if(json.sending)
 		form.innerHTML = '<div style="color:green;border: thin solid green; padding: 15px; margin: 15px;">Sent</div>';
 	if(json.error)
 		form.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">'+json.error+'</div>';
+	}
   } catch (e) {
     console.error(e);
   }
@@ -799,3 +838,4 @@ form.addEventListener("submit", (event) => {
 </script>
 <?php
 }
+

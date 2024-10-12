@@ -70,20 +70,32 @@ export default function Edit(props) {
       }, [form_id]);
     if(!form.length)
     getForm();
+
+    const fieldslist = [{'label':'Field containing order information','value':''}];
+    if(form.length > 0)
+    form.map((block, blockindex) => {
+        if(block.attrs && block.attrs.label && block.attrs.slug)
+            fieldslist.push({'label':block.attrs.label,'value':block.attrs.slug});
+    })
+
     return (
         <div { ...useBlockProps() }>
         <InspectorControls key="contactinspector">
             <PanelBody title={ __( 'Contact Form', 'rsvpmaker' ) } >
             <SelectCtrl label="Switch Form" value={form_id} options={formOptions} onChange={(id) => {
             setAttributes({'form_id':id});
-         }} />
+             }} />
+            <SelectCtrl label="Order Field (optional)" value={attributes.order} options={fieldslist} onChange={(value) => {
+                setAttributes({'order':value});
+             }} />
          <p><a target="_blank" href={"/wp-admin/post.php?post="+form_id+"&action=edit"}>{__('Edit form','rsvpmaker')}</a></p>
          <p>{__('To create new forms, see RSVPMaker Settings','rsvpmaker')}: <a target="_blank" href="/wp-admin/options-general.php?page=rsvpmaker_settings&tab=forms">Forms</a></p>
+         <p>{__('For a simple order form, using RSVPMaker PayPal/Stripe integration, include a select or radio buttons field with a value in the format product description:amount (Gift Certificate: $10). Include the word "Gift" in the description to have RSVPMaker generate a gift certificate coupon code that can be entered into the RSVP form for priced events.','rsvpmaker')}</p>
             </PanelBody>
         </InspectorControls>
         {form.length == 0 && <p>Loading form</p>}
         {isSelected && <div>See sidebar for form options</div>}
-        {form.length > 0 && <TextControl label='Subject' />}
+        {form.length > 0 && !attributes.order.length && <TextControl label='Subject' />}
         {form.length > 0 &&
         form.map((block, blockindex) => {
             const isrsvp = block.blockName && block.blockName.indexOf('rsvpmaker') > -1;

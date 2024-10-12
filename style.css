@@ -88,8 +88,15 @@ max-width: 90%;
     margin: 0;
     line-height: 1;
 }    
-#rsvpform label, .wp-block-rsvpmaker-formfield label {
+#rsvpform label, .wp-block-rsvpmaker-formfield label, .wp-block-rsvpmaker-formselect label {
 display: block;
+}
+
+.wp-block-rsvpmaker-formselect select {
+    width: 50%;
+}
+.rsvprequiredfield {
+    color:red;
 }
 
 .rsvpmaker-flexible-form button {

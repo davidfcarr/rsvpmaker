@@ -780,7 +780,8 @@ function rsvpmaker_postmark_show_sent_log() {
                 if(isset($suppressions['suppressions'])) {
                     echo '<p>Suppressions (bad or blocked): ';
                     foreach($suppressions['suppressions'] as $s) {
-                        if(is_array($ignore) && in_array($s['EmailAddress'],$ignore)) {
+                        $email = strtolower($s['EmailAddress']);
+                        if(is_array($ignore) && in_array($email,$ignore)) {
                             $suppressionChanges = array(new SuppressionChangeRequest($email));
                             $messageStream = "broadcast";
                             $result = $client->deleteSuppressions($suppressionChanges, $messageStream);                        
@@ -788,8 +789,10 @@ function rsvpmaker_postmark_show_sent_log() {
                             $result = $client->deleteSuppressions($suppressionChanges, $messageStream);
                             continue;
                         }
-                        echo $s['EmailAddress'].' '.$s['CreatedAt'].' ';
-                        rsvpmail_add_problem($s['EmailAddress'],$s['SuppressionReason']);
+                        else {
+                            echo $email.' '.$s['CreatedAt'].' ';
+                            rsvpmail_add_problem($email,$s['SuppressionReason']);    
+                        }
                     } 
                     echo '<p>';
                 }            
@@ -824,23 +827,28 @@ function rsvpmaker_postmark_show_sent_log() {
 add_action('rsvpmaker_postmark_suppressions','rsvpmaker_postmark_suppressions');
 function rsvpmaker_postmark_suppressions() {
     if(rsvpmaker_postmark_is_live()) {
-        $postmark_settings = get_rsvpmaker_postmark_options();
-        $client = new PostmarkClient($postmark_settings['postmark_production_key']);
+    if(is_multisite())
+        switch_to_blog(1);
+
+    $postmark_settings = get_rsvpmaker_postmark_options();
+    $client = new PostmarkClient($postmark_settings['postmark_production_key']);
     $suppressions = $client->getSuppressions('broadcast');
     $ignore = get_option('ignore_postmark_supressions');	
     $suppressions = $client->getSuppressions('broadcast');
     if(isset($suppressions['suppressions'])) {
         echo '<p>Suppressions (bad or blocked): ';
         foreach($suppressions['suppressions'] as $s) {
-            if(is_array($ignore) && in_array($s['EmailAddress'],$ignore)) {
+            $email = strtolower($s['EmailAddress']);
+            if(is_array($ignore) && in_array($email,$ignore)) {
                 $suppressionChanges = array(new SuppressionChangeRequest($email));
                 $messageStream = "broadcast";
                 $result = $client->deleteSuppressions($suppressionChanges, $messageStream);                            
                 $messageStream = "outbound";
                 $result = $client->deleteSuppressions($suppressionChanges, $messageStream);
                 continue;
+            } else {
+                rsvpmail_add_problem($email,$s['SuppressionReason']);
             }
-            rsvpmail_add_problem($s['EmailAddress'],$s['SuppressionReason']);
         } 
     }
 }

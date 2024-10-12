@@ -278,7 +278,7 @@ if ( isset( $_GET['template_preview'] ) ) {
 } elseif ( current_user_can( 'publish_rsvpemails' ) ) {
 		$preview = str_replace('<!-- controls go here -->',rsvpmaker_email_send_ui( $html, $text ),$preview);
 }
-$test_address = (isset($_GET['personalize'])) ? sanitize_text_field(($_GET['personalize'])) : 'rsvpmaker@example.com';
+$test_address = (isset($_GET['personalize'])) ? sanitize_text_field((wp_unslash($_GET['personalize']))) : 'rsvpmaker@example.com';
 $preview = rsvpmaker_personalize_email($preview,$test_address);
 /* cannot be escaped because of embedded form content. Escaping belongs in the functions that create this output variable */
 echo $preview;
