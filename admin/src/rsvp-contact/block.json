@@ -20,9 +20,29 @@
 			"type": "string",
 			"default": "Subject"
 		},
+		"subject_prefix": {
+			"type": "string",
+			"default": ""
+		},
+		"email": {
+			"type": "string",
+			"default": ""
+		},
+		"unique_id": {
+			"type": "string",
+			"default": ""
+		},
 		"order": {
 			"type": "string",
 			"default": ""
+		},
+		"gift": {
+			"type": "string",
+			"default": "0"
+		},
+		"gateway": {
+			"type": "string",
+			"default": "Default"
 		}
         },
 	"version": "1",

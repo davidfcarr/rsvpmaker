@@ -2959,7 +2959,8 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 		if(empty($_GET['rsvp_print'])) {
 			$url = add_query_arg('update',$row['id'],$permalink);
 			$url = add_query_arg('e',$row['email'],$url);
-			$url = add_query_arg('t',time(),$url).'#rsvpnow';							
+			$url = add_query_arg('t',time(),$url).'#rsvpnow';
+			if(!empty($row['event']))							
 			printf('<p>Update link: <a href="%s" target="_blank">%s</a></p><p><em>Share with users who want to update their details or add guests.</em></p>',$url,$url);	
 		}
 	}

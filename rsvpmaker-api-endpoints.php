@@ -440,14 +440,11 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 		$key = 'conf:' . time();
 
 		foreach ( $_POST as $name => $value ) {
-
 			$vars[ $name ] = sanitize_text_field( $value );
 		}
 
 		if ( is_array( $base ) ) {
-
 			foreach ( $base as $name => $value ) {
-
 				if ( empty( $vars[ $name ] ) ) {
 					$vars[ $name ] = sanitize_text_field($value);
 				}
@@ -497,37 +494,24 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 			delete_post_meta( $rsvp_post_id, '_invoice_' . $rsvp_id );
 
 		}
-
-		/*
-		rsvpmaker_money_tx();
-		global $wpdb;
-		$money_table = rsvpmaker_money_table();
-		$name = (isset($atts['name'])) ? $atts['name'] : '';
-		$email = (isset($atts['email'])) ? $atts['email'] : '';
-		$description = (isset($atts['description'])) ? $atts['description'] : '';
-		$date = (isset($atts['date'])) ? $atts['date'] : date('Y-m-d H:i:s');
-		$status = (isset($atts['status'])) ? $atts['status'] : 'Stripe';
-		$transaction_id = (isset($atts['transaction_id'])) ? $atts['transaction_id'] : '';
-		$user_id = (isset($atts['user_id'])) ? $atts['user_id'] : 0;
-		$metadata = (isset($atts['metadata'])) ? $atts['metadata'] : '';
-		$amount = (isset($atts['amount'])) ? $atts['amount'] : '';
-		$fee = (isset($atts['fee'])) ? $atts['fee'] : '';
-		$tracking_key = (isset($atts['tracking_key'])) ? $atts['tracking_key'] : '';
-		$tracking_value = (isset($atts['tracking_value'])) ? $atts['tracking_value'] : '';
-		$existing = $wpdb->get_row("SELECT * FROM $money_table WHERE transaction_id='$transaction_id' ");
-		*/
-
+		$gift_certificate = '';
+        if(!empty($vars['purchase_code'])) {
+          $purchase = get_transient($vars['purchase_code']);
+          if(!empty($purchase[2]))
+            $details['rsvp_to'] = sanitize_text_field($purchase[2]);
+          if(!empty($vars['is_gift_certificate'])) {
+			$rsvptable = $wpdb->prefix.'rsvpmaker';
+			$details = $wpdb->get_var("SELECT details FROM $rsvptable WHERE id=$rsvp_id");
+			$details = unserialize($details); 
+            $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
+            $vars['gift_certificate'] = $details['gift_certficate'] = $gift_certificate;
+            $sql = $wpdb->prepare("UPDATE $rsvptable set details=%s WHERE id=$rsvp_id",serialize($details));
+			error_log($sql);
+            $wpdb->query($sql);
+            add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
+          }
+        }
 		rsvpmaker_stripe_payment_log( $vars, $key );
-		/*
-		if(!empty($rsvp_id)) {
-			$rsvprow = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix.'rsvpmaker_money where id='.$rsvp_id);
-			$atts['name'] = $rsvprow->first . ' '.$rsvprow->last;
-			$event = get_rsvpmaker_event($rsvprow->event);
-			$atts['description'] = 'Registration for '.$event->post_title.' '.$event->date;
-			$atts['transaction_id'] = 
-			rsvpmaker_confirm_payment($rsvp_id);
-		}
-		*/
 		delete_option( $request['txkey'] );
         wp_schedule_single_event( time() + 30, 'rsvpmaker_after_payment',array('stripe'));
 		return new WP_REST_Response( $vars, 200 );
@@ -3343,9 +3327,27 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 	public function get_items( $request ) {
 		global $wpdb, $current_user, $rsvp_options;
 		$postdata = $_POST;
-		$rsvp['subject'] = sanitize_text_field($postdata['contact_subject']);
+		if(!empty($postdata['contact_subject']))
+			$rsvp['subject'] = sanitize_text_field($postdata['contact_subject']);
 		$post_id = intval($postdata['post_id']);
+		$post = get_post($post_id);
+		$unique_id = (empty($postdata['form_id'])) ? '' : sanitize_text_field($postdata['form_id']);
 		$is_order = empty($postdata['is_order']) ? false : sanitize_text_field($postdata['is_order']);
+		$gateway = (empty($postdata['gateway'])) ? '' : sanitize_text_field($postdata['gateway']);
+		$email_to = $rsvp_options['rsvp_to'];
+		$prefix = 'Contact';
+		$attributes = [];
+		if($unique_id) {
+			$regex = '/{[^}]+'.$unique_id.'[^}]+}/';
+			preg_match($regex,$post->post_content,$match);
+			if($match) {
+				$attributes = (array) json_decode($match[0]);
+				if(!empty($attributes['email']))
+					$email_to = sanitize_text_field($attributes['email']);
+				if(!empty($attributes['subject_prefix']))
+					$prefix = sanitize_text_field($attributes['subject_prefix']);
+			}
+		}
 		foreach ( $postdata['profile'] as $name => $value ) {
 			$rsvp[ $name ] = sanitize_text_field( $value );
 		}
@@ -3401,28 +3403,29 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 			if($is_order && (strpos($key,$is_order) !== false) && (strpos($item,':') !== false)) {
 				$purchase = explode(':',$item);
 				$purchase[1] = trim($purchase[1]);
+				$purchase[2] = $email_to;
 				$purchase_code = 'rsvp_purchase_'.time();
 				set_transient($purchase_code,$purchase);
 			}
 			$label = ucfirst(str_replace('_',' ',$key));		
-			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$key,$label);
+			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$label,sanitize_text_field($item));
 		}
 		if($post_id && !empty($purchase_code)) {
-			$purchase_link = add_query_arg(array('purchase_code'=>$purchase_code,'rsvp_id'=>$id),get_permalink($post_id));
-			return new WP_REST_Response(array('sending'=>$id,'purchase_link'=>$purchase_link), 200 );
+			$purchase_link = add_query_arg(array('purchase_code'=>$purchase_code,'rsvp_id'=>$id,'gateway'=>$gateway),get_permalink($post_id));
+			return new WP_REST_Response(array('sending'=>$id,'purchase_link'=>$purchase_link,'gateway'=>$gateway), 200 );
 		}
 
 		$mail['html'] .= '<p>'.nl2br($note).'</p>';
 		$mail['from'] = $rsvp['email'];
 		$mail['fromname'] = $rsvp['first'].' '.$rsvp['last'].' (Contact Form)';
-		$mail['subject'] = $rsvp['subject'].' (Contact: '.$_SERVER['SERVER_NAME'].')';
-		$recipients = explode(",",$rsvp_options['rsvp_to']);
+		$mail['subject'] = '['.$prefix.'] '.$rsvp['subject'].' ('.$_SERVER['SERVER_NAME'].')';
+		$recipients = explode(",",$email_to);
 		foreach($recipients as $recipient) {
 			$mail['to'] = trim($recipient);
 			rsvpmailer($mail);
 		}
 		$response = $postdata;
-	return new WP_REST_Response(array('sending'=>$id,'mail'=>$mail), 200 );
+	return new WP_REST_Response(array('sending'=>$id,'mail'=>$mail,'attributes'=>$attributes,'unique_id'=>$unique_id), 200 );
 	}//end handle
 }//end class
 

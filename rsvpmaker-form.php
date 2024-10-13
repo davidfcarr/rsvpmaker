@@ -761,22 +761,36 @@ function rsvpmaker_contact_form_capture_output($attributes) {
 function rsvpmaker_contact_form_order($lookup) {
 	global $wpdb;
 	$purchase = get_transient($lookup['purchase_code']);
-	$rsvprow = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=".intval($lookup['rsvp_id']));
+	$rsvprow = (array) $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=".intval($lookup['rsvp_id']));
+	$rsvprow = rsvp_row_to_profile($rsvprow);
 	$description=$purchase[0].' '.$purchase[1];
-	return rsvpmaker_paypal_button (str_replace('$','',$purchase[1]), $currency_code = 'USD', $description, array('purchase_code'=>$lookup['purchase_code'],'rsvp'=>$lookup['rsvp_id'])).'<p>'.$description.'</p>';
+	$amount = trim(str_replace('$','',$purchase[1]));
+	$rsvprow['amount']=$amount;
+	$rsvprow['description']=$description;
+	$rsvprow['purchase_code']=$lookup['purchase_code'];
+	$rsvprow['rsvp_id'] = $lookup['rsvp_id'];
+	$rsvprow['name'] = $rsvprow['first'].' '.$rsvprow['last'];
+	if('PayPal REST API' == $lookup['gateway'])
+	return rsvpmaker_paypal_button ($amount, 'USD', $description, $rsvprow).'<p>'.$description.'</p>';
+	elseif('Stripe' == $_GET['gateway']) {
+		return rsvpmaker_stripe_form( $rsvprow, true );
+	}
+	else {
+		return 'Invalid payment gateway';
+	}
 	//return 'lookup'.var_export($lookup,true).' '.var_export($purchase,true).'<br>'.var_export($rsvprow,true);
 }
 
 function rsvpmaker_contact_form_output($attributes) {
 	if(isset($_GET['purchase_code'])) {
-		echo rsvpmaker_contact_form_order($_GET);
+			echo rsvpmaker_contact_form_order($_GET);
 		return;
 	}
 
 global $current_user, $rsvp_options, $post;
 $user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
 ?>
-<form id="rsvpmaker_contact_form"><input type="hidden" name="post_id" value="<?php echo esc_attr($post->ID); ?>" />
+<form id="rsvpmaker_contact_form"><input type="hidden" name="post_id" value="<?php echo esc_attr($post->ID); ?>" /><input type="hidden" name="form_id" value="<?php if(isset($attributes['unique_id'])) echo esc_attr($attributes['unique_id']); ?>" />
 <?php
 if(empty($attributes['order']))
 {
@@ -789,6 +803,13 @@ rsvphoney_ui();
 echo rsvpmaker_basic_form( $attributes['form_id'] );
 wp_nonce_field('rsvpmaker_contact','contact_confidential');
 printf('<input type="hidden" name="user_id" value="%d" >',esc_attr($user_id));
+$payment_gateway = get_rsvpmaker_payment_gateway();
+if(isset($attributes['gateway']) && 'Default' != $attributes['gateway'])
+	$payment_gateway = sanitize_text_field($attributes['gateway']);
+printf('<input type="hidden" name="gateway" value="%s" />',esc_attr($payment_gateway));
+if(!empty($attributes['gift']))
+	echo '<input type="hidden" name="profile[is_gift_certificate]" value="yes" />';
+
 if (! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) )
 {
 	rsvpmaker_recaptcha_output();
@@ -814,7 +835,7 @@ async function sendData() {
 	console.log('senddata response',json);
 	if(json.purchase_link) {
 		console.log('attempt redirect to '+json.purchase_link);
-		form.innerHTML += '<div style="color:green;border: thin solid red; padding: 15px; margin: 15px;">Redirecting to '+json.purchase_link+'</div>';
+		form.innerHTML += '<div style="color:green;border: thin solid red; padding: 15px; margin: 15px;"><a href="'+json.purchase_link+'">Pay Now</a></div>';
 		location.assign(json.purchase_link);
 	}
 	else {

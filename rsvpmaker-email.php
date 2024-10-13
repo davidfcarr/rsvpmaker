@@ -2898,6 +2898,7 @@ function rsvpmaker_tx_email($event_post, $mail) {
 global $rsvpmaker_tx_content;
 $rsvpmaker_tx_content = rsvpmailer_default_block_template_wrapper($mail["html"],true);
 $mail["html"] = rsvpmail_filter_style($rsvpmaker_tx_content);
+$title = ($event_post) ? $event_post->post_title : 'misc transaction';
 $rsvpfooter_text = '
 
 ==============================================
@@ -2916,7 +2917,7 @@ $problem = rsvpmail_is_problem($mail["to"]);
 			rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
 			return;
 		}
-	rsvpmailer($mail,__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$event_post->post_title.'</div>' );
+	rsvpmailer($mail,__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>' );
 }
 
 function rsvpmaker_email_content ($atts, $content) {

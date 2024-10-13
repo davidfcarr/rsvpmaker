@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.6.2
-Stable tag: 11.4.3
+Stable tag: 11.4.4
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -129,6 +129,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 11.4.4 =
+
+* Contact form improvements. Payment options for contact form.
+* Contact form can serve as an order form for gift certificates that can be redeemed against events.
+
 = 11.4.2 =
 
 * Eliminate one stray use of PHP short tags not supported in some configs of PHP 8
@@ -218,49 +223,3 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 = 11.0.2 =
 
 * Fix for issue with html entities in email
-
-= 10.9.7 =
-
-* Block transform from excerpt to RSVPMaker Loop Blocks block (contains templated elements as InnerBlocks)
-
-= 10.9.5 =
-
-* Block transform from RSVPMaker Upcoming to Query Loop variation.
-
-= 10.9.4 =
-
-* Refinements to Query Loop block support
-* Remove deprecated PHP code for UTF-8 encoding
-
-= 10.9.1 =
-
-* Custom past / future and exclude post type controls for the Query Block variations
-
-= 10.9 =
-
-* Rendering of RSVPMaker Upcoming block within the editor
-
-= 10.8.8 =
-
-* Tweaks to RSVPMaker Query block variation
-* Prevent rsvpmaker_where filter on single event posts to allow display of past events
-
-= 10.8.7 =
-
-* RSVPMaker Query Loop block variation added: sets default formatting for event listings displayed using the Query Loop block
-* New RSVPMaker Calendar block for displaying the calendar grid
-* Event sort order corrected to work with the standard Query Loop block, not just custom RSVPMaker Upcoming blocknpm
-
-= 10.8.6 =
-
-* Update Stripe library, fix conflict with PHP 8.x
-* Fixes to settings screen for Stripe
-* Fixes to the settings screens for email and mailing list functions
-
-= 10.8.4 =
-
-* Fix for encoding the event venue in ical link / email attachment and Google Calendar links
-
-= 10.8.1 to 10.8.3 =
-
-* Updated database routines for events. Better compatability with wpdb apis.

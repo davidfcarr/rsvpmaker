@@ -170,7 +170,12 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 		if(isset($_GET['amount']))
 			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
 		$output = sprintf( '<form action="%s" method="get">%s (%s, %s %s): <input type="text" name="amount" value="%s"><br />%s<br /><textarea name="stripenote" cols="80" rows="2"></textarea><br /><input type="hidden" name="txid" value="%s"><input type="hidden" name="sb" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), __('minimum','rsvpmaker'), $rsvp_options['payment_minimum'], esc_attr( $vars['amount'] ), __('Note','rsvpmaker'), esc_attr( $idempotency_key ), esc_attr( $sandbox ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
-	} else {
+	} 
+	elseif(isset($vars['returnurl'])) {
+		$param = ['txid'=>$idempotency_key, 'sb' =>$sandbox];
+		return add_query_arg($param,$url);
+	}
+	else {
 		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><input type="hidden" name="sb" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), esc_attr( $sandbox ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
 	}
 
@@ -281,17 +286,13 @@ function rsvpmaker_stripe_checkout() {
 	$keys = get_rsvpmaker_stripe_keys();
 
 	if ( empty( $_GET['txid'] ) ) {
-
 		return;
 	}
 
 	ob_start();
 	$varkey = $idempotency_key = sanitize_text_field( $_GET['txid'] );
-
 	$vars = get_option( $idempotency_key );
-
 	if ( empty( $vars ) ) {
-
 		return '<p>' . __( 'No pending payment found for', 'rsvpmaker' ) . ' ' . esc_html( $idempotency_key ) . '</p>';
 	}
 
@@ -564,9 +565,11 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
 				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed, but may not have been recorded correctly', 'rsvpmaker' ); ?>';
 
-			else
-
-				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+' <?php echo esc_attr($currency_symbol); ?>'+myJson.amount+' '+myJson.currency.toUpperCase();
+			else {
+				cardResult.innerHTML = '<p><?php esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+'<br /><?php echo esc_attr($currency_symbol); ?>'+myJson.amount+' '+myJson.currency.toUpperCase()+'</p>';
+				if(myJson.gift_certificate)
+					cardResult.innerHTML += '<h1><?php esc_html_e( 'Gift Certificate', 'rsvpmaker' ); ?><br />'+myJson.gift_certificate+'</h1>';
+			}
 
 		});
 
@@ -655,7 +658,13 @@ function rsvpmaker_stripe_notify( $vars ) {
 	$receipt = true;
 
 	if ( ! empty( $vars['rsvp_id'] ) ) {
-		rsvp_confirmation_after_payment( intval($vars['rsvp_id']) );
+		rsvpmaker_confirm_payment(intval($vars['rsvp_id']),sanitize_text_field($vars['email']));
+		//rsvp_confirmation_after_payment( intval($vars['rsvp_id']) );
+		return;
+	}
+	if ( ! empty( $vars['rsvp'] ) ) {
+		rsvpmaker_confirm_payment(intval($vars['rsvp']),sanitize_text_field($vars['email']));
+		//rsvp_confirmation_after_payment( intval($vars['rsvp_id']) );
 		return;
 	}
 

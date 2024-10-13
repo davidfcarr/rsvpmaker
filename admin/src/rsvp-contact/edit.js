@@ -6,7 +6,7 @@
 import { __ } from '@wordpress/i18n';
 //import Forms from '../Forms.js';
 import { SanitizedHTML } from "../SanitizedHTML.js";
-import { PanelBody, TextControl, RadioControl, TextareaControl } from '@wordpress/components';
+import { PanelBody, TextControl, RadioControl, TextareaControl, ToggleControl } from '@wordpress/components';
 import {SelectCtrl} from '../Ctrl.js'
 
 /**
@@ -78,18 +78,36 @@ export default function Edit(props) {
             fieldslist.push({'label':block.attrs.label,'value':block.attrs.slug});
     })
 
+    if(!attributes.unique_id) {
+        setAttributes({'unique_id':'rsvpcontactform'+Date.now()});
+    }
+
     return (
         <div { ...useBlockProps() }>
         <InspectorControls key="contactinspector">
             <PanelBody title={ __( 'Contact Form', 'rsvpmaker' ) } >
+            <p><a href="https://rsvpmaker.com/knowledge-base/contact-form-payment-gift-certificate/" target="_blank">{__('Documentation','rsvpmaker')}</a></p>
             <SelectCtrl label="Switch Form" value={form_id} options={formOptions} onChange={(id) => {
             setAttributes({'form_id':id});
              }} />
+            <p><a target="_blank" href={"/wp-admin/post.php?post="+form_id+"&action=edit"}>{__('Edit form','rsvpmaker')}</a></p>
+            <p>{__('To create new forms, see RSVPMaker Settings','rsvpmaker')}: <a target="_blank" href="/wp-admin/options-general.php?page=rsvpmaker_settings&tab=forms">Forms</a></p>
+            <TextControl label="Email To (leave blank to use RSVPMaker default)" value={attributes.email} onChange={(value) => {
+                setAttributes({'email':value});
+             }} />
+            {!attributes.order && <TextControl label="Subject Prefix (leave blank for 'Contact')" value={attributes.subject_prefix} onChange={(value) => {
+                setAttributes({'subject_prefix':value});
+             }} />}
             <SelectCtrl label="Order Field (optional)" value={attributes.order} options={fieldslist} onChange={(value) => {
                 setAttributes({'order':value});
              }} />
-         <p><a target="_blank" href={"/wp-admin/post.php?post="+form_id+"&action=edit"}>{__('Edit form','rsvpmaker')}</a></p>
-         <p>{__('To create new forms, see RSVPMaker Settings','rsvpmaker')}: <a target="_blank" href="/wp-admin/options-general.php?page=rsvpmaker_settings&tab=forms">Forms</a></p>
+            {attributes.order && <><SelectCtrl label="Payment Gateway" value={attributes.gateway} options={[{'label':'Default','value':'Default'},{'label':'PayPal','value':'PayPal REST API'},{'label':'Stripe','value':'Stripe'}]} onChange={(value) => {
+                setAttributes({'gateway':value})
+             }} />
+             <SelectCtrl label="Gift Certificate?" value={attributes.gift} options={[{'label':'No','value':'0'},{'label':'Yes','value':'1'}]} onChange={(value) => {
+                setAttributes({'gift':value})
+             }} />
+            </>}
          <p>{__('For a simple order form, using RSVPMaker PayPal/Stripe integration, include a select or radio buttons field with a value in the format product description:amount (Gift Certificate: $10). Include the word "Gift" in the description to have RSVPMaker generate a gift certificate coupon code that can be entered into the RSVP form for priced events.','rsvpmaker')}</p>
             </PanelBody>
         </InspectorControls>

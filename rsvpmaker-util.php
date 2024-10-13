@@ -4359,7 +4359,7 @@ function rsvpmailer_bot_shortcode() {
 
 function rsvpmaker_receipt() {
 	global $post;
-	if(!$post || 'rsvpmaker' != $post->post_type || empty($_GET['rsvp_receipt'])) {
+	if(!$post || empty($_GET['rsvp_receipt'])) {
 		return;
 	}
 	$rsvp_id = intval($_GET['rsvp_receipt']);
@@ -4369,8 +4369,10 @@ function rsvpmaker_receipt() {
 	}
 	$sitename = get_option('blogname');
 	$rsvpconfirm = sprintf('<h1>%s</h1><h2>%s</h2>',$sitename,$post->post_title);
+	if('rsvpmaker' == $post->post_type) {
 	$rsvpconfirm .= rsvpdateblock();
 	$rsvpconfirm .= rsvp_get_confirm( $post->ID );
+	}
 	$rsvpconfirm .= rsvpmaker_guestparty($rsvp_id,true,true);
 	rsvpmaker_print_format($rsvpconfirm,'receipt','Receipt: '.$post->post_title.' | '.$sitename);
 }
@@ -4414,12 +4416,18 @@ do_action('rsvpmaker_print_format_top',$context);
 exit();
 }
 
-function rsvpmaker_confirm_payment($rsvp_id) {
+function rsvpmaker_confirm_payment($rsvp_id, $rsvp_to = '') {
 	global $wpdb, $rsvp_options;
+	if(empty($rsvp_to))
+		$rsvp_to = $rsvp_options['rsvp_to'];
 	$row = $wpdb->get_row('SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $rsvp_id);
 	$rsvpdata['rsvpmessage'] = rsvpmaker_guestparty($rsvp_id,true,true);
+	$event = null;
 	if($row->event) {
 		$event = get_rsvpmaker_event($row->event);
+		$custom_to = get_post_meta($row->event,'_rsvp_to',true);
+		if($custom_to)
+			$rsvp_to = $custom_to;
 		$rsvpdata['rsvptitle'] = $event->post_title;
 		$rsvpdata['rsvpdate'] = rsvpmaker_date($rsvp_options['long_date'],intval($event->ts_start));
 	}
@@ -4430,8 +4438,9 @@ function rsvpmaker_confirm_payment($rsvp_id) {
 	$rsvpdata['email'] = $row->email;
 	$rsvpdata['event_id'] = $row->event;
 	$rsvpdata['rsvp_id'] = $rsvp_id;
+	error_log('rsvpmaker_confirm_payment to template '.var_export($rsvpdata,true));
 	rsvp_message_via_template ($rsvpdata,'receipt',$event);
-	$emails = explode(',',$rsvp_options['rsvp_to']);
+	$emails = explode(',',$rsvp_to);
 	$rsvpdata['rsvpmessage'] .= sprintf("\n".'<p><a href="%s">RSVP Report</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report'));
 	$rsvpdata['rsvpmessage'] .= '<p>'.signed_up_ajax( $row->event ).'</p>';
 	$rsvpdata['rsvpdate'] .= ' (Copy)';
@@ -4482,6 +4491,7 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 					$guestparty .= sprintf('<p><a href="%s" class="noprint wp-block-button__link" target="_blank">%s</a></p>'."\n",$payurl,__('Pay Online','rsvpmaker'));
 			}
 		}
+		if($row['event'])
 		$guestparty .= sprintf('<p class="noprint"><a href="%s">%s</a></p>',add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($row['event'])),__('Print Receipt','rsvpmaker'));
 		
 		$guestparty .= '<p>'.$row['first'].' '.$row['last'];

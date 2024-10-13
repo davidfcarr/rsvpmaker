@@ -55,6 +55,7 @@ function paypal_verify_rest () {
           return array('status' => 'Pending transaction not found');
         delete_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);//one time use
         $rsvp_id = (empty($saved['rsvp'])) ? 0 : $saved['rsvp'];
+        $rsvp_to = $rsvp_options['rsvp_to'];
         $paidnow = floatval($saved['amount']);
         $status = $data->status.' payment of '.number_format( $paidnow, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'].' from '.$data->payer->name->given_name.' '.$data->payer->name->surname;
         $event_id = 0;
@@ -77,12 +78,14 @@ function paypal_verify_rest () {
         $gift_certificate = '';
         if(!empty($saved['purchase_code'])) {
           $purchase = get_transient($saved['purchase_code']);
-          if(!empty($purchase[0]) && strpos('Gift',$purchase[0]) !== false) {
+          if(!empty($purchase[2]))
+            $rsvp_to = sanitize_text_field($purchase[2]);
+          if(!empty($saved['is_gift_certificate'])) {
             $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
             $details['gift_certficate'] = $gift_certificate;
             $sql = $wpdb->prepare("UPDATE $rsvptable set details=%s WHERE id=$rsvp_id",serialize($details));
             $wpdb->query($sql);
-            add_option($gift_certificate,str_replace('$','',$purchase[1]));
+            add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
           }
         }
         $atts['name'] = $data->payer->name->given_name.' '.$data->payer->name->surname;
@@ -109,7 +112,7 @@ function paypal_verify_rest () {
             $mail['html'] = $status.$confirmation;
             $mail['subject'] = 'CONFIRMING RSVP for '.sizeof($postdata['rsvpmultievent']).' events';
             $mail['to'] = $postdata['profile']['email'];
-            $mail['from'] = $rsvp_options['rsvp_to'];
+            $mail['from'] = $rsvp_to;
             rsvpmailer($mail);
             $mail['subject'] = 'RSVP for '.sizeof($postdata['rsvpmultievent']).' events';
             $mail['to'] = $rsvp_options['rsvp_to'];
@@ -122,13 +125,19 @@ function paypal_verify_rest () {
         }
         $rsvp_receipt_link = '';
         if($rsvp_id) {
-          rsvpmaker_confirm_payment($rsvp_id);
+          rsvpmaker_confirm_payment($rsvp_id,$rsvp_to);
           $receipt_code = get_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,true);
           if(!$receipt_code) {
             $receipt_code = wp_generate_password(20,false,false);
-            update_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
+            if($event_id)
+              update_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
+            elseif(!empty($saved['post_id']))
+              update_post_meta($saved['post_id'],'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
           }
-          $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($event_id));
+          if($event_id)
+            $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($event_id));
+          elseif(!empty($saved['post_id']))
+            $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($saved['post_id']));
         }
   return array('status'=>$status,'receipt_link'=>$rsvp_receipt_link,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing,'gift_certificate'=>$gift_certificate);
 }
@@ -207,6 +216,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     $verify .= '&'.$key.'='.$value;
   $vars['amount'] = $amount;
   $vars['description'] = $description;
+  $vars['post_id'] = $post->ID;
   $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
   $transaction_code = wp_generate_password(20,false,false);
