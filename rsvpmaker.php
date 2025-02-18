@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.4.4
+* Version: 11.4.8
 */
 
 function get_rsvpversion() {
-	return '11.4.4'; 
+	return '11.4.8'; 
 }
 
 global $wp_version;
@@ -521,7 +521,7 @@ CREATE TABLE `{$wpdb->prefix}rsvpmailer_blocked` (
 `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 `email` varchar(100) NOT NULL DEFAULT '',
 `code` varchar(50) NOT NULL DEFAULT '',
-`timestamp` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+`timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 PRIMARY KEY  (`ID`),
 KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

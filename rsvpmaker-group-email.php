@@ -892,6 +892,7 @@ function rsvpmaker_relay_duplicate( $message_id ) {
 
 function rsvpmaker_qemail ($mail, $recipients) {
 	$recipients = rsvpmaker_recipients_no_problems($recipients);
+	error_log('rsvpmaker_qemail '.implode(', ',$recipients));
 	global $current_user;
 	if(is_multisite()) // send through root blog
 	{
@@ -927,6 +928,7 @@ function rsvpmaker_qemail ($mail, $recipients) {
 			add_post_meta($post_id,'_rsvpmail_html',$_html);
 		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
 		if(rsvpmaker_postmark_is_active()) {
+			error_log('rsvpmaker_postmark_broadcast id '.$post_id);
 			rsvpmaker_postmark_broadcast($recipients,$post_id);
 		}
 		else {
@@ -1058,17 +1060,20 @@ function rsvpmaker_get_hosts_and_subdomains() {
     return $hosts_and_subdomains;
 }
 
-function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL) {
-	foreach($emailobj->ToFull as $one) {
-		$addresses[] = $one->Email;
+function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL, $addresses=[]) {
+	if($emailobj) {
+		foreach($emailobj->ToFull as $one) {
+			$addresses[] = $one->Email;
+		}
+		foreach($emailobj->CcFull as $one) {
+			$addresses[] = $one->Email;
+		}	
 	}
-	foreach($emailobj->CcFull as $one) {
-		$addresses[] = $one->Email;
-	}
-	$from = $emailobj->From;
+	$from = (empty($emailobj->From)) ? null : $emailobj->From;
 	$recipients = array();
 	$recipient_names = array();
 	if(is_numeric($slug_and_id['slug'])) {
+		printf('<p>numeric %s</p>',$slug_and_id['slug']);
 		$user = get_userdata($slug_and_id['slug']);
 		if($user && !empty($user->user_email)) {
 			return array($user->user_email);
@@ -1132,36 +1137,92 @@ add_shortcode('hosts_and_subs_test','hosts_and_subs_test');
 function rsvpmaker_expand_recipients($email) {
 	$email = strtolower($email);
 	global $expand_done;
-	if($expand_done)
-		return $email;// don't get caught in loops
-	$expand_done = true;
+	if(empty($expand_done))
+		$expand_done[] = array();
+	if(in_array($email,$expand_done))
+		return [];// don't get caught in loops
+	$expand_done[] = $email;
     $emailparts = explode('@',$email);
 	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
     if(in_array($emailparts[1],$hosts_and_subdomains) || ($emailparts[1]==$hosts_and_subdomains['basedomain']))
     {
         $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
-        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id);
+        $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,null,[$email]);
     }
 	//error_log('rsvpmaker-group-email.php 1138 $emailparts '.var_export($emailparts));
-    if(isset($recipients))
+    if(is_array($recipients) && !empty($recipients) && !empty(trim($recipients[0])))
         return $recipients;
     else
         return $email;
 }
 
 function rsvpmaker_recipients_no_problems($recipients) {
-	$additional_recipients = $cleanrecipients = array();
+	global $no_problems_done;
+	if($no_problems_done)
+		return $recipients;
+	$no_problems_done = true;
+	$additional_recipients = $additional_recipients2 = $checked = $cleanrecipients = array();
     foreach($recipients as $email) {
+		$checked[] = $email;
+		$original = $email;
 		$email = rsvpmaker_expand_recipients($email);
-		if(is_array($email))
-			$additional_recipients = array_merge($email,$additional_recipients);
+		error_log('recipients no problems expand: '.$original.' to '.var_export($email,true));
+		if(is_array($email)) {
+			if(!empty($email))
+				$additional_recipients = array_merge($email,$additional_recipients);
+		} else {
+			$cleanrecipients[] = $email;
+		}
 	}
+	error_log('recipients no problems clean: '.var_export($cleanrecipients,true));
+	error_log('recipients no problems additional: '.var_export($additional_recipients,true));
+	$cleanrecipients = array_merge($cleanrecipients,$additional_recipients);
+	$final = [];
+	foreach($cleanrecipients as $email) {
+		if(!rsvpmail_is_problem($email))
+			$final[] = $email;
+	}
+	return $final;
+
 	if(!empty($additional_recipients))
-		$recipients = array_merge($recipients,$additional_recipients);
-	foreach($recipients as $email) {
-		if(!rsvpmail_is_problem($email) && !in_array($email,$cleanrecipients))
+	foreach($additional_recipients as $email) {
+		$checked[] = $email;
+		error_log('additional recipients '.$email);
+		$email = rsvpmaker_expand_recipients($email);
+		if(is_array($email)) {
+			foreach($email as $e)
+				{
+					if(!in_array($e,$checked))
+						$additional_recipients2[] = $e;
+				}
+		}
+		elseif(rsvpmail_is_problem($email))
+			error_log('problem with '.$email);
+		elseif(in_array($email,$cleanrecipients))
+			error_log('already added '.$email);
+		else
 			$cleanrecipients[] = $email;	
 	}
+	if(isset($_GET['test'])) {
+		printf('<p>2 clean %s</p>',var_export($cleanrecipients,true));
+		printf('<p>additional recipeints 2 %s</p>',var_export($additional_recipients2,true));
+	}
+	if(!empty($additional_recipients2))
+	foreach($additional_recipients2 as $email) {
+		error_log('additional recipients 2 '.$email);
+		if(in_array($email,$checked)) {
+			error_log($email.' already checked');
+			continue;
+		}
+		if(rsvpmail_is_problem($email))
+			error_log('problem with '.$email);
+		elseif(in_array($email,$cleanrecipients))
+			error_log('already added '.$email);
+		else
+			$cleanrecipients[] = $email;	
+	}
+	if(isset($_GET['test']))
+		printf('<p>3 clean %s</p>',var_export($cleanrecipients,true));
     return $cleanrecipients;
 }
 

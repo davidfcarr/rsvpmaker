@@ -1467,7 +1467,7 @@ if(in_array($data->From,$blacklist)) {
 }
 
 $origin = sprintf("<p>Forwarded message, originally <br />From <a href=\"mailto:%s\">%s</a><br />To: %s<br />Cc: %s<br /><a href=\"mailto:%s?cc=%s&subject=Re: %s\">Reply All</a></p>",$data->From,$data->From,htmlentities($data->To),htmlentities($data->Cc),$data->From,implode(',',$audience),$data->Subject);
-$origin = '<div class="postmark-origin" style="padding:10px; background-color:#efefef">'.$origin.'</div>';
+$origin .= '<div class="postmark-origin" style="padding:10px; background-color:#efefef">'.$origin.'</div>';
 $check = implode('|',$audience).$data->Subject;
 $last = get_transient('postmark_last_incoming');
 if($check == $last) {
@@ -1591,15 +1591,16 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 	public function get_items( $request ) {
 		global $wpdb;
 		$email = '';
-		return new WP_REST_Response( array('message'=>'Something went wrong, sorry'), 200 );
 		if(isset($_POST['em']))
 			$email = trim($_POST['em']);
 		elseif(isset($_POST['email']))
 			$email = trim($_POST['email']);
 		
-		if(check_ajax_referer('rsvp_mailing_list','rsvp_mailing_list', false))
+		$origin = get_http_origin();
+
+		if(!strpos($origin,$_SERVER['SERVER_NAME'])) //(check_ajax_referer('rsvp_mailing_list','rsvp_mailing_list', false))
 			{
-				$result['message'] = 'Security check failed '.$_POST['rsvp_mailing_list'];
+				$result['message'] = 'Security check failed '.$origin;
 			}
 		elseif(!empty($_POST['extra_special_discount_code']))
 			$result['message'] = 'Something went wrong, sorry';
@@ -3182,7 +3183,6 @@ class RSVP_PayPalPaid extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
-		//error_log('PayPalPaid '.var_export($request->get_params(),true));
 		$response = paypal_verify_rest ();
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
@@ -3224,9 +3224,9 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 		if(!empty($params)) {
 			$type = $params['event_type'];
 			if('PAYMENT.CAPTURE.COMPLETED' == $type) {
-				$order_id = (empty($params['resource']['supplementary_data']['related_ids']['order_id'])) ? '' : $params['resource']['supplementary_data']['related_ids']['order_id'];
-				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : $params['resource']['seller_receivable_breakdown']['paypal_fee']['value'];
-				$gross = (empty($params['resource']['seller_receivable_breakdown']['gross_amount']['value'])) ? '' : $params['resource']['seller_receivable_breakdown']['gross_amount']['value'];
+				$order_id = (empty($params['resource']['supplementary_data']['related_ids']['order_id'])) ? '' : sanitize_text_field($params['resource']['supplementary_data']['related_ids']['order_id']);
+				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['paypal_fee']['value']);
+				$gross = (empty($params['resource']['seller_receivable_breakdown']['gross_amount']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['gross_amount']['value']);
 				$rsvpmaker_money = $wpdb->prefix.'rsvpmaker_money';
 				$sql_check = "SELECT * FROM $rsvpmaker_money WHERE transaction_id='$order_id'";
 				$existing = $wpdb->get_row($sql_check);

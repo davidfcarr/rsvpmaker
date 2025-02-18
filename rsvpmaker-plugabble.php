@@ -425,7 +425,6 @@ function ajax_rsvp_email_lookup( $email, $event ) {
 			$guests = $wpdb->get_var( $sql );
 
 			if ( $guests ) {
-
 				$out .= ' + ' . esc_html( $guests ) . ' ' . __( 'guests', 'rsvpmaker' );
 			}
 
@@ -437,8 +436,8 @@ function ajax_rsvp_email_lookup( $email, $event ) {
 						'update' => $row->id,
 					),
 					$p
-				),
-				__( 'Update', 'rsvpmaker' ),
+				).'#rsvpnow',
+				__( 'Click to Update', 'rsvpmaker' ),
 				$out
 			);
 
@@ -809,8 +808,6 @@ WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}'
 AND  `post_id` = " . $event;
 
 				$results = $wpdb->get_results( $sql );
-
-				// $msg = var_export($results,true);
 
 				if ( $results ) {
 
@@ -1294,12 +1291,9 @@ AND  `post_id` = " . $event;
 
 			if ( $rsvp_id ) {
 				if($owed) {
-					//error_log("SELECT * FROM ".$wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id ORDER BY master_rsvp, id");
 					$snapshot = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id ORDER BY master_rsvp, id"); //get host, followed by guests
-					//error_log(var_export($snapshot[0],true));
 					if($snapshot && !intval($snapshot[0]->owed)) {
-						//error_log('capturing snapshot');
-						update_post_meta($snapshot[0]->event,'_rsvp_snapshot_'.$snapshot[0]->amountpaid,$snapshot);
+						update_post_meta($snapshot[0]->event,'_rsvp_snapshot_'.$snapshot[0]->id.'_'.$snapshot[0]->amountpaid,$snapshot);
 					}
 				}
 				$wpdb->update($wpdb->prefix . 'rsvpmaker',$nv,array('id'=>$rsvp_id));
@@ -1326,7 +1320,7 @@ AND  `post_id` = " . $event;
 				}
 			}
 
-			if ( ! empty( $rsvp_options['send_payment_reminders'] ) && isset( $price ) && ( $price > 0 ) ) {
+			if (!is_admin() && ! empty( $rsvp_options['send_payment_reminders'] ) && isset( $price ) && ( $price > 0 ) ) {
 				rsvpmaker_payment_reminder_cron( $rsvp_id );
 			}
 			if(!is_admin())
@@ -1773,7 +1767,25 @@ function event_content( $content, $formonly = false, $form = '' ) {
 	if ( $rsvp_id && $e ) {
 		$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id and email='$e'";
 		$rsvprow = $wpdb->get_row( $sql, ARRAY_A );
-		$profile = rsvp_row_to_profile($rsvprow);
+
+		if(!$rsvprow) {
+			$unp = rsvpmaker_check_unpaid($post->ID,$rsvp_id);
+			$party_size = (is_array($unp)) ? sizeof($unp) : 0;
+			//restore unpaid record as long as there is still room
+			if($party_size && rsvpmaker_check_openings($post->ID, $party_size)) {
+				foreach($unp as $restore) {
+					$restore = (array) $restore;
+					$wpdb->replace($wpdb->prefix.'rsvpmaker',$restore);
+				}
+				$rsvprow = (array) $unp[0];
+				$time = rsvpmaker_strtotime('+10 minutes');
+				wp_clear_scheduled_hook( 'rsvp_payment_reminder',array($rsvp_id) );
+				wp_schedule_single_event($time,'rsvp_payment_reminder',array($rsvp_id));			
+			}	
+		}
+
+		if($rsvprow)
+			$profile = rsvp_row_to_profile($rsvprow);
 	}
 	else {
 		$profile = rsvpmaker_profile_lookup( $e );
@@ -2550,6 +2562,50 @@ function rsvp_report_shortcode( $atts ) {
 			$permalink = get_permalink( $eventid );
 			$pricing = get_post_meta($eventid,'pricing',true);
 
+			if(isset($_GET['show_unpaid'])) {
+				echo '<h2>Looking up unpaid records</h2>';
+				$matched = '';
+				$unmatched = '';
+				$unpaid = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE post_id=$eventid AND meta_key='rsvpmaker_unpaid' ");
+				foreach($unpaid as $unp) {
+					$unpaid_record = unserialize($unp->meta_value);
+					$restore = admin_url("edit.php?post_type=rsvpmaker&page=rsvp_report&event=$eventid&restore_unpaid=$unp->meta_id");
+					
+					$match = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$eventid AND email='".$unpaid_record[0]->email."' ");
+					$names = [];
+					if($match) {
+						$names[] = $match->first.' '.$match->last;
+						$matchguests = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$eventid AND master_rsvp=$match->id");
+						foreach($matchguests as $matchg)
+							$names[] = $matchg->first.' '.$matchg->last;
+						$matched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>',$restore,$unpaid_record[0]->id,$unpaid_record[0]->timestamp,$unpaid_record[0]->first,$unpaid_record[0]->last,$unpaid_record[0]->email,$unpaid_record[0]->owed,sizeof($unpaid_record));
+						$matched .= sprintf('<p><a href="#rsvprow%d">Possible match</a>, party of %d, %s</p>',$match->id,sizeof($names),implode(', ',$names));
+					}
+					else
+						$unmatched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>',$restore,$unpaid_record[0]->id,$unpaid_record[0]->timestamp,$unpaid_record[0]->first,$unpaid_record[0]->last,$unpaid_record[0]->email,$unpaid_record[0]->owed,sizeof($unpaid_record));
+				}
+				if($unmatched)
+					echo '<h3>Unpaid</h3>'.$unmatched;
+				if($matched)
+					echo '<h3>May have subsequently paid or partially paid</h3>'.$matched;
+
+			}
+
+			if(isset($_GET['restore_unpaid'])) {
+				$restore_id = intval($_GET['restore_unpaid']);
+				$unpaid = $wpdb->get_row("SELECT * FROM $wpdb->postmeta WHERE meta_id=$restore_id ");
+				if($unpaid) {
+					echo '<h2>Restoring unpaid record</h2>';
+					$unpaid_record = unserialize($unpaid->meta_value);
+					foreach($unpaid_record as $restore) {
+						printf('<p>%s %s</p>',$restore->first,$restore->last);
+						$restore = (array) $restore;
+						$wpdb->replace($wpdb->prefix.'rsvpmaker',$restore);
+					}
+					$wpdb->query("UPDATE $wpdb->postmeta SET meta_key='rsvpmaker_restored' WHERE meta_id=$restore_id ");	
+				}
+			}
+
 			$event_row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$eventid" );
 
 			$date = $event_row->date;
@@ -2561,8 +2617,11 @@ function rsvp_report_shortcode( $atts ) {
 			if(!$_GET['event']) {
 				echo '<h2>' . __( 'Contact Form Entries', 'rsvpmaker' ). "</h2>\n";
 			}
-			else
+			else {
 				echo '<h2>' . __( 'RSVPs for', 'rsvpmaker' ) . ' ' . $title . "</h2>\n";
+				if(!empty($rsvp_options['cancel_unpaid_hours']) && ! isset( $_GET['rsvp_print'] ))
+					printf('<p><a href="%s">%s</a></p>',admin_url("edit.php?post_type=rsvpmaker&page=rsvp_report&event=$eventid&show_unpaid=1"),__('Show Unpaid','rsvpmaker'));
+			}
 
 			if ( ! isset( $_GET['rsvp_print'] ) ) {
 
@@ -2668,7 +2727,7 @@ function rsvp_report_shortcode( $atts ) {
 
 							$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $eventid ) . '">
 
-<p>' . __( 'Amount Owed', 'rsvpmaker' ) . ': ' . $charge . '<input name="markpaid[]" type="hidden" id="markpaid_' . $master_rsvp . '"  value="' . $master_rsvp . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid 1', 'rsvpmaker' ) . '"></p>
+<p>' . __( 'Amount Owed', 'rsvpmaker' ) . ': ' . $charge . '<input name="markpaid[]" type="hidden" id="markpaid_' . $master_rsvp . '"  value="' . $charge . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid 1', 'rsvpmaker' ) . '"></p>
 '.rsvpmaker_nonce('return').'
 </form>';
 
@@ -2978,7 +3037,7 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 	}
 	
 	if ( $row['amountpaid'] > 0 ) {
-		echo '<div style="color: #006400;font-weight: bold;">' . __( 'Paid', 'rsvpmaker' ) . ': ' . esc_html( $row['amountpaid'] ) . '</div>';
+		echo '<div style="color: #006400;font-weight: bold;">' . __( 'Paid', 'rsvpmaker' ) . ': ' . esc_html( $row['amountpaid'] ) . ' - '.sprintf('<a href="%s">Transaction List</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_stripe_report&email='.$row['email'])).'</div>';
 	}
 	
 	if ( isset( $details['fee_total'] ) ) {
@@ -2991,7 +3050,7 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 			printf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>',$url,$url);
 			if ( $owed > 0 ) {
 				if(is_admin()) {
-					echo '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $row['event'] ) . '"><input name="markpaid[]" type="text" id="markpaid_' . $row['id'] . '"  value="' . $row['id'] . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid 2', 'rsvpmaker' ) . '"></p>'.rsvpmaker_nonce('return').'</form>';	
+					echo '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $row['event'] ) . '"><input name="markpaid[]" type="text" id="markpaid_' . $row['id'] . '"  value="' . $owed . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.rsvpmaker_nonce('return').'</form>';	
 				}
 					$owed_list = sprintf( '<p><input type="checkbox" name="markpaid[]" value="%s:%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_html( $owed ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $owed ), __( 'Owed', 'rsvpmaker' ) );
 			}
@@ -3101,7 +3160,6 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 			}
 
 			if ( ! isset( $_GET['rsvp_print'] ) && current_user_can( 'edit_others_posts' ) && $editor_options ) {
-				//edit_rsvp=4&page=rsvp_report&post_type=rsvpmaker&event=17
 				$editlink = ($row['master_rsvp']) ? '' : sprintf( '<a href="%s&edit_rsvp=%d">Edit %s %s</a> | ', admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$post->ID, $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
 
 				echo sprintf( '<p>%s <a href="%s&delete=%d">Delete %s %s</a></p>', $editlink, admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report', $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
@@ -3692,7 +3750,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 }
 
-	function rsvp_print() {
+function rsvp_print() {
 
 		if ( (isset( $_GET['rsvp_print']) || isset( $_GET['print_rsvp_report']) ) && isset( $_GET['page'] ) && is_admin() ) {
 
@@ -5370,8 +5428,6 @@ ORDER BY meta_value LIMIT 0,100";
 
 					$restore .= sprintf( '<p><a href="%s">Restore</a> - This template appears to have been corrupted: <strong>%s</strong> (%d) last modified: %s, used for %d future events.</p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&restore=' . intval( $corrupted->ID ) . '&specimen=' . intval( $specimen ) ), esc_html( $corrupted->post_title ), esc_attr( $corrupted->ID ), esc_attr( $corrupted->post_modified ), esc_attr( $futurecount ) );
 
-					// $restore .= var_export($future,true);
-
 				}
 			}
 		}
@@ -6797,3 +6853,36 @@ function rsvpmaker_check_coupon_code( $price, $postdata, $participants ) {
 
 }
 
+function rsvpmaker_check_unpaid($post_id, $rsvp_id) {
+	global $wpdb;
+	$unpaid = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key='rsvpmaker_unpaid' ORDER BY meta_id DESC ");
+	foreach($unpaid as $unp) {
+		$unpaid_record = unserialize($unp->meta_value);
+		if($unpaid_record[0]->id == $rsvp_id)
+			return $unpaid_record;
+	}
+}
+
+function rsvpmaker_check_openings( $post_id, $party_size ) {
+	global $rsvp_options, $wpdb;
+	if(!get_post_meta($post_id,'_rsvp_on',true)) {
+		return false;
+	}
+	$rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
+	$rsvp_start = (int) get_post_meta($post_id,'_rsvp_start',true);
+	$now = time();
+	if($rsvp_start && ($now < $rsvp_start)) {
+		return false;
+	}
+	if ( !is_rsvpmaker_deadline_future( $post_id) ) {
+		return false;
+	} 	
+	if($rsvp_max) {
+		$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$post_id AND yesno=1";
+		$total = $wpdb->get_var( $sql );
+		if( $total + $party_size >= $rsvp_max ) {
+			return false;
+		}
+	}
+	return true;
+}

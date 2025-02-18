@@ -4,7 +4,8 @@ import {useQuery, useMutation, useQueryClient} from 'react-query';
 
 export function useOptions(tab = '') {
     function fetchOptions(queryobj) {
-        return apiClient.get('rsvp_options?tab='+tab);
+        const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
+        return apiClient.get('rsvp_options'+queryjoin+'tab='+tab);
     }
     return useQuery(['rsvp_options'], fetchOptions, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
         console.log('rsvp options query',data);
@@ -60,7 +61,8 @@ export function useOptionsMutation(setChanges,makeNotification) {
 
 export function useRSVPDate(eventID) {
     function fetchRSVPDate(queryobj) {
-        return apiClient.get('rsvp_event_date?event_id='+eventID);
+        const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
+        return apiClient.get('rsvp_event_date'+queryjoin+'event_id='+eventID);
     }
     return useQuery(['rsvp_event_date'], fetchRSVPDate, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
         console.log('rsvp_event_date query',data);
@@ -87,7 +89,8 @@ export function useRSVPDateMutation(eventID) {
     console.log('useRSVPDateMutation queryClient',queryClient);
 
     async function updateDate (update) {
-        return await apiClient.post('rsvp_event_date?event_id='+eventID, update);
+        const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
+        return await apiClient.post('rsvp_event_date'+queryjoin+'event_id='+eventID, update);
     }
     
     return useMutation(updateDate, {

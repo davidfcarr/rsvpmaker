@@ -167,9 +167,6 @@ function rsvpmaker_event_listing( $atts = array() ) {
 			$dateline = rsvpmaker_date( $date_format, $t ); // rsvpmaker_long_date($event->ID, isset($atts['time']), false);
 
 			$listings .= sprintf( '<li><a href="%s">%s</a> %s</li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( strip_tags($event->post_title)  ), $dateline );
-
-			$test = var_export( $event, true );
-
 		}
 	}
 
@@ -422,7 +419,6 @@ function rsvpmaker_orderby_past( $orderby ) {
 
 /* rest queries from editor */
 function rsvpmaker_custom_query_params( $args, $request ) {
-////mail('d@cc.com','rsvpmaker query params',var_export($args,true)."\n\nparams:".$request->get_param('eventOrder')."\n\nGET:".var_export($request['params']['GET'],true)."\n\nEvent order:".$request['params']['GET']['eventOrder']);//var_export($request,true));
 $order = $request->get_param('eventOrder');
 $args['eventOrder'] = $order;
 return $args;

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export default axios.create({
-  baseURL: '/wp-json/rsvpmaker/v1/',
+  baseURL: rsvpmaker_rest.rest_url+'rsvpmaker/v1/',
   headers: {
     "Content-type": "application/json",
     'X-WP-Nonce': rsvpmaker_rest.nonce,

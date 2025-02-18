@@ -712,6 +712,8 @@ function rsvpmaker_stripe_report() {
 
 	rsvpmaker_admin_heading(__('Stripe and PayPal Charges','rsvpmaker'),__FUNCTION__,'');
 
+	printf('<form method="get" action="edit.php"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_stripe_report" /><input type="text" name="email" value="" /> <button>Search by Email</button></form>');
+
 	$detail = '';
 
 	if ( isset( $_GET['history'] ) ) {
@@ -920,7 +922,14 @@ function stripe_balance_history( $limit = 20 ) {
 
 function rsvpmaker_stripe_transactions() {
 	$limit = isset($_GET['history']) ? intval($_GET['history']) : 50;
-	$transactions = rsvpmaker_stripe_transactions_list($limit);
+	if(isset($_GET['email']))
+	{
+		$email = sanitize_text_field($_GET['email']);
+		$where = " where email='$email' ";
+		$transactions = rsvpmaker_stripe_transactions_list($limit, $where);
+	}
+	else
+		$transactions = rsvpmaker_stripe_transactions_list($limit);
 	$yield = '';
 	//$temp_memory = fopen( 'php://output', 'w' );
 

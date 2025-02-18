@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.6.2
-Stable tag: 11.4.4
+Tested up to: 6.7.2
+Stable tag: 11.4.8
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -128,6 +128,16 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 11.4.8 =
+
+* Search transaction log by email, with link from RSVP Report
+* Bug fixes for mailing list maintenance, paypal webhook api endpoint
+
+= 11.4.5 =
+
+* Tweaks to screen for viewing / restoring emails on unsubscribe list.
+* View / restore RSVP registrations that were dropped from list for nonpayment.
 
 = 11.4.4 =
 

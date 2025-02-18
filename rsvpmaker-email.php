@@ -656,6 +656,8 @@ foreach($results as $row)
 						{
 						////print_r($property_array);
 						$post_id = $property_array["args"][0];
+						$posthash = $property_array["args"][2];
+						$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
 
 						$signatures = get_post_meta($post_id,'signatures');
 						$cancel_links = '';
@@ -664,11 +666,15 @@ foreach($results as $row)
 							$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 							if($next) {
 								$cancel_links .= sprintf('<p>%s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+								if(isset($_GET['showvars']))
+									$cancel_links .= sprintf('<p>vars: %s</p>',var_export($postvars,true));
 							}
 							$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 							if($next) {
 								$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
 								$cancel_links .= sprintf('<p>%s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+								if(isset($_GET['showvars']))
+									$cancel_links .= sprintf('<p>vars: %s</p>',var_export($postvars,true));
 							}	
 						}		
 				
@@ -1687,6 +1693,13 @@ if(!empty($_POST["subject"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsv
 			$post->post_title = $subject;
 			$postarr["ID"] = $post->ID;
 			$postarr["post_title"] = $subject;
+			$postarr['post_status'] = 'publish';
+			wp_update_post($postarr);
+		}
+		elseif($post->post_status != 'publish')
+		{
+			$postarr["ID"] = $post->ID;
+			$post->post_status = $postarr['post_status'] = 'publish';
 			wp_update_post($postarr);
 		}
 	}
@@ -1701,6 +1714,9 @@ if(!empty($_POST["send_when"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 	add_post_meta($post->ID,'signatures',$signature);
 	update_post_meta($post->ID,'rsvpmail_last_hash',$posthash);
 	update_post_meta($post->ID,'scheduled_send_vars'.$posthash,$postvars);
+}
+elseif(!empty($_POST["send_when"])) {
+	echo "<p>Postvars not saved, nonce error</p>";
 }
 if(isset($_POST['bigsend']) && rsvpmaker_verify_nonce()) {
 	echo '<p>Big email broadcast confirmed!</p>';
@@ -1959,6 +1975,8 @@ echo $events_dropdown;
 printf('<div id="cron_schedule_options" %s>',(isset($_GET['scheduling'])) ? '' : 'style="display:none"');
 rsvpmaker_cron_schedule_options();
 echo '</div>';
+if('publish' != $post->post_status)
+	printf('<p>Sending will change the post status from "%s" to "publish"</p>',$post->post_status);
 ?>
 <p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> </p>
 </form>
@@ -2531,17 +2549,10 @@ if(isset($_POST['problems']))
 rsvpmaker_admin_heading(__('Unsubscribed and Blocked','rsvpmaker'),__FUNCTION__);
 
 printf('<p>%s</p>',__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
-$sql = "SELECT * FROM $table ORDER BY code, timestamp DESC";
+$sql = "SELECT * FROM $table ORDER BY code, ID DESC";
 $results = $wpdb->get_results($sql);
-if(!empty($results))
-{
-printf('<form method="post" action="%s"><table><tr><th>Unblock</th><th>Email</th><th>Issue</th></tr>',$action);
+printf('<form method="post" action="%s">',$action);
 //patchstack fix
-foreach($results as $row)
-{
-	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s</td></tr>',esc_attr($row->email),esc_html($row->email),$row->code);	
-}
-}
 
 if(is_array($ignore))
 	printf('<p>Ignoring postmark supressions for %s</p>',implode(', ',$ignore));
@@ -2554,8 +2565,21 @@ printf('<h2>Add Email Addresses as Unsubscribed Or Blocked</h2><form method="pos
 <p>
 <input type="radio" name="code" value="unsubscribed" checked="checked"> Unsubscribed
 <input type="radio" name="code" value="blocked"> Blocked
-<button>Add</button></form>',$action,rsvpmaker_nonce('return'));
+<button>Add</button>',$action,rsvpmaker_nonce('return'));
 
+if(!empty($results))
+{
+echo '<table><tr><th>Unblock</th><th>Email</th><th>Issue</th></tr>';
+foreach($results as $row)
+{
+	if(strpos($row->code,'Suppression'))
+		$row->code .= ' (Postmark unsubscribe)';
+	$date = (strpos($row->timestamp,'00-')) ? '' : date('F j, Y',strtotime($row->timestamp));
+	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s %s</td></tr>',esc_attr($row->email),esc_html($row->email),$row->code,$date);	
+}
+echo '</table><p><button>Update</button></p>';
+}
+echo '</form>';
 }
 
 
@@ -3608,7 +3632,7 @@ function rsvp_nonpayment_delete($rsvp_id) {
 	global $wpdb;
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
 	$rsvp = (array) $wpdb->get_row($sql);
-	error_log('nonpayment_delete check '.var_export($row));
+	error_log('nonpayment_delete check '.var_export($row,true));
 	if($rsvp['fee_total'] == $rsvp['amountpaid']) {
 		error_log($rsvp['fee_total'].' == '.$rsvp['amountpaid']);
 		return;
@@ -3628,20 +3652,24 @@ function rsvp_nonpayment_delete($rsvp_id) {
 		rsvpmailer($mail);
 	} else {
 		//paid something, but not enough
-		$snapshot = get_post_meta($rsvp['event'],'_rsvp_snapshot_'.$rsvp['amountpaid'],true); //snapshot from when rsvp was fully paid
-		error_log('snapshot retrieved '.var_export($snapshot,true));
-		$snapshot_text = var_export($snapshot,true);
-		$snap = (array) array_shift($snapshot);
-		$wpdb->update($wpdb->prefix.'rsvpmaker',$snap,array('id'=>$rsvp_id));
-		$wpdb->delete($wpdb->prefix.'rsvpmaker',array('master_rsvp'=>$rsvp_id));
-		foreach($snapshot as $snap) {
-			$snap = (array) $snap;
-			$wpdb->insert($wpdb->prefix.'rsvpmaker',$snap);
+		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+		add_post_meta($rsvp['event'],'rsvpmaker_unpaid',$wpdb->get_results($sql)); //preserve option of restoring record
+		$snapshot = get_post_meta($rsvp['event'],'_rsvp_snapshot_'.$rsvp['id'].'_'.$rsvp['amountpaid'],true); //snapshot from when rsvp was fully paid
+		if($snapshot) {
+			error_log('snapshot retrieved '.var_export($snapshot,true));
+			$snapshot_text = var_export($snapshot,true);
+			$snap = (array) array_shift($snapshot);
+			$wpdb->update($wpdb->prefix.'rsvpmaker',$snap,array('id'=>$rsvp_id));
+			$wpdb->delete($wpdb->prefix.'rsvpmaker',array('master_rsvp'=>$rsvp_id));
+			foreach($snapshot as $snap) {
+				$snap = (array) $snap;
+				$wpdb->insert($wpdb->prefix.'rsvpmaker',$snap);
+			}	
+			$mail['to'] = $mail['from'] = get_option('admin_email');
+			$mail['subject'] = "RSVP Updated Entries Deleted for Nonpayment ".$event->post_title.' '.$event->date;
+			$mail['html'] = sprintf("<p>Record restored to previous status</p><pre>%s</pre>",$snapshot_text);
+			rsvpmailer($mail);	
 		}
-		$mail['to'] = $mail['from'] = get_option('admin_email');
-		$mail['subject'] = "RSVP Updated Entries Deleted for Nonpayment ".$event->post_title.' '.$event->date;
-		$mail['html'] = sprintf("<p>Record restored to previous status</p><pre>%s</pre>",$snapshot_text);
-		rsvpmailer($mail);	
 	}
 }
 
@@ -3952,9 +3980,13 @@ if(!empty($rsvpmaker_tx_content))
 	$preview = $rsvpmaker_tx_content;
 else {
 	$parts = explode('*|',$post->post_content);
-	$preview = trim(strip_tags($parts[0]));
+	$preview = $parts[0];
+	$preview = str_replace('>',"> ",$preview);
 }
 $preview = trim(strip_tags($preview));
+$preview = preg_replace('/[\s]{2,}/'," ",$preview);
+$preview = html_entity_decode($preview);
+$preview = preg_replace("/[^[:alnum:][:space:]\.\?\!\:]/u", '', $preview);
 if(strlen($preview) > 200)
 	$preview = substr($preview,0,200).' ...';
 }
@@ -4898,7 +4930,6 @@ function rsvpmail_csv_export() {
 
 	$sql = 'SELECT email,first_name,last_name,active, meta_value as segment, meta_key FROM ' . $table . " LEFT JOIN ".$table_meta." ON `$table`.id = `$table_meta`.guest_id ORDER BY email";
 	$results = $wpdb->get_results( $sql, ARRAY_A );
-	//wp_die(var_export($results,true));
 	foreach($results as $row) {
 		$meta_key = array_pop($row);
 		if($meta_key != 'segment')
@@ -5197,7 +5228,7 @@ function rsvpmaker_guest_list() {
 		$row = $wpdb->get_row("select * from $table where id=".intval($_GET['edit']));
 		printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'));
 		//patchstack fix
-		printf('<div>Email</div><div><input type="text" name="edit_email" value="%s"> ></div><div>First Name</div><div><input type="text" name="first_name" value="%s"></div><div>Last Name</div><div><input type="text" name="last_name" value="%s"></div><input type="hidden" name="id" value="%d"> </p>',__('Edit','rsvpmaker'),esc_attr($row->email),esc_attr($row->first_name),esc_attr($row->last_name),$row->id);
+		printf('<div>Email</div><div><input type="text" name="edit_email" value="%s"> ></div><div>First Name</div><div><input type="text" name="first_name" value="%s"></div><div>Last Name</div><div><input type="text" name="last_name" value="%s"></div><input type="hidden" name="id" value="%d"> </p>',esc_attr($row->email),esc_attr($row->first_name),esc_attr($row->last_name),$row->id);
 		submit_button('Update');
 		rsvpmaker_nonce();
 		echo '</form>';	
@@ -5272,7 +5303,7 @@ function rsvpmaker_guest_list() {
 				if(empty($prompt))
 					$prompt = ($item->active) ? '' : '<br><strong>Not confirmed.</strong> <input type="checkbox" name="resend[]" value="'.$item->id.'"> Resend confirmation prompt? <button>Submit</button>';
 				$segment_remove = '';
-				if($segment_list && strpos($item->segment,$segment_list) !== false) {
+				if(!empty($segment_list) && strpos($item->segment,$segment_list) !== false) {
 					$segment_remove = sprintf('<br><input type="checkbox" name="unsegment[%d]" value="%s" /> Remove from %s',$item->id,$segment_list,$segment_list);
 				}
 				printf('<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>',$item->id,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit='.$item->id),$item->email.$prompt,$item->first_name, $item->last_name, $item->segment,$segment_remove,$item->id);
@@ -5611,6 +5642,7 @@ function rsvpmail_latest_post_promo($args = array()) {
 			$segment = empty($args['segment']) ? 'general' : $args['segment'];
 			$parts = preg_match('/<p>(.+?)<\/p>/',$html,$match);
 			$preview = strip_tags($match[1]);
+			$preview = preg_replace('/[^A-Za-z0-9\s\:\.\?\!]/', ' ', $preview);
 			if(strlen($preview) > 200)
 				$preview = substr($preview,0,200).' ...';
 			$postvars['preview_text'] = $preview;

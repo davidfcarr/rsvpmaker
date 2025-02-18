@@ -109,6 +109,10 @@ function copy_to_rsvp_template() {
 	global $wpdb,$current_user;
 	if(isset($_GET['copy_to_rsvp_template'])) {
 		$from = intval($_GET['copy_to_rsvp_template']);
+		if(!current_user_can('edit_post',$from)) {
+			wp_die('Insufficient permissions');
+			return;//only allow if user has editing rights to post
+		}
 		$source = get_post($from);
 		$new['post_content'] = $source->post_content;
 		$new['post_type'] = 'rsvpmaker_template';
@@ -375,7 +379,7 @@ function rsvpmaker_get_timezone_string( $post_id = 0 ) {
 			$timezone = $event->timezone;
 		}
 	}
-	if(strpos($timezone,'/') || strpos($timezone,'TC'))
+	if(!empty($timezone) && (strpos($timezone,'/') || strpos($timezone,'TC')))
 		return $timezone;
 	else
 		return 'UTC';

@@ -269,7 +269,7 @@ function rsvp_form_field( $atts, $content = '' ) {
 
 	if ( empty( $profile[ $slug ] ) ) {
 
-		return $content;// .$slug.': no default'.var_export($profile,true);
+		return $content;
 	}
 
 	$default = $profile[ $slug ];
@@ -778,7 +778,6 @@ function rsvpmaker_contact_form_order($lookup) {
 	else {
 		return 'Invalid payment gateway';
 	}
-	//return 'lookup'.var_export($lookup,true).' '.var_export($purchase,true).'<br>'.var_export($rsvprow,true);
 }
 
 function rsvpmaker_contact_form_output($attributes) {

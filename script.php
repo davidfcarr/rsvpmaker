@@ -195,6 +195,9 @@ function rsvp_form_jquery( $atts = null) {
 				return;
 		}
 	for(let i = 0; i < number_to_add; i++) {
+	<?php if(!is_admin()) {
+		//do not enforce for admin working in RSVP Report
+	?>
 		if(guestcount > max_guests)
 		{
 		console.log('guest limit reached');
@@ -203,6 +206,7 @@ function rsvp_form_jquery( $atts = null) {
 		$('#first_blank').append('<p><em><?php esc_html_e( 'Guest limit reached', 'rsvpmaker' ); ?></em></p>');
 		return;
 		}
+	<?php } ?>
 	console.log('guestline loop',i);
 	console.log('guestline number to add',number_to_add);
 	console.log('guestline guestcount',guestcount);
@@ -266,7 +270,7 @@ function rsvp_form_jquery( $atts = null) {
 					'email_search': value,
 				};
 				jQuery.get('<?php echo rest_url( 'rsvpmaker/v1/email_lookup/' . wp_create_nonce( 'rsvp_email_lookup' ) ); ?>/'+post_id, data, function(response) {
-				$('#rsvp_email_lookup').html(response);
+				$('#rsvp_email_lookup').html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">'+response+'</div>');
 				});
 			}
 		});
