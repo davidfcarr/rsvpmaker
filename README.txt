@@ -129,6 +129,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 11.4.9 =
+
+* Update to stay in sync with Stripe requirements.
+
 = 11.4.8 =
 
 * Search transaction log by email, with link from RSVP Report

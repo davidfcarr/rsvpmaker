@@ -384,8 +384,6 @@ function rsvpmaker_stripe_checkout() {
 
 			'payment_method_types' => array( 'card' ),
 
-			'statement_descriptor' => substr( 'Paid on ' . sanitize_text_field($_SERVER['SERVER_NAME']), 0, 21 ),
-
 		),
 		array( 'idempotency_key' => $idempotency_key )
 	);

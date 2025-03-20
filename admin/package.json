@@ -17,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^27.5.0",
+		"ws": ">=8.17.1",
 		"dotenv-cli": "^7.4.1"
 	},
 	"dependencies": {
@@ -25,6 +26,7 @@
 		"dotenv": "^16.4.5",
 		"react-clock": "^4.2.0",
 		"react-query": "^3.39.3",
-		"react-time-picker": "^6.2.0"
+		"react-time-picker": "^6.2.0",
+		"ws": ">=8.17.1"
 	}
 }
