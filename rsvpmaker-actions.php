@@ -66,6 +66,7 @@ if('rsvpemail' == $post_after->post_type) {
 if(('rsvpmaker' == $post_after->post_type) && $post_after->post_title != $post_before->post_title) {
 	$table = get_rsvpmaker_event_table();
 	$wpdb->query($wpdb->prepare("update $table SET post_title=%s where event=%d",$post_after->post_title,$post_after->ID)); //keep title in sync
+	delete_transient('rsvpmakers');
 }
 
 },10,3);
@@ -93,6 +94,8 @@ add_action(
 */
 add_action('wp', 'clear_rsvp_cookies' );
 add_action('wp', 'rsvp_reminder_activation' );
+add_action('the_post','rsvpmaker_the_post');
+add_action('shutdown','save_rsvpmakers');
 
 add_action( 'wp_enqueue_scripts', 'rsvpmaker_event_scripts', 10000 );
 
@@ -102,10 +105,6 @@ if ( ! isset( $rsvp_options['flush'] ) ) {
 }
 if ( ! isset( $rsvp_options['flush'] ) ) {
 	add_action('admin_init', 'flush_rewrite_rules' );
-}
-
-if ( isset( $_GET['clean_duplicate_dates'] ) ) {
-	add_action('init', 'rsvpmaker_duplicate_dates' );
 }
 
 if ( isset( $_GET['ical'] ) ) {

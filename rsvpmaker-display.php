@@ -192,43 +192,6 @@ function rsvpmaker_event_listing( $atts = array() ) {
 
 }
 
-
-
-function get_next_events_link( $label = '', $no_events = '' ) {
-
-	global $last_time;
-
-	global $wpdb;
-
-	$sql = "SELECT post_id from $wpdb->postmeta JOIN $wpdb->posts ON $wpdb->postmeta.post_id = $wpdb->posts.ID WHERE meta_key='_rsvp_dates' AND meta_value > '" . rsvpmaker_date( 'Y-m-d H:i:s', $last_time ) . "' AND post_status='publish' ";
-
-	$at_least_one = $wpdb->get_var( $sql );
-
-	if ( ! $at_least_one ) {
-
-		if ( ! empty( $no_events ) ) {
-
-			return '<p class="no_events">' . $no_events . '</p>';
-		}
-	}
-
-	$link = get_rsvpmaker_archive_link();
-
-	$link .= ( strpos( $link, '?' ) ) ? '&' : '?';
-
-	$link .= 'cd=' . rsvpmaker_date( 'd', $last_time ) . '&cm=' . date( 'm', $last_time ) . '&cy=' . date( 'Y', $last_time );
-
-		$attr = apply_filters( 'next_posts_link_attributes', '' );
-
-		$link = '<a href="' . $link . "\" $attr>" . esc_html( $label ) . ' &raquo;</a>';
-
-	if ( isset( $link ) ) {
-
-		return "<p class=\"more_events\">$link</p>";
-	}
-
-}
-
 add_filter('posts_fields','rsvpmaker_select',99,2);
 add_filter('posts_distinct','rsvpmaker_distinct',99,2);
 add_filter('posts_join','rsvpmaker_join',99,2);
@@ -900,7 +863,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 		$startday = $atts['startday'];
 	}
 
-	$self = $req_uri = site_url(preg_replace('/\?cm.+/','',sanitize_text_field($_SERVER['REQUEST_URI'])));
+	$self = $req_uri = get_permalink();
 
 	$req_uri .= ( strpos( $req_uri, '?' ) ) ? '&' : '?';
 
@@ -1422,11 +1385,12 @@ function rsvpmaker_looking_ahead( $atts ) {
 
 function get_adjacent_rsvp_join( $join ) {
 	global $post;
+	$event_table = get_rsvpmaker_event_table();
 	if ( $post->post_type != 'rsvpmaker' ) {
 		return $join;
 	}
 	global $wpdb;
-	return $join . ' JOIN ' . $wpdb->postmeta . ' ON p.ID=' . $wpdb->postmeta . ".post_id AND meta_key='_rsvp_dates' ";
+	return $join . ' JOIN ' . $event_table . ' ON p.ID=' . $event_table . ".event ";
 }
 
 add_filter( 'get_previous_post_join', 'get_adjacent_rsvp_join' );
@@ -1450,6 +1414,7 @@ function get_adjacent_rsvp_where( $where ) {
 	if ( $post->post_type != 'rsvpmaker' ) {
 		return $where;
 	}
+	/* checkthis */
 	if ( ! get_rsvp_date( $post->ID ) ) { // if not an event, we don't want to display adjacent post links
 		return 'WHERE false';
 	}
@@ -1457,12 +1422,10 @@ function get_adjacent_rsvp_where( $where ) {
 
 	$op = strpos( $where, '>' ) ? '>' : '<';
 
-	$current_event_date = $wpdb->get_var( 'select meta_value from ' . $wpdb->postmeta . " WHERE meta_key='_rsvp_dates' AND post_id=" . $post->ID );
+	$event = get_rsvpmaker_event($post->ID);
+	$current_event_date = (isset($event->date)) ? "'".$event->date."'" : ' CURDATE() ';
 
-	// split and modify
-
-	$wparts = explode( 'p.post_type', $where );
-	$where  = 'WHERE ' . $wpdb->postmeta . ".meta_value $op '$current_event_date' AND p.ID != $post->ID AND p.post_type" . $wparts[1];
+	$where  = " WHERE date $op $current_event_date AND p.ID != $post->ID AND p.post_type='rsvpmaker' ";
 
 	return $where;
 }
@@ -2945,7 +2908,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 				$dateblock .= '</span>';
 
-			} elseif ( !empty($event->display_type) && ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+			} elseif ( ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
 
 				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
 

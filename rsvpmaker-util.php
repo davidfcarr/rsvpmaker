@@ -1,14 +1,9 @@
 <?php 
-
- 
-
 /*
 
 utilities
 
 */
-
-
 
 function get_rsvpmaker_event_table() {
 
@@ -343,79 +338,6 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 }
 
 
-
-//legacy data update
-
-function rsvpmaker_update_event_row ($post_id) {
-
-	global $wpdb, $post, $rsvp_options;
-
-	$event_table = $wpdb->prefix . 'rsvpmaker_event';
-
-	$date = get_post_meta($post_id,'_rsvp_dates',true);
-
-	if(empty($date))
-
-		return;//don't mess with non dated events
-
-	delete_transient('rsvp_meta_cache');
-
-	$post = get_post($post_id);
-
-	$timezone = rsvpmaker_get_timezone_string($post_id);
-
-	$type = get_post_meta($post_id,'_firsttime',true);
-
-	$date = get_post_meta($post_id,'_rsvp_dates',true);
-
-	$enddate = get_post_meta($post_id,'_rsvp_end_date',true);
-
-	if(empty($enddate)) {
-
-	$end = get_post_meta($post_id,'_endfirsttime',true);
-
-	$enddate = rsvpmaker_end_date($date,$type,$end);
-
-	update_post_meta($post_id,'_rsvp_end_date',$enddate);
-
-	}
-
-	$ts_start = rsvpmaker_strtotime($date);
-
-	$ts_end = rsvpmaker_strtotime($enddate);
-
-	$event = $wpdb->get_row( "SELECT * FROM $event_table WHERE event=$post_id" );
-
-	$nv = array(
-
-		'post_title'=> $post->post_title,
-
-		'display_type'=>$type, 
-
-		'date'=>$date, 
-
-		'enddate'=>$enddate, 
-
-		'ts_start'=>$ts_start, 
-
-		'ts_end'=>$ts_end, 
-
-		'timezone'=>$timezone);
-
-	if($event)
-
-		$wpdb->update($event_table,$nv,array('event'=>$post_id));
-
-	else
-
-		$wpdb->insert($event_table,$nv);
-
-	return (object) array('event' => $post_id, 'post_title'=> $post->post_title,'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
-
-}
-
-
-
 function rsvpmaker_update_start_time ($post_id, $date) {
 
 	global $wpdb, $post;
@@ -441,6 +363,7 @@ function rsvpmaker_update_start_time ($post_id, $date) {
 	$sql = $wpdb->prepare("update $event_table SET display_type=%s, date=%s, enddate=%s, ts_start=%d, ts_end=%d, timezone=%s WHERE event=%s",$type,$date,$enddate,$ts_start,$ts_end,$timezone, $post_id);
 
 	$wpdb->query($sql);
+	delete_transient('rsvpmakers');
 
 }
 
@@ -459,6 +382,7 @@ function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 		$ts_start = rsvpmaker_strtotime($date);
 
 		$sql = $wpdb->prepare("UPDATE $event_table SET date=%s, ts_start=%d WHERE event=%d ",$date,$ts_start,$event_post_id);
+		delete_transient('rsvpmakers');
 
 	}
 
@@ -486,20 +410,21 @@ function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 
 }
 
-
-
 function get_rsvpmaker_event( $post_id ) {
+	if('rsvpmaker' != get_post_type($post_id))
+		return;
+	$rsvpmaker_event = get_rsvpmaker_global($post_id);
+	if(isset($rsvpmaker_event->event))
+	{
+		return $rsvpmaker_event;
+	}
 
 	if ( empty( $post_id ) ) {
 
 		return;
 
 	}
-
-
-
-	global $wpdb, $rsvpdates;
-
+	global $wpdb;
 	$wpdb->show_errors();
 
 	$sql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id );
@@ -545,6 +470,7 @@ function get_rsvpmaker_event( $post_id ) {
 			$sql = 'UPDATE '.$wpdb->prefix . "rsvpmaker_event SET ts_start=$row->ts_start WHERE event=" . intval( $post_id );
 
 			$wpdb->query($sql);
+			delete_transient('rsvpmakers');
 
 		}
 
@@ -805,6 +731,7 @@ function rsvpmaker_add_timestamps() {
 			$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d', $t, $end, $timezone, $event->event );
 
 			$wpdb->query( $sql );
+			delete_transient('rsvpmakers');
 
 		}
 
@@ -1290,11 +1217,30 @@ function get_sql_curdate() {
 
 }
 
-
-
 function get_rsvp_date( $post_id, $format = '' ) {
-
-	global $wpdb, $rsvpdates, $rsvp_options;
+	if('rsvpmaker' != get_post_type($post_id))
+		return;
+	global $wpdb, $rsvp_options, $post;
+	$rsvpmaker_event = get_rsvpmaker_global($post_id);
+	error_log('get_rsvp_date return from get_rsvpmaker_global post_id '.$post_id.' '. var_export($rsvpmaker_event,true));
+	if($rsvpmaker_event && isset($rsvpmaker_event->ts_start)) {
+		if (empty($format)) 
+		{
+			//error_log('get_rsvp_date by $rsvpmaker_event properties: '.$rsvpmaker_event->date);
+			return $rsvpmaker_event->date;
+		}
+		else {
+			$formatted = rsvpmaker_date($rsvp_options[$format],$rsvpmaker_event->ts_start,$rsvpmaker_event->timezone);
+			//error_log('get_rsvp_date by $rsvpmaker_event properties: '.$formatted);
+			return $formatted;
+		}
+	}
+	elseif (get_post_type($post_id) != 'rsvpmaker') {
+		return;
+	}
+	else {
+		error_log('get_rsvp_date by $rsvpmaker_event properties: failed to find object properties for post id '.$post_id);
+	}
 
 	if ( empty( $post_id ) ) {
 
@@ -1302,52 +1248,22 @@ function get_rsvp_date( $post_id, $format = '' ) {
 
 	}
 
-	if ( empty( $rsvpdates ) ) {
-
-		cache_rsvp_dates( 50 );
-
-	}
-
-
-
-	if ( ! empty( $rsvpdates[ $post_id ] ) ) {
-
-		if(empty($format))
-
-			return $rsvpdates[ $post_id ][0];
-
-		else
-
-			return rsvpmaker_date($rsvp_options[$format],rsvpmaker_strtotime($rsvpdates[ $post_id ][0]));
-
-	}
-
-
-
 	$wpdb->show_errors();
 
-
-
-	$sql  = 'SELECT date FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id );
-
-	$date = $wpdb->get_var( $sql );
-
-	if ( $date == '0000-00-00 00:00:00' ) {
-
-		$wpdb->query( 'DELETE FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id ) );
-
+	$sql  = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker_event WHERE event=' . intval( $post_id );
+	
+	$event = $wpdb->get_row( $sql );
+	if($event) {
+		$date = $event->date;
+		rsvpmakers_add($event);
+	}
+	else
 		return;
 
-	}
-
 	if(empty($format))
-
 		return $date;
-
 	else
-
-		return rsvpmaker_date($rsvp_options[$format],rsvpmaker_strtotime($date));
-
+		return rsvpmaker_date($rsvp_options[$format],$event->ts_start,$event->timezone);
 }
 
 
@@ -1609,52 +1525,28 @@ function get_rsvp_dates( $post_id, $obj = false ) {
 }
 
 
-
 function get_rsvp_event( $where = '', $output = OBJECT ) {
 
 	global $wpdb;
+	$event_table = get_rsvpmaker_event_table();
 
-
-
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-
-
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, *
 
 	 FROM " . $wpdb->posts . '
 
-
-
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-
+	 JOIN ' . $event_table . ' ON ' . $wpdb->posts . ".ID = $event_table.event WHERE 1 
 
 	 WHERE (post_status='publish' OR post_status='draft') ";
 
-
-
 	if ( empty( $where ) ) {
 
+		$where = " AND date > '" . get_sql_curdate() . "' ";
 
-
-		$where = " a1.meta_value > '" . get_sql_curdate() . "' ";
-
-
-
-	} else {
-
-		$where = str_replace( 'datetime', 'a1.meta_value', $where );
-
-	}
-
-
-
+	} 
+	
 	$sql .= ' AND ' . $where . ' ';
 
-
-
-	$sql .= ' ORDER BY a1.meta_value ';
-
-
+	$sql .= ' ORDER BY date ';
 
 	return $wpdb->get_row( $sql );
 
@@ -1668,33 +1560,20 @@ function get_rsvp_event( $where = '', $output = OBJECT ) {
 
 function get_events_rsvp_on( $limit = 0 ) {
 
-
-
 	global $wpdb;
+	$event_table = get_rsvpmaker_event_table();
 
-
-
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date, a2.meta_value as template
-
-
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, *
 
 	 FROM " . $wpdb->posts . '
 
+	 JOIN ' . $event_table . ' ON ' . $wpdb->posts . ".ID =$event_table.event
 
+	 JOIN " . $wpdb->postmeta . ' ON ' . $wpdb->posts . ".ID =$wpdb->postmeta.post_id meta_key='_rsvp_on' AND meta_value=1 
 
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
+	 WHERE date > '" . get_sql_curdate() . "' AND post_status='publish'
 
-
-
-	 JOIN " . $wpdb->postmeta . ' a2 ON ' . $wpdb->posts . ".ID =a2.post_id AND a2.meta_key='_rsvp_on' AND a2.meta_value=1 
-
-
-
-	 WHERE a1.meta_value > '" . get_sql_curdate() . "' AND post_status='publish'
-
-
-
-	 ORDER BY a1.meta_value ASC ";
+	 ORDER BY date ASC ";
 
 
 
@@ -1706,15 +1585,9 @@ function get_events_rsvp_on( $limit = 0 ) {
 
 	}
 
-
-
 	$wpdb->show_errors();
 
-
-
 	return $wpdb->get_results( $sql );
-
-
 
 }
 
@@ -1952,23 +1825,15 @@ function get_next_rsvpmaker() {
 
 function get_events_by_author( $author, $limit = '', $status = '' ) {
 
-
-
 	global $wpdb;
 
-
+	$table = get_rsvpmaker_event_table();
 
 	$wpdb->show_errors();
 
-
-
 	if ( $status == 'publish' ) {
 
-
-
 		$status_sql = " AND post_status='publish' ";
-
-
 
 	} else {
 
@@ -1978,154 +1843,29 @@ function get_events_by_author( $author, $limit = '', $status = '' ) {
 
 
 
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, *
 
 
 
 	 FROM " . $wpdb->posts . '
 
+	 JOIN ' . $table . ' a1 ON ' . $wpdb->posts . ".ID ='.$table.'.event
+
+	 WHERE $wpdb->posts.post_author=$author AND a1.date > '" . get_sql_now() . "' " . $status_sql;
 
 
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-
-
-	 WHERE $wpdb->posts.post_author=$author AND a1.meta_value > '" . get_sql_now() . "' " . $status_sql;
-
-
-
-	$sql .= ' ORDER BY a1.meta_value ';
-
+	$sql .= ' ORDER BY date ';
 
 
 	if ( ! empty( $limit ) ) {
-
-
 
 		$sql .= ' LIMIT 0,' . $limit . ' ';
 
 	}
 
-
-
 	return $wpdb->get_results( $sql );
 
-
-
 }
-
-
-
-
-
-
-
-function rsvpmaker_week_of_events() {
-
-
-
-	global $wpdb;
-
-
-
-	$wpdb->show_errors();
-
-
-
-	$startfrom = '"' . get_sql_now() . '"';
-
-
-
-	$enddate = ' DATE_ADD(NOW(),INTERVAL 1 WEEK) ';
-
-
-
-		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-
-
-
-		 FROM " . $wpdb->posts . '
-
-
-
-		 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-
-
-		 WHERE a1.meta_value > " . $startfrom . " AND a1.meta_value < $enddate AND post_status='publish' ";
-
-
-
-		$sql .= ' ORDER BY a1.meta_value ';
-
-
-
-		return $wpdb->get_results( $sql );
-
-
-
-}
-
-
-
-
-
-
-
-function rsvpmaker_week_reminders() {
-
-
-
-	global $wpdb;
-
-
-
-	$wpdb->show_errors();
-
-
-
-	$startfrom = '"' . get_sql_now() . '"';
-
-
-
-	$enddate = ' DATE_ADD(NOW(),INTERVAL 1 WEEK) ';
-
-
-
-		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, a1.meta_value as datetime,
-
-
-
-		a2.meta_key as slug, a2.meta_value as reminder_post_id
-
-
-
-		 FROM " . $wpdb->posts . '
-
-
-
-		 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-
-
-		 JOIN " . $wpdb->postmeta . ' a2 ON ' . $wpdb->posts . ".ID =a2.post_id AND a2.meta_key LIKE '_rsvp_reminder_msg_%'
-
-
-
-		 WHERE a1.meta_value > " . $startfrom . " AND a1.meta_value < $enddate AND post_status='publish' ";
-
-
-
-		$sql .= ' ORDER BY a1.meta_value ';
-
-
-
-		return $wpdb->get_results( $sql );
-
-
-
-}
-
 
 
 function rsvpmaker_reminders_nudge() {
@@ -2178,137 +1918,17 @@ function rsvpmaker_reminders_nudge() {
 
 add_action( 'rsvpmaker_update_table_continue', 'rsvpmaker_update_table_continue' );
 
-
-
 function rsvpmaker_update_table_continue() {
 
 	rsvpmaker_event_dates_table_update( );
 
 }
 
-
-
 function rsvpmaker_event_dates_table_update( $new = false ) {
-
-	global $wpdb;
-
-	if($new)
-
-		{
-
-		$last_date = '';
-
-		delete_option('rsvpmaker_update_last_date');
-
-		}
-
-	else
-
-		$last_date = get_option( 'rsvpmaker_update_last_date' );
-
-	$where     = ( $last_date ) ? " AND a1.meta_value <= '" . $last_date . "'" : '';
-
-	$sql       = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime
-
-	 FROM " . $wpdb->posts . '
-
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates' AND post_status='publish' $where ORDER BY a1.meta_value DESC LIMIT 0, 100";
-
-	 //rsvpmaker_debug_log( $sql, 'event lookup' );
-
-	$events    = $wpdb->get_results( $sql );
-
-	$log       = '';
-
-	$last_date = '';// remove for now
-
-	if ( $events ) {
-
-		foreach ( $events as $event ) {
-
-			$date = $event->datetime;
-
-			$type = get_post_meta( $event->ID, '_firsttime', true );
-
-			$end  = get_post_meta( $event->ID, '_endfirsttime', true );
-
-			if ( empty( $end ) ) {
-
-				$enddatetime = date( 'Y-m-d H:i:s', strtotime( $date . ' +1 hour' ) );
-
-			} elseif ( strpos( $type, '|' ) ) {
-
-				$p           = explode( '|', $type );
-
-				$days        = $p[1] - 1;
-
-				$enddatetime = date( 'Y-m-d ', strtotime( $date . ' +' . $days . ' days' ) ) . $end . ':00';
-
-			} elseif ( $type == 'set' ) {
-
-				$enddatetime = date( 'Y-m-d', strtotime( $date ) ) . ' ' . $end . ':00';
-
-			} else {
-
-				$enddatetime = date( 'Y-m-d H:i:s', strtotime( $date . ' +1 hour' ) );
-
-			}
-
-			$enddatetime = fix_enddatetime( $enddatetime, $date, $event->ID );
-
-			$title       = get_the_title( $event->ID );
-
-			$sql         = $wpdb->prepare( 'REPLACE INTO ' . $wpdb->prefix . 'rsvpmaker_event SET event=%d, post_title=%s, date=%s, enddate=%s, display_type=%s', $event->ID, $title, $date, $enddatetime, $type );
-
-			$wpdb->query( $sql );
-
-			$last_date = $event->datetime;
-
-			$log      .= $sql . "\n";
-
-		}
-
-	}
-
-	//rsvpmaker_debug_log( $log, 'log of updated events' );
-
-	$where = " AND a1.meta_value < '" . $last_date . "'";
-
-	$sql   = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime
-
-	 FROM " . $wpdb->posts . '
-
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates' AND post_status='publish' $where ORDER BY a1.meta_key DESC ";
-
-	//rsvpmaker_debug_log( $sql, 'more events lookup' );
-
-	$events = $wpdb->get_results( $sql );
-
-	$more   = ( is_array( $events ) ) ? sizeof( $events ) : 0;
-
-	//rsvpmaker_debug_log( $more, 'more events to convert' );
-
-	update_option( 'rsvpmaker_update_last_date', $last_date );
-
-	//rsvpmaker_debug_log( $last_date, 'recording last date' );
-
-	if ( empty( $events ) ) {
-
-		update_option( 'rsvpmaker_event_table', time() );
-
-		wp_clear_scheduled_hook( 'rsvpmaker_update_table_continue' );
-
-	} else {
-
-		$timestamp = time() + 300;
-
-		wp_schedule_single_event( $timestamp, 'rsvpmaker_update_table_continue' );
-
-	}
-
+	//disable using metadata as the authoratative source of date / end date
+	wp_clear_scheduled_hook( 'rsvpmaker_update_table_continue' );
+	return;
 }
-
-
 
 add_action( 'updated_option', 'timezone_change_check' );
 
@@ -2366,10 +1986,11 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 
 			if(($end < $t) || ($event->ts_end < $event->ts_start)) {
 
+				error_log('rsvpmaker_consistency_check '.$end.' < '.$t.' || '.$event->ts_end.' < '.$event->ts_start);
 				$end = $event->ts_end = $t + HOUR_IN_SECONDS;
 
 				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET ts_end=%d, enddate=%s WHERE event=%d', $end, rsvpmaker_date('Y-m-d H:i:s',$end), $event->event );
-
+				error_log($sql);
 				$wpdb->query($sql);
 
 			}
@@ -2377,10 +1998,9 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 			if ( ( $t != (int) $event->ts_start ) || ( $end != (int) $event->ts_end ) ) {
 
 				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET ts_start=%d, ts_end=%d, timezone=%s WHERE event=%d', $t, $end, $timezone, $event->event );
-
-				//rsvpmaker_debug_log( $sql, 'consistency set timestamps' );
-
+				error_log('rsvpmaker_consistency_check timestamps '.$sql);
 				$wpdb->query( $sql );
+				delete_transient('rsvpmakers');
 
 			}
 
@@ -2389,42 +2009,6 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET timezone=%s WHERE event=%d', $timezone, $event->event );
 
 				//rsvpmaker_debug_log( $sql, 'consistency set timezone' );
-
-				$wpdb->query( $sql );
-
-			}
-
-			$ymd = date( 'Y-m-d', $t );
-
-			// rsvpmaker_debug_log($ymd,'consistency check ymd');
-
-			if ( $ymd != date( 'Y-m-d', $end ) ) {
-
-				$endtime = date( 'H:i:s', $end );
-
-				// rsvpmaker_debug_log($endtime,'end time');
-
-				if ( strpos( $event->display_type, '|' ) ) {
-
-					$dtparts   = explode( '|', $event->display_type );
-
-					$increment = ( (int) $dtparts[1] ) - 1;
-
-					$enddate   = date( 'Y-m-d', strtotime( $ymd . '+ ' . $increment . ' days' ) ) . ' ' . $endtime;
-
-				} else {
-
-					$enddate = $ymd . ' ' . $endtime;
-
-				}
-
-				// rsvpmaker_debug_log($enddate,'new end date');
-
-				$end = strtotime( $enddate );
-
-				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker_event SET enddate=%s, ts_end=%d WHERE event=%d', $enddate, $end, $event->event );
-
-				//rsvpmaker_debug_log( $sql, 'consistency check enddate' );
 
 				$wpdb->query( $sql );
 
@@ -2452,8 +2036,6 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 
 	}
 
-
-
 	$event_table = get_rsvpmaker_event_table();
 
 	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpmaker' AND meta_key='_sked_Monday' ";
@@ -2461,42 +2043,10 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 	$results = $wpdb->get_results($sql);
 
 	foreach($results as $p) {
-
-		if(get_post_meta($p->ID,'_rsvp_dates',true))
-
-			$wpdb->query("delete from $wpdb->postmeta WHERE post_id=$p->ID AND meta_key LIKE '_sked%' ");
-
-		else {
-
-			$wpdb->query("update $wpdb->posts set post_type='rsvpmaker_template' WHERE ID=$p->ID ");
-
-		}		
-
+		$wpdb->query("update $wpdb->posts set post_type='rsvpmaker_template' WHERE ID=$p->ID ");
 	}
 
 }
-
-
-
-function fix_enddatetime( $enddatetime, $date, $post_id ) {
-
-	global $wpdb;
-
-	if ( $enddatetime < $date ) {
-
-		$t           = strtotime( $date . ' +1 hour' );
-
-		$enddatetime = date( 'Y-m-d H:i:s', $t );
-
-		update_post_meta( $post_id, '_endfirsttime', date( 'H:i', $t ) );
-
-	}
-
-	return $enddatetime;
-
-}
-
-
 
 function rsvpmaker_excerpt_filter($excerpt) {
 
@@ -2676,101 +2226,20 @@ function get_future_events_by_meta( $kv, $limit = '', $output = OBJECT, $offset_
 
 }
 
-
-
-function get_future_dates( $limit ) {
-
-
-
-	global $wpdb;
-
-
-
-	$wpdb->show_errors();
-
-
-
-	$startfrom = '"' . get_sql_curdate() . '"';
-
-
-
-		$sql  = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, date_format(a1.meta_value,'%M %e, %Y') as date
-
-	
-
-		 FROM " . $wpdb->posts . '
-
-	
-
-		 JOIN ' . $wpdb->prefix . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-	
-
-		 WHERE a1.meta_value > " . $startfrom . " AND post_status='publish' ";
-
-		$sql .= ' ORDER BY a1.meta_value ';
-
-
-
-	if ( ! empty( $limit ) ) {
-
-
-
-		$sql .= ' LIMIT 0,' . $limit . ' ';
-
-	}
-
-
-
-		return $wpdb->get_results( $sql );
-
-
-
-}
-
-
-
-
-
 function count_future_events() {
 
-
-
 	global $wpdb;
-
-
+	$table = get_rsvpmaker_event_table();
 
 	$wpdb->show_errors();
 
 
 
-	$sql = 'SELECT COUNT(*)
-
-
-
-	 FROM ' . $wpdb->posts . '
-
-
-
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-
-
-	 WHERE a1.meta_value > '" . get_sql_now() . "' AND post_status='publish' ";
-
-
+	$sql = 'SELECT COUNT(*) FROM ' . $table . " JOIN $wpdb->posts ON $wpdb->posts.ID = $table.event WHERE date > '" . get_sql_now() . "' AND post_status='publish' ";
 
 	return $wpdb->get_var( $sql );
 
-
-
 }
-
-
-
-
-
-
 
 function count_recent_posts( $blog_weeks_ago = 1 ) {
 
@@ -3014,31 +2483,24 @@ function get_events_dropdown() {
 
 }
 
-
-
 function is_rsvpmaker_future( $event_id, $offset_hours = 0 ) {
 
-
-
 	global $wpdb;
-
+	$rsvpmaker_event = get_rsvpmaker_global($event_id);
+	if(isset($rsvpmaker_event->ts_start)){
+		$t = time();
+		return ($t < $rsvpmaker_event->ts_end || $t < $rsvpmaker_event->ts_start); 
+	}
+	//fallback
 	$table = get_rsvpmaker_event_table();
 
 	$now = get_sql_now();
 
-
-
 	$sql = 'SELECT date FROM ' . $table . " WHERE (date > '" . $now . "' OR enddate > '" . $now . "') AND event=" . $event_id;
-
-
 
 	$date = $wpdb->get_var( $sql );
 
-
-
 	return ( ! empty( $date ) );
-
-
 
 }
 
@@ -3113,76 +2575,43 @@ function rsvpmaker_has_template( $post_id = 0 ) {
 
 
 //replace with get_rsvp_event_times
-
-function cache_rsvp_dates( $limit = 50 ) {
-
-
-
-	global $rsvpdates, $wpdb;
-
-
-
-	if ( ! empty( $rsvpdates ) ) {
-
-
-
-		return;// if some other process already retrieved the dates
-
+add_action('wp','rsvpmaker_cache_test');
+function rsvpmaker_cache_test() {
+	global $post;
+	if(isset($_GET['rsvpmaker_cache_test'])) {
+		global $rsvpdates;
+		$rsvpdates = cache_rsvp_dates();
+		print_r($rsvpdates);
+		die();
 	}
-
-
-
-	$rsvpdates = get_transient( 'rsvpmakerdates' );
-
-
-
-	if ( ! empty( $rsvpdates ) ) {
-
-
-
-		return;
-
+}
+function cache_rsvp_dates( ) {
+	global $wpdb;
+	return array();
+	$rsvpdates = get_transient('rsvpmaker_dates_cache');
+	if ( is_array( $rsvpdates ) ) {
+		return $rsvpdates;// if some other process already retrieved the dates
 	}
-
-
-
-	$rsvpdates = array();
-
-
-
-	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='_rsvp_dates' AND meta_value > '" . get_sql_now() . "' ORDER BY meta_value LIMIT 0, $limit";
-
-
-
+	else
+		$rsvpdates = array();
+	$event_table = $wpdb->prefix.'rsvpmaker_event';
+	$sql = "SELECT * FROM $event_table WHERE date > '" . get_sql_now() . "' ORDER BY date LIMIT 0, 25";
 	$results = $wpdb->get_results( $sql );
-
-
-
 	if ( $results ) {
-
-
-
 		foreach ( $results as $row ) {
-
-
-
-			$rsvpdates[ $row->post_id ][] = $row->meta_value;
-
-
-
+			$rsvpdates[ 'event_'.$row->event ] = $row;
 		}
 
+	if($target_post && empty($rsvpdates[$target_post]))
+	{
+		$row = $wpdb->get_row("SELECT * FROM $event_table WHERE event=".intval($target_post));
+		if($row)
+			$rsvpdates['event_'.$target_post] = $row;
 	}
-
-
-
-	set_transient( 'rsvpmakerdates', $rsvpdates, HOUR_IN_SECONDS );
-
-
-
+	set_transient('rsvpmaker_dates_cache',$rsvpdates,3600);
+	}
+	return $rsvpdates;
 }
-
-
 
 function get_rsvpmaker_payment_gateway() {
 
@@ -3470,35 +2899,16 @@ function get_rspmaker_paypal_rest_keys() {
 
 
 
-	$paypal_rest_keys = get_option( 'rsvpmaker_paypal_rest_keys' );
-
-
-
+	$paypal_rest_keys = get_option( 'rsvpmaker_paypal_rest_keys' )
 	return $paypal_rest_keys;
-
-
-
 }
-
-
 
 function rsvpmaker_is_post_meta( $post_id, $field ) {
-
-
-
+	//todo remove function and references
+	return;
 	global $wpdb;
-
-
-
 	return $wpdb->get_var( "SELECT meta_id FROM $wpdb->postmeta WHERE meta_key ='" . $field . "' AND post_id=" . intval( $post_id ) );
-
-
-
 }
-
-
-
-
 
 add_action('admin_init','rsvpmaker_trigger_data_check');
 
@@ -9912,3 +9322,109 @@ function rsvpmaker_gift_certificate($rsvp) {
 
 }
 
+function rsvpmaker_the_post($post_object) {
+	//fetches event data for every new rsvpmaker event post
+	if('rsvpmaker' == $post_object->post_type) {
+		global $wpdb, $rsvpmaker_event, $rsvpmakers;
+		$rsvpmakers = get_rsvpmakers();
+		if(isset($rsvpmaker_event->event) && $rsvpmaker_event->event == $post_object->ID )
+		{
+			error_log("rsvpmaker_the_post match $rsvpmaker_event->event == $post_object->ID");
+			return $rsvpmaker_event;
+		}
+		else {
+			$found = rsvpmakers_find_match($post_object->ID,$rsvpmakers);
+			if($found) {
+				error_log('rsvpmaker_the_post found match '.var_export($found,true));
+				return $found;
+			}
+			else
+			error_log("rsvpmaker_the_post not found match $post_object->ID");
+		}
+		error_log("SELECT *, event as ID from ".$wpdb->prefix."rsvpmaker_event WHERE event=$post_object->ID");
+		$rsvpmaker_event = $wpdb->get_row("SELECT *, event as ID from ".$wpdb->prefix."rsvpmaker_event WHERE event=$post_object->ID");
+		if(!$rsvpmaker_event) // not an event document
+			{
+				$rsvpmaker_event = (object) array('event'=>$post_object->ID,'ts_start'=>1,'ts_end'=>1,'date'=>'');
+				error_log('not an event '.var_export($rsvpmaker_event,true));
+			}
+		else {
+			error_log('rsvpmaker_the_post add '.var_export($rsvpmaker_event,true));
+		}
+		$rsvpmakers[] = $rsvpmaker_event;
+		return $rsvpmaker_event;
+	}
+}
+
+function rsvpmakers_add($event) {
+	global $rsvpmaker_event;
+	$rsvpmaker_event = $event;
+	if(empty($event->ts_start) || empty($event->ts_start))
+		return;
+	if(empty($event->event) && empty($event->ID))
+		return;
+	$event_id = (empty($event->ID)) ? $event->event : $event->ID;
+	global $rsvpmakers;
+	$rsvpmakers = get_rsvpmakers();
+	$found = rsvpmakers_find_match($event_id, $rsvpmakers);
+	if(!$found) {
+		$add = (object) array('event'=>(empty($event->event)) ? $event->ID : $event->event,'ts_start'=>$event->ts_start, 'display_type'=>$event->display_type,'timezone'=>$event->timezone,'date'=>$evnt->date,'enddate'=>$event->enddate);
+		$rsvpmakers[] = $add;
+		error_log('add_event '.sizeof($rsvpmakers).' '.var_export($add,true));
+	}
+}
+
+function rsvpmakers_find_match($post_id, $rsvpmakers = null) {
+	if(!$rsvpmakers)
+		$rsvpmakers = get_rsvpmakers();
+	//error_log('rsvpmakers_find_match id '.$post_id);
+	foreach($rsvpmakers as $r) {
+		if($r->event == $post_id) {
+			//error_log('found match '.var_export($r,true));
+			return $r;
+		}
+	}
+	error_log('rsvpmakers_find_match NOT FOUND id '.$post_id);
+	return false;
+}
+
+function get_rsvpmakers() {
+	global $rsvpmakers;
+	if(empty($rsvpmakers)) {
+		$rsvpmakers = get_transient('rsvpmakers');
+		//error_log('rsvpmakers from transient '.sizeof($rsvpmakers).' '.var_export($rsvpmakers,true));
+	}
+	if(empty($rsvpmakers) || !is_array($rsvpmakers))
+		$rsvpmakers = [];
+	return $rsvpmakers;
+}
+
+function save_rsvpmakers() {
+	global $rsvpmakers;
+	if(!empty($rsvpmakers) && is_array($rsvpmakers)) {
+		$rsvpmakers = array_filter($rsvpmakers, function ($ev) { return ($ev->ts_end > time());} );
+		if(sizeof($rsvpmakers) > 20) {
+			//error_log('rsvpmakers before usort '.var_export($rsvpmakers,true));
+			usort($rsvpmakers, function ($a, $b) { return ($a->ts_start - $b->ts_start);  } );
+			//error_log('sorted rsvpmakers to save '.var_export($rsvpmakers,true));
+			$rsvpmakers = array_slice($rsvpmakers,0,20);
+		}
+		set_transient('rsvpmakers',$rsvpmakers);
+	}
+}
+
+//$rsvpmaker_event = get_rsvpmaker_global($post_id);
+function get_rsvpmaker_global($post_id = 0) {
+	global $post, $rsvpmaker_event;
+	if(empty($post) && empty($rsvpmaker_event) && !empty($post_id)) {
+		$rsvpmaker_event = rsvpmaker_the_post(get_post($post_id));
+	}
+	elseif(!empty($post) && empty($rsvpmaker_event)) {
+		$rsvpmaker_event = rsvpmaker_the_post($post);
+	}
+	elseif($post_id && !empty($rsvpmaker_event) && ($rsvpmaker_event->event != $post_id)) {
+		error_log("get_rsvpmaker_global $rsvpmaker_event->event != $post_id return null");
+		return null;
+	}
+	return $rsvpmaker_event;
+}

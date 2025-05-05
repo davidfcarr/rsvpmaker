@@ -10,16 +10,17 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.5.5
+* Version: 11.5.51
 */
 
 function get_rsvpversion() {
-	return '11.5.5'; 
+	return '11.5.51'; 
 }
 
 global $wp_version;
 global $default_tz;
-
+global $rsvpmaker_event;
+global $rsvpmakers;
 $default_tz = date_default_timezone_get();
 
 if ( version_compare( $wp_version, '3.0', '<' ) ) {
@@ -586,49 +587,6 @@ function rsvpmaker_deactivate() {
 
 register_deactivation_hook( __FILE__, 'rsvpmaker_deactivate' );
 
-function rsvp_firsttime() {
-
-	global $rsvp_options;
-
-	if ( $rsvp_options['dbversion'] > 12 ) {
-
-		return;
-	}
-
-	$rsvp_options['dbversion'] = 13;
-
-	update_option( 'RSVPMAKER_Options', $rsvp_options );
-
-	$future = get_future_events();
-
-	if ( is_array( $future ) ) {
-
-		foreach ( $future as $event ) {
-
-			$post_id = $event->ID;
-
-			$datetime = get_rsvp_date( $post_id );
-
-			$end = get_post_meta( $post_id, '_end' . $datetime, true );
-
-			if ( empty( $end ) ) {
-
-				$t = rsvpmaker_strtotime( $datetime . ' +1 hour' );
-
-				$end = rsvpmaker_date( 'H:i', $t );
-
-			}
-
-			$duration = get_post_meta( $post_id, '_' . $datetime, true );
-
-			update_post_meta( $post_id, '_firsttime', $duration );
-
-			update_post_meta( $post_id, '_endfirsttime', $end );
-
-		}
-	}
-}
-
 add_filter('single_template_hierarchy','rsvpmaker_single_template_hierarchy');
 function rsvpmaker_single_template_hierarchy($templates) {
 	global $post;
@@ -719,17 +677,6 @@ function format_cddate( $year, $month, $day, $hours, $minutes ) {
 
 }
 
-
-function delete_rsvpmaker_date( $post_id, $cddate ) {
-
-	delete_post_meta( $post_id, '_rsvp_dates', $cddate );
-
-	delete_post_meta( $post_id, '_' . $cddate );
-
-	delete_transient( 'rsvpmakerdates' );
-
-}
-
 function add_rsvpmaker_date( $post_id, $cddate, $duration = '', $end_time = '', $index = 0, $timezone = '' ) {
 	if($end_time && !strpos($end_time,'-')) {
 		$parts = explode(' ',$cddate);
@@ -765,9 +712,8 @@ function rsvpmaker_upcoming_data( $atts ) {
 
 		while ( $rsvp_query->have_posts() ) :
 			$rsvp_query->the_post();
-
+			rsvpmakers_add($post);
 			$events[] = $post;
-
 		endwhile;
 
 	}
@@ -779,52 +725,6 @@ function rsvpmaker_upcoming_data( $atts ) {
 	return $events;
 
 }
-
-
-
-function rsvpmaker_duplicate_dates() {
-
-	global $wpdb;
-
-	$sql = "SELECT $wpdb->posts.ID as postID, $wpdb->posts.*, a1.meta_value as datetime, meta_id
-
-	 FROM " . $wpdb->posts . '
-
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . ".ID =a1.post_id AND a1.meta_key='_rsvp_dates'
-
-	 ORDER BY postID, a1.meta_value";
-
-	$results = $wpdb->get_results( $sql );
-
-	if ( $results ) {
-
-		foreach ( $results as $row ) {
-
-			$slug = $row->datetime . $row->postID;
-
-			$dup = ( empty( $count[ $slug ] ) ) ? false : true;
-
-			if ( $dup ) {
-
-				$wpdb->query( "DELETE FROM $wpdb->postmeta WHERE meta_id=" . $row->meta_id );
-
-			}
-
-			if ( isset( $_GET['clean_duplicate_dates'] ) && isset( $_GET['debug'] ) ) {
-
-				printf( '<p>%s<br />%s %s</p>', $row->post_title, $row->datetime, $row->meta_id );
-			}
-
-			$count[ $slug ]++;
-
-		}
-	}
-
-	exit();
-
-}
-
-
 
 function rsvpmaker_menu_order( $menu_ord ) {
 

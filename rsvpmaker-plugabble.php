@@ -763,7 +763,7 @@ function rsvpmaker_capture_email( $rsvp ) {
 				$sql = 'SELECT date FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$event ";
 
 				if ( empty( $wpdb->get_var( $sql ) ) ) {
-					$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event' => $event, 'post_title' => $post->post_title, 'date',get_rsvp_date( $event )));
+					$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event' => $event, 'post_title' => $post->post_title, 'date'=>get_rsvp_date( $event )));
 				}
 			}
 			if(!is_admin())
@@ -6357,20 +6357,21 @@ function next_or_recent( $template_id ) {
 		global $wpdb;
 
 		global $rsvp_options;
+		$event_table = get_rsvpmaker_event_table();
 
 		$event = '';
 
-		$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, a1.meta_value as datetime, a2.meta_value as template
+		$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, $event_table.*, a2.meta_value as template
 
 	 FROM " . $wpdb->posts . '
 
-	 JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . '.ID =a1.post_id 
+	 JOIN ' . $event_table . ' ON ' . $wpdb->posts . '.ID ='.$event_table.'.event
 
 	 JOIN ' . $wpdb->postmeta . ' a2 ON ' . $wpdb->posts . ".ID =a2.post_id 
 
-	 WHERE a1.meta_key='_rsvp_dates' AND a1.meta_value > '" . get_sql_curdate() . "' AND a2.meta_key='_meet_recur' AND a2.meta_value=" . $template_id . " AND post_status='publish'
+	 WHERE date > '" . get_sql_curdate() . "' AND a2.meta_key='_meet_recur' AND a2.meta_value=" . $template_id . " AND post_status='publish'
 
-	 ORDER BY a1.meta_value LIMIT 0,1";
+	 ORDER BY date LIMIT 0,1";
 
 		if ( $row = $wpdb->get_row( $sql ) ) {
 
@@ -6382,18 +6383,18 @@ function next_or_recent( $template_id ) {
 
 		} else {
 
-			$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, a1.meta_value as datetime, a2.meta_value as template
+			$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, $event_table.*, a2.meta_value as template
 
-	 FROM " . $wpdb->posts . '
-
-	 LEFT JOIN ' . $wpdb->postmeta . ' a1 ON ' . $wpdb->posts . '.ID =a1.post_id
-
-	 LEFT JOIN ' . $wpdb->postmeta . ' a2 ON ' . $wpdb->posts . ".ID =a2.post_id 
-
-	 WHERE a1.meta_key='_rsvp_dates' AND a1.meta_value < '" . get_sql_curdate() . "' AND a2.meta_key='_meet_recur' AND a2.meta_value=" . $template_id . " AND post_status='publish'
-
-	 ORDER BY a1.meta_value DESC LIMIT 0,1";
-
+			FROM " . $wpdb->posts . '
+	   
+			JOIN ' . $event_talbe . ' ON ' . $wpdb->posts . '.ID ='.$event_table.'.event
+	   
+			JOIN ' . $wpdb->postmeta . ' a2 ON ' . $wpdb->posts . ".ID =a2.post_id 
+	   
+			WHERE date < '" . get_sql_curdate() . "' AND a2.meta_key='_meet_recur' AND a2.meta_value=" . $template_id . " AND post_status='publish'
+	   
+			ORDER BY date LIMIT 0,1";
+	   
 			if ( $row = $wpdb->get_row( $sql ) ) {
 
 				$t = rsvpmaker_strtotime( $row->datetime );
