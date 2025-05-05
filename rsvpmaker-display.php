@@ -2945,7 +2945,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 				$dateblock .= '</span>';
 
-			} elseif ( ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+			} elseif ( !empty($event->display_type) && ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
 
 				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
 

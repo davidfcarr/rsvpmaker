@@ -24,6 +24,14 @@ function rsvpmailer($mail, $description = '') {
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
 	$mail = apply_filters('rsvpmailer_mail',$mail);
+	if(is_array($mail['to'])) {
+		$single = $mail;
+		foreach($mail['to'] as $to) {
+			$single['to'] = $to;
+			$errors = rsvpmailer($single,$description);
+		}
+		return;
+	}
 	if(empty($mail['skip_check']))
 		$problem = rsvpmail_is_problem($mail['to']);
 	else

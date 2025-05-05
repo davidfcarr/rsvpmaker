@@ -3228,6 +3228,9 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['paypal_fee']['value']);
 				$gross = (empty($params['resource']['seller_receivable_breakdown']['gross_amount']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['gross_amount']['value']);
 				$rsvpmaker_money = $wpdb->prefix.'rsvpmaker_money';
+				$order_id = esc_sql($order_id);
+				$fee = esc_sql($fee);
+				$gross = esc_sql($gross);
 				$sql_check = "SELECT * FROM $rsvpmaker_money WHERE transaction_id='$order_id'";
 				$existing = $wpdb->get_row($sql_check);
 				if($existing)

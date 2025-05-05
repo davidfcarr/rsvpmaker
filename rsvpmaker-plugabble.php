@@ -5292,27 +5292,17 @@ function rsvpmaker_template_list() {
 
 				if ( $target_id ) {
 
-					$event = get_rsvp_event( 'ID = ' . $target_id );
+					$event = get_rsvpmaker_event( $target_id );
 
 					if ( ! empty( $event ) ) {
 
-						$event_options .= sprintf( '<option value="%d" selected="selected">%s %s</option>', $event->ID, esc_html( $event->post_title ), esc_html( $event->datetime ) );
+						$event_options .= sprintf( '<option value="%d" selected="selected">%s %s</option>', $event->event, esc_html( $event->post_title ), esc_html( $event->date ) );
 					}
 				}
 
 				$current_template .= '<option value="0">Choose Template</option>';
 
-				$sql = "SELECT *, $wpdb->posts.ID as postID, meta_value as datetime
-
-FROM `" . $wpdb->postmeta . "`
-
-JOIN $wpdb->posts ON " . $wpdb->postmeta . ".post_id = $wpdb->posts.ID AND meta_key='_rsvp_dates'
-
-WHERE meta_value >= '" . get_sql_curdate() . "' AND $wpdb->posts.post_status = 'publish'
-
-ORDER BY meta_value LIMIT 0,100";
-
-				$results = $wpdb->get_results( $sql );
+				$results = get_future_events();
 
 				if ( is_array( $results ) ) {
 
@@ -5437,7 +5427,6 @@ ORDER BY meta_value LIMIT 0,100";
 			echo '<h3>Restore Templates</h3>' . $restore;
 		}
 
-		$templates = rsvpmaker_get_templates();
 		foreach ( $templates as $template ) {
 			$date = get_rsvp_date( $template->ID );
 			if ( $date ) {
@@ -5535,6 +5524,7 @@ function rsvpmaker_day( $index = 0, $context = '' ) {
 
 
 function rsvp_template_checkboxes( $t ) {
+		$templates = rsvpmaker_get_templates();
 
 		global $wpdb;
 
@@ -5928,6 +5918,26 @@ function rsvp_template_checkboxes( $t ) {
 
 		if ( empty( $updatelist ) ) {
 			$updatelist = '';
+		}
+
+		if(isset($_GET['other'])) {
+			$future = get_future_events(50);
+			$updatelist .= '<h3>Other Events</h3>';
+			foreach($future as $f) {
+				$otherrecur = get_post_meta($f->ID,'_meet_recur',true);
+				$different = '';
+				if($otherrecur && ($otherrecur != $t))
+				{
+					$title = get_the_title($otherrecur);
+					if($title) {
+						$different = __('Template','rsvpmaker-for-toastmasters').': '.$title;
+					}
+					$updatelist .= sprintf('<p><input type="checkbox" name="update_from_template[]" value="%d" /> %s %s %s</p>',$f->ID,$f->post_title,$f->date,$different);
+				}
+			}
+		}
+		else {
+			$updatelist .= sprintf('<div><a href="%s&other=1">%s</a></div>',$action,__('Show other events (not based on this template)','rsvpmaker'));	
 		}
 
 		if ( current_user_can( 'edit_rsvpmakers' ) ) {

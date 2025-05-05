@@ -2457,6 +2457,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 
 	$my_post['post_title'] = $post->post_title;
 	$my_post['post_content'] = $post->post_content;
+	$my_post['post_excerpt'] = $post->post_excerpt;
 	$my_post['post_status'] = 'draft';
 	$my_post['post_author'] = $current_user->ID;
 	$my_post['post_type'] = 'rsvpmaker';
@@ -2832,6 +2833,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				wp_update_post($update_post);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
 				update_post_meta($target_id,"_updated_from_template",$ts);
+				update_post_meta($target_id,"_meet_recur",$t);
 				$duration = (empty($template["duration"])) ? '' : $template["duration"];
 				$end_time = (empty($template['end'])) ? '' : $template['end'];
 				$event = get_rsvpmaker_event($target_id);
@@ -2868,6 +2870,7 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 {
 	$my_post['post_title'] = $post->post_title;
 	$my_post['post_content'] = $post->post_content;
+	$my_post['post_excerpt'] = $post->post_excerpt;
 	$my_post['post_status'] = (($_POST['newstatus'] == 'publish') && current_user_can('publish_rsvpmakers')) ? 'publish' : 'draft';
 	$my_post['post_author'] = $current_user->ID;
 	$my_post['post_type'] = 'rsvpmaker';

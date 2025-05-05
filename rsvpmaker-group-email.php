@@ -1226,22 +1226,22 @@ function rsvpmaker_recipients_no_problems($recipients) {
     return $cleanrecipients;
 }
 
-function rsvpmail_email_to_parts($email) {
+function rsvpmail_email_to_parts($email,$blog_id = 0) {
 	global $wpdb;
 	$email = strtolower($email);
 	preg_match('/([^@-]+)-{0,1}(.*)@(.+)/',$email,$match);
 	if('forwardto' == $match[1])
 		return array('subdomain'=>'forwardto','fwdkey'=>$match[2],'domain'=>$match[3],'blog_id'=>1);
 	if(is_multisite()) {
-		$blog_id = get_blog_option(1,'old_email_subdomain_'.$match[1]);
-		if(is_numeric($match[1]))
-			$blog_id = $match[1];
 		if(!$blog_id) {
-			$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
-			$blog_id = $wpdb->get_var($sql);
+			$blog_id = get_blog_option(1,'old_email_subdomain_'.$match[1]);
+			if(is_numeric($match[1]))
+				$blog_id = $match[1];
+			if(!$blog_id) {
+				$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
+				$blog_id = $wpdb->get_var($sql);
+			}
 		}
-		//error_log('email '.$email.var_export($match,true));
-		//error_log('blog id group email 1172 '.$blog_id);
 		if($blog_id) {
 			$fkey = empty($match[2]) ? 'members' : $match[2];
 			return array('subdomain'=>$match[1],'fwdkey'=>$fkey,'domain'=>$match[3],'blog_id'=>$blog_id);
