@@ -30,8 +30,6 @@ $color = imagecolorallocate( $captcha, 0, 0, 200 );
 Encrypt and store the key inside of a session
 */
 $_SESSION['captcha_key'] = md5( $string );
-
-
 // Create some colors
 $bgcolor   = imagecolorallocate( $im, 200, 255, 255 );
 $grey      = imagecolorallocate( $im, 128, 128, 128 );

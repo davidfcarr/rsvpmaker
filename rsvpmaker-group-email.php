@@ -222,9 +222,6 @@ function group_emails_extract( $text ) {
 	return $unique;
 
 }
-
-
-
 function get_mime_type( &$structure ) {
 
 	$primary_mime_type = array( 'TEXT', 'MULTIPART', 'MESSAGE', 'APPLICATION', 'AUDIO', 'IMAGE', 'VIDEO', 'OTHER' );
@@ -238,9 +235,6 @@ function get_mime_type( &$structure ) {
 		return 'TEXT/PLAIN';
 
 }
-
-
-
 function rsvpmaker_get_part( $stream, $msg_number, $mime_type, $structure = false, $part_number = false ) {
 
 	if ( ! $structure ) {
@@ -304,9 +298,6 @@ function rsvpmaker_get_part( $stream, $msg_number, $mime_type, $structure = fals
 		return false;
 
 } // END OF FUNCTION
-
-
-
 function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 
 	global $wpdb;
@@ -801,9 +792,6 @@ function rsvpmailer_embedded_images( $mailq ) {
 	return $img;
 
 }
-
-
-
 function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $urlpath, $strFileName, $strFileType ) {
 
 		printf( '<p>Check %s %s part number %s</p>', $strFileName, $strFileType, $file );

@@ -1,7 +1,4 @@
 <?php
-
-
-
 function register_rsvpmaker_exporter( $exporters ) {
 
 	$exporters['rsvpmaker'] = array(
@@ -115,9 +112,6 @@ function rsvpmaker_exporter( $email_address, $page = 1 ) {
 	);
 
 }
-
-
-
 function rsvpmaker_eraser( $email_address, $page = 1 ) {
 	global $wpdb;
 
@@ -137,9 +131,6 @@ function rsvpmaker_eraser( $email_address, $page = 1 ) {
 	);
 
 }
-
-
-
 function register_rsvpmaker_eraser( $erasers ) {
 
 	$erasers['rsvpmaker'] = array(
@@ -153,9 +144,6 @@ function register_rsvpmaker_eraser( $erasers ) {
 	return $erasers;
 
 }
-
-
-
  add_filter(
 	'wp_privacy_personal_data_erasers',
 	'register_rsvpmaker_eraser',
@@ -183,5 +171,3 @@ function rsvpmaker_plugin_add_privacy_policy_content() {
 	);
 
 }
-
-

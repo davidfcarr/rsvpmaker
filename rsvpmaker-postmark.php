@@ -199,7 +199,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(empty($message_stream))
         $message_stream = (sizeof($recipients) > 1) ? $postmark_settings['postmark_broadcast_slug'] : $postmark_settings['postmark_tx_slug'];
     $mpost = get_post($post_id);
-    
+
     $html = rsvpmaker_email_html($mpost,$post_id);
     $text = rsvpmaker_text_version($html);
     $mail['Subject'] = do_shortcode($mpost->post_title);
@@ -238,7 +238,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $batch[] = $mail;
         $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
     }
-    
+
     $hash = postmark_batch_hash($batch,$recipients);
     error_log('postmark broadcast hash '.$hash);
     if(rsvpmaker_postmark_duplicate($hash)) {

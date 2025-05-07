@@ -12,11 +12,11 @@ class PostmarkAttachment implements \JsonSerializable {
 	public static function fromRawData($data, $attachmentName, $mimeType = NULL, $contentId = NULL) {
 		return new PostmarkAttachment(base64_encode($data), $attachmentName, $mimeType, $contentId);
 	}
-	
+
 	public static function fromBase64EncodedData($base64EncodedData, $attachmentName, $mimeType = NULL, $contentId = NULL) {
 		return new PostmarkAttachment($base64EncodedData, $attachmentName, $mimeType, $contentId);
 	}
-	
+
 	public static function fromFile($filePath, $attachmentName, $mimeType = NULL, $contentId = NULL) {
 		return new PostmarkAttachment(base64_encode(file_get_contents($filePath)), $attachmentName, $mimeType, $contentId);
 	}

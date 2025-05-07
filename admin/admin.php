@@ -121,12 +121,10 @@ function rsvpmaker_frontend_admin () {
 		wp_localize_script('rsvpmaker_single_form', 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}
 }
-
-
 function get_rsvpmaker_admin_script_handle ($type) {
 	return generate_block_asset_handle( 'rsvpmaker/admin', $type);
 }
-	
+
 function rsvpmaker_react_admin() {
 	global $rsvp_options;
 	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'"></div>';
@@ -163,7 +161,7 @@ function get_rsvpmaker_ajax() {
 	$template_id = 0;
 	//if(is_admin() && !empty($post) && (($post_type == 'rsvpmaker') || ($post_type == 'rsvpmaker_template')) ) //&& ( (isset($_GET['action']) && $_GET['action'] == 'edit') || strpos($_SERVER['REQUEST_URI'],'post-new.php') ) )
 		//{
-		
+
 		$projected_label = '';
 		$projected_url = '';
 		$template_label = '';
@@ -184,7 +182,7 @@ function get_rsvpmaker_ajax() {
 			$top_message = $rsvpmaker_special;
 		$top_message = apply_filters('rsvpmaker_ajax_top_message',$top_message);
 		$bottom_message = apply_filters('rsvpmaker_ajax_bottom_message',$bottom_message);
-		
+
 		if($sked)
 		{
 			$projected_label = __('Create/update events from template','rsvpmaker');
@@ -197,7 +195,7 @@ function get_rsvpmaker_ajax() {
 		$template_label = __('Edit Template','rsvpmaker');
 		$template_url = admin_url('post.php?action=edit&post='.$template_id);
 		}
-		
+
 	$post_id = (empty($post_id)) ? 0 : $post_id;
 	$date = get_rsvp_date($post_id);
 	$datecount = sizeof(get_rsvp_dates($post_id));
@@ -222,7 +220,7 @@ function get_rsvpmaker_ajax() {
 			$duration = rsvpmaker_date('H:i',$diff);
 		}
 	}
-	
+
 	$confirm = rsvp_get_confirm($post_id,true);
 	$confirm_edit_post = (current_user_can('edit_post',$confirm->ID));
 	$excerpt = strip_tags($confirm->post_content);
@@ -232,7 +230,7 @@ function get_rsvpmaker_ajax() {
 		$confirmation_type =__('Message is default from settings','rsvpmaker');
 	elseif($confirm->post_parent != $post_id)
 		$confirmation_type = __('Message inherited from template','rsvpmaker');
-	
+
 	$form_id = get_post_meta($post_id,'_rsvp_form',true);
 	if(empty($form_id))
 		$form_id = (int) $rsvp_options['rsvp_form'];
@@ -270,7 +268,7 @@ function get_rsvpmaker_ajax() {
 		if($index > 0)
 		$confirmation_email_templates[] = array('label' => $template['slug'], 'value' => $index);
 	}
-	
+
 	//if(('rsvpmaker' == $post_type) || ('rsvpmaker_template' == $post_type))
 	//{
 		$related_documents = get_related_documents ();
@@ -310,7 +308,7 @@ function get_rsvpmaker_ajax() {
 			'related_document_links' => $related_documents,
 			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
 			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'));
-			
+
 	//}
 	//}
 	return empty($rsvpmaker_ajax) ? [] : $rsvpmaker_ajax;

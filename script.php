@@ -126,7 +126,7 @@ function rsvp_form_jquery( $atts = null) {
 	?>
 	<script type="text/javascript">
 	jQuery(document).ready(function($) {
-	
+
 	<?php
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
 	printf( "var hide = '%s';\n", empty($hide) ? '' : wp_json_encode( $hide ) );
@@ -149,7 +149,7 @@ function rsvp_form_jquery( $atts = null) {
 	?>
 	$('#coupon_field').hide();
 	$('#coupon_field_add').click(() => {$('#coupon_field').show(); $('#coupon_field_prompt').hide(); });
-	
+
 	$('#guest_count_pricing select').change(function() {
 	  //reset hidden fields
 	  $('#rsvpform input').prop( "disabled", false );
@@ -165,7 +165,7 @@ function rsvp_form_jquery( $atts = null) {
 	  $('p.'+value).hide();
 	  $('.'+value).prop( "disabled", true );
 	});
-	  
+
 	});
 	var max_guests = $('#max_guests').val();
 	console.log('max guests ',max_guests);
@@ -216,7 +216,7 @@ function rsvp_form_jquery( $atts = null) {
 	guestcount++;
 	$('#first_blank').append(guestline);
 	}
-	
+
 	if(hide)
 	{
 	  var pricechoice = $("#guest_count_pricing select").val();
@@ -228,9 +228,9 @@ function rsvp_form_jquery( $atts = null) {
 	  $('.'+value).prop( "disabled", true );
 	});
 	}
-	
+
 	});
-	
+
 		jQuery("#rsvpform").submit(function() {
 		var leftblank = '';
 		var required = jQuery("#required").val();
@@ -251,13 +251,13 @@ function rsvp_form_jquery( $atts = null) {
 		else
 			return true;
 	});
-	
+
 	//search for previous rsvps
 	var searchRequest = null;
-	
+
 	$(function () {
 		var minlength = 3;
-	
+
 		$("#email").keyup(function () {
 			var that = this;
 			value = $(this).val();
@@ -275,7 +275,7 @@ function rsvp_form_jquery( $atts = null) {
 			}
 		});
 	});	
-	
+
 	});
 	</script>
 	<?php

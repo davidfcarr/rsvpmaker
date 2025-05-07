@@ -77,8 +77,6 @@ class MailChimp {
 	public function getApiEndpoint() {
 		return $this->api_endpoint;
 	}
-
-
 	/**
 	 * Convert an email address into a 'subscriber hash' for identifying the subscriber in a method URL
 	 *

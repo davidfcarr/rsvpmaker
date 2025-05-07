@@ -334,8 +334,6 @@ function rsvp_form_guests( $atts, $content = '' ) {
 	$template .= '<div class="guest_blank" id="first_blank" style="display:none"><p><strong>' . __( 'Guest', 'rsvpmaker' ) . ' ###</strong></p>' . $shared . $content . '</div>';// fields shared from master form, plus added fields
 
 	$addmore = ( isset( $atts['addmore'] ) ) ? $atts['addmore'] : __( 'Add Guests', 'rsvpmaker' );
-
-
 	// $master_rsvp = 4;//test data
 
 	$wpdb->show_errors();
@@ -402,13 +400,13 @@ function rsvp_form_guests( $atts, $content = '' ) {
 		if ( $max_guests && $blanks_allowed < 1 ) {
 
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // if event is full, no additional guests
-	
+
 		} elseif (  $blanks_allowed && $count > $max_guests ) {
-	
+
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
-	
+
 		} elseif ( $blanks_allowed && $max_guests && ( $count >= $max_guests ) ) {
-	
+
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests (max per party)', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
 		}	
 	}
@@ -724,7 +722,7 @@ function rsvpmaker_item_pricing($post_id) {
 						else 
 							$slugdata = (array) $item_prices->$slug;
 					}
-					
+
 					if(!isset($item_prices->$slug->$choice)) {
 						$slugdata[$choice] = 0;
 					}

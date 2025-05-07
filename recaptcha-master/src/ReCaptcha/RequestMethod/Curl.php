@@ -30,8 +30,6 @@ namespace ReCaptcha\RequestMethod;
  * Convenience wrapper around the cURL functions to allow mocking.
  */
 class Curl {
-
-
 	/**
 	 * @see http://php.net/curl_init
 	 * @param string $url

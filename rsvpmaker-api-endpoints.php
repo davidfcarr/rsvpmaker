@@ -31,17 +31,11 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
 
 	}
-
-
-
 	public function get_items( $request ) {
 
 		$events = get_future_events(null,15);
@@ -88,9 +82,6 @@ class RSVPMaker_Types_Controller extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
@@ -104,19 +95,10 @@ class RSVPMaker_Types_Controller extends WP_REST_Controller {
 		return new WP_REST_Response( $types, 200 );
 
 	}
-
-
-
 	// other functions to override
 
 	// create_item(), update_item(), delete_item() and get_item()
-
-
-
 }
-
-
-
 class RSVPMaker_Authors_Controller extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -144,17 +126,11 @@ class RSVPMaker_Authors_Controller extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
 
 	}
-
-
-
 	public function get_items( $request ) {
 
 		$authors = get_rsvpmaker_authors();
@@ -162,13 +138,7 @@ class RSVPMaker_Authors_Controller extends WP_REST_Controller {
 		return new WP_REST_Response( $authors, 200 );
 
 	}
-
-
-
 }
-
-
-
 class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -196,17 +166,11 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
 
 	}
-
-
-
 	public function get_items( $request ) {
 
 		$wp_query = rsvpmaker_upcoming_query(array('type'=>$request['type']));
@@ -219,15 +183,9 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 		}
 		return new WP_REST_Response( $posts, 200 );
 	}
-
-
-
 	// other functions to override
 
 	// create_item(), update_item(), delete_item() and get_item()
-
-
-
 }
 
 class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
@@ -257,9 +215,6 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		global $rsvp_options;
@@ -278,9 +233,6 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 		return false;
 
 	}
-
-
-
 	public function get_items( $request ) {
 
 		global $wpdb;
@@ -296,9 +248,6 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 	}
 
 }
-
-
-
 class RSVPMaker_ClearDateCache extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -326,17 +275,11 @@ class RSVPMaker_ClearDateCache extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
 
 	}
-
-
-
 	public function get_items( $request ) {
 
 		delete_transient( 'rsvpmakerdates' );
@@ -346,9 +289,6 @@ class RSVPMaker_ClearDateCache extends WP_REST_Controller {
 	}
 
 }
-
-
-
 class RSVPMaker_Sked_Controller extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -376,17 +316,11 @@ class RSVPMaker_Sked_Controller extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return true;
 
 	}
-
-
-
 	public function get_items( $request ) {
 
 		$sked = get_template_sked( intval($request['post_id']) );
@@ -567,9 +501,6 @@ class RSVP_Export extends WP_REST_Controller {
 		return ( $code == $request['code'] );
 
 	}
-
-
-
 	public function handle( $request ) {
 
 		global $wpdb;
@@ -598,9 +529,6 @@ class RSVP_Export extends WP_REST_Controller {
 	}
 
 }
-
-
-
 class RSVP_RunImport extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -628,9 +556,6 @@ class RSVP_RunImport extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		// nonce check here
@@ -730,9 +655,6 @@ class RSVP_RunImport extends WP_REST_Controller {
 	}//end handle()
 
 }//end class
-
-
-
 class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -760,9 +682,6 @@ class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return wp_verify_nonce( $request['nonce'], 'rsvp_email_lookup' );
@@ -784,9 +703,6 @@ class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 	}
 
 }
-
-
-
 class RSVPMaker_Signed_Up extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -814,9 +730,6 @@ class RSVPMaker_Signed_Up extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 
 		return wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'));
@@ -864,9 +777,6 @@ class RSVPMaker_Shared_Template extends WP_REST_Controller {
 		);
 
 	}
-
-
-
 	public function get_items_permissions_check( $request ) {
 		return true;
 	}
@@ -1426,7 +1336,7 @@ class PostmarkIncoming extends WP_REST_Controller {
 	public function register_routes() {
 	  $namespace = 'rsvpmaker/v1';
 	  $path = 'postmark_incoming/(?P<code>.+)';
-  
+
 	  register_rest_route( $namespace, '/' . $path, [
 		array(
 		  'methods'             => 'GET, POST, PUT, PATCH, DELETE',
@@ -1435,12 +1345,12 @@ class PostmarkIncoming extends WP_REST_Controller {
 			  ),
 		  ]);     
 	  }
-  
+
 	public function get_items_permissions_check($request) {
 		$postmark = get_rsvpmaker_postmark_options();
 		return (!empty($postmark['handle_incoming']) && $request['code'] == $postmark['handle_incoming']);
 	}
-  
+
   public function get_items($request) {
 $opbusiness = false;
 $json = file_get_contents('php://input');
@@ -1595,7 +1505,7 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 			$email = trim($_POST['em']);
 		elseif(isset($_POST['email']))
 			$email = trim($_POST['email']);
-		
+
 		$origin = get_http_origin();
 
 		if(!strpos($origin,$_SERVER['SERVER_NAME'])) //(check_ajax_referer('rsvp_mailing_list','rsvp_mailing_list', false))
@@ -1674,8 +1584,6 @@ class RSVPMaker_Flex_Form extends WP_REST_Controller {
 		return new WP_REST_Response( $result, 200 );
 	}
 }
-
-
 class RSVPMaker_Form extends WP_REST_Controller {
 
 	public function register_routes() {
@@ -1857,7 +1765,7 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$response['is_inherited'] = ($form_id == $template_form);
 		$response['form'] = parse_blocks($form->post_content);
 		$response['form_options'][] = array('value'=>'','label'=>__('Select/Edit Form','rsvpmaker'));
-		
+
 		if($custom_form)
 			$response['form_options'][] = array('value'=>$form_id,'label'=>__('Custom Form for This Event','rsvpmaker'));
 		$includedform = array($rsvp_options['rsvp_form']);
@@ -1887,7 +1795,7 @@ class RSVPMaker_Form extends WP_REST_Controller {
 				}
 				$includedform[] = $value;
 				}
-				
+
 			}
 			if(sizeof($reusable) != sizeof($reusable_filtered))
 				update_option('reusable_forms',$reusable_filtered);
@@ -2419,7 +2327,7 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 			$confirm_post = (object) $updated;
 			update_post_meta($post_id,'_rsvp_confirm',$confirm_id);
 		}
-		
+
 $response["confirmation"] = $confirm_post;
 $response['confirmation']->html = do_blocks($response["confirmation"]->post_content);
 $response['reminder'] = [];
@@ -2517,7 +2425,7 @@ class RSVP_Pricing extends WP_REST_Controller {
 					add_post_meta( $post_id, '_rsvp_coupon_method', $data->change->coupon_methods[$index] );
 					add_post_meta( $post_id, '_rsvp_coupon_discount', $data->change->coupon_discounts[$index] );	
 				}
-		
+
 				update_post_meta($post_id,'_rsvp_coupons',(array) $data->change);
 			}
 		}

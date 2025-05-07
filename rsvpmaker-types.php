@@ -254,7 +254,7 @@ function rsvpmaker_form_single($content) {
 	{
 		ob_start();
 		$currency = $rsvp_options['paypal_currency'];
- 
+
 		$currency_symbol = '';
 
 		if ( $currency == 'USD' ) {
@@ -344,4 +344,3 @@ function create_rsvpemail_post_type() {
         )
       );
 }
-    

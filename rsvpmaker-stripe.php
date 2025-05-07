@@ -30,9 +30,6 @@ function rsvpmaker_to_stripe( $rsvp ) {
 	return rsvpmaker_stripe_form( $vars );
 
 }
-
-
-
 // called from Gutenberg init
 
 function rsvpmaker_stripecharge( $atts ) {
@@ -479,9 +476,6 @@ var style = {
 	  },
 
 };
-
-
-
 var card = elements.create("card", { style: style });
 
 card.mount("#card-element");
@@ -586,9 +580,6 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 	return ob_get_clean();
 
 }
-
-
-
 function stripe_log_by_email( $email, $months = 0 ) {
 
 	global $wpdb;
@@ -722,11 +713,11 @@ function rsvpmaker_stripe_report() {
 	if ( !empty( $keys ) && isset( $keys['pk'] ) ) {
 		printf(
 			'<div style="padding: 5px; border: thin dotted #000;"><h3>Retrieve Transactions from Stripe Service</h3>
-	
+
 		<p>Includes fees, refunds, and payouts</p>
-	
+
 		<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_stripe_report" />
-	
+
 		Up to <input name="history" type="number" value="100" /> transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
 		%s
 		<button>Get</button></form></div>',

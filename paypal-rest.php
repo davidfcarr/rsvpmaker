@@ -191,7 +191,7 @@ function rsvpmaker_paypal_choice($atts = []) {
       $output .= sprintf('<p><a href="%s">%s - %s%s %s</a></p>',add_query_arg('paypal_choice',$index,$permalink),$choice['description'],$currency_symbol,$choice['amount'],$currency);
     }
   }
-  
+
   return $output; 
 }
 
@@ -339,7 +339,7 @@ if(isset($atts['paymentType']) && 'schedule' == $atts['paymentType']) {
 
 if(empty($atts['amount']) || !is_numeric($atts['amount']))
   return 'amount not set';
- 
+
 $explanation = (empty($atts['paypal'])) ? '' : '<p>'.__('Or pay with PayPal','rsvpmaker').'</p>';
 
 $currency_symbol = '';

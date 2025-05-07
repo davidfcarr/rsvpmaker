@@ -55,7 +55,7 @@ class PostmarkAdminClientDomainTest extends PostmarkClientBaseTest {
 	function testClientCanEditDomain() {
 		$tk = parent::$testKeys;
 		$client = new PostmarkAdminClient($tk->WRITE_ACCOUNT_TOKEN, $tk->TEST_TIMEOUT);
-    
+
 		$domainName = 'test-php-edit-' . $tk->WRITE_TEST_DOMAIN_NAME;
 		$returnPath = 'return.' . $domainName;
 
@@ -69,7 +69,7 @@ class PostmarkAdminClientDomainTest extends PostmarkClientBaseTest {
 	function testClientCanDeleteDomain() {
 		$tk = parent::$testKeys;
 		$client = new PostmarkAdminClient($tk->WRITE_ACCOUNT_TOKEN, $tk->TEST_TIMEOUT);
-    
+
 		$domainName = $tk->WRITE_TEST_DOMAIN_NAME;
 
 		$name = 'test-php-delete-' . $domainName;

@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.5.51
+* Version: 11.5.6
 */
 
 function get_rsvpversion() {
-	return '11.5.51'; 
+	return '11.5.6'; 
 }
 
 global $wp_version;
@@ -38,7 +38,7 @@ $rsvp_options = get_option( 'RSVPMAKER_Options' );
 $locale = get_locale();
 
 function rsvp_options_defaults() {
-	
+
 	global $rsvp_options;
 
 	if ( empty( $rsvp_options ) ) {
@@ -126,7 +126,7 @@ function rsvp_options_defaults() {
 		'show_screen_multiple'              => 0,
 
 		'dashboard_message'                 => '',
-		
+
 		'rsvpmaker_send_confirmation_email' => 1,
 
 		'update_rsvp'                       => __( 'Update RSVP', 'rsvpmaker' ),
@@ -899,8 +899,6 @@ function add_rsvpmaker_roles() {
 	}
 
 }
-
-
 function rsvpmaker_wp_editor( $content, $editor_id, $settings = array() ) {
 	if ( function_exists( 'do_blocks' ) ) { // gutenberg world
 
@@ -917,9 +915,6 @@ function rsvpmaker_dequeue_script() {
 	wp_dequeue_script( 'tiny_mce' );
 
 }
-
-
-
 function rsvpautog( $content ) {
 
 	if ( strpos( $content, '<!-- /wp:paragraph -->' ) ) {

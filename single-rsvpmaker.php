@@ -37,8 +37,6 @@ if ( have_posts() ) {
 						);
 						?>
 					</div><!-- .entry-content -->
-
-
 					<div class="rsvpmaker-entry-utility">
 						<?php twentyten_posted_in(); ?>
 						<?php edit_post_link( __( 'Edit', 'twentyten' ), '<span class="edit-link">', '</span>' ); ?>

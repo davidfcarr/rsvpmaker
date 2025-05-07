@@ -12,8 +12,6 @@ namespace Stripe;
  * @package Stripe
  */
 class CheckoutSession extends ApiResource {
-
-
 	const OBJECT_NAME = 'checkout_session';
 
 	use ApiOperations\Create;

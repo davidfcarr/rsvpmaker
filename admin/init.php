@@ -109,7 +109,7 @@ register_meta( 'post', '_rsvp_currency', $args );
 	register_meta( 'post', '_rsvp_deadline_hours', $args );
 	register_meta( 'post', '_rsvp_reg_daysbefore', $args );
 	register_meta( 'post', '_rsvp_reg_hours', $args );
-	
+
 	$args = array(
 		'type'		=> 'string',
 		'single'	=> true,
@@ -206,8 +206,6 @@ function rsvpmaker_block_cgb_editor_assets() {
 		true // Enqueue the script in the footer.
 	);
 	rsvpmaker_localize();
-
-
 } // End function rsvpmaker_block_cgb_editor_assets().
 
 // Hook: Editor assets.
@@ -220,7 +218,7 @@ function rsvpmaker_limited_time ($atts, $content) {
 		$debug .= ' attributes: '. var_export($atts, true);
 	if(empty($atts['start_on']) && empty($atts['end_on']))
 		return $content.$debug; // no parameters set
-	
+
 	$now = time();
 	if(!empty($atts['start_on']) && !empty($atts['start']))
 	{
@@ -230,7 +228,7 @@ function rsvpmaker_limited_time ($atts, $content) {
 		$debug .= sprintf('<p>Start time %s = %s, now = %s</p>',$atts['start'],$start,$now);
 	if($now < $start)
 		{
-		
+
 		return $debug;
 		}
 	}
@@ -259,10 +257,10 @@ function rsvpmaker_limited_time ($atts, $content) {
 		else
 			$debug .= 'Preg replace came back empty';
 		}
-		
+
 		return $debug;
 	}
-		
+
 	}
 
 return $content.$debug;

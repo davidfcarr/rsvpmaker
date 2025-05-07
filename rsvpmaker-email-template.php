@@ -143,9 +143,6 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 			return;
 
 		}
-
-
-
 		if ( $campaign['id'] ) {
 			$html = str_replace('<!-- mailchimp -->','<a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a><br>',$html);
 
@@ -204,9 +201,6 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 			}
 		}
 	}
-
-
-
 	if ( ! empty( $cron['cron_to'] ) && ( $rsvpmaker_cron_context == 2 ) ) {
 
 			$mail['to'] = $cron['cron_to'];

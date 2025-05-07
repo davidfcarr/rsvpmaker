@@ -59,8 +59,6 @@ abstract class PostmarkClientBase {
 		$this->os = PHP_OS;
 		$this->timeout = $timeout;
 	}
-
-
 	/**
 	 * Return the injected GuzzleHttp\Client or create a default instance
 	 * @return Client
