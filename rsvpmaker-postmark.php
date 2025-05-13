@@ -186,7 +186,8 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         return;
     if(sizeof($recipients) > 200) {
         $chunks = array_chunk($recipients,200);
-        echo $log = sprintf('<p>split into %s chunks</p>',sizeof($chunks));
+        echo $log = sprintf('message split into %s chunks for '.$post_id,sizeof($chunks));
+        error_log($log);
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
             add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
@@ -280,6 +281,7 @@ function rsvpmaker_postmark_chunked_batches() {
     $log = '';
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
 	$results = $wpdb->get_results($sql);
+    error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
 	if($results) {
         $batchrow = $results[0];
         $doneafterthis = sizeof($results) == 1;
@@ -304,6 +306,8 @@ function rsvpmaker_postmark_chunked_batches() {
             wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
         }
 	}
+    else
+        wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
     //wp_suspend_cache_addition(false);
 }
 
@@ -542,7 +546,6 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         $testoutput .= "\nSEND\n".$result;
     }
     rsvpmaker_testlog('postmark_incoming_output',$testoutput);
-    error_log('rsvpmaker_postmark_incoming memory: '.memory_get_peak_usage(true));
     return $testoutput;
 }
 
@@ -692,8 +695,6 @@ function rsvpmaker_postmark_batch_send($batch) {
             add_post_meta($post_id,'rsvpmail_postmark_error',$error);
         }
     }
-
-    error_log('rsvpmaker_postmark_batch_send memory: '.memory_get_peak_usage(true));
 
     return $output;
 }

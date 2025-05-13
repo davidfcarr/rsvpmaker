@@ -605,7 +605,7 @@ class RSVPMAKER_Options
 
 				  echo '<div class="updated fade"><p>Plugin settings saved.</p></div>';
 				  if(isset($_POST['defaultoverride'])) {
-					$future = get_future_events();
+					$future = rsvpmaker_get_future_events();
 					$fcount = sizeof($future);
 					$templates = rsvpmaker_get_templates();
 					$tcount = sizeof($templates);
@@ -1048,8 +1048,9 @@ function rsvpmaker_columns($defaults) {
 
 function rsvpmaker_template_custom_column($column_name, $post_id) {
 	if('template_schedule' == $column_name) {
+		error_log('custom column for template schedule '.$post_id);
 		$sked = get_template_sked($post_id);
-		//echo var_export($sked,true).'<br>';
+		error_log('sked for custom colum '.var_export($sked,true));
 		$output = '';
 		if(is_array($sked))
 		foreach($sked as $key => $value) {
@@ -1102,7 +1103,8 @@ function rsvpmaker_custom_column($column_name, $post_id) {
     elseif( $column_name == 'event_dates' ) {
 
 $datetime = (isset($event->date)) ? $event->date : '';
-$template = get_template_sked($post_id);
+$datetime = get_post_meta($post_id,'_rsvp_email_date',true);
+$template = ($post->post_type == 'rsvpmaker_template') ? get_template_sked($post_id) : null;
 $rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 
 $s = $dateline = '';
@@ -1957,7 +1959,7 @@ function rsvp_get_confirm($post_id, $return_post = false) {
 
 function rsvp_list_reminders_all_events() {
 	global $wpdb;
-	$events = get_future_events();
+	$events = rsvpmaker_get_future_events();
 	if(empty($events))
 		return;
 	$output = '';
@@ -2205,7 +2207,7 @@ else {
 		if(current_user_can('edit_post',$event->ID))
 		$o .= sprintf('<option value="%s">TEMPLATE: %s</option>',esc_attr($event->ID),esc_html($event->post_title));
 	}
-	$future = get_future_events();
+	$future = rsvpmaker_get_future_events();
 	if($future)
 	foreach($future as $event)
 	{
@@ -2567,33 +2569,15 @@ $cleared = is_array($cleared) ? $cleared : array();
     update_option('cleared_rsvpmaker_notices',$cleared);
 }
 
-function rsvpmaker_debug_log($msg, $label = '', $filename_base = '', $reset = false) {
-	global $rsvp_options;
-		if(empty($rsvp_options["debug"]))
-			return;
-		if(empty($filename_base))
-			$filename_base = 'rsvpmaker';
-
+function rsvpmaker_debug_log($msg, $context = '') {
+	if(!defined('RSVPMAKER_DEBUG'))
+		return;
 	if(!is_string($msg))
 		$msg = var_export($msg,true);
-	if(!empty($label))
-		$msg = $label.":\n".$msg;
-	$upload_dir   = wp_upload_dir();
-
-	if ( ! empty( $upload_dir['basedir'] ) ) {
-		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
-		if($reset)
-			file_put_contents($fname, rsvpmaker_date('r')."\n".$msg."\n\n");
-		else
-			file_put_contents($fname, rsvpmaker_date('r')."\n".$msg."\n\n", FILE_APPEND);
-		//clean old logs
-		$oldlog = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d',time() - 172800).'.txt';
-		if (file_exists($oldlog)) {
-			unlink($oldlog);
-		}
-	}
-	if(isset($_GET['debug']) && current_user_can('manage_options'))
-		echo '<pre>'. $msg . '</pre>';
+	if($context)
+		error_log($context.' '.$msg);
+	else
+		error_log($msg);
 }
 
 function rsvpmaker_show_debug_log() {
@@ -2981,7 +2965,7 @@ $meta_keys = array();
 $post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$source_id");
 $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
 $deadlinedays = $deadlinehours = $regdays = $reghours = 0;
-$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur','_rsvp_dates');
+$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');
 if(isset($_POST['metadata_only']))
 	$meta_protect[] = '_thumbnail_id';
 
@@ -4548,21 +4532,11 @@ if(!$event)
 
 	switch( $column_name ) :
 		case 'event_dates': {
-
-			// you can also print Nonce here, do not do it ouside the switch() because it will be printed many times
 			rsvpmaker_nonce();
 
-			// please not the fieldset classes could be:
-			// inline-edit-col-left, inline-edit-col-center, inline-edit-col-right
-			// each class for each column, all columns are float:left,
-			// so, if you want a left column, use clear:both element before
-			// the best way to use classes here is to look in browser "inspect element" at the other fields
-
-			// for the FIRST columns only, it opens <fieldset> element, all our fields will be there
 			echo '<fieldset class="inline-edit-col-right"><div class="inline-edit-col"><div class="inline-edit-group wp-clearfix">';
 
 			$dateparts = explode(' ',$event->date);
-			//echo '<div id="rsvpmaker-quick-edit-react" event="'.$post->ID.'" date="'.$event->date.'" enddate="'.$event->date.'" ts_start="'.$event->ts_start.'" ts_end="'.$event->ts_end.'" timezone="'.$event->ts_end.'" display_type="'.$event->display_type.'"><button id="quick-edit-dates-now" event="'.$post->ID.'" date="'.$event->date.'" enddate="'.$event->date.'" ts_start="'.$event->ts_start.'" ts_end="'.$event->ts_end.'" timezone="'.$event->ts_end.'" display_type="'.$event->display_type.'">Edit Dates</button></div>';
 
 			echo '<label class="alignleft">
 					<span class="title">Event Date and Time</span>
@@ -4570,7 +4544,6 @@ if(!$event)
 					<span class="input-text-wrap"><input class="quick_event_date_new" id="start_time-'.$post->ID.'" post_id="'.$post->ID.'" name="start_time" type="time" value=""></span>
 					<span id="quick_event_date_text-'.$post->ID.'"></span>
 				</label>';
-	//					<span class="input-text-wrap"><input type="text" class="quick_event_date" id="quick_event_date-'.$post->ID.'" post_id="'.$post->ID.'" name="event_dates" value=""></span>
 
 			break;
 
@@ -4599,12 +4572,3 @@ function rsvpmaker_quick_edit_save( $post_id ){
 		rsvpmaker_update_start_time (intval($_POST['post_ID']), $datetime);
 	}
 }
-/*
-add_filter('query','rsvpmaker_debug_query');
-
-function rsvpmaker_debug_query($query) {
-	if(strpos($query,'rsvpmaker'))// && strpos($query,'join'))
-		mail('d@c.com','query',$query);
-	return $query;
-}
-*/

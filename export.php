@@ -184,7 +184,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 				$post_ids[] = $template->ID;
 			}
 		}
-		$events = get_future_events();
+		$events = rsvpmaker_get_future_events();
 	}
 
 	if ( ! empty( $events ) ) {

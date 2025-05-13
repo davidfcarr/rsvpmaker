@@ -732,6 +732,23 @@ function rsvpmailer_post_promo_summary() {
 	}
 
 	}
+
+	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
+	$results = $wpdb->get_results($sql);
+	if(is_array($results) && !empty($results)) {
+		echo '<h3>Pending Post Promo</h3>';
+		echo '<p>Pending post promo for the following posts:</p>';
+		echo '<table class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>'.__('Post Title','rsvpmaker').'</th><th>'.__('Scheduled','rsvpmaker').'</th></tr></thead><tbody>';
+		foreach($results as $row) {
+			$post = get_post($row->post_id);
+			if(!empty($post)) {
+				if(!strpos($post->post_title,'kilter'))
+					delete_post_meta($post->ID,'rsvprelay_to_batch');
+				printf('<tr><td>%s</td><td>%s</td></tr>',esc_html($post->post_title),sizeof(unserialize($row->meta_value)));
+			}
+		}
+		echo '</tbody></table>';
+	}
 }
 
 function rsvpmaker_cron_schedule_options() {
@@ -1606,6 +1623,8 @@ function rsvpmaker_template_inline_test($atts) {
 }
 
 function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null, $type='') {
+	if(defined('RSVPMAKER_DEBUG') && RSVPMAKER_DEBUG)
+		error_log('rsvpmailer_delayed_send: '.$post_id.' '.$user_id.' '.$posthash);
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
 	if('pending_post_promo' == $type)
@@ -1613,7 +1632,7 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null, 
 	$epost = get_post($post_id);
 	if($epost->post_status != 'publish')
 		{
-			set_transient('rsvpmailer_delayed_send','not sent, post status='.$epost->post_status);
+			rsvpmaker_debug_log('rsvpmailer_delayed_send not sent, post status='.$epost->post_status);
 			return;
 		}
 	$html = rsvpmaker_email_html($epost);
@@ -2513,7 +2532,7 @@ Useful formatting codes for email ("excerpt" works well in most cases):
 [custom:rsvpmaker_next rsvp_on="1" format="excerpt"] next event with RSVPs active
 [custom:rsvpmaker_youtube url="YOUTUBE URL" link="LINK IF DIFFERENT"] display preview image of a youtube video, with to view
 <?php
-	$events = get_future_events(array('limit' => 20));
+	$events = rsvpmaker_get_future_events(array('limit' => 20));
 	foreach($events as $event) {
 		printf('[custom:rsvpmaker_one post_id="%d" format="excerpt"] %s %s'."\n",$event->ID,$event->post_title,$event->date);
 	}
@@ -2725,7 +2744,7 @@ $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Prev
 
 $event_options = '<option value="upcoming">'.__('Upcoming Events','rsvpmaker').'</option>';
 $posts = '';
-$future = get_future_events();
+$future = rsvpmaker_get_future_events();
 if(is_array($future))
 foreach($future as $event)
 	{
@@ -3082,7 +3101,7 @@ function rsvpmaker_upcoming_email($atts) {
 	$output = '';
 	$weeks = (empty($atts["weeks"])) ? 4 : $atts["weeks"];
 	$end = date('Y-m-d',rsvpmaker_strtotime('+'.$weeks.' weeks')). ' 23:59:59';
-	$upcoming = get_future_events(' a1.meta_value < "'.$end.'"');
+	$upcoming = rsvpmaker_get_future_events(' a1.meta_value < "'.$end.'"');
 	if(is_array($upcoming))
 	foreach($upcoming as $embed)
 		{
@@ -3094,7 +3113,7 @@ function rsvpmaker_upcoming_email($atts) {
 			$weeksmore = $atts["looking_ahead"];
 			$label = (empty($atts["looking_ahead_label"])) ? '<h2>Looking Ahead</h2>' : '<h2 class="looking_ahead">'.$atts["looking_ahead_label"].'</h2>';
 			$extra = date('Y-m-d',rsvpmaker_strtotime($end .' +'.$weeksmore.' weeks')). ' 23:59:59';
-			$upcoming = get_future_events(' a1.meta_value > "'.$end .'" AND  a1.meta_value < "'.$extra.'"');
+			$upcoming = rsvpmaker_get_future_events(' a1.meta_value > "'.$end .'" AND  a1.meta_value < "'.$extra.'"');
 			if(is_array($upcoming))
 				{
 					$output .= $label."\n";
@@ -3966,7 +3985,7 @@ function rsvpmaker_cronmail_check_duplicate($content) {
 	$found = get_transient($key);
 	if($found)
 		return true;
-	set_transient($key,time()); // used to set content
+	set_transient($key,time(),HOUR_IN_SECONDS); // used to set content
 	return false;
 }
 
@@ -5679,6 +5698,7 @@ function rsvpmail_latest_post_promo($args = array()) {
 add_action('rsvpmailer_post_promo','rsvpmailer_post_promo_cron');
 
 function rsvpmailer_post_promo_cron() {
+	if(defined('RSVPMAKER_DEBUG')) error_log('rsvpmailer_post_promo_cron function start');
 	global $wpdb;
 	//added date check to avoid resending old entries, even if pending_post_promo was not deleted
 	$promo_id = $wpdb->get_var("SELECT post_id FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='pending_post_promo' and post_date > DATE_SUB(NOW(), INTERVAL 48 HOUR) ORDER BY post_id DESC ");
@@ -5699,6 +5719,14 @@ function rsvpmail_latest_posts_notification_setup() {
 	h2 {line-height: 1.5}
 	h3 {line-height: 1.5}
 	</style>';
+
+	if(defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) {
+		echo '<p><strong>WP CRON is disabled. Scheduled promos will not send unless you have a server-side cron job set up to call wp-cron.php.</strong></p>';
+	}
+	else {
+		echo '<p><strong>WP CRON is enabled. Scheduled promos will send automatically.</strong></p>';
+		error_log('WP CRON is enabled. Scheduled promos will send automatically.');
+	}
 
 	if(isset($_POST['checkresend']))
 		{
@@ -6427,7 +6455,7 @@ function rsvpmail_patterns() {
 				'content'     => "<!-- wp:rsvpmaker/upcoming /-->",
 			)
 		);
-	$events = get_future_events();
+	$events = rsvpmaker_get_future_events();
 	foreach($events as $post) {
 		register_block_pattern(
 			'rsvpmaker/email-'.$post->ID,

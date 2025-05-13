@@ -37,8 +37,9 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
-		$events = get_future_events(null,15);
+		$events = rsvpmaker_get_future_events(null,15);
 
 		if ( empty( $events ) ) {
 
@@ -89,7 +90,7 @@ class RSVPMaker_Types_Controller extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
-
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$types = get_terms( array('taxonomy' =>'rsvpmaker-type','hide_empty' => false) );
 
 		return new WP_REST_Response( $types, 200 );
@@ -132,11 +133,9 @@ class RSVPMaker_Authors_Controller extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
-
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$authors = get_rsvpmaker_authors();
-
 		return new WP_REST_Response( $authors, 200 );
-
 	}
 }
 class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
@@ -172,7 +171,7 @@ class RSVPMaker_By_Type_Controller extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
-
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$wp_query = rsvpmaker_upcoming_query(array('type'=>$request['type']));
 		$posts    = $wp_query->get_posts();
 		if ( empty( $posts ) ) {
@@ -234,7 +233,7 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
-
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 
 		$event = $request['post_id'];
@@ -281,7 +280,7 @@ class RSVPMaker_ClearDateCache extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
-
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		delete_transient( 'rsvpmakerdates' );
 
 		return new WP_REST_Response( (object) 'deleted rsvpmakerdates transient', 200 );
@@ -322,7 +321,7 @@ class RSVPMaker_Sked_Controller extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
-
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$sked = get_template_sked( intval($request['post_id']) );
 
 		return new WP_REST_Response( $sked, 200 );
@@ -366,6 +365,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
 		global $wpdb;
 
@@ -689,6 +689,7 @@ class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
 		global $wpdb;
 
@@ -737,6 +738,7 @@ class RSVPMaker_Signed_Up extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
 		global $wpdb;
 
@@ -782,6 +784,7 @@ class RSVPMaker_Shared_Template extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$post_id  = $request['post_id'];
 		$template = get_post( $post_id );
 		$shared   = get_post_meta( $post_id, 'rsvpmaker_shared_template', true );
@@ -826,6 +829,7 @@ class RSVPMaker_Setup extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$editurl = rsvpmaker_setup_post( true );
 		return new WP_REST_Response( $editurl, 200 );
 	}
@@ -863,6 +867,7 @@ class RSVPMaker_Email_Templates extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$templates = $_POST['rsvpmaker_email_template']; // array
 		$output    = '<h2>' . __( 'Updated', 'rsvpmaker' ) . '</h2>';
 		foreach ( $templates as $index => $template ) {
@@ -908,6 +913,7 @@ class RSVPMaker_Notification_Templates extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$output = '<h2>' . __( 'Updated', 'rsvpmaker' ) . '</h2>';
 		if ( isset( $_POST['ntemp'] ) ) {
 			$ntemp = $_POST['ntemp'];
@@ -959,6 +965,7 @@ class RSVPMaker_Details extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$output = rsvpmaker_details_post();
 		return new WP_REST_Response( $output, 200 );
 	}
@@ -996,6 +1003,7 @@ class RSVPMaker_Time_And_Zone extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$date = '';
 		if ( $request['post_id'] == 'nextrsvp' ) {
 			$event = get_next_rsvp_on();
@@ -1050,10 +1058,11 @@ class RSVPMaker_Events_with_Timezone extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $default_tz;
 		$last_tz = '';
 		$events  = array();
-		$list    = get_future_events( array( 'limit' => 10 ) );
+		$list    = rsvpmaker_get_future_events( array( 'limit' => 10 ) );
 		if ( $list ) {
 			foreach ( $list as $event ) {
 				$timezone = rsvpmaker_get_timezone_string( $event->ID );
@@ -1109,6 +1118,7 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $default_tz, $rsvp_options, $post;
 		$originaltime = $time   = sanitize_text_field( $_POST['time'] );
 		$end    = sanitize_text_field( $_POST['end'] );
@@ -1185,6 +1195,7 @@ class RSVPMaker_Daily extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 		$sql = $wpdb->prepare("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=%d ORDER BY timestamp",$request['event']);
 		$results = $wpdb->get_results($sql);
@@ -1239,6 +1250,7 @@ class RSVPMaker_Preview extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		if('next-events' == $request['block'])
 			return new WP_REST_Response( rsvpmaker_next_rsvps($_GET), 200 );
 		if('schedule' == $request['block'])
@@ -1282,6 +1294,7 @@ class RSVPMaker_PorC extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$pc[] = array('label' => 'Choose Post or Category', 'value' => '');
 		$posts = get_posts('posts_per_page=20');
 		foreach($posts as $p)
@@ -1325,6 +1338,7 @@ class RSVPMaker_Confirmation_Code extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$transient = get_transient('remote_nonce');
 		$result = (empty($transient)) ? false : $request['code'] == $transient;
 		return new WP_REST_Response( $result, 200 );
@@ -1352,6 +1366,7 @@ class PostmarkIncoming extends WP_REST_Controller {
 	}
 
   public function get_items($request) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 $opbusiness = false;
 $json = file_get_contents('php://input');
 $data = json_decode(trim($json));
@@ -1384,7 +1399,7 @@ if($check == $last) {
 	//rsvpmaker_debug_log($check,'incoming duplicate');
 	return;
 }
-set_transient('postmark_last_incoming',$check,time()+30);
+set_transient('postmark_last_incoming',$check,30);
 if(empty($data->HtmlBody))
 	$data->HtmlBody = '<html><body>'.nl2br($data->TextBody).$origin.'</body></html>';
 else
@@ -1448,6 +1463,7 @@ class RSVPMaker_Confirm_Email_Membership extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 		//patchstack fix, filter out anything other than email
 		$email = rsvpmail_contains_email($request['email']);
@@ -1499,6 +1515,7 @@ class RSVPMail_Remote_Signup extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 		$email = '';
 		if(isset($_POST['em']))
@@ -1571,6 +1588,7 @@ class RSVPMaker_Flex_Form extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 		ob_start();
 		$formvars = array_map('sanitize_textarea_field',$_POST['profile']);
@@ -1616,6 +1634,7 @@ class RSVPMaker_Form extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $rsvp_options, $post, $current_user;
 		$json = file_get_contents('php://input');
 		$updated = array();
@@ -1846,6 +1865,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $rsvp_options, $current_user;
 		$json = file_get_contents('php://input');
 		$actions = [];
@@ -2050,6 +2070,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $rsvp_options, $current_user;
 		$post_id = $event_id = intval($_GET['event_id']);
 		$type = get_post_type($post_id);
@@ -2256,6 +2277,7 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $current_user, $post;
 		$status = '';
 		$post_id= intval($_GET['event_id']);
@@ -2395,6 +2417,7 @@ class RSVP_Pricing extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $current_user;
 		$status = '';
 		$post_id= intval($_GET['event_id']);
@@ -2479,6 +2502,7 @@ class RSVP_Editor_Loop_Excerpt extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	global $post;
 	$backup = $post;
 	$post_id = $request['post_id'];
@@ -2532,6 +2556,7 @@ class RSVP_Title_Date extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	global $post, $rsvp_options;
 	$backup = $post;
 	$post_id = $request['post_id'];
@@ -2576,7 +2601,7 @@ class RSVP_Calendar extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
-	global $wp_query;
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	$atts = $_GET;
 	$atts['calendar_block'] = true;
 	$response['calendar'] = rsvpmaker_calendar($atts);
@@ -2617,6 +2642,7 @@ class RSVP_Date_Block extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	global $wp_query, $post;
 	$atts = $_GET;
 	$response['dateblock'] = rsvpdateblock($atts);
@@ -2658,6 +2684,7 @@ class RSVP_Date_Element extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	global $wp_query, $post;
 	$formats = ["l F j, Y g:i A", "l F j, g:i A", "M j g:i A","l g:i A","g:i A","H:i"];
 	$atts = $_GET;
@@ -2668,8 +2695,12 @@ class RSVP_Date_Element extends WP_REST_Controller {
 		$formats[] = $atts['end_format'];
 	}
 	$atts['editor'] = 1;
-	$post = get_post($atts['post_id']);
-	$event = get_rsvpmaker_event($atts['post_id']);
+	$post = get_post(intval($atts['post_id']));
+	$event = get_rsvpmaker_event(intval($atts['post_id']));
+	error_log('call to RSVP_Date_Element: '.var_export($atts,true));
+	if(empty($event) || empty($post)) {
+		return;
+	}
 	$post->date = $event->date;
 	$post->enddate = $event->enddate;
 	$post->ts_start = $event->ts_start;
@@ -2716,6 +2747,7 @@ class RSVP_Preview extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	global $wp_query;
 	$atts = $_GET;
 	$atts['calendar_block'] = true;
@@ -2831,6 +2863,7 @@ class RSVP_Template_Projected extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	$response = get_rsvpmaker_projected_api(intval($_GET['post']));
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
@@ -2915,6 +2948,7 @@ class RSVP_Report_API extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 	$response = rsvp_report_api();
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
@@ -2951,7 +2985,8 @@ class RSVP_PayPalPaid extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
-		$response = paypal_verify_rest ();
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
+	$response = paypal_verify_rest ();
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
 }//end class
@@ -2987,6 +3022,7 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 		$params = $request->get_json_params();
 		if(!empty($params)) {
@@ -3043,9 +3079,10 @@ class RSVP_CopyDefaults extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$found = '';
 		$templates = rsvpmaker_get_templates();
-		$events = get_future_events();
+		$events = rsvpmaker_get_future_events();
 		foreach($templates as $post) {
 			rsvpmaker_defaults_for_post($post->ID);
 			if(!empty($found))
@@ -3096,6 +3133,7 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 	}
 
 	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $current_user, $rsvp_options;
 		$postdata = $_POST;
 		if(!empty($postdata['contact_subject']))
@@ -3176,7 +3214,7 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 				$purchase[1] = trim($purchase[1]);
 				$purchase[2] = $email_to;
 				$purchase_code = 'rsvp_purchase_'.time();
-				set_transient($purchase_code,$purchase);
+				set_transient($purchase_code,$purchase,HOUR_IN_SECONDS);
 			}
 			$label = ucfirst(str_replace('_',' ',$key));		
 			$mail['html'] .= sprintf("\n<p><label>%s:</label> %s</p>",$label,sanitize_text_field($item));

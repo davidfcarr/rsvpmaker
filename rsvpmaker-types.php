@@ -302,7 +302,7 @@ function rsvpmaker_form_single($content) {
 		$atts['description'] = __('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
 		$atts['showdescription'] = 'yes';
 		echo rsvpmaker_paypay_button_embed($atts);
-		set_transient($rsvpmulti, $postdata, time() + HOUR_IN_SECONDS);
+		set_transient($rsvpmulti, $postdata, HOUR_IN_SECONDS);
 		return ob_get_clean().$content.'<div style="margin-top:500px;"></div>';
 	}
 

@@ -65,7 +65,7 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 	update_post_meta( $rsvp_options['rsvp_form'], '_rsvpmaker_special', 'RSVP Form' );
 
 	if ( $future ) {
-		$results = get_future_events();
+		$results = rsvpmaker_get_future_events();
 		if ( $results ) {
 			foreach ( $results as $post ) {
 				update_post_meta( $post->ID, '_rsvp_form', $rsvp_options['rsvp_form'] );

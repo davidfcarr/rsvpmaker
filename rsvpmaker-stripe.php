@@ -368,8 +368,6 @@ function rsvpmaker_stripe_checkout() {
 		'https://rsvpmaker.com'
 	);
 
-	rsvpmaker_debug_log( 'call to PaymentIntent' );
-
 	$intent = \Stripe\PaymentIntent::create(
 		array(
 

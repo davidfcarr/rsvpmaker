@@ -1087,7 +1087,7 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL, $addr
 		$recipients = array_merge($recipients,$additional_recipients,$whitelist);
 		if(!in_array(strtolower($from),$recipients))
 			return 'BLOCKED'; //NOT FROM A RECOGNIZED MEMBER ADDRESS
-		set_transient('recipient_names',$recipient_names);
+		set_transient('recipient_names',$recipient_names,HOUR_IN_SECONDS);
 	}
 	return $recipients;
 }

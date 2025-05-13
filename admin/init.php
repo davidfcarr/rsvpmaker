@@ -157,9 +157,6 @@ register_meta( 'post', '_rsvp_currency', $args );
 		   return current_user_can('edit_posts');
 	   }
    );
-	$date_fields = array('_rsvp_dates','_firsttime','_rsvp_end_date'); 
-	foreach($date_fields as $field)
-		register_meta( 'post', $field, $args );	
 	$args = array(
 		'object_subtype' => 'rsvpmaker_template',
  		'type'		=> 'boolean',

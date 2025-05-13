@@ -197,8 +197,7 @@ function rsvpmaker_select( $select, $query = null ) {
 		return $select;
 	global $wpdb;
 
-	$select .= ", ID as postID, rsvpdates.date as datetime, date_format(rsvpdates.date,'%M %e, %Y') as date, rsvpdates.enddate, rsvpdates.display_type, rsvpdates.ts_start, rsvpdates.ts_end, rsvpdates.timezone";
-
+	$select .= ", ID as postID, rsvpdates.*";
 	return $select;
 
 }
@@ -1306,7 +1305,7 @@ function rsvpmaker_looking_ahead( $atts ) {
 		return 'last time not found';
 	}
 
-	$results = get_future_events( "meta_value > '" . date( 'Y-m-d', $last_time ) . "' AND meta_value < DATE_ADD('" . date( 'Y-m-d', $last_time ) . "',INTERVAL $datelimit)", $limit, ARRAY_A );
+	$results = rsvpmaker_get_future_events( "meta_value > '" . date( 'Y-m-d', $last_time ) . "' AND meta_value < DATE_ADD('" . date( 'Y-m-d', $last_time ) . "',INTERVAL $datelimit)", $limit, ARRAY_A );
 
 	if ( $results ) {
 		foreach ( $results as $row ) {
@@ -1372,7 +1371,7 @@ function get_adjacent_rsvp_sort( $sort ) {
 		return $sort;
 	}
 	global $wpdb;
-	$sort = str_replace( 'p.post_date', $wpdb->postmeta . '.meta_value', $sort );
+	$sort = str_replace( 'p.post_date', 'date', $sort );
 	return $sort;
 }
 
@@ -2836,7 +2835,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 				$dateblock .= '</span>';
 
-			} elseif ( ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+			} elseif ( empty($event->display_type) || ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
 
 				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
 
@@ -3086,7 +3085,7 @@ function rsvpmaker_multi_event($atts = array()) {
 	global $rsvp_options, $blanks_allowed;
 	$blanks_allowed = 10000000;
 	$page_id = get_rsvpmaker_multiple_event_page();
-	$future_events = get_future_events($atts);
+	$future_events = rsvpmaker_get_future_events($atts);
 	$eventcount = empty($atts['eventcount']) ? 4 : intval($atts['eventcount']);
 	if(count($future_events) < $eventcount)
 		return '<p>Offer expired</p>';

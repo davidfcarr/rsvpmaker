@@ -220,7 +220,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
   $transaction_code = wp_generate_password(20,false,false);
-  set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,time()+(15 * MINUTE_IN_SECONDS));
+  set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,(15 * MINUTE_IN_SECONDS));
   $enable_funding = (empty($paypal_rest_keys['funding_sources'])) ? '' : $paypal_rest_keys['funding_sources'];
   if($enable_funding)
     $enable_funding = '&enable-funding='.$enable_funding;

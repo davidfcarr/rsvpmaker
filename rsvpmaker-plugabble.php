@@ -1956,7 +1956,7 @@ function event_content( $content, $formonly = false, $form = '' ) {
 	$dateblock = ( strpos( $post->post_content, 'rsvpdateblock]' ) || strpos( $post->post_content, 'wp:rsvpmaker/rsvpdateblock' ) ) ? '' : rsvpmaker_format_event_dates( $post->ID );
 	$event     = get_rsvpmaker_event( $post->ID );
 	if ( $event ) {
-		$dur       = $event->display_type;
+		$dur       = isset($event->display_type) ? $event->display_type : '';
 		$last_time = (int) $event->ts_end;
 		$firstrow  = $event->date;
 	} else {
@@ -2413,7 +2413,7 @@ function rsvp_report_shortcode( $atts ) {
 
 }
 
-	function rsvp_report() {
+function rsvp_report() {
 
 		global $wpdb, $post, $rsvp_options, $is_rsvp_report;
 		$is_rsvp_report = true;
@@ -2724,7 +2724,7 @@ function rsvp_report_shortcode( $atts ) {
 			}
 
 			if ( isset( $_GET['edit_rsvp'] ) && current_user_can( 'edit_rsvpmakers' ) ) {
-				admin_edit_rsvp( $_GET['edit_rsvp'], $eventid );
+				admin_edit_rsvp( intval($_GET['edit_rsvp']), $eventid );
 			}
 
 			if( !isset( $_GET['rsvp_order'] ) || ( $_GET['rsvp_order'] == 'host' ) )
@@ -2758,7 +2758,7 @@ function rsvp_report_shortcode( $atts ) {
 
 			if ( $_GET['detail'] == 'future' ) {
 
-				$future = get_future_events( '', $limit );
+				$future = rsvpmaker_get_future_events( '', $limit );
 
 			} else {
 				$future = get_past_rsvp_events( '', $limit );
@@ -3332,7 +3332,7 @@ to <select name="move_to">
 
 			<?php
 
-			$future = get_future_events( '', 50 );
+			$future = rsvpmaker_get_future_events( '', 50 );
 
 			if ( $future ) {
 
@@ -4150,7 +4150,7 @@ function rsvp_reminder_activation() {
 }
 
 function rsvp_daily_reminder() {
-
+		delete_transient('rsvpmakerdates');//no longer used
 		rsvpautorenew_test(); // also check for templates that autorenew
 		cleanup_rsvpmaker_child_documents(); // delete form and confirmation messages
 		rsvpmaker_reminders_nudge(); // make sure events with reminders set are in cron
@@ -5263,7 +5263,7 @@ function rsvpmaker_template_list() {
 
 				$current_template .= '<option value="0">Choose Template</option>';
 
-				$results = get_future_events();
+				$results = rsvpmaker_get_future_events();
 
 				if ( is_array( $results ) ) {
 
@@ -5304,7 +5304,7 @@ function rsvpmaker_template_list() {
 
 		$event_options = '';
 
-		$results = get_future_events();
+		$results = rsvpmaker_get_future_events();
 
 		if ( is_array( $results ) ) {
 
@@ -5876,7 +5876,7 @@ function rsvp_template_checkboxes( $t ) {
 		}
 
 		if(isset($_GET['other'])) {
-			$future = get_future_events(50);
+			$future = rsvpmaker_get_future_events(50);
 			$updatelist .= '<h3>Other Events</h3>';
 			foreach($future as $f) {
 				$otherrecur = get_post_meta($f->ID,'_meet_recur',true);
@@ -6627,7 +6627,7 @@ function rsvpmaker_dashboard_widget_function() {
 
 		echo '<p><strong>' . __( 'My Events', 'rsvpmaker' ) . '</strong><br /></p>';
 
-		$results = get_future_events( 'post_author=' . $current_user->ID );
+		$results = rsvpmaker_get_future_events( 'post_author=' . $current_user->ID );
 
 		if ( $results ) {
 
