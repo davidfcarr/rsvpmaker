@@ -4587,7 +4587,8 @@ function rsvpmaker_get_style_substitutions() {
 				'has-huge-font-size' => 'font-size: xx-large;',
 				'has-small-font-size' => 'font-size: small;',
 				'wp-block-pullquote' => 'font-size: xx-large;text-align:center; font-style: normal;',
-				'wp-block-columns' => 'display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 5px;',
+				'wp-block-columns' => 'display: flex; margin: 0; padding: 0;',
+				'wp-block-column' => 'width: 45%; vertical-align: top;display: inline-block; padding: 5px;',
 				'wp-block-post-template' => 'list-style-type: none',
 			);			
 		foreach($colors as $index => $color)
@@ -4596,7 +4597,7 @@ function rsvpmaker_get_style_substitutions() {
 				$style_sub['has-'.$index.'-background-color'] = 'padding: 5px 30px 5px 30px;background-color:'.$color;
 			}
 			if(!empty($theme_style['gradients']))
-			foreach($theme_style['gradients'] as $index => $gradient)
+			foreach($theme_style['gradients'] as $index => $gradient) 	
 			{
 				$style_sub['has-'.$index.'-gradient-background'] = 'padding: 5px 30px 5px 30px;background-image:'.$gradient;
 			}

@@ -1465,7 +1465,7 @@ function rsvpmaker_week_reminders() {
 
 	$enddate = ' DATE_ADD(NOW(),INTERVAL 1 WEEK) ';
 
-		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $event_table.*, date as datetime, date_format(a1.date,'%M %e, %Y') as dateformatted,
+		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $event_table.*, date as datetime, date_format(date,'%M %e, %Y') as dateformatted,
 		a2.meta_key as slug, a2.meta_value as reminder_post_id
 		 FROM " . $wpdb->posts . '
 		 JOIN ' . $event_table . ' ON ' . $wpdb->posts . ".ID =event
@@ -1712,7 +1712,7 @@ function rsvpmaker_get_future_events_by_meta( $kv, $limit = '', $output = OBJECT
 
 	$wpdb->show_errors();
 	$startfrom = ( $offset_hours ) ? ' DATE_SUB("' . get_sql_now() . '", INTERVAL ' . $offset_hours . ' HOUR) ' : '"' . get_sql_now() . '"';
-		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(a1.date,'%M %e, %Y') as dateformatted, a1.enddate, a1.display_type, meta.meta_value
+		$sql = "SELECT DISTINCT ID, $wpdb->posts.ID as postID, $wpdb->posts.*, a1.date as datetime, date_format(date,'%M %e, %Y') as dateformatted, a1.enddate, a1.display_type, meta.meta_value
 
 		 FROM " . $wpdb->posts . '
 
@@ -1796,7 +1796,7 @@ function get_past_rsvp_events( $where = '', $limit = '', $output = OBJECT ) {
 
 	$table = $wpdb->prefix.'rsvpmaker_event';
 	$wpdb->show_errors();
-	$sql = "SELECT DISTINCT *, date as datetime, event as ID, date_format(a1.date,'%M %e, %Y') as dateformatted
+	$sql = "SELECT DISTINCT *, date as datetime, event as ID, date_format(date,'%M %e, %Y') as dateformatted
 	 FROM " . $table . " WHERE date < '" . get_sql_now() . "'";
 	if ( ! empty( $where ) ) {
 		$where = trim( $where );
@@ -2909,60 +2909,6 @@ function update_post_meta_unfiltered( $post_id, $meta_key, $meta_value ) {
 
 	}
 }
-function update_rsvp_post_metadata( $check, $post_id, $meta_key, $meta_value ) {
-	if ( ( $meta_key == 'simple_price' ) || ( $meta_key == 'simple_price_label' ) ) {
-		$per = get_post_meta( $post_id, '_per', true );
-		if ( empty( $per ) ) {
-				$per = array();
-				$per['unit'][0] = 'Tickets';
-				$per['price'][0] = '';
-		} elseif ( empty( $per['price'] ) ) {
-			$per['price'][0] = '';
-
-		}
-		if ( $meta_key == 'simple_price' ) {
-			$per['price'][0] = $meta_value;
-		}
-		if ( $meta_key == 'simple_price_label' ) {
-			$per['unit'][0] = $meta_value;
-		}
-		update_post_meta( $post_id, '_per', $per );
-		return $check; //also record Gutenberg value
-	}
-	$date_fields = array( '_firsttime', '_endfirsttime', '_day_of_week', '_week_of_month', '_template_start_hour', '_template_start_minutes', 'complex_template' );
-	if ( in_array( $meta_key, $date_fields ) && ( $sked = get_template_sked( $post_id ) ) && is_array( $sked ) ) {
-			$week = $sked['week'];
-			$dayofweek = $sked['dayofweek'];
-			$hour = $sked['hour'];
-			$minutes = $sked['minutes'];
-			$duration = $sked['duration'];
-		if ( $meta_key == '_firsttime' ) {
-			//rsvpmaker_debug_log( 'firsttime_test' . $meta_value, $meta_key );
-			$sked['duration'] = $meta_value;
-		} elseif ( ( $meta_key == '_endfirsttime' ) || ( $meta_key == '_endfirsttime' ) ) {
-			//rsvpmaker_debug_log( $meta_value, $meta_key );
-			$sked['end'] = $meta_value;
-		}
-		if ( $meta_key == '_template_start_hour' ) {
-			$sked['hour'] = $meta_value;
-			//rsvpmaker_debug_log( $meta_value, $meta_key );
-		} elseif ( $meta_key == '_template_start_minutes' ) {
-			$sked['minutes'] = $meta_value;
-			//rsvpmaker_debug_log( $meta_value, $meta_key );
-		} elseif ( $meta_key == '_day_of_week' ) {
-			$sked['dayofweek'] = array( $meta_value );
-			//rsvpmaker_debug_log( $meta_value, $meta_key );
-		} elseif ( $meta_key == '_week_of_month' ) {
-			//rsvpmaker_debug_log( $meta_value, $meta_key );
-			$sked['week'] = array( $meta_value );
-		}
-		new_template_schedule( $post_id, $sked, 'update_rsvp_post_metadata' );
-		return $check; //also record Gutenberg value
-	}
-	//rsvpmaker_debug_log( $meta_value, $meta_key . ' - update_rsvp_post_metadata' );
-	return $check;
-}
-add_filter( 'update_post_metadata', 'update_rsvp_post_metadata', 10, 4 );
 function rsvpmaker_check_privacy_page() {
 	$privacy_page = get_option( 'wp_page_for_privacy_policy' );
 	if ( $privacy_page ) {

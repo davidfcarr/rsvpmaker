@@ -2814,6 +2814,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				$update_post['ID'] = $target_id;
 				$update_post['post_title'] = $post->post_title;
 				$update_post['post_content'] = $post->post_content;
+				$update_post['post_excerpt'] = $post->post_excerpt;
 				wp_update_post($update_post);
 				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
 				update_post_meta($target_id,"_updated_from_template",$ts);
