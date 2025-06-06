@@ -296,6 +296,7 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 	$nv = array('display_type'=>$type, 'date'=>$date, 'enddate'=>$enddate, 'ts_start'=>$ts_start, 'ts_end'=>$ts_end, 'timezone'=>$timezone, 'event'=>$post_id,'post_title'=>$post_title);	
 
 	$wpdb->insert($event_table,$nv);
+	error_log('rsvpmaker_add_event_row '. var_export($nv,true));
 
 	return (object) array('event' => $post_id, 'display_type' => $type, 'date' => $date,'enddate' => $enddate, 'ts_start' => $ts_start, 'ts_end' => $ts_end, 'timezone' => $timezone,'justupdated' => true);
 
@@ -411,6 +412,7 @@ function get_rsvpmaker_event( $post_id ) {
 		$row->enddate = rsvpmaker_date('Y-m-d H:i:s',$row->ts_end,$row->timezone );
 
 		$sql = $wpdb->prepare('UPDATE '.$wpdb->prefix . "rsvpmaker_event SET ts_end=%d, enddate=%s, timezone=%s WHERE event=" . intval( $post_id ),$row->ts_end,$row->enddate,$row->timezone);
+		error_log('rsvpmaker_event sanity check '.$sql);
 
 		$wpdb->query($sql);
 
@@ -446,7 +448,7 @@ function get_rsvpmaker_event( $post_id ) {
 		}
 
 	}
-
+	error_log('get_rsvpmaker_event  '. var_export($row,true));
 	return $row;
 
 }

@@ -54,13 +54,6 @@ export default function DateTimeMakerInner(props) {
     function setEndDate(datestring) {
         console.log('end date '+datestring);
         const newendDate = new Date(datestring);
-        if(newendDate.getDate() < date.getDate()) {
-            console.log('new end date error end',newendDate);
-            console.log('new end date error date',date);
-            alert('end date cannot be before start date');
-            newendDate.setTime(date.getTime()+60000);
-            return;
-        }
         const endsqldate = sqlDate(newendDate);
         setLocal((prev) => { return (prev.date) ? {...prev,'enddate':endsqldate} : {...eventdata,'enddate':endsqldate} } );
         datemutate({'enddate':sqlDate(newendDate)});
@@ -69,7 +62,7 @@ export default function DateTimeMakerInner(props) {
     function setOther(key,value) {
         console.log('set other key',key);
         console.log('set other value',value);
-        setLocal((prev) => { let change = (prev.date) ? {...prev} : {...eventdata}; change[key] = value; datemutate(change); return change; } );
+        setLocal((prev) => { let change = (prev.date) ? {...prev} : {...eventdata}; change[key] = value; console.log(change); datemutate(change); return change; } );
     }
 
     function retry() {

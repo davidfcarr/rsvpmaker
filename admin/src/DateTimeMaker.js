@@ -47,11 +47,6 @@ export default function DateTimeMaker(props) {
 
     function setEndDate(datestring) {
         const newendDate = new Date(datestring);
-        if(newendDate.getTime() < date.getTime()) {
-            newendDate.setTime(date.getTime()+60000);
-             alert('end date cannot be before start date');
-            return;
-        }
         const endsqldate = sqlDate(newendDate);
         datemutate({'enddate':sqlDate(newendDate)});
     }

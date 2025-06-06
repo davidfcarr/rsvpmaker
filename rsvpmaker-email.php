@@ -1503,7 +1503,7 @@ if(!empty($postvars['custom_list'])) {
 					add_post_meta($post_id,'rsvpmail_blocked',$problem);
 					continue;
 				}
-			if(!in_array($recipients,$email))
+			if(empty($recipients) || !in_array($email,$recipients))
 				$recipients[] = $email;
 			//add_post_meta($post_id,'rsvprelay_to',$email);
 			}					

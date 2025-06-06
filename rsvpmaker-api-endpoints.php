@@ -2072,6 +2072,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb, $rsvp_options, $current_user;
+		$event_table = $wpdb->prefix.'rsvpmaker_event';
 		$post_id = $event_id = intval($_GET['event_id']);
 		$type = get_post_type($post_id);
 		$rsvpmeta = array("_rsvp_to", "_rsvp_instructions", "simple_price", "simple_price_label", "venue", "_sked_minutes", "_sked_stop", "_sked_duration", "_payment_gateway", "_rsvp_currency", "_rsvp_end_display", "_sked_start_time", "_sked_end");
@@ -2086,44 +2087,65 @@ class RSVP_Event_Date extends WP_REST_Controller {
 			return new WP_REST_Response( 'user does not have editing rights for this event', 401 );
 		}
 		$status = $upsql = '';
+		$event = get_rsvpmaker_event($event_id);// $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
 		if(!empty($json)) {
 			$data = json_decode(trim($json));
-			if(isset($data->date) && isset($data->timezone)) //retry submission
+			if(isset($data->date)) //retry submission
 			{
 				$ts_start = rsvpmaker_strtotime($data->date);
-				$ts_end = rsvpmaker_strtotime($data->enddate);
-				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET date=%s, enddate=%s, ts_start=%d, ts_end=%d, display_type=%s, timezone=%s WHERE event=%d",$data->date,$data->enddate,$ts_start, $ts_end, $data->display_type, $data->timezone, $event_id);
-				$status = __('Updated','rsvpmaker').': '.$data->date.' / '.$data->enddate;
-			}
-			elseif(isset($data->date))
-			{
-				$ts_start = rsvpmaker_strtotime($data->date);
-				$ts_end = rsvpmaker_strtotime($data->enddate);
-				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET date=%s, enddate=%s, ts_start=%d, ts_end=%d WHERE event=%d",$data->date,$data->enddate,$ts_start, $ts_end, $event_id);
-				$status = __('Updated','rsvpmaker').': '.$data->date;
+				if(empty($data->enddate) || $data->enddate < $data->date) {
+					$data->enddate = $data->date;
+					$ts_end = $ts_start + 3600; // default to one hour
+					$data->enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end);
+				}
+				else
+					$ts_end = rsvpmaker_strtotime($data->enddate);
+				$nv['date'] = $data->date;
+				$nv['enddate'] = $data->enddate;
+				$nv['ts_start'] = $ts_start;
+				$nv['ts_end'] = $ts_end;
+				if($event) {
+					$event->date = $data->date;
+					$event->enddate = $data->enddate;	
+					$event->ts_start = $ts_start;
+					$event->ts_end = $ts_end;
+				}
 				delete_transient('rsvpmakers');
 			}
 			elseif(isset($data->enddate)) // end date set independently
 			{
 				$ts_end = rsvpmaker_strtotime($data->enddate);
-				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET enddate=%s, ts_end=%d WHERE event=%d",$data->enddate,$ts_end,$event_id);
-				$status = __('Updated','rsvpmaker').': '.$data->enddate;
+				if($event) {
+					if(($event->ts_start > $ts_end)) {
+						$event->ts_start = intval($event->ts_start);
+						$ts_end = $event->ts_start + HOUR_IN_SECONDS; // default to one hour after start date
+						$data->enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end);
+					}
+					$event->enddate = $data->enddate;
+					$event->ts_end = $ts_end;
+				}
+				$nv['enddate'] = $data->enddate;
+				$nv['ts_end'] = $ts_end;
 			}
-			elseif(isset($data->display_type)) // end date set independently
-			{
-				$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET display_type=%s WHERE event=%d",$data->display_type,$event_id);
-				$status = __('Updated display','rsvpmaker').': '.$data->display_type;
-			}
-			elseif(isset($data->timezone))
+			if(isset($data->timezone))
 			{
 				if ('rsvpmaker_template' == $type) {
 					update_post_meta($event_id,'timezone',$data->timezone);
-				} else {
-					$upsql = $wpdb->prepare("update ".$wpdb->prefix."rsvpmaker_event SET timezone=%s WHERE event=%d",$data->timezone,$event_id);
-					$status = __('Updated timezone','rsvpmaker').': '.$data->timezone;	
+				}
+				else
+					$nv['timezone'] = $data->timezone;
+				if($event) {
+					$event->timezone = $data->timezone;
 				}
 			}
-			elseif(isset($data->metaKey) && isset($data->metaValue)) {
+			if(isset($data->display_type)) // end date set independently
+			{
+				$nv['display_type'] = $data->display_type;
+				if($event) {
+					$event->display_type = $data->display_type;
+				}
+			}
+			if(isset($data->metaKey) && isset($data->metaValue)) {
 				$status = 'updated '.$data->metaKey;
 				if(in_array($data->metaKey,$rsvpmeta))
 					update_post_meta($post_id,$data->metaKey,sanitize_text_field($data->metaValue));
@@ -2134,10 +2156,12 @@ class RSVP_Event_Date extends WP_REST_Controller {
 				else
 					$status = $data->metaKey.' not found';
 			}
-			if(!empty($upsql))
-				$wpdb->query($upsql);
+			if(!empty($nv)) {
+				$result = $wpdb->update($event_table,$nv,array('event' => $event_id));
+				$upsql = $wpdb->last_query;
+			}
 		}
-		$event = get_rsvpmaker_event($event_id);// $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
+
 		if(!$event) {
 			$type = get_post_type($event_id);
 			if('rsvpmaker_template' != $type)
@@ -2697,7 +2721,6 @@ class RSVP_Date_Element extends WP_REST_Controller {
 	$atts['editor'] = 1;
 	$post = get_post(intval($atts['post_id']));
 	$event = get_rsvpmaker_event(intval($atts['post_id']));
-	error_log('call to RSVP_Date_Element: '.var_export($atts,true));
 	if(empty($event) || empty($post)) {
 		return;
 	}
