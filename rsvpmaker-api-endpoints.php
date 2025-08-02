@@ -37,6 +37,15 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 
 	}
 	public function get_items( $request ) {
+	global $rsvp_options;
+
+		if ( ! empty( $rsvpmaker_options['api_key'] ) && ! empty( $_GET['key'] ) && $rsvpmaker_options['api_key'] != $_GET['key'] ) {
+			return new WP_Error( 'unauthorized', 'Invalid API key', array( 'status' => 401 ) );
+		}
+
+		if ( ! empty( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field($_GET['nonce']), 'rsvpmaker_api' ) ) {
+			return new WP_Error( 'unauthorized', 'Invalid nonce', array( 'status' => 401 ) );
+		}
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
 		$events = rsvpmaker_get_future_events(null,15);
@@ -48,6 +57,7 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 		}
 		foreach($events as $index => $post) {
 			$events[$index]->permalink = get_permalink($post->ID);
+			$events[$index]->neatdate = rsvpmaker_date( $rsvp_options['long_date'], intval( $post->ts_start ) );
 		}
 
 		return new WP_REST_Response( $events, 200 );
@@ -2089,6 +2099,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 		$status = $upsql = '';
 		$event = get_rsvpmaker_event($event_id);// $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
 		if(!empty($json)) {
+			delete_transient('rsvpmakers');
 			$data = json_decode(trim($json));
 			if(isset($data->date)) //retry submission
 			{

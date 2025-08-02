@@ -190,9 +190,13 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         error_log($log);
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
-            add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
+            $size = sizeof($chunk);
+            $meta_id = add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
+            $check = $wpdb->get_row("select * from $wpdb->postmeta where meta_id=$meta_id");
+            error_log('saving emails from '.$chunk[0].' to '.$chunk[$size-1]. 'for post '.$post_id.' rsvprelay_to_batch result '.var_export($meta_id,true).' check '.var_export($check,true));
         }
-        wp_schedule_event( strtotime('+15 seconds'), 'minute', 'rsvpmaker_postmark_chunked_batches' );
+        error_log('scheduling rsvpmaker_postmark_chunked_batches');
+        wp_schedule_event( strtotime('+95 seconds'), 'minute', 'rsvpmaker_postmark_chunked_batches' );
     }
 
     $postmark_settings = get_rsvpmaker_postmark_options();
@@ -280,13 +284,16 @@ function rsvpmaker_postmark_chunked_batches() {
     global $wpdb;
     $log = '';
 	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
+    error_log($sql);
 	$results = $wpdb->get_results($sql);
     error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
 	if($results) {
         $batchrow = $results[0];
         $doneafterthis = sizeof($results) == 1;
 		$recipients = unserialize($batchrow->meta_value);
-		$wpdb->query("update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id");
+        $sql = "update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id";
+        error_log($sql);
+		$wpdb->query($sql);
         $log .= rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
         $postmark_options = get_rsvpmaker_postmark_options();
         if(!empty($postmark_options['notify_batch_send']))
@@ -306,8 +313,10 @@ function rsvpmaker_postmark_chunked_batches() {
             wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
         }
 	}
-    else
+    else {
+        error_log('ending postmark chunked batches');
         wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
+    }
     //wp_suspend_cache_addition(false);
 }
 
@@ -759,7 +768,8 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
 
 function rsvpmaker_postmark_show_sent_log() {
     rsvpmaker_admin_heading('Postmark Email Log',__FUNCTION__);
-    global $wpdb;
+    global $wpdb,$rsvp_options;
+    $time_format = (strpos($rsvp_options['time_format'],'T')) ? $rsvp_options['time_format'] : $rsvp_options['time_format'].' T';
     $table = $wpdb->base_prefix.'postmark_tally';
     $blog_id = get_current_blog_id();
     $days = isset($_GET['days']) ? intval($_GET['days']) : 31;
@@ -926,7 +936,7 @@ function rsvpmaker_postmark_show_sent_log() {
         else
             $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'... (<a href="'.admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&showall='.$row->id).'#row'.$row->id.'">Show All</a>)' : $row->recipients;
         $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a><br>%s',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag),$row->tag);
-        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,$row->time,$row->count,$row->blog_id,$recipients,$prompt);
+        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)),$row->count,$row->blog_id,$recipients,$prompt);
     }
     echo '</tbody></table>';
 

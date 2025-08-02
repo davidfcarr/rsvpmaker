@@ -293,15 +293,11 @@ function rsvpmaker_stripe_checkout() {
 		return '<p>' . __( 'No pending payment found for', 'rsvpmaker' ) . ' ' . esc_html( $idempotency_key ) . '</p>';
 	}
 
-	if ( $vars['paymentType'] == 'donation' ) {
-
+	if ( !empty($vars['paymentType']) && ($vars['paymentType'] == 'donation') ) {
 		if ( empty( $_GET['amount'] ) ) {
-
 			return '<p>No amount given</p>';
 		}
-
 		$vars['amount'] = sanitize_text_field( $_GET['amount'] );
-
 	}
 
 	if($vars['amount'] < $rsvp_options['payment_minimum']) {

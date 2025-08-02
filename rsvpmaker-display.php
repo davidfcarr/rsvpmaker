@@ -420,6 +420,11 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		$queryarg['author'] = $atts['author'];
 	}
 
+	if ( ! empty( $atts['post_status'] ) ) {
+
+		$queryarg['post_status'] = $atts['post_status'];
+	}
+
 	if ( isset( $atts['one'] ) && ! empty( $atts['one'] ) ) {
 
 		$queryarg['posts_per_page'] = 1;

@@ -448,7 +448,7 @@ function get_rsvpmaker_event( $post_id ) {
 		}
 
 	}
-	error_log('get_rsvpmaker_event  '. var_export($row,true));
+
 	return $row;
 
 }
@@ -1420,23 +1420,16 @@ function get_events_by_author( $author, $limit = '', $status = '' ) {
 		$status_sql = " AND post_status='publish' ";
 
 	} else {
-
-		$status_sql = " AND ($wpdb->posts.post_status='publish' OR $wpdb->posts.post_status='draft') ";
-
+		$status_sql = " AND (p.post_status='publish' OR p.post_status='draft') ";
 	}
-	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, *
-	 FROM " . $wpdb->posts . '
+	$sql = "SELECT * FROM $wpdb->posts p JOIN $table  e ON p.ID =e.event
 
-	 JOIN ' . $table . ' a1 ON ' . $wpdb->posts . ".ID ='.$table.'.event
-
-	 WHERE $wpdb->posts.post_author=$author AND a1.date > '" . get_sql_now() . "' " . $status_sql;
-	$sql .= ' ORDER BY date ';
+	 WHERE p.post_author=$author AND e.date > '" . get_sql_now() . "' " . $status_sql. ' ORDER BY date ';
 	if ( ! empty( $limit ) ) {
 
 		$sql .= ' LIMIT 0,' . $limit . ' ';
 
 	}
-
 	return $wpdb->get_results( $sql );
 
 }
@@ -1679,6 +1672,11 @@ function rsvpmaker_excerpt( $post ) {
 function rsvpmaker_get_future_events( $where_or_atts = '', $limit = 0, $output = OBJECT, $offset_hours = 0 ) {
 
 	global $offset_hours;
+	if(is_numeric($where_or_atts))
+		{
+			$limit = $where_or_atts;
+			$where_or_atts = '';
+		}
 
 	if ( is_array( $where_or_atts ) ) {
 
@@ -1791,6 +1789,7 @@ function rsvpmaker_get_past_events( $where = '', $limit = '', $output = OBJECT )
 		$sql .= ' LIMIT 0,' . $limit . ' ';
 
 	}
+	error_log($sql);
 	return $wpdb->get_results( $sql );
 }
 function get_past_rsvp_events( $where = '', $limit = '', $output = OBJECT ) {
@@ -1814,7 +1813,7 @@ function get_past_rsvp_events( $where = '', $limit = '', $output = OBJECT ) {
 
 	return $results;
 }
-function get_events_dropdown() {
+function get_events_dropdown($include_drafts = false) {
 	$options = '<optiongroup><optgroup label="' . __( 'Future Events', 'rsvpmaker' ) . '">' . "\n";
 	$future = rsvpmaker_get_future_events();
 	if ( is_array( $future ) ) {
@@ -1829,6 +1828,21 @@ function get_events_dropdown() {
 
 	}
 	$options .= '</optiongroup><optiongroup>' . "\n";
+	if($include_drafts) {
+	$drafts = rsvpmaker_get_future_events( array( 'post_status' => 'draft' ), 50 );
+		if ( is_array( $drafts ) ) {
+		$options .= '<optgroup label="' . __( 'Draft Events', 'rsvpmaker' ) . '">' . "\n";
+			foreach ( $drafts as $event ) {
+				if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
+
+					$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', $event->ts_start ) );
+
+				}
+
+			}
+		$options .= '</optiongroup><optiongroup>' . "\n";
+		}
+	}
 	$options .= '<optgroup label="' . __( 'Recent Events', 'rsvpmaker' ) . '">' . "\n";
 	$past = rsvpmaker_get_past_events( '', 50 );
 	if ( is_array( $past ) ) {
@@ -2391,18 +2405,6 @@ if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && cu
 		foreach($sites as $site) {
 
 			printf('<h3>%d %s</h3>',$site->blog_id,$site->domain);
-
-			/*
-
-			if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-
-				$wpdb->query( 'DELETE FROM ' . $wpdb->base_prefix . "rsvpmaker WHERE timestamp < '$older' " );
-
-				printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', $older );
-
-			} else {
-
-			*/
 
 				$sql   = 'SELECT * FROM ' . $wpdb->base_prefix.$site->blog_id . "_rsvpmaker_event WHERE date < '$older' ";
 
@@ -5465,7 +5467,7 @@ function rsvpmaker_the_post($post_object, $context = 'post loaded') {
 function rsvpmakers_add($event) {
 	global $rsvpmaker_event;
 	$rsvpmaker_event = $event;
-	if(empty($event->ts_start) || empty($event->ts_start))
+	if(empty($event->ts_start) || empty($event->ts_end))
 		return;
 	if(empty($event->event) && empty($event->ID))
 		return;
@@ -5507,7 +5509,7 @@ function get_rsvpmakers() {
 function save_rsvpmakers() {
 	global $rsvpmakers;
 	if(!empty($rsvpmakers) && is_array($rsvpmakers)) {
-		$rsvpmakers = array_filter($rsvpmakers, function ($ev) { return ($ev->ts_end > time());} );
+		$rsvpmakers = array_filter($rsvpmakers, function ($ev) { return ($ev && !empty($ev->ts_end) && $ev->ts_end > time());} );
 		if(sizeof($rsvpmakers) > 20) {
 			////error_log('rsvpmakers before usort '.var_export($rsvpmakers,true));
 			usort($rsvpmakers, function ($a, $b) { return ($a->ts_start - $b->ts_start);  } );
@@ -5562,4 +5564,17 @@ add_filter('query','rsvpmaker_query_memory_check');
 function rsvpmaker_query_memory_check($query) {
 	rsvp_memory_peak_limit(0.95,'query '.$query);
 	return $query;
+}
+
+function rsvpmaker_rewrite_check() {
+	$rewrite = get_option( 'rewrite_rules', array() );
+	if(isset($rewrite[ 'rsvpmaker/?$']))
+		return true;
+	if(is_array($rewrite)){
+		foreach($rewrite as $key => $value) {
+			if(strpos($key,'rsvpmaker') !== false)
+				return true;
+		}
+	}
+return false;
 }

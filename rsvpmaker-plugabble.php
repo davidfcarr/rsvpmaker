@@ -3047,7 +3047,7 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 		$newdetails = array();
 		if ( is_array( $details ) ) {
 			foreach ( $details as $name => $value ) {
-				if('id' == $name)
+				if(('id' == $name) || ('details' == $name))
 					continue;
 				if ( $value ) {
 					if ( strpos( $name, ' ' ) ) {
@@ -3075,7 +3075,8 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 	}
 	return $owed_list;
 }
-	function format_rsvp_details( $results, $editor_options = true, $check_guests = false ) {
+
+function format_rsvp_details( $results, $editor_options = true, $check_guests = false ) {
 
 		global $rsvp_options, $wpdb, $post, $rsvpmaker_additional_fields;
 		$pricing = get_post_meta($post->ID,'pricing',true);
@@ -4139,6 +4140,9 @@ function rsvp_reminder_activation() {
 
 	}
 
+	if(rsvpmaker_postmark_is_active())
+		return; //we don't want to start rsvpmaker_relay_init_hook
+
 	$active = get_option( 'rsvpmaker_discussion_active' );
 
 	// if stalled, restart email queue process
@@ -5117,7 +5121,7 @@ function rsvpmaker_template_list() {
 
 		}
 
-		$results = rsvpmaker_get_templates('',true);
+		$templates = $results = rsvpmaker_get_templates('',true);
 
 		if ( $results ) {
 

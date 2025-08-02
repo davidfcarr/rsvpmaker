@@ -742,8 +742,7 @@ function rsvpmailer_post_promo_summary() {
 		foreach($results as $row) {
 			$post = get_post($row->post_id);
 			if(!empty($post)) {
-				if(!strpos($post->post_title,'kilter'))
-					delete_post_meta($post->ID,'rsvprelay_to_batch');
+				//delete_post_meta($post->ID,'rsvprelay_to_batch');
 				printf('<tr><td>%s</td><td>%s</td></tr>',esc_html($post->post_title),sizeof(unserialize($row->meta_value)));
 			}
 		}
@@ -1728,6 +1727,8 @@ if(!empty($_POST["subject"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsv
 if(!empty($_POST["send_when"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 {
 	$postvars = $_POST;
+	//delete temporary log entries
+	$wpdb->query("DELETE FROM $wpdb->postmeta WHERE `meta_key` LIKE 'rsvprelay_to_batch_done'");
 	$postvars = array_map('sanitize_text_field',$postvars);
 	$postvars['post_id'] = $post->ID;
 	$posthash = crc32(var_export($postvars,true));
@@ -3650,7 +3651,7 @@ function rsvp_nonpayment_delete($rsvp_id) {
 	$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
 	$rsvp = (array) $wpdb->get_row($sql);
 	if(defined('RSVPMAKER_DEBUG')) error_log('nonpayment_delete check '.var_export($row,true));
-	if($rsvp['fee_total'] == $rsvp['amountpaid']) {
+	if(empty($rsvp['fee_total']) || $rsvp['fee_total'] == $rsvp['amountpaid']) {
 		error_log($rsvp['fee_total'].' == '.$rsvp['amountpaid']);
 		return;
 	}
@@ -4993,6 +4994,7 @@ function get_rsvpmaker_email_segment($segment, $active = true) {
 		$sql = "SELECT $table.*, email as user_email, meta_value as segment, $table_meta.id as segment_id FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE active=1 AND meta_value='$segment' ORDER BY last_name, first_name";
 	else
 		$sql = "SELECT $table.*, email as user_email, meta_value as segment, $table_meta.id as segment_id FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE meta_value='$segment' ORDER BY last_name, first_name";
+	error_log('email segment lookup '.$sql);
 	return $wpdb->get_results($sql);
 }
 

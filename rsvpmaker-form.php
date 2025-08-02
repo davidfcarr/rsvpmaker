@@ -386,8 +386,6 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 	$output .= $template;
 
-	// $output .= '<script type="text/javascript"> var guestcount ='.$count.'; </script>';
-
 	$max_guests = $blanks_allowed + $count;
 
 	if ( $max_party ) {
@@ -418,7 +416,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 		$output .= '<p><span class="plusguests">+</span> <input type="number" id="number_to_add" name="number_to_add" min="1" value="1" style="width: 50px;" > <a href="#guest_section" id="add_guests" class="add_guests_button" name="add_guests">' . $addmore . '</a> <!-- end of guest section--></p>'."\n";
 	}
 
-	$output .= '<script type="text/javascript"> var guestcount =' . $count . '; </script>';
+	$output .= sprintf('<p><strong>%s: <span id="totalparty">%d</span></strong><input type="hidden" id="guestcount" value="%d" /></p>',__('Total party (including you)','rsvpmaker'),$count,$count);//'<script type="text/javascript"> var guestcount =' . $count . '; </script>';
 
 	return $output;
 

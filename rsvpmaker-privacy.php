@@ -114,6 +114,10 @@ function rsvpmaker_exporter( $email_address, $page = 1 ) {
 }
 function rsvpmaker_eraser( $email_address, $page = 1 ) {
 	global $wpdb;
+	$email_address = trim($email_address);
+	$email_address = sanitize_text_field($email_address);
+	if(empty($email_address) || !is_email($email_address) )
+		return;
 
 	$sql = 'DELETE FROM ' . $wpdb->prefix . "rsvpmaker WHERE email='$email_address'";
 

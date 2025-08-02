@@ -60,6 +60,11 @@ add_action( 'rsvpmaker_relay_init_hook', 'rsvpmaker_relay_init' );
 
 function rsvpmaker_relay_init( $show = false ) {
 
+	if(rsvpmaker_postmark_is_active()) {
+		wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
+		return;
+	}
+
 	$active = get_option( 'rsvpmaker_discussion_active' );
 
 	$result = $qresult = '';
@@ -199,7 +204,8 @@ function rsvpmaker_relay_queue() {
 		if(empty($recipients))
 			echo 'done';
 		rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
-		$wpdb->query("delete from $wpdb->postmeta where meta_id=$batchrow->meta_id");
+		error_log('rsvpmaker_relay_queue wants to delete rsvprelay_to_batch');
+		//$wpdb->query("delete from $wpdb->postmeta where meta_id=$batchrow->meta_id");
 		$log .= sizeof($recipients)." added from batch\n";
 	}
 
@@ -509,7 +515,8 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 
 			$html .= sprintf( '<h1>Structure</h1><pre>%s</pre>', var_export( $struct, true ) );
 		}
-
+		if(empty($struct->parts))
+			return;
 		$contentParts = count( $struct->parts );
 
 		$upload_dir = wp_upload_dir();
@@ -1138,7 +1145,7 @@ function rsvpmaker_expand_recipients($email) {
         $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,null,[$email]);
     }
 	//error_log('rsvpmaker-group-email.php 1138 $emailparts '.var_export($emailparts));
-    if(is_array($recipients) && !empty($recipients) && !empty(trim($recipients[0])))
+    if(!empty($recipients) && is_array($recipients) && !empty(trim($recipients[0])))
         return $recipients;
     else
         return $email;

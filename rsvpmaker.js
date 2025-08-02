@@ -8,7 +8,151 @@ jQuery( document ).ready(
 				}
 			}
 		);
+/** Begin form js */
+if($('#formvars')) {
+	const hide = $('#formvars').attr('hide');
+	const events_to_add = $('#formvars').attr('events_to_add');
+	const options = $('#formvars').attr('options');
+	const is_admin = $('#formvars').attr('is_admin');
+	const email_lookup = $('#formvars').attr('email_lookup');
+	let guestcount = parseInt($('#guestcount').val());
+	$('#rsvp_more_events_click').click(
+		() => {
+			if(events_to_add > 0) {
+			$('#more_rsvp_events').append('<p><select name="rsvpmultievent[]">'+options+'</select></p>');
+			}
+			else if(0 == events_to_add)
+			$('#more_rsvp_events').append('<p>Reached limit</p>');
+			events_to_add--;
+		}
+	);
+	$('#coupon_field').hide();
+	$('#coupon_field_add').click(() => {$('#coupon_field').show(); $('#coupon_field_prompt').hide(); });
 
+	$('#guest_count_pricing select').change(function() {
+	  //reset hidden fields
+	  $('#rsvpform input').prop( "disabled", false );
+	  $('#rsvpform select').prop( "disabled", false );
+	  $('#rsvpform div').show();
+	  $('#rsvpform p').show();
+	  var pricechoice = $(this).val();
+	  //alert( "Price choice" + hide[pricechoice] );
+	  var hideit = hide[pricechoice];
+	  $.each(hideit, function( index, value ) {
+	  //alert( index + ": " + value );
+	  $('div.'+value).hide();
+	  $('p.'+value).hide();
+	  $('.'+value).prop( "disabled", true );
+	});
+
+	});
+	var max_guests = $('#max_guests').val();
+	console.log('max guests ',max_guests);
+	var last;
+	var blank = $('#first_blank').html();
+	console.log('initial blank',blank);
+	var firstblank_hidden = true;
+	let number_to_add = 0;
+	let guestline = '';
+	$('#add_guests').click(function(event){
+		event.preventDefault();
+		number_to_add = parseInt($('#number_to_add').val());
+		console.log('number_to_add',number_to_add);
+		last = $('#last').val();
+		console.log('number to add',number_to_add);
+		console.log('guestcount',guestcount);
+		if(firstblank_hidden) {
+			firstblank_hidden = false;
+			let firstblank = blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount);
+			let defaultlast = (last != '') ? last : 'TBD';
+			firstblank = firstblank.replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+defaultlast);
+			$('#first_blank').html(firstblank);
+			$('#first_blank').show();
+			guestcount++;
+			$('#totalparty').html(guestcount); // +1 for the person filling out the form
+			number_to_add--;
+			if(!number_to_add)
+				return;
+		}
+	for(let i = 0; i < number_to_add; i++) {
+		if(!is_admin && (guestcount > max_guests))
+		{
+		console.log('guest limit reached');
+		console.log('guest count',guestcount);
+		console.log('max_guests',max_guests);
+		$('#first_blank').append('<p><em>Guest limit reached</em></p>');
+		return;
+		}
+	console.log('guestline loop',i);
+	console.log('guestline number to add',number_to_add);
+	console.log('guestline guestcount',guestcount);
+	guestline = '<div class="guest_blank">' +
+		blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount).replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last) +
+		'</div>';
+	guestcount++;
+	$('#first_blank').append(guestline);
+	}
+
+	if(hide)
+	{
+	  var pricechoice = $("#guest_count_pricing select").val();
+	  var hideit = hide[pricechoice];
+	  $.each(hideit, function( index, value ) {
+	  //alert( index + ": " + value );
+	  $('div.'+value).hide();
+	  $('p.'+value).hide();
+	  $('.'+value).prop( "disabled", true );
+	});
+	}
+
+	});
+
+		jQuery("#rsvpform").submit(function() {
+		var leftblank = '';
+		var required = jQuery("#required").val();
+		var required_fields = required.split(',');
+		$.each(required_fields, function( index, value ) {
+			if(value == 'privacy_consent')
+				{
+				if(!jQuery('#privacy_consent:checked').val())
+				leftblank = leftblank + '<' + 'div class="rsvp_missing">privacy policy consent checkbox<' +'/div>';				
+				}
+			else if(jQuery("#"+value).val() === '') leftblank = leftblank + '<' + 'div class="rsvp_missing">'+value+'<' +'/div>';
+		});
+		if(leftblank != '')
+			{
+			jQuery("#jqerror").html('<' +'div class="rsvp_validation_error">' + "Required fields left blank:\n" + leftblank + ''+'<' +'/div>');
+			return false;
+			}
+		else
+			return true;
+	});
+
+	//search for previous rsvps
+	var searchRequest = null;
+
+	$(function () {
+		var minlength = 3;
+
+		$("#email").keyup(function () {
+			var that = this;
+			value = $(this).val();
+			var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+			var post_id = $('#event').val();
+			if ((value.length >= minlength ) && (value.match(mailformat)) ) {
+				if (searchRequest != null) 
+					searchRequest.abort();
+				var data = {
+					'email_search': value,
+				};
+				jQuery.get(email_lookup, data, function(response) {
+				$('#rsvp_email_lookup').html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">'+response+'</div>');
+				});
+			}
+		});
+	});	
+}
+/** end form js */
 		$('.wp-block-rsvpmaker-formfield input').change( function () {
 			let v = $(this).val();
 			let h = v.includes('//');
@@ -366,7 +510,7 @@ jQuery( document ).ready(
 									if(Array.isArray(json))
 									json.forEach(
 										(event) => {
-											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.date+'</span></a></li>';
+											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.neatdate+'</span></a></li>';
 										}
 									);
 								
@@ -393,7 +537,7 @@ jQuery( document ).ready(
 								json.forEach(
 									(event, index) => {
 										if(index < 12)
-											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.date+'</span></a></li>';
+											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.neatdate+'</span></a></li>';
 										else
 											showmore = true;
 									}

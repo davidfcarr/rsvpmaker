@@ -63,48 +63,33 @@ global $wpdb;
 if('rsvpemail' == $post_after->post_type) {
 	$html = rsvpmaker_email_html($post_after); //update the styled html metadata
 }
-if(('rsvpmaker' == $post_after->post_type) && $post_after->post_title != $post_before->post_title) {
-	$table = get_rsvpmaker_event_table();
-	$wpdb->query($wpdb->prepare("update $table SET post_title=%s where event=%d",$post_after->post_title,$post_after->ID)); //keep title in sync
+if(('rsvpmaker' == $post_after->post_type)) {
+	if($post_after->post_title != $post_before->post_title) {
+		$table = get_rsvpmaker_event_table();
+		$wpdb->query($wpdb->prepare("update $table SET post_title=%s where event=%d",$post_after->post_title,$post_after->ID)); //keep title in sync
+	}
 	delete_transient('rsvpmakers');
 }
 
 },10,3);
 
 add_action( 'user_register', 'RSVPMaker_register_chimpmail' );
-/*
-add_action(
-	'widgets_init',
-	function() {
-		return register_widget( 'CPEventsWidget' );
-	}
-);
-add_action(
-	'widgets_init',
-	function() {
-		return register_widget( 'RSVPTypeWidget' );
-	}
-);
-add_action(
-	'widgets_init',
-	function() {
-		return register_widget( 'RSVPMakerByJSON' );
-	}
-);
-*/
 add_action('wp', 'clear_rsvp_cookies' );
 add_action('wp', 'rsvp_reminder_activation' );
 add_action('the_post','rsvpmaker_the_post');
 add_action('shutdown','save_rsvpmakers');
+if(isset($_GET['reset_rsvpmakers']))
+	delete_transient('rsvpmakers');
 
 add_action( 'wp_enqueue_scripts', 'rsvpmaker_event_scripts', 10000 );
 
-// make sure new rules will be generated for custom post type - flush for admin but not for regular site visitors
-if ( ! isset( $rsvp_options['flush'] ) ) {
-	add_action('admin_init', 'flush_rewrite_rules' );
-}
-if ( ! isset( $rsvp_options['flush'] ) ) {
-	add_action('admin_init', 'flush_rewrite_rules' );
+add_action('init','rsvpmaker_rewrite_flush');
+function rsvpmaker_rewrite_flush() {
+	$ok = rsvpmaker_rewrite_check();
+	if(!$ok) {
+		flush_rewrite_rules();
+		error_log('rsvpmaker flush_rewrite_rules()');
+	}
 }
 
 if ( isset( $_GET['ical'] ) ) {
