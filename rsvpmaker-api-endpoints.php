@@ -3195,7 +3195,7 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 			$rsvp[ $name ] = sanitize_text_field( $value );
 		}
 		$note = (empty($postdata['note'])) ? '' : sanitize_textarea_field($postdata['note']);
-		if(!$note && !$is_order)
+		if(!$note && empty($postdata['sale_item_amount']))
 			return new WP_REST_Response(array('no_note'=>1), 200 );
 		if ( ! is_admin() && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) ) {
 			if ( ! rsvpmaker_recaptcha_check( $rsvp_options['rsvp_recaptcha_site_key'], $rsvp_options['rsvp_recaptcha_secret'] ) ) {
@@ -3257,7 +3257,18 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 			$purchase_link = add_query_arg(array('purchase_code'=>$purchase_code,'rsvp_id'=>$id,'gateway'=>$gateway),get_permalink($post_id));
 			return new WP_REST_Response(array('sending'=>$id,'purchase_link'=>$purchase_link,'gateway'=>$gateway), 200 );
 		}
-
+		if(!empty($postdata['sale_item_amount']) && !empty($postdata['sale_item_count'])) {
+			$purchase['item_name'] = sanitize_text_field($postdata['sale_item_name']);
+			$purchase['item_amount'] = floatval($postdata['sale_item_amount']);
+			$purchase['item_count'] = intval($postdata['sale_item_count']);
+			$purchase['total'] = $purchase['item_amount'] * $purchase['item_count'];
+			$purchase['currency'] = (empty($rsvp_options['currency'])) ? 'USD' : $rsvp_options['currency'];
+			$purchase['is_gift_certificate'] = empty($rsvp['is_gift_certificate']) ? 0 : 1;
+			$purchase_code = 'rsvp_purchase_'.time();
+			set_transient($purchase_code,$purchase,HOUR_IN_SECONDS);
+			$purchase_link = add_query_arg(array('purchase_code'=>$purchase_code,'rsvp_id'=>$id,'gateway'=>$gateway),get_permalink($post_id));
+			return new WP_REST_Response(array('sending'=>$id,'purchase_link'=>$purchase_link,'gateway'=>$gateway), 200 );
+		}
 		$mail['html'] .= '<p>'.nl2br($note).'</p>';
 		$mail['from'] = $rsvp['email'];
 		$mail['fromname'] = $rsvp['first'].' '.$rsvp['last'].' (Contact Form)';

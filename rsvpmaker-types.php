@@ -254,6 +254,9 @@ function rsvpmaker_form_single($content) {
 	{
 		ob_start();
 		$currency = $rsvp_options['paypal_currency'];
+		$mincount = $_POST['eventcount'];
+		$multicount = 0;
+		$chosen = [];
 
 		$currency_symbol = '';
 
@@ -268,19 +271,22 @@ function rsvpmaker_form_single($content) {
 
 		$blanks = 0;
 		$events = [];
-		if(count($_POST['rsvpmultievent']) != count(array_unique($_POST['rsvpmultievent'])))
-			return '<p>Error: Duplicate events selected</p>';
 		foreach($_POST['rsvpmultievent'] as $post_id) {
-			if(intval($post_id)) {
+			$post_id = intval($post_id);
+			if($post_id) {
+				if(in_array($post_id, $chosen))
+					return '<p>Error: Duplicate events selected</p>';
 				$event = get_post($post_id);
+				if(!$event || 'rsvpmaker' != $event->post_type)
+					return '<p>Error: Invalid event selected</p>';
 				$events[] = $event->post_title;	
+				$multicount++;
+				$chosen[] = $post_id;
 			}
-			else
-				$blanks++;
 		}
 
-		if($blanks)
-			return sprintf('<p>%d %s</p>',$blanks,__('events left blank','rsvpmaker'));
+		if($multicount < $mincount)
+			return sprintf('<p>%s %d</p>',__('You must choose at least ','rsvpmaker'), $mincount);
 
 		$postdata = $_POST;
 		$atts['discount_price'] = floatval($_POST['discount_price']);
@@ -294,15 +300,32 @@ function rsvpmaker_form_single($content) {
 					$party++;
 			}
 		}
-		$events_count = sizeof($events);
-		$postdata['multi_event_price'] = $party * $atts['discount_price'];
-		$atts['rsvpmulti'] = $rsvpmulti;
-		$atts['amount'] = $postdata['multi_event_price'] * $events_count;
-		$priceline = $currency_symbol.number_format($atts['discount_price'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']).' '.$currency;
-		$atts['description'] = __('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
-		$atts['showdescription'] = 'yes';
-		echo rsvpmaker_paypay_button_embed($atts);
-		set_transient($rsvpmulti, $postdata, HOUR_IN_SECONDS);
+		/** Check capacity limit */
+		$capacity_ok = true;
+		$capacity_message = '';
+		foreach($chosen as $post_id) {
+			$capacity = rsvpmaker_check_availability($post_id);
+			if(is_numeric($capacity) && $capacity < $party) {
+				$capacity_ok = false;
+				$capacity_message .= '<p>'.sprintf(__('Sorry, the event %s is limited to %d additional reservations.','rsvpmaker'),get_the_title($post_id),$capacity).'</p>';
+			}
+		}
+		if($capacity_ok) {
+			$events_count = sizeof($events);
+			$postdata['multi_event_price'] = $party * $atts['discount_price'];
+			$atts['rsvpmulti'] = $rsvpmulti;
+			$atts['amount'] = $postdata['multi_event_price'] * $events_count;
+			$priceline = $currency_symbol.number_format($atts['discount_price'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']).' '.$currency;
+			$atts['description'] = __('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
+			$atts['showdescription'] = 'yes';
+			echo rsvpmaker_paypay_button_embed($atts);
+			$postdata['description'] = $atts['description'];
+			$postdata['events_count'] = $events_count;
+			set_transient($rsvpmulti, array_merge($postdata,$atts), HOUR_IN_SECONDS);
+		}
+		else {
+			echo $capacity_message;
+		}
 		return ob_get_clean().$content.'<div style="margin-top:500px;"></div>';
 	}
 

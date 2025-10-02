@@ -17,8 +17,8 @@
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^27.5.0",
-		"ws": ">=8.17.1",
-		"dotenv-cli": "^7.4.1"
+		"dotenv-cli": "^7.4.1",
+		"ws": ">=8.17.1"
 	},
 	"dependencies": {
 		"@wordpress/icons": "^9.29.0",

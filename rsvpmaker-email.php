@@ -733,20 +733,29 @@ function rsvpmailer_post_promo_summary() {
 
 	}
 
-	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
-	$results = $wpdb->get_results($sql);
-	if(is_array($results) && !empty($results)) {
-		echo '<h3>Pending Post Promo</h3>';
-		echo '<p>Pending post promo for the following posts:</p>';
-		echo '<table class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>'.__('Post Title','rsvpmaker').'</th><th>'.__('Scheduled','rsvpmaker').'</th></tr></thead><tbody>';
-		foreach($results as $row) {
-			$post = get_post($row->post_id);
-			if(!empty($post)) {
-				//delete_post_meta($post->ID,'rsvprelay_to_batch');
-				printf('<tr><td>%s</td><td>%s</td></tr>',esc_html($post->post_title),sizeof(unserialize($row->meta_value)));
+	if(isset($_GET['cancel_batch']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+	{
+		$post_id = intval($_GET['cancel_batch']);
+		delete_post_meta($post_id,'rsvprelay_to_batch');
+		echo '<p>Batch cancelled</p>';
+	}
+	else {
+		$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
+		$results = $wpdb->get_results($sql);
+		if(is_array($results) && !empty($results)) {
+			echo '<h3>Pending Post Promo</h3>';
+			echo '<p>Pending post promo for the following posts:</p>';
+			echo '<table class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>'.__('Post Title','rsvpmaker').'</th><th>'.__('Scheduled','rsvpmaker').'</th></tr></thead><tbody>';
+			foreach($results as $row) {
+				$post = get_post($row->post_id);
+				if(!empty($post)) {
+					//delete_post_meta($post->ID,'rsvprelay_to_batch');
+					printf('<tr><td>%s</td><td>%s</td></tr>',esc_html($post->post_title),sizeof(unserialize($row->meta_value)));
+				}
 			}
+			echo '</tbody></table>';
+			printf('<p><a href="%s">%s</a></p>',add_query_arg(array('cancel_batch' => $results[0]->post_id,'timelord' => rsvpmaker_nonce('value')),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list')),__('Cancel Batch Sending','rsvpmaker') );
 		}
-		echo '</tbody></table>';
 	}
 }
 
@@ -3645,6 +3654,7 @@ foreach($rsvpdata as $field => $value)
 add_action('rsvp_nonpayment_delete','rsvp_nonpayment_delete', 10, 1);
 
 function rsvp_nonpayment_delete($rsvp_id) {
+	return;
 	global $post;
 	global $rsvp_options;
 	global $wpdb;
@@ -3692,6 +3702,7 @@ function rsvp_nonpayment_delete($rsvp_id) {
 }
 
 function rsvp_payment_reminder ($rsvp_id) {
+return;
 global $post;
 global $rsvp_options;
 global $wpdb;
@@ -6511,9 +6522,9 @@ function rsvpmail_post_excerpt($post, $pcount = 5) {
 		$excerpt = $parts[0];
 	}
 	else {
-		$paragraphs = explode('<!-- wp:paragraph -->',$content);
+		$paragraphs = explode('<!-- /wp:paragraph -->',$content);
 		$paragraphs = array_slice($paragraphs,0,$pcount);
-		$excerpt = implode('<!-- wp:paragraph -->',$paragraphs);
+		$excerpt = implode('<!-- /wp:paragraph -->',$paragraphs).'<!-- /wp:paragraph -->';
 	}
 	$excerpt .= rsvpemail_readmore_button(get_permalink($post->ID),$post->ID);
 	return $excerpt;

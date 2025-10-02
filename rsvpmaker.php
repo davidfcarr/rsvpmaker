@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.6.4
+* Version: 11.6.5
 */
 
 function get_rsvpversion() {
-	return '11.6.4'; 
+	return '11.6.5'; 
 }
 
 global $wp_version;
@@ -449,6 +449,7 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'rsvpmaker-widgets.php';
 	include $rsvpmaker_dir . 'rsvpmaker-group-email.php';
 	include $rsvpmaker_dir . 'rsvpmaker-quick-playground.php';
+	include $rsvpmaker_dir . 'rsvpmaker-report.php';
 	include $rsvpmaker_dir . 'script.php';
 	include $rsvpmaker_dir . 'rsvpmaker-money.php';
 	include $rsvpmaker_dir . 'rsvpmaker-ical.php';

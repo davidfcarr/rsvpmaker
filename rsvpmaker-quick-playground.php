@@ -184,7 +184,7 @@ function qckply_form_demo_rsvpmaker_content($settings) {
     if(function_exists('get_rsvpmaker_event_table')) {
     $copy_events = (!isset($settings['copy_events'])) ? 10 : intval($settings['copy_events']);
     echo '<h3>RSVPMaker Events</h3>';
-    echo '<p>Copy <input type="number" name="settings[copy_events]" value="'.$copy_events.'" style="width:5em" > Future RSVPMaker events </p>'; 
+    echo '<p><label>Copy</label> <input type="number" name="settings[copy_events]" value="'.$copy_events.'" /> Future RSVPMaker events </p>'; 
     if(!empty($settings['demo_rsvpmakers']) && is_array($settings['demo_rsvpmakers'])) {
     foreach($settings['demo_rsvpmakers'] as $r) {
         $event = get_rsvpmaker_event($r);
@@ -194,7 +194,7 @@ function qckply_form_demo_rsvpmaker_content($settings) {
     $events_dropdown = get_events_dropdown (true);//events dropdown including drafts
     for($i = 0; $i < 10; $i++) {
     $classAndID = ($i > 0) ? ' class="hidden_item rsvpmaker" id="rsvpmaker_'.$i.'" ' : ' class="rsvpmaker" id="rsvpmaker_'.$i.'" ';
-    printf('<p%s>Demo Event: <select class="select_with_hidden" name="demo_rsvpmakers[]">%s</select></p>'."\n",wp_kses($classAndID, qckply_kses_allowed()),'<option value="">Choose Event</option>'.wp_kses($events_dropdown, qckply_kses_allowed()));
+    printf('<p%s><label>Demo Event</label> <select class="select_with_hidden" name="demo_rsvpmakers[]">%s</select></p>'."\n",wp_kses($classAndID, qckply_kses_allowed()),'<option value="">Choose Event</option>'.wp_kses($events_dropdown, qckply_kses_allowed()));
     }
     printf('<p><input type="radio" name="settings[rsvpmaker_prompt]" value="1" %s /> %s <input type="radio" name="settings[rsvpmaker_prompt]" value="0" %s /> %s </p>', empty($settings['rsvpmaker_prompt']) ? '' : ' checked="checked" ',esc_html__('SHOW','quick-playground'), !empty($settings['rsvpmaker_prompt']) ? '' : ' checked="checked" ', esc_html__('DO NOT SHOW RSVPMaker help prompts in demo.','quick-playground' ) );
     }

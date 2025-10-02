@@ -759,21 +759,35 @@ function rsvpmaker_contact_form_order($lookup) {
 	$purchase = get_transient($lookup['purchase_code']);
 	$rsvprow = (array) $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=".intval($lookup['rsvp_id']));
 	$rsvprow = rsvp_row_to_profile($rsvprow);
-	$description=$purchase[0].' '.$purchase[1];
-	$amount = trim(str_replace('$','',$purchase[1]));
-	$rsvprow['amount']=$amount;
+	$currency = ( empty( $purchase['currency'] ) ) ? 'USD' : strtoupper( $purchase['currency'] );
+      $currency_symbol = '';
+      if ( $currency == 'USD' ) {
+        $currency_symbol = '$';
+      } elseif ( $currency == 'EUR' ) {
+        $currency_symbol = '€';
+      }
+	$description=$purchase['item_name'].' '.$purchase['item_count'].' @ '.$currency_symbol.$purchase['item_amount'].' = '.$currency_symbol.$purchase['total'].' '.$currency;
+	$rsvprow['amount']=number_format($purchase['total'],2);
 	$rsvprow['description']=$description;
 	$rsvprow['purchase_code']=$lookup['purchase_code'];
 	$rsvprow['rsvp_id'] = $lookup['rsvp_id'];
 	$rsvprow['name'] = $rsvprow['first'].' '.$rsvprow['last'];
 	if('PayPal REST API' == $lookup['gateway'])
-	return rsvpmaker_paypal_button ($amount, 'USD', $description, $rsvprow).'<p>'.$description.'</p>';
+	return rsvpmaker_paypal_button ($purchase['total'], $purchase['currency'], $description, $rsvprow).'<p>'.$description.'</p>';
 	elseif('Stripe' == $_GET['gateway']) {
 		return rsvpmaker_stripe_form( $rsvprow, true );
 	}
 	else {
 		return 'Invalid payment gateway';
 	}
+}
+
+add_shortcode('rsvpmaker_contact_form_shortcode','rsvpmaker_contact_form_shortcode');
+
+function rsvpmaker_contact_form_shortcode($attributes) {
+	ob_start();
+	rsvpmaker_contact_form_output($attributes);
+	return ob_get_clean();
 }
 
 function rsvpmaker_contact_form_output($attributes) {
@@ -787,14 +801,23 @@ $user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
 ?>
 <form id="rsvpmaker_contact_form"><input type="hidden" name="post_id" value="<?php echo esc_attr($post->ID); ?>" /><input type="hidden" name="form_id" value="<?php if(isset($attributes['unique_id'])) echo esc_attr($attributes['unique_id']); ?>" />
 <?php
-if(empty($attributes['order']))
+if(empty($attributes['order']) && empty($attributes['sale']))
 {
+	$button_label = __('Send','rsvpmaker');
 	$subject_label = (empty($attributes['subject_label'])) ? 'Subject' : $attributes['subject_label'];
 	printf('<div class="wp-block-rsvpmaker-formfield"><label>%s:</label><input type="text" name="contact_subject"></div>',esc_html($subject_label));	
 }
-else
+else {
+	$button_label = __('Submit','rsvpmaker');
 	printf('<input type="hidden" name="is_order" value="%s" />',esc_attr($attributes['order']));
+}
 rsvphoney_ui();
+if(!empty($attributes['sale'])) {
+	$amount = floatval($attributes['sale']);
+	$item_label = (empty($attributes['item_label'])) ? __('Item','rsvpmaker') : $attributes['item_label'];
+	printf( '<p>%s<input type="hidden" name="sale_item_name" value="%s"> @ %s <input type="number" name="sale_item_count" value="1" />',esc_html($item_label),esc_attr($item_label),esc_html($amount) );
+	echo '<input type="hidden" name="sale_item_amount" value="'.esc_attr($amount).'" />';
+}
 echo rsvpmaker_basic_form( $attributes['form_id'] );
 wp_nonce_field('rsvpmaker_contact','contact_confidential');
 printf('<input type="hidden" name="user_id" value="%d" >',esc_attr($user_id));
@@ -810,7 +833,7 @@ if (! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_option
 	rsvpmaker_recaptcha_output();
 }
 ?>
-<p><button id="rsvpmaker_contact_send">Send</button></p>
+<p><button id="rsvpmaker_contact_send"><?php echo $button_label; ?></button></p>
 </form>
 <script>
 const form = document.querySelector("#rsvpmaker_contact_form");

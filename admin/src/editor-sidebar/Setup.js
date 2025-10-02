@@ -78,20 +78,20 @@ return (
         >
             { ( tab ) => {
                 if('basics' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><Basics eventdata={eventdata} /></div>
+                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><p><em>{__('Set the date, time, and RSVP parameters for your event, then click Done. Access these options at any time from the RSVP / Event Options button in the sidebar.','rsvpmaker')}</em></p><Basics eventdata={eventdata} /><div></div></div>
                 else if('form' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><Form form_id={eventdata.form_id} event_id={rsvpmaker_ajax.event_id} eventdata={eventdata} /></div>
+                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Form form_id={eventdata.form_id} event_id={rsvpmaker_ajax.event_id} eventdata={eventdata} /></div>
                 else if('confirmation' == tab.name)
                     return (
-                        <div className="rsvpsettings-tab-contents"><Confirmation eventdata={eventdata} /></div>
+                        <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Confirmation eventdata={eventdata} /></div>
                     )
                     else if('pricing' == tab.name)
                     return (
-                        <div className="rsvpsettings-tab-contents"><Pricing eventdata={eventdata} /></div>
+                        <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Pricing eventdata={eventdata} /></div>
                     )
         } }
         </TabPanel>
-        <div><button onClick={close}>Close</button></div>
+        <div><button onClick={close}>Done</button></div>
         </Modal>}
     </div>
 )

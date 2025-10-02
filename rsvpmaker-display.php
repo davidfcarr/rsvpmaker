@@ -2822,8 +2822,10 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
 			$dateblock .= mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
-
-			if ( $event->display_type == 'set' ) {
+			if ( $event->display_type == 'none' ) {
+				return '';
+			}
+			elseif ( $event->display_type == 'set' ) {
 				$tzcode = strpos( $time_format, 'T' );
 
 				if ( $tzcode ) {
@@ -3092,19 +3094,30 @@ function rsvpmaker_multi_event($atts = array()) {
 	$page_id = get_rsvpmaker_multiple_event_page();
 	$future_events = rsvpmaker_get_future_events($atts);
 	$eventcount = empty($atts['eventcount']) ? 4 : intval($atts['eventcount']);
-	if(count($future_events) < $eventcount)
+	$futurecount = count($future_events);
+	if($futurecount < $eventcount)
 		return '<p>Offer expired</p>';
 	$options = '<option>Choose Event</option>';
-	foreach($future_events as $event)
-		$options .= sprintf('<option value="%d">%s %s</option>',$event->ID,$event->post_title,$event->date);
+	foreach($future_events as $event) {
+		$capacity = rsvpmaker_check_availability($event->ID);
+		$capacity_note = is_numeric($capacity) ? sprintf(' (%s available)', $capacity) : '';
+		$options .= sprintf('<option value="%d">%s %s %s</option>',$event->ID,$event->post_title,rsvpmaker_date($rsvp_options['long_date'], $event->ts_start),$capacity_note);	
+	}
 	printf('<p>Multi-event discount: %s%s per person, per event. Full price: %s%s</p>',$currency,number_format($price,2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']),$currency,number_format($atts['full_price'],2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']));
 	printf('<form id="rsvpform" method="post" action="%s">',get_permalink($page_id));
-	for($i = 0; $i < $eventcount; $i++)
+	for($i = 0; $i < $futurecount; $i++) {
+		if($i < $eventcount) {
 		printf('<p><select name="rsvpmultievent[]">%s</select></p>',$options);
+		}
+		else {
+		printf('<p class="multieventhide"><select name="rsvpmultievent[]">%s</select></p>',$options);
+		}
+	}
 	$addmore = sizeof($future_events) - $eventcount;
 	if($addmore)
 	printf('<div id="more_rsvp_events"></div><p><a href="#rsvpform" id="rsvp_more_events_click">%s</a></p>',__('Show more choices','rsvpmaker'));
 	rsvpmaker_basic_form( $rsvp_options['rsvp_form'] );
+	printf('<input type="hidden" name="eventcount" value="%s" />',$eventcount);
 	printf('<input type="hidden" name="discount_price" value="%s" />',$price);
 	printf('<input type="hidden" name="coupon_code" value="%s" /><input type="hidden" name="multievent_discount_amount" value="%s" /><input type="hidden" name="full_price" value="%s" />', $atts['coupon_code'],floatval($atts['discount_amount']),floatval($atts['full_price']));
 	printf('<input type="hidden" name="multievent_discount_method" value="%s" />',$atts['discount_method']);

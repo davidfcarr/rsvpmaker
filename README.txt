@@ -7,8 +7,8 @@ License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
-Tested up to: 6.8.2
-Stable tag: 11.6.4
+Tested up to: 6.8
+Stable tag: 11.6.5
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -129,6 +129,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 11.6.4 =
+
+* Integration with forthcoming Quick Playground plugin
+* Reduced use of inline Javascript
+
 = 11.6.2 =
 
 * Updated code for clearing cache, setting post type permalinks
@@ -168,88 +173,3 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 * Eliminate one stray use of PHP short tags not supported in some configs of PHP 8
 
-= 11.2.6 =
-
-* PayPal support improvements
-* Multiple sender addresses for Postmark forwarding
-* RSVP Report format update, fix for deleting registrations
-
-= 11.2.4 =
-
-* Updates to PayPal payments support. Option to add payment services like Venmo or exclude services like PayLater from buttons displayed.
-* Button on Settings -> RSVPMaker screen for copying current defaults to existing events and templates.
-
-= 11.2.3 =
-
-* More form and pricing UI improvements
-
-= 11.2.2 =
-
-* Clarified UI for modifying the RSVP form, creating reusable forms
-
-= 11.2 =
-
-* API access to the RSVP Report
-
-= 11.1.9 =
-
-* Better control over editing the default form (or an inherited form) versus a custom form for a single event.
-
-= 11.1.8 =
-
-* Updates to radio button controls on RSVP form.
-
-= 11.1.7 =
-
-* Neater display of pricing information in confirmation message
-* Option to manually send a scheduled post promo when automation glitches. (Checks first to make sure it didn't already send).
-
-= 11.1.5 =
-
-* Option to add a charge based on an RSVP form selection such as meal choice (+$15 for Steak), either in addition to the base charge or as the primary way of charging attendees. Designed to work with radio button options.
-* Radio button form widgets can now be set to default to the first item.
-
-= 11.1.2 =
-
-* Fix is_rsvpmaker_query()
-
-= 11.1 =
-
-* Bug fix for registration system, tweak for RSVP Report
-
-= 11.0.9 =
-
-* Overhaul of event pricing and coupon discounts
-* Improvements to the RSVP Report, including grouping of registrations by party (host + guests)
-* Better support for adding / editing records from the RSVP Report screen
-
-= 11.0.8 =
-
-* Improved support for the WordPress native import / export tools (WXR file method)
-* Prevent event templates, forms, and other internal post types from being displayed in search results
-* Support for dynamic menu items. In the site editor, you can add class name "rsvpmaker_menu_dropdown" to menu item with a submenu specified to have a future events listing added to the submenu. Or use "rsvpmaker_menu_dropdown rsvmpaker_menu_type_featured-event" to get a listing of events tagged with the featured-event event type (substitute any other event type for 'featured-event')
-
-= 11.0.7 =
-
-* Fixed bug with regenerating default email template
-* Option for sending Postmark heavy message volume alerts to a different email (other than admin)
-
-= 11.0.5 =
-
-* More responsive email CSS for columns (fluid 2 columns grid template)
-* Option to set timezone in event template
-* Removed filters wp_theme_json_data_user and wp_theme_json_data_theme
-
-= 11.0.4 =
-
-* Fixed Settings screen for Mailchimp Default List
-* Changed name of options page that includes Postmark Settings
-
-= 11.0.3 =
-
-* RSVPMaker Date Element block for fine-grained control over placement / formatting of date, calendar icons, timezone conversion button
-* More consistent use of the RSVPMaker Loop Blocks collection across templates and loop variations
-
-= 11.0.2 =
-
-* Fix for issue with html entities in email

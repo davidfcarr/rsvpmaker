@@ -10,6 +10,8 @@ export default function TemplateControl (props) {
 		return <p>Reloading ...</p>
 	const [local,setLocal] = useState({});
 	const {eventdata, event_id} = props;
+	if(typeof eventdata === 'string')
+        return;
 
     return (<div>
         <h3>RSVPMaker Template {rsvpmaker_ajax.projected_url && <a href={rsvpmaker_ajax.projected_url}>(Create/Update)</a>}</h3>

@@ -9,6 +9,8 @@ export default function DateTimeMaker(props) {
     const {event_id, eventdata, isLoadingDates} = props;
     const [error,setError] = useState('');
     const {mutate:datemutate} = useRSVPDateMutation(event_id);
+    if(typeof eventdata === 'string')
+        return;
     if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
         eventdata.tzchoices = [];
     const d = new Date();

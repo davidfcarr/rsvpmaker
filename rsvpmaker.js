@@ -16,14 +16,10 @@ if($('#formvars')) {
 	const is_admin = $('#formvars').attr('is_admin');
 	const email_lookup = $('#formvars').attr('email_lookup');
 	let guestcount = parseInt($('#guestcount').val());
+	$('.multieventhide').hide();
 	$('#rsvp_more_events_click').click(
 		() => {
-			if(events_to_add > 0) {
-			$('#more_rsvp_events').append('<p><select name="rsvpmultievent[]">'+options+'</select></p>');
-			}
-			else if(0 == events_to_add)
-			$('#more_rsvp_events').append('<p>Reached limit</p>');
-			events_to_add--;
+			$('.multieventhide').show();
 		}
 	);
 	$('#coupon_field').hide();

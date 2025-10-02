@@ -19,6 +19,8 @@ export default function DateTimeMakerInner(props) {
     const date = new Date(eventdata.date);
     const endDate = new Date(eventdata.enddate);
     const elapsed = endDate.getTime() - date.getTime();
+    if(typeof eventdata === 'string')
+        return;
     if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
         eventdata.tzchoices = [];
 

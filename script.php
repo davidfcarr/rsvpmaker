@@ -125,7 +125,7 @@ function rsvp_form_jquery( $atts = array()) {
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
 	if($hide)
 		$hide = json_encode($hide, true);
-	return sprintf('<div id="formvars" hide="%s" events_to_add="%d" options="%s" is_admin="%d" email_lookup="%s" ></div>',$hide, isset($atts['events_to_add']) ? $atts['events_to_add'] : 0, isset($atts['options']) ? str_replace("'","\'",$atts['options']) : '', is_admin() ? 1 : 0, rest_url( 'rsvpmaker/v1/email_lookup/' . wp_create_nonce( 'rsvp_email_lookup' ) .'/'.$post->ID));
+	return sprintf('<div id="formvars" hide="%s" events_to_add="%d" is_admin="%d" email_lookup="%s" ></div>',$hide, isset($atts['events_to_add']) ? $atts['events_to_add'] : 0, is_admin() ? 1 : 0, rest_url( 'rsvpmaker/v1/email_lookup/' . wp_create_nonce( 'rsvp_email_lookup' ) .'/'.$post->ID));
 }
 
 function rsvpmaker_timezone_footer() {

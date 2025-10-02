@@ -18,6 +18,8 @@ export default function DateOrTemplate() {
     if(isLoading) 
         return <p><em>Loading event data</em></p>
     const eventdata = data.data;
+    if(typeof eventdata === 'string')
+        return;
     if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
         eventdata.tzchoices = [];
     

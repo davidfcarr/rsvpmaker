@@ -1815,7 +1815,7 @@ function get_past_rsvp_events( $where = '', $limit = '', $output = OBJECT ) {
 }
 function get_events_dropdown($include_drafts = false) {
 	$options = '<optiongroup><optgroup label="' . __( 'Future Events', 'rsvpmaker' ) . '">' . "\n";
-	$future = rsvpmaker_get_future_events();
+	$future = rsvpmaker_get_future_events(50);
 	if ( is_array( $future ) ) {
 		foreach ( $future as $event ) {
 			if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
@@ -2863,6 +2863,8 @@ function rsvp_complex_price( $post_id ) {
 	$complexity = '';
 	$complex = false;
 	$labels = $prices = 0;
+	if(!is_array($per))
+		return;
 	foreach ( $per as $index => $pricearray ) {
 		// $complexity .= $index.': '.var_export($pricearray, true).', ';
 		if ( $index == 'unit' ) {
@@ -4720,6 +4722,7 @@ function rsvpmaker_confirm_payment($rsvp_id, $rsvp_to = '') {
 
 	global $wpdb, $rsvp_options;
 
+
 	if(empty($rsvp_to))
 
 		$rsvp_to = $rsvp_options['rsvp_to'];
@@ -5384,6 +5387,24 @@ function rsvpmaker_data_from_document($content) {
     return $results;
 
 }
+function rsvpmaker_gift_certificate_create($amount, $atts) {
+	global $rsvp_options;
+	$code = 'GIFT-'.wp_generate_password(12,false,false);
+	update_option($code,$amount);
+	if(isset($atts['email'])) {
+	$mail['to'] = $atts['email'];
+	$mail['from'] = $rsvp_options['rsvp_to'];
+	$mail['fromname'] = get_option('blogname');
+	$mail['html'] = sprintf('<p>%s: %s</p><p>%s</p><p>%s</p>',__('Here is the gift certificate code for your purchase.','rsvpmaker'),$code,$atts['description'],$atts['name']);
+	$mail['subject'] = 'Gift Certificate';
+	rsvpmailer($mail);
+	$mail['to'] = $rsvp_options['rsvp_to'];
+	$mail['subject'] = 'Gift Certificate - copy of confirmation to '.$atts['email'];
+	rsvpmailer($mail);
+	}
+	return $code;
+}
+
 function rsvpmaker_gift_certificate($rsvp) {
 
 	if(!empty($rsvp['coupon_code']) && strpos($rsvp['coupon_code'],'GIFT') !== false ) {
@@ -5431,9 +5452,7 @@ function rsvpmaker_gift_certificate($rsvp) {
 		$rsvp['amountpaid'] += $add;
 
 		//error_log('rsvpmaker_gift_certificate apply '.$add.' new value '.$newvalue);
-
 	}
-
 	return $rsvp;
 
 }
@@ -5577,4 +5596,16 @@ function rsvpmaker_rewrite_check() {
 		}
 	}
 return false;
+}
+
+function rsvpmaker_check_availability($post_id = 0) {
+global $wpdb;
+$post_id = (int) $post_id;
+	$rsvp_max = (int) get_post_meta( $post_id, '_rsvp_max', true );
+	if(!$rsvp_max) {	// no limit
+		return 'no limit';
+	}
+	$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$post_id AND yesno=1 ORDER BY id DESC";
+	$total = (int) $wpdb->get_var( $sql );
+	return $rsvp_max - $total;
 }

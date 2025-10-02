@@ -76,18 +76,6 @@ function paypal_verify_rest () {
           $wpdb->query($updatesql);
         }
         $gift_certificate = '';
-        if(!empty($saved['purchase_code'])) {
-          $purchase = get_transient($saved['purchase_code']);
-          if(!empty($purchase[2]))
-            $rsvp_to = sanitize_text_field($purchase[2]);
-          if(!empty($saved['is_gift_certificate'])) {
-            $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
-            $details['gift_certficate'] = $gift_certificate;
-            $sql = $wpdb->prepare("UPDATE $rsvptable set details=%s WHERE id=$rsvp_id",serialize($details));
-            $wpdb->query($sql);
-            add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
-          }
-        }
         $atts['name'] = $data->payer->name->given_name.' '.$data->payer->name->surname;
         $atts['email'] = $data->payer->email_address;
         $atts['transaction_id'] = $data->id;
@@ -95,6 +83,9 @@ function paypal_verify_rest () {
         $atts['amount'] = $data->purchase_units[0]->amount->value;
         $atts['description'] = $data->purchase_units[0]->description;
         $atts['status'] = 'PayPal';
+        if(!empty($saved['is_gift_certificate'])) {
+          $gift_certificate = rsvpmaker_gift_certificate_create($atts['amount'],$atts);
+        }
         $existing = rsvpmaker_money_tx($atts);
         do_action('rsvpmaker_paypal_confirmation_tracking',$data,$saved);
         $postdata = null;
@@ -105,16 +96,19 @@ function paypal_verify_rest () {
             $status .= '<p>'.__('Event registrations saved.','rsvpmaker').'</p>';
             $status .= '<p>'.__('Use the links below to update any of the individual events.','rsvpmaker').'</p>';
             foreach($postdata['rsvpmultievent'] as $event_id) {
+              $event_id = intval($event_id);
+              if($event_id) {
               $postdata['event'] = $event_id;
               $status .= save_rsvp($postdata,false);
+              }
             }
             $confirmation = rsvp_get_confirm(0);
-            $mail['html'] = $status.$confirmation;
-            $mail['subject'] = 'CONFIRMING RSVP for '.sizeof($postdata['rsvpmultievent']).' events';
+            $mail['html'] = $status.$confirmation.'<p>'.$postdata['description'].'</p>';
+            $mail['subject'] = 'CONFIRMING RSVP for '.intval($postdata['events_count']).' events';
             $mail['to'] = $postdata['profile']['email'];
             $mail['from'] = $rsvp_to;
             rsvpmailer($mail);
-            $mail['subject'] = 'RSVP for '.sizeof($postdata['rsvpmultievent']).' events';
+            $mail['subject'] = 'RSVP for '.intval($postdata['events_count']).' events';
             $mail['to'] = $rsvp_options['rsvp_to'];
             $mail['from'] = $postdata['profile']['email'];
             $mail['fromname'] = $postdata['profile']['first'].' '.$postdata['profile']['last'];
@@ -217,6 +211,14 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $vars['amount'] = $amount;
   $vars['description'] = $description;
   $vars['post_id'] = $post->ID;
+  $details = [];
+  error_log('paypal button vars '.var_export($vars,true));
+  mail('david@carrcommunications','paypal button vars',var_export($vars,true));
+  if(!empty($vars['details'])) {
+    $details = unserialize($vars['details']);
+    mail('david@carrcommunications','paypal button details',var_export($details,true));
+    error_log('paypal button details '.var_export($details,true));
+  }
   $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
   $transaction_code = wp_generate_password(20,false,false);
