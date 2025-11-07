@@ -4275,8 +4275,8 @@ else
 
 function rsvpmaker_submission ($atts) {
 global $rsvp_options;
-$defaultto = isset($rsvp_options['submissions_to']) ? $rsvp_options['submissions_to'] : $rsvp_options['rsvp_to'];
-$to = (isset($atts['to'])) ? $atts['to'] : $defaultto;
+$to = (isset($atts['to'])) ? $atts['to'] : $rsvp_options['rsvp_to'];
+
 ob_start();
 ?>
 <style>#rsvpmaker_submission label {

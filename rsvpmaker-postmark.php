@@ -212,17 +212,9 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     $mail['Tag'] = rsvpemail_tag($post_id);
     if(isset($meta['rsvprelay_from'][0]))
         $mail['ReplyTo'] = $meta['rsvprelay_from'][0];
+    else
+        $mail['ReplyTo'] = get_option('admin_email');
     $mail['From'] = ($message_stream == $postmark_settings['postmark_tx_slug']) ? $postmark_settings['postmark_tx_from'] : $postmark_settings['postmark_broadcast_from'];
-    //error_log('sender domains '.var_export($postmark_settings['sender_domains'],true));
-    if(!empty($postmark_settings['sender_domains']) && isset($mail['ReplyTo'])) {
-        $rparts = explode('@',$mail['ReplyTo']);
-        //error_log('rparts '.var_export($rparts,true));
-        $good_domains = $postmark_settings['sender_domains'];
-        if(in_array($rparts[1],$good_domains))
-        {	
-            $mail['From'] = $reply_to;
-        }
-    }
     $fromname = get_post_meta($post_id,'rsvprelay_fromname',true);
     if(empty($fromname))
         $fromname = get_bloginfo('name');
@@ -459,6 +451,8 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         mail($admin_email,'postmark deactivated',date('r'));
     }
     $postmark_settings = get_rsvpmaker_postmark_options();
+    $tx_from = trim(strtolower($postmark_settings['postmark_tx_from']));
+    $broadcast_from = trim(strtolower($postmark_settings['postmark_broadcast_from']));
     $flattened = (function_exists('wpt_all_flattened_forwarders')) ? wpt_all_flattened_forwarders() : array();
 
     //test new approach
@@ -468,10 +462,20 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $recipients = array();
     $sent = [];
     foreach($forwarders as $email) {
-        $email = strtolower($email);
+        $email = trim(strtolower($email));
         $blog_id = rsvpmail_is_local_address($email);
         if(!$blog_id) {
             error_log('postmark incoming ignore non-local address '.$email);
+            continue;
+        }
+        if($email == $tx_from || $email == $broadcast_from) {
+            error_log('postmark incoming ignore tx or broadcast address '.$email);
+            error_log('postmark forwarder '.var_export($forwarders,true));
+            if(sizeof($forwarders) == 1)
+            {
+                error_log('postmark incoming single forwarder '.var_export($emailobj,true));
+                do_action('rsvpmaker_incoming_to_tx_or_broadcast',$emailobj,$post_id);
+            }
             continue;
         }
         $testoutput .= "\n $email after filter\n";
@@ -520,7 +524,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
                 if((in_array($from,$testrecipients[$breakdown['blog_id']][$email])) || (!empty($testrecipients[$breakdown['blog_id']][$email.'_whitelist']) && is_array($testrecipients[$breakdown['blog_id']][$email.'_whitelist']) && in_array($from,$testrecipients[$breakdown['blog_id']][$email.'_whitelist']))) {
                     $batch = rsvpmaker_postmark_batch($emailobj, $list_recipients, $breakdown);
                     $result = rsvpmaker_postmark_batch_send($batch);
-                    error_log('postmark mailing list forwarding for '.$email);
+                    error_log('postmark mailing list forwarding for '.$email.' '.$emailobj->Subject);
                     $testoutput .= "\nSEND\n".$result;    
                 }
                 else {
@@ -936,9 +940,27 @@ function rsvpmaker_postmark_show_sent_log() {
         else
             $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'... (<a href="'.admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&showall='.$row->id).'#row'.$row->id.'">Show All</a>)' : $row->recipients;
         $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a><br>%s',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag),$row->tag);
-        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)),$row->count,$row->blog_id,$recipients,$prompt);
+        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)).' '.$row->time,$row->count,$row->blog_id,$recipients,$prompt);
     }
     echo '</tbody></table>';
+
+    $sql = "SELECT meta_value from $wpdb->postmeta WHERE meta_key='rsvpmail_postmark_error' ORDER BY meta_id DESC LIMIT 100";
+
+    $results = $wpdb->get_results($sql);
+    if($results) {
+        echo '<h2>Recent Postmark Errors</h2><ul>';
+        foreach($results as $row) {
+            preg_match('/inactive addresses: ([^\s]+). Inactive/',$row->meta_value,$matches);
+            if(!empty($matches[1])) {
+            if(!rsvpmail_is_problem($matches[1]))
+                rsvpmail_add_problem($matches[1],'inactive address detected in Postmark error log');
+            echo '<li>inactive: '.$matches[1]. ' '.var_export(rsvpmail_is_problem($matches[1]),true). '</li>';
+            }
+            else
+            echo '<li>'.var_export($matches,true).' '.$row->meta_value.'</li>';
+        }
+        echo '</ul>';
+    }
 
 }
 add_action('rsvpmaker_postmark_suppressions','rsvpmaker_postmark_suppressions');

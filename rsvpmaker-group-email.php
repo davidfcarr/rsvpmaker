@@ -1178,47 +1178,6 @@ function rsvpmaker_recipients_no_problems($recipients) {
 			$final[] = $email;
 	}
 	return $final;
-
-	if(!empty($additional_recipients))
-	foreach($additional_recipients as $email) {
-		$checked[] = $email;
-		error_log('additional recipients '.$email);
-		$email = rsvpmaker_expand_recipients($email);
-		if(is_array($email)) {
-			foreach($email as $e)
-				{
-					if(!in_array($e,$checked))
-						$additional_recipients2[] = $e;
-				}
-		}
-		elseif(rsvpmail_is_problem($email))
-			error_log('problem with '.$email);
-		elseif(in_array($email,$cleanrecipients))
-			error_log('already added '.$email);
-		else
-			$cleanrecipients[] = $email;	
-	}
-	if(isset($_GET['test'])) {
-		printf('<p>2 clean %s</p>',var_export($cleanrecipients,true));
-		printf('<p>additional recipeints 2 %s</p>',var_export($additional_recipients2,true));
-	}
-	if(!empty($additional_recipients2))
-	foreach($additional_recipients2 as $email) {
-		error_log('additional recipients 2 '.$email);
-		if(in_array($email,$checked)) {
-			error_log($email.' already checked');
-			continue;
-		}
-		if(rsvpmail_is_problem($email))
-			error_log('problem with '.$email);
-		elseif(in_array($email,$cleanrecipients))
-			error_log('already added '.$email);
-		else
-			$cleanrecipients[] = $email;	
-	}
-	if(isset($_GET['test']))
-		printf('<p>3 clean %s</p>',var_export($cleanrecipients,true));
-    return $cleanrecipients;
 }
 
 function rsvpmail_email_to_parts($email,$blog_id = 0) {

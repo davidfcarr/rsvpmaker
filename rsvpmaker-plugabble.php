@@ -1574,11 +1574,13 @@ AND  `post_id` = " . $event;
 	}
 // end rsvp notifications
 
-function rsvp_admin_payment( $rsvp_id ) {
+function rsvp_admin_payment( $rsvp_id, $amount_paid = 0 ) {
 	global $wpdb;
 	global $current_user;
 	$row = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id ");
-	$sql = 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET owed=0, amountpaid='".$row->fee_total."' WHERE id=$rsvp_id ";
+	$owed = $row->owed - $amount_paid;
+	$amount_paid += $row->amountpaid;
+	$sql = 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET owed=$owed, amountpaid='".$amount_paid."' WHERE id=$rsvp_id ";
 	$wpdb->query( $sql );
 	$row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id ", ARRAY_A );
 }

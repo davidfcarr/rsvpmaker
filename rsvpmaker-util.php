@@ -962,7 +962,6 @@ function rsvpmaker_date( $date_format = '', $t = 0, $tzstring = '') {
 	if(empty($tzstring))
 
 		$tzstring = rsvpmaker_get_timezone_string( $post_id );
-
 	$tz       = new DateTimeZone( $tzstring );
 	if ( empty( $date_format ) ) {
 
@@ -4063,12 +4062,22 @@ function rsvpmail_add_problem($email,$code) {
 	$email = trim(strtolower($email));
 
 	$sql = $wpdb->prepare("SELECT code from $table where email=%s",$email);
+	$problem = $wpdb->get_var($sql);
 
-	if(! $wpdb->get_var($sql) )
-
+	if( $problem ) {
+		if(isset($_GET['debug']) ) {
+			printf('<p>%s is already marked as a problem: %s</p>',$email,$problem);
+		}
+	}
+	else
+	{
+		if(isset($_GET['debug']) ) {
+			printf('<p>%s add problem problem: %s</p>',$email,$code);
+		}
 		$wpdb->insert($table,array('email'=>$email,'code'=>$code));
+	}
 
-	do_action('rsvpmail_add_problme',$email,$code);
+	do_action('rsvpmail_add_problem',$email,$code);
 
 }
 function rsvpmail_remove_problem($email) {
@@ -4119,7 +4128,8 @@ function rsvpmail_is_problem($email) {
 
 	$email = trim(strtolower($email));
 
-	$sql = $wpdb->prepare("SELECT code from $table where email=%s AND (code='unsubscribed' OR code LIKE 'blocke%')",$email);
+	//removed AND (code='unsubscribed' OR code LIKE 'blocke%')
+	$sql = $wpdb->prepare("SELECT code from $table where email=%s ",$email);
 
 	$code = $wpdb->get_var($sql);
 
@@ -4865,11 +4875,8 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 
 			}
 
-		}
-
-		if($row['event'])
-
 		$guestparty .= sprintf('<p class="noprint"><a href="%s">%s</a></p>',add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($row['event'])),__('Print Receipt','rsvpmaker'));
+		}
 		$guestparty .= '<p>'.$row['first'].' '.$row['last'];
 
 		foreach($row as $key => $value) {
@@ -5575,8 +5582,8 @@ function rsvp_memory_peak_limit($ratio = 0, $log = '') {
 		return false;
 	}
 }
-add_action('shutdown','peak_memory_check');
-function peak_memory_check() {
+add_action('shutdown','rsvpmaker_peak_memory_check');
+function rsvpmaker_peak_memory_check() {
 	rsvp_memory_peak_limit(0.9,'shutdown');
 }
 add_filter('query','rsvpmaker_query_memory_check');

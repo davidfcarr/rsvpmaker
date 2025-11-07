@@ -7,7 +7,7 @@ function rsvpmaker_create_post_type() {
 	$menu_label = ( isset( $rsvp_options['menu_label'] ) ) ? $rsvp_options['menu_label'] : __( 'RSVP Events', 'rsvpmaker' );
 	$rewrite = array('slug' => 'rsvpmaker','with_front' => false);
 
-	$supports = array( 'title', 'editor', 'author', 'excerpt', 'custom-fields', 'thumbnail', 'revisions' );
+	$supports = array( 'title', 'editor', 'author', 'excerpt', 'custom-fields', 'thumbnail', 'revisions','page-attributes','post-formats' );
 
 	register_post_type(
 		'rsvpmaker',

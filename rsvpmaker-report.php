@@ -252,8 +252,8 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 			if ( ! empty( $postdata['markpaid'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
-				foreach ( $postdata['markpaid'] as $value ) {
-					rsvp_admin_payment( $value );
+				foreach ( $postdata['markpaid'] as $rsvp_id => $value ) {
+					rsvp_admin_payment( $rsvp_id, $value );
 				}
 			}
 
@@ -649,9 +649,9 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 			printf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>',$url,$url);
 			if ( $owed > 0 ) {
 				if(is_admin()) {
-					echo '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $row['event'] ) . '"><input name="markpaid[]" type="text" id="markpaid_' . $row['id'] . '"  value="' . $owed . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.rsvpmaker_nonce('return').'</form>';	
+					echo '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $row['event'] ) . '"><input name="markpaid[' . intval($row['id']) . ']" type="text" id="markpaid_' . $row['id'] . '"  value="' . $owed . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.rsvpmaker_nonce('return').'</form>';	
 				}
-					$owed_list = sprintf( '<p><input type="checkbox" name="markpaid[]" value="%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $owed ), __( 'Owed', 'rsvpmaker' ) );
+					$owed_list = sprintf( '<p><input type="checkbox" name="markpaid[%s]" value="%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_html( $owed ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $owed ), __( 'Owed', 'rsvpmaker' ) );
 			}
 		}
 	}
@@ -1390,37 +1390,32 @@ function rsvp_report_unpaid() {
 
 		global $wpdb, $post, $rsvp_options, $is_rsvp_report;
 
+		$action = admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&unpaid_upcoming&'.rsvpmaker_nonce('query'));
+
 		$is_rsvp_report = true;
 
 		$sql = "select * from ".$wpdb->prefix.'rsvpmaker_event'." where date > CURDATE() order by date";
 
 		$events = $wpdb->get_results($sql);
 
- 
-
 		foreach($events as $event) {
 
-			//printf('<h1>%s</h1>',$event->post_title);
-
 			$sql = $wpdb->prepare('select * from %i WHERE event=%d AND owed > 0.00 ',$wpdb->prefix.'rsvpmaker',$event->event);
-
-			//printf('<p>%s</p>',$sql);
 
 			$unpaids = $wpdb->get_results($sql);
 
 			if(!empty($unpaids)) {
-
-				printf('<h1>%s</h1>',$event->post_title);
+				$titledate = rsvpmaker_date($rsvp_options['short_date'], $event->ts_start).' - '.$event->post_title;
+				printf('<h1>%s</h1>',$titledate);
 
 				foreach($unpaids as $unpaid) {
+					ob_start();
 
 					$payment_link = add_query_arg(array('rsvp'=>$unpaid->id,'e'=>$unpaid->email),get_permalink($event->event)).'#rsvpconfirm';
 
 					printf('<h2>%s %s %s</h2><p>Owed: %s, payment link <a href="%s">%s</a></p>',$unpaid->first,$unpaid->last,$unpaid->email,$unpaid->owed, $payment_link, $payment_link);
 
 					$sql = $wpdb->prepare('select * from %i WHERE event=%d AND master_rsvp=%d ',$wpdb->prefix.'rsvpmaker',$event->event, $unpaid->id);
-
-					//printf('<p>%s %s</p>',$sql,var_export($unpaid,true));
 
 					$guests = $wpdb->get_results($sql);
 
@@ -1440,8 +1435,6 @@ function rsvp_report_unpaid() {
 
 			$sql = $wpdb->prepare('select * from %i events join %i rsvps on events.event=rsvps.event WHERE events.event!=%d and rsvps.email=%s and events.date > CURDATE() ',$wpdb->prefix.'rsvpmaker_event',$wpdb->prefix.'rsvpmaker',$event->event, $unpaid->email);
 
-			//printf('<p>%s</p>',$sql);
-
 			$other_events = $wpdb->get_results($sql);
 
 			if($other_events) {
@@ -1454,27 +1447,41 @@ function rsvp_report_unpaid() {
 
 					$status .= ($other->owed > 0.00) ? ' <span style="color:red">'.$other->owed.' owed</span>' : ' PAID';
 
-					//$status .= ' <span style="color:red">'.$other->owed.' owed</span>';
-
-					$other_status[] = $status; //$other->post_title .' '. (intval($other->owed)) ? '('.$other->owed.' unpaid)' : 'PAID';
+					$other_status[] = $status;
 
 				}
 
 				printf('<p>Other registrations: %s</p>',implode(', ',$other_status));
-
 			}
-
-
+				$mail['html'] = ob_get_flush();
+				if(isset($_POST['send_reminders']) && in_array($event->event,$_POST['send_reminders']) || 'all' == $_POST['send_reminders'][0]) {
+					$mail['html'] = wpautop(stripslashes($_POST['reminder_message']))."\n\n".sprintf('<h1>%s</h1>',$titledate)."\n\n".$mail['html'];
+					$mail['to'] = (isset($_POST['test'])) ? $rsvp_options['rsvp_to'] : $unpaid->email;
+					$mail['subject'] = __('Payment Reminder for ','rsvpmaker').$titledate;
+					$mail['from'] = $rsvp_options['rsvp_to'];
+					$mail['fromname'] = get_bloginfo('name');
+					rsvpmailer($mail);
+					printf('<p>Reminder sent to %s</p>',$mail['to']);
+				}
 
 				}
 
-
-
 			}
-
+		$send_reminders[$event->event] = $event->post_title;
 		}
 
-}
+		if(isset($_POST['reminder_message']))
+			update_option('rsvpmaker_unpaid_reminder_message',stripslashes($_POST['reminder_message']));
+		else
+			$message = get_option('rsvpmaker_unpaid_reminder_message','You registered for this event but our records indicate that your payment is still pending. If you have already made your payment, please disregard this message. If not, please use the link below to complete your payment. Thank you!');
 
-// end rsvp report
+		printf('<h2>Send Reminders</h2><form action="%s" method="post">', $action);
+		printf('<p><input type="checkbox" name="send_reminders[]" value="all" /> %s</p>',__('Send to all events listed above','rsvpmaker'));
+		foreach($send_reminders as $id => $title)
+			printf('<p><input type="checkbox" name="send_reminders[]" value="%d" /> %s</p>',$id,$title);
+		printf('<h3>Message to Include</h3><p><textarea name="reminder_message" style="width: 100%%; height: 200px;">%s</textarea></p>',$message);
+		echo '<p><input type="checkbox" name="test" value="1" /> Test</p>';
+		submit_button('Send');
+		echo '</form>';
+	}
 

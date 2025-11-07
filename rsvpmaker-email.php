@@ -3583,6 +3583,7 @@ function rsvp_message_via_template ($rsvpdata,$slug,$event) {
 	}
 
 	$mail['to'] = $rsvpdata['email'];
+	$mail['from'] = $rsvp_options['rsvp_to'];
 	$rsvp_id = isset($rsvpdata['rsvp_id']) ? intval($rsvpdata['rsvp_id']) : 0;
 	$mail["ical"] = rsvpmaker_to_ical_email ($rsvpdata['event_id'], $mail['to'], $rsvp["email"], rsvpmaker_text_version($mail['html']), $rsvpdata['rsvp_id']);
 	rsvpmaker_tx_email($event, $mail);
@@ -4973,19 +4974,52 @@ function rsvpmail_csv_export() {
 
 function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $search = '') {
 	global $wpdb;
-	$table = rsvpmaker_guest_list_table();
-	$table_meta = $table.'_meta';
-	$where = ($active) ? ' WHERE active=1 ' : '';
-	if(!empty($search)) {
-		if(!empty($where)) 
-			$where .= ' AND ';
-		else
-			$where = ' WHERE ';
-		$where .= " (email LIKE '%$search%' OR first_name LIKE '%$search%' OR last_name LIKE '%$search%')";			
-	}
-	$sql = "SELECT $table.*, email as user_email, $table_meta.meta_value as segment FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id $where ORDER BY email";
-	if($limit)
+    $table = rsvpmaker_guest_list_table();
+    $table_meta = $table.'_meta';
+    $blocked_list = $wpdb->prefix . "rsvpmailer_blocked";
+
+    // build prepared WHERE clauses and params
+    $where_clauses = array();
+    $params = array();
+
+    if ( $active ) {
+        $where_clauses[] = 't.active = %d';
+        $params[] = 1;
+    }
+
+    if ( ! empty( $search ) ) {
+        $like = '%' . $wpdb->esc_like( $search ) . '%';
+        $where_clauses[] = '( t.email LIKE %s OR t.first_name LIKE %s OR t.last_name LIKE %s )';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
+    }
+
+    // always filter out blocked emails
+    $where_sql = '';
+    if ( ! empty( $where_clauses ) ) {
+        $where_sql = ' WHERE ' . implode( ' AND ', $where_clauses ) . ' AND b.email IS NULL';
+    } else {
+        $where_sql = ' WHERE b.email IS NULL';
+    }
+
+    $sql = "
+        SELECT t.*, t.email AS user_email, m.meta_value AS segment
+        FROM {$table} AS t
+        LEFT JOIN {$table_meta} AS m ON t.id = m.guest_id
+        LEFT JOIN {$blocked_list} AS b ON t.email = b.email
+        {$where_sql}
+        ORDER BY t.email
+    ";
+
+    if ( ! empty( $params ) ) {
+        $sql = $wpdb->prepare( $sql, $params );
+    }
+	if($limit) {
+		$start = intval($start);
+		$limit = intval($limit);
 		$sql .= " LIMIT $start, $limit";
+	}
 	$results = $wpdb->get_results($sql);
 	foreach($results as $row) {
 		if(empty($returnarray[$row->email]))
@@ -5126,7 +5160,8 @@ function rsvpmaker_guest_list() {
 	$mailpoet_table = $wpdb->prefix.'mailpoet_subscribers';
 
 	$totalcount = $wpdb->get_var('SELECT count(*) from '.$table);
-	$activecount = $wpdb->get_var('SELECT count(*) from '.$table.' where active=1' );
+	$active_list = get_rsvpmaker_guest_list();
+	$activecount = sizeof($active_list);
 
 	if(isset($_GET['latest'])) {
 		$results = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC LIMIT 0, 100");// 
