@@ -21,6 +21,25 @@ registerBlockType( 'rsvpmaker/limited', {
 		( 'Start Time' ),
 		( 'Wrapper' ),
 	],
+	supports: {
+        color: {
+            background: true,
+            gradient: true,
+            text: true,
+            link: true,
+        },
+		align: [ 'left','right','center','wide', 'full' ],
+		typography: {
+        fontSize: true,
+        lineHeight: true,
+        textAlign: true,
+    	},
+		spacing: {
+        margin: true,
+        padding: true,
+        blockGap: true,
+		},
+	},
 attributes: {
         content: {
             type: 'array',
@@ -59,7 +78,7 @@ attributes: {
 <div className={className} >
 <div class="limited_border">{__('START Limited time content (click to set start and end times)')}</div>
 	<InnerBlocks />
-<div class="limited_border">{__('END Limited time content)')}</div>
+<div class="limited_border">{__('END Limited time content (click to set start and end times)')}</div>
 </div>
 		</Fragment>
 		);

@@ -721,7 +721,7 @@ function rsvpmailer_post_promo_summary() {
 		$cancel_url = add_query_arg($cancel,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list'));
 		if($titles)
 			$titles .= ', ';
-		$titles .= '<strong>'.get_the_title($row->post_id).'</strong> (<a href="'.$cancel_url.'">cancel</a>)';
+		$titles .= '<strong>'.get_the_title($row->post_id).'</strong> (<a href="'.get_permalink($row->post_id).'">Send Now</a> | <a href="'.$cancel_url.'">Cancel</a>)';
 	}
 	printf('<p>Promo of latest blog post scheduled to send at %s, %d waiting %s</p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$promo_scheduled),sizeof($results),$titles);
 	$checkstamp = $promo_scheduled + (5 * MINUTE_IN_SECONDS);
@@ -5730,7 +5730,7 @@ function rsvpmail_latest_post_promo($args = array()) {
 			wp_unschedule_hook('rsvpmailer_post_promo');
 			wp_schedule_single_event( $t,'rsvpmailer_post_promo');
 			$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>1);
-			$schedule = sprintf('<p><em>Scheduling to send at %s to %s mailing list. Options: <a href="%s">Edit</a> | <a href="%s">cancel</a>.</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t), $segment, admin_url("post.php?post=$promo_id&action=edit"), add_query_arg($cancel,get_permalink($promo_id)) );
+			$schedule = sprintf('<p><em>Scheduling to send at %s to %s mailing list. Options: <a href="%s">Edit</a> | <a href="%s">Send Now</a> | <a href="%s">Cancel</a>.</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t), $segment, admin_url("post.php?post=$promo_id&action=edit"), get_permalink($promo_id), add_query_arg($cancel,get_permalink($promo_id)) );
 			$html = $schedule.$html;
 			if(defined('RSVPMAKER_DEBUG'))
 			error_log($postvars['subject'].' scheduling to run at '.rsvpmaker_date($rsvp_options['time_format'],$t));
