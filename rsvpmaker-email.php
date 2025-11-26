@@ -5027,8 +5027,7 @@ function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $sear
 		else
 			$returnarray[$row->email]->segment .= ', '.$row->segment;
 	}
-	if(!empty($returnarray))
-	return $returnarray;
+	return empty($returnarray) ? [] : $returnarray;
 }
 
 function get_rsvpmaker_email_segment($segment, $active = true) {

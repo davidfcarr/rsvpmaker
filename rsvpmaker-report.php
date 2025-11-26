@@ -111,7 +111,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 			echo sprintf(
 				'<form action="%s" method="post">
 
-<h2 style="color: red;">' . __( 'Confirm Delete for', 'rsvpmaker' ) . ' %s %s</h2>
+<h2 style="color: red;">' . __( 'Confirm ' ) . ' %s %s</h2>
 
 <input type="hidden" name="deletenow[]" value="%s"  />
 
