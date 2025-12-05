@@ -1342,9 +1342,9 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	if(!empty($postvars["mailchimp_exclude_rsvp"]))
 	{
 	$event = (int) $postvars["mailchimp_exclude_rsvp"];	
-	$sql = "SELECT * 
-	FROM  `".$wpdb->prefix."rsvpmaker` 
-	WHERE  `event` = ".$event;
+	$sql = $wpdb->prepare("SELECT * 
+	FROM  %i 
+	WHERE  `event` = %d",$wpdb->prefix."rsvpmaker",$event);
 	$results = $wpdb->get_results($sql);
 	if(is_array($results))
 	foreach($results as $row)
@@ -1437,9 +1437,9 @@ $title = 'one of our previous events';
 else {
 $event = (int) $postvars["event"];
 $event_post = get_post($event);
-$sql = "SELECT * 
-FROM  `".$wpdb->prefix."rsvpmaker` 
-WHERE  `event` = ".$event." ORDER BY  `email` ASC";
+$sql = $wpdb->prepare("SELECT * 
+FROM  %i 
+WHERE  `event` = %d ORDER BY  `email` ASC",$wpdb->prefix."rsvpmaker",$event);
 $title = $event_post->post_title;
 }
 $results = $wpdb->get_results($sql);
@@ -1471,8 +1471,8 @@ $t = rsvpmaker_strtotime('-'.$since.' days');
 
 $date = date('Y-m-d',$t);
 
-$sql = "SELECT DISTINCT email 
-FROM  `".$wpdb->prefix."rsvpmaker` WHERE `timestamp` > '$date'";
+$sql = $wpdb->prepare("SELECT DISTINCT email 
+FROM %i WHERE `timestamp` > %s",$wpdb->prefix."rsvpmaker",$date);
 $title = 'one of our previous events';
 
 $results = $wpdb->get_results($sql);
@@ -1605,7 +1605,7 @@ $recipients = array();
 $count = 0;
 foreach($emails as $email)
 	{
-	$sql = $wpdb->prepare( 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE email LIKE %s AND event=%d', $email, $event );
+	$sql = $wpdb->prepare( 'SELECT * FROM %i WHERE email LIKE %s AND event=%d',$wpdb->prefix . 'rsvpmaker', $email, $event );
 	$row = $wpdb->get_row( $sql );
 	if($row && 'exclude' == $rule)
 		continue;
@@ -3557,7 +3557,7 @@ else
 
 if(!$post_id)
 	return;
-$sql = "SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post_id AND yesno=1 ORDER BY id DESC";
+$sql = $wpdb->prepare("SELECT count(*) FROM %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix."rsvpmaker",$post_id);
 $total = (int) $wpdb->get_var($sql);
 $rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
 $output = $total.' '.__('signed up so far.','rsvpmaker');
@@ -3656,6 +3656,9 @@ add_action('rsvp_nonpayment_delete','rsvp_nonpayment_delete', 10, 1);
 
 function rsvp_nonpayment_delete($rsvp_id) {
 	return;
+	$rsvp_id = (int) $rsvp_id;
+	if(!$rsvp_id)
+		return;
 	global $post;
 	global $rsvp_options;
 	global $wpdb;
@@ -3667,13 +3670,13 @@ function rsvp_nonpayment_delete($rsvp_id) {
 		return;
 	}
 	if($rsvp['amountpaid'] < 0.01) {
-		$count = $wpdb->get_var("SELECT count(*) FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
-		$archive = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id");
+		$count = $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM %i WHERE id=%d OR master_rsvp=%d",$wpdb->prefix."rsvpmaker",$rsvp_id,$rsvp_id));
+		$archive = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE id=%d OR master_rsvp=%d",$wpdb->prefix."rsvpmaker",$rsvp_id,$rsvp_id));
 		add_post_meta($rsvp['event'],'_rsvp_archive_'.$rsvp_id,$archive);
-		$event = $wpdb->get_row("SELECT post_title, date FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=".$rsvp['event']);
-		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+		$event = $wpdb->get_row($wpdb->prepare("SELECT post_title, date FROM %i WHERE event=%d",$wpdb->prefix."rsvpmaker_event",$rsvp['event']));
+		$sql = $wpdb->prepare("SELECT * FROM %i WHERE id=%d OR master_rsvp=%d",$wpdb->prefix."rsvpmaker",$rsvp_id,$rsvp_id);
 		add_post_meta($rsvp['event'],'rsvpmaker_unpaid',$wpdb->get_results($sql));
-		$sql = "DELETE FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+		$sql = $wpdb->prepare("DELETE FROM %i WHERE id=%d OR master_rsvp=%d",$wpdb->prefix."rsvpmaker",$rsvp_id,$rsvp_id);
 		$wpdb->query($sql);
 		$mail['to'] = $mail['from'] = get_option('admin_email');
 		$mail['subject'] = "RSVP Deleted for Nonpayment ".$event->post_title.' '.$event->date;
@@ -3681,7 +3684,7 @@ function rsvp_nonpayment_delete($rsvp_id) {
 		rsvpmailer($mail);
 	} else {
 		//paid something, but not enough
-		$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id";
+		$sql = $wpdb->prepare("SELECT * FROM %i WHERE id=%d OR master_rsvp=%d",$wpdb->prefix."rsvpmaker",$rsvp_id,$rsvp_id);
 		add_post_meta($rsvp['event'],'rsvpmaker_unpaid',$wpdb->get_results($sql)); //preserve option of restoring record
 		$snapshot = get_post_meta($rsvp['event'],'_rsvp_snapshot_'.$rsvp['id'].'_'.$rsvp['amountpaid'],true); //snapshot from when rsvp was fully paid
 		if($snapshot) {
@@ -3707,7 +3710,7 @@ return;
 global $post;
 global $rsvp_options;
 global $wpdb;
-$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id";
+$sql = $wpdb->prepare("SELECT * FROM %i WHERE id=%d",$wpdb->prefix."rsvpmaker",$rsvp_id);
 $rsvp = (array) $wpdb->get_row($sql);
 $post = get_post($rsvp['event']);
 $rsvpdata = unserialize($rsvp['details']);
@@ -3874,7 +3877,7 @@ function rsvpmailer_template_preview() {
 	if(isset($_GET['preview_broadcast_in_template'])) {
 		$template = (int) $_GET['preview_broadcast_in_template'];
 		$title = 'Demo: Broadcast Email Message';
-		$id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_title='$title' ");
+		$id = $wpdb->get_var($wpdb->prepare("SELECT ID FROM %i WHERE post_title=%s",$wpdb->posts,$title));
 		if(!$id) {
 			$postarray['post_title'] = $title;
 			$postarray['post_status'] = 'publish';
@@ -3912,7 +3915,7 @@ function rsvpmailer_template_preview() {
 		global $rsvp_options;
 		$template = (int) $_GET['preview_confirmation_in_template'];
 		$title = 'RSVP YES for Demo Event Confirmation on April 1';
-		$id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_title='$title' ");
+		$id = $wpdb->get_var($wpdb->prepare("SELECT ID FROM %i WHERE post_title=%s",$wpdb->posts,$title));
 		if(!$id || isset($_GET['reset'])) {
 			$postarray['post_title'] = $title;
 			$postarray['post_status'] = 'publish';
@@ -5055,7 +5058,7 @@ function rsvpmaker_guest_list_lookup_by_email ($email) {
 	$email = trim(strtolower($email));
 	global $wpdb;
 	$table = rsvpmaker_guest_list_table();
-	$sql = "SELECT * FROM $table WHERE email='$email' ";
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE email=%s ",$table, $email);
 	return $wpdb->get_row($sql);
 }
 
@@ -5118,9 +5121,9 @@ function rsvpmaker_add_contact_segment($id, $segment='') {
 	global $wpdb;
 	$table = rsvpmaker_guest_list_table();
 	if($id && !empty($segment)) {
-		$sql = "select * from ".$table."_meta where guest_id='$id' and meta_key='segment' and meta_value='$segment' ";
+		$sql = $wpdb->prepare("select * from %i where guest_id=%d and meta_key='segment' and meta_value=%s ",$table."_meta",$id,$segment);
 		if(!$wpdb->get_row($sql)) {
-			$sql = "insert into ".$table."_meta SET guest_id='$id', meta_key='segment', meta_value='$segment' ";
+			$sql = $wpdb->query("insert into %i SET guest_id=%d, meta_key='segment', meta_value=%s ",$table."_meta",$id,$segment);
 			$wpdb->query($sql);	
 		}
 	}
@@ -5284,7 +5287,7 @@ function rsvpmaker_guest_list() {
 	}
 
 	if(isset($_GET['edit'])) {
-		$row = $wpdb->get_row("select * from $table where id=".intval($_GET['edit']));
+		$row = $wpdb->get_row($wpdb->prepare("select * from %i where id=%d",$table,$_GET['edit']));
 		printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'));
 		//patchstack fix
 		printf('<div>Email</div><div><input type="text" name="edit_email" value="%s"> ></div><div>First Name</div><div><input type="text" name="first_name" value="%s"></div><div>Last Name</div><div><input type="text" name="last_name" value="%s"></div><input type="hidden" name="id" value="%d"> </p>',esc_attr($row->email),esc_attr($row->first_name),esc_attr($row->last_name),$row->id);
@@ -5443,19 +5446,19 @@ function rsvpmaker_email_upload_to_array($segment = '') {
 function rsvpmaker_email_to_name($to) {
 	$name = '';
 	global $wpdb;
-	$sql = "select display_name from $wpdb->users WHERE user_email LIKE '$to' ";
+	$sql = $wpdb->prepare("select display_name from %i WHERE user_email LIKE %s ",$wpdb->users,$to);
 	$name .= $wpdb->get_var($sql);
 	if(!empty($name)) {
 		return $name;
 	}
-	$sql = "select * from ".$wpdb->prefix."rsvpmaker WHERE email LIKE '$to' ";
+	$sql = $wpdb->prepare("select * from %i WHERE email LIKE %s ",$wpdb->prefix."rsvpmaker",$to);
 	$row = $wpdb->get_row($sql);
 	if(!empty($row->first) || !empty($row->last)) {
 		$name .= $row->first.' '.$row->last;
 		return $name;
 	}
 	$table = rsvpmaker_guest_list_table();
-	$sql = "select * from $table WHERE email LIKE '$to' ";
+	$sql = $wpdb->prepare("select * from %i WHERE email LIKE %s ",$table,$to);
 	$row = $wpdb->get_row($sql);
 	if(!empty($row->first_name) || !empty($row->last_name)) {
 		$name = $row->first_name.' '.$row->last_name;
@@ -5486,7 +5489,7 @@ function rsvpmaker_on_guest_email_list($email, $checkuserlist = true) {
 	global $wpdb;
 	if($checkuserlist)
 	{
-		$sql = "select ID from $wpdb->users WHERE user_email LIKE '$email' ";
+		$sql = $wpdb->prepare("select ID from %i WHERE user_email LIKE %s ",$wpdb->users,$email);
 		$id = $wpdb->get_var($sql);
 		if($id) {
 			return true;

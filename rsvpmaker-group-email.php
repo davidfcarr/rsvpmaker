@@ -123,7 +123,7 @@ function rsvpmaker_relay_queue() {
 	$last_post_id = 0;
 	$posts = $wpdb->posts;
 	$postmeta = $wpdb->postmeta;
-	$sql = "select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, $limit";
+	$sql = $wpdb->prepare("select ID as post_id, count(*) as hits, post_title as subject, post_content as html, meta_value as `to` FROM $posts JOIN $postmeta ON $posts.ID = $postmeta.post_id WHERE meta_key='rsvprelay_to' group by ID ORDER BY ID LIMIT 0, %d",$limit);
 	$results = $wpdb->get_results($sql);
 	foreach($results as $mail) {
 		$mail = (array) $mail;
@@ -132,7 +132,7 @@ function rsvpmaker_relay_queue() {
 		$mail['override'] = 1;
 		$epost_id = $mail['post_id'];
 		$hits = $mail['hits'];
-		$saved = $wpdb->get_var("SELECT meta_value from $postmeta WHERE post_id=$epost_id AND meta_key='mail_array' ");
+		$saved = $wpdb->get_var($wpdb->prepare("SELECT meta_value from %i WHERE post_id=%d AND meta_key='mail_array' ",$postmeta,$epost_id));
 		if($saved)
 		{
 			//saved broadcast message
@@ -141,7 +141,7 @@ function rsvpmaker_relay_queue() {
 		else {
 			$epost = get_post($epost_id);
 			$mail['html'] = rsvpmaker_email_html($epost);
-			$sql = "select * from $wpdb->postmeta WHERE meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=$epost_id";
+			$sql = $wpdb->prepare("select * from %i WHERE meta_key!='rsvpmail_sent' AND meta_key!='rsvprelay_to' AND post_id=%d",$postmeta,$epost_id);
 			$meta = $wpdb->get_results($sql);
 			set_transient('group email meta',$meta);
 			foreach($meta as $row) {
@@ -161,7 +161,7 @@ function rsvpmaker_relay_queue() {
 			$message_description = empty($message_description) ? '' : '<div class="rsvpexplain">' . $message_description . '</div>';
 			$result = rsvpmailer( $mail, $message_description );
 			$result = $mail['to'] . ' ' . rsvpmaker_date( 'r' ).' '.$result;
-			$wpdb->query("update $postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND post_id=$epost_id ");
+			$wpdb->query($wpdb->prepare("update %i SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND post_id=%d ",$postmeta,$epost_id));
 			$log .= $result."\n";
 			$count++;
 			$limit--;
@@ -177,7 +177,7 @@ function rsvpmaker_relay_queue() {
 			$log .= $mail['subject'] . " broadcast\n";
 			if($limit < 1)
 				break;
-			$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$epost_id AND meta_key='rsvprelay_to' LIMIT 0, $limit";
+			$sql = $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key='rsvprelay_to' LIMIT 0, %d", $wpdb->postmeta, $epost_id, $limit);
 			$results = $wpdb->get_results($sql);
 			//print_r($results);
 			//return;
@@ -189,7 +189,7 @@ function rsvpmaker_relay_queue() {
 				$mail['to'] = $row->meta_value;
 				$result = rsvpmailer( $mail, '<div class="rsvpexplain">' . $message_description . '</div>' );
 				$result = $mail['to'] . ' ' . rsvpmaker_date( 'r' ).' '.$result;
-				$wpdb->query("update $postmeta SET meta_key='rsvpmail_sent' WHERE meta_id=$row->meta_id ");
+				$wpdb->query($wpdb->prepare("update %i SET meta_key='rsvpmail_sent' WHERE meta_id=%d ", $postmeta ,$row->meta_id));
 				$log .= $result."\n";
 				$limit--;
 			}
@@ -882,7 +882,7 @@ function rsvpmaker_relay_interval( $schedules = array() ) {
 
 function rsvpmaker_relay_duplicate( $message_id ) {
 	global $wpdb;
-	return $wpdb->get_var( "SELECT post_id FROM $wpdb->postmeta WHERE meta_value='$message_id' " );
+	return $wpdb->get_var( $wpdb->prepare("SELECT post_id FROM %i WHERE meta_value=%s ",$wpdb->postmeta,$message_id) );
 }
 
 function rsvpmaker_qemail ($mail, $recipients) {
@@ -973,7 +973,7 @@ function rsvpmaker_relay_queue_monitor () {
 	{
 		if($row->ID != $was) {
 			if('draft' == $row->post_status) {
-				$sql = "update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=$row->ID ";
+				$sql = $wpdb->prepare("update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=%d ",$row->ID);
 				$result = $wpdb->query($sql);
 				print_r("<p>post status change result %s %s</p>",$sql,var_export($result,true));
 			}

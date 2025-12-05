@@ -316,7 +316,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 	$label = ( isset( $atts['label'] ) ) ? $atts['label'] : __( 'Guest', 'rsvpmaker' );
 	$max_party = ( isset( $atts['max_party'] ) ) ? (int) $atts['max_party'] : 0;
-	$count = ($master_rsvp) ? $wpdb->get_var('SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $master_rsvp) : 0;
+	$count = ($master_rsvp) ? $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM %i WHERE master_rsvp=",$wpdb->prefix . 'rsvpmaker', $master_rsvp)) : 0;
 	$max_guests = $blanks_allowed + $count;
 
 	if ( $max_party ) {
@@ -346,7 +346,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 	if ( isset( $master_rsvp ) && $master_rsvp ) {
 
-		$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $master_rsvp . ' ORDER BY id';
+		$guestsql = $wpdb->prepare('SELECT * FROM %i WHERE master_rsvp=%d ORDER BY id',$wpdb->prefix . 'rsvpmaker',$master_rsvp);
 
 		if ( $results = $wpdb->get_results( $guestsql, ARRAY_A ) ) {
 

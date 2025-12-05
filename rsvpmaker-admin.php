@@ -950,7 +950,7 @@ global $wpdb;
 if(isset($_GET["from_template"]) ) 
 	{
 	$t = (int) $_GET["from_template"];
-	$sql = "SELECT post_title, post_content FROM $wpdb->posts WHERE ID=$t";
+	$sql = $wpdb->prepare("SELECT post_title, post_content FROM %i WHERE ID=%d", $wpdb->posts, $t);
 	$rsvp_template = $wpdb->get_row($sql);
 	return $rsvp_template->post_title;
 	}
@@ -1176,10 +1176,10 @@ else
 function rsvpmaker_reminders_list($post_id)
 {
 global $wpdb;
-$sql = "SELECT  `meta_key` 
-FROM  `$wpdb->postmeta` 
-WHERE  `meta_key` LIKE  '_rsvp_reminder_msg%' AND post_id = $post_id
-ORDER BY  `meta_key` ASC ";
+$sql = $wpdb->prepare("SELECT  `meta_key` 
+FROM  %i 
+WHERE  `meta_key` LIKE  '_rsvp_reminder_msg%' AND post_id = %d
+ORDER BY  `meta_key` ASC ", $wpdb->postmeta, $post_id);
 $results = $wpdb->get_results($sql);
 $txt = '';
 if($results)
@@ -1720,7 +1720,7 @@ $wpdb->show_errors();
 
 	$rsvpto = get_post_meta($post_id,'_rsvp_to',true);			
 
-$sql = "SELECT email FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post_id AND id=".$rsvp_id;
+	$sql = $wpdb->prepare("SELECT email FROM %i WHERE event=%d AND id=%d", $wpdb->prefix."rsvpmaker",$post_id,$rsvp_id);
 	$notify = $wpdb->get_var($sql);							
 	$mail["subject"] = $subject;
 	$mail["html"] = $confirm;
@@ -1788,7 +1788,7 @@ $wpdb->show_errors();
 			$event_content = get_rsvp_link($post_id);
 	}
 
-			$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$post_id AND yesno=1";
+			$sql = $wpdb->prepare("SELECT * FROM %i WHERE event=%d AND yesno=1",$wpdb->prefix."rsvpmaker",$post_id);
 			if(get_post_meta($post_id,'paid_only_confirmation',true))
 				$sql .= " AND amountpaid";
 
@@ -1964,7 +1964,7 @@ function rsvp_list_reminders_all_events() {
 		return;
 	$output = '';
 	foreach($events as $event) {
-		$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key LIKE '_rsvp_reminder_msg_%' AND post_id=".$event->ID." ORDER BY meta_key ";
+		$sql = $wpdb->prepare("SELECT * FROM %i WHERE meta_key LIKE '_rsvp_reminder_msg_%' AND post_id=%d ORDER BY meta_key ",$wpdb->postmeta,$event->ID);
 		$results = $wpdb->get_results($sql);
 		foreach($results as $row) {
 			$time = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
@@ -2013,7 +2013,7 @@ if(isset($_POST['defaults']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsv
 		}
 		if($index == 'reminders')
 		{
-			$sql = "DELETE FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%'";
+			$sql = $wpdb->prepare("DELETE FROM %i WHERE post_id=%d AND meta_key LIKE %s",$wpdb->postmeta,$post_id,'_rsvp_reminder_msg_%');
 			$wpdb->query($sql);
 		}
 	}
@@ -2122,7 +2122,7 @@ if(!empty($pconf->post_content))
 
 echo '<div style="border: thin solid #555; padding: 10px;"><h2>Reminders</h2>';
 
-$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
+$sql = $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key LIKE %s",$wpdb->postmeta,$post_id,'_rsvp_reminder_msg_%');
 
 $results = $wpdb->get_results($sql);
 $delete_reminder_options = '';
@@ -2495,18 +2495,18 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 				{
 				add_rsvpmaker_date($post_id,$cddate,$duration, $timezone);				
 				add_post_meta($post_id,'_meet_recur',$t,true);
-				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
+				$ts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d"),$wpdb->posts,$post_id);
 				update_post_meta($post_id,"_updated_from_template",$ts);
 
 				wp_set_object_terms( $post_id, $rsvptypes, 'rsvpmaker-type', true );
 
-				$results = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE meta_key LIKE '_rsvp%' AND post_id=".$t);
+				$results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE meta_key LIKE '_rsvp%' AND post_id=%d",$wpdb->postmeta,$t));
 				if($results)
 				foreach($results as $row)
 					{
 					if($row->meta_key == '_rsvp_reminder')
 						continue;
-					$wpdb->query($wpdb->prepare("INSERT INTO $wpdb->postmeta SET meta_key=%s,meta_value=%s,post_id=%d",$row->meta_key,$row->meta_value,$post_id));
+					$wpdb->query($wpdb->prepare("INSERT INTO %i SET meta_key=%s,meta_value=%s,post_id=%d",$wpdb->postmeta,$row->meta_key,$row->meta_value,$post_id));
 					}
 				//copy rsvp options
 				$editurl = admin_url('post.php?action=edit&post='.$post_id);
@@ -2611,7 +2611,7 @@ function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
     {
         global $wpdb;
 		$post_id = $args[0];
-		$author = $wpdb->get_var("SELECT post_author FROM $wpdb->posts WHERE ID=".intval($post_id));
+		$author = $wpdb->get_var($wpdb->prepare("SELECT post_author FROM %i WHERE ID=%d",$wpdb->posts,$post_id));
 		$eds = get_additional_editors($post_id);
 		if(!current_user_can($cap[0]) && ($author != $user_id) && in_array($user_id, $eds) )
         {
@@ -2621,7 +2621,7 @@ function rsvpmaker_map_meta_cap( $caps, $cap, $user_id, $args ) {
 			if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
 			{
 			//if the current author is not already on the editors list, add them
-			if(!$wpdb->get_var("SELECT meta_id FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key='_additional_editors' AND meta_value=$author"))
+			if(!$wpdb->get_var($wpdb->prepare("SELECT meta_id FROM %i WHERE post_id=%d AND meta_key='_additional_editors' AND meta_value=%d",$wpdb->postmeta, $post_id, $author)))
 				add_post_meta($post_id, '_additional_editors',$author);				
 			wp_update_post(array('ID' => $post_id, 'post_author' => $user_id));
 			}
@@ -2725,7 +2725,7 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') 
 				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> %s</p>',$prettydate,get_permalink($post_id),__('View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),__('Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),__('Trash','rsvpmaker'),$hthis);
 				add_rsvpmaker_date($post_id,$date,$duration,$timezone);
 				add_post_meta($post_id,'_meet_recur',$t,true);
-				$upts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
+				$upts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$post_id));
 				update_post_meta($post_id,"_updated_from_template",$upts);
 				rsvpmaker_copy_metadata($t, $post_id);
 			}
@@ -2738,7 +2738,7 @@ global $rsvp_options;
 	global $wpdb;
 	$wpdb->show_errors();
 
-	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpautorenew' AND meta_value=1 AND $wpdb->posts.post_status='publish' ";
+	$sql = $wpdb->prepare("SELECT * FROM %i JOIN %i ON %i.ID = %i.post_id WHERE meta_key='rsvpautorenew' AND meta_value=1 AND %i.post_status='publish' ",$wpdb->posts,$wpdb->postmeta,$wpdb->posts,$wpdb->postmeta,$wpdb->posts);
 	$results = $wpdb->get_results($sql);
 	if(is_array($results))
 	foreach($results as $row)
@@ -2816,7 +2816,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				$update_post['post_content'] = $post->post_content;
 				$update_post['post_excerpt'] = $post->post_excerpt;
 				wp_update_post($update_post);
-				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$target_id);
+				$ts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$target_id));
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				update_post_meta($target_id,"_meet_recur",$t);
 				$duration = (empty($template["duration"])) ? '' : $template["duration"];
@@ -2846,7 +2846,7 @@ if(isset($_POST["detach_from_template"])  && wp_verify_nonce(rsvpmaker_nonce_dat
 	foreach($_POST["detach_from_template"] as $target_id)
 		{
 			$target_id = (int) $target_id;
-			$sql = $wpdb->prepare("UPDATE $wpdb->postmeta SET meta_key='_detached_from_template' WHERE meta_key='_meet_recur' AND post_id=%d", $target_id);
+			$sql = $wpdb->prepare("UPDATE %i SET meta_key='_detached_from_template' WHERE meta_key='_meet_recur' AND post_id=%d", $wpdb->postmeta, $target_id);
 			$result = $wpdb->query($sql);
 			$update_messages .= '<div class="updated">Detached from Template: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
 		}
@@ -2905,7 +2905,7 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 					$update_messages .= '<div class="updated">Draft for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">Preview</a></div>';
 
 				add_post_meta($post_id,'_meet_recur',$t,true);
-				$ts = $wpdb->get_var("SELECT post_modified from $wpdb->posts WHERE ID=".$post_id);
+				$ts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$post_id));
 				update_post_meta($post_id,"_updated_from_template",$ts);
 				rsvpmaker_copy_metadata($t, $post_id);
 				if($topnumber) {
@@ -2931,7 +2931,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 	if(!strpos($_POST["nomeeting"],'-'))
 		{ //update vs new post
 			$id = (int) $_POST["nomeeting"];
-			$sql = $wpdb->prepare("UPDATE $wpdb->posts SET post_title=%s, post_content=%s WHERE ID=%d",$my_post['post_title'],$my_post['post_content'],$id);
+			$sql = $wpdb->prepare("UPDATE %i SET post_title=%s, post_content=%s WHERE ID=%d",$wpdb->posts,$my_post['post_title'],$my_post['post_content'],$id);
 			$wpdb->show_errors();
 			$return = $wpdb->query($sql);
 			if($return == false)
@@ -2963,7 +2963,7 @@ global $wpdb;
 $log = '';
 //copy metadata
 $meta_keys = array();
-$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$source_id");
+$post_meta_infos = $wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_value FROM %i WHERE post_id=%d",$wpdb->postmeta,$source_id));
 $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
 $deadlinedays = $deadlinehours = $regdays = $reghours = 0;
 $meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');

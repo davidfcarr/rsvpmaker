@@ -66,7 +66,7 @@ if('rsvpemail' == $post_after->post_type) {
 if(('rsvpmaker' == $post_after->post_type)) {
 	if($post_after->post_title != $post_before->post_title) {
 		$table = get_rsvpmaker_event_table();
-		$wpdb->query($wpdb->prepare("update $table SET post_title=%s where event=%d",$post_after->post_title,$post_after->ID)); //keep title in sync
+		$wpdb->query($wpdb->prepare("update %i SET post_title=%s where event=%d",$table,$post_after->post_title,$post_after->ID)); //keep title in sync
 	}
 	delete_transient('rsvpmakers');
 }

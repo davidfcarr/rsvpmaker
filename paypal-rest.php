@@ -60,7 +60,7 @@ function paypal_verify_rest () {
         $status = $data->status.' payment of '.number_format( $paidnow, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'].' from '.$data->payer->name->given_name.' '.$data->payer->name->surname;
         $event_id = 0;
         if($rsvp_id) {
-          $row = $wpdb->get_row("SELECT * FROM $rsvptable WHERE id=$rsvp_id");
+          $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id=%d",$rsvptable,$rsvp_id));
           $details = unserialize($row->details);
           $paidbefore = (empty($row->amountpaid)) ? 0 : floatval($row->amountpaid);
           $paid = ($paidbefore) ? $paidbefore + $paidnow : $paidnow;
@@ -72,7 +72,7 @@ function paypal_verify_rest () {
             $balance_was = $fee_total - $paidbefore;
           }
           $event_id = $row->event;
-          $updatesql = "UPDATE $rsvptable SET amountpaid='$paid', owed='$owed' WHERE id=$rsvp_id";
+          $updatesql = $wpdb->prepare("UPDATE %i SET amountpaid=%s, owed=%s WHERE id=%d",$rsvptable,$paid,$owed,$rsvp_id);
           $wpdb->query($updatesql);
         }
         $gift_certificate = '';

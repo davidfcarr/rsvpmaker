@@ -45,7 +45,7 @@ function rsvpmaker_money_tx($atts) {
     $fee = (isset($atts['fee'])) ? $atts['fee'] : '';
     $tracking_key = (isset($atts['tracking_key'])) ? $atts['tracking_key'] : '';
     $tracking_value = (isset($atts['tracking_value'])) ? $atts['tracking_value'] : '';
-    $existing = $wpdb->get_row("SELECT * FROM $money_table WHERE transaction_id='$transaction_id' ");
+    $existing = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE transaction_id=%s ",$money_table,$transaction_id));
     if($existing) {
         $wpdb->update($money_table,array('name'=>$name,
     'email'  => $email,

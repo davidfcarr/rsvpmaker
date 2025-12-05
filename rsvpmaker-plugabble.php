@@ -715,7 +715,7 @@ function rsvpmaker_capture_email( $rsvp ) {
 
 			if ( isset( $_POST['onfile'] ) ) {
 
-				$sql = $wpdb->prepare( 'SELECT details FROM ' . $wpdb->prefix . "rsvpmaker WHERE event='$event' AND email LIKE %s AND first LIKE %s AND last LIKE %s  ORDER BY id DESC", $rsvp['email'], $rsvp['first'], $rsvp['last'] );
+				$sql = $wpdb->prepare( "SELECT details FROM %s WHERE event=%d AND email LIKE %s AND first LIKE %s AND last LIKE %s  ORDER BY id DESC", $wpdb->prefix . "rsvpmaker", $event, $rsvp['email'], $rsvp['first'], $rsvp['last'] );
 
 				$details = $wpdb->get_var( $sql );
 
@@ -757,7 +757,7 @@ function rsvpmaker_capture_email( $rsvp ) {
 				$wpdb->insert($wpdb->prefix . 'rsvpmaker',$nv);
 				$rsvp_id = $wpdb->insert_id;
 
-				$sql = 'SELECT date FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$event ";
+				$sql = $wpdb->prepare("SELECT date FROM %i WHERE event=%d ",$wpdb->prefix . "rsvpmaker_event",$event);
 
 				if ( empty( $wpdb->get_var( $sql ) ) ) {
 					$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event' => $event, 'post_title' => $post->post_title, 'date'=>get_rsvp_date( $event )));
@@ -796,13 +796,13 @@ function rsvpmaker_capture_email( $rsvp ) {
 
 				// cron for follow up messages
 
-				$sql = "SELECT * 
+				$sql = $wpdb-prepare("SELECT * 
 
-FROM  `$wpdb->postmeta` 
+FROM %i 
 
 WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}'
 
-AND  `post_id` = " . $event;
+AND  `post_id` = %d",$wpdb->postmeta,$event);
 
 				$results = $wpdb->get_results( $sql );
 
@@ -921,7 +921,7 @@ AND  `post_id` = " . $event;
 
 			$rsvp_max = empty($custom_fields['_rsvp_max'][0]) ? 0 : $custom_fields['_rsvp_max'][0];
 
-			$count = $wpdb->get_var( 'SELECT count(*) FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$event AND yesno=1" );
+			$count = $wpdb->get_var( $wpdb->prepare("SELECT count(*) FROM %i WHERE event=%d AND yesno=1",$wpdb->prefix . "rsvpmaker",$event) );
 
 			// if permalinks are not turned on, we need to append to query string not add our own ?
 
@@ -1058,7 +1058,7 @@ AND  `post_id` = " . $event;
 
 			if ( $rsvp_id ) {
 
-				$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE email !='' AND id=" . $rsvp_id;
+				$sql = $wpdb->prepare("SELECT * FROM %i WHERE email !='' AND id=%d",$wpdb->prefix .'rsvpmaker',$rsvp_id);
 				$rsvp_row = $wpdb->get_row( $sql );
 				$details =  empty($rsvp_row) ? '' : $rsvp_row->details;
 				$paid = empty($rsvp_row) ? 0 : $rsvp_row->amountpaid;
@@ -1286,7 +1286,7 @@ AND  `post_id` = " . $event;
 
 			if ( $rsvp_id ) {
 				if($owed) {
-					$snapshot = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id OR master_rsvp=$rsvp_id ORDER BY master_rsvp, id"); //get host, followed by guests
+					$snapshot = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE id=%d OR master_rsvp=%d ORDER BY master_rsvp, id",$wpdb->prefix . "rsvpmaker",$rsvp_id,$rsvp_id)); //get host, followed by guests
 					if($snapshot && !intval($snapshot[0]->owed)) {
 						update_post_meta($snapshot[0]->event,'_rsvp_snapshot_'.$snapshot[0]->id.'_'.$snapshot[0]->amountpaid,$snapshot);
 					}
@@ -1307,7 +1307,7 @@ AND  `post_id` = " . $event;
 					$wpdb->insert($wpdb->prefix . 'rsvpmaker',$nv);
 					$rsvp_id = $wpdb->insert_id;
 
-					$sql = 'SELECT date FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$event ";
+					$sql = $wpdb->prepare("SELECT date FROM %i WHERE event=%d ",$wpdb->prefix . "rsvpmaker_event",$event);
 
 					if ( empty( $wpdb->get_var( $sql ) ) ) {
 						$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event'=>$event, 'post_title'=>$post->post_title, 'date'=> get_rsvp_date( $event )));
@@ -1329,7 +1329,7 @@ AND  `post_id` = " . $event;
 
 				// clear previous response, if any
 
-				$wpdb->query( 'DELETE FROM ' . $wpdb->prefix . "rsvp_volunteer_time WHERE rsvp=$rsvp_id" );
+				$wpdb->query( $wpdb->prepare("DELETE FROM %i WHERE rsvp=",$wpdb->prefix . "rsvp_volunteer_time",$rsvp_id));
 
 				foreach ( $postdata['timeslot'] as $slot ) {
 
@@ -1432,7 +1432,7 @@ AND  `post_id` = " . $event;
 
 						$gd = (int) $postdata['guestdelete'][ $id ];
 
-						$sql = 'DELETE FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $gd;
+						$sql = $wpdb->prepare("DELETE FROM %i WHERE id=%d",$wpdb->prefix . 'rsvpmaker', $gd);
 
 						$guest_text[ $index ] = __( 'Deleted:', 'rsvpmaker' ) . "\n" . $guest_text[ $index ];
 
@@ -1454,9 +1454,10 @@ AND  `post_id` = " . $event;
 					}
 				}
 			}
-
-			$missing_guests = "delete from ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=$rsvp_id ".$missing_guests;
-			$wpdb->query($missing_guests);
+			if($rsvp_id && $missing_guests) {
+				$missing_guests = "delete from ".$wpdb->prefix."rsvpmaker WHERE master_rsvp= ".intval($rsvp_id).$missing_guests;
+				$wpdb->query($missing_guests);
+			}
 
 			if(!empty($guests_to_add)) {
 				foreach($guests_to_add as $nv)
@@ -1577,12 +1578,12 @@ AND  `post_id` = " . $event;
 function rsvp_admin_payment( $rsvp_id, $amount_paid = 0 ) {
 	global $wpdb;
 	global $current_user;
-	$row = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id ");
+	$row = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id=%d",$wpdb->prefix . "rsvpmaker",$rsvp_id));
 	$owed = $row->owed - $amount_paid;
 	$amount_paid += $row->amountpaid;
-	$sql = 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET owed=$owed, amountpaid='".$amount_paid."' WHERE id=$rsvp_id ";
+	$sql = $wpdb->prepare("UPDATE %i SET owed=$owed, amountpaid=%s WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$amount_paid,$rsvp_id);
 	$wpdb->query( $sql );
-	$row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id ", ARRAY_A );
+	$row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE id=%d ",$wpdb->prefix . 'rsvpmaker', $rsvp_id), ARRAY_A );
 }
 
 function rsvpmaker_localdate() {
@@ -1757,7 +1758,7 @@ function event_content( $content, $formonly = false, $form = '' ) {
 
 	$rsvp_id = get_rsvp_id( $e );
 	if ( $rsvp_id && $e ) {
-		$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id and email='$e'";
+		$sql = $wpdb->prepare("SELECT * FROM %i WHERE id=%d and email=%s",$wpdb->prefix . "rsvpmaker",$rsvp_id,$e);
 		$rsvprow = $wpdb->get_row( $sql, ARRAY_A );
 
 		if(!$rsvprow) {

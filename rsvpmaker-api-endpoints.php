@@ -248,7 +248,7 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 
 		$event = $request['post_id'];
 
-		$sql = 'SELECT first,last,note FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$event AND yesno=1 ORDER BY id DESC";
+		$sql = $wpdb->prepare("SELECT FROM first,last,note %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix . "rsvpmaker",$event);
 
 		$attendees = $wpdb->get_results( $sql );
 
@@ -417,7 +417,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 				}
 			}
 
-			$wpdb->query( 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id " );
+			$wpdb->query( $wpdb->prepare("UPDATE %i SET amountpaid=%s WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$paid,$rsvp_id) );
 
 			add_post_meta( $rsvp_post_id, '_paid_' . $rsvp_id, $vars['amount'] );
 
@@ -445,11 +445,11 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
             $details['rsvp_to'] = sanitize_text_field($purchase[2]);
           if(!empty($vars['is_gift_certificate'])) {
 			$rsvptable = $wpdb->prefix.'rsvpmaker';
-			$details = $wpdb->get_var("SELECT details FROM $rsvptable WHERE id=$rsvp_id");
+			$details = $wpdb->get_var($wpdb->prepare("SELECT details FROM %i WHERE id=",$rsvptable,$rsvp_id));
 			$details = unserialize($details); 
             $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
             $vars['gift_certificate'] = $details['gift_certficate'] = $gift_certificate;
-            $sql = $wpdb->prepare("UPDATE $rsvptable set details=%s WHERE id=$rsvp_id",serialize($details));
+            $sql = $wpdb->prepare("UPDATE %i set details=%s WHERE id=%d",$rsvptable,serialize($details),$rsvp_id);
 			error_log($sql);
             $wpdb->query($sql);
             add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
@@ -517,13 +517,13 @@ class RSVP_Export extends WP_REST_Controller {
 
 		$start = $request['start'];
 
-		$sql = "SELECT * FROM $wpdb->posts WHERE ID > $start AND post_type='rsvpmaker' AND post_status='publish' ORDER BY ID LIMIT 0,50";
+		$sql = $wpdb->prepare("SELECT * FROM %i WHERE ID > %d AND post_type='rsvpmaker' AND post_status='publish' ORDER BY ID LIMIT 0,50",$wpdb->posts,$start);
 
 		$future = $wpdb->get_results( $sql );
 
 		foreach ( $future as $index => $row ) {
 
-			$sql = "select * from $wpdb->postmeta WHERE post_id=" . $row->ID;
+			$sql = $wpdb->prepare("select * from %i WHERE post_id=%d", $wpdb->postmeta, $row->ID);
 
 			$metaresults = $wpdb->get_results( $sql );
 
@@ -639,7 +639,7 @@ class RSVP_RunImport extends WP_REST_Controller {
 
 								foreach ( $event->meta as $metarow ) {
 
-									  $sql = $wpdb->prepare( "INSERT INTO $wpdb->postmeta SET post_id=%s, meta_key=%s, meta_value=%s", $post_id, $metarow->meta_key, $metarow->meta_value );
+									  $sql = $wpdb->prepare( "INSERT INTO %i SET post_id=%s, meta_key=%s, meta_value=%s", $wpdb->postmeta, $post_id, $metarow->meta_key, $metarow->meta_value );
 
 									  $wpdb->query( $sql );
 
@@ -1480,7 +1480,7 @@ class RSVPMaker_Confirm_Email_Membership extends WP_REST_Controller {
 		if($email)
 		{
 			$table = rsvpmaker_guest_list_table();
-			$sql = "select id from $table where email LIKE '".esc_sql($email)."' ";
+			$sql = $wpdb->prepare("select id from %i where email LIKE %s",$table,$email) ;
 			$result = ($wpdb->get_var($sql) > 0);
 		}
 		else
@@ -2097,7 +2097,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 			return new WP_REST_Response( 'user does not have editing rights for this event', 401 );
 		}
 		$status = $upsql = '';
-		$event = get_rsvpmaker_event($event_id);// $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker_event WHERE event=$event_id");
+		$event = get_rsvpmaker_event($event_id);
 		if(!empty($json)) {
 			delete_transient('rsvpmakers');
 			$data = json_decode(trim($json));
@@ -2388,7 +2388,7 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 $response["confirmation"] = $confirm_post;
 $response['confirmation']->html = do_blocks($response["confirmation"]->post_content);
 $response['reminder'] = [];
-$sql = "SELECT * FROM $wpdb->postmeta WHERE post_id=$post_id AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key";
+$sql = $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key",$wpdb->postmeta,$post_id);
 $results = $wpdb->get_results($sql);
 if($results)
 {
@@ -3069,12 +3069,12 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 				$order_id = esc_sql($order_id);
 				$fee = esc_sql($fee);
 				$gross = esc_sql($gross);
-				$sql_check = "SELECT * FROM $rsvpmaker_money WHERE transaction_id='$order_id'";
+				$sql_check = $wpdb->prepare("SELECT * FROM %i WHERE transaction_id=%s",$rsvpmaker_money,$order_id);
 				$existing = $wpdb->get_row($sql_check);
 				if($existing)
-				$sql = "UPDATE $rsvpmaker_money SET fee=$fee WHERE transaction_id='$order_id'";
+				$sql = $wpdb->prepare("UPDATE %i SET fee=%s WHERE transaction_id=%s");
 				else
-				$sql = "INSERT INTO $rsvpmaker_money SET amount='$gross', fee='$fee', name='added from webhook', transaction_id='$order_id' ";
+				$sql = $wpdb->prepare("INSERT INTO %i SET amount=%s, fee=%s, name='added from webhook', transaction_id=%s ",$rsvpmaker_money, $gross,$fee,$order_id);
 				$wpdb->query($sql);
 			}
 		} 
