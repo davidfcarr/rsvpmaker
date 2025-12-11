@@ -81,7 +81,7 @@ function rsvpmaker_qckply_clone_custom($clone, $ids) {
     $events = [];
     foreach($ids as $id) {
         if('rsvpmaker' == get_post_type($id)) {
-            $event = $wpdb->get_row("SELECT * FROM $table where event=".intval($id),ARRAY_A);
+            $event = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i where event=%d",$table,$id),ARRAY_A);
             if(!empty($event)) {
                 $events[] = $event;
                 for($loop = 0; $loop < rand(1, 10); $loop++) {

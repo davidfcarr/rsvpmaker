@@ -7,8 +7,8 @@ foreach ( $tables as $slug ) {
 	$sql = 'DROP TABLE IF EXISTS ' . $wpdb->prefix . $slug;
 	$wpdb->query( $sql );
 }
-$sql = 'SELECT ID FROM ' . $wpdb->posts . " WHERE post_type='rsvpmaker' OR post_type='rsvpmaker_template' OR post_type='rsvpemail' OR post_type='rsvpmaker_form' ";
-$items = $wpdb->get_results( $sql );
+
+$items = $wpdb->get_results( $wpdb->prepare("SELECT ID FROM %i WHERE post_type='rsvpmaker' OR post_type='rsvpmaker_template' OR post_type='rsvpemail' OR post_type='rsvpmaker_form' ",$wpdb->posts) );
 if($items)
 foreach($items as $item)
 	wp_delete_post($item->ID,true);

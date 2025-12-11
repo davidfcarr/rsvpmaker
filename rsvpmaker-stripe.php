@@ -108,7 +108,7 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	if(empty($vars['currency']))
 		$vars['currency'] = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
 
-	$rsvpmaker_stripe_checkout_page_id = $wpdb->get_var( "SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND  post_content LIKE '%[rsvpmaker_stripe_checkout]%' " );
+	$rsvpmaker_stripe_checkout_page_id = $wpdb->get_var( $wpdb->prepare("SELECT ID FROM %i WHERE post_status='publish' AND  post_content LIKE %s ",$wpdb->posts.'%[rsvpmaker_stripe_checkout]%') );
 
 	if ( empty( $rsvpmaker_stripe_checkout_page_id ) ) {
 
@@ -585,7 +585,7 @@ function stripe_log_by_email( $email, $months = 0 ) {
 
 	$log = '';
 
-	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvpmaker_stripe_payment' AND meta_value LIKE '%" . $email . "%' ORDER BY meta_id DESC";
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE meta_key='rsvpmaker_stripe_payment' AND meta_value LIKE %s ORDER BY meta_id DESC",$wpdb->postmeta,'%'.$wpdb->esc_like($email).'%');
 
 	$results = $wpdb->get_results( $sql );
 

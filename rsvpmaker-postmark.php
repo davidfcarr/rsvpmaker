@@ -192,7 +192,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         foreach($chunks as $chunk) {
             $size = sizeof($chunk);
             $meta_id = add_post_meta($post_id,'rsvprelay_to_batch',$chunk);
-            $check = $wpdb->get_row("select * from $wpdb->postmeta where meta_id=$meta_id");
+            $check = $wpdb->get_row($wpdb->prepare("select * from %i where meta_id=%d",$wpdb->postmeta,$meta_id));
             error_log('saving emails from '.$chunk[0].' to '.$chunk[$size-1]. 'for post '.$post_id.' rsvprelay_to_batch result '.var_export($meta_id,true).' check '.var_export($check,true));
         }
         error_log('scheduling rsvpmaker_postmark_chunked_batches');
@@ -233,7 +233,8 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         $mail['TextBody'] = str_replace('*|EMAIL|*',$to,$text);
         $mail['Headers'] = array('X-Auto-Response-Suppress' => 'OOF'); //tells Exchange not to send out of office auto replies
         $batch[] = $mail;
-        $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '$to' AND post_id=$post_id ");
+        $wpdb->query($wpdb->prepare("update %i SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE %s AND post_id=%d "
+    ,$wpdb->postmeta,$to,$post_id));
     }
 
     $hash = postmark_batch_hash($batch,$recipients);
@@ -275,7 +276,7 @@ function rsvpmaker_postmark_chunked_batches() {
     //wp_suspend_cache_addition(true);
     global $wpdb;
     $log = '';
-	$sql = "SELECT * FROM $wpdb->postmeta WHERE meta_key='rsvprelay_to_batch'";
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE meta_key='rsvprelay_to_batch'",$wpdb->postmeta);
     error_log($sql);
 	$results = $wpdb->get_results($sql);
     error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
@@ -283,7 +284,7 @@ function rsvpmaker_postmark_chunked_batches() {
         $batchrow = $results[0];
         $doneafterthis = sizeof($results) == 1;
 		$recipients = unserialize($batchrow->meta_value);
-        $sql = "update $wpdb->postmeta set meta_key='rsvprelay_to_batch_done' where meta_id=$batchrow->meta_id";
+        $sql = $wpdb->prepare("update %i set meta_key='rsvprelay_to_batch_done' where meta_id=%d",$wpdb->postmeta,$batchrow->meta_id);
         error_log($sql);
 		$wpdb->query($sql);
         $log .= rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
@@ -699,7 +700,8 @@ function rsvpmaker_postmark_batch_send($batch) {
         $output .= sprintf('Successful sends %d',count($sent));
         foreach($sent as $e) {
             if($post_id)
-                $wpdb->query("update $wpdb->postmeta SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE '".$e."' AND post_id=$post_id ");
+                $wpdb->query($wpdb->prepare("update %i SET meta_key='rsvpmail_sent' WHERE meta_key='rsvprelay_to' AND meta_value LIKE %s AND post_id=%d ",
+            $wpdb->postmeta,$e,$post_id));
         }
     }
     if(count($send_error)) {
@@ -726,7 +728,7 @@ function postmark_batch_hash ($batch,$recipients = null) {
 function rsvpmaker_postmark_duplicate($hash) {
     global $wpdb;
     check_postmark_tally_version();
-	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM ".$wpdb->base_prefix."postmark_tally where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 120 MINUTE)",$hash);
+	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM %i where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 120 MINUTE)",$wpdb->base_prefix."postmark_tally",$hash);
 	$row = $wpdb->get_row($sql);
     if(!empty($row->duplicates))
     {
@@ -753,10 +755,10 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
     if($sent_lately > 150) {
         $overloadmessage = '';
         $score = 0;
-        $sql = "SELECT `count`, recipients, subject FROM `".$wpdb->base_prefix."postmark_tally` WHERE time > DATE_SUB(NOW(), INTERVAL 15 MINUTE) group by recipients";
+        $sql = $wpdb->prepare("SELECT `count`, recipients, subject FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL 15 MINUTE) group by recipients",$wpdb->base_prefix."postmark_tally");
         $results = $wpdb->get_results($sql);
         foreach($results as $row) {
-            $overloadmessage .= sprintf('%d %s %s'."\n",$row->count, $row->recipients,$row->subject);
+            $overloadmessage .= sprintf('%d %s %s',$row->count,$row->recipients,$row->subject);
             if($row->count > 20)
                 $score += $row->count;
         }
@@ -780,11 +782,11 @@ function rsvpmaker_postmark_show_sent_log() {
     $where = ($blog_id > 1) ? ' AND blog_id='.$blog_id : '';
     if(isset($_GET['monthly'])) {
         if($blog_id > 1)
-            $where = ' WHERE blog_id='.$blog_id.' ';
+            $where = ' WHERE blog_id='.intval($blog_id).' ';
         else 
             $where = ($_GET['blog_id']) ? ' WHERE blog_id='.intval($_GET['blog_id']) .' ' : '';
         $order = (isset($_GET['by_volume'])) ? 'total DESC' : 'blog_id, ym DESC';
-        $sql = "SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM `$table` $where group by blog_id, ym order by $order";
+        $sql = $wpdb->prepare("SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM %i $where group by blog_id, ym order by $order",$table);
         $results = $wpdb->get_results($sql);
         if($results) {
             echo '<h2>Monthly Volume</h2>';
@@ -807,7 +809,7 @@ function rsvpmaker_postmark_show_sent_log() {
     echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
     printf('<p>See summary <a href="%s">by month</a> | <a href="%s">by volume</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'));
     $grandtotal = 0;
-    $sql = "SELECT sum(count) total, blog_id FROM `$table` WHERE time > DATE_SUB(NOW(), INTERVAL $days DAY) $where group by blog_id";
+    $sql = $wpdb->prepare("SELECT sum(count) total, blog_id FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) $where group by blog_id",$table,$days);
     $results = $wpdb->get_results($sql);
     foreach($results as $row) {
         $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
@@ -925,11 +927,11 @@ function rsvpmaker_postmark_show_sent_log() {
     printf('<form method="get" action="%s">Showing outgoing message data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> days <button>Change</button></form>',admin_url('edit.php'),$days);
 
     if($blog_id > 1) {
-        $sql = "SELECT * FROM $table WHERE time > DATE_SUB(NOW(), INTERVAL $days DAY) AND blog_id=$blog_id ORDER BY id DESC";
+        $sql = $wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) AND blog_id=%d ORDER BY id DESC",$table, $days, $blog_id);
         $showmulti = false;
     }
     else {
-        $sql = "SELECT * FROM $table  WHERE time > DATE_SUB(NOW(), INTERVAL 31 DAY) ORDER BY id DESC";
+        $sql = $wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL 31 DAY) ORDER BY id DESC",$table);
         $showmulti = is_multisite();
     }
     $results = $wpdb->get_results($sql);
@@ -944,7 +946,7 @@ function rsvpmaker_postmark_show_sent_log() {
     }
     echo '</tbody></table>';
 
-    $sql = "SELECT meta_value from $wpdb->postmeta WHERE meta_key='rsvpmail_postmark_error' ORDER BY meta_id DESC LIMIT 100";
+    $sql = $wpdb->prepare("SELECT meta_value from %i WHERE meta_key='rsvpmail_postmark_error' ORDER BY meta_id DESC LIMIT 100",$wpdb->postmeta);
 
     $results = $wpdb->get_results($sql);
     if($results) {
@@ -1005,7 +1007,7 @@ if(!empty($parts[1]))
     $blog_id = $parts[1];
 if($blog_id > 1)
     $prefix .= $blog_id.'_';
-$sql = "SELECT post_title, post_type FROM ".$prefix."posts WHERE ID=$post_id";
+$sql = $wpdb->prepare("SELECT post_title, post_type FROM %i WHERE ID=%d",$wpdb->posts,$post_id);
 $row = $wpdb->get_row($sql);
 $title = $row->post_title;
 if('rsvpmaker' == $row->post_type)

@@ -4977,13 +4977,13 @@ function rsvpmail_csv_export() {
 
 function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $search = '') {
 	global $wpdb;
-    $table = rsvpmaker_guest_list_table();
-    $table_meta = $table.'_meta';
-    $blocked_list = $wpdb->prefix . "rsvpmailer_blocked";
+    $params = array();
+    $params[] = rsvpmaker_guest_list_table();
+    $params[] = $table.'_meta';
+    $params[] = $wpdb->prefix . "rsvpmailer_blocked";
 
     // build prepared WHERE clauses and params
     $where_clauses = array();
-    $params = array();
 
     if ( $active ) {
         $where_clauses[] = 't.active = %d';
@@ -5008,9 +5008,9 @@ function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $sear
 
     $sql = "
         SELECT t.*, t.email AS user_email, m.meta_value AS segment
-        FROM {$table} AS t
-        LEFT JOIN {$table_meta} AS m ON t.id = m.guest_id
-        LEFT JOIN {$blocked_list} AS b ON t.email = b.email
+        FROM %i AS t
+        LEFT JOIN %i AS m ON t.id = m.guest_id
+        LEFT JOIN %i AS b ON t.email = b.email
         {$where_sql}
         ORDER BY t.email
     ";
@@ -5070,7 +5070,7 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 	$output = '';
 	$id = $exists = $confirmed = 0;
 	$table = rsvpmaker_guest_list_table();
-	$sql = $wpdb->prepare("SELECT * FROM $table where email LIKE %s",$email);
+	$sql = $wpdb->prepare("SELECT * FROM %i where email LIKE %s",$table,$email);
 	$row = $wpdb->get_row($sql);
 	if($row) {
 		$exists = $id = $row->id;
@@ -5087,7 +5087,7 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		$id = $wpdb->insert_id;
 	}
 	if($id && !empty($segment)) {
-		$sql = $wpdb->prepare("SELECT * from ".$table."_meta WHERE guest_id=%d AND meta_key='segment' AND meta_value=%s",$id,$segment);
+		$sql = $wpdb->prepare("SELECT * from %i WHERE guest_id=%d AND meta_key='segment' AND meta_value=%s",$table."_meta",$id,$segment);
 		$row = $wpdb->get_row($sql);
 		if(!$row) {
 			$add = array('guest_id'=>$id,'meta_key'=>'segment','meta_value'=>$segment);
@@ -5123,7 +5123,7 @@ function rsvpmaker_add_contact_segment($id, $segment='') {
 	if($id && !empty($segment)) {
 		$sql = $wpdb->prepare("select * from %i where guest_id=%d and meta_key='segment' and meta_value=%s ",$table."_meta",$id,$segment);
 		if(!$wpdb->get_row($sql)) {
-			$sql = $wpdb->query("insert into %i SET guest_id=%d, meta_key='segment', meta_value=%s ",$table."_meta",$id,$segment);
+			$sql = $wpdb->prepare("insert into %i SET guest_id=%d, meta_key='segment', meta_value=%s ",$table."_meta",$id,$segment);
 			$wpdb->query($sql);	
 		}
 	}
@@ -5225,7 +5225,7 @@ function rsvpmaker_guest_list() {
 		if(isset($_POST['unsegment'])) {
 			$metatable = $table.'_meta';
 			foreach($_POST['unsegment'] as $id => $segment) {
-				$sql = $wpdb->prepare("delete from $metatable where guest_id=%d AND meta_key='segment' AND meta_value=%s",$id,$segment);
+				$sql = $wpdb->prepare("delete from %i where guest_id=%d AND meta_key='segment' AND meta_value=%s",$metatable,$id,$segment);
 				$wpdb->query($sql);
 			}
 		}
@@ -5282,7 +5282,7 @@ function rsvpmaker_guest_list() {
 	}
 
 	if(isset($_POST['edit_email']) && rsvpmaker_verify_nonce()) {
-		$sql = $wpdb->prepare("update $table set email=%s, first_name=%s,last_name=%s WHERE id=%d",sanitize_text_field($_POST['edit_email']),sanitize_text_field($_POST['first_name']),sanitize_text_field($_POST['last_name']),intval($_POST['id']));
+		$sql = $wpdb->prepare("update %i set email=%s, first_name=%s,last_name=%s WHERE id=%d",$table,sanitize_text_field($_POST['edit_email']),sanitize_text_field($_POST['first_name']),sanitize_text_field($_POST['last_name']),intval($_POST['id']));
 		$wpdb->query($sql);
 	}
 

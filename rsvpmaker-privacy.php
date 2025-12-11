@@ -28,14 +28,12 @@ function rsvpmaker_exporter( $email_address, $page = 1 ) {
 	$number = 500; // Limit us to avoid timing out
 
 	$page = (int) $page;
-
+	
 	$start = ( $page > 1 ) ? ( $page - 1 ) * 500 : 0;
 
 	$export_items = array();
 
-	$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE email LIKE '$email_address' ORDER BY event LIMIT $start, " . ( $number + 5 );
-
-	// get rsvps matching that email
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE email LIKE %s ORDER BY event LIMIT %d, %d",$wpdb->prefix . "rsvpmaker",$email_address,$start, $number + 5 );
 
 	$results = $wpdb->get_results( $sql, ARRAY_A );
 
@@ -119,7 +117,7 @@ function rsvpmaker_eraser( $email_address, $page = 1 ) {
 	if(empty($email_address) || !is_email($email_address) )
 		return;
 
-	$sql = 'DELETE FROM ' . $wpdb->prefix . "rsvpmaker WHERE email='$email_address'";
+	$sql = $wpdb->prepare("DELETE FROM %i WHERE email=%s",$wpdb->prefix . "rsvpmaker",$email_address);
 
 	$wpdb->query( $sql );
 

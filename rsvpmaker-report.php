@@ -21,7 +21,6 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 		$guest_check = '';
 
-		$wpdb->show_errors();
 		if(!empty($_POST))
 		$postdata = $_POST;
 
@@ -34,7 +33,8 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 		if(isset($_GET['rsvpsearch'])) {
 			$search = sanitize_text_field($_GET['rsvpsearch']);
-			$sql = "select * from ".$wpdb->prefix.'rsvpmaker'." rsvpmaker JOIN ".$wpdb->prefix.'rsvpmaker_event'." events ON rsvpmaker.event=events.event WHERE email LIKE '%".$search."%' OR last LIKE '%".$search."%' AND master_rsvp='0' ORDER BY events.event DESC ";
+			$sql = $wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE email LIKE %s OR last LIKE '%".$search."%' AND master_rsvp='0' ORDER BY events.event DESC "
+		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%');
 			$results = $wpdb->get_results($sql);
 			foreach($results as $row) {
 				printf('<p>%s %s %s<br /><a href="%s">%s</a></p>',$row->first,$row->last,$row->email,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$row->event.'#rsvprow'.$row->id),$row->post_title);
@@ -62,10 +62,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 				$move_to   = (int) $postdata['move_to'];
 				$moved_post = get_post($move_to);
 				$moved_event = get_rsvpmaker_event($move_to);
-				$sql       = 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET event=$move_to WHERE id=$move_rsvp ";
-				$count = $wpdb->query( $sql );
-				$sql = 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET event=$move_to WHERE master_rsvp=$move_rsvp ";
-				$count += $wpdb->query( $sql );
+				$count = $wpdb->query( $wpdb->prepare("UPDATE %i SET event=%d WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$move_to,$move_rsvp) );
 				printf('<div class="notice notice-info"><p>%d entries moved, see <a href="%s">%s %s</a></p></div>',$count,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$move_to),$moved_post->post_title,rsvpmaker_date($rsvp_options['long_date'],$moved_event->ts_start));
 			}
 		}
@@ -96,9 +93,9 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 			$delete = intval($_GET['delete']);
 
-			$row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE id=$delete" );
+			$row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE id=%d",$wpdb->prefix . "rsvpmaker",$delete) );
 
-			$guests = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE master_rsvp=$delete" );
+			$guests = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE master_rsvp=%d",$wpdb->prefix . "rsvpmaker",$delete) );
 
 			if ( is_array( $guests ) ) {
 
@@ -135,8 +132,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 		}
 
 		if(isset($_GET['allcontacts'])) {
-			$sql = "SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE master_rsvp=0 ORDER BY timestamp desc";
-			$results = $wpdb->get_results($sql,ARRAY_A);
+			$results = $wpdb->get_results($wpdb->prepare("SELECT * FROM  %i WHERE master_rsvp=0 ORDER BY timestamp desc",$wpdb->prefix."rsvpmaker"),ARRAY_A);
 			format_rsvp_details($results);
 			echo '</div>';
 			return;
@@ -152,16 +148,16 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 				echo '<h2>Looking up unpaid records</h2>';
 				$matched = '';
 				$unmatched = '';
-				$unpaid = $wpdb->get_results("SELECT * FROM $wpdb->postmeta WHERE post_id=$eventid AND meta_key='rsvpmaker_unpaid' ");
+				$unpaid = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key='rsvpmaker_unpaid' ",$wpdb->postmeta,$eventid));
 				foreach($unpaid as $unp) {
 					$unpaid_record = unserialize($unp->meta_value);
 					$restore = admin_url("edit.php?post_type=rsvpmaker&page=rsvp_report&event=$eventid&restore_unpaid=$unp->meta_id");
 
-					$match = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$eventid AND email='".$unpaid_record[0]->email."' ");
+					$match = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE event=%d AND email=%s", $wpdb->prefix."rsvpmaker",$eventid,$unpaid_record[0]->email ));
 					$names = [];
 					if($match) {
 						$names[] = $match->first.' '.$match->last;
-						$matchguests = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE event=$eventid AND master_rsvp=$match->id");
+						$matchguests = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE event=%d AND master_rsvp=%d".$wpdb->prefix."rsvpmaker",$eventid,$match->id));
 						foreach($matchguests as $matchg)
 							$names[] = $matchg->first.' '.$matchg->last;
 						$matched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>',$restore,$unpaid_record[0]->id,$unpaid_record[0]->timestamp,$unpaid_record[0]->first,$unpaid_record[0]->last,$unpaid_record[0]->email,$unpaid_record[0]->owed,sizeof($unpaid_record));
@@ -179,7 +175,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 			if(isset($_GET['restore_unpaid'])) {
 				$restore_id = intval($_GET['restore_unpaid']);
-				$unpaid = $wpdb->get_row("SELECT * FROM $wpdb->postmeta WHERE meta_id=$restore_id ");
+				$unpaid = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE meta_id=%d ",$wpdb->postmeta,$restore_id));
 				if($unpaid) {
 					echo '<h2>Restoring unpaid record</h2>';
 					$unpaid_record = unserialize($unpaid->meta_value);
@@ -188,11 +184,11 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 						$restore = (array) $restore;
 						$wpdb->replace($wpdb->prefix.'rsvpmaker',$restore);
 					}
-					$wpdb->query("UPDATE $wpdb->postmeta SET meta_key='rsvpmaker_restored' WHERE meta_id=$restore_id ");	
+					$wpdb->query($wpdb->prepare("UPDATE %i SET meta_key='rsvpmaker_restored' WHERE meta_id=%d ",$wpdb->postmeta,$restore_id));	
 				}
 			}
 
-			$event_row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker_event WHERE event=$eventid" );
+			$event_row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE event=%d",$wpdb->prefix."rsvpmaker_event",$eventid) );
 
 			$date = $event_row->date;
 
@@ -259,9 +255,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 			if ( isset( $_GET['rsvp'] ) ) {
 
-				$sql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE ' . $wpdb->prepare( 'id=%d', intval($_GET['rsvp']) );
-
-				$rsvprow = $wpdb->get_row( $sql, ARRAY_A );
+				$rsvprow = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE id=%d",$wpdb->prefix.'rsvpmaker',$_GET['rsvp']), ARRAY_A );
 
 				if ( $rsvprow ) {
 
@@ -334,19 +328,13 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 			if( !isset( $_GET['rsvp_order'] ) || ( $_GET['rsvp_order'] == 'host' ) )
 			{
 				$order = isset($_GET['latest']) ? ' timestamp DESC ' : ' yesno DESC, last, first ';
-				$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$eventid AND master_rsvp=0 ORDER BY ".$order;
-				$wpdb->show_errors();
-				$results = $wpdb->get_results( $sql, ARRAY_A );	
+				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d AND master_rsvp=0 ORDER BY ".$order,$wpdb->prefix."rsvpmaker",$eventid), ARRAY_A );	
 				format_rsvp_details( $results, true, true );	
 			}
 			else {
 				$rsvp_order = ( isset( $_GET['rsvp_order'] ) && ( $_GET['rsvp_order'] == 'alpha' ) ) ? ' ORDER BY yesno DESC, last, first' : ' ORDER BY yesno DESC, timestamp DESC';
 
-				$sql = 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$eventid $rsvp_order";
-
-				$wpdb->show_errors();
-
-				$results = $wpdb->get_results( $sql, ARRAY_A );
+				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d".$rsvp_order,$wpdb->prefix . "rsvpmaker",$wpdb->prefix . "rsvpmaker"), ARRAY_A );
 
 				format_rsvp_details( $results );	
 			}
@@ -374,7 +362,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 				foreach ( $future as $f ) {
 
-					$sql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE event=' . $f->ID . ' ORDER BY yesno DESC, timestamp DESC';
+					$sql = $wpdb->prepare("SELECT * FROM %i WHERE event=%d ORDER BY yesno DESC, timestamp DESC",$wpdb->prefix . "rsvpmaker",$f->ID);
 
 					$wpdb->show_errors();
 
@@ -515,7 +503,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 				foreach ( $events as $post_id => $event ) {
 
-					$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE yesno=1 AND event=' . intval( $post_id );
+					$sql = $wpdb->prepare('SELECT count(*) FROM %i WHERE yesno=1 AND event=%d',$wpdb->prefix . 'rsvpmaker',$post_id);
 
 					if ( $rsvpcount = $wpdb->get_var( $sql ) ) {
 						$eventlist .= "<h3>$event</h3>";
@@ -529,7 +517,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 				foreach ( $past_events as $post_id => $event ) {
 
-					$sql = 'SELECT count(*) FROM ' . $wpdb->prefix . 'rsvpmaker WHERE yesno=1 AND event=' . intval( $post_id );
+					$sql = $wpdb->prepare('SELECT count(*) FROM %i WHERE yesno=1 AND event=%d',$wpdb->prefix . 'rsvpmaker',$post_id);
 
 					if ( $rsvpcount = $wpdb->get_var( $sql ) ) {
 						$pastlist .= "<h3>$event</h3>";
@@ -752,7 +740,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 			echo '</p>';
 
 			if ( $update ) {
-				$sql = $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'rsvpmaker SET details=%s WHERE id=%d', serialize( $newdetails ), $row['id'] );
+				$sql = $wpdb->prepare( 'UPDATE %i SET details=%s WHERE id=%d',$wpdb->prefix . 'rsvpmaker', serialize( $newdetails ), $row['id'] );
 				$wpdb->query( $sql );
 			}
 
@@ -917,7 +905,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 
 		if ( is_admin() && ! isset( $_GET['rsvp_print'] ) ) {
 			$event_id = isset($_GET['event']) ? intval($_GET['event']) : 0;
-			$results = $wpdb->get_results("select * from ".$wpdb->prefix."rsvpmaker where event=$event_id AND master_rsvp=0 ORDER BY last, first");
+			$results = $wpdb->get_results($wpdb->prepare("select * from %i where event=%d AND master_rsvp=0 ORDER BY last, first",$wpdb->prefix."rsvpmaker",$event_id));
 				foreach ( $results as $row ) {
 					$options .= sprintf( '<option value="%d">%s</option>', $row->id, esc_html( $row->first.' '.$row->last ) );
 				}
@@ -1012,7 +1000,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 	} else {
 
-		$row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE id=' . $id, ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare('SELECT * FROM %i WHERE id=%d',$wpdb->prefix . 'rsvpmaker', $id), ARRAY_A );
 
 		$profile = rsvp_row_to_profile( $row );
 
@@ -1147,7 +1135,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 															for ( $i = 0; ( $slot = rsvpmaker_mktime( $hour, $minutes + ( $i * $min_add ), 0, $month, $day, $year ) ) < $dur; $i++ ) {
 
-																$sql = 'SELECT SUM(participants) FROM ' . $wpdb->prefix . "rsvp_volunteer_time WHERE time=$slot AND event = $post->ID";
+																$sql = $wpdb->prepare("SELECT SUM(participants) from %i WHERE time=%d AND event = %d",$wpdb->prefix . "rsvp_volunteer_time",$slot,$post->ID);
 
 																$signups = ( $signups = $wpdb->get_var( $sql ) ) ? $signups : 0;
 
@@ -1394,7 +1382,7 @@ function rsvp_report_unpaid() {
 
 		$is_rsvp_report = true;
 
-		$sql = "select * from ".$wpdb->prefix.'rsvpmaker_event'." where date > CURDATE() order by date";
+		$sql = $wpdb->prepare("select * from %i where date > CURDATE() order by date",$wpdb->prefix.'rsvpmaker_event');
 
 		$events = $wpdb->get_results($sql);
 

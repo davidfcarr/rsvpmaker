@@ -229,7 +229,7 @@ function rsvpmaker_create_post_type() {
 	$model_version = 1;
 	if(empty($rsvp_options['model_version']) || $rsvp_options['model_version'] < $model_version) {
 		global $wpdb;
-		$wpdb->query("update $wpdb->posts set post_type='rsvpmaker_form' WHERE post_type='rsvpmaker' AND post_content LIKE '%wp:rsvpmaker/formfield%' ");
+		$wpdb->query($wpdb->prepare("update %i set post_type='rsvpmaker_form' WHERE post_type='rsvpmaker' AND post_content LIKE %s ",$wpdb->posts,'%wp:rsvpmaker/formfield%'));
 		$rsvp_options['model_version'] = $model_version;
 		update_option('RSVPMAKER_Options',$rsvp_options);
 	}

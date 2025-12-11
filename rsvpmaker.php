@@ -540,9 +540,9 @@ $result = dbDelta($sql);
 error_log('rsvpmaker dbDelata '.var_export($result,true));
 rsvpmail_problem_init();
 
-	$sql = 'SELECT slug FROM ' . $wpdb->prefix . 'terms JOIN `' . $wpdb->prefix . 'term_taxonomy` on ' . $wpdb->prefix . 'term_taxonomy.term_id= ' . $wpdb->prefix . "terms.term_id WHERE taxonomy='rsvpmaker-type' AND slug='featured'";
+	
 
-	if ( ! $wpdb->get_var( $sql ) ) {
+	if ( ! $wpdb->get_var( $wpdb->prepare('SELECT slug FROM %i terms JOIN %i term_taxonomy on term_taxonomy.term_id=terms.term_id WHERE taxonomy="rsvpmaker-type" AND slug="featured"',$wpdb->prefix.'terms',$wpdb->prefix.'term_taxonomy') ) ) {
 
 		wp_insert_term(
 			'Featured', // the term
@@ -811,7 +811,7 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 		}
 	}
 
-	$wpdb->query( 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id " );
+	$wpdb->query( $wpdb->prepare("UPDATE %i SET amountpaid=%s WHERE id=%d ",$wpdb->prefix.'rsvpmaker',$paid,$rsvp_id) );
 
 	add_post_meta( $event, '_stripe_' . $tx_id, $charge );
 
@@ -821,7 +821,7 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 
 	delete_post_meta( $event, '_invoice_' . $rsvp_id );
 
-	$row = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "rsvpmaker WHERE id=$rsvp_id ", ARRAY_A );
+	$row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE id=%d",$wpdb->prefix.'rsvpmaker',$rsvp_id), ARRAY_A );
 
 	$message = sprintf( '<p>%s ' . __( 'payment for', 'rsvpmaker' ) . ' %s %s ' . __( ' c/o Stripe transaction', 'rsvpmaker' ) . ' %s<br />' . __( 'Post ID', 'rsvpmaker' ) . ': %s<br />' . __( 'Time', 'rsvpmaker' ) . ': %s</p>', esc_html( $charge ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $tx_id ), esc_html( $event ), date( 'r' ) );
 
