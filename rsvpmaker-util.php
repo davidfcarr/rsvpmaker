@@ -1310,7 +1310,7 @@ function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT 
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
 
-	$sql = $wpdb->prepare("SELECT posts.ID, posts.post_title, posts.post_status, posts.post_author, posts.post_modified, posts.ID as postID, events.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted FROM %i posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN %i events ON events.event = posts.ID WHERE date > %s AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=%d ORDER BY date " . $order.", post_modified DESC",$wpdb->posts,$event_table,et_sql_curdate(),$template_id);
+	$sql = $wpdb->prepare("SELECT posts.ID, posts.post_title, posts.post_status, posts.post_author, posts.post_modified, posts.ID as postID, events.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted FROM %i posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN %i events ON events.event = posts.ID WHERE date > %s AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=%d ORDER BY date " . $order.", post_modified DESC",$wpdb->posts,$event_table,get_sql_curdate(),$template_id);
 
 	$wpdb->show_errors();
 	return $wpdb->get_results( $sql, $output );
@@ -2413,7 +2413,7 @@ if ( isset( $_POST['rsvpmaker_database_check'] )  && wp_verify_nonce(rsvpmaker_n
 
 	rsvpmaker_event_dates_table_update(true);
 
-	echo '<div class="notice notice-success"><p>Checking that '.$wpdb->prefix.'resvpmaker_event table is complete</p></div>';
+	echo '<div class="notice notice-success"><p>Checking that '.esc_attr($wpdb->prefix).'resvpmaker_event table is complete</p></div>';
 
 }
 if ( isset( $_POST['rsvpmaker_template_duplicates'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {

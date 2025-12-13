@@ -232,19 +232,19 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   ob_start();
   ?>
   <script
-      src="https://www.paypal.com/sdk/js?client-id=<?php echo $paypal_client_id.'&currency='.$currency_code; echo $enable_funding.$disable_funding;?>">
+      src="<?php echo esc_url('https://www.paypal.com/sdk/js?client-id='.$paypal_client_id.'&currency='.$currency_code.$enable_funding.$disable_funding);?>">
   </script>
   <script>
     var purchase = {
-          custom_id: '<?php echo $rsvp_id; ?>',
+          custom_id: '<?php echo intval($rsvp_id); ?>',
           <?php if($invoice_id) {
-            echo "invoice_id: '".$invoice_id."',\n";
+            echo "invoice_id: '".esc_js($invoice_id)."',\n";
           }
           ?>
-          description: '<?php echo $description; ?>',
+          description: '<?php echo esc_js($description); ?>',
             amount: {
-              value: '<?php echo $amount; ?>',
-              currency_code: '<?php echo $currency_code; ?>',
+              value: '<?php echo esc_js($amount); ?>',
+              currency_code: '<?php echo esc_js($currency_code); ?>',
             },
           };
     paypal.Buttons({
@@ -255,12 +255,12 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       },
       onApprove: function(data, actions) {
         return actions.order.capture().then(function(details) {
-          details.rsvp_tx = '<?php echo $transaction_code; ?>';
-          details.user_id = '<?php if(isset($current_user->ID)) echo $current_user->ID; ?>';
+          details.rsvp_tx = '<?php echo esc_js($transaction_code); ?>';
+          details.user_id = '<?php if(isset($current_user->ID)) echo esc_js($current_user->ID); ?>';
           result = 'Recording transaction by ' + details.payer.name.given_name+'... ';
           document.getElementById("paypal-button-container").innerHTML = result;
           // Call your server to save the transaction
-          return fetch('<?php echo $verify; ?>', {
+          return fetch('<?php echo esc_url($verify); ?>', {
             method: 'post',
             headers: {
               'content-type': 'application/json'

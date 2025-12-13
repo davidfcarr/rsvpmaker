@@ -574,12 +574,12 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 			$event = get_rsvpmaker_event($row['event']);
 			printf('<h2>%s %s</h2>',$event->post_title,rsvpmaker_date($rsvp_options['long_date'],intval($event->ts_start)));
 		}
-		echo '<h3 id="rsvprow'.$row['id'].'">' . esc_html( $row['yesno'] . ' ' . $row['first'] . ' ' . $row['last'] . ' ' . $row['email'] );
+		echo '<h3 id="rsvprow'.intval($row['id']).'">' . esc_html( $row['yesno'] . ' ' . $row['first'] . ' ' . $row['last'] . ' ' . $row['email'] );
 	}
 	else {
 		if(isset($_GET['allcontacts']))
 			echo '<h2>Contact Form</h2>';
-		echo '<h3 id="rsvprow'.$row['id'].'">'. esc_html($row['first'] . ' ' . $row['last'] . ' ' . $row['email']);
+		echo '<h3 id="rsvprow'.intval($row['id']).'">'. esc_html($row['first'] . ' ' . $row['last'] . ' ' . $row['email']);
 	}
 
 	if ( $row['guestof'] ) {
@@ -637,7 +637,7 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 			printf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>',$url,$url);
 			if ( $owed > 0 ) {
 				if(is_admin()) {
-					echo '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $row['event'] ) . '"><input name="markpaid[' . intval($row['id']) . ']" type="text" id="markpaid_' . $row['id'] . '"  value="' . $owed . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . $rsvp_id . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.rsvpmaker_nonce('return').'</form>';	
+					echo '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . intval($row['event']) ) . '"><input name="markpaid[' . intval($row['id']) . ']" type="text" id="markpaid_' . $row['id'] . '"  value="' . $owed . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . intval($rsvp_id) . '" ><input type="submit" name="Submit" value="' . __( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.rsvpmaker_nonce('return').'</form>';	
 				}
 					$owed_list = sprintf( '<p><input type="checkbox" name="markpaid[%s]" value="%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_html( $owed ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $owed ), __( 'Owed', 'rsvpmaker' ) );
 			}
@@ -747,7 +747,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 			if ( ! isset( $_GET['rsvp_print'] ) && current_user_can( 'edit_others_posts' ) && $editor_options ) {
 				$editlink = ($row['master_rsvp']) ? '' : sprintf( '<a href="%s&edit_rsvp=%d">Edit %s %s</a> | ', admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$post->ID, $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
 
-				echo sprintf( '<p>%s <a href="%s&delete=%d">Delete %s %s</a></p>', $editlink, admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report', $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
+				echo sprintf( '<p>%s <a href="%s&delete=%d">Delete %s %s</a></p>', $editlink, admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report', intval($row['id']), esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
 			}
 
 			$userrsvps[] = $row['user_id'];
