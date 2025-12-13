@@ -33,9 +33,9 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 		if(isset($_GET['rsvpsearch'])) {
 			$search = sanitize_text_field($_GET['rsvpsearch']);
-			$sql = $wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE email LIKE %s OR last LIKE '%".$search."%' AND master_rsvp='0' ORDER BY events.event DESC "
-		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%');
-			$results = $wpdb->get_results($sql);
+			
+			$results = $wpdb->get_results($wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE email LIKE %s OR last LIKE %s AND master_rsvp='0' ORDER BY events.event DESC "
+		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%'));
 			foreach($results as $row) {
 				printf('<p>%s %s %s<br /><a href="%s">%s</a></p>',$row->first,$row->last,$row->email,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$row->event.'#rsvprow'.$row->id),$row->post_title);
 			}
@@ -327,14 +327,14 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 			if( !isset( $_GET['rsvp_order'] ) || ( $_GET['rsvp_order'] == 'host' ) )
 			{
-				$order = isset($_GET['latest']) ? ' timestamp DESC ' : ' yesno DESC, last, first ';
-				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d AND master_rsvp=0 ORDER BY ".$order,$wpdb->prefix."rsvpmaker",$eventid), ARRAY_A );	
+				
+				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d AND master_rsvp=0 ORDER BY ".(isset($_GET['latest']) ? ' timestamp DESC ' : ' yesno DESC, last, first '),$wpdb->prefix."rsvpmaker",$eventid), ARRAY_A );	
 				format_rsvp_details( $results, true, true );	
 			}
 			else {
-				$rsvp_order = ( isset( $_GET['rsvp_order'] ) && ( $_GET['rsvp_order'] == 'alpha' ) ) ? ' ORDER BY yesno DESC, last, first' : ' ORDER BY yesno DESC, timestamp DESC';
+				
 
-				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d".$rsvp_order,$wpdb->prefix . "rsvpmaker",$wpdb->prefix . "rsvpmaker"), ARRAY_A );
+				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d ".( isset( $_GET['rsvp_order'] ) && ( $_GET['rsvp_order'] == 'alpha' ) ) ? ' ORDER BY yesno DESC, last, first' : ' ORDER BY yesno DESC, timestamp DESC',$wpdb->prefix . "rsvpmaker",$wpdb->prefix . "rsvpmaker"), ARRAY_A );
 
 				format_rsvp_details( $results );	
 			}
@@ -362,11 +362,11 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 				foreach ( $future as $f ) {
 
-					$sql = $wpdb->prepare("SELECT * FROM %i WHERE event=%d ORDER BY yesno DESC, timestamp DESC",$wpdb->prefix . "rsvpmaker",$f->ID);
+					
 
-					$wpdb->show_errors();
+					
 
-					$rsvps = $wpdb->get_results( $sql, ARRAY_A );
+					$rsvps = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d ORDER BY yesno DESC, timestamp DESC",$wpdb->prefix . "rsvpmaker",$f->ID), ARRAY_A );
 
 					if ( ! empty( $rsvps ) ) {
 
@@ -503,9 +503,9 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 				foreach ( $events as $post_id => $event ) {
 
-					$sql = $wpdb->prepare('SELECT count(*) FROM %i WHERE yesno=1 AND event=%d',$wpdb->prefix . 'rsvpmaker',$post_id);
 
-					if ( $rsvpcount = $wpdb->get_var( $sql ) ) {
+
+					if ( $rsvpcount = $wpdb->get_var( $wpdb->prepare('SELECT count(*) FROM %i WHERE yesno=1 AND event=%d',$wpdb->prefix . 'rsvpmaker',$post_id) ) ) {
 						$eventlist .= "<h3>$event</h3>";
 						$eventlist .= '<p><a href="' . admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . intval( $post_id ) . '">' . __( 'RSVP', 'rsvpmaker' ) . ' ' . __( 'Yes', 'rsvpmaker' ) . ': ' . $rsvpcount . '</a></p>';
 					}
@@ -516,10 +516,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 			if ( ! empty( $past_events ) ) {
 
 				foreach ( $past_events as $post_id => $event ) {
-
-					$sql = $wpdb->prepare('SELECT count(*) FROM %i WHERE yesno=1 AND event=%d',$wpdb->prefix . 'rsvpmaker',$post_id);
-
-					if ( $rsvpcount = $wpdb->get_var( $sql ) ) {
+					if ( $rsvpcount = $wpdb->get_var( $wpdb->prepare('SELECT count(*) FROM %i WHERE yesno=1 AND event=%d',$wpdb->prefix . 'rsvpmaker',$post_id) ) ) {
 						$pastlist .= "<h3>$event</h3>";
 						$pastlist .= '<p><a href="' . admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event=' . intval( $post_id ) . '">' . __( 'RSVP', 'rsvpmaker' ) . ' ' . __( 'Yes', 'rsvpmaker' ) . ': ' . $rsvpcount . '</a></p>';
 					}

@@ -1916,9 +1916,9 @@ function event_content( $content, $formonly = false, $form = '' ) {
 
 			if ( ! isset( $_GET['rsvp'] ) ) {
 
-				$guestsql = 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE master_rsvp=' . $rsvprow['id'];
+				
 
-				if ( $results = $wpdb->get_results( $guestsql, ARRAY_A ) ) {
+				if ( $results = $wpdb->get_results( $wpdb->prepare('SELECT * FROM %i WHERE master_rsvp=%d', $wpdb->prefix . 'rsvpmaker', $rsvprow['id']), ARRAY_A ) ) {
 
 					$rsvpconfirm .= '<p>' . __( 'Guests', 'rsvpmaker' ) . ':</p>';
 
@@ -2010,9 +2010,9 @@ function event_content( $content, $formonly = false, $form = '' ) {
 
 		// check for responses so far
 
-		$sql = 'SELECT first,last,note FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=$post->ID AND yesno=1 ORDER BY id DESC";
 
-		$attendees = $wpdb->get_results( $sql );
+
+		$attendees = $wpdb->get_results( $wpdb->prepare('SELECT first,last,note FROM %i WHERE event=%d AND yesno=1 ORDER BY id DESC',$wpdb->prefix . 'rsvpmaker',$post->ID) );
 
 		$total = sizeof( $attendees ); // (int) $wpdb->get_var($sql);
 
@@ -3576,8 +3576,8 @@ function rsvpmaker_template_list() {
 				if(!empty($keysql))
 					$sql .= '( '.$keysql.' )';
 
-				$sql = $wpdb->prepare($sql,$params);
-				$results = $wpdb->get_results( $sql,$params );
+				
+				$results = $wpdb->get_results( $wpdb->prepare($sql,$params) );
 
 				if ( is_array( $results ) ) {
 
@@ -3615,10 +3615,7 @@ function rsvpmaker_template_list() {
 				wp_update_post( $newpost );
 
 				printf( '<h1>Template updated based on contents of event for %s</h1>', rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) );
-
-				$sql = $wpdb->prepare("select * from %i WHERE post_id=%d",$wpdb->postmeta,$e);
-
-				$results = $wpdb->get_results( $sql );
+				$results = $wpdb->get_results( $wpdb->prepare("select * from %i WHERE post_id=%d",$wpdb->postmeta,$e) );
 
 				$docopy = array( '_add_timezone', '_convert_timezone', '_calendar_icons', 'tm_sidebar', 'sidebar_officers' );
 

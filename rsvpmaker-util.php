@@ -440,7 +440,7 @@ function get_rsvpmaker_event( $post_id ) {
 		{
 
 			$row->ts_end = rsvpmaker_strtotime($row->enddate);
-			$wpdb->query($wpdb->prepare("UPDATE %i SET ts_end=$row->ts_end WHERE event=%d",$wpdb->prefix . "rsvpmaker_event",$post_id));
+			$wpdb->query($wpdb->prepare("UPDATE %i SET ts_end=%d WHERE event=%d",$wpdb->prefix . "rsvpmaker_event",$row->ts_end,$post_id));
 
 		}
 
@@ -1191,13 +1191,13 @@ function get_rsvp_event( $where = '', $output = OBJECT ) {
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
 
-	$sql = $wpdb->prepare("SELECT DISTINCT $wpdb->posts.ID as postID, *
+	$sql = "SELECT DISTINCT $wpdb->posts.ID as postID, *
 
 	 FROM %i posts
 
 	 JOIN %i events ON posts.ID = events.event 
 
-	 WHERE (post_status='publish' OR post_status='draft') ",$wpdb->posts,$event_table);
+	 WHERE (post_status='publish' OR post_status='draft') ";
 
 	if ( empty( $where ) ) {
 
@@ -1209,7 +1209,7 @@ function get_rsvp_event( $where = '', $output = OBJECT ) {
 
 	$sql .= ' ORDER BY date ';
 
-	return $wpdb->get_row( $sql );
+	return $wpdb->get_row( $wpdb->prepare($sql,$wpdb->posts,$event_table) );
 
 }
 function get_events_rsvp_on( $limit = 0 ) {
@@ -1310,18 +1310,18 @@ function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT 
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
 
-	$sql = $wpdb->prepare("SELECT posts.ID, posts.post_title, posts.post_status, posts.post_author, posts.post_modified, posts.ID as postID, events.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted FROM %i posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN %i events ON events.event = posts.ID WHERE date > %s AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=%d ORDER BY date " . $order.", post_modified DESC",$wpdb->posts,$event_table,get_sql_curdate(),$template_id);
+	
 
 	$wpdb->show_errors();
-	return $wpdb->get_results( $sql, $output );
+	return $wpdb->get_results( $wpdb->prepare("SELECT posts.ID, posts.post_title, posts.post_status, posts.post_author, posts.post_modified, posts.ID as postID, events.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted FROM %i posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN %i events ON events.event = posts.ID WHERE date > %s AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=%d ORDER BY date " . $order.", post_modified DESC",$wpdb->posts,$event_table,get_sql_curdate(),$template_id), $output );
 }
 function rsvpmaker_next_by_template( $template_id, $order = 'ASC', $output = OBJECT ) {
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
 	$wpdb->show_errors();
-	return $wpdb->get_row( $wpdb->prepare("SELECT DISTINCT $wpdb->posts.ID as postID, $wpdb->posts.*, $event_table.*, date as datetime, date_format(date,'%M %e, %Y') as dateformatted, a2.meta_value as template
+	return $wpdb->get_row( $wpdb->prepare("SELECT DISTINCT posts.ID as postID, posts.*, events.*, date as datetime, date_format(date,'%M %e, %Y') as dateformatted, a2.meta_value as template
 	 FROM %i posts
-	 JOIN %i events  ON posts=events.event
+	 JOIN %i events  ON posts.ID=events.event
 	 JOIN %i a2 ON posts.ID =a2.post_id AND a2.meta_key='_meet_recur' AND a2.meta_value=%d 
 	 WHERE date > %s AND (post_status='publish' OR post_status='draft')
 	 ORDER BY date " . $order,$wpdb->posts,$event_table,$wpdb->postmeta,$template_id, get_sql_curdate()), $output );
@@ -1373,9 +1373,7 @@ function rsvpmaker_get_templates( $criteria = '', $include_drafts = false ) {
 
 	$templates = array();
 
-	$status_sql = ($include_drafts) ? "(post_status='publish' OR post_status='draft')" : "post_status='publish'";
-
-	$results   = $wpdb->get_results( $wpdb->prepare("SELECT posts.*, meta_value as sked FROM %i posts JOIN %i meta ON meta.post_id = posts.ID WHERE post_type='rsvpmaker_template' AND `meta_key` REGEXP '_sked_[A-Z].+' and meta_value AND $status_sql $criteria GROUP BY posts.ID ORDER BY post_title",$wpdb->posts,$wpdb->postmeta) );
+	$results   = $wpdb->get_results( $wpdb->prepare("SELECT posts.*, meta_value as sked FROM %i posts JOIN %i meta ON meta.post_id = posts.ID WHERE post_type='rsvpmaker_template' AND `meta_key` REGEXP '_sked_[A-Z].+' AND ".(($include_drafts) ? "(post_status='publish' OR post_status='draft')" : "post_status='publish'")." $criteria ORDER BY post_title",$wpdb->posts,$wpdb->postmeta) );
 
 	foreach ( $results as $template ) {
 
@@ -1407,15 +1405,8 @@ function get_events_by_author( $author, $limit = '', $status = '' ) {
 
 	$wpdb->show_errors();
 
-	if ( $status == 'publish' ) {
-
-		$status_sql = " AND post_status='publish' ";
-
-	} else {
-		$status_sql = " AND (p.post_status='publish' OR p.post_status='draft') ";
-	}
 	$sql = $wpdb->prepare("SELECT * FROM %i p JOIN %i  e ON p.ID =e.event
-	 WHERE p.post_author=%d AND e.date > %s " . $status_sql. ' ORDER BY date ',$wpdb->posts,$table,$author,get_sql_now());
+	 WHERE p.post_author=%d AND e.date > %s " . (( $status == 'publish' ) ? " AND post_status='publish' " : " AND (p.post_status='publish' OR p.post_status='draft') ") . ' ORDER BY date ',$wpdb->posts,$table,$author,get_sql_now());
 	if ( ! empty( $limit ) ) {
 
 		$sql .= ' LIMIT 0,' . intval($limit) . ' ';
@@ -1451,13 +1442,12 @@ function rsvpmaker_week_reminders() {
 
 	$enddate = ' DATE_ADD(NOW(),INTERVAL 1 WEEK) ';
 
-		$sql = $wpdb->prepare("SELECT DISTINCT ID, $wpdb->posts.ID as postID, $event_table.*, date as datetime, date_format(date,'%M %e, %Y') as dateformatted,
+		return $wpdb->get_results( $wpdb->prepare("SELECT DISTINCT ID, $wpdb->posts.ID as postID, $event_table.*, date as datetime, date_format(date,'%M %e, %Y') as dateformatted,
 		a2.meta_key as slug, a2.meta_value as reminder_post_id
 		 FROM %i posts
 		 JOIN %i events ON posts.ID =events.event
 		 JOIN %i a2 ON posts.ID =a2.post_id AND a2.meta_key LIKE %s
-		 WHERE date > %s AND enddate < %s AND post_status='publish' ORDER BY date ",$wpdb->posts,$event_table,$wpdb->postmeta,'_rsvp_reminder_msg_%',$startfrom,$enddate);
-		return $wpdb->get_results( $sql );
+		 WHERE date > %s AND enddate < %s AND post_status='publish' ORDER BY date ",$wpdb->posts,$event_table,$wpdb->postmeta,'_rsvp_reminder_msg_%',$startfrom,$enddate) );
 
 }
 
@@ -1736,58 +1726,46 @@ function count_future_events() {
 	$table = get_rsvpmaker_event_table();
 
 	$wpdb->show_errors();
-	$sql = $wpdb->prepare("SELECT COUNT(*) FROM %i events JOIN %i posts ON posts.ID = events.event WHERE date > %s AND post_status='publish' "
-,$table, $wpdb->posts,get_sql_now());
-
-	return $wpdb->get_var( $sql );
+	return $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM %i events JOIN %i posts ON posts.ID = events.event WHERE date > %s AND post_status='publish' "
+,$table, $wpdb->posts,get_sql_now()) );
 
 }
 
 function count_recent_posts( $blog_weeks_ago = 1 ) {
 	global $wpdb;
 	$week_ago_stamp = rsvpmaker_strtotime( '-' . $blog_weeks_ago . ' week' );
-	$sql = $wpdb->prepare("SELECT COUNT(*)
+	return $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*)
 	 FROM %i
-	 WHERE post_type='post' AND post_status='publish' AND post_date > %s",$wpdb->posts, date( 'Y-m-d H:i:s', $week_ago_stamp ));
-	return $wpdb->get_var( $sql );
+	 WHERE post_type='post' AND post_status='publish' AND post_date > %s",$wpdb->posts, date( 'Y-m-d H:i:s', $week_ago_stamp )) );
 }
-function rsvpmaker_get_past_events( $where = '', $limit = '', $output = OBJECT ) {
+function rsvpmaker_get_past_events( $where = '', $limit = 100, $output = OBJECT ) {
 	global $wpdb;
 	$table = $wpdb->prefix.'rsvpmaker_event';
 	$wpdb->show_errors();
-	$sql = $wpdb->prepare("SELECT DISTINCT *, date as datetime, date_format(date,'%M %e, %Y') as dateformatted
+	$sql = "SELECT DISTINCT *, date as datetime, date_format(date,'%M %e, %Y') as dateformatted
 	 FROM %i posts
 	 JOIN %i events ON posts.ID = events.event 
-	 WHERE date < %s AND post_status='publish' ",$wpdb->posts, $table ,get_sql_now());
+	 WHERE date < %s AND post_status='publish' ";
 	if ( ! empty( $where ) ) {
 		$where = trim( $where );
 		$sql .= ' AND ' . $where . ' ';
 	}
-	$sql .= ' ORDER BY date DESC';
-	if ( ! empty( $limit ) ) {
-		$sql .= ' LIMIT 0,' . $limit . ' ';
-
-	}
-	error_log($sql);
-	return $wpdb->get_results( $sql );
+	$sql .= ' ORDER BY date DESC LIMIT 0, %d';
+	return $wpdb->get_results( $wpdb->prepare($sql,$wpdb->posts, $table ,get_sql_now(),$limit) );
 }
-function get_past_rsvp_events( $where = '', $limit = '', $output = OBJECT ) {
+function get_past_rsvp_events( $where = '', $limit = 100, $output = OBJECT ) {
 	global $wpdb;
 
 	$table = $wpdb->prefix.'rsvpmaker_event';
 	$wpdb->show_errors();
-	$sql = $wpdb->prepare("SELECT DISTINCT *, date as datetime, event as ID, date_format(date,'%M %e, %Y') as dateformatted
-	 FROM %i WHERE date < %s", $table,get_sql_now());
+	$sql = "SELECT DISTINCT *, date as datetime, event as ID, date_format(date,'%M %e, %Y') as dateformatted
+	 FROM %i WHERE date < %s";
 	if ( ! empty( $where ) ) {
 		$where = trim( $where );
 		$sql .= ' AND ' . $where . ' ';
 	}
-	$sql .= ' ORDER BY date DESC';
-	if ( ! empty( $limit ) ) {
-		$sql .= ' LIMIT 0,' . $limit . ' ';
-	}
-
-	$results = $wpdb->get_results( $sql );
+	$sql .= ' ORDER BY date DESC LIMIT 0, %d';
+	$results = $wpdb->get_results( $wpdb->prepare($sql, $table,get_sql_now(),$limit) );
 
 	return $results;
 }

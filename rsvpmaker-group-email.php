@@ -945,8 +945,8 @@ function rsvpmaker_relay_queue_monitor () {
 		$sql = "DELETE FROM $wpdb->postmeta where post_id=".intval($_GET['cancel'])." AND meta_key='rsvprelay_to' ";
 		$result = $wpdb->query($sql);
 	}
-	$sql = "SELECT ID, post_title, $wpdb->postmeta.meta_key, $wpdb->postmeta.meta_value FROM $wpdb->posts JOIN $wpdb->postmeta on $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND (meta_key LIKE 'rsvpmail%' OR meta_key LIKE 'rsvprelay%') ORDER BY ID DESC";
-	$results = $wpdb->get_results($sql);
+	
+	$results = $wpdb->get_results($wpdb->prepare("SELECT ID, post_title, meta_key, meta_value FROM %i posts JOIN %i meta on posts.ID = meta.post_id WHERE post_type='rsvpemail' AND (post_status='draft' OR post_status='publish'  OR post_status='rsvpmessage') AND (meta_key LIKE 'rsvpmail%' OR meta_key LIKE 'rsvprelay%') ORDER BY ID DESC",$wpdb->posts,$wpdb->postmeta));
 	$was = 0;
 	$action = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_relay_queue_monitor&cancel=');
 	echo '<h2>In Queue / Sent</h2>';

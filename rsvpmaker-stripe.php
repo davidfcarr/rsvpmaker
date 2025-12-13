@@ -740,7 +740,7 @@ function stripe_latest_logged() {
 	if ( ! $wpdb->get_results( "show tables like '$stripetable' " ) ) {
 		stripe_balance_history( 200, false );
 	}
-	return $wpdb->get_var( "SELECT date FROM $stripetable ORDER BY date DESC" );
+	return $wpdb->get_var( $wpdb->prepare("SELECT date FROM %i ORDER BY date DESC",$stripetable) );
 }
 
 function rsvpmaker_stripe_transactions_list( $limit = 50, $where = '' ) {
@@ -752,8 +752,7 @@ function rsvpmaker_stripe_transactions_list( $limit = 50, $where = '' ) {
 function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
 	global $wpdb;
 	$stripetable = rsvpmaker_money_table();
-	$where       = ( $recent ) ? ' AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ' : '';
-	return $wpdb->get_results( "SELECT * FROM $stripetable WHERE user_id=0 $where ORDER BY date DESC" );
+	return $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE user_id=0 ".( $recent ) ? ' AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ' : ''." ORDER BY date DESC",$stripetable) );
 }
 
 function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = '' ) {
@@ -762,10 +761,10 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
 		return;
 	}
-	$where       = ( $start_date ) ? " AND date > '$start_date' " : '';
+	
 	$stripetable  = rsvpmaker_money_table();
-	$sql         = "SELECT * FROM $stripetable WHERE user_id=$user_id $where ORDER BY date DESC";
-	return $wpdb->get_row( $sql );
+	
+	return $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE user_id=%d ".( $start_date ) ? " AND date > '$start_date' " : ''." ORDER BY date DESC",$stripetable,$user_id) );
 }
 
 add_action( 'stripe_balance_history_cron', 'stripe_balance_history_cron' );
@@ -843,8 +842,8 @@ function stripe_balance_history( $limit = 20 ) {
 		$user                          = get_user_by( 'email', $email );
 		$user_id                       = ( empty( $user->ID ) ) ? 0 : $user->ID;
 		$tablerow[ $date . $data->id ] = "$date,$name,$email,$description,$amount,$fee,$yield\n";
-		$sql                           = "select transaction_id FROM $stripetable WHERE transaction_id='$data->id'";
-		$check                         = $wpdb->get_var( $sql );
+		
+		$check                         = $wpdb->get_var( $wpdb->prepare("select transaction_id FROM %i WHERE transaction_id=%s",$stripetable,$data->id) );
 		// echo '<div>check: '.$sql.'<br />'.$check.'</div>';
 		if ( ! $check ) {
 			$snv = array(

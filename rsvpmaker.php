@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.6.7
+* Version: 11.6.8
 */
 
 function get_rsvpversion() {
-	return '11.6.7'; 
+	return '11.6.8'; 
 }
 
 global $wp_version;
@@ -845,7 +845,7 @@ function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 
 		}
 	}
 
-	$wpdb->query( 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET amountpaid='$paid' WHERE id=$rsvp_id " );
+	$wpdb->query( $wpdb->prepare('UPDATE %i SET amountpaid=%s WHERE id=%d ',$wpdb->prefix . "rsvpmaker",$paid,$rsvp_id) );
 
 	add_post_meta( $event, '_' . $method . '_' . $tx_id, $charge );
 
@@ -854,10 +854,6 @@ function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 
 	delete_post_meta( $event, '_open_invoice_' . $rsvp_id );
 
 	delete_post_meta( $event, '_invoice_' . $rsvp_id );
-
-	$log = sprintf( '%s amount: %s rsvp_id: %s event: %s, tx: %s', $method, $paid, $rsvp_id, $event, $tx_id = 0 );
-
-	//rsvpmaker_debug_log( $log );
 
 }
 

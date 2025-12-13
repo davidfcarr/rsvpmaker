@@ -777,17 +777,11 @@ function rsvpmaker_postmark_show_sent_log() {
     global $wpdb,$rsvp_options;
     $time_format = (strpos($rsvp_options['time_format'],'T')) ? $rsvp_options['time_format'] : $rsvp_options['time_format'].' T';
     $table = $wpdb->base_prefix.'postmark_tally';
-    $blog_id = get_current_blog_id();
+    $blog_id = isset($_GET['blog_id']) ? intval($_GET['blog_id']) : get_current_blog_id();
     $days = isset($_GET['days']) ? intval($_GET['days']) : 31;
-    $where = ($blog_id > 1) ? ' AND blog_id='.$blog_id : '';
+    
     if(isset($_GET['monthly'])) {
-        if($blog_id > 1)
-            $where = ' WHERE blog_id='.intval($blog_id).' ';
-        else 
-            $where = ($_GET['blog_id']) ? ' WHERE blog_id='.intval($_GET['blog_id']) .' ' : '';
-        $order = (isset($_GET['by_volume'])) ? 'total DESC' : 'blog_id, ym DESC';
-        $sql = $wpdb->prepare("SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM %i $where group by blog_id, ym order by $order",$table);
-        $results = $wpdb->get_results($sql);
+        $results = $wpdb->get_results($wpdb->prepare("SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM %i ".(($blog_id > 1) ? ' WHERE blog_id='.intval($blog_id).' ' : '') ." group by blog_id, ym order by ".(isset($_GET['by_volume'])) ? 'total DESC' : 'blog_id, ym DESC',$table));
         if($results) {
             echo '<h2>Monthly Volume</h2>';
             if(!isset($_GET['by_volume'])) {
@@ -809,8 +803,8 @@ function rsvpmaker_postmark_show_sent_log() {
     echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
     printf('<p>See summary <a href="%s">by month</a> | <a href="%s">by volume</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'));
     $grandtotal = 0;
-    $sql = $wpdb->prepare("SELECT sum(count) total, blog_id FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) $where group by blog_id",$table,$days);
-    $results = $wpdb->get_results($sql);
+    
+    $results = $wpdb->get_results($wpdb->prepare("SELECT sum(count) total, blog_id FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) ".($blog_id > 1) ? ' AND blog_id='.$blog_id : ''." group by blog_id",$table,$days));
     foreach($results as $row) {
         $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
         $text = sprintf('<strong>%s</strong>: %d (<a href="%s">monthly</a>)',$name,$row->total,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&blog_id='.$row->blog_id));
@@ -927,14 +921,14 @@ function rsvpmaker_postmark_show_sent_log() {
     printf('<form method="get" action="%s">Showing outgoing message data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> days <button>Change</button></form>',admin_url('edit.php'),$days);
 
     if($blog_id > 1) {
-        $sql = $wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) AND blog_id=%d ORDER BY id DESC",$table, $days, $blog_id);
+        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) AND blog_id=%d ORDER BY id DESC",$table, $days, $blog_id));
         $showmulti = false;
     }
     else {
-        $sql = $wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL 31 DAY) ORDER BY id DESC",$table);
+        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL 31 DAY) ORDER BY id DESC",$table));
         $showmulti = is_multisite();
     }
-    $results = $wpdb->get_results($sql);
+
     echo '<table class="wp-list-table widefat striped"><thead><tr><th>Subject</th><th># Recipients</th><th>Blog ID</th><th>Recipients</th><th>Details</th></tr></thead><tbody>';
     foreach($results as $row) {
         if(isset($_GET['showall']) && $row->id == intval($_GET['showall']))

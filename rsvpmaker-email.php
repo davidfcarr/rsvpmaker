@@ -2580,8 +2580,8 @@ if(isset($_POST['problems']))
 rsvpmaker_admin_heading(__('Unsubscribed and Blocked','rsvpmaker'),__FUNCTION__);
 
 printf('<p>%s</p>',__('If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
-$sql = "SELECT * FROM $table ORDER BY code, ID DESC";
-$results = $wpdb->get_results($sql);
+
+$results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i ORDER BY code, ID DESC",$table));
 printf('<form method="post" action="%s">',$action);
 //patchstack fix
 
@@ -4922,7 +4922,7 @@ function rsvpmaker_guestlist_nextprev($start) {
 	global $wpdb;
 	$table = rsvpmaker_guest_list_table();
 	$table_meta = $table.'_meta';
-	$count = $wpdb->get_var("SELECT count(*) FROM $table");
+	$count = $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM %i",$table));
 	if($count < 500)
 		return '';
 	$next = ($count > $start + 500) ? sprintf('<a href="%s">Next</a>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&start='.($start + 500))) : '';
@@ -4960,8 +4960,8 @@ function rsvpmail_csv_export() {
 	$table = rsvpmaker_guest_list_table();
 	$table_meta = $table.'_meta';
 
-	$sql = 'SELECT email,first_name,last_name,active, meta_value as segment, meta_key FROM ' . $table . " LEFT JOIN ".$table_meta." ON `$table`.id = `$table_meta`.guest_id ORDER BY email";
-	$results = $wpdb->get_results( $sql, ARRAY_A );
+
+	$results = $wpdb->get_results( $wpdb->prepare("SELECT email,first_name,last_name,active, meta_value as segment, meta_key FROM %i t LEFT JOIN %i meta ON t.id = meta.guest_id ORDER BY email",$table,$table_meta), ARRAY_A );
 	foreach($results as $row) {
 		$meta_key = array_pop($row);
 		if($meta_key != 'segment')
@@ -4978,7 +4978,8 @@ function rsvpmail_csv_export() {
 function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $search = '') {
 	global $wpdb;
     $params = array();
-    $params[] = rsvpmaker_guest_list_table();
+	$table = rsvpmaker_guest_list_table();
+    $params[] = $table;
     $params[] = $table.'_meta';
     $params[] = $wpdb->prefix . "rsvpmailer_blocked";
 
@@ -5015,15 +5016,12 @@ function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $sear
         ORDER BY t.email
     ";
 
-    if ( ! empty( $params ) ) {
-        $sql = $wpdb->prepare( $sql, $params );
-    }
 	if($limit) {
 		$start = intval($start);
 		$limit = intval($limit);
 		$sql .= " LIMIT $start, $limit";
 	}
-	$results = $wpdb->get_results($sql);
+	$results = $wpdb->get_results($wpdb->prepare( $sql, $params ));
 	foreach($results as $row) {
 		if(empty($returnarray[$row->email]))
 			$returnarray[$row->email] = $row;
@@ -5049,8 +5047,8 @@ function rsvpmail_confirm_email($e) {
 	if(rsvpmail_contains_email($e)) {
 		global $wpdb;
 		$table = rsvpmaker_guest_list_table();
-		$sql = "UPDATE $table SET active=1 WHERE email='$e' ";
-		$wpdb->query($sql);	
+
+		$wpdb->query($wpdb->prepare("UPDATE %i SET active=1 WHERE email=%s ",$table,$e));	
 	}
 }
 
@@ -5161,12 +5159,12 @@ function rsvpmaker_guest_list() {
 
 	$mailpoet_table = $wpdb->prefix.'mailpoet_subscribers';
 
-	$totalcount = $wpdb->get_var('SELECT count(*) from '.$table);
+	$totalcount = $wpdb->get_var($wpdb->prepare('SELECT count(*) from %i',$table));
 	$active_list = get_rsvpmaker_guest_list();
 	$activecount = sizeof($active_list);
 
 	if(isset($_GET['latest'])) {
-		$results = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC LIMIT 0, 100");// 
+		$results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i ORDER BY id DESC LIMIT 0, 100",$table));// 
 		foreach($results as $row)
 		{
 			print_r($row);
@@ -5175,7 +5173,7 @@ function rsvpmaker_guest_list() {
 	}
 
 	if(isset($_GET['testlist'])) {
-		$wpdb->query("DELETE FROM $table where email LIKE '%example.com' ");
+		$wpdb->query($wpdb->prepare("DELETE FROM %i where email LIKE '%example.com' ",$table));
 		echo '<div class="notice"><p>Resending email requesting confirmation</p></div>';
 		for($i = 1; $i < 10000; $i++) {
 			rsvpmaker_guest_list_add('test'.$i.'@localhost.com', 'Testy '.$i,'Tester');
@@ -5231,8 +5229,8 @@ function rsvpmaker_guest_list() {
 		}
 		if(isset($_POST['mailpoet'])) {
 			$segment = sanitize_text_field($_POST['segment']);
-			$sql = "SELECT * FROM $mailpoet_table WHERE status='subscribed' ";
-			$results = $wpdb->get_results($sql);
+			
+			$results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE status='subscribed' ",$mailpoet_table));
 			if($results) {
 				printf('<p>Importing %s confirmed subscribers from MailPoet</p>',sizeof($results));
 				foreach($results as $index => $row) {
@@ -5246,8 +5244,8 @@ function rsvpmaker_guest_list() {
 			echo '<div class="notice"><p>Deleting selected emails</p></div>';
 			foreach($_POST['delete'] as $id) {
 				if(is_numeric($id)) {
-					$sql = "delete from $table where id = ".intval($id);
-					$wpdb->query($sql);	
+					
+					$wpdb->query($wpdb->prepare("delete from %i where id = %d",$table,$id));	
 				}
 			}
 		}
@@ -5259,8 +5257,8 @@ function rsvpmaker_guest_list() {
 			$mail['fromname'] = get_option('blogname');
 			$mail['subject'] = 'Please confirm your subscription to the email list for '.$mail['fromname'];
 			foreach($_POST['resend'] as $id) {
-				$sql = "select email from $table where id = ".intval($id);
-				$mail['to'] = $wpdb->get_var($sql);
+				
+				$mail['to'] = $wpdb->get_var($wpdb->prepare("select email from %i where id = %d",$table,$id));
 				$confirm = site_url('?rsvpmail_subscribe='.$mail['to']);
 				$mail['html'] = "<p>We have your email list signup on file but need confirmation before we can add you to our active list.</p>";
 				$mail['html'] .= sprintf('<p>Please <a href="%s">confirm your subscription</a> to the email list.</p><p>Follow this link to confirm<br><a href="%s">%s</a></p><p>If you did not initiate a subscription request, please ignore this note and accept our apologies.</p>',$confirm,$confirm,$confirm);
@@ -5316,8 +5314,8 @@ function rsvpmaker_guest_list() {
 		printf('<li>%s: One contact per line with email, first name, last name (separated with commas or tabs)<br><textarea name="emailtextarea" rows="3" cols="80" placeholder="email@example.com,First Name,Last Name" /></textarea></li>',__('Copy-Paste','rsvpmaker'));
 		echo '</ol>';
 
-		$sql = "SHOW TABLES LIKE '$mailpoet_table' ";
-		if($wpdb->get_var($sql))
+		
+		if($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s ",$mailpoet_table)))
 			printf('<p><input type="checkbox" name="mailpoet" value="1" /> %s</p>',__('Import MailPoet subscriber list','rsvpmaker'));
 		printf('<p>List segment (optional): <select name="segment">%s</select>.</p>',$segment_options);
 	submit_button();
@@ -5332,7 +5330,7 @@ function rsvpmaker_guest_list() {
 		$start = (isset($_GET['start'])) ? intval($_GET['start']) : 0;
 		$search = (isset($_GET['s'])) ? sanitize_text_field($_GET['s']) : '';
 		if(isset($_GET['unconfirmed']))
-			$list = $wpdb->get_results("SELECT * from $table WHERE active=0");
+			$list = $wpdb->get_results($wpdb->prepare("SELECT * from %i WHERE active=0",$table));
 		elseif(isset($_GET['segment_list'])) {
 			$segment_list = sanitize_text_field($_GET['segment_list']);
 			$list = get_rsvpmaker_email_segment($segment_list);
@@ -5496,8 +5494,8 @@ function rsvpmaker_on_guest_email_list($email, $checkuserlist = true) {
 		}	
 	}
 	$table = rsvpmaker_guest_list_table();
-	$sql = "select * from $table WHERE email LIKE '$email' ";
-	return $wpdb->get_row($sql);
+	
+	return $wpdb->get_row($wpdb->prepare("select * from %i WHERE email LIKE %s ",$table,$email));
 }
 
 function rsvpmaker_emailpostorposts($atts) {
