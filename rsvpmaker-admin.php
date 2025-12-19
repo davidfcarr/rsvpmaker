@@ -2675,19 +2675,35 @@ $date = rsvpmaker_date('Y-m-d',$ts).' '.$sked['start_time'];
 $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 } // end for loop
 
-if($notify && !empty($added))
-	{
-		$admin = get_option('admin_email');
-		$mail['subject'] = __('Dates added for ','rsvpmaker').$post->post_title;
-		if(!empty($htext)) 
-			$mail['subject'] .= ' - check overlap with holidays';
-		$mail['html'] = "<p>Dates added according to recurring event schedule.</p>\n".$added.$htext;
-		$mail['to'] = $admin;
-		$mail['from'] = $admin;
-		$mail['fromname'] = get_bloginfo('name');
-		echo $mail['html'];
+if(!empty($added)) {
+	$admin = get_option('admin_email');
+
+	$mail['subject'] = $_SERVER['SERVER_NAME'].' '.__('Dates added for ','rsvpmaker').$post->post_title;
+
+	if(!empty($htext)) 
+
+		$mail['subject'] .= ' - check overlap with holidays';
+
+	$mail['html'] = "<p>Dates added according to recurring event schedule.</p>\n".$added.$htext."\n<p>farthest: ".$farthest->datetime.'</p>';
+
+	$mail['from'] = $admin;
+
+	$mail['fromname'] = get_bloginfo('name');
+
+	echo $mail['html'];
+	if(is_multisite()) {
+		//network admin should know if thi is working properly
+		$mail['to'] = get_blog_option(1,'admin_email');
 		rsvpmailer($mail);
 	}
+	if($notify)
+
+		{
+			$mail['to'] = $admin;
+			rsvpmailer($mail);
+		}
+	}
+
 }
 
 function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') {
