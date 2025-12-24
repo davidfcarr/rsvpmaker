@@ -326,16 +326,12 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 			}
 
 			if( !isset( $_GET['rsvp_order'] ) || ( $_GET['rsvp_order'] == 'host' ) )
-			{
-				
+			{				
 				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d AND master_rsvp=0 ORDER BY ".(isset($_GET['latest']) ? ' timestamp DESC ' : ' yesno DESC, last, first '),$wpdb->prefix."rsvpmaker",$eventid), ARRAY_A );	
 				format_rsvp_details( $results, true, true );	
 			}
 			else {
-				
-
 				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE event=%d ".( isset( $_GET['rsvp_order'] ) && ( $_GET['rsvp_order'] == 'alpha' ) ) ? ' ORDER BY yesno DESC, last, first' : ' ORDER BY yesno DESC, timestamp DESC',$wpdb->prefix . "rsvpmaker",$wpdb->prefix . "rsvpmaker"), ARRAY_A );
-
 				format_rsvp_details( $results );	
 			}
 
@@ -694,6 +690,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 		}
 
 		$number_registered = sizeof($results);
+		$unpaidcount = 0;
 
 		foreach ( $results as $index => $row ) {
 
@@ -710,11 +707,17 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 			}
 			$owed_list .= format_rsvp_row($row,$fields, $pricing);
 
+			$is_unpaid = !empty($row['fee_total']) && '0.00' != $row['fee_total'] && '0.00' != $row['owed'] && !empty($row['owed']);
+			if($is_unpaid)
+				$unpaidcount++;
+
 			if($check_guests) {
 				$sql = $wpdb->prepare("select * from ".$wpdb->prefix."rsvpmaker where master_rsvp=%d ORDER by last, first",$row['id']);
 				$g = $wpdb->get_results($sql, ARRAY_A);
 				if($g) {
 					$number_registered += sizeof($g);
+					if($is_unpaid)
+						$unpaidcount+= sizeof($g);
 					echo '<blockquote>';
 					foreach($g as $grow) {
 						$grow['yesno'] = '';
@@ -750,7 +753,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 			$userrsvps[] = $row['user_id'];
 
 		}
-		printf('<p>%d registered</p>',$number_registered);
+		printf('<p>%d registered, including %d unpaid</p>',$number_registered,$unpaidcount);
 
 		echo '<div class="noprint">';
 

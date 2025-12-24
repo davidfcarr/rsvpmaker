@@ -248,7 +248,7 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 
 		$event = $request['post_id'];
 
-		$sql = $wpdb->prepare("SELECT FROM first,last,note %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix . "rsvpmaker",$event);
+		$sql = $wpdb->prepare("SELECT first,last,note FROM %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix . "rsvpmaker",$event);
 
 		$attendees = $wpdb->get_results( $sql );
 
