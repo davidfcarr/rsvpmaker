@@ -1305,16 +1305,20 @@ function get_next_rsvp_on() {
 	return (is_array($events) && !empty($events[0])) ? $events[0] : null;
 
 }
+
 function get_events_by_template( $template_id, $order = 'ASC', $output = OBJECT ) {
+
 	// return rsvpmaker_upcoming_data(array('meta_key' => '_meet_recur', 'meta_value' => $template_id));
+
 	global $wpdb;
+
 	$event_table = get_rsvpmaker_event_table();
 
-	
-
 	$wpdb->show_errors();
-	return $wpdb->get_results( $wpdb->prepare("SELECT posts.ID, posts.post_title, posts.post_status, posts.post_author, posts.post_modified, posts.ID as postID, events.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted FROM %i posts JOIN $wpdb->postmeta ON $wpdb->posts.ID=$wpdb->postmeta.post_id JOIN %i events ON events.event = posts.ID WHERE date > %s AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=%d ORDER BY date " . $order.", post_modified DESC",$wpdb->posts,$event_table,get_sql_curdate(),$template_id), $output );
+	return $wpdb->get_results( $wpdb->prepare("SELECT posts.ID, posts.post_title, posts.post_status, posts.post_author, posts.post_modified, posts.ID as postID, events.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted FROM %i posts JOIN %i meta ON posts.ID=meta.post_id JOIN %i events ON events.event = posts.ID WHERE date > %s AND (post_status='publish' OR post_status='draft') AND meta_key='_meet_recur' AND meta_value=%d ORDER BY date " . $order.", ID ASC",$wpdb->posts,$wpdb->postmeta,$event_table,get_sql_curdate(),$template_id), $output );
+
 }
+
 function rsvpmaker_next_by_template( $template_id, $order = 'ASC', $output = OBJECT ) {
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
@@ -2242,168 +2246,999 @@ function rsvpmaker_set_default_field( $index, $display = false ) {
 	return $output;
 }
 function rsvpmaker_cleanup() {
+
 	global $wpdb;
+
 	$defaults = array(
+
 		'calendar_icons'                    => '_calendar_icons',
+
 		'rsvp_to'                           => '_rsvp_to',
+
 		'rsvp_confirm'                      => '_rsvp_confirm',
+
 		'rsvpmaker_send_confirmation_email' => '_rsvp_rsvpmaker_send_confirmation_email',
+
 		'confirmation_include_event'        => '_rsvp_confirmation_include_event',
+
 		'rsvp_instructions'                 => '_rsvp_instructions',
+
 		'rsvp_count'                        => '_rsvp_count',
+
 		'rsvp_count_party'                  => '_rsvp_count_party',
+
 		'rsvp_yesno'                        => '_rsvp_yesno',
+
 		'rsvp_max'                          => '_rsvp_max',
+
 		'login_required'                    => '_rsvp_login_required',
+
 		'rsvp_captcha'                      => '_rsvp_captcha',
+
 		'show_attendees'                    => '_rsvp_show_attendees',
+
 		'convert_timezone'                  => '_convert_timezone',
+
 		'add_timezone'                      => '_add_timezone',
+
 		'rsvp_form'                         => '_rsvp_form',
+
 	);
+
 ?>
+
 <h1>RSVPMaker Cleanup</h1>
+
 	<?php 
-		$sites = get_sites();
+
+		$sites = (is_multisite() && current_user_can('manage_network')) ? get_sites() : [];
+
 
 		foreach($sites as $site) {
+
 			$sql   = $wpdb->prepare("SELECT count(*) FROM %i WHERE post_type='attachment' ",$wpdb->base_prefix.$site->blog_id . "_posts");
+
 			$count = $wpdb->get_var($sql);
+
 			$sortable[$count] = $site->blog_id.':'.$site->domain;
+
 			printf('<h3>%d %s %d files</h3>',$site->blog_id,$site->domain,$count);
+
 		}
 
+
+		if(!empty($sortable)) {
 		krsort($sortable);
+
+
 
 		foreach($sortable as $count => $item) {
 
+
+
 			if($count > 50)
+
+
 
 			printf('<p>%d %s</p>',$count,$item);
 
+
+
 		}
+
+		}
+
 if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && current_user_can('manage_network') && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
 	if(isset($_POST['multisite_remove'])) {
 
 		$rows_removed = 0;
 
 		foreach($_POST['multisite_remove'] as $item) {
 
+
+
 			$parts = explode(':',$item);
+
+
 
 			$sql = $wpdb->prepare("SELECT ID FROM %i WHERE ID=%d",$wpdb->base_prefix.$parts[0].'_posts',$parts[1]);
 
+
+
 			if($wpdb->get_var($sql)) {
+
+
 
 				$sql = $wpdb->prepare("DELETE FROM %i WHERE ID=%d",$wpdb->base_prefix.$parts[0].'_posts',$parts[1]);
 
+
+
 				$r = $wpdb->query($sql);
+
+
 
 				$rows_removed++;	
 
+
+
 			}
+
+
 
 			$sql = $wpdb->prepare("SELECT count(*) FROM %i WHERE post_id=%d",$wpdb->base_prefix.$parts[0].'_postmeta',$parts[1]);
 
+
+
 			$meta_count = $wpdb->get_var($sql);
+
+
 
 			if($meta_count) {
 
+
+
 				$rows_removed += $meta_count;
+
+
 
 				$sql = $wpdb->prepare("DELETE FROM %i WHERE post_id=%d",$wpdb->base_prefix.$parts[0].'_postmeta',$parts[1]);
 
+
+
 				$r = $wpdb->query($sql);	
+
+
 
 			}
 
+
+
 		}
+
+
 
 		printf('<p>Rows removed: %d </p>',$rows_removed);
 
+
+
 	}
+
+
 
 	else {
 
+
+
 		$older = sanitize_text_field($_POST['older_than']);
+
+
 
 		$regex = '/^\d{4}-\d{2}-\d{2}$/';
 
+
+
 		if ( ! preg_match( $regex, $older ) ) {
+
+
 
 			die( 'invalid date' );
 
+
+
 		}
+
 ?>
+
 		<form method="post" action="<?php 
+
+
 
   echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
 
+
+
 ?>
 
+
+
 ">
+
 		<input type="hidden" name="confirm_network_delete" value="1" />
+
 					<?php 
+
+
 
   submit_button( 'Confirm Delete' );  
 
+
+
 ?>
+
 		<?php 
+
 		rsvpmaker_nonce();
+
+
 
 		$sites = get_sites();
 
+
+
 		foreach($sites as $site) {
 
+
+
 			printf('<h3>%d %s</h3>',$site->blog_id,$site->domain);
+
+
 
 				
 
 
 
+
+
+
+
 				$results = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE date < %s ",$wpdb->base_prefix.$site->blog_id . "_rsvpmaker_event",$older) );
+
+
 
 				printf( '<p style="color: red;">%d RSVP events older than %s </p>', sizeof($results), esc_html( $older ) );
 
+
+
 				echo '<p>';
+
+
 
 				foreach($results as $event)
 
+
+
 					printf('<input type="hidden" name="multisite_remove[]" value="%d:%d" /> ',$site->blog_id,$event->event);
+
+
 
 				echo '</p>';
 
+
+
 					//}		
 
+
+
 		}
+
 ?>
+
 	</form>
 
+
+
 	<?php 
+
 	}
 
+
+
 }
+
 if ( isset( $_POST['rsvpmaker_database_check'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+
 
 	cpevent_activate();
 
+
+
 	echo '<div class="notice notice-success"><p>Checking that RSVPMaker database tables are properly initialized</p></div>';
+
+
 
 	rsvpmaker_event_dates_table_update(true);
 
+
+
 	echo '<div class="notice notice-success"><p>Checking that '.esc_attr($wpdb->prefix).'resvpmaker_event table is complete</p></div>';
 
-}
-if ( isset( $_POST['rsvpmaker_template_duplicates'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
-	echo '<div class="notice notice-success"><p>Checking for duplicates by template</p></div>';
+
+}
+
+if ( isset( $_POST['rsvpmaker_trash_duplicates'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+if(!empty($_POST['multisite_dups']) && current_user_can('manage_network')) {
+	$sites = wp_get_sites(['number'=>500]);
+	foreach($sites as $site) {
+		printf('<p>Site: %s</p>',var_export($site,true));
+		printf('<p>switch to %s</p>',$site['blog_id']);
+		switch_to_blog($site['blog_id']);
+		printf('<p>blog before %s</p>',$wpdb->prefix);
+		rsvpmaker_trash_duplicates(!empty($_POST['all']));
+		printf('<p>blog after %s</p>',$wpdb->prefix);
+	}
+}
+else
+rsvpmaker_trash_duplicates(!empty($_POST['all']));
+
+}
+
+	if ( isset( $_POST['reset_defaults'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+		$result = rsvpmaker_set_defaults_all( true );
+
+		echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events</p></div>';
+
+		echo esc_html($result);
+
+	}
+
+	if ( isset( $_POST['default_field'] ) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+		$result = '';
+
+		foreach ( $_POST['default_field'] as $field ) {
+
+			$field = sanitize_text_field( $field );
+
+			$result .= rsvpmaker_set_default_field( $field, true );
+
+		}
+
+		echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events for fields shown below.</p></div>';
+
+		echo esc_attr($result);
+
+	}
+
+	if ( isset( $_POST['older_than'] ) ) {
+
+		$older = sanitize_text_field($_POST['older_than']);
+
+
+
+		$regex = '/^\d{4}-\d{2}-\d{2}$/';
+
+
+
+		if ( ! preg_match( $regex, $older ) ) {
+
+
+
+			die( 'invalid date' );
+
+
+
+		}
+
+		if ( ! isset( $_POST['confirm'] ) ) {
+
+?>
+
+<form method="post" action="<?php 
+
+
+
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+
+
+
+?>
+
+
+
+">
+
+<input type="hidden" name="confirm" value="1" />
+
+<input type="hidden" name="older_than" value="<?php 
+
+
+
+  echo esc_attr( $older );  
+
+
+
+?>
+
+
+
+" /> 
+
+
+
+rsvpmaker_nonce();
+
+
+
+			<?php 
+
+
+
+  submit_button( 'Confirm Delete' );  
+
+
+
+?>
+
+</form>
+
+<div>Preview</div>
+
+			<?php 
+
+		}
+
+		$sql = $wpdb->prepare("SELECT DISTINCT ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(date,'%M %e, %Y') as dateformatted
+
+	 FROM %i posts
+
+	 JOIN %i events ON posts.ID =events.event
+
+	 WHERE date < %s ",$wpdb->posts,$wpdb->prefix.'rsvpmaker_event', $older );
+
+		$results = $wpdb->get_results( $sql );
+
+		if ( is_array( $results ) ) {
+
+			foreach ( $results as $event ) {
+
+				$deleted = '';
+
+				if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+					wp_delete_post( $event->ID, true );
+
+					$deleted = '<span style="color:red">Deleted</span> ';
+
+				}
+
+				printf( '<div>%s %s %s</div>', esc_html( $deleted ), esc_html( $event->post_title ), esc_html( $event->date ) );
+
+			}
+
+
+
+		}
+
+
+
+	}
+
+	if ( isset( $_POST['rsvps_older_than'] ) ) {
+
+		$older = sanitize_text_field($_POST['rsvps_older_than']);
+
+
+
+		$regex = '/^\d{4}-\d{2}-\d{2}$/';
+
+
+
+		if ( ! preg_match( $regex, $older ) ) {
+
+
+
+			die( 'invalid date' );
+
+
+
+		}
+
+		if ( ! isset( $_POST['confirm'] ) ) {
+
+?>
+
+<form method="post" action="<?php 
+
+
+
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+
+
+
+?>
+
+
+
+">
+
+
+
+rsvpmaker_nonce();
+
+
+
+<input type="hidden" name="confirm" value="1" />
+
+RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php 
+
+
+
+  echo esc_attr( $older );  
+
+
+
+?>
+
+
+
+" /> 
+
+			<?php 
+
+
+
+  submit_button( 'Confirm Delete' );  
+
+
+
+?>
+
+</form>
+
+			<?php 
+
+		}
+
+		if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+
+
+			$wpdb->query( $wpdb->prepare("DELETE FROM %i WHERE timestamp < %s ",$wpdb->prefix . "rsvpmaker",$older) );
+
+
+
+			printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', $older );
+
+
+
+		} else {
+
+
+
+			$sql   = $wpdb->prepare("SELECT count(*) FROM %i WHERE timestamp < %s ",$wpdb->prefix . "rsvpmaker",$older);
+
+
+
+			$count = $wpdb->get_var( $sql );
+
+
+
+			printf( '<p style="color: red;">%d RSVPs older than %s </p>', $count, esc_html( $older ) );
+
+
+
+		}
+
+
+
+	}
+
+	if ( ! empty( $_POST ) ) {
+
+
+
+		printf( '<p><a href="%s">Reload form</a></p>', admin_url( 'tools.php?page=rsvpmaker_cleanup' ) );
+
+
+
+	} else {
+
+
+
+		$minus30 = strtotime( '30 days ago' );
+
+?>
+
+<h2><?php 
+
+
+
+  esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+</h2>
+
+<form method="post" action="<?php 
+
+
+
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+
+
+
+?>
+
+
+
+">
+
+
+
+<?php 
+
+
+
+  rsvpmaker_nonce();
+
+
+
+esc_html_e( 'Delete events older than', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+ <input type="date" name="older_than" value="<?php 
+
+
+
+  echo date( 'Y-m-d', $minus30 );  
+
+
+
+?>
+
+
+
+" /> 
+
+
+
+<?php 
+
+if(is_multisite() && current_user_can('manage_network')) {
+
+
+
+	printf('<p><input type="checkbox" name="multisite_clean" value="1"> Apply to all sites in multisite network.</p>');
+
+
+
+}
+
+submit_button( 'Delete' );  
+
+
+
+?>
+
+</form>
+
+<h2><?php 
+
+
+
+  esc_html_e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+</h2>
+
+<form method="post" action="<?php 
+
+
+
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+
+
+
+?>
+
+
+
+">
+
+
+
+<?php 
+
+
+
+  rsvpmaker_nonce();  
+
+
+
+?>
+
+		<?php 
+
+
+
+  esc_html_e( 'Delete RSVP event registrations older than', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+ <input type="date" name="rsvps_older_than" value="<?php 
+
+
+
+  echo date( 'Y-m-d', $minus30 );  
+
+
+
+?>
+
+
+
+" /> 
+
+		<?php 
+
+
+
+  submit_button( 'Delete' );  
+
+
+
+?>
+
+</form>
+
+<h2><?php 
+
+
+
+  esc_html_e( 'Apply Defaults', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+</h2>
+
+<form method="post" action="<?php 
+
+
+
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+
+
+
+?>
+
+
+
+">
+
+
+
+<?php 
+
+
+
+  rsvpmaker_nonce();  
+
+
+
+?>
+
+<p><?php 
+
+
+
+  esc_html_e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+</p>
+
+<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php 
+
+
+
+  esc_html_e( 'All fields', 'rsvpmaker' );  
+
+
+
+?>
+
+
+
+</div>
+
+		<?php 
+
+		foreach ( $defaults as $index => $field ) {
+
+			printf( '<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>', esc_attr( $index ), esc_html( $field ) );
+
+
+
+		}
+
+?>
+
+		<?php 
+
+
+
+  submit_button( 'Reset' );  
+
+
+
+?>
+
+</form>
+
+<h2>Check RSVPMaker for Duplicates</h2>
+
+<form method="post" action="<?php 
+
+
+
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+
+
+
+?>
+
+
+
+">
+
+
+
+<?php 
+
+  rsvpmaker_nonce();
+
+?>
+
+<p><input type="radio" name="all" value="1" checked="checked" /> All with same date/time <input type="radio" name="all" value="0" /> All with same date/time and template </p>
+
+<input type="hidden" name="rsvpmaker_trash_duplicates" value="1" /> 
+
+		<?php 
+if(is_multisite() && current_user_can('manage_network'))
+	echo '<p><input type="checkbox" name="multisite_dups" value="1" /> Check all sites</p>';
+submit_button( 'Check Now' );
+?>
+</form>
+
+<h2>Check RSVPMaker Database Tables</h2>
+
+<form method="post" action="<?php 
+  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
+?>">
+<?php
+  rsvpmaker_nonce();
+?>
+<input type="hidden" name="rsvpmaker_database_check" value="1" /> 
+<?php 
+submit_button( 'Check Now' );
+?>
+</form>
+
+<?php 
+
+	$tables = $wpdb->get_results('SHOW TABLES');
+	foreach ($tables as $mytable)
+
+
+
+	{
+
+
+
+		foreach ($mytable as $t) 
+
+
+
+		{       
+
+
+
+			if(strpos($t,$wpdb->prefix.'rsvp') !== false)
+
+
+
+			echo $t . "<br>";
+
+
+
+		}
+
+
+
+	}
+
+?>
+
+<script>
+
+jQuery(document).ready(function( $ ) {
+
+$(document).on( 'click', '.default_field', function() {
+
+	$("#all").prop("checked", false);
+
+});
+
+});
+
+</script>
+
+		<?php 
+
+	}
+
+	// end initial form
+}
+
+function rsvpmaker_trash_duplicates( $all = true ) {
+	global $wpdb;
+	$found = false;
+
+	if($all) {
+	echo '<div class="notice notice-success"><p>Checking for duplicates by date/time.</p></div>';
+	$sql = $wpdb->prepare("SELECT distinct events.event, posts.ID, events.date 
+	FROM %i events JOIN %i posts on events.event=posts.ID LEFT JOIN %i meta ON (events.event=meta.post_id and meta_value LIKE '_role%') LEFT JOIN %i rsvps ON events.event=rsvps.id 
+	where date > curdate() and posts.post_status='publish' 
+	order by date ASC, (meta.meta_value IS NOT NULL OR rsvps.email IS NOT NULL) DESC, events.event ASC",$wpdb->prefix.'rsvpmaker_event',$wpdb->posts,$wpdb->postmeta,$wpdb->prefix.'rsvpmaker');
+	$results = $wpdb->get_results($sql);
+	$dupcheck = [];
+	foreach($results as $event) {
+		if(!empty($dupcheck[$event->date]) && in_array($event->ID,$dupcheck[$event->date]) )
+			continue;
+		$dupcheck[$event->date][] = $event->ID;
+	}
+
+	if(!empty($dupcheck))
+	foreach($dupcheck as $date => $check) {
+
+		if(sizeof($check) > 1) {
+			$keep = array_shift($check);
+			$post = get_post($keep);
+			printf("<p>keep %d %s by default for %s, %d other entries</p>",$keep,$post->post_name,$date,sizeof($check));
+			foreach($check as $ch) {
+				if($ch != $keep) {
+				$found = true;
+				$wpdb->query($wpdb->prepare("update %i set post_id=%d where post_id=%d ",$wpdb->postmeta,$keep,$ch));
+				$wpdb->query($wpdb->prepare("update %i set event=%d where event=%d",$wpdb->prefix.'rsvpmaker',$keep,$ch));
+				printf("<p>delete %d</p>",$ch);
+				wp_delete_post($ch,false);
+				}
+			}
+		}
+	}
+	if(!$found)
+		echo '<p>No duplicates found</p>';
+	return;
+	}
+
+	echo '<div class="notice notice-success"><p>Checking for duplicates by date/time and template</p></div>';
 
 	$templates = rsvpmaker_get_templates(); 
 
 	if($templates)
 
 	{
-
 		foreach($templates as $template) {
 
 			printf('<p>Checking %s</p>',$template->post_title);
@@ -2415,386 +3250,42 @@ if ( isset( $_POST['rsvpmaker_template_duplicates'] )  && wp_verify_nonce(rsvpma
 				$dupcheck = [];
 
 				foreach($sofar as $event) {
-
-					$dupcheck[$event->date][] = $event;
-
+					if($event->post_status != 'publish')
+						continue;
+					if(!empty($dupcheck[$event->date]) && in_array($event->ID,$dupcheck[$event->date]) )
+						continue;
+					$dupcheck[$event->date][] = $event->ID;
 				}
 
+				if(!empty($dupcheck))
 				foreach($dupcheck as $date => $check) {
-
 					if(sizeof($check) > 1) {
-
-						$keep = array_pop($check);
-
+						$keep = array_shift($check);
+						printf("<p>keep %d by default for %s, %d other entries</p>",$keep,$date,sizeof($check));
 						foreach($check as $ch) {
-
-							$meta = get_post_meta($ch->ID);
-
-							foreach($meta as $key => $values) {
-
-								if(preg_match('/_[A-Z]/',$key) && !empty($values[0])) {
-
-									printf('<p><strong>%s %s</strong></p>',$key,$values[0]);
-
-									continue;
-
-								}
-
+							if($ch != $keep) {
+							$found = true;
+							$wpdb->query($wpdb->prepare("update %i set post_id=%d where post_id=%d ",$wpdb->postmeta,$keep,$ch));
+							$wpdb->query($wpdb->prepare("update %i set event=%d where event=%d",$wpdb->prefix.'rsvpmaker',$keep,$ch));
+							printf("<p>delete %d</p>",$ch);
+							wp_delete_post($ch,false);
 							}
-
-							echo "<p>delete $ch->ID</p>";
-
-							wp_delete_post($ch->ID,true);
-
 						}
-
 					}
 
 				}
 
+
+
 			}
 
 		}
 
 	}
-
+	if(!$found)
+		echo '<p>No duplicates found</p>';
 }
-	if ( isset( $_POST['reset_defaults'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-		$result = rsvpmaker_set_defaults_all( true );
-		echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events</p></div>';
-		echo esc_html($result);
-	}
-	if ( isset( $_POST['default_field'] ) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-		$result = '';
-		foreach ( $_POST['default_field'] as $field ) {
-			$field = sanitize_text_field( $field );
-			$result .= rsvpmaker_set_default_field( $field, true );
-		}
-		echo '<div class="notice notice-success"><p>Defaults applied to all templates and future events for fields shown below.</p></div>';
-		echo esc_attr($result);
-	}
-	if ( isset( $_POST['older_than'] ) ) {
-		$older = sanitize_text_field($_POST['older_than']);
 
-		$regex = '/^\d{4}-\d{2}-\d{2}$/';
-
-		if ( ! preg_match( $regex, $older ) ) {
-
-			die( 'invalid date' );
-
-		}
-		if ( ! isset( $_POST['confirm'] ) ) {
-?>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-<input type="hidden" name="confirm" value="1" />
-<input type="hidden" name="older_than" value="<?php 
-
-  echo esc_attr( $older );  
-
-?>
-
-" /> 
-
-rsvpmaker_nonce();
-
-			<?php 
-
-  submit_button( 'Confirm Delete' );  
-
-?>
-</form>
-<div>Preview</div>
-			<?php 
-		}
-		$sql = $wpdb->prepare("SELECT DISTINCT ID as postID, $wpdb->posts.*, a1.meta_value as datetime,date_format(date,'%M %e, %Y') as dateformatted
-	 FROM %i posts
-	 JOIN %i events ON posts.ID =events.event
-	 WHERE date < %s ",$wpdb->posts,$wpdb->prefix.'rsvpmaker_event', $older );
-		$results = $wpdb->get_results( $sql );
-		if ( is_array( $results ) ) {
-			foreach ( $results as $event ) {
-				$deleted = '';
-				if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-					wp_delete_post( $event->ID, true );
-					$deleted = '<span style="color:red">Deleted</span> ';
-				}
-				printf( '<div>%s %s %s</div>', esc_html( $deleted ), esc_html( $event->post_title ), esc_html( $event->date ) );
-			}
-
-		}
-
-	}
-	if ( isset( $_POST['rsvps_older_than'] ) ) {
-		$older = sanitize_text_field($_POST['rsvps_older_than']);
-
-		$regex = '/^\d{4}-\d{2}-\d{2}$/';
-
-		if ( ! preg_match( $regex, $older ) ) {
-
-			die( 'invalid date' );
-
-		}
-		if ( ! isset( $_POST['confirm'] ) ) {
-?>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-
-rsvpmaker_nonce();
-
-<input type="hidden" name="confirm" value="1" />
-RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php 
-
-  echo esc_attr( $older );  
-
-?>
-
-" /> 
-			<?php 
-
-  submit_button( 'Confirm Delete' );  
-
-?>
-</form>
-			<?php 
-		}
-		if ( isset( $_POST['confirm'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-
-			$wpdb->query( $wpdb->prepare("DELETE FROM %i WHERE timestamp < %s ",$wpdb->prefix . "rsvpmaker",$older) );
-
-			printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', $older );
-
-		} else {
-
-			$sql   = $wpdb->prepare("SELECT count(*) FROM %i WHERE timestamp < %s ",$wpdb->prefix . "rsvpmaker",$older);
-
-			$count = $wpdb->get_var( $sql );
-
-			printf( '<p style="color: red;">%d RSVPs older than %s </p>', $count, esc_html( $older ) );
-
-		}
-
-	}
-	if ( ! empty( $_POST ) ) {
-
-		printf( '<p><a href="%s">Reload form</a></p>', admin_url( 'tools.php?page=rsvpmaker_cleanup' ) );
-
-	} else {
-
-		$minus30 = strtotime( '30 days ago' );
-?>
-<h2><?php 
-
-  esc_html_e( 'Remove Past Events from Database', 'rsvpmaker' );  
-
-?>
-
-</h2>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-
-<?php 
-
-  rsvpmaker_nonce();
-
-esc_html_e( 'Delete events older than', 'rsvpmaker' );  
-
-?>
-
- <input type="date" name="older_than" value="<?php 
-
-  echo date( 'Y-m-d', $minus30 );  
-
-?>
-
-" /> 
-
-<?php 
-if(is_multisite() && current_user_can('manage_network')) {
-
-	printf('<p><input type="checkbox" name="multisite_clean" value="1"> Apply to all sites in multisite network.</p>');
-
-}
-submit_button( 'Delete' );  
-
-?>
-</form>
-<h2><?php 
-
-  esc_html_e( 'Remove RSVP Event Registrations from Database', 'rsvpmaker' );  
-
-?>
-
-</h2>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-
-<?php 
-
-  rsvpmaker_nonce();  
-
-?>
-		<?php 
-
-  esc_html_e( 'Delete RSVP event registrations older than', 'rsvpmaker' );  
-
-?>
-
- <input type="date" name="rsvps_older_than" value="<?php 
-
-  echo date( 'Y-m-d', $minus30 );  
-
-?>
-
-" /> 
-		<?php 
-
-  submit_button( 'Delete' );  
-
-?>
-</form>
-<h2><?php 
-
-  esc_html_e( 'Apply Defaults', 'rsvpmaker' );  
-
-?>
-
-</h2>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-
-<?php 
-
-  rsvpmaker_nonce();  
-
-?>
-<p><?php 
-
-  esc_html_e( 'Apply default values from the RSVPMaker Settings screen to all templates and future events', 'rsvpmaker' );  
-
-?>
-
-</p>
-<div><input id="all" type="checkbox" name="reset_defaults" value="1" checked="checked" /> <?php 
-
-  esc_html_e( 'All fields', 'rsvpmaker' );  
-
-?>
-
-</div>
-		<?php 
-		foreach ( $defaults as $index => $field ) {
-			printf( '<div><input class="default_field" type="checkbox" name="default_field[]" value="%s" />%s</div>', esc_attr( $index ), esc_html( $field ) );
-
-		}
-?>
-		<?php 
-
-  submit_button( 'Reset' );  
-
-?>
-</form>
-<h2>Check RSVPMaker Templates for Duplicates</h2>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-
-<?php 
-
-  rsvpmaker_nonce();
-?>
-
- <input type="hidden" name="rsvpmaker_template_duplicates" value="1" /> 
-
-		<?php 
-
-  submit_button( 'Check Now' );  
-
-?>
-</form>
-<h2>Check RSVPMaker Database Tables</h2>
-<form method="post" action="<?php 
-
-  echo admin_url( 'tools.php?page=rsvpmaker_cleanup' );  
-
-?>
-
-">
-
-<?php 
-
-  rsvpmaker_nonce();
-?>
-
- <input type="hidden" name="rsvpmaker_database_check" value="1" /> 
-
-		<?php 
-
-  submit_button( 'Check Now' );  
-
-?>
-</form>
-<?php 
-	$tables = $wpdb->get_results('SHOW TABLES');
-
-	foreach ($tables as $mytable)
-
-	{
-
-		foreach ($mytable as $t) 
-
-		{       
-
-			if(strpos($t,$wpdb->prefix.'rsvp') !== false)
-
-			echo $t . "<br>";
-
-		}
-
-	}
-?>
-<script>
-jQuery(document).ready(function( $ ) {
-$(document).on( 'click', '.default_field', function() {
-	$("#all").prop("checked", false);
-});
-});
-</script>
-		<?php 
-	}
-
-	// end initial form
-
-}
 function rsvp_simple_price( $post_id ) {
 	$per = get_post_meta( $post_id, '_per', true );
 	$price = ( empty( $per['price'][0] ) ) ? '' : $per['price'][0];
