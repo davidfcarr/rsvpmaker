@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 11.7
+Stable tag: 11.7.4
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -33,6 +33,8 @@ Use RSVPMaker to:
 ## Creating and Managing Events
 
 RSVPMaker events are created and edited just like blog posts in the WordPress editor, with the addition of parameters like event date (so the items can be listed chronologically and displayed on a calendar grid).
+
+Explore the editing experience with this [WordPress Playground demo](https://playground.wordpress.net/?blueprint-url=https%3A%2F%2Fquickplayground.com%2Fwp-json%2Fquickplayground%2Fv1%2Fblueprint%2Frsvpmaker_editing%3Fx%3D1768757330%26user_id%3D1%252) (created using the author's Quick Playground plugin)
 
 You can use RSVPMaker for event announcements, or turn on the Collect RSVPs function and set additional options for sending email notifications, customizing confirmation and reminder messages, and setting a price or prices if you will be requesting online payments via PayPal.
 
@@ -129,6 +131,14 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 11.7.4 =
+
+* Fix for the guest list controls
+
+= 11.7.3 =
+
+* Changed scripts for adding and removing guests.
+
 = 11.7 =
 
 * Fix glitch with get_events_by_template function
@@ -158,26 +168,3 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 = 11.5.6 =
 
 * Streamlined queries, new caching strategy
-
-= 11.4.9 =
-
-* Update to stay in sync with Stripe requirements.
-
-= 11.4.8 =
-
-* Search transaction log by email, with link from RSVP Report
-* Bug fixes for mailing list maintenance, paypal webhook api endpoint
-
-= 11.4.5 =
-
-* Tweaks to screen for viewing / restoring emails on unsubscribe list.
-* View / restore RSVP registrations that were dropped from list for nonpayment.
-
-= 11.4.4 =
-
-* Contact form improvements. Payment options for contact form.
-* Contact form can serve as an order form for gift certificates that can be redeemed against events.
-
-= 11.4.2 =
-
-* Eliminate one stray use of PHP short tags not supported in some configs of PHP 8

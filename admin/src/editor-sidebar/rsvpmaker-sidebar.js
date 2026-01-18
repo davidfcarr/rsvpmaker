@@ -13,12 +13,9 @@ const { __ } = wp.i18n; // Import __() from wp.i18n
 const RSVPMakerSidebarPlugin = function() {
 if(typeof rsvpmaker_ajax === 'undefined')
 	return null; //not an rsvpmaker post
+const tab = 'basics';
 const initialPostStatus = wp?.data?.select( 'core/editor' ).getEditedPostAttribute( 'status' );
-const url = window.location.href;
-const tabarg = url.match(/tab=([^&]+)/);
-const tab = (tabarg) ? tabarg[1] : 'basics';
-
-const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus) || ((tabarg) && tabarg[1]));
+const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus));
 
 const end_times = Array();
 const end_times_display = Array();

@@ -306,8 +306,8 @@ function get_rsvpmaker_ajax() {
 			'payment_gateway_options' => get_rsvpmaker_payment_options(),
 			'payment_gateway' => get_rsvpmaker_payment_gateway(),
 			'related_document_links' => $related_documents,
-			'form_links' => get_form_links($post_id, $template_id, 'rsvp_options'),
-			'confirmation_links' => get_conf_links($post_id, $template_id, 'rsvp_options'));
+			'form_links' => rsvpmaker_get_form_links($post_id, $template_id, 'rsvp_options'),
+			'confirmation_links' => rsvpmaker_get_conf_links($post_id, $template_id, 'rsvp_options'));
 
 	//}
 	//}

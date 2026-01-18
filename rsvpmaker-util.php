@@ -1773,17 +1773,14 @@ function get_past_rsvp_events( $where = '', $limit = 100, $output = OBJECT ) {
 
 	return $results;
 }
-function get_events_dropdown($include_drafts = false) {
+function rsvpmaker_get_events_dropdown($include_drafts = false, $require_rsvp_on = true) {
 	$options = '<optiongroup><optgroup label="' . __( 'Future Events', 'rsvpmaker' ) . '">' . "\n";
 	$future = rsvpmaker_get_future_events(50);
 	if ( is_array( $future ) ) {
 		foreach ( $future as $event ) {
-			if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
-
-				$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', $event->ts_start ) );
-
-			}
-
+			if ( $require_rsvp_on && !get_post_meta( $event->ID, '_rsvp_on', true ) )
+				continue;
+			$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', $event->ts_start ) );
 		}
 
 	}
@@ -1793,12 +1790,9 @@ function get_events_dropdown($include_drafts = false) {
 		if ( is_array( $drafts ) ) {
 		$options .= '<optgroup label="' . __( 'Draft Events', 'rsvpmaker' ) . '">' . "\n";
 			foreach ( $drafts as $event ) {
-				if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
-
-					$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', $event->ts_start ) );
-
-				}
-
+			if ( $require_rsvp_on && !get_post_meta( $event->ID, '_rsvp_on', true ) )
+				continue;
+			$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', $event->ts_start ) );
 			}
 		$options .= '</optiongroup><optiongroup>' . "\n";
 		}
@@ -1807,15 +1801,10 @@ function get_events_dropdown($include_drafts = false) {
 	$past = rsvpmaker_get_past_events( '', 50 );
 	if ( is_array( $past ) ) {
 		foreach ( $past as $event ) {
-
-			if ( get_post_meta( $event->ID, '_rsvp_on', true ) ) {
-
-				$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", $event->ID, esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', intval($event->ts_start) ) );
-
-			}
-
+			if ( $require_rsvp_on && !get_post_meta( $event->ID, '_rsvp_on', true ) )
+				continue;
+			$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", $event->ID, esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', intval($event->ts_start) ) );
 		}
-
 	}
 	else {
 		$options .= '<option value="">' . __( 'No events found', 'rsvpmaker' ) . '</option>' . "\n";
@@ -3635,27 +3624,56 @@ function rsvpmaker_parent( $post_id ) {
 	global $wpdb;
 	return $wpdb->get_var( $wpdb->prepare("SELECT post_parent FROM %i WHERE ID=%d",$wpdb->posts,$post_id) );
 }
-function get_form_links( $post_id, $t, $parent_tag ) {
+function rsvpmaker_get_form_links( $post_id, $t, $parent_tag ) {
 	global $rsvp_options;
 
-	$args[] = array(
-		'parent' => $parent_tag,
-		'id'     => 'edit_form',
-		'title'  => 'RSVP Form',
-		'href'   => admin_url( 'post.php?action=edit&tab=form&post=' . $post_id ),
-		'meta'   => array( 'class' => 'rsvpmenu' ),
-	);
+		$form_id = get_post_meta( $post_id, '_rsvp_form', true );
+		if ( empty( $form_id ) ) {
+			$form_id = $rsvp_options['rsvp_form'];
+		}
+		$parent = get_post_parent($form_id);
+		$parent_id = isset($parent->ID) ? $parent->ID : 0;
+		if($post_id && $parent_id && $post_id == $parent_id) {
+			$source = ' (custom for this event)';
+			$custom = true;
+		}
+		elseif($t && $parent_id && $t == $parent_id) {
+			$source = ' (inherited from template)';
+			$custom = false;
+		}
+		else {
+			$source = ' (default from RSVPMaker Settings)';
+			$custom = false;
+		}
 
 	$args[] = array(
 		'parent' => $parent_tag,
-		'id'     => 'edit_pricing',
-		'title'  => 'Pricing',
-		'href'   => admin_url( 'post.php?action=edit&tab=pricing&post=' . $post_id ),
-		'meta'   => array( 'class' => 'rsvpmenu' ),
+		'id'     => 'rsvp_form',
+		'title'  => 'RSVP Form'.$source,
+		'href'   => admin_url( 'post.php?post=' . $form_id.'&action=edit&tab=confirmation' ),
+		'meta'   => array( 'class' => 'confirmation_reminders' ),
 	);
+	if($custom) {
+		$args[] = array(
+			'parent' => 'rsvp_form',
+			'id'     => 'rsvp_form_default',
+			'title'  => 'Revert to Default Form',
+			'href'   => admin_url( '?rsvpmaker_customize=form&action=revert&event_id=' . $post_id ),
+			'meta'   => array( 'class' => 'confirmation_reminders' ),
+		);
+	}
+	else {
+		$args[] = array(
+			'parent' => 'rsvp_form',
+			'id'     => 'rsvp_form_customize',
+			'title'  => 'Customize Form',
+			'href'   => admin_url( '?rsvpmaker_customize=form&action=customize&event_id=' . $post_id.'&source='.$form_id ),
+			'meta'   => array( 'class' => 'confirmation_reminders' ),
+		);
+	}
 	return $args;
 }
-function get_conf_links( $post_id, $t, $parent_tag ) {
+function rsvpmaker_get_conf_links( $post_id, $t, $parent_tag ) {
 	global $rsvp_options, $wpdb;
 	$label = '';
 	$confirm_id = get_post_meta( $post_id, '_rsvp_confirm', true );
@@ -3734,14 +3752,46 @@ function get_conf_links( $post_id, $t, $parent_tag ) {
 }
 function get_more_related( $post, $post_id, $t, $parent_tag ) {
 	global $wpdb, $rsvp_options;
+		$confirm_post = rsvp_get_confirm( $post_id, true );
+		if($post_id && $post_id == $confirm_post->post_parent) {
+			$source = ' (custom for this event)';
+			$custom = true;
+		}
+		elseif($t && $t == $confirm_post->post_parent) {
+			$source = ' (inherited from template)';
+			$custom = false;
+		}
+		else {
+			$source = ' (default from RSVPMaker Settings)';
+			$custom = false;
+		}
+
 	$args[] = array(
 		'parent' => $parent_tag,
-		'id'     => 'confirmation_reminders',
-		'title'  => 'Confirmations + Reminders',
-		'href'   => admin_url( 'post.php?action=edit&tab=confirmation&post=' . $post_id ),
+		'id'     => 'confirmation',
+		'title'  => 'Confirmation Message'.$source,
+		'href'   => admin_url( 'post.php?post=' . $confirm_post->ID.'&action=edit&tab=confirmation' ),
 		'meta'   => array( 'class' => 'confirmation_reminders' ),
 	);
-	$forms = get_form_links( $post_id, $t, $parent_tag );
+	if($custom) {
+		$args[] = array(
+			'parent' => 'confirmation',
+			'id'     => 'confirmation_default',
+			'title'  => 'Revert to Default Confirmation Message',
+			'href'   => admin_url( '?rsvpmaker_customize=confirmation&action=revert&event_id=' . $post_id ),
+			'meta'   => array( 'class' => 'confirmation_reminders' ),
+		);
+	}
+	else {
+		$args[] = array(
+			'parent' => 'confirmation',
+			'id'     => 'confirmation_customize',
+			'title'  => 'Customize Confirmation Message',
+			'href'   => admin_url( '?rsvpmaker_customize=confirmation&action=customize&event_id=' . $post_id.'&source='.$confirm_post->ID ),
+			'meta'   => array( 'class' => 'confirmation_reminders' ),
+		);
+	}
+	$forms = rsvpmaker_get_form_links( $post_id, $t, $parent_tag );
 	foreach ( $forms as $arg ) {
 		$args[] = $arg;
 
@@ -3764,7 +3814,7 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 
 				'id'     => 'rsvpmaker-edit-template',
 
-				'href'   => admin_url( 'post.php?action=edit&post=' ) . $t,
+				'href'   => admin_url( 'post.php?&post='.$t.'&action=edit' ),
 
 				'title'  => __( 'Edit Template', 'rsvpmaker' ),
 
@@ -3788,7 +3838,7 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 				'parent' => $parent_tag,
 				'id'     => 'template-options',
 				'title'  => 'Template Options',
-				'href'   => admin_url( 'post.php?action=edit&tab=basics&post=' . $t ),
+				'href'   => admin_url( 'post.php?action=edit&post=' . $t.'&tab=basics' ),
 				'meta'   => array( 'class' => 'template-options' ),
 			);
 			$args[] = array(
@@ -6053,4 +6103,62 @@ $post_id = (int) $post_id;
 	$sql = $wpdb->prepare("SELECT count(*) FROM %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix . "rsvpmaker",$post_id);
 	$total = (int) $wpdb->get_var( $sql );
 	return $rsvp_max - $total;
+}
+
+function rsvpmaker_customize_document () {
+    if(empty($_GET['rsvpmaker_customize']))
+        return;
+    $action = sanitize_text_field($_GET['action']);
+    $type = sanitize_text_field($_GET['rsvpmaker_customize']);
+    $event_id = intval($_GET['event_id']);
+    $source = isset($_GET['source']) ? intval($_GET['source']) : 0;
+    global $rsvp_options;
+    if('confirmation' == $type) {
+        if('revert' == $action) {
+            //set meta field and redirect
+            $confirm_id = $rsvp_options['rsvp_confirm'];
+			update_post_meta($event_id,'_rsvp_confirm',$confirm_id);
+        }
+        elseif('customize' == $action && $source) {
+		$confirm_post = get_post( $source );
+		if($confirm_post) {
+			$updated['post_title'] = 'Confirmation:'.$post->post_title.' ('.$event_id.')';
+			$updated['post_type'] = 'rsvpemail';
+			$updated['post_author'] = $current_user->ID;
+			$updated['post_content'] = $confirm_post->post_content;
+			$updated['post_status'] = 'publish';
+			$updated['post_parent'] = $event_id;
+			$confirm_id = wp_insert_post($updated);
+			update_post_meta($event_id,'_rsvp_confirm',$confirm_id);
+		}
+
+        }
+        if($confirm_id) {
+            wp_safe_redirect(admin_url('post.php?post='.$confirm_id.'&action=edit'));
+        }
+    }
+    if('form' == $type) {
+        if('revert' == $action) {
+            //set meta field and redirect
+            $form_id = $rsvp_options['rsvp_form'];
+			update_post_meta($event_id,'_rsvp_form',$form_id);
+        }
+        elseif('customize' == $action && $source) {
+		$form_post = get_post( $source );
+		if($form_post) {
+			$updated['post_title'] = 'Form:'.$post->post_title.' ('.$event_id.')';
+			$updated['post_type'] = 'rsvpemail';
+			$updated['post_author'] = $current_user->ID;
+			$updated['post_content'] = $form_post->post_content;
+			$updated['post_status'] = 'publish';
+			$updated['post_parent'] = $event_id;
+			$form_id = wp_insert_post($updated);
+			update_post_meta($event_id,'_rsvp_form',$form_id);
+		}
+
+        }
+        if($form_id) {
+            wp_safe_redirect(admin_url('post.php?post='.$form_id.'&action=edit'));
+        }
+    }
 }

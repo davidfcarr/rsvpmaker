@@ -27,6 +27,7 @@ add_action('admin_init', 'cpevent_activate' );
 
 //add_action('admin_init', 'rsvpmaker_setup_post' );
 add_action('admin_init', 'add_rsvpemail_caps' );
+add_action('admin_init', 'rsvpmaker_customize_document' );
 
 add_action( 'admin_menu', 'my_events_menu' );
 add_action( 'admin_menu', 'my_rsvpemails_menu' );

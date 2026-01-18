@@ -247,9 +247,7 @@ class RSVPMaker_GuestList_Controller extends WP_REST_Controller {
 		global $wpdb;
 
 		$event = $request['post_id'];
-
 		$sql = $wpdb->prepare("SELECT first,last,note FROM %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix . "rsvpmaker",$event);
-
 		$attendees = $wpdb->get_results( $sql );
 
 		return new WP_REST_Response( $attendees, 200 );
@@ -2313,7 +2311,8 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
-		global $wpdb, $current_user, $post;
+		global $wpdb, $current_user, $post, $rsvp_options;
+		$template_id = intval(get_post_meta($post->ID,'_meet_recur',true));
 		$status = '';
 		$post_id= intval($_GET['event_id']);
 		$json = file_get_contents('php://input');
@@ -2370,8 +2369,8 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 				rsvpmaker_reminder_cron($hours, get_rsvp_date($post_id), $post_id);
 			}
 		}
-		$confirm_post = rsvp_get_confirm( $post_id, true );;
-		if($post_id && $post_id != $confirm_post->post_parent) {
+		$confirm_post = rsvp_get_confirm( $post_id, true );
+		if(isset($data->action) && 'custom_confirm' == $data->action) {
 			$response['copied'] = $confirm_post->post_title;
 			$updated['post_title'] = 'Confirmation:'.$post->post_title.' ('.$post_id.')';
 			$updated['post_type'] = 'rsvpemail';
@@ -2383,6 +2382,18 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 			$updated['ID'] = $confirm_id;
 			$confirm_post = (object) $updated;
 			update_post_meta($post_id,'_rsvp_confirm',$confirm_id);
+		}
+		if($post_id && $post_id == $confirm_post->post_parent) {
+			$response['confirmation_source'] = 'custom';
+		}
+		elseif($template_id == $confirm_post->post_parent) {
+			$response['confirmation_source'] = 'inherited from template';
+		}
+		elseif($rsvp_options['rsvp_confirm'] == $confirm_post->post_parent) {
+			$response['confirmation_source'] = 'default from RSVPMaker Settings';
+		}
+		else {
+			$response['confirmation_source'] = '?';
 		}
 
 $response["confirmation"] = $confirm_post;

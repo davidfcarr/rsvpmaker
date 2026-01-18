@@ -44,50 +44,42 @@ if($('#formvars')) {
 	});
 	var max_guests = $('#max_guests').val();
 	console.log('max guests ',max_guests);
-	var last;
-	var blank = $('#first_blank').html();
-	console.log('initial blank',blank);
-	var firstblank_hidden = true;
-	let number_to_add = 0;
+	let first;
+	let last;
+	var blank = $('#guest_blank_template').html();
+	console.log('guest_blank_template',blank);
+	$('#guest_blank_template').remove();
+	let newcount;
 	let guestline = '';
-	$('#add_guests').click(function(event){
-		event.preventDefault();
-		number_to_add = parseInt($('#number_to_add').val());
-		console.log('number_to_add',number_to_add);
+	console.log('starting guestcount',guestcount);
+	$('#people_in_party').change(function(event){
+		first = $('#first').val();
 		last = $('#last').val();
-		console.log('number to add',number_to_add);
-		console.log('guestcount',guestcount);
-		if(firstblank_hidden) {
-			firstblank_hidden = false;
-			let firstblank = blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount);
-			let defaultlast = (last != '') ? last : 'TBD';
-			firstblank = firstblank.replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+defaultlast);
-			$('#first_blank').html(firstblank);
-			$('#first_blank').show();
-			guestcount++;
-			$('#totalparty').html(guestcount); // +1 for the person filling out the form
-			number_to_add--;
-			if(!number_to_add)
-				return;
-		}
-	for(let i = 0; i < number_to_add; i++) {
-		if(!is_admin && (guestcount > max_guests))
+		$('#rsvphost').html('# 1 '+first+' '+last);
+		newcount = parseInt($('#people_in_party').val());
+		if(newcount < 1)
+			return;
+		if(!is_admin && (newcount > max_guests))
 		{
-		console.log('guest limit reached');
-		console.log('guest count',guestcount);
-		console.log('max_guests',max_guests);
-		$('#first_blank').append('<p><em>Guest limit reached</em></p>');
+		$('#guest_section').append('<p><em>Guest limit reached</em></p>');
 		return;
 		}
-	console.log('guestline loop',i);
-	console.log('guestline number to add',number_to_add);
-	console.log('guestline guestcount',guestcount);
-	guestline = '<div class="guest_blank">' +
-		blank.replace(/\[\]/g,'['+guestcount+']').replace('###',guestcount).replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last) +
-		'</div>';
-	guestcount++;
-	$('#first_blank').append(guestline);
-	}
+		if(newcount > guestcount) {
+			while(guestcount < newcount) {
+			guestcount++;
+			guestline = '<div class="guest_blank" id="guest_blank_'+guestcount+'">' +
+				blank.replace(/\[2\]/g,'['+guestcount+']').replace('###',guestcount).replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last) +
+				'</div>';
+			$('#guest_section').append(guestline);
+			console.log('guestline',guestline);
+			}
+		}
+		else if (newcount < guestcount) {
+			for(guestcount; guestcount > newcount; guestcount--) {
+			$('#guest_blank_'+guestcount).remove();
+			}
+		}
+	});
 
 	if(hide)
 	{
@@ -100,8 +92,6 @@ if($('#formvars')) {
 	  $('.'+value).prop( "disabled", true );
 	});
 	}
-
-	});
 
 		jQuery("#rsvpform").submit(function() {
 		var leftblank = '';

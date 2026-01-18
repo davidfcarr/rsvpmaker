@@ -22,6 +22,9 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  */
 add_filter('qckply_qckply_clone_posts','qckply_qckply_clone_rsvpmakers', 10, 2);
 function qckply_qckply_clone_rsvpmakers($clone, $settings) {
+    global $rsvp_options;
+    //todo: import rsvpmaker_template and rsvpmaker_form posts as well
+    $rsvp_posts = [];
     error_log('qckply_qckply_clone_rsvpmakers copy events '.intval($settings['copy_events']));
     $was = sizeof($clone['posts']);
     if(!empty($settings['copy_events']) && function_exists('rsvpmaker_get_future_events')) {
@@ -33,6 +36,7 @@ function qckply_qckply_clone_rsvpmakers($clone, $settings) {
             $clone['next_event'] = $rsvpmakers[0]->ID;
             foreach($rsvpmakers as $r) {
                 $clone['ids'][] = $r->ID;
+                $rsvp_posts[] = $r->ID;
                 $post = array(
                     'ID' => $r->ID,
                     'post_type' => 'rsvpmaker',
@@ -55,6 +59,8 @@ function qckply_qckply_clone_rsvpmakers($clone, $settings) {
       foreach($settings['demo_rsvpmakers'] as $r) {
         $r = intval($r);
         if($post = get_post($r)) {
+        if(!in_array($r->ID,$rsvp_posts))
+            $rsvp_posts[] = $r;
         $clone['ids'][] = $r;
         $post = (array) $post;
         $post['post_status'] = 'publish'; // ensure post status is set to publish
@@ -62,6 +68,46 @@ function qckply_qckply_clone_rsvpmakers($clone, $settings) {
         }
     }
 }
+    
+	$id = get_option('rsvpmaker_link_template_post');		
+    if($id) {
+        if(!in_array($id,$clone['ids']) && $post = get_post($id)) {
+        $clone['ids'][] = $id;
+        $post = (array) $post;
+        $post['post_status'] = 'publish'; // ensure post status is set to publish
+        $clone['posts'][] = $post;
+        }
+    }
+
+    $id = $rsvp_options['rsvp_form'];
+    if($id) {
+        if(!in_array($id,$clone['ids']) && $post = get_post($id)) {
+        $clone['ids'][] = $id;
+        $post = (array) $post;
+        $post['post_status'] = 'publish'; // ensure post status is set to publish
+        $clone['posts'][] = $post;
+        }
+    }
+
+    foreach($rsvp_posts as $post_id) {
+        if($id = get_post_meta($post_id,'_meet_recur',true))
+        {
+            if(!in_array($id,$clone['ids']) && $post = get_post($id)) {
+            $clone['ids'][] = $id;
+            $post = (array) $post;
+            $post['post_status'] = 'publish'; // ensure post status is set to publish
+            $clone['posts'][] = $post;
+            }
+        }
+        if($id = get_post_meta($post_id,'_rsvp_form',true)) {
+            if(!in_array($id,$clone['ids']) && $post = get_post($id)) {
+            $clone['ids'][] = $id;
+            $post = (array) $post;
+            $post['post_status'] = 'publish'; // ensure post status is set to publish
+            $clone['posts'][] = $post;
+            }
+        }
+    }
     $diff = sizeof($clone['posts']) - $was;
     error_log('added '.$diff.' rsvpmaker posts ');
     return $clone;
@@ -115,6 +161,7 @@ add_filter('qckply_settings_to_copy','rsvpmaker_settings_for_playground');
 function rsvpmaker_settings_for_playground($settings_list) {
     if(function_exists('rsvpmaker_get_future_events')) {
         $settings_list[] = 'RSVPMAKER_Options';
+        $settings_list[] = 'rsvpmaker_link_template_post';
     }
     return $settings_list;
 }
@@ -191,7 +238,7 @@ function qckply_form_demo_rsvpmaker_content($settings) {
         printf('<p>Keep Event: <input type="checkbox" name="demo_rsvpmakers[]" value="%s" checked="checked" /> %s </p>',intval($r),esc_html($event->post_title));
     }
     }
-    $events_dropdown = get_events_dropdown (true);//events dropdown including drafts
+    $events_dropdown = rsvpmaker_get_events_dropdown (true, false);//events dropdown including drafts
     for($i = 0; $i < 10; $i++) {
     $classAndID = ($i > 0) ? ' class="hidden_item rsvpmaker" id="rsvpmaker_'.$i.'" ' : ' class="rsvpmaker" id="rsvpmaker_'.$i.'" ';
     printf('<p%s><label>Demo Event</label> <select class="select_with_hidden" name="demo_rsvpmakers[]">%s</select></p>'."\n",wp_kses($classAndID, qckply_kses_allowed()),'<option value="">Choose Event</option>'.wp_kses($events_dropdown, qckply_kses_allowed()));

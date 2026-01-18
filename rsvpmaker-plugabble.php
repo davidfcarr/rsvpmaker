@@ -2689,7 +2689,7 @@ function rsvpmaker_profile_lookup( $email = '' ) {
 					return $profile;
 			}
 
-			$sql = $wdbp->prepare("SELECT details FROM %i WHERE email LIKE %s ORDER BY id DESC",$wpdb->prefix . 'rsvpmaker',$email);
+			$sql = $wpdb->prepare("SELECT details FROM %i WHERE email LIKE %s ORDER BY id DESC",$wpdb->prefix . 'rsvpmaker',$email);
 			} else {
 				$sql = $wpdb->prepare("SELECT details FROM %i WHERE email LIKE %s ORDER BY id DESC",$wpdb->prefix . 'rsvpmaker',$email);
 			}

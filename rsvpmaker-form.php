@@ -314,9 +314,9 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 	$shared = '';
 
-	$label = ( isset( $atts['label'] ) ) ? $atts['label'] : __( 'Guest', 'rsvpmaker' );
+	$label = ( isset( $atts['label'] ) ) ? $atts['label'] : '#';
 	$max_party = ( isset( $atts['max_party'] ) ) ? (int) $atts['max_party'] : 0;
-	$count = ($master_rsvp) ? $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM %i WHERE master_rsvp=",$wpdb->prefix . 'rsvpmaker', $master_rsvp)) : 0;
+	$count = ($master_rsvp) ? $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM %i WHERE master_rsvp=%d",$wpdb->prefix . 'rsvpmaker', $master_rsvp)) : 0;
 	$max_guests = $blanks_allowed + $count;
 
 	if ( $max_party ) {
@@ -329,16 +329,11 @@ function rsvp_form_guests( $atts, $content = '' ) {
 			$shared .= $field;
 		}
 	}
-	$template = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n";
+	$output = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n";
 
-	$template .= '<div class="guest_blank" id="first_blank" style="display:none"><p><strong>' . __( 'Guest', 'rsvpmaker' ) . ' ###</strong></p>' . $shared . $content . '</div>';// fields shared from master form, plus added fields
-
-	$addmore = ( isset( $atts['addmore'] ) ) ? $atts['addmore'] : __( 'Add Guests', 'rsvpmaker' );
-	// $master_rsvp = 4;//test data
-
-	$wpdb->show_errors();
-
-	$output = '';
+	//$template_content = preg_replace('/\[[^\]^a-zA-Z]*\]/', '[###]', $shared . $content);
+	//echo "\n".htmlentities($template_content)."\n";
+	$output .= '<div class="guest_blank" id="guest_blank_template" style="display:none"><p><strong># ###</strong></p>' .$shared . $content. '</div>';// fields shared from master form, plus added fields
 
 	$count = 1; // reserve 0 for host
 
@@ -352,7 +347,9 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 			foreach ( $results as $row ) {
 
-				$output .= sprintf( '<div class="guest_blank"><p><strong>%s %d</strong></p>', $label, $count ) . "\n";
+				$count++;
+
+				$output .= sprintf( '<div class="guest_blank" id="guest_blank_%d"><p><strong>%s %d</strong></p>', $count, $label, $count ) . "\n";
 
 				$gprofile = rsvp_row_to_profile( $row );
 
@@ -376,15 +373,15 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 				$output = str_replace( '[]', '[' . $count . ']', $output );
 
-				$output .= sprintf( '<div><input type="checkbox" name="guestdelete[%s]" value="%s" /> ' . __( 'Delete Guest', 'rsvpmaker' ) . ' %d</div><input type="hidden" name="guest[id][%s]" value="%s">', esc_attr( $row['id'] ), esc_attr( $row['id'] ), $count, $count, esc_attr( $row['id'] ) );
+				$output .= '</div>';
 
-				$count++;
+				$output .= sprintf( '<input type="hidden" name="guest[id][%s]" value="%s">', $count, esc_attr( $row['id'] ) );
 
 			}
 		}
 	}
 
-	$output .= $template;
+	//$output .= $template;
 
 	$max_guests = $blanks_allowed + $count;
 
@@ -408,15 +405,13 @@ function rsvp_form_guests( $atts, $content = '' ) {
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests (max per party)', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
 		}	
 	}
+	if ( !strpos($post->post_type,'svpmaker') || $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
+		$output = '<h3>'.esc_html__('Add Guests','rsvpmaker').'</h3><p><input type="hidden" id="starting_count" value="'.esc_attr($count).'" /> <input type="number" id="people_in_party" name="people_in_party" min="1" value="'.esc_attr($count).'" style="width: 50px;" > '.__('People in party').'</p><p><strong id="rsvphost"># 1 (You)</strong></p>'."\n".$output;
+	}
 
 	$output = '<div id="guest_section" tabindex="-1">' . "\n" . $output . '</div>' . '<!-- end of guest section-->';
 
-	if ( !strpos($post->post_type,'svpmaker') || $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
-
-		$output .= '<p><span class="plusguests">+</span> <input type="number" id="number_to_add" name="number_to_add" min="1" value="1" style="width: 50px;" > <a href="#guest_section" id="add_guests" class="add_guests_button" name="add_guests">' . $addmore . '</a> <!-- end of guest section--></p>'."\n";
-	}
-
-	$output .= sprintf('<p><strong>%s: <span id="totalparty">%d</span></strong><input type="hidden" id="guestcount" value="%d" /></p>',__('Total party (including you)','rsvpmaker'),$count,$count);//'<script type="text/javascript"> var guestcount =' . $count . '; </script>';
+	$output .= sprintf('<input type="hidden" id="guestcount" value="%d" />',$count);//'<script type="text/javascript"> var guestcount =' . $count . '; </script>';
 
 	return $output;
 

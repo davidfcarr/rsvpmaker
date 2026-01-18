@@ -1882,7 +1882,7 @@ $permalink = get_permalink($post->ID);
 if(isset($_GET['scheduling']))
 	$permalink = add_query_arg('scheduling',1,$permalink);
 $edit_link = get_edit_post_link($post->ID);
-$events_dropdown = get_events_dropdown ();
+$events_dropdown = rsvpmaker_get_events_dropdown ();
 $queued = get_post_meta($post->ID,'rsvprelay_to');
 $delayed = wp_next_scheduled( 'rsvpmailer_delayed_send' );
 if($delayed) {
