@@ -6,8 +6,9 @@ import {useRSVPDate} from '../queries.js'
 
 export default function DateOrTemplate() {
     const initialPostStatus = wp?.data?.select( 'core/editor' ).getEditedPostAttribute( 'status' );
+    const postmeta = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'meta' );
     const tab = 'basics';
-    const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus));
+    const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus) || postmeta?._show_rsvpmaker_options);
     const event_id = wp?.data?.select("core/editor").getCurrentPostId();
     const {data,isLoading,isError} = useRSVPDate(event_id);
     if(isError)

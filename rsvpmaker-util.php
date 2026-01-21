@@ -3867,7 +3867,7 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 		// rsvpmaker_debug_log($args,'more menu array');
 		return $args;
 }
-function get_related_documents( $post_id = 0, $query = '' ) {
+function rsvpmaker_get_related_documents( $post_id = 0, $query = '' ) {
 	global $post, $rsvp_options;
 
 	$backup = $post;
@@ -3898,7 +3898,6 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 	$parent_tag = 'edit'; // front end
 	if ( isset( $_GET['page'] ) || isset( $_GET['action'] ) ) {
 		$parent_tag = 'rsvpmaker_options';
-
 	}
 	$rsvp_id = rsvpmaker_parent( $post_id );
 	if ( ( $query == 'rsvpemail' ) && ! $rsvp_id && ! ( strpos( $post->post_title, 'Default' ) ) ) {
@@ -3933,7 +3932,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 				'parent' => 'rsvpmaker_parent',
 				'id'     => 'rsvpmaker_options',
 				'title'  => 'RSVP / Event Options',
-				'href'   => admin_url( 'post.php?action=edit&tab=basics&post=' . $rsvp_parent ),
+				'href'   => admin_url( '?rsvp_options=' . $rsvp_parent ),
 				'meta'   => array( 'class' => 'edit-rsvpmaker-options' ),
 			);
 			$parent_tag = 'rsvpmaker_parent';
@@ -3969,7 +3968,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 			'parent' => $parent_tag,
 			'id'     => 'rsvpmaker_options',
 			'title'  => 'RSVP / Event Options',
-			'href'   => admin_url( 'post.php?action=edit&tab=basics&post=' . $rsvp_parent ),
+			'href'   => admin_url( '?rsvp_options=' . $rsvp_parent ),
 			'meta'   => array( 'class' => 'rsvpmenu' ),
 		);
 		$more = get_more_related( get_post( $rsvp_parent ), $rsvp_parent, rsvpmaker_has_template( $rsvp_parent ), $parent_tag );
@@ -4014,7 +4013,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 			'parent' => $parent_tag,
 			'id'     => 'rsvpmaker_options_screen',
 			'title'  => 'RSVP / Event Options',
-			'href'   => admin_url( 'post.php?action=edit&tab=basics&post=' . $post_id ),
+			'href'   => admin_url( '?rsvp_options=' . $post_id ),
 			'meta'   => array( 'class' => 'edit-rsvpmaker-options' ),
 		);
 	} elseif ( is_admin() ) {
@@ -4022,7 +4021,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 		$args[] = array(
 			'id'    => 'rsvpmaker_options',
 			'title' => 'RSVP / Event Options',
-			'href'  => admin_url( 'post.php?action=edit&tab=basics&post=' . $post_id ),
+			'href'  => admin_url( '?rsvp_options=' . $post_id ),
 			'meta'  => array( 'class' => 'edit-rsvpmaker-options' ),
 		);
 	} else { // front end
@@ -4030,7 +4029,7 @@ function get_related_documents( $post_id = 0, $query = '' ) {
 			'parent' => $parent_tag,
 			'id'     => 'rsvpmaker_options',
 			'title'  => 'RSVP / Event Options',
-			'href'   => admin_url( 'post.php?action=edit&tab=basics&post=' . $post_id ),
+			'href'   => admin_url( '?rsvp_options=' . $post_id ),
 			'meta'   => array( 'class' => 'edit-rsvpmaker-options' ),
 		);
 
@@ -6161,4 +6160,9 @@ function rsvpmaker_customize_document () {
             wp_safe_redirect(admin_url('post.php?post='.$form_id.'&action=edit'));
         }
     }
+}
+
+function rsvpmaker_options ($post_id) {
+	update_post_meta($post_id,'_show_rsvpmaker_options',true);
+    wp_safe_redirect(admin_url('post.php?post='.$post_id.'&action=edit'));
 }

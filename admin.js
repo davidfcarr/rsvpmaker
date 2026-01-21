@@ -488,7 +488,7 @@ jQuery( document ).ready(
 				if ( id > 0 ) {
 					var specific_post_edit_row = $( '#edit-' + id ),
 					specific_post_row          = $( '#post-' + id ),
-					datetext                   = $( '.rsvpmaker-date', specific_post_row ).text();
+					datetext                   = $( '#event_start_'+id ).val();
 					var timestamp              = Date.parse( datetext );
 					if (Number.isNaN( timestamp )) {
 						return;
@@ -498,7 +498,7 @@ jQuery( document ).ready(
 					var justdate = dt.getFullYear() + '-' + pad2( dt.getMonth() + 1 ) + '-' + pad2( dt.getDate() );
 					var justtime = pad2( dt.getHours() ) + ':' + pad2( dt.getMinutes() ) + ':' + pad2( dt.getSeconds() );
 
-					var endtext = $( '.rsvpmaker_end', specific_post_row ).text();
+					endtext = $( '#event_end_'+id ).val();
 					if (endtext == '') {
 						var hourplus      = pad2( dt.getHours() + 1 ) + ':' + pad2( dt.getMinutes() ) + ':' + pad2( dt.getSeconds() );
 						var end_date_time = new Date( justdate + ' ' + hourplus );

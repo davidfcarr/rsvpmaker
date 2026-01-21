@@ -1420,7 +1420,7 @@ AND  `post_id` = %d",$wpdb->postmeta,$event);
 				}
 			}
 
-			$missing_guests = '';
+			$keep_guests = '';
 
 			if ( sizeof( $guestnv ) ) {
 
@@ -1428,20 +1428,8 @@ AND  `post_id` = %d",$wpdb->postmeta,$event);
 
 					$id = ( isset( $postdata['guest']) && isset( $postdata['guest']['id']) && isset( $postdata['guest']['id'][ $index ] ) ) ? (int) $postdata['guest']['id'][ $index ] : 0;
 
-					if ( isset( $postdata['guestdelete'][ $id ] ) ) {
-
-						$gd = (int) $postdata['guestdelete'][ $id ];
-
-						$sql = $wpdb->prepare("DELETE FROM %i WHERE id=%d",$wpdb->prefix . 'rsvpmaker', $gd);
-
-						$guest_text[ $index ] = __( 'Deleted:', 'rsvpmaker' ) . "\n" . $guest_text[ $index ];
-
-						$guest_list[ $index ] = __( 'Deleted:', 'rsvpmaker' ) . ' ' . $guest_list[ $index ];
-
-						$wpdb->query( $sql );
-
-					} elseif ( $id ) {
-						$missing_guests .= " AND id != $id";
+					if ( $id ) {
+						$keep_guests .= " AND id != $id";
 						$wpdb->update($wpdb->prefix . 'rsvpmaker', $nv,array('id'=>$id));// $sql = 'UPDATE ' . $wpdb->prefix . 'rsvpmaker ' . $sql . ' WHERE id=' . $id;
 					} else {
 						$count++;
@@ -1454,8 +1442,8 @@ AND  `post_id` = %d",$wpdb->postmeta,$event);
 					}
 				}
 			}
-			if($rsvp_id && $missing_guests) {
-				$missing_guests = "delete from ".$wpdb->prefix."rsvpmaker WHERE master_rsvp= ".intval($rsvp_id).$missing_guests;
+			if($rsvp_id) {
+				$missing_guests = "delete from ".$wpdb->prefix."rsvpmaker WHERE master_rsvp= ".intval($rsvp_id).$keep_guests;
 				$wpdb->query($missing_guests);
 			}
 

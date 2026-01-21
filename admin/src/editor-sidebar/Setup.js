@@ -35,6 +35,7 @@ export default function Setup (props) {
         setOpen(false);
         if(props.setOpenModal)
             props.setOpenModal(false);
+        wp.data.dispatch('core/editor').editPost({meta: { '_show_rsvpmaker_options': false }});
     }
     function open() {
         setOpen(true);

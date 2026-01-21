@@ -18,7 +18,7 @@ function rsvpmaker_rest_array() {
 
 function rsvpmaker_admin_enqueue( $hook ) {
 	global $post, $rsvpscript;
-	$scriptversion = get_rsvpversion();
+	$scriptversion = get_rsvpversion().'.1';
 
 	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
 	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');

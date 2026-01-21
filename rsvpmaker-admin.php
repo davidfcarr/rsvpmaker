@@ -1067,11 +1067,13 @@ function rsvpmaker_custom_column($column_name, $post_id) {
 	if(!$event && ('rsvpmaker_template' != $post->post_type) && ('rsvpemail' !=  $post->post_type)) {
 			return;
 	}
-		//return;
-
-    if( $column_name == 'rsvpmaker_end' ) {
+    if( $column_name == 'event_dates' ) {
 		if($event)
-		echo rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_end);
+		printf('<strong>%s<br />%s</strong><input type="hidden" id="event_start_%d" value="%s" />',esc_html(rsvpmaker_date($rsvp_options['long_date'],$event->ts_start)),esc_html(rsvpmaker_date($rsvp_options['time_format'],$event->ts_start)),$post_id,esc_attr($event->date));
+	}
+    elseif( $column_name == 'rsvpmaker_end' ) {
+		if($event)
+		printf('<strong>%s<br />%s</strong><input type="hidden" id="event_end_%d" value="%s" />',esc_html(rsvpmaker_date($rsvp_options['long_date'],$event->ts_end)),esc_html(rsvpmaker_date($rsvp_options['time_format'],$event->ts_end)),$post_id,esc_attr($event->enddate));
 	}
     elseif( $column_name == 'rsvpmaker_display' ) {
 		if(empty($event))
@@ -2017,7 +2019,7 @@ if(isset($_POST['defaults']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsv
 	}
 }
 
-$documents = get_related_documents();
+$documents = rsvpmaker_get_related_documents();
 ?>
 <style>
 <?php 
@@ -3617,7 +3619,7 @@ if(!strpos($rsvp_options["time_format"],'T') )
 <option value="UTC+14">UTC+14</option>
 </optgroup></select>
 <?php
-	printf('<a href="%s" >%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id='.$post_id),__('More Event Options','rsvpmaker')); 
+	printf('<a href="%s" >%s</a>',admin_url('?rsvp_options='.$post_id),__('More Event Options','rsvpmaker')); 
 }//end content not displayed on initial setup page	
 ?>
 
@@ -3767,7 +3769,7 @@ $args = array(
 $wp_admin_bar->add_node( $args );
 
 $noview = true;
-$argarg = get_related_documents ();
+$argarg = rsvpmaker_get_related_documents ();
 if(empty($argarg))
 return;
 	foreach($argarg as $args) {

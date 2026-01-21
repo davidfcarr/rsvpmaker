@@ -140,7 +140,7 @@ register_meta( 'post', '_rsvp_currency', $args );
 				return current_user_can('edit_posts');
 			}
 	);
-	$rsvpmaker_bool = array('rsvp_on','add_timezone','convert_timezone','calendar_icons','rsvp_end_display','rsvp_rsvpmaker_send_confirmation_email','rsvp_confirmation_after_payment','rsvp_confirmation_after_payment','rsvp_confirmation_include_event','rsvp_count','rsvp_yesno','rsvp_captcha','rsvp_login_required','rsvp_form_show_date');
+	$rsvpmaker_bool = array('rsvp_on','add_timezone','convert_timezone','calendar_icons','rsvp_end_display','rsvp_rsvpmaker_send_confirmation_email','rsvp_confirmation_after_payment','rsvp_confirmation_after_payment','rsvp_confirmation_include_event','rsvp_count','rsvp_yesno','rsvp_captcha','rsvp_login_required','rsvp_form_show_date','show_rsvpmaker_options');
 
 	foreach($rsvpmaker_bool as $field) {
 		$args['default'] = !empty($rsvp_options[$field]);

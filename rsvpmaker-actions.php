@@ -155,6 +155,9 @@ function rsvpmaker_init_router() {
 			}
 		}
 	}
+	if(isset($_GET['rsvp_options'])) {
+		rsvpmaker_options(intval($_GET['rsvp_options']));
+	}
 }
 
 add_action('admin_init', 'rsvpmaker_filter_debug' );

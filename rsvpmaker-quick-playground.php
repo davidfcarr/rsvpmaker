@@ -59,7 +59,7 @@ function qckply_qckply_clone_rsvpmakers($clone, $settings) {
       foreach($settings['demo_rsvpmakers'] as $r) {
         $r = intval($r);
         if($post = get_post($r)) {
-        if(!in_array($r->ID,$rsvp_posts))
+        if($r && !in_array($r,$rsvp_posts))
             $rsvp_posts[] = $r;
         $clone['ids'][] = $r;
         $post = (array) $post;

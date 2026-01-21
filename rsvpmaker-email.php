@@ -3173,7 +3173,7 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 	if(current_user_can('edit_post',$post->ID))
 	{
 		if($post->post_type == 'rsvpmaker') {
-			$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('post.php?action=edit&tab=basics&post=').$post->ID,__('Event Options','rsvpmaker'));
+			$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('?rsvp_options=').$post->ID,__('RSVP / Event Options','rsvpmaker'));
 			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
 		}
 		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));

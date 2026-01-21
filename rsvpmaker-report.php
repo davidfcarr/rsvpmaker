@@ -33,11 +33,13 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 		if(isset($_GET['rsvpsearch'])) {
 			$search = sanitize_text_field($_GET['rsvpsearch']);
-			
-			$results = $wpdb->get_results($wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE email LIKE %s OR last LIKE %s AND master_rsvp='0' ORDER BY events.event DESC "
-		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%'));
+			$date_limit = (isset($_GET['datelimit'])) ? 'AND events.date > CURDATE()' : '';			
+			$results = $wpdb->get_results($wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE (email LIKE %s OR first LIKE %s OR last LIKE %s) AND master_rsvp='0' ".$date_limit." ORDER BY events.ts_start"
+		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%'));
+		if(!empty($results))
+			printf('<h3>%s</h3>',esc_html__('Search Results'));
 			foreach($results as $row) {
-				printf('<p>%s %s %s<br /><a href="%s">%s</a></p>',$row->first,$row->last,$row->email,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$row->event.'#rsvprow'.$row->id),$row->post_title);
+				printf('<p>%s %s %s<br /><a href="%s">%s: %s</a></p>',$row->first,$row->last,$row->email,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$row->event.'#rsvprow'.$row->id),$row->post_title,rsvpmaker_date($rsvp_options['long_date'],$row->ts_start));
 			}
 		}
 
@@ -445,7 +447,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 
 <input type="hidden" name="post_type" value="rsvpmaker">
 
-<p><input type="text" name="rsvpsearch" value="" placeholder="email or last name"></p>
+<p><input type="text" name="rsvpsearch" value="" placeholder="email, first name, or last name" style="width: 250px;" /> <input type="checkbox" name="datelimit" value="1" checked="checked" /> <?php esc_html_e( 'Future Events', 'rsvpmaker' ); ?> </p>
 <button><?php esc_html_e( 'Search', 'rsvpmaker' ); ?></button>
 
 </form>
