@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/formwrapper",
+	"title": "RSVP Flexible Form Wrapper",
+	"icon": "products",
+	"category": "rsvpmaker",
+	"keywords": [
+		"RSVPMaker",
+		"Form",
+		"Contact"
+	],
+	"attributes": {
+		"button_label": {
+			"type": "string",
+			"default": "Submit"
+		},
+		"app_slug": {
+			"type": "string",
+			"default": "contact"
+		},
+		"recaptcha": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"version": "2",
+	"textdomain": "rsvpmaker",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"render": "file:./render.php",
+	"style": "file:./style-index.css"
+}

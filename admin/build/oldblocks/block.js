@@ -1,1 +1,1574 @@
-(()=>{"use strict";var e,t={337:(e,t,a)=>{const s=window.wp.plugins,r=(window.wp.editPost,window.wp.components,window.wp.element),l=window.ReactJSXRuntime;var n=wp.element.createElement;const{__}=wp.i18n,{subscribe:i}=wp.data,o=function(){const e=wp.data.select("core/editor").getCurrentPostType(),t=wp.data.select("core/editor").getCurrentPostId();return"rsvpemail"!=e?null:n(wp.editPost.PluginPostStatusInfo,{},(0,l.jsxs)("div",{children:[(0,l.jsx)("h3",{children:__("Email Editor","rsvpmaker")}),(0,l.jsx)("p",{children:__("Use the WordPress editor to compose the body of your message, with the post title as your subject line. View post will display your content in an email template, with a user interface for addressing options.","rsvpmaker")}),(0,l.jsx)("p",{children:(0,l.jsx)("a",{href:"https://rsvpmaker.com/knowledge-base/using-rsvp-mailer/",target:"_blank",children:"Documentation"})}),(0,l.jsx)("p",{children:(0,l.jsx)("strong",{children:"Design Options"})}),t==rsvp_email_template.default&&(0,l.jsx)("p",{children:"You are editing the default email template"}),t!=rsvp_email_template.default&&(0,l.jsxs)("p",{children:["To change the styling of messages or add branding, ",(0,l.jsx)("a",{href:rsvp_email_template.edit_url,children:"edit the default template"}),"."]}),(0,l.jsxs)("p",{children:["Visit the ",(0,l.jsx)("a",{href:rsvp_email_template.more,children:"Email Design Templates screen"})," to create alternate templates or customize the email CSS."]}),related_documents.map(function(e){return(0,l.jsx)("li",{children:(0,l.jsx)("a",{href:e.href,children:e.title})})})]}))};if("rsvpemail"==rsvpmaker.post_type){(0,s.registerPlugin)("rsvpmailer-sidebar-plugin",{render:o});let e=wp.data.select("core/editor").isSavingPost(),t=wp.data.select("core/editor").isAutosavingPost(),a=wp.data.select("core/editor").isPreviewingPost();i(()=>{const s=wp.data.select("core/editor").isSavingPost(),r=wp.data.select("core/editor").isAutosavingPost(),l=wp.data.select("core/editor").isPreviewingPost(),n=e&&!s&&!t||t&&a&&!l;e=s,t=r,a=l,n&&(wp.data.dispatch("core/notices").createNotice("success",__("Preview & Send Email"),{id:"rsvpemialnotice",isDismissible:!0,actions:[{url:wp.data.select("core/editor").getPermalink(),label:__("View in email template")}]}),wp.data.dispatch("core/notices").createNotice("success",__("Preview & Send Email"),{id:"rsvpemialnowsnack",isDismissible:!0,type:"snackbar",actions:[{url:wp.data.select("core/editor").getPermalink(),label:__("View in email template")}]}))}),wp.data.dispatch("core/notices").createNotice("info",__("Compose your message with the post title as the subject line and post content as the email body. Once you save and publish your post, preview it in the email template, choose your recipients, and send it."),{id:"rsvpemialnotice",isDismissible:!0})}const{__:d}=wp.i18n,{registerBlockType:c}=wp.blocks,{InnerBlocks:p,RichText:u}=wp.blockEditor,{Fragment:m}=wp.element,{BlockControls:v}=wp.editor,{Component:h}=wp.element,{InspectorControls:b}=wp.blockEditor,{PanelBody:g,DateTimePicker:k,SelectControl:x}=wp.components;c("rsvpmaker/limited",{title:"Limited Time Content (RSVPMaker)",icon:"admin-comments",category:"rsvpmaker",keywords:["Expiration","Start Time","Wrapper"],supports:{color:{background:!0,gradient:!0,text:!0,link:!0},align:["left","right","center","wide","full"],typography:{fontSize:!0,lineHeight:!0,textAlign:!0},spacing:{margin:!0,padding:!0,blockGap:!0}},attributes:{content:{type:"array",source:"children",selector:"p"},start:{type:"string",default:""},start_on:{type:"string",default:"0"},end:{type:"string",default:""},end_on:{type:"string",default:"0"},delete_expired:{type:"string",default:"0"}},edit:function(e){const{attributes:t,className:a,setAttributes:s,isSelected:r}=e;return(0,l.jsxs)(m,{children:[(0,l.jsx)(f,{...e}),(0,l.jsxs)("div",{className:a,children:[(0,l.jsx)("div",{class:"limited_border",children:d("START Limited time content (click to set start and end times)")}),(0,l.jsx)(p,{}),(0,l.jsx)("div",{class:"limited_border",children:d("END Limited time content (click to set start and end times)")})]})]})},save:function({attributes:e,className:t}){return(0,l.jsx)("div",{className:t,children:(0,l.jsx)(p.Content,{})})}});class f extends h{render(){const{attributes:e,setAttributes:t,className:a}=this.props;return(0,l.jsxs)(b,{children:[(0,l.jsxs)(g,{title:d("Start Time","rsvpmaker"),children:[(0,l.jsx)(x,{label:d("Set Start Time","rsvpmaker"),value:e.start_on,onChange:e=>t({start_on:e}),options:[{value:0,label:d("No","rsvpmaker")},{value:1,label:d("Yes","rsvpmaker")}]}),e.start_on>0&&(0,l.jsx)(k,{is12Hour:!0,currentDate:e.start,onChange:e=>t({start:e})})]}),(0,l.jsxs)(g,{title:d("End Time","rsvpmaker"),children:[(0,l.jsx)(x,{label:d("Set End Time","rsvpmaker"),value:e.end_on,onChange:e=>t({end_on:e}),options:[{value:0,label:d("No","rsvpmaker")},{value:1,label:d("Yes","rsvpmaker")}]}),e.end_on>0&&(0,l.jsx)("div",{id:"endtime",children:(0,l.jsx)(k,{is12Hour:!0,currentDate:e.end,onChange:e=>t({end:e})})}),(0,l.jsx)(x,{label:d("Delete or Hide Expired Content","rsvpmaker"),value:e.delete_expired,onChange:e=>t({delete_expired:e}),options:[{value:0,label:d("Hide","rsvpmaker")},{value:1,label:d("Delete","rsvpmaker")}]})]})]},"inspector")}}const j=window.wp.apiFetch;var y=a.n(j);const{__:C}=wp.i18n,{registerBlockType:w}=wp.blocks,{RichText:S}=wp.blockEditor,{Fragment:_}=wp.element,{Component:P}=wp.element,{InspectorControls:N}=wp.blockEditor,{PanelBody:R,DateTimePicker:A,SelectControl:E,ToggleControl:V,TextControl:M}=wp.components,T=[{value:"",label:"None selected (optional)"}];y()({path:"rsvpmaker/v1/types"}).then(e=>{Array.isArray(e)?e.map(function(e){e.slug&&e.name&&T.push({value:e.slug,label:e.name})}):Object.values(e).map(function(e){e.slug&&e.name&&T.push({value:e.slug,label:e.name})})}).catch(e=>{console.log(e)}),w("rsvpmaker/schedule",{title:"RSVPMaker Schedule",icon:"admin-comments",description:C("Daily schedule of events"),category:"rsvpmaker",keywords:["RSVPMaker","Event","Schedule"],attributes:{start:{type:"string",default:""},start_on:{type:"string",default:"0"},end:{type:"string",default:""},end_on:{type:"string",default:"0"},type:{type:"string",default:"0"},convert_tz:{type:"boolean",default:!1},limit:{type:"int",default:30}},edit:function(e){const{attributes:t,className:a,setAttributes:s,isSelected:r}=e;return(0,l.jsxs)(_,{children:[(0,l.jsx)(F,{...e}),(0,l.jsx)("div",{className:"schedule-placeholder",children:C("Daily schedule of events")})]})},save:function(){return null}});class F extends P{render(){const{attributes:e,setAttributes:t,className:a}=this.props;return(0,l.jsxs)(N,{children:[(0,l.jsxs)(R,{title:C("Start Time","rsvpmaker"),children:[(0,l.jsx)(E,{label:C("Set Start Time","rsvpmaker"),value:e.start_on,onChange:e=>t({start_on:e}),options:[{value:0,label:C("No","rsvpmaker")},{value:1,label:C("Yes","rsvpmaker")}]}),e.start_on>0&&(0,l.jsx)(A,{is12Hour:!0,currentDate:e.start,onChange:e=>t({start:e})})]}),(0,l.jsxs)(R,{title:C("End Time","rsvpmaker"),children:[(0,l.jsx)(E,{label:C("Set End Time","rsvpmaker"),value:e.end_on,onChange:e=>t({end_on:e}),options:[{value:0,label:C("No","rsvpmaker")},{value:1,label:C("Yes","rsvpmaker")}]}),e.end_on>0&&(0,l.jsx)("div",{id:"endtime",children:(0,l.jsx)(A,{is12Hour:!0,currentDate:e.end,onChange:e=>t({end:e})})})]}),(0,l.jsxs)(R,{title:C("Display Options","rsvpmaker"),children:[(0,l.jsx)(V,{label:C('Display "Show in my timezone" button',"rsvpmaker"),checked:e.convert_tz,onChange:e=>{t({convert_tz:e})}}),(0,l.jsx)(E,{label:C("Event Type","rsvpmaker"),value:e.type,options:T,onChange:e=>{t({type:e})}}),(0,l.jsx)(M,{label:C("Max Events Displayed"),value:e.limit,onChange:e=>{t({limit:e})}})]})]},"inspector")}}const{__:D}=wp.i18n,{registerBlockType:B}=wp.blocks,{RichText:L}=wp.blockEditor,{Fragment:I}=wp.element,{InnerBlocks:O,BlockControls:z}=wp.editor,{Component:U}=wp.element,{InspectorControls:W}=wp.blockEditor,{PanelBody:Y,SelectControl:q,TextControl:H,TextareaControl:J,ToggleControl:G,RadioControl:$}=wp.components;B("rsvpmaker/formfield",{title:D("RSVPField Text"),icon:"products",category:"rsvpmaker",keywords:[D("RSVPMaker"),D("Form"),D("Text Field")],attributes:{label:{type:"string",default:"Label"},slug:{type:"string",default:""},guestform:{type:"boolean",default:!1},sluglocked:{type:"boolean",default:!1},required:{type:"string",default:""}},edit:function(e){const{attributes:{label:t,slug:a,required:s,guestform:r},setAttributes:n,isSelected:i}=e;var o="profile["+a+"]";return(0,l.jsxs)(I,{children:[(0,l.jsx)(Z,{...e}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{children:[(0,l.jsxs)("label",{children:[t,":"]})," ",(0,l.jsx)("span",{className:s,children:(0,l.jsx)("input",{className:a,type:"text",name:o,id:a,value:""})})]}),i&&(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:D("Set form label and other properties in sidebar. For use within an RSVPMaker registration form.","rsvpmaker")})})]})]})},save:function(e){return null}}),B("rsvpmaker/formtextarea",{title:D("RSVPField Text Area"),icon:"products",category:"rsvpmaker",keywords:[D("RSVPMaker"),D("Form"),D("Text Area")],attributes:{label:{type:"string",default:"Label"},slug:{type:"string",default:""},rows:{type:"string",default:"3"},guestform:{type:"boolean",default:!1}},edit:function(e){const{attributes:{label:t,slug:a,rows:s,guestform:r},setAttributes:n,isSelected:i}=e;var o="profile["+a+"]";return(0,l.jsxs)(I,{children:[(0,l.jsx)(X,{...e}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsx)("p",{children:(0,l.jsxs)("label",{children:[t,":"]})})," ",(0,l.jsx)("p",{children:(0,l.jsx)("textarea",{rows:s,className:a,type:"text",name:o,id:a})}),(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:D("Set properties in sidebar. Intended for use within an RSVPMaker registration form.","rsvpmaker")})})]})]})},save:function(e){return null}}),B("rsvpmaker/formnote",{title:D("RSVPField Note"),icon:"products",category:"rsvpmaker",keywords:[D("RSVPMaker"),D("Form"),D("Note")],attributes:{label:{type:"string",default:"Note"}},edit:function(e){const{attributes:{label:t},setAttributes:a,isSelected:s}=e;return(0,l.jsxs)(I,{children:[(0,l.jsx)(X,{...e}),(0,l.jsx)("div",{}),(0,l.jsxs)("p",{children:["Note:",(0,l.jsx)("br",{}),(0,l.jsx)("textarea",{name:"note"})]}),(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:D("Note for bottom of RSVP form. Only one allowed. Use RSVPField Text Area for any additional text fields. Set properties in sidebar. Intended for use within an RSVPMaker registration form.","rsvpmaker")})})]})},save:function(e){return null}});class Z extends U{render(){const{attributes:e,setAttributes:t,className:a}=this.props;let s="required"==e.required;return(0,l.jsx)(W,{children:(0,l.jsxs)(Y,{title:D("Field Properties","rsvpmaker"),children:[(0,l.jsx)(H,{label:D("Label","rsvpmaker"),value:e.label,onChange:a=>function(a){if(e.slug,e.sluglocked)return void t({label:a});let s=a.replaceAll(/[^A-Za-z0-9]+/g,"_");s=s.trim().toLowerCase(),t({slug:s}),t({label:a}),t({guestform:!0})}(a)}),(0,l.jsx)(G,{label:D("Required","rsvpmaker"),checked:s,help:e.required?"Required":"Not required",onChange:e=>{!function(e){t({required:e?"required":""})}(e)}}),(0,l.jsx)(G,{label:D("Include on Guest Form","rsvpmaker"),checked:e.guestform,help:e.guestform?"Included":"Not included",onChange:e=>{t({guestform:e})}})]})},"fieldinspector")}}class X extends U{render(){const{attributes:e,setAttributes:t,className:a}=this.props;return(0,l.jsx)(W,{children:(0,l.jsxs)(Y,{title:D("Field Properties","rsvpmaker"),children:[(0,l.jsx)(H,{label:D("Label","rsvpmaker"),value:e.label,onChange:a=>function(a){e.slug;let s=a.replaceAll(/[^A-Za-z0-9]+/g,"_");s=s.trim().toLowerCase(),t({slug:s}),t({label:a}),t({guestform:!0})}(a)}),(0,l.jsx)(q,{label:"Rows",value:e.rows,options:[{label:"2",value:"2"},{label:"3",value:"3"},{label:"4",value:"4"},{label:"5",value:"5"},{label:"6",value:"6"},{label:"7",value:"7"},{label:"8",value:"8"},{label:"9",value:"9"},{label:"10",value:"10"}],onChange:e=>{t({rows:e})}}),(0,l.jsx)(G,{label:D("Include on Guest Form","rsvpmaker"),checked:e.guestform,help:e.required?"Included":"Not included",onChange:e=>{t({guestform:e})}})]})},"fieldinspector")}}B("rsvpmaker/formselect",{title:D("RSVPField Select"),icon:"products",category:"rsvpmaker",keywords:[D("RSVPMaker"),D("Form"),D("Select")],attributes:{label:{type:"string",default:"Label"},slug:{type:"string",default:""},choicearray:{type:"array",default:["a","b"]},guestform:{type:"boolean",default:!1}},edit:function(e){const{attributes:{label:t,slug:a,choicearray:s,guestform:r},setAttributes:n,isSelected:i}=e;var o="profile["+a+"]";return(0,l.jsxs)(I,{children:[(0,l.jsx)(K,{...e}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{children:[(0,l.jsxs)("label",{children:[t,":"]})," ",(0,l.jsx)("span",{children:(0,l.jsx)("select",{className:a,name:o,id:a,children:s.map(function(e,t){return(0,l.jsx)("option",{value:e,children:e})})})})]}),i&&(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:D("Set form label and other properties in sidebar. For use within an RSVPMaker registration form.","rsvpmaker")})})]})]})},save:function(e){return null}}),B("rsvpmaker/formradio",{title:D("RSVPField Radio Buttons"),icon:"products",category:"rsvpmaker",keywords:[D("RSVPMaker"),D("Form"),D("Radio Buttons")],attributes:{label:{type:"string",default:"Label"},slug:{type:"string",default:""},choicearray:{type:"array",default:["a","b"]},guestform:{type:"boolean",default:!1},defaultToFirst:{type:"boolean",default:!1}},edit:function(e){const{attributes:{label:t,slug:a,choicearray:s,guestform:r,defaultToFirst:n},setAttributes:i,isSelected:o}=e;var d="profile["+a+"]";return(0,l.jsxs)(I,{children:[(0,l.jsx)(K,{...e}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{children:[(0,l.jsxs)("label",{children:[t,":"]})," ",(0,l.jsx)("span",{children:s.map(function(e,t){return(0,l.jsxs)("div",{className:"rsvp-form-radio",children:[(0,l.jsx)("input",{type:"radio",className:a,name:d,id:a,value:e,checked:n&&0==t})," ",e," "]})})})]}),o&&(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:D("Set form label and other properties in sidebar. For use within an RSVPMaker registration form.","rsvpmaker")})})]})]})},save:function(e){return null}});class K extends U{render(){const{attributes:e,setAttributes:t,className:a}=this.props,s=e.choicearray.join("\n");return(0,l.jsx)(W,{children:(0,l.jsxs)(Y,{title:D("Field Properties","rsvpmaker"),children:[(0,l.jsx)(H,{label:D("Label","rsvpmaker"),value:e.label,onChange:e=>function(e){let a=e.trim().toLowerCase();a=a.replace(/[^a-z0-9]+/g,"_"),"first_name"==a&&(a="first"),"last_name"==a&&(a="last"),t({slug:a}),t({label:e}),t({guestform:!0})}(e)}),(0,l.jsx)(J,{label:D("Choices","rsvpmaker"),value:s,onChange:e=>function(e){t({choicearray:e.split("\n")})}(e)}),(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:"Enter each choice on a separate line"})}),(0,l.jsx)(G,{label:D("Include on Guest Form","rsvpmaker"),checked:e.guestform,help:e.guestform?"Included":"Not included",onChange:e=>{t({guestform:e})}}),(0,l.jsx)(G,{label:D("Check first choice by default","rsvpmaker"),checked:e.defaultToFirst,help:e.defaultToFirst?"First item selected by default":"No default",onChange:e=>{t({defaultToFirst:e})}})]})},"choiceinspector")}}B("rsvpmaker/guests",{title:"RSVPField Guests",icon:"products",category:"rsvpmaker",keywords:["RSVPMaker","Form","Guests"],attributes:{limit:{type:"string",default:""}},edit:function(e){const{attributes:t,className:a,setAttributes:s,isSelected:r}=e;return(0,l.jsxs)("div",{className:a,children:[(0,l.jsx)("h3",{children:D("Guest Fields","rsvpmaker")}),(0,l.jsx)(H,{label:"Limit (if any)",value:t.limit,onChange:e=>{s({limit:e?parseInt(e):0})}}),(0,l.jsxs)("div",{className:"guestnote",children:[D("Guests section will include fields you checked off above (such as First Name, Last Name), plus any others you embed below (information to be collected about guests ONLY).","rsvpmaker"),(0,l.jsxs)("ul",{children:[(0,l.jsx)("li",{children:D('You MUST check "Include on Guest Form"',"rsvpmaker")}),(0,l.jsx)("li",{children:D('"Required" checkbox does not work in guest fields',"rsvpmaker")}),(0,l.jsx)("li",{children:D("This block is not intended for use outside of an RSVPMaker RSVP Form document","rsvpmaker")})]})]}),(0,l.jsx)(O,{})]})},save:function({attributes:e,className:t}){return(0,l.jsx)("div",{className:t,children:(0,l.jsx)(O.Content,{})})}}),B("rsvpmaker/formchimp",{title:D("RSVPField Mailing List Checkbox"),icon:"products",category:"rsvpmaker",keywords:[D("RSVPMaker"),D("Form"),D("Mailchimp")],attributes:{checked:{type:"boolean",default:!1},label:{type:"string",default:"Add me to your email list"}},edit:function(e){const{attributes:{label:t,checked:a},setAttributes:s,isSelected:r}=e;let n="email_list_ok",i="profile["+n+"]";return(0,l.jsxs)(I,{children:[(0,l.jsx)(Q,{...e}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{children:[(0,l.jsx)("input",{className:n,type:"checkbox",name:i,id:n,value:"1",checked:a})," ",t]}),r&&(0,l.jsx)("div",{children:(0,l.jsx)("em",{children:D("Set form label and other properties in sidebar. For use within an RSVPMaker registration form.","rsvpmaker")})})]})]})},save:function(e){const{attributes:{label:t,checked:a}}=e;let s="email_list_ok",r="profile["+s+"]";return(0,l.jsx)("div",{className:e.className,children:(0,l.jsxs)("p",{children:[(0,l.jsx)("input",{className:s,type:"checkbox",name:r,id:s,value:"1",checked:a})," ",t]})})}});class Q extends U{render(){const{attributes:e,setAttributes:t,className:a}=this.props;return(0,l.jsx)(W,{children:(0,l.jsxs)(Y,{title:D("Field Properties","rsvpmaker"),children:[(0,l.jsx)(H,{label:D("Label","rsvpmaker"),value:e.label,onChange:e=>t({label:e})}),(0,l.jsx)(G,{label:D("Checked by Default","rsvpmaker"),checked:e.checked,help:e.checked?"Included":"Not included",onChange:e=>{t({checked:e})}})]})},"fieldinspector")}}B("rsvpmaker/formwrapper",{title:"RSVPMaker Form Wrapper",icon:"admin-comments",category:"rsvpmaker",keywords:["RSVPMaker","Form","Contact"],attributes:{appslug:{type:"string",default:"contact"},button_label:{type:"string",default:D("Submit","rsvpmaker")},recaptcha:{type:"boolean",default:!1}},edit:function(e){const{attributes:t,attributes:{appslug:a,button_label:s,recaptcha:r},className:n,setAttributes:i,isSelected:o}=e;return(0,l.jsxs)(I,{children:[(0,l.jsx)(ee,{...e}),(0,l.jsxs)("div",{children:[!o&&(0,l.jsx)("p",{children:(0,l.jsx)("em",{children:"Click here to set form options"})}),(0,l.jsx)(O,{template:[["rsvpmaker/formfield",{label:"First Name",slug:"first_name"}],["rsvpmaker/formfield",{label:"Last Name",slug:"last_name"}],["rsvpmaker/formfield",{label:"Email",slug:"email",required:"required"}]]}),r&&(0,l.jsx)("div",{children:(0,l.jsx)("img",{src:"/wp-content/plugins/rsvpmaker/images/recaptcha-preview.png",height:"112",width:"426",alt:"ReCaptcha goes here"})}),(0,l.jsx)("p",{children:(0,l.jsx)("button",{children:s})})]})]})},save:function({attributes:e,className:t}){return(0,l.jsx)("div",{children:(0,l.jsx)(O.Content,{})})}});class ee extends U{render(){const{attributes:e,attributes:{appslug:t,button_label:a,recaptcha:s},setAttributes:r,className:n}=this.props;return(0,l.jsx)(W,{children:(0,l.jsxs)(Y,{title:D("Form Options","rsvpmaker"),children:[(0,l.jsx)(H,{label:D("Button Label","rsvpmaker"),value:a,onChange:e=>{r({button_label:e})}}),(0,l.jsx)(H,{label:D("App Slug","rsvpmaker"),value:t,onChange:e=>{r({appslug:e})}}),(0,l.jsx)("p",{children:(0,l.jsxs)("em",{children:['Leave the App Slug as "contact" for the built-in contact form. Change it to integrate with your own custom app (see ',(0,l.jsx)("a",{href:"https://rsvpmaker.com/knowledge-base/rsvpmaker-form-wrapper-block/",children:"documentation"}),")."]})}),(0,l.jsx)(G,{label:D("Include ReCaptcha","rsvpmaker"),checked:s,onChange:e=>{r({recaptcha:e})}}),(0,l.jsx)("p",{children:(0,l.jsx)("em",{children:"ReCaptcha must be enabled first on the RSVPMaker Settings screen."})})]})},"inspector")}}const te=window.wp.blockEditor,{__:ae}=wp.i18n,{registerBlockType:se}=wp.blocks,{InnerBlocks:re,InspectorControls:le,MediaUpload:ne,MediaUploadCheck:ie}=wp.blockEditor,{Component:oe,Fragment:de,useState:ce,useEffect:pe,RawHTML:ue}=wp.element,{Panel:me,PanelBody:ve,SelectControl:he,TextControl:be,ColorPicker:ge,ColorPalette:ke,Button:xe,ResponsiveWrapper:fe}=wp.components,je=[["core/paragraph",{placeholder:ae("Email content","rsvpmaker")}]];se("rsvpmaker/emailbody",{title:"RSVP Email Body Wrapper",icon:"admin-comments",category:"rsvpmaker",keywords:["RSVPMaker","Email","Background"],attributes:{content:{type:"array",source:"children",selector:"p"},backgroundColor:{type:"string",default:"#efefef"},color:{type:"string",default:"#000"},padding:{type:"string",default:"5px"},mediaId:{type:"number",default:0},mediaUrl:{type:"string",default:""},backgroundRepeat:{type:"string",default:"no-repeat"},backgroundSize:{type:"string",default:"contain"}},edit:function(e){const{attributes:t,className:a,setAttributes:s,isSelected:r}=e,n={backgroundColor:t.backgroundColor,color:t.color,padding:t.padding,backgroundImage:""!=t.mediaUrl?'url("'+t.mediaUrl+'")':"none",backgroundRepeat:t.backgroundRepeat,backgroundSize:t.backgroundSize,backgroundAttachment:"fixed"},i=(0,te.useBlockProps)({style:n});return(0,l.jsxs)(de,{children:[(0,l.jsx)(ye,{...e}),(0,l.jsx)("div",{...i,children:(0,l.jsx)(re,{})})]})},save:function({attributes:e,className:t}){const a=""!=e.mediaUrl?{backgroundColor:e.backgroundColor,color:e.color,padding:e.padding,backgroundImage:""!=e.mediaUrl?'url("'+e.mediaUrl+'")':"none",backgroundRepeat:e.backgroundRepeat,backgroundSize:e.backgroundSize}:{backgroundColor:e.backgroundColor,color:e.color,padding:e.padding},s=te.useBlockProps.save({style:a});return(0,l.jsx)("div",{...s,children:(0,l.jsx)(re.Content,{})})}});class ye extends oe{render(){const e=e=>{c({mediaId:e.id,mediaUrl:e.url})},{media:t,attributes:a,attributes:{backgroundColor:s,paletteBackgroundColor:r,padding:n,backgroundImage:i,backgroundRepeat:o,backgroundSize:d},setAttributes:c,className:p}=this.props,u=wp.data.select("core/block-editor").getSettings().colors;return console.log(t),(0,l.jsxs)(le,{children:[(0,l.jsxs)(ve,{title:ae("Background Color","rsvpmaker"),children:[(0,l.jsx)(ke,{colors:u,value:s,onChange:e=>c({backgroundColor:e})}),(0,l.jsx)(ge,{label:"Custom Background Color",color:s,onChange:e=>{c({backgroundColor:e})},enableAlpha:!0})]}),(0,l.jsxs)(ve,{title:ae("Select email background image","rsvpmaker"),initialOpen:!0,children:[(0,l.jsxs)("div",{className:"editor-post-featured-image background-image",children:[(0,l.jsx)(ie,{children:(0,l.jsx)(ne,{onSelect:e,value:a.mediaId,allowedTypes:["image"],render:({open:e})=>(0,l.jsx)(xe,{className:0==a.mediaId?"editor-post-featured-image__toggle":"editor-post-featured-image__preview",onClick:e,children:0==a.mediaId&&ae("Choose an image","awp")})})}),0!=a.mediaId&&(0,l.jsx)(ie,{children:(0,l.jsx)(ne,{title:ae("Replace image","rsvpmaker"),value:a.mediaId,onSelect:e,allowedTypes:["image"],render:({open:e})=>(0,l.jsx)(xe,{onClick:e,variant:"secondary",isLarge:!0,children:ae("Replace image","awp")})})}),0!=a.mediaId&&(0,l.jsx)(ie,{children:(0,l.jsx)(xe,{onClick:()=>{c({mediaId:0,mediaUrl:""})},isLink:!0,isDestructive:!0,children:ae("Remove image","awp")})})]}),(0,l.jsx)(he,{label:ae("Background Repeat","rsvpmaker"),options:[{label:"None (no-repeat)",value:"no-repeat"},{label:"Repeat Vertical (repeat-y)",value:"repeat-y"},{label:"Repeat Horizontal (repeat-x)",value:"repeat-x"},{label:"Repeat (repeat)",value:"repeat"}],value:o,onChange:e=>c({backgroundRepeat:e})}),(0,l.jsx)(he,{label:ae("Background Sizing","rsvpmaker"),options:[{label:"Contain",value:"contain"},{label:"Cover",value:"cover"}],value:d,onChange:e=>c({backgroundSize:e})})]})]},"inspector")}}se("rsvpmaker/emailcontent",{title:"RSVP Email Content Wrapper",icon:"admin-comments",category:"rsvpmaker",keywords:["RSVPMaker","Email","Background"],attributes:{content:{type:"array",source:"children",selector:"p"},backgroundColor:{type:"string",default:"#fff"},color:{type:"string",default:"#000"},padding:{type:"string",default:"5px"},maxWidth:{type:"string",default:"600px"},border:{type:"string",default:"thin solid gray"},marginLeft:{type:"string",default:"auto"},marginRight:{type:"string",default:"auto"}},edit:function(e){const{attributes:t,className:a,setAttributes:s,isSelected:r}=e,n={backgroundColor:t.backgroundColor,color:t.color,padding:t.padding,marginLeft:t.marginLeft,marginRight:t.marginRight,maxWidth:t.maxWidth,border:t.border,minHeight:"20px"},i=(0,te.useBlockProps)({style:n});return(0,l.jsxs)(de,{children:[(0,l.jsx)(Ce,{...e}),(0,l.jsx)("div",{className:a,...i,children:(0,l.jsx)(re,{template:je})})]})},save:function({attributes:e,className:t}){const a={backgroundColor:e.backgroundColor,color:e.color,padding:e.padding,marginLeft:e.marginLeft,marginRight:e.marginRight,maxWidth:e.maxWidth,border:e.border,minHeight:"20px",marginBottom:"5px"},s=te.useBlockProps.save({style:a});return(0,l.jsx)("div",{...s,className:t,children:(0,l.jsx)(re.Content,{})})}});class Ce extends oe{render(){const{attributes:{backgroundColor:e,color:t,padding:a,marginLeft:s,marginRight:r,maxWidth:n,border:i},setAttributes:o,className:d}=this.props,c=wp.data.select("core/block-editor").getSettings().colors;return(0,l.jsx)(le,{children:(0,l.jsxs)(ve,{title:ae("Style","rsvpmaker"),children:[(0,l.jsx)("h3",{children:"Background Color"}),(0,l.jsx)(ke,{colors:c,value:e,onChange:e=>o({backgroundColor:e})}),(0,l.jsx)(ge,{label:"Background Color",color:e,onChange:e=>{o({backgroundColor:e})},enableAlpha:!0}),(0,l.jsx)("h3",{children:"Text Color"}),(0,l.jsx)(ke,{colors:c,value:t,onChange:e=>o({color:e})}),(0,l.jsx)(ge,{color:t,onChange:e=>{o({color:e})},enableAlpha:!0}),(0,l.jsx)(be,{label:"Border",value:i,onChange:e=>{o({border:e})}}),(0,l.jsx)(be,{label:"Margin Left",value:s,onChange:e=>{o({marginLeft:e})}}),(0,l.jsx)(be,{label:"Margin Right",value:r,onChange:e=>{o({marginRight:e})}}),(0,l.jsx)(be,{label:"Max Width",value:n,onChange:e=>{o({maxWidth:e})}}),(0,l.jsx)(be,{label:"Padding",value:a,onChange:e=>{o({padding:e})}})]})},"inspector")}}const we="rsvpmaker/v1/preview/emailpostorposts";se("rsvpmaker/embedposts",{title:"RSVP Email Embed Post or Post List",icon:"email-alt2",category:"rsvpmaker",keywords:["RSVPMaker","Email","Posts"],attributes:{selection:{type:"string"},posts_per_page:{type:"string",default:"1"}},edit:function({attributes:e,setAttributes:t}){const[a,s]=ce([]),[r,n]=ce(""),{selection:i,posts_per_page:o}=e;return pe(async()=>{if(0==a.length){const e=await y()({path:"rsvpmaker/v1/postsorcategories"});s(e)}}),pe(()=>{(async()=>{const e=i?`${we}?selection=${i}&posts_per_page=${o}`:we,t=await y()({path:e});n(t)})()},[i,o]),""==r?(0,l.jsx)("div",{...(0,te.useBlockProps)(),children:"Loading posts"}):(0,l.jsxs)("div",{children:[(0,l.jsx)(le,{children:(0,l.jsx)(me,{children:(0,l.jsxs)(ve,{children:[(0,l.jsx)(he,{label:ae("Select Post or Category","rsvpmaker"),options:a,value:i,onChange:e=>t({selection:e})}),(0,l.jsx)(he,{label:ae("Number of Posts for Listings","rsvpmaker"),options:[{label:"1",value:1},{label:"2",value:2},{label:"3",value:3},{label:"4",value:4},{label:"5",value:5},{label:"6",value:6},{label:"7",value:7},{label:"8",value:8},{label:"9",value:9},{label:"10",value:10}],value:o,onChange:e=>t({posts_per_page:e})})]})})}),(0,l.jsx)("div",{...(0,te.useBlockProps)(),children:(0,l.jsx)("div",{className:"mylatests-list",children:(0,l.jsx)(ue,{children:r})})})]})},save:function(){return null}}),se("rsvpmaker/emailguestsignup",{title:"RSVP Email List Signup",icon:"admin-comments",category:"rsvpmaker",keywords:["RSVPMaker","Email","Signup"],attributes:{fields:{type:"string",default:""}},edit:function(e){const{attributes:{fields:t},className:a,setAttributes:s,isSelected:r}=e,n=(0,te.useBlockProps)({style:{backgroundColor:"#fff",padding:"5px"},className:"wp-block-rsvpmaker-emailguestsignup"});return console.log(n),(0,l.jsxs)(de,{children:[(0,l.jsx)(le,{children:(0,l.jsx)(me,{children:(0,l.jsx)(ve,{children:(0,l.jsx)(he,{label:ae("Fields to Display","rsvpmaker"),options:[{label:ae("First Name, Last Name, Email"),value:""},{label:ae("First Name, Email"),value:"first"},{label:ae("Email"),value:"email"}],value:t,onChange:e=>s({fields:e})})})})}),(0,l.jsxs)("div",{className:a,...n,children:[""==t&&(0,l.jsxs)("div",{children:[(0,l.jsx)("h4",{children:ae("Email List Signup","rsvpmaker")}),(0,l.jsxs)("p",{children:[(0,l.jsx)("label",{children:ae("First Name","rsvpmaker")})," ",(0,l.jsx)("input",{type:"text",id:"rsvpguest_list_first",name:"rsvpguest_list_first"})]}),(0,l.jsxs)("p",{children:[(0,l.jsx)("label",{children:ae("Last Name","rsvpmaker")})," ",(0,l.jsx)("input",{type:"text",id:"rsvpguest_list_last",name:"rsvpguest_list_last"})]}),(0,l.jsxs)("p",{children:[(0,l.jsx)("label",{children:ae("Email","rsvpmaker")})," ",(0,l.jsx)("input",{type:"text",id:"rsvpguest_list_email",name:"rsvpguest_list_email"})]})]}),"first"==t&&(0,l.jsxs)("div",{children:[(0,l.jsx)("h4",{children:ae("Email List Signup","rsvpmaker")}),(0,l.jsxs)("p",{children:[(0,l.jsx)("label",{children:ae("First Name","rsvpmaker")}),(0,l.jsx)("input",{type:"text",id:"rsvpguest_list_first",name:"rsvpguest_list_first"})]}),(0,l.jsx)("input",{type:"hidden",id:"rsvpguest_list_last",name:"rsvpguest_list_last"}),(0,l.jsxs)("p",{children:[(0,l.jsx)("label",{children:ae("Email","rsvpmaker")}),(0,l.jsx)("input",{type:"text",id:"rsvpguest_list_email",name:"rsvpguest_list_email"})]})]}),"email"==t&&(0,l.jsxs)("div",{children:[(0,l.jsx)("h4",{children:ae("Email List Signup","rsvpmaker")}),(0,l.jsx)("input",{type:"hidden",id:"rsvpguest_list_first",name:"rsvpguest_list_first"}),(0,l.jsx)("input",{type:"hidden",id:"rsvpguest_list_last",name:"rsvpguest_list_last"}),(0,l.jsxs)("p",{children:[(0,l.jsx)("label",{children:ae("Email","rsvpmaker")}),(0,l.jsx)("input",{type:"text",id:"rsvpguest_list_email",name:"rsvpguest_list_email"})]})]})]})]})},save:function(){return null}});const{__:Se}=wp.i18n,{registerBlockType:_e}=wp.blocks,{PanelBody:Pe,SelectControl:Ne,TextControl:Re,ToggleControl:Ae,ColorPicker:Ee,FontSizePicker:Ve}=wp.components,{Component:Me,Fragment:Te,RawHTML:Fe}=wp.element,{InspectorControls:De,useBlockProps:Be}=wp.blockEditor,Le=[{label:Se("Choose event"),value:""},{label:Se("Next event"),value:"next"},{label:Se("Next event - RSVP on"),value:"nextrsvp"}];y()({path:"rsvpmaker/v1/future"}).then(e=>{Array.isArray(e)?e.map(function(e){if(e.ID){var t=e.date?e.post_title+" - "+e.date:e.post_title;Le.push({value:e.ID,label:t})}}):Object.values(e).map(function(e){if(e.ID){var t=e.date?e.post_title+" - "+e.date:e.post_title;Le.push({value:e.ID,label:t})}})}).catch(e=>{console.log(e)});const Ie=[{value:"",label:"None selected (optional)"}];y()({path:"rsvpmaker/v1/types"}).then(e=>{Array.isArray(e)?e.map(function(e){e.slug&&e.name&&Ie.push({value:e.slug,label:e.name})}):Object.values(e).map(function(e){e.slug&&e.name&&Ie.push({value:e.slug,label:e.name})})}).catch(e=>{console.log(e)});const Oe=[{value:"",label:"Any"}];y()({path:"rsvpmaker/v1/authors"}).then(e=>{Array.isArray(e)?e.map(function(e){e.ID&&e.name&&Oe.push({value:e.ID,label:e.name})}):(e=Object.values(e)).map(function(e){e.ID&&e.name&&Oe.push({value:e.ID,label:e.name})})}).catch(e=>{console.log(e)}),_e("rsvpmaker/event",{title:Se("RSVPMaker Embed Event"),icon:"clock",category:"rsvpmaker",description:Se("Displays a single RSVPMaker event post"),keywords:[Se("RSVPMaker"),Se("Event"),Se("Calendar")],attributes:{post_id:{type:"string",default:""},one_hideauthor:{type:"boolean",default:!0},type:{type:"string",default:""},one_format:{type:"string",default:""},hide_past:{type:"string",default:""}},edit:function(e){const{attributes:{post_id:t,type:a,one_hideauthor:s,one_format:r,hide_past:n},setAttributes:i,isSelected:o}=e;return""==t&&i({post_id:"next"}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-clock",children:[(0,l.jsx)("strong",{children:"RSVPMaker"}),": Embed a single event."]}),o&&(0,l.jsxs)("form",{children:[(0,l.jsx)(Ne,{label:Se("Select Post","rsvpmaker"),value:t,options:Le,onChange:e=>{i({post_id:e})}}),(0,l.jsx)(Ne,{label:Se("Format","rsvpmaker"),value:r,options:[{label:"Event with Form",value:""},{label:"Event with Button",value:"button"},{label:"Button Only",value:"button_only"},{label:"Form Only",value:"form"},{label:"Compact (Headline/Date/Button)",value:"compact"},{label:"Dates Only",value:"embed_dateblock"}],onChange:e=>{i({one_format:e})}}),(0,l.jsx)(Ne,{label:Se("Hide After","rsvpmaker"),value:n,options:[{label:"Not Set",value:""},{label:"1 hour",value:"1"},{label:"2 hours",value:"2"},{label:"3 hours",value:"3"},{label:"4 hours",value:"4"},{label:"5 hours",value:"5"},{label:"6 hours",value:"6"},{label:"7 hours",value:"7"},{label:"8 hours",value:"8"},{label:"12 hours",value:"12"},{label:"18 hours",value:"18"},{label:"24 hours",value:"24"},{label:"2 days",value:"48"},{label:"3 days",value:"72"}],onChange:e=>{i({hide_past:e})}}),(0,l.jsx)(Ne,{label:Se("Event Type","rsvpmaker"),value:a,options:Ie,onChange:e=>{i({type:e})}}),(0,l.jsx)(Ne,{label:Se("Show Author","rsvpmaker"),value:s,options:[{label:"No",value:"1"},{label:"Yes",value:"0"}],onChange:e=>{i({one_hideauthor:e})}})]}),!o&&(0,l.jsx)("p",{children:(0,l.jsx)("strong",{children:"Click here to set options."})})]})},save:function(){return null}}),_e("rsvpmaker/next-events",{title:Se("RSVPMaker Next Events"),icon:"clock",category:"rsvpmaker",description:Se("Invites registration for next event, or next few dates"),keywords:[Se("RSVPMaker"),Se("Event"),Se("Calendar")],attributes:{number_of_posts:{type:"int",default:"5"}},edit:function(e){const{attributes:{number_of_posts:t},setAttributes:a,isSelected:s}=e,[n,i]=(0,r.useState)([]);return(0,r.useEffect)(()=>{(async()=>{const e="/rsvpmaker/v1/preview/next-events?number_of_posts="+t;console.log(e);const a=await y()({path:e});i(a)})()},[t]),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-clock",children:[(0,l.jsx)("strong",{children:"RSVPMaker"}),": Registration invite for one or more events."]}),(0,l.jsx)(Ne,{label:Se("Number of Event Links Shown","rsvpmaker"),value:t,options:[{label:"1 (next only)",value:1},{label:"2 (next +1)",value:2},{label:"3 (next +2)",value:3},{label:"4 (next +3)",value:4},{label:"5 (next +4)",value:5},{label:"6 (next +5)",value:6},{label:"7 (next +6)",value:7},{label:"8 (next +7)",value:8},{label:"9 (next +8)",value:9},{label:"10 (next +9)",value:10}],onChange:e=>{a({number_of_posts:e})}}),(0,l.jsx)(Fe,{children:n})]})},save:function(){return null}}),_e("rsvpmaker/embedform",{title:Se("RSVPMaker Embed Event Form"),icon:"clock",category:"rsvpmaker",description:Se("Displays the form associated with a single RSVPMaker event post"),keywords:[Se("RSVPMaker"),Se("Event"),Se("Calendar")],attributes:{post_id:{type:"string",default:""}},edit:function(e){const{attributes:{post_id:t,type:a,one_hideauthor:s,one_format:r,hide_past:n},setAttributes:i,isSelected:o}=e;return""==t&&i({post_id:"next"}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-clock",children:[(0,l.jsx)("strong",{children:"RSVPMaker"}),": Embed just the form for a single event."]}),o&&(0,l.jsx)("form",{children:(0,l.jsx)(Ne,{label:Se("Select Post","rsvpmaker"),value:t,options:Le,onChange:e=>{i({post_id:e})}})}),!o&&(0,l.jsx)("p",{children:(0,l.jsx)("strong",{children:"Click here to set options."})})]})},save:function(){return null}}),_e("rsvpmaker/submission",{title:Se("RSVPMaker Event Submission"),icon:"clock",category:"rsvpmaker",description:Se("Displays a Form for Submitting an Event for Approvoal"),keywords:[Se("RSVPMaker"),Se("Event"),Se("Submission")],attributes:{to:{type:"string",default:""},timezone:{type:"boolean",default:!1}},edit:function(e){const{attributes:{to:t,timezone:a},setAttributes:s,isSelected:r}=e;return(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-clock",children:[(0,l.jsx)("strong",{children:"RSVPMaker"}),": ",Se("Allow non-authenticated users to submit events for approval by an editor.")]}),r&&(0,l.jsxs)("div",{children:[(0,l.jsx)(Ae,{label:Se("Prompt for Timezone","rsvpmaker"),checked:a,onChange:e=>{s({timezone:e})}}),(0,l.jsx)(Re,{label:Se("Notification Emails: To override default from Settings, enter one or more emails, separated by commas","rsvpmaker"),value:t,onChange:e=>{s({to:e})}})]}),!r&&(0,l.jsx)("p",{children:(0,l.jsx)("strong",{children:"Click here to set options."})})]})},save:function(){return null}}),_e("rsvpmaker/eventlisting",{title:Se("RSVPMaker Event Listing"),icon:"calendar-alt",category:"rsvpmaker",description:Se("Displays an RSVPMaker event listing (headlines and dates)"),keywords:[Se("RSVPMaker"),Se("Events"),Se("Calendar")],attributes:{days:{type:"int",default:180},posts_per_page:{type:"int",default:10},type:{type:"string",default:""},date_format:{type:"string",default:"%A %B %e, %Y"},time:{type:"int",default:0}},edit:function(e){const{attributes:{days:t,posts_per_page:a,type:s,date_format:r,time:n},setAttributes:i,isSelected:o}=e;return(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-calendar-alt",children:[(0,l.jsx)("strong",{children:"RSVPMaker"}),": Add an Events Listing and/or Calendar Display"]}),o&&(0,l.jsxs)("form",{children:[(0,l.jsx)(Ne,{label:Se("Events Per Page","rsvpmaker"),value:a,options:[{value:5,label:5},{value:10,label:10},{value:15,label:15},{value:20,label:20},{value:25,label:25},{value:30,label:30},{value:35,label:35},{value:40,label:40},{value:45,label:45},{value:50,label:50},{value:"-1",label:"No limit"}],onChange:e=>{i({posts_per_page:e})}}),(0,l.jsx)(Ne,{label:Se("Date Range","rsvpmaker"),value:t,options:[{value:5,label:5},{value:30,label:"30 Days"},{value:60,label:"60 Days"},{value:90,label:"90 Days"},{value:180,label:"180 Days"},{value:366,label:"1 Year"}],onChange:e=>{i({days:e})}}),(0,l.jsx)(Ne,{label:Se("Event Type","rsvpmaker"),value:s,options:Ie,onChange:e=>{i({type:e})}}),(0,l.jsx)(Ne,{label:Se("Date Format","rsvpmaker"),value:r,options:[{label:"Thursday August 8, 2019",value:"%A %B %e, %Y"},{label:"August 8, 2019",value:"%B %e, %Y"},{label:"August 8",value:"%B %e"},{label:"Aug. 8",value:"%h. %e"},{label:"8 August 2019",value:"%e %B %Y"}],onChange:e=>{i({date_format:e})}}),(0,l.jsx)(Ae,{label:Se("Include Time","rsvpmaker"),checked:n,onChange:e=>{i({time:e})}})]}),!o&&(0,l.jsx)("p",{children:(0,l.jsx)("strong",{children:Se("Click here to set options.","rsvpmaker")})})]})},save:function(e){return null}}),_e("rsvpmaker/stripecharge",{title:Se("Stripe Charge (RSVPMaker)"),icon:"products",category:"rsvpmaker",description:Se("Displays a payment widget for the Stripe service"),keywords:[Se("RSVPMaker"),Se("Payment"),Se("Charge")],attributes:{description:{type:"string",default:""},showdescription:{type:"string",default:"no"},amount:{type:"string",default:""},paymentType:{type:"string",default:"once"},amount:{type:"string",default:""},currency:{type:"string",default:"usd"},january:{type:"string",default:""},february:{type:"string",default:""},march:{type:"string",default:""},april:{type:"string",default:""},may:{type:"string",default:""},june:{type:"string",default:""},july:{type:"string",default:""},august:{type:"string",default:""},september:{type:"string",default:""},october:{type:"string",default:""},november:{type:"string",default:""},december:{type:"string",default:""},paypal:{type:"boolean",default:!1}},edit:function(e){const{attributes:{description:t,showdescription:a,amount:s,paymentType:r,january:n,february:i,march:o,april:d,may:c,june:p,july:u,august:m,september:v,october:h,november:b,december:g,paypal:k,currency:x},setAttributes:f,isSelected:j}=e;var y="schedule"==r.toString();return j?(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-products",children:[(0,l.jsx)("strong",{children:"Payment Button"}),": Embed in any post or page (not meant to be included in events)."]}),(0,l.jsx)(Re,{label:Se("Description","rsvpmaker"),value:t,onChange:e=>f({description:e})}),(0,l.jsxs)("div",{children:["  ",(0,l.jsx)(Ne,{label:Se("Show Amount/Description Under Button","rsvpmaker"),value:a,onChange:e=>f({showdescription:e}),options:[{value:"yes",label:Se("Yes","rsvpmaker")},{value:"no",label:Se("No","rsvpmaker")}]}),(0,l.jsx)(Ne,{label:Se("Payment Type","rsvpmaker"),value:r,onChange:e=>f({paymentType:e}),options:[{value:"one-time",label:Se("One time, fixed fee","rsvpmaker")},{value:"schedule",label:Se("Dues schedule","rsvpmaker")},{value:"donation",label:Se("Donation","rsvpmaker")}]})]}),!y&&(0,l.jsx)(Re,{label:Se("Fee","rsvpmaker"),value:s,placeholder:"$0.00",onChange:e=>f({amount:e})}),y&&(0,l.jsxs)("div",{children:["    ",(0,l.jsx)(Re,{label:Se("January","rsvpmaker"),value:n,onChange:e=>f({january:e})}),(0,l.jsx)(Re,{label:Se("February","rsvpmaker"),value:i,onChange:e=>f({february:e})}),(0,l.jsx)(Re,{label:Se("March","rsvpmaker"),value:o,onChange:e=>f({march:e})}),(0,l.jsx)(Re,{label:Se("April","rsvpmaker"),value:d,onChange:e=>f({april:e})}),(0,l.jsx)(Re,{label:Se("May","rsvpmaker"),value:c,onChange:e=>f({may:e})}),(0,l.jsx)(Re,{label:Se("June","rsvpmaker"),value:p,onChange:e=>f({june:e})}),(0,l.jsx)(Re,{label:Se("July","rsvpmaker"),value:u,onChange:e=>f({july:e})}),(0,l.jsx)(Re,{label:Se("August","rsvpmaker"),value:m,onChange:e=>f({august:e})}),(0,l.jsx)(Re,{label:Se("September","rsvpmaker"),value:v,onChange:e=>f({september:e})}),(0,l.jsx)(Re,{label:Se("October","rsvpmaker"),value:h,onChange:e=>f({october:e})}),(0,l.jsx)(Re,{label:Se("November","rsvpmaker"),value:b,onChange:e=>f({november:e})}),(0,l.jsx)(Re,{label:Se("December","rsvpmaker"),value:g,onChange:e=>f({december:e})})]}),(0,l.jsx)(Ae,{label:Se("Show PayPal Also","rsvpmaker"),checked:k,onChange:e=>{f({paypal:e})}}),(0,l.jsx)(Re,{label:Se("Currency Code (lowercase)","rsvpmaker"),value:x,onChange:e=>f({currency:e})})]}):(0,l.jsx)("div",{className:e.className,children:(0,l.jsxs)("p",{class:"dashicons-before dashicons-products",children:[(0,l.jsx)("strong",{children:"Payment Button"}),": Embed in any post or page (not meant to be included in events). Click to set price and options."]})})},save:function(){return null}}),_e("rsvpmaker/paypal",{title:Se("PayPal Charge (RSVPMaker)"),icon:"products",category:"rsvpmaker",description:Se("Displays a payment widget for the PayPal service"),keywords:[Se("RSVPMaker"),Se("Payment"),Se("PayPal")],attributes:{description:{type:"string",default:""},showdescription:{type:"string",default:"no"},amount:{type:"string",default:""},paymentType:{type:"string",default:"once"},currencyCode:{type:"string",default:"USD"},amount:{type:"string",default:""},january:{type:"string",default:""},february:{type:"string",default:""},march:{type:"string",default:""},april:{type:"string",default:""},may:{type:"string",default:""},june:{type:"string",default:""},july:{type:"string",default:""},august:{type:"string",default:""},september:{type:"string",default:""},october:{type:"string",default:""},november:{type:"string",default:""},december:{type:"string",default:""}},edit:function(e){const{attributes:{description:t,showdescription:a,amount:s,paymentType:r,january:n,february:i,march:o,april:d,may:c,june:p,july:u,august:m,september:v,october:h,november:b,december:g,currencyCode:k},setAttributes:x,isSelected:f}=e;var j="schedule"==r.toString();return f?(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-products",children:[(0,l.jsx)("strong",{children:"PayPal Payment Button"}),": Embed in any post or page (not meant to be included in events)."]}),(0,l.jsx)(Re,{label:Se("Description","rsvpmaker"),value:t,onChange:e=>x({description:e})}),(0,l.jsxs)("div",{children:["  ",(0,l.jsx)(Ne,{label:Se("Show Amount/Description Under Button","rsvpmaker"),value:a,onChange:e=>x({showdescription:e}),options:[{value:"yes",label:Se("Yes","rsvpmaker")},{value:"no",label:Se("No","rsvpmaker")}]}),(0,l.jsx)(Ne,{label:Se("Payment Type","rsvpmaker"),value:r,onChange:e=>x({paymentType:e}),options:[{value:"one-time",label:Se("One time, fixed fee","rsvpmaker")},{value:"schedule",label:Se("Dues schedule","rsvpmaker")},{value:"donation",label:Se("Donation","rsvpmaker")}]})]}),!j&&(0,l.jsx)(Re,{label:Se("Fee","rsvpmaker"),value:s,placeholder:"$0.00",onChange:e=>x({amount:e})}),j&&(0,l.jsxs)("div",{children:["    ",(0,l.jsx)(Re,{label:Se("January","rsvpmaker"),value:n,onChange:e=>x({january:e})}),(0,l.jsx)(Re,{label:Se("February","rsvpmaker"),value:i,onChange:e=>x({february:e})}),(0,l.jsx)(Re,{label:Se("March","rsvpmaker"),value:o,onChange:e=>x({march:e})}),(0,l.jsx)(Re,{label:Se("April","rsvpmaker"),value:d,onChange:e=>x({april:e})}),(0,l.jsx)(Re,{label:Se("May","rsvpmaker"),value:c,onChange:e=>x({may:e})}),(0,l.jsx)(Re,{label:Se("June","rsvpmaker"),value:p,onChange:e=>x({june:e})}),(0,l.jsx)(Re,{label:Se("July","rsvpmaker"),value:u,onChange:e=>x({july:e})}),(0,l.jsx)(Re,{label:Se("August","rsvpmaker"),value:m,onChange:e=>x({august:e})}),(0,l.jsx)(Re,{label:Se("September","rsvpmaker"),value:v,onChange:e=>x({september:e})}),(0,l.jsx)(Re,{label:Se("October","rsvpmaker"),value:h,onChange:e=>x({october:e})}),(0,l.jsx)(Re,{label:Se("November","rsvpmaker"),value:b,onChange:e=>x({november:e})}),(0,l.jsx)(Re,{label:Se("December","rsvpmaker"),value:g,onChange:e=>x({december:e})})]}),(0,l.jsx)(Re,{label:Se("Currency Code","rsvpmaker"),value:k,onChange:e=>x({currencyCode:e})})]}):(0,l.jsx)("div",{className:e.className,children:(0,l.jsxs)("p",{class:"dashicons-before dashicons-products",children:[(0,l.jsx)("strong",{children:"PayPal Payment Button"}),": Embed in any post or page (not meant to be included in events). Click to set price and options."]})})},save:function(){return null}}),_e("rsvpmaker/placeholder",{title:Se("Placeholder"),icon:"products",category:"formatting",description:Se("Placeholder for content to be added later"),keywords:[Se("RSVPMaker"),Se("Placeholder"),Se("Layout")],attributes:{text:{type:"string",default:""}},edit:function(e){const{attributes:{text:t},setAttributes:a,isSelected:s}=e;return s?(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsx)(Re,{label:Se("Text","rsvpmaker"),value:t,onChange:e=>a({text:e})}),(0,l.jsx)("p",{class:"dashicons-before dashicons-welcome-write-blog",children:(0,l.jsx)("em",{children:"(Not shown on front end. Delete from finished post)"})})]}):(0,l.jsx)("div",{className:e.className,children:(0,l.jsxs)("p",{class:"dashicons-before dashicons-welcome-write-blog",children:[t," ",(0,l.jsx)("em",{children:"(Placeholder: Not shown on front end)"})]})})},save:function(){return null}}),_e("rsvpmaker/upcoming-by-json",{title:Se("RSVPMaker Events (fetch via API)"),icon:"calendar-alt",category:"rsvpmaker",description:Se("Displays a listing of RSVPMaker events from a remote site"),keywords:[Se("RSVPMaker"),Se("Events"),Se("Calendar")],attributes:{limit:{type:"int",default:10},url:{type:"string",default:""},morelink:{type:"string",default:""}},edit:function(e){const{attributes:{limit:t,url:a,morelink:s},setAttributes:r,isSelected:n}=e;let i="";return Le&&Le.length>2&&(i="API urls for  this site:\n"+window.location.protocol+"//"+window.location.hostname+"/wp-json/rsvpmaker/v1/future\n",Ie.forEach(function(e,t){t>0&&(i=i.concat(rsvpmaker.json_url+"type/"+e.value+"\n"))})),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-calendar-alt",children:[(0,l.jsx)("strong",{children:"RSVPMaker "}),": Add an Events Listing that dynamically loads via JSON API endpoint"]}),n&&(0,l.jsxs)("div",{children:[(0,l.jsx)(Re,{label:Se("JSON API url","rsvpmaker"),value:a,onChange:e=>r({url:e})}),(0,l.jsx)(Re,{label:Se("Limit","rsvpmaker"),value:t,help:Se("For no limit, enter 0"),onChange:e=>r({limit:e})}),(0,l.jsx)(Re,{label:Se("Link URL for more results (optional)","rsvpmaker"),value:s,onChange:e=>r({morelink:e})}),(0,l.jsx)("p",{children:(0,l.jsxs)("em",{children:["Enter JSON API url for this site or another in the format:",(0,l.jsx)("br",{}),"https://rsvpmaker.com/wp-json/rsvpmaker/v1/future",(0,l.jsx)("br",{}),"or",(0,l.jsx)("br",{}),"https://rsvpmaker.com/wp-json/rsvpmaker/v1/type/featured"]})}),(0,l.jsx)("pre",{children:i})]}),!n&&(0,l.jsx)("p",{children:(0,l.jsx)("em",{children:"Click to set options"})})]})},save:function(e){return null}}),_e("rsvpmaker/future-rsvp-links",{title:Se("Future RSVP Links"),icon:"calendar-alt",category:"rsvpmaker",description:Se("Displays a list of links to the RSVP Form for upcoming events with RSVPs turned on"),keywords:[Se("RSVPMaker"),Se("Events"),Se("Calendar")],attributes:{limit:{type:"int",default:5},skipfirst:{type:"boolean",default:!1}},edit:function(e){const{attributes:{limit:t,skipfirst:a},setAttributes:s,isSelected:r}=e;return(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-calendar-alt",children:[(0,l.jsx)("strong",{children:"RSVPMaker "}),": Display a list of links to the RSVP Form for upcoming events"]}),(0,l.jsxs)("div",{children:[(0,l.jsx)(Ne,{label:Se("Limit","rsvpmaker"),value:t,options:[{label:"3",value:"3"},{label:"5",value:"5"},{label:"7",value:"7"},{label:"10",value:"10"}],onChange:e=>{s({limit:e})}}),(0,l.jsx)(Ae,{label:Se("Skip First Date","rsvpmaker"),checked:a,help:Se("For example, to pick up after an embedded date block that features the first event in the series."),onChange:e=>{s({skipfirst:e})}})]})]})},save:function(e){return null}}),_e("rsvpmaker/countdown",{title:Se("RSVPMaker Countdown Timer"),icon:"clock",category:"rsvpmaker",description:Se("Displays a countdown timer for the specified event"),keywords:[Se("RSVPMaker"),Se("Countdown"),Se("Timer")],attributes:{event_id:{type:"string",default:""},countdown_id:{type:"string",default:""},expiration_display:{type:"string",default:"stoppedclock"},expiration_message:{type:"string",default:"The wait is over!"}},edit:function(e){const{attributes:{event_id:t,countdown_id:a,expiration_display:s,expiration_message:r},setAttributes:n,isSelected:i}=e;let o=wp.data.select("core/editor").getCurrentPostId(),d="rsvpmaker"==rsvpmaker.post_type&&rsvpmaker_ajax._rsvp_first_date;return n({countdown_id:"countdown-"+o}),(0,l.jsxs)("div",{className:e.className,children:[(0,l.jsxs)("p",{class:"dashicons-before dashicons-clock",children:[(0,l.jsx)("strong",{children:"RSVPMaker"}),": Embed a countdown clock."]}),i&&(0,l.jsxs)("form",{children:[!d&&(0,l.jsx)(Ne,{label:Se("Select Event","rsvpmaker"),value:t,options:Le,onChange:e=>{n({event_id:e})}}),(0,l.jsx)(Ne,{label:Se("Show When Time Expires","rsvpmaker"),value:s,options:[{label:Se("Stopped Clock 00:00:00"),value:"stoppedclock"},{label:Se("Stopped Clock Plus Message"),value:"clockmessage"},{label:Se("Message Only"),value:"message"},{label:Se("Nothing, Clear Content"),value:"nothing"}],onChange:e=>{n({expiration_display:e})}}),(0,l.jsx)(Re,{label:Se("Expiration Message","rsvpmaker"),value:r,onChange:e=>{n({expiration_message:e})}})]}),!i&&(0,l.jsx)("div",{children:(0,l.jsx)("p",{children:(0,l.jsx)("strong",{children:"Click here to set options."})})})]})},save:function(e){const{attributes:{event_id:t,countdown_id:a,expiration_display:s,expiration_message:r}}=e;return(0,l.jsx)("div",{id:a,event_id:t,expiration_display:s,expiration_message:r,className:e.className})}}),("rsvpemail"==rsvpmaker.post_type||"rsvpmaker"==rsvpmaker.post_type||"rsvpmaker_template"==rsvpmaker.post_type)&&wp.data.select("core/edit-post").isFeatureActive("fullscreenMode")&&wp.data.dispatch("core/edit-post").toggleFeature("fullscreenMode")}},a={};function s(e){var r=a[e];if(void 0!==r)return r.exports;var l=a[e]={exports:{}};return t[e](l,l.exports,s),l.exports}s.m=t,e=[],s.O=(t,a,r,l)=>{if(!a){var n=1/0;for(c=0;c<e.length;c++){for(var[a,r,l]=e[c],i=!0,o=0;o<a.length;o++)(!1&l||n>=l)&&Object.keys(s.O).every(e=>s.O[e](a[o]))?a.splice(o--,1):(i=!1,l<n&&(n=l));if(i){e.splice(c--,1);var d=r();void 0!==d&&(t=d)}}return t}l=l||0;for(var c=e.length;c>0&&e[c-1][2]>l;c--)e[c]=e[c-1];e[c]=[a,r,l]},s.n=e=>{var t=e&&e.__esModule?()=>e.default:()=>e;return s.d(t,{a:t}),t},s.d=(e,t)=>{for(var a in t)s.o(t,a)&&!s.o(e,a)&&Object.defineProperty(e,a,{enumerable:!0,get:t[a]})},s.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),(()=>{var e={598:0,538:0};s.O.j=t=>0===e[t];var t=(t,a)=>{var r,l,[n,i,o]=a,d=0;if(n.some(t=>0!==e[t])){for(r in i)s.o(i,r)&&(s.m[r]=i[r]);if(o)var c=o(s)}for(t&&t(a);d<n.length;d++)l=n[d],s.o(e,l)&&e[l]&&e[l][0](),e[l]=0;return s.O(c)},a=globalThis.webpackChunkadmin=globalThis.webpackChunkadmin||[];a.forEach(t.bind(null,0)),a.push=t.bind(null,a.push.bind(a))})();var r=s.O(void 0,[538],()=>s(337));r=s.O(r)})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./src/oldblocks/block.js"
+/*!********************************!*\
+  !*** ./src/oldblocks/block.js ***!
+  \********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _style_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./style.scss */ "./src/oldblocks/style.scss");
+/* harmony import */ var _editor_scss__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./editor.scss */ "./src/oldblocks/editor.scss");
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wordpress/api-fetch */ "@wordpress/api-fetch");
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
+/* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
+/* BLOCK: rsvpmaker-block
+ *
+ * Registering a basic block with Gutenberg.
+ * Simple block, renders and saves the same content without any interactivity.
+ */
+//  Import CSS.
+
+
+//import './rsvpemail-sidebar.js';		
+//import './limited_time.js';		
+//import './schedule.js';
+//import './form.js';		
+//import './rsvpmailer-wrapper.js';
+
+
+
+const {
+  __
+} = wp.i18n; // Import __() from wp.i18n
+const {
+  registerBlockType
+} = wp.blocks; // Import registerBlockType() from wp.blocks
+const {
+  PanelBody,
+  SelectControl,
+  TextControl,
+  ToggleControl,
+  ColorPicker,
+  FontSizePicker
+} = wp.components;
+const {
+  Component,
+  Fragment,
+  RawHTML
+} = wp.element;
+const {
+  InspectorControls,
+  useBlockProps
+} = wp.blockEditor;
+const rsvpupcoming = [{
+  label: __('Choose event'),
+  value: ''
+}, {
+  label: __('Next event'),
+  value: 'next'
+}, {
+  label: __('Next event - RSVP on'),
+  value: 'nextrsvp'
+}];
+_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_2___default()({
+  path: 'rsvpmaker/v1/future'
+}).then(events => {
+  if (Array.isArray(events)) {
+    events.map(function (event) {
+      if (event.ID) {
+        var title = event.date ? event.post_title + ' - ' + event.date : event.post_title;
+        rsvpupcoming.push({
+          value: event.ID,
+          label: title
+        });
+      }
+    });
+  } else {
+    var eventsarray = Object.values(events);
+    eventsarray.map(function (event) {
+      if (event.ID) {
+        var title = event.date ? event.post_title + ' - ' + event.date : event.post_title;
+        rsvpupcoming.push({
+          value: event.ID,
+          label: title
+        });
+      }
+    });
+  }
+}).catch(err => {
+  console.log(err);
+});
+const rsvptypes = [{
+  value: '',
+  label: 'None selected (optional)'
+}];
+_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_2___default()({
+  path: 'rsvpmaker/v1/types'
+}).then(types => {
+  if (Array.isArray(types)) types.map(function (type) {
+    if (type.slug && type.name) rsvptypes.push({
+      value: type.slug,
+      label: type.name
+    });
+  });else {
+    var typesarray = Object.values(types);
+    typesarray.map(function (type) {
+      if (type.slug && type.name) rsvptypes.push({
+        value: type.slug,
+        label: type.name
+      });
+    });
+  }
+}).catch(err => {
+  console.log(err);
+});
+const rsvpauthors = [{
+  value: '',
+  label: 'Any'
+}];
+_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_2___default()({
+  path: 'rsvpmaker/v1/authors'
+}).then(authors => {
+  if (Array.isArray(authors)) authors.map(function (author) {
+    if (author.ID && author.name) rsvpauthors.push({
+      value: author.ID,
+      label: author.name
+    });
+  });else {
+    authors = Object.values(authors);
+    authors.map(function (author) {
+      if (author.ID && author.name) rsvpauthors.push({
+        value: author.ID,
+        label: author.name
+      });
+    });
+  }
+}).catch(err => {
+  console.log(err);
+});
+
+/**
+ * Register: a Gutenberg Block.
+ *
+ * Registers a new block provided a unique name and an object defining its
+ * behavior. Once registered, the block is made editor as an option to any
+ * editor interface where blocks are implemented.
+ *
+ * @link https://wordpress.org/gutenberg/handbook/block-api/
+ * @param  {string}   name     Block name.
+ * @param  {Object}   settings Block settings.
+ * @return {?WPBlock}          The block, if it has been successfully
+ *                             registered; otherwise `undefined`.
+ */
+/*
+registerBlockType( 'rsvpmaker/event', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Embed Event' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a single RSVPMaker event post'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            post_id: {
+            type: 'string',
+            default: '',
+            },
+            one_hideauthor: {
+                type: 'boolean',
+                default: true,
+            },
+            type: {
+                type: 'string',
+                default: '',
+            },
+            one_format: {
+                type: 'string',
+				default: '',
+            },
+            hide_past: {
+                type: 'string',
+                default: '',
+            },
+        },
+	edit: function( props ) {
+	const { attributes: { post_id, type, one_hideauthor, one_format, hide_past }, setAttributes, isSelected } = props;
+	if(post_id == '')
+		setAttributes( { post_id: 'next' } );
+
+	function showFormPrompt () {
+		return <p><strong>Click here to set options.</strong></p>
+	}
+
+	function showForm() {
+
+			return (
+				<form>
+<SelectControl
+        label={__("Select Post",'rsvpmaker')}
+        value={ post_id }
+        options={ rsvpupcoming }
+        onChange={ ( post_id ) => { setAttributes( { post_id: post_id } ) } }
+    />
+<SelectControl
+        label={__("Format",'rsvpmaker')}
+        value={ one_format }
+        options={ [
+	{label: 'Event with Form', value:''},
+	{label: 'Event with Button', value:'button'},
+	{label: 'Button Only', value:'button_only'},
+	{label: 'Form Only', value:'form'},
+	{label: 'Compact (Headline/Date/Button)', value:'compact'},
+	{label: 'Dates Only', value:'embed_dateblock'}] }
+        onChange={ ( one_format ) => { setAttributes( { one_format: one_format } ) } }
+/>
+
+<SelectControl
+        label={__("Hide After",'rsvpmaker')}
+        value={ hide_past }
+        options={ [
+	{label: 'Not Set', value:''},
+	{label: '1 hour', value:'1'},
+	{label: '2 hours', value:'2'},
+	{label: '3 hours', value:'3'},
+	{label: '4 hours', value:'4'},
+	{label: '5 hours', value:'5'},
+	{label: '6 hours', value:'6'},
+	{label: '7 hours', value:'7'},
+	{label: '8 hours', value:'8'},
+	{label: '12 hours', value:'12'},
+	{label: '18 hours', value:'18'},
+	{label: '24 hours', value:'24'},
+	{label: '2 days', value:'48'},
+	{label: '3 days', value:'72'}] }
+        onChange={ ( hide_past ) => { setAttributes( { hide_past: hide_past } ) } }
+/>
+
+<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+
+<SelectControl
+        label={__("Show Author",'rsvpmaker')}
+        value={ one_hideauthor }
+        options={ [{label: 'No', value:'1'},{label: 'Yes', value:'0'}] }
+        onChange={ ( one_hideauthor ) => { setAttributes( { one_hideauthor: one_hideauthor } ) } }
+    />
+				</form>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Embed a single event.
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+
+
+registerBlockType( 'rsvpmaker/next-events', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Next Events' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Invites registration for next event, or next few dates'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            number_of_posts: {
+            type: 'int',
+            default: '5',
+            },
+        },
+	edit: function( props ) {
+	const { attributes: { number_of_posts }, setAttributes, isSelected } = props;
+	const [preview, setPreview] = useState([]);
+
+	const fetchPreview = async () => {
+		const path = '/rsvpmaker/v1/preview/next-events?number_of_posts='+number_of_posts;
+		console.log(path);
+		const preview = await apiFetch({path});
+		setPreview(preview);
+	}
+
+	useEffect( () => { fetchPreview(); }, [number_of_posts]);
+	if ( preview.length === 0 ) {
+		return <div {...useBlockProps()}>Loading</div>;
+	}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Registration invite for one or more events.
+				</p>
+	<SelectControl
+	label={__("Number of Event Links Shown",'rsvpmaker')}
+	value={ number_of_posts }
+	options={ [
+	{label: '1 (next only)', value:1},
+	{label: '2 (next +1)', value:2},
+	{label: '3 (next +2)', value:3},
+	{label: '4 (next +3)', value:4},
+	{label: '5 (next +4)', value:5},
+	{label: '6 (next +5)', value:6},
+	{label: '7 (next +6)', value:7},
+	{label: '8 (next +7)', value:8},
+	{label: '9 (next +8)', value:9},
+	{label: '10 (next +9)', value:10}] }
+        onChange={ ( number_of_posts ) => { setAttributes( { number_of_posts } ) } }
+/>
+<RawHTML>{preview}</RawHTML>
+			</div>
+		);
+	},
+
+
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+
+registerBlockType( 'rsvpmaker/embedform', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Embed Event Form' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays the form associated with a single RSVPMaker event post'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            post_id: {
+            type: 'string',
+            default: '',
+            },
+        },
+	edit: function( props ) {
+	const { attributes: { post_id, type, one_hideauthor, one_format, hide_past }, setAttributes, isSelected } = props;
+	if(post_id == '')
+		setAttributes( { post_id: 'next' } );
+
+	function showFormPrompt () {
+		return <p><strong>Click here to set options.</strong></p>
+	}
+
+	function showForm() {
+
+			return (
+				<form>
+<SelectControl
+        label={__("Select Post",'rsvpmaker')}
+        value={ post_id }
+        options={ rsvpupcoming }
+        onChange={ ( post_id ) => { setAttributes( { post_id: post_id } ) } }
+    />
+	</form>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Embed just the form for a single event.
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	save: function() {
+		return null;
+	},
+} );
+
+/*
+registerBlockType( 'rsvpmaker/submission', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Event Submission' ), // Block title.
+	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a Form for Submitting an Event for Approval'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Event' ),
+		__( 'Submission' ),
+	],
+       attributes: {
+            to: {
+	
+				type: 'string',
+            default: '',
+            },
+            timezone: {
+				type: 'boolean',
+				default: false,
+			},
+		},
+	edit: function( props ) {
+	const { attributes: { to, timezone }, setAttributes, isSelected } = props;
+	function showFormPrompt () {
+		return <p><strong>Click here to set options.</strong></p>
+	}
+
+	function showForm() {
+
+			return (
+		<div>
+	<ToggleControl
+        label={__("Prompt for Timezone",'rsvpmaker')}
+        checked={ timezone }
+        onChange={ ( timezone ) => { setAttributes( { timezone } ) } }
+    />
+	<TextControl 
+		label={__("Notification Emails: To override default from Settings, enter one or more emails, separated by commas",'rsvpmaker')}
+		value={to}
+		onChange={ ( to ) => { setAttributes( { to } ) } }
+	/>
+	</div>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: {__('Allow non-authenticated users to submit events for approval by an editor.')}
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	save: function() {
+		return null;
+	},
+} );
+*/
+/*
+registerBlockType( 'rsvpmaker/eventlisting', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Event Listing' ), // Block title.
+	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays an RSVPMaker event listing (headlines and dates)'),
+
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Events' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            days: {
+                type: 'int',
+				default: 180,
+            },
+            posts_per_page: {
+                type: 'int',
+				default: 10,
+            },
+            type: {
+                type: 'string',
+                default: '',
+            },
+            date_format: {
+                type: 'string',
+                default: '%A %B %e, %Y',
+            },
+            time: {
+                type: 'int',
+                default: 0,
+            },
+        },
+	/**
+	 * The edit function describes the structure of your block in the context of the editor.
+	 * This represents what the editor will render when the block is used.
+	 *
+	 * The "edit" property must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	edit: function( props ) {
+		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
+	const { attributes: { days, posts_per_page, type, date_format, time }, setAttributes, isSelected } = props;
+
+	function showFormPrompt () {
+		return <p><strong>{__('Click here to set options.','rsvpmaker')}</strong></p>
+	}
+		
+	function showForm() {
+			return (
+				<form  >
+					<SelectControl
+        label={__("Events Per Page",'rsvpmaker')}
+        value={ posts_per_page }
+        options={ [{value: 5, label: 5},
+			{value: 10, label: 10},
+			{value: 15, label: 15},
+			{value: 20, label: 20},
+			{value: 25, label: 25},
+			{value: 30, label: 30},
+			{value: 35, label: 35},
+			{value: 40, label: 40},
+			{value: 45, label: 45},
+			{value: 50, label: 50},
+			{value: '-1', label: 'No limit'}]}
+        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page: posts_per_page } ) } }
+    />
+					<SelectControl
+        label={__("Date Range",'rsvpmaker')}
+        value={ days }
+        options={ [{value: 5, label: 5},
+			{value: 30, label: '30 Days'},
+			{value: 60, label: '60 Days'},
+			{value: 90, label: '90 Days'},
+			{value: 180, label: '180 Days'},
+			{value: 366, label: '1 Year'}] }
+        onChange={ ( days ) => { setAttributes( { days: days } ) } }
+    />
+					<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+				<SelectControl
+        label={__("Date Format",'rsvpmaker')}
+        value={ date_format }
+        options={ [
+            { label: 'Thursday August 8, 2019', value: '%A %B %e, %Y' },
+            { label: 'August 8, 2019', value: '%B %e, %Y' },
+            { label: 'August 8', value: '%B %e' },
+            { label: 'Aug. 8', value: '%h. %e' },
+            { label: '8 August 2019', value: '%e %B %Y' },
+        ] }
+        onChange={ ( date_format ) => { setAttributes( { date_format: date_format } ) } }
+    />
+				<ToggleControl
+        label={__("Include Time",'rsvpmaker')}
+        checked={ time }
+        onChange={ ( time ) => { setAttributes( { time: time } ) } }
+    />
+				</form>
+			);
+		}
+
+		return (
+			<div className={ props.className }>
+				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker</strong>: Add an Events Listing and/or Calendar Display
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	save: function( props ) {
+		return null;
+	},
+} );
+*/
+/*
+registerBlockType( 'rsvpmaker/stripecharge', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'Stripe Charge (RSVPMaker)' ), // Block title.
+	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a payment widget for the Stripe service'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Payment' ),
+		__( 'Charge' ),
+	],
+       attributes: {
+            description: {
+            type: 'string',
+            default: '',
+            },
+            showdescription: {
+            type: 'string',
+            default: 'no',
+            },
+            amount: {
+            type: 'string',
+            default: '',
+            },
+            paymentType: {
+            type: 'string',
+            default: 'once',
+            },
+            amount: {
+            type: 'string',
+            default: '',
+            },
+            currency: {
+				type: 'string',
+				default: 'usd',
+			},
+			january: {
+            type: 'string',
+            default: '',
+            },
+            february: {
+            type: 'string',
+            default: '',
+            },
+            march: {
+            type: 'string',
+            default: '',
+            },
+            april: {
+            type: 'string',
+            default: '',
+            },
+            may: {
+            type: 'string',
+            default: '',
+            },
+            june: {
+            type: 'string',
+            default: '',
+            },
+            july: {
+            type: 'string',
+            default: '',
+            },
+            august: {
+            type: 'string',
+            default: '',
+            },
+            september: {
+            type: 'string',
+            default: '',
+            },
+            october: {
+            type: 'string',
+            default: '',
+            },
+            november: {
+            type: 'string',
+            default: '',
+            },
+            december: {
+            type: 'string',
+            default: '',
+            },
+			paypal: {
+				type: 'boolean',
+				default: false,
+			},
+        },
+	edit: function( props ) {
+		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
+	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december, paypal, currency }, setAttributes, isSelected } = props;
+		var show = (paymentType.toString() == 'schedule') ? true : false;
+		//alert(show);
+		
+		if(!isSelected)
+			return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-products"><strong>Payment Button</strong>: Embed in any post or page (not meant to be included in events). Click to set price and options.
+				</p>
+				</div>
+			);
+		
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-products"><strong>Payment Button</strong>: Embed in any post or page (not meant to be included in events).
+				</p>
+	<TextControl
+        label={ __( 'Description', 'rsvpmaker' ) }
+        value={ description }
+        onChange={ ( description ) => setAttributes( { description } ) }
+    />	
+<div>		<SelectControl
+			label={ __( 'Show Amount/Description Under Button', 'rsvpmaker' ) }
+			value={ showdescription }
+			onChange={ ( showdescription ) => setAttributes( { showdescription } ) }
+			options={ [
+				{ value: 'yes', label: __( 'Yes', 'rsvpmaker' ) },
+				{ value: 'no', label: __( 'No', 'rsvpmaker' ) },
+			] }
+		/>
+
+		<SelectControl
+			label={ __( 'Payment Type', 'rsvpmaker' ) }
+			value={ paymentType }
+			onChange={ ( paymentType ) => setAttributes( { paymentType } ) }
+			options={ [
+				{ value: 'one-time', label: __( 'One time, fixed fee', 'rsvpmaker' ) },
+				{ value: 'schedule', label: __( 'Dues schedule', 'rsvpmaker' ) },
+				{ value: 'donation', label: __( 'Donation', 'rsvpmaker' ) },
+			] }
+		/>
+				</div>
+{
+!show &&	<TextControl
+        label={ __( 'Fee', 'rsvpmaker' ) }
+        value={ amount }
+		placeholder="$0.00"
+        onChange={ ( amount ) => setAttributes( { amount } ) }
+    />			
+}
+			{
+show &&	
+<div>    <TextControl
+        label={ __( 'January', 'rsvpmaker' ) }
+        value={ january }
+        onChange={ ( january ) => setAttributes( { january } ) }
+    />
+    <TextControl
+        label={ __( 'February', 'rsvpmaker' ) }
+        value={ february }
+        onChange={ ( february ) => setAttributes( { february } ) }
+    />
+    <TextControl
+        label={ __( 'March', 'rsvpmaker' ) }
+        value={ march }
+        onChange={ ( march ) => setAttributes( { march } ) }
+    />
+    <TextControl
+        label={ __( 'April', 'rsvpmaker' ) }
+        value={ april }
+        onChange={ ( april ) => setAttributes( { april } ) }
+    />
+    <TextControl
+        label={ __( 'May', 'rsvpmaker' ) }
+        value={ may }
+        onChange={ ( may ) => setAttributes( { may } ) }
+    />
+    <TextControl
+        label={ __( 'June', 'rsvpmaker' ) }
+        value={ june }
+        onChange={ ( june ) => setAttributes( { june } ) }
+    />
+    <TextControl
+        label={ __( 'July', 'rsvpmaker' ) }
+        value={ july }
+        onChange={ ( july ) => setAttributes( { july } ) }
+    />
+    <TextControl
+        label={ __( 'August', 'rsvpmaker' ) }
+        value={ august }
+        onChange={ ( august ) => setAttributes( { august } ) }
+    />
+    <TextControl
+        label={ __( 'September', 'rsvpmaker' ) }
+        value={ september }
+        onChange={ ( september ) => setAttributes( { september } ) }
+    />
+    <TextControl
+        label={ __( 'October', 'rsvpmaker' ) }
+        value={ october }
+        onChange={ ( october ) => setAttributes( { october } ) }
+    />
+    <TextControl
+        label={ __( 'November', 'rsvpmaker' ) }
+        value={ november }
+        onChange={ ( november ) => setAttributes( { november } ) }
+    />
+    <TextControl
+        label={ __( 'December', 'rsvpmaker' ) }
+        value={ december }
+        onChange={ ( december ) => setAttributes( { december } ) }
+    />
+</div>
+ }
+ 	<ToggleControl
+        label={__("Show PayPal Also",'rsvpmaker')}
+        checked={ paypal }
+        onChange={ ( paypal ) => { setAttributes( { paypal } ) } }
+    />
+	<TextControl
+        label={ __( 'Currency Code (lowercase)', 'rsvpmaker' ) }
+        value={ currency }
+        onChange={ ( currency ) => setAttributes( { currency } ) }
+    />
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+*/
+
+/*
+registerBlockType( 'rsvpmaker/paypal', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'PayPal Charge (RSVPMaker)' ), // Block title.
+	icon: 'products', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a payment widget for the PayPal service'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Payment' ),
+		__( 'PayPal' ),
+	],
+       attributes: {
+            description: {
+            type: 'string',
+            default: '',
+            },
+            showdescription: {
+            type: 'string',
+            default: 'no',
+            },
+            amount: {
+            type: 'string',
+            default: '',
+            },
+            paymentType: {
+            type: 'string',
+            default: 'once',
+            },
+            currencyCode: {
+				type: 'string',
+				default: 'USD',
+			},
+			amount: {
+            type: 'string',
+            default: '',
+            },
+            january: {
+            type: 'string',
+            default: '',
+            },
+            february: {
+            type: 'string',
+            default: '',
+            },
+            march: {
+            type: 'string',
+            default: '',
+            },
+            april: {
+            type: 'string',
+            default: '',
+            },
+            may: {
+            type: 'string',
+            default: '',
+            },
+            june: {
+            type: 'string',
+            default: '',
+            },
+            july: {
+            type: 'string',
+            default: '',
+            },
+            august: {
+            type: 'string',
+            default: '',
+            },
+            september: {
+            type: 'string',
+            default: '',
+            },
+            october: {
+            type: 'string',
+            default: '',
+            },
+            november: {
+            type: 'string',
+            default: '',
+            },
+            december: {
+            type: 'string',
+            default: '',
+            },
+        },
+	edit: function( props ) {
+		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
+	const { attributes: { description, showdescription, amount, paymentType, january, february, march, april, may, june, july, august, september, october, november, december, currencyCode }, setAttributes, isSelected } = props;
+		var show = (paymentType.toString() == 'schedule') ? true : false;
+		//alert(show);
+		
+		if(!isSelected)
+			return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-products"><strong>PayPal Payment Button</strong>: Embed in any post or page (not meant to be included in events). Click to set price and options.
+				</p>
+				</div>
+			);
+		
+		return (
+			<div className={ props.className }>
+				<p class="dashicons-before dashicons-products"><strong>PayPal Payment Button</strong>: Embed in any post or page (not meant to be included in events).
+				</p>
+	<TextControl
+        label={ __( 'Description', 'rsvpmaker' ) }
+        value={ description }
+        onChange={ ( description ) => setAttributes( { description } ) }
+    />	
+<div>		<SelectControl
+			label={ __( 'Show Amount/Description Under Button', 'rsvpmaker' ) }
+			value={ showdescription }
+			onChange={ ( showdescription ) => setAttributes( { showdescription } ) }
+			options={ [
+				{ value: 'yes', label: __( 'Yes', 'rsvpmaker' ) },
+				{ value: 'no', label: __( 'No', 'rsvpmaker' ) },
+			] }
+		/>
+
+		<SelectControl
+			label={ __( 'Payment Type', 'rsvpmaker' ) }
+			value={ paymentType }
+			onChange={ ( paymentType ) => setAttributes( { paymentType } ) }
+			options={ [
+				{ value: 'one-time', label: __( 'One time, fixed fee', 'rsvpmaker' ) },
+				{ value: 'schedule', label: __( 'Dues schedule', 'rsvpmaker' ) },
+				{ value: 'donation', label: __( 'Donation', 'rsvpmaker' ) },
+			] }
+		/>
+				</div>
+{
+!show &&	<TextControl
+        label={ __( 'Fee', 'rsvpmaker' ) }
+        value={ amount }
+		placeholder="$0.00"
+        onChange={ ( amount ) => setAttributes( { amount } ) }
+    />			
+}
+			{
+show &&	
+<div>    <TextControl
+        label={ __( 'January', 'rsvpmaker' ) }
+        value={ january }
+        onChange={ ( january ) => setAttributes( { january } ) }
+    />
+    <TextControl
+        label={ __( 'February', 'rsvpmaker' ) }
+        value={ february }
+        onChange={ ( february ) => setAttributes( { february } ) }
+    />
+    <TextControl
+        label={ __( 'March', 'rsvpmaker' ) }
+        value={ march }
+        onChange={ ( march ) => setAttributes( { march } ) }
+    />
+    <TextControl
+        label={ __( 'April', 'rsvpmaker' ) }
+        value={ april }
+        onChange={ ( april ) => setAttributes( { april } ) }
+    />
+    <TextControl
+        label={ __( 'May', 'rsvpmaker' ) }
+        value={ may }
+        onChange={ ( may ) => setAttributes( { may } ) }
+    />
+    <TextControl
+        label={ __( 'June', 'rsvpmaker' ) }
+        value={ june }
+        onChange={ ( june ) => setAttributes( { june } ) }
+    />
+    <TextControl
+        label={ __( 'July', 'rsvpmaker' ) }
+        value={ july }
+        onChange={ ( july ) => setAttributes( { july } ) }
+    />
+    <TextControl
+        label={ __( 'August', 'rsvpmaker' ) }
+        value={ august }
+        onChange={ ( august ) => setAttributes( { august } ) }
+    />
+    <TextControl
+        label={ __( 'September', 'rsvpmaker' ) }
+        value={ september }
+        onChange={ ( september ) => setAttributes( { september } ) }
+    />
+    <TextControl
+        label={ __( 'October', 'rsvpmaker' ) }
+        value={ october }
+        onChange={ ( october ) => setAttributes( { october } ) }
+    />
+    <TextControl
+        label={ __( 'November', 'rsvpmaker' ) }
+        value={ november }
+        onChange={ ( november ) => setAttributes( { november } ) }
+    />
+    <TextControl
+        label={ __( 'December', 'rsvpmaker' ) }
+        value={ december }
+        onChange={ ( december ) => setAttributes( { december } ) }
+    />
+</div>
+ }
+<TextControl
+        label={ __( 'Currency Code', 'rsvpmaker' ) }
+        value={ currencyCode }
+        onChange={ ( currencyCode ) => setAttributes( { currencyCode } ) }
+    />
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 /
+	save: function() {
+		// server render
+		return null;
+	},
+} );
+*/
+registerBlockType('rsvpmaker/placeholder', {
+  // Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+  title: __('Placeholder'),
+  // Block title.
+  icon: 'products',
+  // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+  category: 'formatting',
+  // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+  description: __('Placeholder for content to be added later'),
+  keywords: [__('RSVPMaker'), __('Placeholder'), __('Layout')],
+  attributes: {
+    text: {
+      type: 'string',
+      default: ''
+    }
+  },
+  edit: function (props) {
+    const {
+      attributes: {
+        text
+      },
+      setAttributes,
+      isSelected
+    } = props;
+    if (isSelected) return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+      className: props.className,
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(TextControl, {
+        label: __('Text', 'rsvpmaker'),
+        value: text,
+        onChange: text => setAttributes({
+          text
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("p", {
+        class: "dashicons-before dashicons-welcome-write-blog",
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("em", {
+          children: "(Not shown on front end. Delete from finished post)"
+        })
+      })]
+    });
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+      className: props.className,
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("p", {
+        class: "dashicons-before dashicons-welcome-write-blog",
+        children: [text, " ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("em", {
+          children: "(Placeholder: Not shown on front end)"
+        })]
+      })
+    });
+  },
+  /**
+   * The save function defines the way in which the different attributes should be combined
+   * into the final markup, which is then serialized by Gutenberg into post_content.
+   *
+   * The "save" property must be specified and must be a valid function.
+   *
+   * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+   */
+  save: function () {
+    // server render
+    return null;
+  }
+});
+
+/*
+registerBlockType( 'rsvpmaker/upcoming-by-json', {
+	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+	title: __( 'RSVPMaker Events (fetch via API)' ), // Block title.
+	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+	description: __('Displays a listing of RSVPMaker events from a remote site'),
+	keywords: [
+		__( 'RSVPMaker' ),
+		__( 'Events' ),
+		__( 'Calendar' ),
+	],
+       attributes: {
+            limit: {
+                type: 'int',
+				default: 10,
+            },
+            url: {
+                type: 'string',
+                default: '',
+            },
+            morelink: {
+                type: 'string',
+                default: '',
+            },
+        },
+	/**
+	 * The edit function describes the structure of your block in the context of the editor.
+	 * This represents what the editor will render when the block is used.
+	 *
+	 * The "edit" property must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	edit: function( props ) {
+	const { attributes: { limit, url, morelink }, setAttributes, isSelected } = props;
+	let typelist = '';
+	if(rsvpupcoming && (rsvpupcoming.length > 2))
+	{
+		typelist = 'API urls for  this site:\n'+window.location.protocol+'//'+window.location.hostname+'/wp-json/rsvpmaker/v1/future\n';
+		rsvptypes.forEach(showTypes);	
+	}
+
+function showTypes (data, index) {
+	if(index > 0)
+		typelist = typelist.concat(rsvpmaker.json_url+'type/'+data.value + '\n'); 
+}
+
+function showForm() {
+return (<div>
+	<TextControl
+        label={ __( 'JSON API url', 'rsvpmaker' ) }
+        value={ url }
+        onChange={ ( url ) => setAttributes( { url } ) }
+    />
+	<TextControl
+        label={ __( 'Limit', 'rsvpmaker' ) }
+        value={ limit }
+		help={__('For no limit, enter 0')}
+        onChange={ ( limit ) => setAttributes( { limit } ) }
+    />	
+	<TextControl
+        label={ __( 'Link URL for more results (optional)', 'rsvpmaker' ) }
+        value={ morelink }
+        onChange={ ( morelink ) => setAttributes( { morelink } ) }
+    />	
+	<p><em>Enter JSON API url for this site or another in the format:
+	<br />https://rsvpmaker.com/wp-json/rsvpmaker/v1/future
+	<br />or
+	<br />https://rsvpmaker.com/wp-json/rsvpmaker/v1/type/featured</em></p>
+<pre>{typelist}</pre>
+</div>);
+}
+
+function showFormPrompt () {
+    return (<p><em>Click to set options</em></p>);
+}
+
+		return (
+			<div className={ props.className }>
+				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker </strong>: Add an Events Listing that dynamically loads via JSON API endpoint
+				</p>
+			{ isSelected && ( showForm() ) }
+			{ !isSelected && ( showFormPrompt() ) }
+			</div>
+		);
+	},
+
+	/**
+	 * The save function defines the way in which the different attributes should be combined
+	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 *
+	 * The "save" property must be specified and must be a valid function.
+	 *
+	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	save: function( props ) {
+		return null;
+	},
+} );
+*/
+registerBlockType('rsvpmaker/countdown', {
+  // Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+  title: __('RSVPMaker Countdown Timer'),
+  // Block title.
+  icon: 'clock',
+  // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
+  category: 'rsvpmaker',
+  // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
+  description: __('Displays a countdown timer for the specified event'),
+  keywords: [__('RSVPMaker'), __('Countdown'), __('Timer')],
+  attributes: {
+    event_id: {
+      type: 'string',
+      default: ''
+    },
+    countdown_id: {
+      type: 'string',
+      default: ''
+    },
+    expiration_display: {
+      type: 'string',
+      default: 'stoppedclock'
+    },
+    expiration_message: {
+      type: 'string',
+      default: 'The wait is over!'
+    }
+  },
+  edit: function (props) {
+    const {
+      attributes: {
+        event_id,
+        countdown_id,
+        expiration_display,
+        expiration_message
+      },
+      setAttributes,
+      isSelected
+    } = props;
+    let current_id = wp.data.select("core/editor").getCurrentPostId();
+    let isEvent = rsvpmaker.post_type == 'rsvpmaker' && rsvpmaker_ajax._rsvp_first_date;
+    setAttributes({
+      countdown_id: 'countdown-' + current_id
+    });
+    function showFormPrompt() {
+      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("p", {
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("strong", {
+            children: "Click here to set options."
+          })
+        })
+      });
+    }
+    function showForm() {
+      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("form", {
+        children: [!isEvent && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(SelectControl, {
+          label: __("Select Event", 'rsvpmaker'),
+          value: event_id,
+          options: rsvpupcoming,
+          onChange: event_id => {
+            setAttributes({
+              event_id: event_id
+            });
+          }
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(SelectControl, {
+          label: __("Show When Time Expires", 'rsvpmaker'),
+          value: expiration_display,
+          options: [{
+            label: __('Stopped Clock 00:00:00'),
+            value: 'stoppedclock'
+          }, {
+            label: __('Stopped Clock Plus Message'),
+            value: 'clockmessage'
+          }, {
+            label: __('Message Only'),
+            value: 'message'
+          }, {
+            label: __('Nothing, Clear Content'),
+            value: 'nothing'
+          }],
+          onChange: expiration_display => {
+            setAttributes({
+              expiration_display: expiration_display
+            });
+          }
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(TextControl, {
+          label: __('Expiration Message', 'rsvpmaker'),
+          value: expiration_message,
+          onChange: expiration_message => {
+            setAttributes({
+              expiration_message: expiration_message
+            });
+          }
+        })]
+      });
+    }
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+      className: props.className,
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("p", {
+        class: "dashicons-before dashicons-clock",
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("strong", {
+          children: "RSVPMaker"
+        }), ": Embed a countdown clock."]
+      }), isSelected && showForm(), !isSelected && showFormPrompt()]
+    });
+  },
+  save: function (props) {
+    const {
+      attributes: {
+        event_id,
+        countdown_id,
+        expiration_display,
+        expiration_message
+      }
+    } = props;
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+      id: countdown_id,
+      event_id: event_id,
+      expiration_display: expiration_display,
+      expiration_message: expiration_message,
+      className: props.className
+    });
+  }
+});
+
+//default to full screen off for RSVPMaker and related documents
+if (rsvpmaker.post_type == 'rsvpemail' || rsvpmaker.post_type == 'rsvpmaker' || rsvpmaker.post_type == 'rsvpmaker_template') {
+  const isFullscreenMode = wp.data.select('core/edit-post').isFeatureActive('fullscreenMode');
+  if (isFullscreenMode) {
+    wp.data.dispatch('core/edit-post').toggleFeature('fullscreenMode');
+  }
+}
+
+/***/ },
+
+/***/ "./src/oldblocks/editor.scss"
+/*!***********************************!*\
+  !*** ./src/oldblocks/editor.scss ***!
+  \***********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ },
+
+/***/ "./src/oldblocks/style.scss"
+/*!**********************************!*\
+  !*** ./src/oldblocks/style.scss ***!
+  \**********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ },
+
+/***/ "@wordpress/api-fetch"
+/*!**********************************!*\
+  !*** external ["wp","apiFetch"] ***!
+  \**********************************/
+(module) {
+
+module.exports = window["wp"]["apiFetch"];
+
+/***/ },
+
+/***/ "@wordpress/element"
+/*!*********************************!*\
+  !*** external ["wp","element"] ***!
+  \*********************************/
+(module) {
+
+module.exports = window["wp"]["element"];
+
+/***/ },
+
+/***/ "react/jsx-runtime"
+/*!**********************************!*\
+  !*** external "ReactJSXRuntime" ***!
+  \**********************************/
+(module) {
+
+module.exports = window["ReactJSXRuntime"];
+
+/***/ }
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Check if module exists (development only)
+/******/ 		if (__webpack_modules__[moduleId] === undefined) {
+/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			e.code = 'MODULE_NOT_FOUND';
+/******/ 			throw e;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/chunk loaded */
+/******/ 	(() => {
+/******/ 		var deferred = [];
+/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
+/******/ 			if(chunkIds) {
+/******/ 				priority = priority || 0;
+/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
+/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				return;
+/******/ 			}
+/******/ 			var notFulfilled = Infinity;
+/******/ 			for (var i = 0; i < deferred.length; i++) {
+/******/ 				var [chunkIds, fn, priority] = deferred[i];
+/******/ 				var fulfilled = true;
+/******/ 				for (var j = 0; j < chunkIds.length; j++) {
+/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
+/******/ 						chunkIds.splice(j--, 1);
+/******/ 					} else {
+/******/ 						fulfilled = false;
+/******/ 						if(priority < notFulfilled) notFulfilled = priority;
+/******/ 					}
+/******/ 				}
+/******/ 				if(fulfilled) {
+/******/ 					deferred.splice(i--, 1)
+/******/ 					var r = fn();
+/******/ 					if (r !== undefined) result = r;
+/******/ 				}
+/******/ 			}
+/******/ 			return result;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		// no baseURI
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			"oldblocks/block": 0,
+/******/ 			"oldblocks/style-block": 0
+/******/ 		};
+/******/ 		
+/******/ 		// no chunk on demand loading
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var [chunkIds, moreModules, runtime] = data;
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
+/******/ 				for(moduleId in moreModules) {
+/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 					}
+/******/ 				}
+/******/ 				if(runtime) var result = runtime(__webpack_require__);
+/******/ 			}
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkId] = 0;
+/******/ 			}
+/******/ 			return __webpack_require__.O(result);
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = globalThis["webpackChunkadmin"] = globalThis["webpackChunkadmin"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["oldblocks/style-block"], () => (__webpack_require__("./src/oldblocks/block.js")))
+/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
+/******/ 	
+/******/ })()
+;
+//# sourceMappingURL=block.js.map

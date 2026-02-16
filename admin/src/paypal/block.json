@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/paypal",
+  "title": "PayPal Charge (RSVPMaker)",
+  "icon": "admin-comments",
+  "category": "rsvpmaker",
+  "description": "Displays a PayPal charge form.",
+  "keywords": [
+    "Stripe",
+    "Payment",
+    "Charge"
+  ],
+  "supports": {
+    "html": false,
+    "color": {
+      "text": true,
+      "background": true,
+      "link": true
+    },
+    "align": ["left", "right", "center", "wide", "full"],
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "textAlign": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    }
+  },
+  "attributes": {
+            "description": {
+            "type": "string",
+            "default": ""
+            },
+            "showdescription": {
+            "type": "string",
+            "default": "no"
+            },
+            "amount": {
+            "type": "string",
+            "default": ""
+            },
+            "paymentType": {
+            "type": "string",
+            "default": "once"
+            },
+            "currency": {
+        "type": "string",
+        "default": "usd"
+      },
+      "january": {
+            "type": "string",
+            "default": ""
+            },
+            "february": {
+            "type": "string",
+            "default": ""
+            },
+            "march": {
+            "type": "string",
+            "default": ""
+            },
+            "april": {
+            "type": "string",
+            "default": ""
+            },
+            "may": {
+            "type": "string",
+            "default": ""
+            },
+            "june": {
+            "type": "string",
+            "default": ""
+            },
+            "july": {
+            "type": "string",
+            "default": ""
+            },
+            "august": {
+            "type": "string",
+            "default": ""
+            },
+            "september": {
+            "type": "string",
+            "default": ""
+            },
+            "october": {
+            "type": "string",
+            "default": ""
+            },
+            "november": {
+            "type": "string",
+            "default": ""
+            },
+            "december": {
+            "type": "string",
+            "default": ""
+            }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

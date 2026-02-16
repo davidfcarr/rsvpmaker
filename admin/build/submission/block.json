@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/submission",
+  "title": "RSVPMaker Submission Form",
+  "icon": "clock",
+  "category": "rsvpmaker",
+  "description": "Displays a form for submitting an event for approval",
+  "keywords": [
+    "RSVPMaker",
+    "Event",
+    "Submission"
+  ],
+  "attributes": {
+    "to": {
+      "type": "string",
+      "default": ""
+    },
+    "timezone": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

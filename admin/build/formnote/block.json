@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/formnote",
+  "title": "RSVPField Note",
+  "icon": "products",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Form",
+    "Text Area"
+  ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Note"
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

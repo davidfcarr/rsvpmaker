@@ -27,7 +27,48 @@ function create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build/title-date' );
 	register_block_type( __DIR__ . '/build/date-element' );
 	register_block_type( __DIR__ . '/build/rsvp-contact' );
+	register_block_type( __DIR__ . '/build/limited-time' );
+	register_block_type( __DIR__ . '/build/schedule' );
+	register_block_type( __DIR__ . '/build/formfield' );
+	register_block_type( __DIR__ . '/build/formtextarea' );
+	register_block_type( __DIR__ . '/build/formselect' );
+	register_block_type( __DIR__ . '/build/formradio' );
+	register_block_type( __DIR__ . '/build/formnote' );
+	register_block_type( __DIR__ . '/build/formguests' );
+	register_block_type( __DIR__ . '/build/event' );
+	register_block_type( __DIR__ . '/build/next-events' );
+	register_block_type( __DIR__ . '/build/submission' );
+	register_block_type( __DIR__ . '/build/stripecharge' );
+	register_block_type( __DIR__ . '/build/paypal' );
+	register_block_type( __DIR__ . '/build/eventlisting' );
+	register_block_type( __DIR__ . '/build/future_rsvp_links' );
+	register_block_type( __DIR__ . '/build/formwrapper' );
+	register_block_type( __DIR__ . '/build/emailguestsignup' );
+	register_block_type( __DIR__ . '/build/formchimp' );//rsvpmaker_formchimp no longer used, static block
+	register_block_type( __DIR__ . '/build/embedposts' );//rsvpmaker_emailpostorposts
+	register_block_type( __DIR__ . '/build/stripe-form-wrapper' );//stripe_form_wrapper
+	register_block_type( __DIR__ . '/build/upcoming-by-json' );//rsvpjsonlisting
+	register_block_type( __DIR__ . '/build/embedform' );//rsvpmaker_form
+
 }
+
+function rsvpmaker_register_block_editor_store() {
+    // Only load on block editor
+    if ( ! function_exists( 'get_current_screen' ) ) {
+        return;
+    }
+    
+    $screen = get_current_screen();
+    if ( ! $screen || ! in_array( $screen->base, array( 'post' ) ) ) {
+        return;
+    }
+
+    wp_enqueue_script( 'rsvpmaker-block-store', plugin_dir_url( __FILE__ ) . '../admin/build/block-store.js', array( 'wp-data', 'wp-api-fetch' ), get_rsvpversion(), true );
+
+    wp_localize_script( 'rsvpmaker-block-store', 'rsvpmakerSettings', rsvpmaker_rest_array() );
+}
+add_action( 'enqueue_block_editor_assets', 'rsvpmaker_register_block_editor_store' );
+
 add_action( 'init', 'create_block_admin_block_init' );
 
 add_action('admin_enqueue_scripts', 'react_admin_script');

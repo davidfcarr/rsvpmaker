@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/formfield",
+  "title": "RSVPField Text",
+  "icon": "products",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Form",
+    "Text Field"
+  ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Label"
+    },
+    "slug": {
+      "type": "string",
+      "default": ""
+    },
+    "guestform": {
+      "type": "boolean",
+      "default": false
+    },
+    "sluglocked": {
+      "type": "boolean",
+      "default": false
+    },
+    "required": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

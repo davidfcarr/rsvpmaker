@@ -1,1 +1,98 @@
-.schedule-placeholder,.wp-block-rsvpmaker-countdown,.wp-block-rsvpmaker-event,.wp-block-rsvpmaker-next-events,.wp-block-rsvpmaker-placeholder,.wp-block-rsvpmaker-rsvpdateblock,.wp-block-rsvpmaker-upcoming{background:#ddd;border:.2rem solid #000;color:#000;margin:0 auto;max-width:740px;padding:1rem}.wp-block-rsvpmaker-countdown form{height:400px}.wp-block-rsvpmaker-event label,.wp-block-rsvpmaker-upcoming label{display:block;float:left;margin-right:10px;width:200px}.wp-block-rsvpmaker-emailguestsignup label{display:block}.wp-block-rsvpmaker-limited{border:thin dotted #000}.limited_border{background-color:#ddd;color:#555;font-size:small}.wp-block-rsvpmaker-formfield label,.wp-block-rsvpmaker-formradio label,.wp-block-rsvpmaker-formselect label{display:inline-block;width:25%}.wp-block-rsvpmaker-formfield input[type=text],.wp-block-rsvpmaker-formselect select{max-width:70%}.wp-block-rsvpmaker-guests{border:thin dotted #000}textarea{width:90%}div.guestnote{background-color:#eee;font-size:small;margin-left:15px;margin-right:15px;padding:5px}.rsvpmaker_toggles{padding-bottom:5px;padding-top:5px}.sked_frequency{float:left;width:45%}.rsvpmenu-custom{padding-left:10px}select{height:2em;padding:5px}option{height:1.5em;padding:5px}.rsvpcalendar_buttons img,a#emailhome{display:inline-block}a#emailhome{background-color:#000;height:60px;margin-right:20px;padding-top:20px;text-align:center;text-decoration:none;width:60px}#emailpreviewprompt{font-size:large;font-style:italic}
+/*!**************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/oldblocks/editor.scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************/
+/**
+ * #.# Editor Styles
+ *
+ * CSS for just Backend enqueued after style.scss
+ * which makes it higher in priority.
+ */
+.wp-block-rsvpmaker-upcoming, .wp-block-rsvpmaker-event, .wp-block-rsvpmaker-next-events, .wp-block-rsvpmaker-rsvpdateblock, .wp-block-rsvpmaker-placeholder, .schedule-placeholder, .wp-block-rsvpmaker-countdown {
+  background: #ddd;
+  border: 0.2rem solid #000;
+  color: #000;
+  margin: 0 auto;
+  max-width: 740px;
+  padding: 1rem;
+}
+.wp-block-rsvpmaker-countdown form {
+  height: 400px;
+}
+.wp-block-rsvpmaker-upcoming label, .wp-block-rsvpmaker-event label {
+  display: block;
+  width: 200px;
+  float: left;
+  margin-right: 10px;
+}
+.wp-block-rsvpmaker-emailguestsignup label {
+  display: block;
+}
+.wp-block-rsvpmaker-limited {
+  border: thin dotted #000;
+}
+.limited_border {
+  background-color: #ddd;
+  font-size: small;
+  color: #555;
+}
+.wp-block-rsvpmaker-formfield label,
+.wp-block-rsvpmaker-formselect label,
+.wp-block-rsvpmaker-formradio label {
+  display: inline-block;
+  width: 25%;
+}
+.wp-block-rsvpmaker-formfield input[type=text],
+.wp-block-rsvpmaker-formselect select {
+  max-width: 70%;
+}
+.wp-block-rsvpmaker-guests {
+  border: thin dotted #000;
+}
+textarea {
+  width: 90%;
+}
+div.guestnote {
+  font-size: small;
+  padding: 5px;
+  background-color: #eee;
+  margin-left: 15px;
+  margin-right: 15px;
+}
+.rsvpmaker_toggles {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.sked_frequency {
+  width: 45%;
+  float: left;
+}
+.rsvpmenu-custom {
+  padding-left: 10px;
+}
+select {
+  height: 2em;
+  padding: 5px;
+}
+option {
+  height: 1.5em;
+  padding: 5px;
+}
+.rsvpcalendar_buttons img {
+  display: inline-block;
+}
+a#emailhome {
+  display: inline-block;
+  margin-right: 20px;
+  height: 60px;
+  width: 60px;
+  text-align: center;
+  padding-top: 20px;
+  background-color: #000;
+  text-decoration: none;
+}
+#emailpreviewprompt {
+  font-size: large;
+  font-style: italic;
+}
+
+/*# sourceMappingURL=block.css.map*/

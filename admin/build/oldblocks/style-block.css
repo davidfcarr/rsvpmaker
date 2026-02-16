@@ -1,1 +1,30 @@
-.countdowndigits{font-size:40px}.countdowndigits,.countdownlabel{display:inline-block;text-align:center;width:50px}.countdownlabel{font-size:10px}.countdown-space{display:inline-block;text-align:center;width:5px}.wp-block-rsvpmaker-formwrapper button{font-size:x-large}
+/*!*************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/oldblocks/style.scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************/
+/**
+ * #.# Styles
+ *
+ * CSS for both Frontend+Backend.
+ */
+.countdowndigits {
+  display: inline-block;
+  font-size: 40px;
+  width: 50px;
+  text-align: center;
+}
+.countdownlabel {
+  display: inline-block;
+  font-size: 10px;
+  width: 50px;
+  text-align: center;
+}
+.countdown-space {
+  display: inline-block;
+  width: 5px;
+  text-align: center;
+}
+.wp-block-rsvpmaker-formwrapper button {
+  font-size: x-large;
+}
+
+/*# sourceMappingURL=style-block.css.map*/

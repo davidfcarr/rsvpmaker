@@ -6,11 +6,11 @@
 //  Import CSS.
 import './style.scss';
 import './editor.scss';
-import './rsvpemail-sidebar.js';		
-import './limited_time.js';		
-import './schedule.js';
-import './form.js';		
-import './rsvpmailer-wrapper.js';
+//import './rsvpemail-sidebar.js';		
+//import './limited_time.js';		
+//import './schedule.js';
+//import './form.js';		
+//import './rsvpmailer-wrapper.js';
 import apiFetch from '@wordpress/api-fetch';
 import {useState, useEffect} from "@wordpress/element";
 
@@ -70,7 +70,7 @@ apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( authors => {
  * @return {?WPBlock}          The block, if it has been successfully
  *                             registered; otherwise `undefined`.
  */
-
+/*
 registerBlockType( 'rsvpmaker/event', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Embed Event' ), // Block title.
@@ -190,6 +190,7 @@ registerBlockType( 'rsvpmaker/event', {
 	},
 } );
 
+
 registerBlockType( 'rsvpmaker/next-events', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Next Events' ), // Block title.
@@ -219,10 +220,10 @@ registerBlockType( 'rsvpmaker/next-events', {
 	}
 
 	useEffect( () => { fetchPreview(); }, [number_of_posts]);
-/*	if ( preview.length === 0 ) {
+	if ( preview.length === 0 ) {
 		return <div {...useBlockProps()}>Loading</div>;
 	}
-*/
+
 		return (
 			<div className={ props.className }>
 				<p class="dashicons-before dashicons-clock"><strong>RSVPMaker</strong>: Registration invite for one or more events.
@@ -247,6 +248,7 @@ registerBlockType( 'rsvpmaker/next-events', {
 			</div>
 		);
 	},
+
 
 	save: function() {
 		// server render
@@ -309,12 +311,13 @@ registerBlockType( 'rsvpmaker/embedform', {
 	},
 } );
 
+/*
 registerBlockType( 'rsvpmaker/submission', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Event Submission' ), // Block title.
 	icon: 'clock', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
-	description: __('Displays a Form for Submitting an Event for Approvoal'),
+	description: __('Displays a Form for Submitting an Event for Approval'),
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Event' ),
@@ -369,13 +372,15 @@ registerBlockType( 'rsvpmaker/submission', {
 		return null;
 	},
 } );
-
+*/
+/*
 registerBlockType( 'rsvpmaker/eventlisting', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Event Listing' ), // Block title.
 	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 	description: __('Displays an RSVPMaker event listing (headlines and dates)'),
+
 	keywords: [
 		__( 'RSVPMaker' ),
 		__( 'Events' ),
@@ -410,7 +415,6 @@ registerBlockType( 'rsvpmaker/eventlisting', {
 	 * The "edit" property must be a valid function.
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
 	edit: function( props ) {
 		// Creates a <p class='wp-block-cgb-block-toast-block'></p>.
 	const { attributes: { days, posts_per_page, type, date_format, time }, setAttributes, isSelected } = props;
@@ -493,13 +497,12 @@ registerBlockType( 'rsvpmaker/eventlisting', {
 	 * The "save" property must be specified and must be a valid function.
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
 	save: function( props ) {
 		return null;
 	},
 } );
-
-
+*/
+/*
 registerBlockType( 'rsvpmaker/stripecharge', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'Stripe Charge (RSVPMaker)' ), // Block title.
@@ -726,13 +729,15 @@ show &&
 	 * The "save" property must be specified and must be a valid function.
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
+	 
 	save: function() {
 		// server render
 		return null;
 	},
 } );
+*/
 
+/*
 registerBlockType( 'rsvpmaker/paypal', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'PayPal Charge (RSVPMaker)' ), // Block title.
@@ -950,13 +955,13 @@ show &&
 	 * The "save" property must be specified and must be a valid function.
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
+	 /
 	save: function() {
 		// server render
 		return null;
 	},
 } );
-
+*/
 registerBlockType( 'rsvpmaker/placeholder', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'Placeholder' ), // Block title.
@@ -1010,6 +1015,7 @@ registerBlockType( 'rsvpmaker/placeholder', {
 	},
 } );
 
+/*
 registerBlockType( 'rsvpmaker/upcoming-by-json', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Events (fetch via API)' ), // Block title.
@@ -1042,7 +1048,6 @@ registerBlockType( 'rsvpmaker/upcoming-by-json', {
 	 * The "edit" property must be a valid function.
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
 	edit: function( props ) {
 	const { attributes: { limit, url, morelink }, setAttributes, isSelected } = props;
 	let typelist = '';
@@ -1104,79 +1109,11 @@ function showFormPrompt () {
 	 * The "save" property must be specified and must be a valid function.
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
 	save: function( props ) {
 		return null;
 	},
 } );
-
-registerBlockType( 'rsvpmaker/future-rsvp-links', {
-	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
-	title: __( 'Future RSVP Links' ), // Block title.
-	icon: 'calendar-alt', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
-	category: 'rsvpmaker', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
-	description: __('Displays a list of links to the RSVP Form for upcoming events with RSVPs turned on'),
-	keywords: [
-		__( 'RSVPMaker' ),
-		__( 'Events' ),
-		__( 'Calendar' ),
-	],
-       attributes: {
-            limit: {
-                type: 'int',
-				default: 5,
-            },
-            skipfirst: {
-                type: 'boolean',
-                default: false,
-            },
-        },
-	/**
-	 * The edit function describes the structure of your block in the context of the editor.
-	 * This represents what the editor will render when the block is used.
-	 *
-	 * The "edit" property must be a valid function.
-	 *
-	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
-	edit: function( props ) {
-	const { attributes: { limit, skipfirst }, setAttributes, isSelected } = props;
-
-		return (
-			<div className={ props.className }>
-				<p  class="dashicons-before dashicons-calendar-alt"><strong>RSVPMaker </strong>: Display a list of links to the RSVP Form for upcoming events
-				</p>
-<div>
-<SelectControl
-        label={__("Limit",'rsvpmaker')}
-        value={ limit }
-        options={ [{label:'3',value: '3'},{label:'5',value: '5'},{label:'7',value: '7'},{label:'10',value: '10'}] }
-        onChange={ ( limit ) => { setAttributes( { limit } ) } }
-    />
-<ToggleControl
-        label={__("Skip First Date",'rsvpmaker')}
-        checked={ skipfirst }
-		help={__('For example, to pick up after an embedded date block that features the first event in the series.')}
-        onChange={ ( skipfirst ) => { setAttributes( { skipfirst } ) } }
-    />
-</div>		
-			</div>
-		);
-	},
-
-	/**
-	 * The save function defines the way in which the different attributes should be combined
-	 * into the final markup, which is then serialized by Gutenberg into post_content.
-	 *
-	 * The "save" property must be specified and must be a valid function.
-	 *
-	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
-	 */
-	save: function( props ) {
-		return null;
-	},
-} );
-
+*/
 registerBlockType( 'rsvpmaker/countdown', {
 	// Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 	title: __( 'RSVPMaker Countdown Timer' ), // Block title.

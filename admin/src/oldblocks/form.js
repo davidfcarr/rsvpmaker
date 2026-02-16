@@ -58,6 +58,8 @@ registerBlockType( 'rsvpmaker/formfield', {
 			);
 	},
 
+
+	
 	/**
 	 * The save function defines the way in which the different attributes should be combined
 	 * into the final markup, which is then serialized by Gutenberg into post_content.
@@ -529,6 +531,7 @@ class ChimpInspector extends Component {
 		);	} }
 
 
+/*
 registerBlockType( 'rsvpmaker/formwrapper', {
 	title: ( 'RSVPMaker Form Wrapper' ), // Block title.
 	icon: 'admin-comments', 
@@ -608,3 +611,4 @@ class FormWrapperInspector extends Component {
 		);
 	}
 }
+*/

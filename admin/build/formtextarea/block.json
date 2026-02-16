@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/formtextarea",
+  "title": "RSVPField Text Area",
+  "icon": "products",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Form",
+    "Text Area"
+  ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Label"
+    },
+    "slug": {
+      "type": "string",
+      "default": ""
+    },
+    "guestform": {
+      "type": "boolean",
+      "default": false
+    },
+    "rows": {
+      "type": "string",
+      "default": "3"
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

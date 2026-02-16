@@ -117,7 +117,6 @@ add_action('init', 'rsvpmaker_submission_post' );
 add_action( 'quick_edit_custom_box', 'rsvpmaker_quick_edit_fields', 10, 2 );
 add_action( 'manage_posts_custom_column', 'rsvpmaker_custom_column', 99, 2 );
 add_action( 'manage_posts_custom_column', 'rsvpmaker_template_custom_column', 99, 2 );
-add_action( 'save_post', 'rsvpmaker_quick_edit_save', 1 );
 
 add_action('export_wp','rsvpmaker_export_wp');
 add_action('import_end','rsvpmaker_import_end');

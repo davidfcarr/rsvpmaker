@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/emailguestsignup",
+  "title": "RSVPField Email Guest Signup",
+  "icon": "products",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Email",
+    "Signup"
+  ],
+  "attributes": {
+    "fields": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

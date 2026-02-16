@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();
 
 import RSVPAdmin from './RSVPAdmin.js'
-
 window.addEventListener('load', function(event) {
     const doc = document.getElementById('rsvpmaker-admin');
     const form_id = doc.getAttribute('form_id');

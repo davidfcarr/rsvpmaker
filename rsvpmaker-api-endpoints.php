@@ -1259,14 +1259,22 @@ class RSVPMaker_Preview extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
+		$attributes = $_GET;
+		$attributes['server'] = true;
+
+		if('one' == $request['block'])
+			return new WP_REST_Response( rsvpmaker_one($attributes), 200 );
+		if('eventslisting' == $request['block'])
+			return new WP_REST_Response( rsvpmaker_event_listing($attributes), 200 );
 		if('next-events' == $request['block'])
-			return new WP_REST_Response( rsvpmaker_next_rsvps($_GET), 200 );
+			return new WP_REST_Response( rsvpmaker_next_rsvps($attributes), 200 );
 		if('schedule' == $request['block'])
-			return new WP_REST_Response( rsvpmaker_daily_schedule($_GET), 200 );
-		if('future-rsvp-links' == $request['block'])
-			return new WP_REST_Response( future-rsvp-links($_GET), 200 );
+			return new WP_REST_Response( rsvpmaker_daily_schedule($attributes), 200 );
+		if('future-rsvp-links' == $request['block']) {
+			return new WP_REST_Response( future_rsvp_links($attributes), 200 );
+		}
 		if('emailpostorposts' == $request['block'])
-			return new WP_REST_Response( rsvpmaker_emailpostorposts($_GET), 200 );
+			return new WP_REST_Response( rsvpmaker_emailpostorposts($attributes), 200 );
 	}
 }
 

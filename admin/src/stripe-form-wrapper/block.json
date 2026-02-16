@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/stripe-form-wrapper",
+  "title": "Stripe Form Wrapper",
+  "icon": "admin-comments",
+  "category": "rsvpmaker",
+  "description": "Displays a Stripe charge form.",
+  "keywords": [
+    "Stripe",
+    "Form",
+    "Wrapper"
+  ],
+  "supports": {
+    "html": false,
+    "color": {
+      "text": true,
+      "background": true,
+      "link": true
+    },
+    "align": ["left", "right", "center", "wide", "full"],
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "textAlign": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    }
+  },
+  "attributes": {
+           "description": {
+            "type": "string",
+            "default": ""
+            },
+            "amount": {
+            "type": "string",
+            "default": ""
+            },
+            "paymentType": {
+            "type": "string",
+            "default": "once"
+            }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

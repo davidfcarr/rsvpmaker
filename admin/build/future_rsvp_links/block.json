@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/future-rsvp-links",
+  "title": "Future RSVP Links",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Displays a list of links to the RSVP Form for upcoming events with RSVPs turned on",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "Calendar"
+  ],
+  "attributes": {
+    "limit": {
+      "type": "number",
+      "default": 5
+    },
+    "skipfirst": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "version": "1",
+  "supports": {
+    "html": false,
+    "color": {
+      "link": true
+    }
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

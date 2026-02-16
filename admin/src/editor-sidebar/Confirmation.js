@@ -3,13 +3,20 @@ import { ToggleControl, TextControl, RadioControl, TextareaControl } from '@word
 import {SelectCtrl} from '../Ctrl.js'
 import { SanitizedHTML } from "../SanitizedHTML.js";
 import {Up,Down,Delete} from '../icons.js';
-import apiClient from '../http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
+import { createConfiguredAxios } from '../http-common.js';
+import { useSelect } from '@wordpress/data';
 
 export default function Confirmation() {
     const [status,setStatus] = useState('');
     const [reminderHours,setReminderHours] = useState(1);
     const [addBeforeAfter,setBeforeAfter] = useState('before');
+    const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+    } );
+
+    const apiClient = createConfiguredAxios( rsvpmaker_rest );
     
     function fetchMessages() {
         return apiClient.get('confirm_remind?event_id='+rsvpmaker_ajax.event_id);

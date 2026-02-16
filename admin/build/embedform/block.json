@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/embedform",
+  "title": "RSVPMaker Events (fetch via API)",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Displays the form associated with a single RSVPMaker event post",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "Calendar"
+  ],
+  "attributes": {
+    "post_id": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "1",
+  "supports": {
+    "html": false,
+    "color": {
+      "link": true
+    }
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

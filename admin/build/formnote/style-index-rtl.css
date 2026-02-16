@@ -1,0 +1,461 @@
+/*!************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/formnote/style.scss ***!
+  \************************************************************************************************************************************************************************************************************************************************/
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+.wp-block-create-block-admin {
+  background-color: #21759b;
+  color: #fff;
+  padding: 2px;
+}
+.components-tab-panel__tab-content {
+  clear: both;
+  display: block;
+  background-color: #fff;
+  padding: 10px;
+}
+textarea {
+  width: 80%;
+}
+.rsvptab {
+  margin-bottom: 200px;
+  min-height: 800px;
+}
+#savebuttonwrapper {
+  width: 200px;
+  margin-right: auto;
+  margin-left: auto;
+  text-align: center;
+}
+#savebuttonwrapper button {
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  font-size: large;
+}
+.rsvp-notification {
+  width: 600px;
+  margin-right: auto;
+  margin-left: auto;
+  color: #fff;
+  padding: 2px;
+  animation-name: fadeOut;
+  animation-delay: 20s;
+  animation-duration: 5s;
+  border: medium solid darkblue;
+  z-index: 10;
+}
+.rsvp-notification-success {
+  background-color: #21759b;
+}
+.rsvptab-saving {
+  opacity: 0.2;
+}
+.rsvptab label.textlabel {
+  display: inline-block;
+  width: 150px;
+  padding-left: 20px;
+  text-align: left;
+  font-weight: bold;
+}
+#savecontrols {
+  color: #000;
+  background-color: #fff;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 15px;
+  background-color: #fff;
+  border-top: thick solid #7C2128;
+  width: 100%;
+  opacity: 1;
+  z-index: 200;
+}
+.security-select {
+  max-width: 300px;
+}
+.css-1v57ksj {
+  display: block !important;
+}
+.key-inputs {
+  display: flex;
+  gap: 20px;
+}
+.reorgblock {
+  display: flex;
+}
+.reorgcolumn {
+  width: 50px;
+  /*height: 100%;*/
+  display: flex;
+  align-self: stretch;
+  border-right: thin solid #7C2128;
+  border-top: thin solid #7C2128;
+  border-bottom: thin solid #7C2128;
+  padding-right: 5px;
+}
+.reorganize {
+  flex: 1;
+  /*height: 100%;*/
+}
+.reorgupdown {
+  align-self: center;
+}
+.block {
+  margin-bottom: 5px;
+}
+.reorgdragup {
+  width: 50px;
+  float: right;
+}
+.reorgdragdown {
+  width: 400px;
+  float: left;
+}
+.reorgdrag {
+  border: medium solid #7C2128;
+  padding: 5px;
+  margin-bottom: 5px;
+}
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+.wp-block-create-block-toastmasters-dynamic-agenda {
+  background-color: #21759b;
+  color: #fff;
+  padding: 2px;
+}
+.next-meeting-prompt {
+  background-color: #fff !important;
+  color: #7C2128;
+  font-weight: bold;
+}
+.tm-notification {
+  width: 600px;
+  margin-right: auto;
+  margin-left: auto;
+  color: #fff !important;
+  padding: 2px;
+  animation-name: fadeOut;
+  animation-delay: 20s;
+  animation-duration: 5s;
+  border: medium solid darkblue;
+  z-index: 10;
+}
+.tm-notification-success {
+  background-color: #21759b;
+}
+.tm-notification-error {
+  background-color: red;
+}
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.agendawrapper, .agendawrapper p, .agendawrapper div, .agendawrapper h3, .agendawrapper h2, .agendawrapper h1, .agendawrapper li {
+  color: #000 !important;
+  background-color: #fff !important;
+}
+.agendawrapper {
+  padding: 10px;
+  margin-bottom: 200px;
+}
+.agendawrapper a {
+  color: blue;
+}
+.wp-block-post-content .agendawrapper a:where(:not(.wp-element-button)) {
+  color: blue;
+}
+button.tmform {
+  display: inline-block;
+  margin-left: 15px;
+  margin-bottom: 5px;
+  padding: 10px;
+  vertical-align: middle;
+  background-color: #004165;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 10%;
+  border: thin solid #444165;
+}
+button.tmsmallbutton {
+  display: inline-block;
+  margin-left: 5px;
+  margin-bottom: 2px;
+  padding: 3px;
+  vertical-align: middle;
+  background-color: #004165;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 10%;
+  border: thin solid #444165;
+}
+.evaluation-link {
+  width: 150px;
+  float: left;
+}
+button.tmform:hover, button.tmsmallbutton:hover {
+  color: #004165;
+  background-color: #F2DF74;
+}
+.titleline {
+  display: flex;
+  gap: 25px;
+}
+.titleline h2 {
+  min-width: 400px;
+}
+.form-control-buttons {
+  width: 400px;
+}
+button.blockmove {
+  display: inline-block;
+  margin-left: 15px;
+  margin-bottom: 5px;
+  padding: 10px;
+  vertical-align: middle;
+  background-color: #7C2128;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 10%;
+  border: thin solid #444165;
+}
+button.blockmove:hover {
+  color: #7C2128;
+  background-color: #F2DF74;
+}
+.tmflexrow {
+  display: flex;
+  gap: 20px;
+  align-items: top;
+}
+.tmflex30 {
+  width: 30%;
+}
+.rb {
+  padding: 5px;
+  margin: 5px;
+  border: medium solid #aaa;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #000;
+}
+.rb:hover {
+  border: medium solid #000;
+}
+.radio-mode .components-flex {
+  flex-flow: row;
+}
+#fixed-mode-control {
+  color: #000;
+  background-color: #fff;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 15px;
+  background-color: #fff;
+  border-top: thick solid #7C2128;
+  width: 100%;
+  opacity: 1;
+  z-index: 200;
+}
+#fixed-mode-control .radio-mode {
+  width: 600px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.speakertime-warning {
+  color: red;
+}
+.agendawrapper {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+}
+.agendawrapper h1 {
+  font-size: 26px;
+  font-weight: bold;
+}
+.agendawrapper h2 {
+  font-size: 22px;
+  font-weight: bold;
+}
+.agendawrapper h3 {
+  font-size: 18px;
+  font-weight: bold;
+}
+.agendawrapper h4 {
+  font-size: 16px;
+  font-weight: bold;
+}
+.bigplus {
+  font-size: large;
+  font-weight: bolder;
+}
+.reorgblock {
+  display: flex;
+}
+.reorgcolumn {
+  width: 50px;
+  /*height: 100%;*/
+  display: flex;
+  align-self: stretch;
+  border-right: thin solid #7C2128;
+  border-top: thin solid #7C2128;
+  border-bottom: thin solid #7C2128;
+  padding-right: 5px;
+}
+.reorganize {
+  flex: 1;
+  /*height: 100%;*/
+}
+.reorgupdown {
+  align-self: center;
+}
+.block {
+  margin-bottom: 5px;
+}
+.insertroleform {
+  margin-top: 20px;
+  border: medium solid #7C2128;
+  padding: 5px;
+}
+.suggestion-preview {
+  margin: 10px;
+  background-color: lightgray;
+  padding: 5px;
+  border: 5px;
+}
+.reorgdragup {
+  width: 50px;
+  float: right;
+}
+.reorgdragdown {
+  width: 50px;
+  float: left;
+}
+.reorgdrag {
+  border: medium solid #7C2128;
+  padding: 5px;
+  margin-bottom: 5px;
+}
+.radio-inserter {
+  border: medium solid #7C2128;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  flex-flow: row;
+}
+.showtoggle {
+  width: 150px;
+  float: right;
+}
+.dropplaceholder {
+  border: thick dotted gray;
+  margin-right: -25px;
+  margin-left: -25px;
+  min-height: 150px;
+}
+.template-schedule, .event-schedule {
+  display: flex;
+}
+.frequency, .days {
+  padding-left: 20px;
+}
+.evaluation-note {
+  width: 100%;
+  height: 4em;
+}
+.down-up {
+  width: 100%;
+  clear: both;
+}
+.mode-help {
+  text-align: center;
+  font-style: italic;
+}
+@media (min-width: 35em) {
+  .insert-selects {
+    display: grid;
+    gap: 1em;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+}
+.agenda-preview {
+  background-color: #fff;
+  padding: 30px;
+}
+.yoodli-promo {
+  display: flex;
+  gap: 20px;
+  padding: 10px;
+  border: thick solid #004165;
+}
+.modenote {
+  text-align: center;
+  font-style: italic;
+}
+.reorganize-drag h2 {
+  font-size: 20px;
+  font-weight: bold;
+}
+.alertnotice {
+  color: red;
+}
+#react_date_time .rsvpmaker-date-time {
+  background-color: #fff;
+  max-width: 300px;
+  padding: 20px;
+}
+.rsvp-end-date {
+  background-color: #ddd;
+}
+button.is-primary {
+  background-color: blue;
+  color: #fff;
+}
+.components-datetime__date {
+  margin-bottom: 1.5em;
+}
+.rsvpmaker-setup-modal {
+  padding: 15px;
+  width: 800px;
+  min-height: 700px;
+  border: medium solid darkblue;
+}
+.rsvpguide-page {
+  background-color: #fff;
+  margin: 5px;
+  padding: 10px;
+}
+.guide-page-1-columns {
+  display: flex;
+  align-items: stretch;
+  gap: 30px;
+}
+.rsvpguide-datetime {
+  width: 300px;
+}
+.rsvpsettings-tab-contents {
+  padding-bottom: 500px;
+}
+#create-update-form {
+  width: 90%;
+}
+#create-update-controls {
+  position: sticky;
+  top: 5px;
+  left: 5px;
+  width: 150px;
+}

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
-	"apiVersion": 2,
+	"apiVersion": 3,
 	"name": "rsvpmaker/admin",
 	"version": "0.1.0",
 	"title": "Admin",
@@ -14,5 +14,5 @@
 	"editorScript": ["file:./index.js","file:./oldblocks/block.js"],
 	"editorStyle": "file:./index.css",
 	"style": "file:./style-index.css",
-	"viewScript": ["file:./adminui.js","file:./single-form.js","file:./event-options.js","file:./date-time.js","file:./editor-sidebar/sidebars.js","file:./metabox.js"]
+	"viewScript": ["file:./block-store.js","file:./adminui.js","file:./single-form.js","file:./event-options.js","file:./date-time.js","file:./editor-sidebar/sidebars.js","file:./metabox.js"]
 }

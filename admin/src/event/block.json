@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/event",
+	"title": "RSVPMaker Embed Event",
+	"icon": "products",
+	"category": "rsvpmaker",
+	"keywords": [
+		"RSVPMaker",
+		"Event",
+		"Calendar"
+	],
+"attributes": {
+	"post_id": {
+		"type": "string",
+		"default": ""
+	},
+	"one_hideauthor": {
+		"type": "boolean",
+		"default": true
+	},
+	"type": {
+		"type": "string",
+		"default": ""
+	},
+	"one_format": {
+		"type": "string",
+		"default": ""
+	},
+	"hide_past": {
+		"type": "string",
+		"default": ""
+	}
+},
+	"version": "2",
+	"textdomain": "rsvpmaker",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"render": "file:./render.php",
+	"style": "file:./style-index.css"
+}

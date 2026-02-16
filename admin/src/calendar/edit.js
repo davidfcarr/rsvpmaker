@@ -56,6 +56,7 @@ export default function Edit(props) {
             console.log(err);
         });	    
     }, [attributes]);
+    
 
     /* <RadioControl label="Calendar Item Font Size" selected={itemfontsize} options={[{'label':'x-small','value':'x-small'},{'label':'xx-small','value':'xx-small'},{'label':'small','value':'small'},{'label':'medium','value':'medium'}]} onChange={ (change) => setAttributes({'itemfontsize':change}) }	/> */
     

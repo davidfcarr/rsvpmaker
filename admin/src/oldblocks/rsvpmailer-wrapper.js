@@ -423,7 +423,10 @@ attributes: {
                 </InspectorControls>
                 <div {...useBlockProps()}>
                     <div className="mylatests-list">
+                        <p>Preview length {preview.length} {preview}</p>
                         <RawHTML>{preview}</RawHTML>
+                        {!selection && <p>Please select a post or category to display.</p>}
+                        {!preview && <p>Loading...</p>}
                     </div>
                 </div>
     

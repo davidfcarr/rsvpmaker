@@ -1,0 +1,40 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rsvpmaker/upcoming-by-json",
+	"title": "RSVPMaker Events (fetch via API)", 
+	"icon": "calendar-alt", 
+	"category": "rsvpmaker",
+	"description": "Displays an RSVPMaker event listing and/or a calendar widget. (Alternative: the RSVPMaker Query Loop block variation allows more control over the formatting of your events listing)",
+	"keywords": [
+		 "RSVPMaker", 
+		 "Events", 
+		 "Calendar"
+	],
+       "attributes": {
+            "url": {
+                "type": "string",
+                "default": ""
+            },
+            "morelink": {
+                "type": "string",
+                "default": ""
+            },
+            "limit": {
+                "type": "number",
+                "default": 10
+            }
+        },
+	"version": "1",
+	"supports": {
+		"html": false,
+        "color": {
+            "link": true
+        }
+	},
+	"textdomain": "rsvpmaker",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+    "render": "file:./render.php",
+	"style": "file:./style-index.css"
+}

@@ -1,9 +1,15 @@
 import React, {useState} from "react"
-import apiClient from './http-common.js';
+import { createConfiguredAxios } from './http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
+import { useSelect } from '@wordpress/data';
 
 export function useOptions(tab = '') {
+    const rsvpmaker_rest = useSelect( ( select ) => {
+        return select( 'rsvpmaker' ).getSettings();
+    } );
+
     function fetchOptions(queryobj) {
+        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return apiClient.get('rsvp_options'+queryjoin+'tab='+tab);
     }
@@ -16,8 +22,12 @@ export function useOptions(tab = '') {
 
 export function useOptionsMutation(setChanges,makeNotification) {
     const queryClient = useQueryClient();
+    const rsvpmaker_rest = useSelect( ( select ) => {
+        return select( 'rsvpmaker' ).getSettings();
+    } );
 
     async function updateOption (option) {
+        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         return await apiClient.post('rsvp_options', option);
     }
     
@@ -60,7 +70,13 @@ export function useOptionsMutation(setChanges,makeNotification) {
 }
 
 export function useRSVPDate(eventID) {
+    const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+    } );
+
     function fetchRSVPDate(queryobj) {
+        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return apiClient.get('rsvp_event_date'+queryjoin+'event_id='+eventID);
     }
@@ -72,7 +88,12 @@ export function useRSVPDate(eventID) {
 }
 
 export function useCopyDefaults() {
+    const rsvpmaker_rest = useSelect( ( select ) => {
+        return select( 'rsvpmaker' ).getSettings();
+    } );
+
     function fetchCopyDefaults(queryobj) {
+        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         return apiClient.get('copy_defaults');
     }
     return useQuery([], fetchCopyDefaults, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
@@ -87,8 +108,13 @@ export function useRSVPDateMutation(eventID) {
     const queryClient = useQueryClient();
     console.log('useRSVPDateMutation called with');
     console.log('useRSVPDateMutation queryClient',queryClient);
+    const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+    } );
 
     async function updateDate (update) {
+        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return await apiClient.post('rsvp_event_date'+queryjoin+'event_id='+eventID, update);
     }

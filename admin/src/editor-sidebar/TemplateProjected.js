@@ -5,6 +5,7 @@ import { SanitizedHTML } from "../SanitizedHTML.js";
 const { subscribe } = wp.data;
 import apiClient from '../http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
+import { useSelect } from '@wordpress/data';
 
 export default function TemplateProjected (props) {
     if(-1 == window.location.href.indexOf('post='))
@@ -104,6 +105,10 @@ export default function TemplateProjected (props) {
 
 if(catalog.length == 0)
     return null;
+const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+} );
 
 return (
     <div>

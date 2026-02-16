@@ -191,8 +191,6 @@ var jsonwidget<?php echo esc_attr($slug); ?> = new RSVPJsonWidget('rsvpjsonwidge
 return ob_get_clean();
 }
 
-add_action('init','rsvpmaker_server_block_render',1);
-
 function rsvpmaker_block_cgb_editor_assets() {
 	global $post, $rsvp_options, $current_user;
 	wp_enqueue_script(

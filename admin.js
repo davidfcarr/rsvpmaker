@@ -320,6 +320,7 @@ jQuery( document ).ready(
 
 		$( "form#rsvpmaker_setup" ).submit(
 			function( event ) {
+
 				var error = false;
 				var date  = $( '#sql-date' ).val();
 				var end   = $( '#sql-end' ).val();
@@ -339,7 +340,7 @@ jQuery( document ).ready(
 				}
 
 				var data = $( this ).serializeArray();
-				var url  = rsvpmaker_rest.rest_url + 'rsvpmaker/v1/setup';
+				var url  = rsvp_rest.rest_url + 'rsvpmaker/v1/setup';
 				$( "form#rsvpmaker_setup" ).html( '<h1>Creating Draft ...</h1>' );
 				jQuery.post(
 					url,

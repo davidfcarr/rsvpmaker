@@ -4,21 +4,39 @@
 */
 
 function rsvpmaker_rest_array() {
-	global $post, $rsvpmaker_nonce;
+	global $post, $rsvpmaker_nonce, $rsvp_options;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
+	$time = '';
+	$sked = [];
+	if(isset($post->post_type) && 'rsvpmaker' == $post->post_type) {
+		$event = get_rsvpmaker_event( $post_id );
+		$parts = explode( ' ', $event->date );
+		if ( count( $parts ) > 1 ) {
+			$time = $parts[1];
+		}
+	}
+	elseif(isset($post->post_type) && 'rsvpmaker_template' == $post->post_type) {
+		$sked = get_template_sked($post_id);
+		if(!empty($sked['time']))
+			$time = $sked['time'];
+	}
+
 	return array(
 		'post_id'  => $post_id,
+		'date'    => (empty($event) || empty($event->date)) ? '' : $event->date,
+		'time'    => $time,
+		'12hour' => strpos($rsvp_options['time_format'], 'A') !== false,
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 		'rest_url' => rest_url(),
 		'ajaxurl' => admin_url( 'admin-ajax.php' ),
-		'rsvpmaker_json_url' => site_url( '/wp-json/rsvpmaker/v1/' ),
+		'rsvpmaker_json_url' => rest_url( 'rsvpmaker/v1/' ),
 		'timelord' => $rsvpmaker_nonce['value'],
 		);
 }
 
 function rsvpmaker_admin_enqueue( $hook ) {
 	global $post, $rsvpscript;
-	$scriptversion = get_rsvpversion().'.1';
+	$scriptversion = get_rsvpversion().'1';
 
 	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
 	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');

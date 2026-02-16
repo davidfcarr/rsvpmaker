@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/next-events",
+  "title": "RSVPMaker Next Events",
+  "icon": "clock",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Event",
+    "Calendar"
+  ],
+  "attributes": {
+    "number_of_posts": {
+      "type": "number",
+      "default": 5
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

@@ -1,11 +1,18 @@
 import React, {useState} from 'react';
 import { TextControl, RadioControl } from '@wordpress/components';
-import apiClient from '../http-common.js';
+import { createConfiguredAxios } from '../http-common.js';
+import { useSelect } from '@wordpress/data';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { MetaSelectControl, MetaTextControl, MetaRadioControl } from './metadata_components.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
 
 export default function Pricing() {
+    const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+    } );
+
+    const apiClient = createConfiguredAxios( rsvpmaker_rest );
     const [status,setStatus] = useState('');
     const [priceToAdd,setPriceToAdd] = useState('0.00');
     const [extraGuestPrice,setExtraGuestPrice] = useState('0.00');
@@ -102,6 +109,8 @@ export default function Pricing() {
         }
 
         function postCode() {
+            if(!code)
+            {alert('Please enter a code'); return;}
             const codes = [...coupon_codes];
             const discounts = [...coupon_discounts];
             const methods = [...coupon_methods];

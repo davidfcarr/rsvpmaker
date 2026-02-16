@@ -1217,7 +1217,7 @@ function get_events_rsvp_on( $limit = 0 ) {
 	global $wpdb;
 	$event_table = get_rsvpmaker_event_table();
 
-	$sql = $wpdb->prepare("SELECT DISTINCT posts.ID as postID, *
+	$sql = $wpdb->prepare("SELECT *
 
 	 FROM %i posts
 
@@ -1624,7 +1624,7 @@ if($post->post_excerpt)
 	return $excerpt;
 
 }
-function rsvpmaker_excerpt( $post ) {
+function rsvpmaker_excerpt( $post, $show_excerpt = true ) {
 
 	global $rsvp_options, $post;
 
@@ -1632,7 +1632,8 @@ function rsvpmaker_excerpt( $post ) {
 
 	$excerpt = rsvpdateblock();
 
-	$excerpt .= rsvpmaker_excerpt_body($post);
+	if($show_excerpt)
+		$excerpt .= rsvpmaker_excerpt_body($post);
 
 	$permalink = get_permalink( $post->ID );
 
@@ -4736,6 +4737,8 @@ global $rsvp_options;
 
 }
 function rsvphoney_ui($return = false) {
+	if(isset($_POST['extra_special_discount_code']))
+		return;
 
 	$html = '<div class="rsvploginrequired" aria-hidden="true"><p><label>Extra Discount Code</label> <input name="extra_special_discount_code" /></p><p></p></div>';
 

@@ -3135,8 +3135,8 @@ function rsvpmaker_upcoming_email($atts) {
 }
 
 function is_email_context () {
-		global $email_context;
-		return (isset($email_context) && $email_context);
+	global $email_context;
+	return (isset($email_context) && $email_context);
 }
 
 function rsvpmaker_cron_email_send($post_id,$user_id,$posthash = '') {
@@ -3514,7 +3514,7 @@ $email_context = true;
 $templates = get_option('rsvpmaker_notification_templates', array());
 //$template_forms represents the defaults
 $template_forms['notification'] = array('subject' => 'RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "Just signed up:\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>");
-$template_forms['confirmation'] = array('subject' => 'Confirming RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
+$template_forms['confirmation'] = array('subject' => 'Confirming RSVP [rsvpyesno] for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>");
 $template_forms['confirmation_after_payment'] = array('subject' => 'Confirming payment for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>\n\n<div class=\"rsvpdetails\">[rsvpdetails]</div>\n\nIf you wish to change your registration, you can do so using the button below. [rsvpupdate]");
 $template_forms['receipt'] = array('subject' => 'Receipt for [rsvptitle] on [rsvpdate]','body' => "<div class=\"rsvpmessage\">[rsvpmessage]</div>");
 $template_forms['payment_reminder'] = array('subject' => 'Payment Required: [rsvptitle] on [rsvpdate]','body' => "We received your registration, but it is not complete without a payment. Please follow the link below to complete your registration and payment.
@@ -5500,17 +5500,32 @@ function rsvpmaker_on_guest_email_list($email, $checkuserlist = true) {
 
 function rsvpmaker_emailpostorposts($atts) {
 global $wp_query, $post;
+if(empty($post))
+	$post = new stdClass();
+$post->post_type = 'post';
 $backup = $wp_query;
 ob_start();
+
+$args = array();
 if(!empty($atts['selection']) && is_numeric($atts['selection']))
 	$args['p'] = intval($atts['selection']);
 else {
 	$posts_per_page = (isset($atts['posts_per_page'])) ? intval($atts['posts_per_page']) : 1;
-	$args = array( 'posts_per_page' => $posts_per_page );
-	$args['category_name'] =  (isset($atts['selection'])) ? sanitize_text_field($atts['selection']) : '';
+	$args = array( 
+		'posts_per_page' => $posts_per_page,
+		'post_type' => 'post',
+		'orderby' => 'date',
+		'order' => 'DESC'
+	);
+	if(isset($atts['selection']) && !is_numeric($atts['selection']))
+		$args['category_name'] =  sanitize_text_field($atts['selection']);
 }
 // the query
-$wp_query = new WP_Query( $args );?>
+$wp_query = new WP_Query( $args );
+if(!$wp_query->have_posts()) {
+	return '';
+}
+?>
 <div class="email-posts">
 <?php while ( have_posts() ) : the_post(); 
 $permalink = get_permalink();

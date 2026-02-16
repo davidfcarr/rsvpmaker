@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/formchimp",
+  "title": "RSVPField Mailing List Checkbox",
+  "icon": "products",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Form",
+    "Email"
+  ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Add me to your mailing list"
+    },
+    "checked": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css"
+}

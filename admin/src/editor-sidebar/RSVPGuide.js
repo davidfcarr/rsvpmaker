@@ -3,10 +3,16 @@ const { Guide,GuidePage,ToggleControl,Panel, PanelBody, PanelRow, Flex, FlexBloc
 import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaRadioControl, MetaFormToggle, MetaTimeLord, MetaEndDateTimeControl} from './metadata_components.js';
 import DateTimeMaker from "../DateTimeMaker.js";
 const { __ } = wp.i18n; // Import __() from wp.i18n
+import { useSelect } from '@wordpress/data';
 
 export default function RSVPGuide (props) {
     const initialPostStatus = wp?.data?.select( 'core/editor' ).getEditedPostAttribute( 'status' );
     const [ isOpen, setOpen ] = useState( initialPostStatus == 'draft' );
+    const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+    } );
+
 return (
     <div>
     <ToggleControl label="Show RSVPMaker Guide" checked={isOpen} onClick={() => {setOpen((prev) => !prev)} } />

@@ -5,6 +5,7 @@ const { Panel, PanelBody, PanelRow } = wp.components;
 import DateOrTemplate from './DateOrTemplate.js';
 import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();
+import { useSelect } from '@wordpress/data';
 import TemplateProjected from './TemplateProjected.js';
 
 var el = wp.element.createElement;

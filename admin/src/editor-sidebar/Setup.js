@@ -7,6 +7,7 @@ import FormSetup from './FormSetup.js'
 import Confirmation from './Confirmation.js';
 import Pricing from './Pricing.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
+import { useSelect } from '@wordpress/data';
 
 const onSelect = ( tabName ) => {
     console.log( 'Selecting tab', tabName );
@@ -168,6 +169,11 @@ function Reminders() {
 
 function Basics(props) {
     const {eventdata} = props;
+    const rsvpmaker_rest = useSelect( ( select ) => {
+    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    return rsvpmaker_rest;
+    } );
+
     return (
         <div className="guide-page-1-columns">
         <div className="rsvpguide-datetime">

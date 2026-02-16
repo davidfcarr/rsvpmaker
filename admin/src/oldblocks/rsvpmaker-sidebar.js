@@ -1,5 +1,3 @@
-//import './state.js';
-//const { withState } = wp.compose;
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
 const { Panel, PanelBody, PanelRow } = wp.components;
