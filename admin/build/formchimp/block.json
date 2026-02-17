@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/formchimp",
   "title": "RSVPField Mailing List Checkbox",
-  "icon": "products",
+  "icon": "forms",
   "category": "rsvpmaker",
   "keywords": [
     "RSVPMaker",

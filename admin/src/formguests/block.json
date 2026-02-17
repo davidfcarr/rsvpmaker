@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/guests",
 	"title": "RSVPField Guests",
-	"icon": "products",
+	"icon": "forms",
 	"category": "rsvpmaker",
 	"keywords": [
 		"RSVPMaker",

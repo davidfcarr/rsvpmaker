@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/formfield",
 	"title": "RSVPField Text",
-	"icon": "products",
+	"icon": "forms",
 	"category": "rsvpmaker",
 	"keywords": [
 		"RSVPMaker",

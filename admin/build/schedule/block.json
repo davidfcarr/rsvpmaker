@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/schedule",
   "title": "RSVPMaker Schedule",
-  "icon": "admin-comments",
+  "icon": "calendar-alt",
   "description": "Daily schedule of events",
   "category": "rsvpmaker",
   "keywords": [

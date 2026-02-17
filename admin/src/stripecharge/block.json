@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/stripecharge",
   "title": "Stripe Charge (RSVPMaker)",
-  "icon": "admin-comments",
+  "icon": "products",
   "category": "rsvpmaker",
   "description": "Displays a Stripe charge form.",
   "keywords": [

@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/formnote",
 	"title": "RSVPField Note",
-	"icon": "products",
+	"icon": "forms",
 	"category": "rsvpmaker",
 	"keywords": [
 		"RSVPMaker",

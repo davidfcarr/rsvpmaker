@@ -18,7 +18,6 @@ include 'init.php';
 function create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build' );
 	register_block_type( __DIR__ . '/build/upcoming' );
-	register_block_type( __DIR__ . '/build/loop_excerpt_block' );
 	register_block_type( __DIR__ . '/build/excerpt' );
 	register_block_type( __DIR__ . '/build/calendar' );
 	register_block_type( __DIR__ . '/build/rsvpdateblock' );
@@ -48,7 +47,10 @@ function create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build/embedposts' );//rsvpmaker_emailpostorposts
 	register_block_type( __DIR__ . '/build/stripe-form-wrapper' );//stripe_form_wrapper
 	register_block_type( __DIR__ . '/build/upcoming-by-json' );//rsvpjsonlisting
-	register_block_type( __DIR__ . '/build/embedform' );//rsvpmaker_form
+	register_block_type( __DIR__ . '/build/embedform' );
+	register_block_type( __DIR__ . '/build/emailbody' );
+	register_block_type( __DIR__ . '/build/emailcontent' );
+	// not working register_block_type( __DIR__ . '/build/loop_excerpt_block' );
 
 }
 

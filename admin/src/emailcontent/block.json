@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/emailcontent",
+	"title": "RSVP Email Content Wrapper",
+	"description" : "Wrapper for the main content of the email. Typically embedded within the RSVP Email Body Wrapper block.",
+	"icon": "email-alt",
+	"category": "rsvpmaker",
+	"keywords": [
+		"RSVPMaker",
+		"Wrapper",
+		"Email"
+	],
+    "attributes": {
+        "backgroundColor": {
+            "type": "string",
+            "default": "#efefef"
+        },
+        "color": {
+            "type": "string",
+            "default": "#000"
+        },
+        "padding": {
+            "type": "string",
+            "default": "5px"
+        },
+        "maxWidth": {
+            "type": "string",
+            "default": "600px"
+        },
+        "border": {
+            "type": "string",
+            "default": "thin solid gray"
+        },
+        "marginLeft": {
+            "type": "string",
+            "default": "auto"
+        },
+        "marginRight": {
+            "type": "string",
+            "default": "auto"
+        }
+    },
+	"version": "2",
+	"textdomain": "rsvpmaker",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}

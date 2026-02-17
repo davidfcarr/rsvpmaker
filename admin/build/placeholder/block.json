@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/placeholder",
+  "title": "Placeholder",
+  "description": "Placeholder for content to be added later.",
+  "icon": "admin-comments",
+  "category": "rsvpmaker",
+  "keywords": [
+    "RSVPMaker",
+    "Placeholder"
+  ],
+  "attributes": {
+    "text": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "2",
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css"
+}

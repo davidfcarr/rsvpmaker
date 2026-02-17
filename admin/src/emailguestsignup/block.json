@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/emailguestsignup",
 	"title": "RSVPField Email Guest Signup",
-	"icon": "products",
+	"icon": "email-alt",
 	"category": "rsvpmaker",
 	"keywords": [
 		"RSVPMaker",

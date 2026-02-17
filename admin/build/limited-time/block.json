@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/limited",
   "title": "Limited Time Content (RSVPMaker)",
-  "icon": "admin-comments",
+  "icon": "clock",
   "category": "rsvpmaker",
   "description": "Displays an RSVPMaker event listing and/or a calendar widget. (Alternative: the RSVPMaker Query Loop block variation allows more control over the formatting of your events listing)",
   "keywords": [

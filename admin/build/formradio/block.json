@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/formradio",
   "title": "RSVPField Radio Buttons",
-  "icon": "products",
+  "icon": "forms",
   "category": "rsvpmaker",
   "keywords": [
     "RSVPMaker",

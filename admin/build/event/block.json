@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/event",
   "title": "RSVPMaker Embed Event",
-  "icon": "products",
+  "icon": "calendar-alt",
   "category": "rsvpmaker",
   "keywords": [
     "RSVPMaker",

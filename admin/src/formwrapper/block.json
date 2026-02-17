@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/formwrapper",
 	"title": "RSVP Flexible Form Wrapper",
-	"icon": "products",
+	"icon": "forms",
 	"category": "rsvpmaker",
 	"keywords": [
 		"RSVPMaker",

@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/next-events",
   "title": "RSVPMaker Next Events",
-  "icon": "clock",
+  "icon": "calendar-alt",
   "category": "rsvpmaker",
   "keywords": [
     "RSVPMaker",

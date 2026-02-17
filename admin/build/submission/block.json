@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/submission",
   "title": "RSVPMaker Submission Form",
-  "icon": "clock",
+  "icon": "calendar-alt",
   "category": "rsvpmaker",
   "description": "Displays a form for submitting an event for approval",
   "keywords": [

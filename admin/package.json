@@ -15,6 +15,11 @@
 		"start": "dotenv -e .env.development wp-scripts start",
 		"dev": "dotenv -e .env.development wp-scripts build"
 	},
+	"wp-scripts": {
+		"entry": {
+			"index": "./src/index.js"
+		}
+	},
 	"devDependencies": {
 		"@wordpress/scripts": "^31.1.0",
 		"dotenv-cli": "^7.4.1",

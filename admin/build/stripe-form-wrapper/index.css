@@ -1,15 +1,1 @@
-/*!************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/stripe-form-wrapper/editor.scss ***!
-  \************************************************************************************************************************************************************************************************************************************************************/
-/**
- * The following styles get applied inside the editor only.
- *
- * Replace them with your own styles or remove the file completely.
- */
-.stripe-wrapper-border {
-  border: 1px dashed #1275ff;
-  padding: 10px;
-  margin: 10px 0;
-}
-
-/*# sourceMappingURL=index.css.map*/
+.stripe-wrapper-border{border:1px dashed #1275ff;margin:10px 0;padding:10px}

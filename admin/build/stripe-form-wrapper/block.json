@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/stripe-form-wrapper",
   "title": "Stripe Form Wrapper",
-  "icon": "admin-comments",
+  "icon": "products",
   "category": "rsvpmaker",
   "description": "Displays a Stripe charge form.",
   "keywords": [

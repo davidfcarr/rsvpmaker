@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "rsvpmaker/paypal",
   "title": "PayPal Charge (RSVPMaker)",
-  "icon": "admin-comments",
+  "icon": "products",
   "category": "rsvpmaker",
   "description": "Displays a PayPal charge form.",
   "keywords": [
