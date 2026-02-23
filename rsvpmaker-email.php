@@ -1100,7 +1100,7 @@ function rsvpmailer_default_block_template_wrapper($content, $transactional = fa
 		$rsvpmailer_default_block_template = get_rsvpmailer_tx_block_template();
 	else
 		$rsvpmailer_default_block_template = get_rsvpmailer_default_block_template();
-	if(!empty($rsvpmailer_default_block_template))
+    if(!empty($rsvpmailer_default_block_template))
 		{
 		$temp = preg_replace('/<div[^>]+class="wp-block-rsvpmaker-emailcontent"[^>]*>/',"$0 <!--content-->",$rsvpmailer_default_block_template, 1);
 		$content = str_replace('<!--content-->',$content,$temp);
@@ -1124,7 +1124,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 				$post = get_post($id);
 				$content = '';
 				if(!empty($_GET['excerpt'])) {
-					$content .= sprintf("<!-- wp:heading -->\n".'<h2><a class="headline-link" href="%s" class="article">%s</a></h2>'."\n<!-- /wp:heading -->\n",$permalink,$post->post_title);
+					$content .= sprintf("<!-- wp:heading -->\n".'<h2 class="wp-block-heading"><a class="headline-link article" href="%s">%s</a></h2>'."\n<!-- /wp:heading -->\n",$permalink,$post->post_title);
 					$content .= rsvpmail_post_excerpt($post);
 				}
 				else {
@@ -1175,11 +1175,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 	}
 	if(!empty($_GET["email_to_post"])) {
 		$email = get_post(intval($_GET["email_to_post"]));
-		$pattern = '/<div.+class="wp-block-rsvpmaker-emailcontent">/';
-		$split = preg_split($pattern,$email->post_content);
-		$content = str_replace("</div>
-		<!-- /wp:rsvpmaker/emailcontent -->",'',$split[1]);
-		$content = trim(str_replace("<!-- wp:rsvpmaker/emailcontent -->","",$content));
+		$content = rsvpmailer_default_block_template_wrapper($email->post_content);
 		$my_post['post_title'] = $email->post_title;
 		$my_post['post_content'] = $content;
 		$my_post['post_type'] = 'post';
@@ -3071,7 +3067,7 @@ function event_to_embed($post_id, $event_post = NULL, $context = '') {
 			$event_post = get_post($post_id);
 		$event_embed["subject"] = $event_post->post_title;
 		$event_embed["content"] = sprintf('<!-- wp:heading -->
-<h2 class="email_event"><a href="%s">%s</a></h2>
+<h2 class="wp-block-heading"><a href="%s">%s</a></h2>
 <!-- /wp:heading -->'."\n",get_permalink($post_id),apply_filters('the_title',$event_post->post_title));
 		if($event_post->post_type == 'rsvpmaker')
 		{
@@ -4778,28 +4774,27 @@ function get_rsvpmailer_tx_block_template( $edit = false ) {
 	}
 	elseif(empty($content)) {
 		$content = '<!-- wp:rsvpmaker/emailbody -->
-		<div style="background-color:#efefef;color:#000;padding:5px" class="wp-block-rsvpmaker-emailbody">
-		<!-- wp:paragraph -->
-		<p></p>
-		<!-- /wp:paragraph -->
+<div class="wp-block-rsvpmaker-emailbody" style="background-color:#efefef;color:#000;padding:5px"><!-- wp:spacer {"height":"1px"} -->
+<div style="height:1px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
 
-		<!-- wp:rsvpmaker/emailcontent -->
-		<div style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px" class="wp-block-rsvpmaker-emailcontent"><!-- wp:paragraph {"placeholder":"Email content"} -->
-		<p></p>
-		<!-- /wp:paragraph --></div>
-		<!-- /wp:rsvpmaker/emailcontent -->
+<!-- wp:rsvpmaker/emailcontent -->
+<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#efefef;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Add email content here"} -->
+<p></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:rsvpmaker/emailcontent -->
 
-		<!-- wp:rsvpmaker/emailcontent -->
-		<div style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px" class="wp-block-rsvpmaker-emailcontent"><!-- wp:paragraph -->
-		<p>*|LIST:DESCRIPTION|*</p>
-		<!-- /wp:paragraph -->
+<!-- wp:rsvpmaker/emailcontent -->
+<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#efefef;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph -->
+<p>*|LIST:DESCRIPTION|*</p>
+<!-- /wp:paragraph -->
 
-		<!-- wp:paragraph -->
-		<p><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span>*|UNSUB|*</span>
+<!-- wp:paragraph -->
+<p><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span>*|UNSUB|*</span>
 				<br><strong>Our mailing address is:</strong><br>*|LIST:ADDRESS|*<br><em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>*|REWARDS|*</p>
-		<!-- /wp:paragraph --></div>
-		<!-- /wp:rsvpmaker/emailcontent --></div>
-		<!-- /wp:rsvpmaker/emailbody -->';
+<!-- /wp:paragraph --></div>
+<!-- /wp:rsvpmaker/emailcontent --></div>
+<!-- /wp:rsvpmaker/emailbody -->';
 		$post['post_title'] = 'Transactional Email Template';
 		$post['post_type'] = 'rsvpemail';
 		$post['post_status'] = 'publish';
@@ -4829,30 +4824,27 @@ function get_rsvpmailer_default_block_template($edit = false) {
 	//if not set or failed to retrieve
 	if(empty($content)) {
 		$content = '<!-- wp:rsvpmaker/emailbody -->
-		<div style="background-color:#efefef;color:#000;padding:5px" class="wp-block-rsvpmaker-emailbody">
-		<!-- wp:paragraph -->
-		<p></p>
-		<!-- /wp:paragraph -->
+<div class="wp-block-rsvpmaker-emailbody" style="background-color:#efefef;color:#000;padding:5px"><!-- wp:spacer {"height":"1px"} -->
+<div style="height:1px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
 
-		<!-- wp:rsvpmaker/emailcontent -->
-		<div style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px" class="wp-block-rsvpmaker-emailcontent">
-		<!-- wp:paragraph {"placeholder":"Add email content here"} -->
-		<p></p>
-		<!-- /wp:paragraph -->
-		</div>
-		<!-- /wp:rsvpmaker/emailcontent -->
+<!-- wp:rsvpmaker/emailcontent -->
+<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#efefef;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Add email content here"} -->
+<p></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:rsvpmaker/emailcontent -->
 
-		<!-- wp:rsvpmaker/emailcontent -->
-		<div style="background-color:#fff;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px" class="wp-block-rsvpmaker-emailcontent"><!-- wp:paragraph -->
-		<p>*|LIST:DESCRIPTION|*</p>
-		<!-- /wp:paragraph -->
+<!-- wp:rsvpmaker/emailcontent -->
+<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#efefef;color:#000;padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;min-height:20px;margin-bottom:5px"><!-- wp:paragraph -->
+<p>*|LIST:DESCRIPTION|*</p>
+<!-- /wp:paragraph -->
 
-		<!-- wp:paragraph -->
-		<p><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span>*|UNSUB|*</span>
+<!-- wp:paragraph -->
+<p><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span>*|UNSUB|*</span>
 				<br><strong>Our mailing address is:</strong><br>*|LIST:ADDRESS|*<br><em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>*|REWARDS|*</p>
-		<!-- /wp:paragraph --></div>
-		<!-- /wp:rsvpmaker/emailcontent --></div>
-		<!-- /wp:rsvpmaker/emailbody -->';
+<!-- /wp:paragraph --></div>
+<!-- /wp:rsvpmaker/emailcontent --></div>
+<!-- /wp:rsvpmaker/emailbody -->';
 		$new['post_title'] = 'Default Email Template';
 		$new['post_type'] = 'rsvpemail';
 		$new['post_status'] = 'publish';
@@ -4860,24 +4852,9 @@ function get_rsvpmailer_default_block_template($edit = false) {
 		$post_id = wp_insert_post($new);
 		update_option('rsvpmailer_default_block_template', $post_id);
 	}
-	/*
-	else {
-		$new['post_title'] = 'Default Email Template';
-		$new['post_type'] = 'rsvpemail';
-		$new['post_status'] = 'publish';
-		$new['post_content'] = $content;
-		$post_id = wp_insert_post($new);
-		update_option('rsvpmailer_default_block_template', $post_id);
-	}
-	*/
+
 	if($edit)
 		$content = sprintf('<p><a href="%s">Edit</a></p>',admin_url("post.php?post=$post_id&action=edit")).$content;
-	else {
-		$content = str_replace('{"placeholder":"Email content"}','{"placeholder":"Add email content here"}',$content);
-		$content = preg_replace('|</div>[^<]*<!-- /wp:rsvpmaker/emailcontent -->|','<!-- wp:paragraph {"placeholder":"Add email content here"} -->
-		<p></p>
-		<!-- /wp:paragraph -->'."$0",$content,1);
-	}
 	return $content;
 }
 
@@ -5684,29 +5661,31 @@ function rsvpmail_latest_post_promo($args = array()) {
     $permalink = get_permalink($featured->ID);
     $new['post_title'] = $featured->post_title;
     $html = '<!-- wp:heading -->
-    <h2><a class="headline-link" href="'.$permalink.'">'.$featured->post_title.'</a></h2>
+    <h2 class="wp-block-heading"><a class="headline-link" href="'.$permalink.'">'.$featured->post_title.'</a></h2>
     <!-- /wp:heading -->
     '."\n";
     $html .= rsvpmail_post_excerpt($featured, intval($args['paragraphs']));
 	if(!empty($posts)) {
 		$html .= '<!-- wp:heading -->
-		<h2>More Headlines</h2>
+		<h2 class="wp-block-heading">More Headlines</h2>
 		<!-- /wp:heading -->
 		';
 		foreach($posts as $p) {
 			$permalink = get_permalink($p->ID);
 			$html .= '<!-- wp:heading {"level":3} -->
-			<h3><a href="'.$permalink.'">'.$p->post_title.'</a></h3>
+			<h3 class="wp-block-heading"><a href="'.$permalink.'">'.$p->post_title.'</a></h3>
 			<!-- /wp:heading -->
 			';
 		}		
 	}
-
+	/*
     $rsvpmailer_default_block_template = get_rsvpmailer_default_block_template();
     $parts = preg_split('/<\/div>\s+<!-- \/wp:rsvpmaker\/emailcontent -->/m',$rsvpmailer_default_block_template,2);
     if(!empty($parts[1]))
         $html = $parts[0].$html."</div>\n<!-- /wp:rsvpmaker/emailcontent -->".$parts[1];
 	$html = rsvpmaker_email_html($html);
+	*/
+	$html = rsvpmailer_default_block_template_wrapper($html);
 	if(!empty($args['preview']))
 		return array('subject' => $featured->post_title,'html' => '<p>(Preview)</p>'.$html);
 	$new['post_content'] = $html;
@@ -5856,7 +5835,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	}
 	rsvpmailer_post_promo_summary();
 
-	echo "<h3>New post promo:".$subject_html['subject'].'</h3>'.$subject_html['html'];
+	echo "<h3>New post promo:".$subject_html['subject'].'</h3>'.rsvpmaker_email_html($subject_html['html']);
 }
 
 add_action( 'transition_post_status', 'rsvpmail_latest_posts_notification',10,3);

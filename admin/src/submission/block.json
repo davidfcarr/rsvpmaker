@@ -5,7 +5,7 @@
 	"title": "RSVPMaker Submission Form",
 	"icon": "calendar-alt",
 	"category": "rsvpmaker",
-	"description": "Displays a form for submitting an event for approval",
+	"description": "Displays a front end form unauthenticated users can use to submit an event for approval by a website editor or administrator.",
 	"keywords": [
 		"RSVPMaker",
 		"Event",

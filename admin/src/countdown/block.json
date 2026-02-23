@@ -1,0 +1,40 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rsvpmaker/countdown",
+	"title": "RSVPMaker Countdown Timer", 
+	"icon": "calendar-alt", 
+	"category": "rsvpmaker",
+	"description": "Displays a countdown timer for an upcoming event",
+	"keywords": [
+		 "RSVPMaker", 
+		 "Countdown", 
+		 "Timer"
+	],
+       "attributes": {
+         "event_id": {
+            "type": "string",
+            "default": ""
+        },
+        "countdown_id": {
+            "type": "string",
+            "default": ""
+        },
+        "expiration_display": {
+            "type": "string",
+            "default": "stoppedclock"
+        },
+        "expiration_message": {
+            "type": "string",
+            "default": "The wait is over!"
+        }
+	},
+	"version": "1",
+	"supports": {
+		"html": false
+	},
+	"textdomain": "rsvpmaker",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}

@@ -170,7 +170,13 @@ function Reminders() {
 function Basics(props) {
     const {eventdata} = props;
     const rsvpmaker_rest = useSelect( ( select ) => {
-    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
     return rsvpmaker_rest;
     } );
 

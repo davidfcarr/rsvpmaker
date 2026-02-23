@@ -1,0 +1,1 @@
+(()=>{"use strict";const t=window.wp.data,e={settings:window.rsvpmakerSettings||{}},s=(0,t.createReduxStore)("rsvpmaker",{reducer:(t=e)=>t,selectors:{getSettings:t=>t.settings,getRestUrl:t=>t.settings.rest_url,getRsvpJsonUrl:t=>t.settings.rsvpmaker_json_url,getNonce:t=>t.settings.nonce,getPostId:t=>t.settings.post_id}});(0,t.register)(s)})();

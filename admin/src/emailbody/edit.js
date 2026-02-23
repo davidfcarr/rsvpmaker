@@ -38,7 +38,7 @@ export default function Edit(props) {
         backgroundSize: attributes.backgroundSize,
         backgroundAttachment: 'fixed',
     };
-    const blockProps = useBlockProps({ style: bodyStyle});
+    const blockProps = useBlockProps({ className, style: bodyStyle});
 
 	const removeMedia = () => {
 		setAttributes({

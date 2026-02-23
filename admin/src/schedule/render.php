@@ -1,5 +1,5 @@
 <div <?php echo get_block_wrapper_attributes(); ?>>
 <?php
-echo rsvp_form_text ($attributes, $content);
+echo rsvpmaker_daily_schedule ($attributes);
 ?>
 </div>

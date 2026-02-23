@@ -2,9 +2,9 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "rsvpmaker/schedule",
-	"title": "RSVPMaker Schedule",
+	"title": "RSVPMaker Daily Schedule",
     "icon": "calendar-alt",
-    "description": "Daily schedule of events",
+    "description": "Daily schedule of events, for example for a conference. Can be constrained by date or RSVPMaker Type event category.",
 	"category": "rsvpmaker",
 	"keywords": [
 		"RSVPMaker",

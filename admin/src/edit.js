@@ -1,5 +1,6 @@
 const { __ } = wp.i18n;
 const { TextControl } = wp.components;
+const {useBlockProps} = wp.blockEditor;
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.

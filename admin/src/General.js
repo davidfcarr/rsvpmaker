@@ -5,15 +5,10 @@ import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import { OptionsToggle,OptRadio,OptSelect,OptText,OptTextArea } from "./OptionControls.js";
 import { createConfiguredAxios } from './http-common.js';
-import { useSelect } from '@wordpress/data';
 
 async function myCopyDefaults() {
     let name = newForm;
-    const rsvpmaker_rest = useSelect( ( select ) => {
-    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
-    return rsvpmaker_rest;
-    } );
-
+    
     const apiClient = createConfiguredAxios( rsvpmaker_rest );
 
     let answer = await apiClient.get('copy_defaults');

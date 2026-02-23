@@ -106,7 +106,13 @@ export default function TemplateProjected (props) {
 if(catalog.length == 0)
     return null;
 const rsvpmaker_rest = useSelect( ( select ) => {
-    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
     return rsvpmaker_rest;
 } );
 

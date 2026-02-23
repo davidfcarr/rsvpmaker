@@ -1640,11 +1640,12 @@ $confirmed_content = '';
 function event_content( $content, $formonly = false, $form = '' ) {
 	global $wpdb, $post, $rsvp_options, $profile, $master_rsvp, $showbutton, $blanks_allowed, $email_context, $confirmed_content;
 	$payment_details = '';
+	
 	if ( is_admin() && !isset($_GET['page']) ) { // || !in_the_loop()
 
 		return $content;
 	}
-
+	
 	// If the post is not an event, leave it alone
 
 	if (empty($post->post_type) || ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) {

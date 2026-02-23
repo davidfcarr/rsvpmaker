@@ -21,9 +21,6 @@ export default function Forms (props) {
     console.log('Forms props',props);
     console.log('Forms formId',formId);
     const [editForm,setEditForm] = useState('');
-    const rsvpmaker_rest = useSelect( ( select ) => {
-        return select( 'rsvpmaker' ).getSettings();
-    } );
 
 function fetchForms() {
     let name = newForm;

@@ -9,35 +9,5 @@ export function RSVPEventOrder (props) {
 	console.log('rsvpcontrols query namespace',attributes.namespace);
 	const eventorder = query.eventOrder ? query.eventOrder : 'future';
 	console.log('eventorder',eventorder);
-	return <p><SelectControl	label="Event Order" value={ eventorder } options={ [{ value: 'future', label: 'Future' },{ value: 'past',  label: "Past" },] } onChange={ ( value ) => { setAttributes( {query: {...query,eventOrder: value}} );} } /></p>
-
-	return (
-<><Panel header="My Panel">
-<PanelBody title="My Block Settings" initialOpen={ true }>
-	<PanelRow>My Panel Inputs and Labels</PanelRow>
-</PanelBody>
-</Panel>
-</>
-);
-
-	return (
-		<PanelBody>
-            <SelectControl
-                label="Event Order"
-                value={ eventorder }
-                options={ [
-                    { value: 'future', label: 'Future' },
-                    { value: 'past',  label: "Past" },
-                ] }
-                onChange={ ( value ) => {
-                    setAttributes( {
-                        query: {
-                            ...query,
-                            eventOrder: value
-                        }
-                    } );
-                } }
-            />
-		</PanelBody>
-    );
+	return <p><SelectControl label="Event Order" value={ eventorder } options={ [{ value: 'future', label: 'Future' },{ value: 'past',  label: "Past" },] } onChange={ ( value ) => { setAttributes( {query: {...query,eventOrder: value}} );} } /></p>
 }

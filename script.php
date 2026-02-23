@@ -20,6 +20,8 @@ function rsvpmaker_rest_array() {
 		if(!empty($sked['time']))
 			$time = $sked['time'];
 	}
+	$email_template = get_option('rsvpmailer_default_block_template');
+	$email_template_design = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template');
 
 	return array(
 		'post_id'  => $post_id,
@@ -31,6 +33,8 @@ function rsvpmaker_rest_array() {
 		'ajaxurl' => admin_url( 'admin-ajax.php' ),
 		'rsvpmaker_json_url' => rest_url( 'rsvpmaker/v1/' ),
 		'timelord' => $rsvpmaker_nonce['value'],
+		'default_email_template' => $email_template,
+		'email_design_screen' => $email_template_design
 		);
 }
 
@@ -54,6 +58,8 @@ function rsvpmaker_admin_enqueue( $hook ) {
 		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery', 'rsvpmaker_js' ), $scriptversion, true );
 		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array(), $scriptversion, true );
 	}
+	wp_enqueue_script( 'rsvpmaker_react_settings', plugin_dir_url( __FILE__ ) . 'admin/build/settings/adminui.js', array(), $scriptversion, true );
+	wp_localize_script( 'rsvpmaker_react_settings', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	$hastabs = (isset($_GET['page']) && ('rsvpmaker-admin.php' == $_GET['page']));
 	$hastabs = apply_filters('rsvpmaker_tab_pages',$hastabs);
 	if($hastabs)

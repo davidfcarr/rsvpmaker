@@ -3,7 +3,7 @@ const { registerBlockType } = wp.blocks;
 const { RichText } = wp.blockEditor;
 const { Fragment } = wp.element;
 const { Component } = wp.element;
-const { InspectorControls } = wp.blockEditor;
+const { InspectorControls, useBlockProps } = wp.blockEditor;
 const { PanelBody, DateTimePicker, SelectControl, ToggleControl, TextControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
 const rsvptypes = [{value: '', label: 'None selected (optional)'}];
@@ -42,20 +42,8 @@ export default function Edit(props) {
 });	
 
 	return (
-        <Fragment>
-        <TimeInspector { ...props } />
-		<div className="schedule-placeholder">{__('Daily schedule of events')}</div>
-        </Fragment>
-		);
-
-}
-
-class TimeInspector extends Component {
-
-	render() {
-		const { attributes, setAttributes, className } = this.props;
-		return (
-			<InspectorControls key="inspector">
+		<div {...blockProps}>
+        <InspectorControls key="scheduleinspector">
 			<PanelBody title={ __( 'Start Time', 'rsvpmaker' ) } >
 					<SelectControl
 							label={ __( 'Set Start Time', 'rsvpmaker' ) }
@@ -114,7 +102,10 @@ class TimeInspector extends Component {
         onChange={ ( limit ) => { setAttributes( { limit: limit } ) } }
 	/>		
     </PanelBody>
-			</InspectorControls>
+		</InspectorControls>
+		<div className="schedule-placeholder">{__('Daily schedule of events')}</div>
+		</div>
 		);
-	}
+
+
 }

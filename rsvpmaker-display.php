@@ -667,7 +667,7 @@ function rsvpmaker_upcoming( $atts = array() ) {
 
 			} elseif ( $format == 'with_form' ) {
 
-				echo rsvpmaker_form( $post, do_blocks( $post->post_content ) );
+				echo rsvpmaker_form( $post, do_blocks( '<!-- wp:rsvpmaker/rsvpdateblock /-->'. $post->post_content ) );
 
 			} 
 			elseif ( $format == 'headline_date_button' ) {
@@ -712,7 +712,7 @@ function rsvpmaker_upcoming( $atts = array() ) {
 
 			<?php
 
-			if ( current_user_can( 'edit_post', $post->ID ) && ! is_email_context() ) {
+			if ( current_user_can( 'edit_post', $post->ID ) && ! is_email_context() && !wp_is_json_request() ) {
 
 				echo '<p><a href="' . admin_url( 'post.php?action=edit&post=' . (int) $post->ID ) . '">Edit</a></p>';
 
@@ -1744,7 +1744,6 @@ function rsvpmaker_compact_format( $post, $atts = array() ) {
 }
 function rsvpmaker_next_rsvps( $atts = array() ) {
 	if ( is_admin() ) {
-
 		return;
 	}
 
@@ -2546,7 +2545,7 @@ function rsvpmaker_form( $atts = array(), $form_content = '' ) {
 		$output = event_content( $form_content, true ) . rsvp_form_jquery();
 	}
 	$post = $backup;
-	return $output.' post '.$post->ID;
+	return $output;
 }
 
 function rsvpmaker_daily_schedule( $atts ) {
@@ -2578,7 +2577,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 			printf( '<p>%s %s %s</p>', $event->post_title, $event->datetime, $event->ts_start );
 		}
 
-		$t = (int) $event->ts_start;
+		$t = $event->ts_start;
 
 		if ( $start_limit && ( $t < $start_limit ) ) {
 			continue;
@@ -2608,7 +2607,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 		$termline = '<p class="daily-schedule-event-types">'. wp_kses_post( implode( ', ', $term_links ) ) . '</p>';
 
-		if ( isset( $atts['type'] ) && ! in_array( $atts['type'], $termslugs ) ) {
+		if ( !empty( $atts['type'] ) && ! in_array( $atts['type'], $termslugs ) ) {
 
 			continue;
 		}
@@ -2659,7 +2658,6 @@ function rsvpmaker_daily_schedule( $atts ) {
 		// }
 
 	$output = '<div class="rsvpmaker-schedule">' . "\n" . $output . "\n</div>";
-
 	$wp_query = $backup;
 
 	return $output;
@@ -2905,24 +2903,22 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 function future_rsvp_links( $atts = array() ) {
 
 	global $rsvp_options;
+	$skipfirst = (!empty( $atts['skipfirst'] ) && 'false' !== $atts['skipfirst']); 
 
 	$output = '<ul>';
 
 	$limit = ( empty( $atts['limit'] ) ) ? 5 : (int) $atts['limit'];
-
+	if($skipfirst)
+		$limit++;
 	$events = get_events_rsvp_on( $limit );
 
 	if ( empty( $events ) ) {
-
 		return;
 	}
 
+	if($skipfirst)
+		array_shift($events);
 	foreach ( $events as $index => $event ) {
-
-		if ( ( $index == 0 ) && ! empty( $atts['skipfirst'] ) ) {
-
-			continue;
-		}
 
 		$url = (isset($atts['server'])) ? '#rsvpnow' : get_permalink( $event->ID ) . '#rsvpnow';
 

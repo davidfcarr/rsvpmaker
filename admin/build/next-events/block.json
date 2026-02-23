@@ -2,7 +2,8 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "rsvpmaker/next-events",
-  "title": "RSVPMaker Next Events",
+  "title": "RSVPMaker Next Events (RSVP On)",
+  "description": "List one or more upcoming events with RSVP registration active, with the first featured and the rest as links.",
   "icon": "calendar-alt",
   "category": "rsvpmaker",
   "keywords": [

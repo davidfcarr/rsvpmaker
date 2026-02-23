@@ -4,7 +4,7 @@
 	"name": "rsvpmaker/loop-blocks",
 	"version": "1.0.0",
 	"icon" : "calendar-alt",
-	"title": "RSVPMaker Loop Blocks",
+	"title": "RSVPMaker: Insert Blocks for Query Loop",
 	"category": "rsvpmaker",
 	"description": "A container for blocks representing the date, excerpt, RSVP Now! registration button.",
 	"textdomain": "rsvpmaker",

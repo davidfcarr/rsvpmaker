@@ -38,11 +38,11 @@ export default function Edit(props) {
         border: attributes.border,
         minHeight: '20px',
     };
-    const blockProps = useBlockProps( { style: bodyStyle } );
+    const blockProps = useBlockProps( { className, style: bodyStyle } );
 	const colors = wp.data.select('core/block-editor').getSettings().colors;
 
 	return (
-<div className={className}  { ...blockProps } >
+<div { ...blockProps } >
 	<InspectorControls key="emailcontentinspector" >
 		<PanelBody title={ __( 'Style', 'rsvpmaker' ) } >
             <h3>Background Color</h3>

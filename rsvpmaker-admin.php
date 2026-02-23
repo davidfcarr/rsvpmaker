@@ -1483,8 +1483,9 @@ function set_rsvpmaker_order_in_admin( $wp_query ) {
 global $current_user, $rsvpmaker_upcoming_loop;
 if(strpos($_SERVER["REQUEST_URI"],'emailpostorposts'))
 	return $wp_query; 
-if(strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')  && strpos($_SERVER["REQUEST_URI"],'upcoming') && !$rsvpmaker_upcoming_loop) {
+if(strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) {
 	//editor behavior, for example query loop block
+	add_filter('posts_fields', 'rsvpmaker_select',99, 2 );
 	add_filter('posts_join', 'rsvpmaker_join',99, 2 );
 	add_filter('posts_groupby', 'rsvpmaker_groupby',99, 2 );	
 	add_filter('posts_where', 'rsvpmaker_where',99, 2 );

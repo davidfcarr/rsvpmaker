@@ -1,5 +1,5 @@
 <?php
-add_action('init', 'rsvpevent_to_email' );
+add_action('admin_init', 'rsvpevent_to_email' );
 add_action('init', 'rsvpmaker_init_router' );
 add_action('init', 'rsvp_options_defaults', 1 );
 add_action('init','rsvpmail_unsubscribe');

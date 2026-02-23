@@ -9,7 +9,13 @@ export default function RSVPGuide (props) {
     const initialPostStatus = wp?.data?.select( 'core/editor' ).getEditedPostAttribute( 'status' );
     const [ isOpen, setOpen ] = useState( initialPostStatus == 'draft' );
     const rsvpmaker_rest = useSelect( ( select ) => {
-    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
     return rsvpmaker_rest;
     } );
 

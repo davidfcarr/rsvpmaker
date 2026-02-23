@@ -3,8 +3,8 @@ const { InspectorControls, useBlockProps } = wp.blockEditor;
 const { SelectControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
 import { addQueryArgs } from '@wordpress/url';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useFutureDateOptions, useRsvpTypesOptions, useRsvpAuthorsOptions } from '../queries';
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -33,43 +33,8 @@ export default function Edit(props) {
 		console.log('downloaded event html',x);
 		setEventHtml(x);
 	} );
-const rsvpupcoming = [{label: __('Choose event'),value: ''},{label: __('Next event'),value: 'next'},{label: __('Next event - RSVP on'),value: 'nextrsvp'}];
-apiFetch( {path: 'rsvpmaker/v1/future'} ).then( events => {
-	if(Array.isArray(events)) {
-		 events.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
-	}
-	 else {
-		 var eventsarray = Object.values(events);
-		 eventsarray.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; rsvpupcoming.push({value: event.ID, label: title }) } } );
-		}
-}).catch(err => {
-	console.log(err);
-});
-
-const rsvptypes = [{value: '', label: 'None selected (optional)'}];
-apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
-	if(Array.isArray(types))
-			types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
-		else {
-			var typesarray = Object.values(types);
-			typesarray.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
-		}
-}).catch(err => {
-	console.log(err);
-});	
-
-const rsvpauthors = [{value: '', label: 'Any'}];
-apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( authors => {
-	if(Array.isArray(authors))
-			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
-		else {
-			authors = Object.values(authors);
-			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
-		}
-}).catch(err => {
-	console.log(err);
-});	
-
+const rsvpupcoming = useFutureDateOptions();
+const rsvptypes = useRsvpTypesOptions();
 		return (
 			<div {...blockProps}>
 <InspectorControls key="eventinspector">

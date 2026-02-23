@@ -27,6 +27,6 @@ export default function save({attributes, className}) {
             color: attributes.color,
             padding: attributes.padding,
         };
-        const blockProps = useBlockProps.save({ style: bodyStyle });
+        const blockProps = useBlockProps.save({ className, style: bodyStyle });
         return <div { ...blockProps}><InnerBlocks.Content /></div>;
  }

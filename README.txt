@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 11.7.6
+Stable tag: 11.8.1
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -130,6 +130,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe and MailChimp under the license of their creators.
 
 == Changelog ==
+
+= 11.8 =
+
+* Updated all blocks to the latest coding standards, as required in advance of WordPress 7.0
+* Added and enhanced block variations including RSVPMaker Upcoming with Cover Loop Blocks and RSVPMaker Next Event Loop Blocks. Variations on the Query Loop have been renamed with "Loop Blocks" for consistency.
 
 = 11.7.6 =
 

@@ -1,11 +1,20 @@
-import React, {useState} from "react"
+import React, {useState, useEffect} from "react"
 import { createConfiguredAxios } from './http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { useSelect } from '@wordpress/data';
+import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 
 export function useOptions(tab = '') {
     const rsvpmaker_rest = useSelect( ( select ) => {
-        return select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
+    return rsvpmaker_rest;
     } );
 
     function fetchOptions(queryobj) {
@@ -23,7 +32,14 @@ export function useOptions(tab = '') {
 export function useOptionsMutation(setChanges,makeNotification) {
     const queryClient = useQueryClient();
     const rsvpmaker_rest = useSelect( ( select ) => {
-        return select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
+    return rsvpmaker_rest;
     } );
 
     async function updateOption (option) {
@@ -71,7 +87,13 @@ export function useOptionsMutation(setChanges,makeNotification) {
 
 export function useRSVPDate(eventID) {
     const rsvpmaker_rest = useSelect( ( select ) => {
-    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
     return rsvpmaker_rest;
     } );
 
@@ -89,7 +111,14 @@ export function useRSVPDate(eventID) {
 
 export function useCopyDefaults() {
     const rsvpmaker_rest = useSelect( ( select ) => {
-        return select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
+    return rsvpmaker_rest;
     } );
 
     function fetchCopyDefaults(queryobj) {
@@ -109,7 +138,13 @@ export function useRSVPDateMutation(eventID) {
     console.log('useRSVPDateMutation called with');
     console.log('useRSVPDateMutation queryClient',queryClient);
     const rsvpmaker_rest = useSelect( ( select ) => {
-    const rsvpmaker_rest = select( 'rsvpmaker' ).getSettings();
+    const rs = select( 'rsvpmaker' );
+    if(!rs)
+    {
+        
+        return {};
+    }
+    const rsvpmaker_rest = rs.getSettings();
     return rsvpmaker_rest;
     } );
 
@@ -161,3 +196,60 @@ export function useRSVPDateMutation(eventID) {
     }
 )
 }
+
+export function useFutureDateOptions (prefix = [{label: __('Choose event'),value: ''},{label: __('Next event'),value: 'next'},{label: __('Next event - RSVP on'),value: 'nextrsvp'}]) {
+    const [rsvpupcoming, setRsvpupcoming] = useState(prefix);
+    useEffect(() => {
+    apiFetch( {path: 'rsvpmaker/v1/future'} ).then( events => {
+        const upcoming = [...rsvpupcoming];
+        if(Array.isArray(events)) {
+            events.map( function(event) { if(event.ID) { var title = (event.neatdate) ? event.post_title+' - '+event.neatdate : event.post_title; upcoming.push({value: event.ID, label: title }) } } );
+        }
+        else {
+            var eventsarray = Object.values(events);
+            eventsarray.map( function(event) { if(event.ID) { var title = (event.date) ? event.post_title+' - '+event.date : event.post_title; upcoming.push({value: event.ID, label: title }) } } );
+            }
+        setRsvpupcoming(upcoming);
+    }).catch(err => {
+        console.log(err);
+    });
+    },[]);
+    return rsvpupcoming;
+}
+
+export function useRsvpTypesOptions () {
+    const [rsvptypes, setRsvptypes] = useState([{value: '', label: 'None selected (optional)'}]);
+    useEffect(() => {
+    apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
+        if(Array.isArray(types))
+                types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
+            else {
+                var typesarray = Object.values(types);
+                typesarray.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
+            setRsvptypes(rsvptypes);
+            }
+    }).catch(err => {
+        console.log(err);
+    });
+},[]);
+    return rsvptypes;
+}
+
+export function useRsvpAuthorsOptions () {
+    const [rsvpauthors, setRsvpauthors] = useState([{value: '', label: __('Any')}]);
+    useEffect(() => {
+    apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( types => {
+	if(Array.isArray(authors))
+			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
+		else {
+			authors = Object.values(authors);
+			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
+		}
+        setRsvpauthors(rsvpauthors);
+    }).catch(err => {
+        console.log(err);
+    });
+},[]);
+    return rsvptypes;
+}
+

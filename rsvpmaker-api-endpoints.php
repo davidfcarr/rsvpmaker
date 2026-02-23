@@ -46,7 +46,7 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 		if ( ! empty( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field($_GET['nonce']), 'rsvpmaker_api' ) ) {
 			return new WP_Error( 'unauthorized', 'Invalid nonce', array( 'status' => 401 ) );
 		}
-	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
+		rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
 		$events = rsvpmaker_get_future_events(null,15);
 
@@ -57,7 +57,7 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 		}
 		foreach($events as $index => $post) {
 			$events[$index]->permalink = get_permalink($post->ID);
-			$events[$index]->neatdate = rsvpmaker_date( $rsvp_options['long_date'], intval( $post->ts_start ) );
+			$events[$index]->neatdate = rsvpmaker_date( $rsvp_options['long_date'], $post->ts_start);
 		}
 
 		return new WP_REST_Response( $events, 200 );

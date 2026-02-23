@@ -269,6 +269,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
             add_post_meta($post_id,'rsvpmail_postmark_error',$error);
         }
     }
+    return count($sent);
 }
 
 add_action('rsvpmaker_postmark_chunked_batches','rsvpmaker_postmark_chunked_batches');
@@ -281,13 +282,19 @@ function rsvpmaker_postmark_chunked_batches() {
 	$results = $wpdb->get_results($sql);
     error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
 	if($results) {
-        $batchrow = $results[0];
-        $doneafterthis = sizeof($results) == 1;
-		$recipients = unserialize($batchrow->meta_value);
+	foreach($results as $index => $batchrow) {
+	if(10 == $index)
+		continue;
+    $doneafterthis = sizeof($results) - $index == 1;
+	$recipients = unserialize($batchrow->meta_value);
+        //returns number sent, 'duplicate message' or null
+	$batch_result = rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
+	if($batch_result)
+	{
         $sql = $wpdb->prepare("update %i set meta_key='rsvprelay_to_batch_done' where meta_id=%d",$wpdb->postmeta,$batchrow->meta_id);
         error_log($sql);
-		$wpdb->query($sql);
-        $log .= rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
+	$wpdb->query($sql);
+	}
         $postmark_options = get_rsvpmaker_postmark_options();
         if(!empty($postmark_options['notify_batch_send']))
             wp_mail(postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
@@ -305,6 +312,8 @@ function rsvpmaker_postmark_chunked_batches() {
             }
             wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
         }
+	
+    }
 	}
     else {
         error_log('ending postmark chunked batches');

@@ -16,9 +16,17 @@
       "default": ""
     }
   },
-  "version": "2",
+  "version": "3",
   "textdomain": "rsvpmaker",
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
-  "style": "file:./style-index.css"
+  "viewScript": [
+    "file:./settings/adminui.js",
+    "file:./single-form.js",
+    "file:./event-options.js",
+    "file:./date-time.js",
+    "file:./editor-sidebar/sidebars.js",
+    "file:./metabox.js",
+    "file:./block-store.js"
+  ]
 }

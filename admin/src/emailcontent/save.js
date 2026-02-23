@@ -27,6 +27,6 @@ export default function save(props) {
             minHeight: '20px',
             marginBottom: '5px',
         };
-        const blockProps = useBlockProps.save({ style: bodyStyle });
-        return <div { ...blockProps } className={className}><InnerBlocks.Content /></div>;
+        const blockProps = useBlockProps.save({className, style: bodyStyle });
+        return <div { ...blockProps }><InnerBlocks.Content /></div>;
 }

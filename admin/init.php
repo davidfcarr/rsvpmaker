@@ -194,10 +194,10 @@ return ob_get_clean();
 function rsvpmaker_block_cgb_editor_assets() {
 	global $post, $rsvp_options, $current_user;
 	wp_enqueue_script(
-		'rsvpmaker-admin-index', // Handle.
-		plugins_url( 'rsvpmaker/admin/build/index.js' ), // Main bundle with all utilities
-		array( 'wp-blocks', 'wp-i18n', 'wp-element', 'wp-dom-ready' ), // Dependencies
-		get_rsvpversion().'1', // Version
+		'rsvpmaker_sidebar-js', // Handle.
+		plugins_url( 'rsvpmaker/admin/build/editor-sidebar/sidebars.js' ), // Block.build.js: We register the block here. Built with Webpack.
+		array( 'wp-blocks', 'wp-i18n', 'wp-element' ), // Dependencies, defined above.
+		get_rsvpversion().'1',//filemtime( plugin_dir_path( 'rsvpmaker' ) . 'admin/dist/sidebars.js' ), // Version: filemtime — Gets file modification time.
 		true // Enqueue the script in the footer.
 	);
 	rsvpmaker_localize();
