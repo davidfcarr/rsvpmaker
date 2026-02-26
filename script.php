@@ -40,12 +40,12 @@ function rsvpmaker_rest_array() {
 
 function rsvpmaker_admin_enqueue( $hook ) {
 	global $post, $rsvpscript;
-	$scriptversion = get_rsvpversion().'1';
+	$scriptversion = get_rsvpversion().'.1';
 
 	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
 	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');
 	if($rsvpmailer_editor_stylesheet)
-		wp_enqueue_style( 'rsvpmaker_editor_style', $rsvpmailer_editor_stylesheet, array(), time(), true );
+		wp_enqueue_style( 'rsvpmaker_editor_style', $rsvpmailer_editor_stylesheet, array(), time(), 'all' );
 	if(is_network_admin())
 		return;
 	rsvpmaker_event_scripts(); // want the front end scripts, too
@@ -54,11 +54,15 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	( ( strpos( $_GET['page'], 'rsvp_report' ) !== false ) || ( strpos( $_GET['page'], 'rsvpmaker-admin.php' ) !== false ) || ( strpos( $_GET['page'], 'toast' ) !== false ) ) ) ) ) {
 		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 		wp_enqueue_script( 'jquery-ui-dialog' );
-		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1', true );
+		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1', 'all' );
 		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery', 'rsvpmaker_js' ), $scriptversion, true );
-		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array(), $scriptversion, true );
+		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array('wp-components'), $scriptversion, 'all' );
 	}
+	if(isset($_GET['page']) && 'rsvpmaker_settings' == $_GET['page'] ) {
 	wp_enqueue_script( 'rsvpmaker_react_settings', plugin_dir_url( __FILE__ ) . 'admin/build/settings/adminui.js', array(), $scriptversion, true );
+	wp_enqueue_style( 'rsvpmaker_react_settings_style', plugin_dir_url( __FILE__ ) . 'admin/build/settings/style-adminui.css', array('wp-components'), $scriptversion, 'all' );
+	}
+
 	wp_localize_script( 'rsvpmaker_react_settings', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	$hastabs = (isset($_GET['page']) && ('rsvpmaker-admin.php' == $_GET['page']));
 	$hastabs = apply_filters('rsvpmaker_tab_pages',$hastabs);

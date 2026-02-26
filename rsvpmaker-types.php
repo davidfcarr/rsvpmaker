@@ -54,6 +54,7 @@ function rsvpmaker_create_post_type() {
 			'supports'           => $supports,
 
 			'show_in_rest'       => true,
+			'delete_with_user'       => false,
 
 			'taxonomies'         => array( 'rsvpmaker-type', 'post_tag' ),
 
@@ -108,6 +109,7 @@ function rsvpmaker_create_post_type() {
 			'menu_position'      => 15,
 
 			'supports'           => $supports,
+			'delete_with_user'       => false,
 
 			'show_in_rest'       => true,
 
@@ -164,6 +166,7 @@ function rsvpmaker_create_post_type() {
 			'menu_position'      => 16,
 
 			'supports'           => array( 'title', 'editor', 'author', 'custom-fields', 'revisions' ),
+			'delete_with_user'       => false,
 
 			'show_in_rest'       => true,
 

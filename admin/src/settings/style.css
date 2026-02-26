@@ -1,0 +1,64 @@
+
+/* Force two-column TabPanel: tabs left, content right */
+.rsvpmaker-tab-panel {
+	display: flex !important;
+	flex-wrap: nowrap !important;
+	width: 100%;
+	align-items: flex-start;
+	box-sizing: border-box;
+}
+
+.rsvpmaker-tab-panel > [role="tablist"] {
+	display: flex !important;
+	flex-direction: column !important;
+	flex: 0 0 200px !important;
+	gap: 6px !important;
+	margin-right: 16px !important;
+}
+
+.rsvpmaker-tab-panel > .components-tab-panel__tab-content {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	clear: none !important;
+	box-sizing: border-box;
+}
+
+.rsvpmaker-tab-panel > [role="tablist"] .components-tab-panel__tabs-item,
+.rsvpmaker-tab-panel > [role="tablist"] .nav-tab {
+	display: block !important;
+	width: 100% !important;
+	text-align: left !important;
+}
+
+@media (max-width: 700px) {
+	.rsvpmaker-tab-panel {
+		flex-direction: column !important;
+	}
+	.rsvpmaker-tab-panel > [role="tablist"] {
+		flex: 0 0 auto !important;
+		margin-right: 0;
+	}
+}
+/* Stronger selectors to override build CSS that forces tab content below tabs */
+.rsvpmaker-tab-panel > [role="tablist"] {
+	display: flex !important;
+	flex-direction: column !important;
+	flex: 0 0 220px !important;
+	gap: 6px !important;
+	margin-right: 16px !important;
+}
+.rsvpmaker-tab-panel > .components-tab-panel__tab-content {
+	flex: 1 1 auto !important;
+	clear: none !important;
+	display: block !important;
+}
+.rsvpmaker-tab-panel > [role="tablist"] .components-tab-panel__tabs-item,
+.rsvpmaker-tab-panel > [role="tablist"] .nav-tab,
+.rsvpmaker-tab-panel > [role="tablist"] .rsvpmaker-nav-tab {
+	display: block !important;
+	width: 100% !important;
+	text-align: left !important;
+}
+.rsvpmaker-tab-panel .nav-tab-active {
+    background-color: #fff;
+}

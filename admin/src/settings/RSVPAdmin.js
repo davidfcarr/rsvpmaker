@@ -5,6 +5,7 @@ import Security from './Security.js'
 import Payment from './Payment.js'
 import Email from './Email.js'
 import Forms from './Forms.js'
+import './style.css';
 
 export default function RSVPAdmin (props) {
     const onSelect = ( tabName ) => {
@@ -49,6 +50,7 @@ export default function RSVPAdmin (props) {
     const MyTabPanel = () => (
         <TabPanel
             className="rsvpmaker-tab-panel"
+            orientation="vertical"
             activeClass="nav-tab-active"
             onSelect={ onSelect }
             initialTabName={start}
