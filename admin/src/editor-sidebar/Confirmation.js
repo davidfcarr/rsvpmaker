@@ -6,22 +6,14 @@ import {Up,Down,Delete} from '../icons.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { createConfiguredAxios } from '../http-common.js';
 import { useSelect } from '@wordpress/data';
+import { useRsvpmakerRest } from '../queries.js';
 
 export default function Confirmation() {
     const [status,setStatus] = useState('');
     const [reminderHours,setReminderHours] = useState(1);
     const [addBeforeAfter,setBeforeAfter] = useState('before');
-    const rsvpmaker_rest = useSelect( ( select ) => {
-    const rs = select( 'rsvpmaker' );
-    if(!rs)
-    {
-        
-        return {};
-    }
-    const rsvpmaker_rest = rs.getSettings();
-    return rsvpmaker_rest;
-    } );
-
+    const rsvpmaker_rest = useRsvpmakerRest();
+    
     const apiClient = createConfiguredAxios( rsvpmaker_rest );
     
     function fetchMessages() {

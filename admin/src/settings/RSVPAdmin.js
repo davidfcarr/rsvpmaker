@@ -1,10 +1,6 @@
-import React, {useState, useEffect, Suspense} from "react"
-import { TabPanel, SelectControl, RadioControl } from '@wordpress/components';
-import General from './General.js'
-import Security from './Security.js'
-import Payment from './Payment.js'
-import Email from './Email.js'
+import { TabPanel } from '@wordpress/components';
 import Forms from './Forms.js'
+import { RsvpmakerSettings, PaymentSettings, PostmarkSettings } from "./components";
 import './style.css';
 
 export default function RSVPAdmin (props) {
@@ -14,39 +10,8 @@ export default function RSVPAdmin (props) {
 
     const url = window.location.href;
     const tabarg = url.match(/tab=([^&]+)/);
-    const start = (tabarg) ? tabarg[1] : 'general';
-    const [changes,setChanges] = useState([]);
-
-    function addChange(key,value,type='rsvp_options') {
-        console.log('addchange key',key);
-        console.log('addchange value',value);
-        console.log('addchange type',type);
-        manageChanges(key,value,type);
-    }
-    
-    function manageChanges(key=null,value=null,type='rsvp_options') {
-        if(!key)
-            return changes;
-        if('reset' == key)
-            {
-                setChanges([]);
-            }
-        setChanges((ch) => {
-            if(!ch || !Array.isArray(ch)) 
-                return [].push(value);
-            console.log('changeset start',ch);
-            console.log('changeset new value',value);
-            const exists = ch.findIndex( (item) => (item.key==key && item.type==type) );
-            console.log('changeset exists test',exists);
-            if(exists > -1)
-                ch[exists].value = value;
-            else
-                ch.push({'key':key,'value':value,'type':type});      
-            console.log('changeset',ch);
-            return(ch);
-        });
-    }
-    
+    const start = (tabarg) ? tabarg[1] : 'rsvp_options';
+        
     const MyTabPanel = () => (
         <TabPanel
             className="rsvpmaker-tab-panel"
@@ -56,13 +21,8 @@ export default function RSVPAdmin (props) {
             initialTabName={start}
             tabs={ [
                 {
-                    name: 'general',
-                    title: 'General Settings',
-                    className: 'nav-tab',
-                },
-                {
-                    name: 'security',
-                    title: 'Security',
+                    name: 'rsvp_options',
+                    title: 'Basics and Defaults',
                     className: 'nav-tab',
                 },
                 {
@@ -76,24 +36,21 @@ export default function RSVPAdmin (props) {
                     className: 'nav-tab',
                 },
                 {
-                    name: 'email',
-                    title: 'Email',
+                    name: 'postmark',
+                    title: 'Postmark Setup',
                     className: 'nav-tab',
                 },
             ] }
         >
             { ( tab ) => {
-                if('general' == tab.name)
-                    return <General addChange={addChange} setChanges={setChanges} changes={changes} />
-                if('security' == tab.name)
-                    return <Security  addChange={addChange} setChanges={setChanges} changes={changes} />
+                if('rsvp_options' == tab.name)
+                    return <RsvpmakerSettings />
                 if('payment' == tab.name)
-                    return <Payment  addChange={addChange} setChanges={setChanges} changes={changes} />
+                    return <PaymentSettings />
                 if('forms' == tab.name)
-                    return <Forms form_id={props.form_id} addChange={addChange} setChanges={setChanges} changes={changes} />
-                if('email' == tab.name)
-                    return <Email addChange={addChange} setChanges={setChanges} changes={changes} />
-               else
+                    return <Forms form_id={props.form_id} />
+                if('postmark' == tab.name)
+                    return <PostmarkSettings />
                 return <section><p>{ tab.title }</p></section>
         } }
         </TabPanel>

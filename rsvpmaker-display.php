@@ -2222,9 +2222,9 @@ function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ='' ) {
 function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id = 0 ) {
 
 	global $rsvp_options, $rsvp_link_template;
+	$link_template_post = get_option('rsvpmaker_link_template_post');
 
 	if(empty($rsvp_link_template)) {
-		$link_template_post = get_option('rsvpmaker_link_template_post');
 		if($link_template_post) {
 			$tpost = get_post($link_template_post);
 			$rsvp_link_template = (empty($tpost->post_content)) ? '' :  $tpost->post_content; 
@@ -2242,6 +2242,10 @@ function get_rsvp_link( $post_id = 0, $justlink = false, $email = '', $rsvp_id =
 		$newpost['post_content'] = $rsvp_link_template;
 		$link_template_post = wp_insert_post($newpost);
 		update_option('rsvpmaker_link_template_post',$link_template_post);		
+	}
+	if(empty($rsvp_options['rsvp_button']) || $rsvp_options['rsvp_button'] != $link_template_post) {
+		$rsvp_options['rsvp_button'] = $link_template_post;
+		update_option('RSVPMAKER_Options',$rsvp_options);
 	}
 	if(empty($post_id))
 		return $rsvp_link_template;

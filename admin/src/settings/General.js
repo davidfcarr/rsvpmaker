@@ -4,15 +4,27 @@ import { __experimentalNumberControl as NumberControl, SelectControl, ToggleCont
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import { OptionsToggle,OptRadio,OptSelect,OptText,OptTextArea } from "./OptionControls.js";
-import apiClient from './http-common.js';
 
-async function myCopyDefaults() {
-    let answer = await apiClient.get('copy_defaults');
-    if(answer.data.updated) {
+async function myCopyDefaults(filter = []) {
+    const url = new URL(rsvpmaker_rest.rest_url + 'rsvpmaker/v1/copy_defaults');
+    filter.forEach((item) => {
+        url.searchParams.append('filter[]', item);
+    });
+
+    const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+            'X-WP-Nonce': rsvpmaker_rest.nonce,
+            'Content-Type': 'application/json'
+        }
+    });
+    const answer = await response.json();
+
+    if(answer.updated) {
         console.log(answer);
-        let updated = answer.data.updated;
+        let updated = answer.updated;
         if(updated.length > 500)
-            updated = update.substring(0,500)+' ...';
+            updated = updated.substring(0,500)+' ...';
         alert(updated);    
     }
     else {
@@ -117,3 +129,4 @@ l F j, Y = Thursday March 9, 2023<br />j F Y = 9 March 2023<br />m-d-Y = 03-09-2
     
     </div>)
 }
+

@@ -121,7 +121,7 @@ function react_admin_script() {
 		wp_localize_script('rsvpmaker_meta', 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}	
 
-	elseif(isset($_GET['page']) && ('rsvpmaker_setup' == $_GET['page'] )) 
+	if(isset($_GET['page']) && ('rsvpmaker_setup' == $_GET['page'] )) 
 	{
 		wp_enqueue_script(
 			'rsvpmaker_setup', // Handle.
@@ -133,7 +133,7 @@ function react_admin_script() {
 		wp_enqueue_style(
 			'rsvpmaker_setup', // Handle.
 			plugins_url( 'rsvpmaker/admin/build/style-index.css'), // Block.build.js: We register the block here. Built with Webpack.
-			array( ), // Dependencies, defined above.
+			array('wp-components','wp-blocks','wp-element'), // Dependencies, defined above.
 			time()
 		);
 		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));

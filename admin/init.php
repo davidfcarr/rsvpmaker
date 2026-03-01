@@ -223,7 +223,6 @@ function rsvpmaker_limited_time ($atts, $content) {
 		$debug .= sprintf('<p>Start time %s = %s, now = %s</p>',$atts['start'],$start,$now);
 	if($now < $start)
 		{
-
 		return $debug;
 		}
 	}
@@ -260,3 +259,4 @@ function rsvpmaker_limited_time ($atts, $content) {
 
 return $content.$debug;
 }
+

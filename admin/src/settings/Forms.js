@@ -1,11 +1,9 @@
-import React, {useState, useEffect} from "react"
+import {useState, useEffect} from "react"
 import { ToggleControl, TextControl, RadioControl, TextareaControl } from '@wordpress/components';
 import {SelectCtrl} from './Ctrl.js'
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import {Up,Down,Delete} from './icons.js';
-import apiClient from './http-common.js';
-import {useQuery, useMutation, useQueryClient} from 'react-query';
 
 export default function Forms (props) {
     const [formId,setFormId] = useState(props.form_id);
@@ -14,72 +12,102 @@ export default function Forms (props) {
     const [addfieldChoices,setAddfieldChoices] = useState('');
     const [showPreview,setShowPreview] = useState(props.contact);
     const [newForm,setNewForm] = useState('');
-    const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
-    const {changes,addChange,setChanges} = props;
-    const event_id = wp?.data?.select("core/editor")?.getCurrentPostId();
-    console.log('Forms props',props);
-    console.log('Forms formId',formId);
     const [editForm,setEditForm] = useState('');
+    const [data,setData] = useState(null);
+    const [isLoading,setIsLoading] = useState(true);
+    const [isError,setIsError] = useState(false);
 
-function fetchForms() {
-    let name = newForm;
-    if(name) {
-        setEditForm('');
-        setNewForm('');
+    async function fetchForms() {
+        setIsLoading(true);
+        setIsError(false);
+        try {
+            let name = newForm;
+            const url = new URL('/wp-json/rsvpmaker/v1/rsvp_form', window.location.origin);
+            url.searchParams.set('form_id', (formId || '') + name);
+            url.searchParams.set('post_id', wp?.data?.select("core/editor")?.getCurrentPostId() || '');
+            url.searchParams.set('contact', props.contact ? '1' : '0');
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                    'X-WP-Nonce': rsvpmaker_rest.nonce,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if(!response.ok)
+                throw new Error('Error retrieving RSVP form');
+            const payload = await response.json();
+            const wrapped = {data: payload};
+            setData(wrapped);
+
+            if(!formId)
+                setFormId(payload.form_id);
+            else if(payload.form_changed)
+                setFormId(payload.form_id);
+
+            if(name) {
+                setEditForm('');
+                setNewForm('');
+            }
+            console.log('rsvp forms query',wrapped);
+        }
+        catch(err) {
+            console.log('error retrieving rsvp forms',err);
+            setIsError(true);
+        }
+        finally {
+            setIsLoading(false);
+        }
     }
-    return apiClient.get('rsvp_form?form_id='+formId+name+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId()+'&contact='+props.contact);
-}
-const {data,isLoading,isError} = useQuery(['rsvp_form',formId], fetchForms, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
-    if(!formId)
-        setFormId(data.data.form_id);
-    else if(data.data.form_changed)
-        setFormId(data.data.form_id);//strip off 'clone'
-    console.log('rsvp forms query',data);
-}, onError: (err, variables, context) => {
-    console.log('error retrieving rsvp forms',err);
-}, refetchInterval: false });
+
+    useEffect(() => {
+        fetchForms();
+    }, [formId, props.contact, newForm]);
 
 if(isError)
     return <p>Error loading form options</p>
 
-const queryClient = useQueryClient();
-async function updateForm (form) {
-    console.log('updateForm');
-    return await apiClient.post('rsvp_form?form_id='+formId+'&post_id='+wp?.data?.select("core/editor")?.getCurrentPostId(), {'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0});
-}
-
-const {mutate:formMutate} = useMutation(updateForm, {
-    onMutate: async (form) => {
-        const previousValue = queryClient.getQueryData(['rsvp_form',formId]);
+    async function formMutate(form) {
+        const previousValue = data;
         console.log('optimistic update form',form);
-        await queryClient.cancelQueries(['rsvp_form',formId]);
-        queryClient.setQueryData(['rsvp_form',formId],(oldQueryData) => {
-            //function passed to setQueryData
-            const {data} = oldQueryData;
-            data.form = form;
+        setData((oldData) => {
+            if(!oldData)
+                return oldData;
             const newdata = {
-                ...oldQueryData, data: data
+                ...oldData,
+                data: {
+                    ...oldData.data,
+                    form
+                }
             };
             console.log('newdata optimistic form update',newdata);
             return newdata;
-        }) 
-        //makeNotification('Updating ...');
-        console.log('updating options');
-        return {previousValue}
-    },
-    onSettled: (data, error, variables, context) => {
-        queryClient.invalidateQueries(['rsvp_form',formId]);
-    },
-    onSuccess: (data, error, variables, context) => {
-        console.log('updated');
-        setFormId(data.data.form_id);
-    },
-    onError: (err, variables, context) => {
-        //makeNotification('Error '+err.message);
-        console.log('update options error',err);
-        queryClient.setQueryData(['rsvp_form',formId], context.previousValue);
-    },    
-});
+        });
+        try {
+            const url = new URL('/wp-json/rsvpmaker/v1/rsvp_form', window.location.origin);
+            url.searchParams.set('form_id', formId || '');
+            url.searchParams.set('post_id', wp?.data?.select("core/editor")?.getCurrentPostId() || '');
+            const response = await fetch(url.toString(), {
+                method: 'POST',
+                headers: {
+                    'X-WP-Nonce': rsvpmaker_rest.nonce,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'form':form,'newForm':newForm,'event_id':(props.event_id) ? props.event_id : 0})
+            });
+            if(!response.ok)
+                throw new Error('Error updating RSVP form');
+            const payload = await response.json();
+            setData({data: payload});
+            setFormId(payload.form_id);
+            console.log('updated');
+        }
+        catch(err) {
+            console.log('update options error',err);
+            setData(previousValue);
+            setIsError(true);
+        }
+    }
     
     if(isLoading)
         return <p>Loading ...</p>

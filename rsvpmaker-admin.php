@@ -457,7 +457,7 @@ class RSVPMAKER_Options
           function admin_menu()
           {
 			add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin', 17);
-			add_options_page('RSVPMaker Postmark + Advanced Email', 'RSVPMaker Postmark + Advanced Email', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 18);
+			add_options_page('RSVPMaker Postmark + Advanced Email', 'RSVPMaker Mailing List and Group Email', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 18);
           }
 
           // handle plugin options
@@ -662,7 +662,7 @@ if(isset($_POST['timezone_string']))
 <div class="wrap" style="max-width:950px !important;">
 
     <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['legacy']) ) echo 'nav-tab-active'; ?>" href="#email"><?php esc_html_e('Mailing List &amp; Postmark','rsvpmaker');?></a>
+      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['legacy']) ) echo 'nav-tab-active'; ?>" href="#email"><?php esc_html_e('Mailing List','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'group_email' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'mailpoet' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#mailpoet"><?php esc_html_e('MailPoet','rsvpmaker');?></a>
       <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'security' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#security"><?php esc_html_e('Editing/Sending Rights','rsvpmaker');?></a>
@@ -808,7 +808,7 @@ if(empty($extra))
 print_group_list_options('extra', $extra);
 echo '<p><em>'.__('Use for small custom distribution lists. Or use to forward an email you want to share to WordPress, then edit further with RSVP Mailer before sending.','rsvpmaker').'</em></p>';
 
-if($postmark['handle_incoming']) {
+if(!empty($postmark['handle_incoming'])) {
 	echo '<p>Postmark integration takes over the "bot" account function</p>';
 }
 else {
@@ -1023,13 +1023,12 @@ list-style-type: circle;
 function rsvpmaker_admin_menu() {
 
 global $rsvp_options;
-//do_action('rsvpmaker_admin_menu_top');
-add_submenu_page('edit.php?post_type=rsvpmaker', __("Create / Update from Template",'rsvpmaker'), __("Create / Update",'rsvpmaker'), $rsvp_options["rsvpmaker_template"], "rsvpmaker_template_list", "rsvpmaker_template_list" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options['report_security'], "rsvp_report", "rsvp_report" );
+add_submenu_page('edit.php?post_type=rsvpmaker', __("Create / Update from Template",'rsvpmaker'), __("Create / Update",'rsvpmaker'), 'publish_rsvpmakers', "rsvpmaker_template_list", "rsvpmaker_template_list" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Event Setup",'rsvpmaker'), __("Event Setup",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup", "rsvpmaker_setup" );
 if(!empty($rsvp_options['additional_editors']))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Share Templates",'rsvpmaker'), __("Share Templates",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_share", "rsvpmaker_share" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events (without a template)",'rsvpmaker'), __("Multiple Events (without a template)",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&quick=5", "rsvpmaker_setup" );
-add_submenu_page('edit.php?post_type=rsvpmaker', __("RSVP Report",'rsvpmaker'), __("RSVP Report",'rsvpmaker'), $rsvp_options["menu_security"], "rsvp_report", "rsvp_report" );
 add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Payments', 'rsvpmaker' ), __( 'RSVPMaker Payments', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
 add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'Settings', 'rsvpmaker' ), __( 'Settings', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_settings', 'rsvpmaker_react_admin' );
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
@@ -1038,6 +1037,30 @@ add_submenu_page('edit.php','Email Promos','Email Promos','edit_others_posts','r
 if(!empty($rsvp_options['debug']))
 	add_submenu_page('tools.php',__('RSVPMaker Debug Log'),__('RSVPMaker Debug Log'),'manage_options','rsvpmaker_show_debug_log','rsvpmaker_show_debug_log');
 }
+
+function rsvpmaker_highlight_report_menu_item() {
+	if ( ! is_admin() ) {
+		return;
+	}
+	?>
+	<style>
+	#adminmenu .wp-submenu a[href="edit.php?post_type=rsvpmaker&page=rsvp_report"] {
+		font-weight: 700;
+		color: yellow !important;
+	}
+	#adminmenu .wp-submenu a[href="edit.php?post_type=rsvpmaker&page=rsvp_report"]::before {
+		font-family: dashicons;
+		content: "\f147";
+		font-size: 18px;
+		line-height: 1;
+		margin-right: 6px;
+		color: #fff !important;
+		vertical-align: middle;
+	}
+	</style>
+	<?php
+}
+add_action( 'admin_head', 'rsvpmaker_highlight_report_menu_item' );
 
 function rsvpmaker_columns($defaults) {
 	if(!empty($_GET["post_type"]) && ($_GET["post_type"] == 'rsvpemail'))

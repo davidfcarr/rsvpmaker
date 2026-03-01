@@ -1264,6 +1264,12 @@ class RSVPMaker_Preview extends WP_REST_Controller {
 
 		if('one' == $request['block'])
 			return new WP_REST_Response( rsvpmaker_one($attributes), 200 );
+		if('do_blocks' == $request['block']) {
+			global $post;
+			$post = get_post($attributes['post_id']);
+			$blocks = (!empty($post->post_content)) ? do_blocks($post->post_content) : '';
+			return new WP_REST_Response( $blocks, 200 );
+		}
 		if('eventslisting' == $request['block'])
 			return new WP_REST_Response( rsvpmaker_event_listing($attributes), 200 );
 		if('next-events' == $request['block'])
@@ -2040,6 +2046,48 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		$c = ($c && !empty($c->post_content)) ? do_blocks($c->post_content) : '<p>Error retrieving message.</p>';
 		$response['confirmation_message'] = $c;
 		$response['stylesheet_url'] = plugins_url('rsvpmaker/style.css');
+		return new WP_REST_Response( $response, 200 );
+	}
+}
+
+class RSVP_Chimp_Lists extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'chimp_lists';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
+		$chimp = get_option('chimp');
+		if($chimp && !empty($chimp['chimp-key']) )
+			$response['chimp_lists'] = mailchimp_list_array($chimp['chimp-key']);
+		else
+			$response['chimp_lists'] = [];
 		return new WP_REST_Response( $response, 200 );
 	}
 }
@@ -3133,20 +3181,27 @@ class RSVP_CopyDefaults extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
+		$filter = $request->get_param('filter');
+		if(!is_array($filter))
+			$filter = array();
+		$filter = array_map('sanitize_text_field',$filter);
 		$found = '';
 		$templates = rsvpmaker_get_templates();
 		$events = rsvpmaker_get_future_events();
 		foreach($templates as $post) {
-			rsvpmaker_defaults_for_post($post->ID);
+			rsvpmaker_defaults_for_post($post->ID,$filter);
 			if(!empty($found))
 				$found .= ', ';
 			$found .= 'template: '.$post->post_title;
 		}
 		foreach($events as $post) {
-			rsvpmaker_defaults_for_post($post->ID);
+			rsvpmaker_defaults_for_post($post->ID,$filter);
 			if(!empty($found))
 				$found .= ', ';
 			$found .= $post->post_title.' '.$post->date;
+		}
+		if(!empty($found) && !empty($filter)) {
+			$found = 'filter: '.implode(', ',$filter).' '.$found;
 		}
 		$response = array('updated'=>'Updated: '.$found);
 	return new WP_REST_Response($response, 200 );
@@ -3394,5 +3449,7 @@ add_action('rest_api_init',
 		$copy->register_routes();
 		$contact = new RSVP_Contact_Form();
 		$contact->register_routes();
+		$chimplist = new RSVP_Chimp_Lists();
+		$chimplist->register_routes();
 	}
 );

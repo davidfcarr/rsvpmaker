@@ -5,19 +5,11 @@ import { useSelect } from '@wordpress/data';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { MetaSelectControl, MetaTextControl, MetaRadioControl } from './metadata_components.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
+import { useRsvpmakerRest } from '../queries.js';
 
 export default function Pricing() {
-    const rsvpmaker_rest = useSelect( ( select ) => {
-    const rs = select( 'rsvpmaker' );
-    if(!rs)
-    {
-        
-        return {};
-    }
-    const rsvpmaker_rest = rs.getSettings();
-    return rsvpmaker_rest;
-    } );
-
+    const rsvpmaker_rest = useRsvpmakerRest();
+    
     const apiClient = createConfiguredAxios( rsvpmaker_rest );
     const [status,setStatus] = useState('');
     const [priceToAdd,setPriceToAdd] = useState('0.00');

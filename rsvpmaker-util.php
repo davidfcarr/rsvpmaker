@@ -1903,7 +1903,6 @@ function get_rsvpmaker_payment_options() {
 	$active_options = array( 'Cash or Custom', 'PayPal REST API', 'Stripe','Both Stripe and PayPal' );
 	if ( class_exists( 'Stripe_Checkout_Functions' ) && ! empty( $rsvp_options['stripe'] ) ) {
 		$active_options[] = 'Stripe via WP Simple Pay';
-
 	}
 	return $active_options;
 }

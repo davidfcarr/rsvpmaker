@@ -2,23 +2,15 @@ import React, {useState} from "react"
 const { Guide,GuidePage,ToggleControl,Panel, PanelBody, PanelRow, Flex, FlexBlock, FlexItem } = wp.components;
 import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaRadioControl, MetaFormToggle, MetaTimeLord, MetaEndDateTimeControl} from './metadata_components.js';
 import DateTimeMaker from "../DateTimeMaker.js";
+import { useRsvpmakerRest } from "../queries.js";
 const { __ } = wp.i18n; // Import __() from wp.i18n
 import { useSelect } from '@wordpress/data';
 
 export default function RSVPGuide (props) {
     const initialPostStatus = wp?.data?.select( 'core/editor' ).getEditedPostAttribute( 'status' );
     const [ isOpen, setOpen ] = useState( initialPostStatus == 'draft' );
-    const rsvpmaker_rest = useSelect( ( select ) => {
-    const rs = select( 'rsvpmaker' );
-    if(!rs)
-    {
-        
-        return {};
-    }
-    const rsvpmaker_rest = rs.getSettings();
-    return rsvpmaker_rest;
-    } );
-
+    const rsvpmaker_rest = useRsvpmakerRest();
+     
 return (
     <div>
     <ToggleControl label="Show RSVPMaker Guide" checked={isOpen} onClick={() => {setOpen((prev) => !prev)} } />

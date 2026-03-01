@@ -24,10 +24,12 @@ function rsvpmailer($mail, $description = '') {
 	if(strpos($mail['to'],'@example.com'))
 		return; // don't try to send to fake addresses
 	$mail = apply_filters('rsvpmailer_mail',$mail);
+	if(strpos($mail['to'],','))
+		$mail['to'] = explode(',',$mail['to']); //break multiple addresses into an array
 	if(is_array($mail['to'])) {
 		$single = $mail;
 		foreach($mail['to'] as $to) {
-			$single['to'] = $to;
+			$single['to'] = trim($to);
 			$errors = rsvpmailer($single,$description);
 		}
 		return;
@@ -415,7 +417,7 @@ remove_script_host : false,
 </script>
 <div class="wrap" style="max-width:950px !important;">
 <?php rsvpmaker_admin_heading(__('RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
-<p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="#postmark_integration">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations.</p>
+<p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="<?php echo admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark'); ?>">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations.</p>
 <h3>Postmark Integration</h3>
 <?php
 if(!is_multisite() || current_user_can('manage_network') )
@@ -3043,7 +3045,9 @@ function mailchimp_list_array($apikey) {
 	try {
 		$MailChimp = new MailChimpRSVP($apikey);
 	} catch (Exception $e) {
-		return [];
+		return [
+			['value'=>'','label'=>'none '.$e->getMessage()]
+		];
 	}
 
 	$retval = $MailChimp->get('lists');

@@ -37,7 +37,7 @@ export default function Email (props) {
     <TextControl label="Mailchimp API Key" value={chimp['chimp-key']} onChange={(value) => {let prev = {...chimp}; prev['chimp-key']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
     <TextControl label="Email From Text" value={chimp['email-name']} onChange={(value) => {let prev = {...chimp}; prev['email-name']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
     <TextControl label="Email From Address" value={chimp['email-from']} onChange={(value) => {let prev = {...chimp}; prev['email-from']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
-    <SelectControl className="chimplist" label="Default Maling List" value={chimpList} options={chimp_lists} onChange={(value) => {setChimpList(value); let prev = {...chimp}; prev['chimp-list']=value; setChimp(prev); addChange('chimp',prev,'mergearray'); } } />    
+    <SelectControl className="chimplist" label="Default Mailing List" value={chimpList} options={chimp_lists} onChange={(value) => {setChimpList(value); let prev = {...chimp}; prev['chimp-list']=value; setChimp(prev); addChange('chimp',prev,'mergearray'); } } />    
     <ToggleControl label="Add new WordPress user emails to mailing list" checked={chimpAdd} onChange={() => {setChimpAdd(!showChimp); let prev = {...chimp}; prev['chimp_add_new_users']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
     </>
     )}

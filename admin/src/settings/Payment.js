@@ -12,6 +12,7 @@ export default function Payment (props) {
     const {changes,addChange,setChanges} = props;
     const {isSaving,saveEffect,SaveControls,makeNotification} = useSaveControls();
 
+    
    function paymentSetChanges() {
       saveStripe();
       savePayPal();

@@ -62,3 +62,26 @@
 .rsvpmaker-tab-panel .nav-tab-active {
     background-color: #fff;
 }
+
+.components-notice {
+    &, &__content {
+        margin: 0;
+    }
+}
+
+.components-notice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.components-base-control:has(textarea) {
+    max-width: 400px;
+}
+
+.components-base-control:has(button[role="radio"]) {
+    max-width: 400px;
+}
+.components-base-control {
+    margin-bottom: 10px;
+}

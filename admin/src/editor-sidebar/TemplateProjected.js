@@ -4,21 +4,12 @@ import Checkbox from './Checkbox';
 import { SanitizedHTML } from "../SanitizedHTML.js";
 const { subscribe } = wp.data;
 import {useQuery, useMutation, useQueryClient} from 'react-query';
-import { useSelect } from '@wordpress/data';
+import { useRsvpmakerRest } from "../queries.js";
 import { createConfiguredAxios } from '../http-common.js';
 
 export default function TemplateProjected (props) {
-    const rsvpmaker_rest = useSelect( ( select ) => {
-    const rs = select( 'rsvpmaker' );
-    if(!rs)
-    {
-        
-        return {};
-    }
-    const rsvpmaker_rest = rs.getSettings();
-    return rsvpmaker_rest;
-    } );
-
+    const rsvpmaker_rest = useRsvpmakerRest();
+    
     const apiClient = createConfiguredAxios( rsvpmaker_rest );
     if(-1 == window.location.href.indexOf('post='))
         return;//don't display if still under construction

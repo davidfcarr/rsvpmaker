@@ -8,10 +8,20 @@ use Postmark\Models\Suppressions\SuppressionChangeRequest;
 
 function get_rsvpmaker_postmark_options() {
     global $postmark_settings;
-    if(is_multisite())
+    $postmark_settings = get_option('rsvpmaker_postmark');
+    if(empty($postmark_settings) && is_multisite()) {
         $postmark_settings = get_blog_option(1,'rsvpmaker_postmark');
-    else
-        $postmark_settings = get_option('rsvpmaker_postmark');
+    }
+    if(empty($postmark_settings)) {
+        $postmark_settings = array();
+        $postmark_settings['postmark_mode'] = '';
+    }
+    if(is_multisite()) {
+       $postmark_settings['multisite_root'] = get_current_blog_id();
+    }
+    else {
+        $postmark_settings['multisite_root'] = 0;
+    }        
     if(empty($postmark_settings))
     {
         $postmark_settings = array();
@@ -51,6 +61,8 @@ function show_rsvpmaker_postmark_status() {
 }
 
 function rsvpmaker_postmark_options() {
+return printf('<p>Postmark Email Settings can now be found on a the <a href="%s">Postmark tab</a> of the main RSVPMaker settings page.</p>',admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark'));    
+//disabled
     global $postmark_settings, $wpdb;
     if(isset($_POST['postmark_mode']) && rsvpmaker_verify_nonce()){
         $postmark_settings['postmark_mode'] = sanitize_text_field($_POST['postmark_mode']);

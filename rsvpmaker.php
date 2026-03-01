@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.8.1
+* Version: 11.8.2
 */
 
 function get_rsvpversion() {
-	return '11.8.1';
+	return '11.8.2';
 }
 
 global $wp_version;
@@ -48,58 +48,48 @@ function rsvp_options_defaults() {
 	// defaults
 
 	$rsvp_defaults = array(
-		'menu_security'                     => 'manage_options',
+		'calendar_icons'                    => true,
 
-		'rsvpmaker_template'                => 'publish_rsvpmakers',
-
-		'recurring_event'                   => 'publish_rsvpmakers',
-
-		'multiple_events'                   => 'publish_rsvpmakers',
-
-		'documentation'                     => 'edit_rsvpmakers',
-
-		'calendar_icons'                    => 1,
-
-		'social_title_date'                 => 1,
+		'social_title_date'                 => true,
 
 		'default_content'                   => '',
 
 		'rsvp_to'                           => get_bloginfo( 'admin_email' ),
 
-		'confirmation_include_event'        => 0,
+		'confirmation_include_event'        => false,
 
-		'rsvpmaker_send_confirmation_email' => 1,
+		'rsvpmaker_send_confirmation_email' => true,
 
 		'rsvp_instructions'                 => '',
 
-		'rsvp_count'                        => 1,
+		'rsvp_count'                        => true,
 
-		'rsvp_count_party'                  => 1,
+		'rsvp_count_party'                  => true,
 
-		'rsvp_yesno'                        => 1,
+		'rsvp_yesno'                        => true,
 
-		'send_payment_reminders'            => 1,
+		'send_payment_reminders'            => true,
 		'cancel_unpaid_hours'            => 0,
 
-		'rsvp_on'                           => 0,
+		'rsvp_on'                           => false,
 
 		'rsvp_max'                          => 0,
 
-		'login_required'                    => 0,
+		'login_required'                    => false,
 
-		'rsvp_captcha'                      => 0,
+		'rsvp_captcha'                      => false,
 
-		'show_attendees'                    => 0,
+		'show_attendees'                    => false,
 
-		'convert_timezone'                  => 0,
+		'convert_timezone'                  => false,
 
-		'add_timezone'                      => 0,
+		'add_timezone'                      => false,
 
 		'rsvp_form_title'                   => __( 'RSVP Now!', 'rsvpmaker' ),
 
-		'defaulthour'                       => 19,
+		'defaulthour'                       => '19',
 
-		'defaultmin'                        => 0,
+		'defaultmin'                        => '00',
 
 		'long_date'                         => 'l F j, Y',
 
@@ -116,32 +106,45 @@ function rsvp_options_defaults() {
 		'currency_thousands'                => ',',
 
 		'payment_minimum'                   => '5.00',
-
-		'paypal_invoiceno'                  => 1,
-
-		'stripe'                            => 0,
-
-		'show_screen_recurring'             => 0,
-
-		'show_screen_multiple'              => 0,
-
+		'dashboard'                 => '',
 		'dashboard_message'                 => '',
 
-		'rsvpmaker_send_confirmation_email' => 1,
+		'rsvpmaker_send_confirmation_email' => true,
 
 		'update_rsvp'                       => __( 'Update RSVP', 'rsvpmaker' ),
-
+		'rsvp_recaptcha_site_key' => '',
+		'rsvp_recaptcha_secret' => '',
+		'debug' => false,
+		'payment_gateway' => 'Cash or Custom',
+		'report_security' => 'publish_rsvpmakers',
 	);
+
+	$update = false;
+	foreach ( $rsvp_defaults as $index => $value ) {
+		if ( is_bool( $value ) && isset( $rsvp_options[ $index ] ) && ! is_bool( $rsvp_options[ $index ] ) ) {
+			$rsvp_options[ $index ] = (bool) $rsvp_options[ $index ];
+			$update = true;
+		}
+		elseif(('defaulthour' == $index) || ('defaultmin' == $index)) {
+			if ( isset( $rsvp_options[ $index ] ) && ! is_string( $rsvp_options[ $index ] ) ) {
+				$v = strval( $rsvp_options[ $index ] );
+				$rsvp_options[ $index ] = ( strlen( $v ) == 1 ) ? '0' . $v : $v;
+				$update = true;
+			}
+		}
+	}
 
 	$rsvp_defaults = apply_filters( 'rsvpmaker_defaults', $rsvp_defaults );
 
 	foreach ( $rsvp_defaults as $index => $value ) {
 		if ( ! isset( $rsvp_options[ $index ] ) ) {
 			$rsvp_options[ $index ] = $rsvp_defaults[ $index ];
+			$update = true;
 		}
 	}
 	$rsvp_options['rsvplink'] = get_rsvp_link();
-	$rsvp_options['rsvplink_edit'] = admin_url('post.php?action=edit&post='.get_option('rsvpmaker_link_template_post'));
+	$rsvp_options['rsvp_button'] = get_option('rsvpmaker_link_template_post');
+	$rsvp_options['rsvplink_edit'] = admin_url('post.php?action=edit&post='.$rsvp_options['rsvp_button']);
 
 	if ( empty( $rsvp_options['long_date'] ) || ( strpos( $rsvp_options['long_date'], '%' ) !== false ) ) {
 
@@ -151,7 +154,7 @@ function rsvp_options_defaults() {
 
 		$rsvp_options['time_format'] = 'g:i A';
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 	}
 
 	if ( isset( $rsvp_options['rsvp_to_current'] ) && $rsvp_options['rsvp_to_current'] && is_user_logged_in() ) {
@@ -226,7 +229,7 @@ function rsvp_options_defaults() {
 
 		update_post_meta( $rsvp_options['rsvp_form'], '_rsvpmaker_special', 'RSVP Form' );
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 
 	} elseif ( ! is_numeric( $rsvp_options['rsvp_form'] ) ) {
 
@@ -242,7 +245,7 @@ function rsvp_options_defaults() {
 
 		$rsvp_options['rsvp_form'] = wp_insert_post( $data );
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 
 	}
 
@@ -252,7 +255,7 @@ function rsvp_options_defaults() {
 
 		$rsvp_options['rsvplink'] = str_replace( '?e=*|EMAIL|*#rsvpnow', '', $rsvp_options['rsvplink'] );
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 
 	}
 
@@ -262,7 +265,7 @@ function rsvp_options_defaults() {
 
 		$rsvp_options['rsvplink'] = '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">' . __( 'RSVP Now!', 'rsvpmaker' ) . '</a></p>';
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 
 	}
 
@@ -284,7 +287,7 @@ function rsvp_options_defaults() {
 			)
 		);
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 
 	} elseif ( ! is_numeric( $rsvp_options['rsvp_confirm'] ) ) {
 
@@ -300,13 +303,279 @@ function rsvp_options_defaults() {
 			)
 		);
 
-		update_option( 'RSVPMAKER_Options', $rsvp_options );
+		$update = true;
 
 	}
-
+	if ( $update ) {
+		update_option( 'RSVPMAKER_Options', $rsvp_options );
+	}
 }
 
-function rsvpmaker_defaults_for_post( $post_id ) {
+function rsvpmaker_sanitize_options( $value ) {
+	return is_array( $value ) ? $value : array();
+}
+
+function rsvpmaker_normalize_postmark_options( $value ) {
+	if ( ! is_array( $value ) ) {
+		$value = array();
+	}
+
+	$integer_fields = array( 'restricted' );
+	foreach ( $integer_fields as $field ) {
+		$value[ $field ] = isset( $value[ $field ] ) ? (int) $value[ $field ] : 0;
+	}
+
+	$array_of_int_fields = array();
+	foreach ( $array_of_int_fields as $field ) {
+		if ( empty( $value[ $field ] ) || ! is_array( $value[ $field ] ) ) {
+			$value[ $field ] = array();
+		} else {
+			$value[ $field ] = array_map( 'intval', $value[ $field ] );
+		}
+	}
+
+	$array_of_string_fields = array( 'enabled', 'sandbox_only' );
+	foreach ( $array_of_string_fields as $field ) {
+		if ( empty( $value[ $field ] ) || ! is_array( $value[ $field ] ) ) {
+			$value[ $field ] = array();
+		} else {
+			$value[ $field ] = array_values(
+				array_filter(
+					array_map(
+						function( $item ) {
+							return sanitize_text_field( strval( $item ) );
+						},
+						$value[ $field ]
+					),
+					function( $item ) {
+						return '' !== trim( $item );
+					}
+				)
+			);
+		}
+	}
+
+	$string_fields = array(
+		'handle_incoming',
+		'postmark_mode',
+		'postmark_sandbox_key',
+		'postmark_production_key',
+		'postmark_tx_from',
+		'postmark_broadcast_from',
+		'postmark_tx_slug',
+		'postmark_broadcast_slug',
+		'postmark_load_alert_emails',
+	);
+
+	foreach ( $string_fields as $field ) {
+		if ( ! isset( $value[ $field ] ) || ! is_string( $value[ $field ] ) ) {
+			$value[ $field ] = isset( $value[ $field ] ) ? strval( $value[ $field ] ) : '';
+		}
+	}
+
+	return $value;
+}
+
+function rsvpmaker_sanitize_postmark_options( $value ) {
+	return rsvpmaker_normalize_postmark_options( $value );
+}
+
+add_filter( 'option_rsvpmaker_postmark', 'rsvpmaker_normalize_postmark_options', 5 );
+
+function rsvpmaker_register_settings( $properties, $defaults ) {
+	$schema  = array(
+		'type'                 => 'object',
+		'properties'           => $properties,
+		'additionalProperties' => true,
+	);
+
+	register_setting(
+		'options',
+		'RSVPMAKER_Options',
+		array(
+			'type'              => 'object',
+			'default'           => is_array( $defaults ) ? $defaults : array(),
+			'sanitize_callback' => 'rsvpmaker_sanitize_options',
+			'show_in_rest'      => array(
+				'schema' => $schema,
+			),
+		)
+	);
+	$stripe_properties = array(
+		'sk' => array( 'type' => 'string' ),
+		'pk' => array( 'type' => 'string' ),
+		'webhook' => array( 'type' => 'string' ),
+		'sandbox_pk' => array( 'type' => 'string' ),
+		'sandbox_sk' => array( 'type' => 'string' ),
+	);
+	$stripe_schema  = array(
+		'type'                 => 'object',
+		'properties'           => $stripe_properties,
+		'additionalProperties' => true,
+	);
+	register_setting(
+		'options',
+		'rsvpmaker_stripe_keys',
+		array(
+			'type'              => 'object',
+			'default'           => array('sk'=>'','pk'=>'','webhook'=>'','sandbox_pk'=>'','sandbox_sk'=>''),
+			'sanitize_callback' => 'rsvpmaker_sanitize_options',
+			'show_in_rest'      => array(
+				'schema' => $stripe_schema,
+			),
+		)
+	);
+	$paypal_properties = array(
+		'client_id' => array( 'type' => 'string' ),
+		'client_secret' => array( 'type' => 'string' ),
+		'webhook' => array( 'type' => 'string' ),
+		'sandbox_client_id' => array( 'type' => 'string' ),
+		'sandbox_client_secret' => array( 'type' => 'string' ),
+		'funding_sources' => array( 'type' => 'string' ),
+		'excluded_funding_sources' => array( 'type' => 'string' ),
+		'mode' => array( 'type' => 'string' ),
+		'sandbox' => array( 'type' => 'integer' ),
+	);
+	$paypal_schema  = array(
+		'type'                 => 'object',
+		'properties'           => $paypal_properties,
+		'additionalProperties' => true,
+	);
+	register_setting(
+		'options',
+		'rsvpmaker_paypal_keys',
+		array(
+			'type'              => 'object',
+			'default'           => array('client_id'=>'','client_secret'=>'','webhook'=>'','sandbox_client_id'=>'','sandbox_client_secret'=>'','funding_sources'=>'','excluded_funding_sources'=>'','mode'=>'','sandbox'=>0),
+			'sanitize_callback' => 'rsvpmaker_sanitize_options',
+			'show_in_rest'      => array(
+				'schema' => $paypal_schema,
+			),
+		)
+	);
+	$stripe_properties = array(
+		'sk' => array( 'type' => 'string' ),
+		'pk' => array( 'type' => 'string' ),
+		'webhook' => array( 'type' => 'string' ),
+		'sandbox_pk' => array( 'type' => 'string' ),
+		'sandbox_sk' => array( 'type' => 'string' ),
+	);
+	$stripe_schema  = array(
+		'type'                 => 'object',
+		'properties'           => $stripe_properties,
+		'additionalProperties' => true,
+	);
+	register_setting(
+		'options',
+		'rsvpmaker_stripe_keys',
+		array(
+			'type'              => 'object',
+			'default'           => array('sk'=>'','pk'=>'','webhook'=>'','sandbox_pk'=>'','sandbox_sk'=>''),
+			'sanitize_callback' => 'rsvpmaker_sanitize_options',
+			'show_in_rest'      => array(
+				'schema' => $stripe_schema,
+			),
+		)
+	);
+	$chimp_properties = array(
+		'chimp-key' => array( 'type' => 'string' ),
+		'email-name' => array( 'type' => 'string' ),
+		'email-from' => array( 'type' => 'string' ),
+		'company' => array( 'type' => 'string' ),
+		'mailing_address' => array( 'type' => 'string' ),
+		'chimplist' => array( 'type' => 'string' ),
+		'add_notify' => array( 'type' => 'string' ),
+		'chimp_add_new_users' => array( 'type' => 'boolean' ),
+	);
+	$chimp_schema  = array(
+		'type'                 => 'object',
+		'properties'           => $chimp_properties,
+		'additionalProperties' => true,
+	);
+	register_setting(
+		'options',
+		'chimp',
+		array(
+			'type'              => 'object',
+			'default'           => array('chimp-key'=>'','email-name'=>'','email-from'=>'','company'=>'','mailing_address'=>'','chimplist'=>'','add_notify'=>get_option('admin_email'),'chimp_add_new_users'=>false),
+			'sanitize_callback' => 'rsvpmaker_sanitize_options',
+			'show_in_rest'      => array(
+				'schema' => $chimp_schema,
+			),
+		)
+	);
+
+$postmark_fields = array('postmark_mode', 'postmark_sandbox_key', 'postmark_production_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails');
+$postmark_properties = array();
+$postmark_defaults = array();
+foreach($postmark_fields as $field) {
+	$postmark_properties[$field] = array( 'type' => 'string' );
+	$postmark_defaults[$field] = '';
+}
+$postmark_defaults['postmark_mode'] = 'production';
+$postmark_properties['handle_incoming'] = array( 'type' => 'string' );
+$postmark_defaults['handle_incoming'] = '';
+$postmark_properties['restricted'] = array( 'type' => 'integer' );
+$postmark_defaults['restricted'] = 0;
+	$postmark_properties['enabled'] = array(
+		'type'  => 'array',
+		'items' => array( 'type' => 'string' ),
+	);
+$postmark_defaults['enabled'] = array();
+	$postmark_properties['sandbox_only'] = array(
+		'type'  => 'array',
+		'items' => array( 'type' => 'string' ),
+	);
+$postmark_defaults['sandbox_only'] = array();
+
+$postmark_schema  = array(
+		'type'                 => 'object',
+		'properties'           => $postmark_properties,
+		'additionalProperties' => true,
+	);
+	register_setting(
+		'options',
+		'rsvpmaker_postmark',
+		array(
+			'type'              => 'object',
+			'default'           => $postmark_defaults,
+			'sanitize_callback' => 'rsvpmaker_sanitize_postmark_options',
+			'show_in_rest'      => array(
+				'schema' => $postmark_schema,
+			),
+		)
+	);
+}
+
+function rsvpmaker_register_settings_for_rest() {
+	$options = get_option( 'RSVPMAKER_Options', array() );
+	if ( empty( $options ) ) {
+		rsvp_options_defaults();
+		$options = get_option( 'RSVPMAKER_Options', array() );
+	}
+
+	$properties = array();
+	foreach ( $options as $index => $value ) {
+		if ( is_bool( $value ) ) {
+			$properties[ $index ] = array( 'type' => 'boolean' );
+		} 
+		elseif ( is_int( $value ) ) {
+			$properties[ $index ] = array( 'type' => 'integer' );
+		} elseif ( is_float( $value ) ) {
+			$properties[ $index ] = array( 'type' => 'number' );
+		} elseif ( is_array( $value ) ) {
+			$properties[ $index ] = array( 'type' => 'array' );
+		} else {
+			$properties[ $index ] = array( 'type' => 'string' );
+		}
+	}
+
+	rsvpmaker_register_settings( $properties, $options );
+}
+
+add_action( 'rest_api_init', 'rsvpmaker_register_settings_for_rest', 5 );
+
+function rsvpmaker_defaults_for_post( $post_id, $filter = [] ) {
 
 	global $rsvp_options;
 
@@ -348,8 +617,11 @@ function rsvpmaker_defaults_for_post( $post_id ) {
 
 	);
 
-	foreach ( $defaults as $index => $label ) {
+	if(!empty($filter)) {
+		$defaults = array_intersect_key($defaults, array_flip($filter));
+	}
 
+	foreach ( $defaults as $index => $label ) {
 		update_post_meta( $post_id, $label, $rsvp_options[ $index ] );
 	}
 

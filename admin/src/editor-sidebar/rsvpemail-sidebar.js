@@ -5,21 +5,13 @@ import { registerPlugin } from '@wordpress/plugins';
 import { __experimentalMainDashboardButton as MainDashboardButton } from '@wordpress/edit-post';
 import { Dashicon, Button, Modal } from '@wordpress/components';
 import { useState } from '@wordpress/element';
+import { useRsvpmakerRest } from '../queries.js';
 const { subscribe, useSelect } = wp.data;
 
 const RSVPEmailSidebarPlugin = function() {
 const type = wp.data.select( 'core/editor' ).getCurrentPostType();
 const post_id = wp.data.select( 'core/editor' ).getCurrentPostId();
-const rsvpmaker_rest = useSelect( ( select ) => {
-	const rs = select( 'rsvpmaker' );
-	if(!rs)
-	{
-		
-		return {};
-	}
-	const rsvpmaker_rest = rs.getSettings();
-	return rsvpmaker_rest;
-	} );
+	const rsvpmaker_rest = useRsvpmakerRest();
 
 	if(type != 'rsvpemail')
 		return null;
