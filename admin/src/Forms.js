@@ -4,9 +4,9 @@ import {SelectCtrl} from './Ctrl.js'
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import {Up,Down,Delete} from './icons.js';
-import { createConfiguredAxios } from './http-common.js';
+import apiClient, { setupNonceInterceptor } from './http-common.js';
+import { useRsvpmakerRest } from './useRsvpmakerRest.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
-import { useSelect } from '@wordpress/data';
 
 export default function Forms (props) {
     const [formId,setFormId] = useState(props.form_id);
@@ -21,10 +21,16 @@ export default function Forms (props) {
     console.log('Forms props',props);
     console.log('Forms formId',formId);
     const [editForm,setEditForm] = useState('');
+    const rsvpmaker_rest = useRsvpmakerRest();
+    
+    useEffect(() => {
+        if (rsvpmaker_rest?.nonce) {
+        setupNonceInterceptor(rsvpmaker_rest.nonce);
+        }
+    }, [rsvpmaker_rest?.nonce]);
 
 function fetchForms() {
     let name = newForm;
-    const apiClient = createConfiguredAxios( rsvpmaker_rest );
 
     if(name) {
         setEditForm('');

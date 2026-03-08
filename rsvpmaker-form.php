@@ -129,7 +129,19 @@ function rsvp_form_text( $atts, $content ) {
 		$required_marker = ' <span class="rsvprequiredfield">*</span>';
 	}
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:%s</label> <span class="%s"><input class="%s" type="text" name="profile[%s]" id="%s" value=""/></span></p></div>', esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ) );
+	if(isset($atts['type']))
+		$type = $atts['type'];
+	elseif ( strpos( $slug, 'email' ) !== false ) {	// if "email" is anywhere in the slug, use email type	
+		$type = 'email';
+		}
+	elseif ( strpos( $slug, 'phone' ) !== false ) {	// if "phone" is anywhere in the slug, use tel type	
+		$type = 'tel';
+	}
+	else {
+		$type = 'text';
+	}
+
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:%s</label> <span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></p></div>', esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ) );
 
 	if ( $slug == 'email' ) {
 

@@ -2,7 +2,7 @@ import React, {useState} from "react"
 const { Guide,GuidePage,ToggleControl,Panel, PanelBody, PanelRow, Flex, FlexBlock, FlexItem } = wp.components;
 import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl, MetaTextareaControl, MetaRadioControl, MetaFormToggle, MetaTimeLord, MetaEndDateTimeControl} from './metadata_components.js';
 import DateTimeMaker from "../DateTimeMaker.js";
-import { useRsvpmakerRest } from "../queries.js";
+import { useRsvpmakerRest } from "../useRsvpmakerRest.js";
 const { __ } = wp.i18n; // Import __() from wp.i18n
 import { useSelect } from '@wordpress/data';
 

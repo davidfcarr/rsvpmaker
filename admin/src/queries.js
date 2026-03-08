@@ -1,26 +1,9 @@
-import React, {useState, useEffect} from "react"
-import { createConfiguredAxios } from './http-common.js';
+import React, {useState} from "react"
+import apiClient from './http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
-import { useSelect } from '@wordpress/data';
-import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
-
-export function useRsvpmakerRest() {
-    return useSelect( ( select ) => {
-        const rs = select( 'rsvpmaker' );
-        if(!rs) {
-            console.log('useRsvpmakerRest: rsvpmaker store not found');
-            return {};
-        }
-        return rs.getSettings();
-    } );
-}
 
 export function useOptions(tab = '') {
-    const rsvpmaker_rest = useRsvpmakerRest();
-
     function fetchOptions(queryobj) {
-        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return apiClient.get('rsvp_options'+queryjoin+'tab='+tab);
     }
@@ -33,10 +16,8 @@ export function useOptions(tab = '') {
 
 export function useOptionsMutation(setChanges,makeNotification) {
     const queryClient = useQueryClient();
-    const rsvpmaker_rest = useRsvpmakerRest();
 
     async function updateOption (option) {
-        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         return await apiClient.post('rsvp_options', option);
     }
     
@@ -79,10 +60,7 @@ export function useOptionsMutation(setChanges,makeNotification) {
 }
 
 export function useRSVPDate(eventID) {
-    const rsvpmaker_rest = useRsvpmakerRest();
-
     function fetchRSVPDate(queryobj) {
-        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return apiClient.get('rsvp_event_date'+queryjoin+'event_id='+eventID);
     }
@@ -94,10 +72,7 @@ export function useRSVPDate(eventID) {
 }
 
 export function useCopyDefaults() {
-    const rsvpmaker_rest = useRsvpmakerRest();
-
     function fetchCopyDefaults(queryobj) {
-        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         return apiClient.get('copy_defaults');
     }
     return useQuery([], fetchCopyDefaults, { enabled: true, retry: 2, onSuccess: (data, error, variables, context) => {
@@ -112,10 +87,8 @@ export function useRSVPDateMutation(eventID) {
     const queryClient = useQueryClient();
     console.log('useRSVPDateMutation called with');
     console.log('useRSVPDateMutation queryClient',queryClient);
-    const rsvpmaker_rest = useRsvpmakerRest();
 
     async function updateDate (update) {
-        const apiClient = createConfiguredAxios( rsvpmaker_rest );
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return await apiClient.post('rsvp_event_date'+queryjoin+'event_id='+eventID, update);
     }
@@ -205,17 +178,17 @@ export function useRsvpAuthorsOptions () {
     const [rsvpauthors, setRsvpauthors] = useState([{value: '', label: __('Any')}]);
     useEffect(() => {
     apiFetch( {path: 'rsvpmaker/v1/authors'} ).then( types => {
-	if(Array.isArray(authors))
-			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
-		else {
-			authors = Object.values(authors);
-			authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
-		}
+    if(Array.isArray(authors))
+            authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
+        else {
+            authors = Object.values(authors);
+            authors.map( function(author) { if(author.ID && author.name) rsvpauthors.push({value: author.ID, label: author.name }) } );
+        }
         setRsvpauthors(rsvpauthors);
     }).catch(err => {
         console.log(err);
     });
 },[]);
-    return rsvptypes;
+    return rsvpauthors;
 }
 

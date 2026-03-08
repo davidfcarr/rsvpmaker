@@ -54,6 +54,33 @@ function create_block_admin_block_init() {
 
 }
 
+function rsvpmaker_enqueue_block_store() {
+	static $store_enqueued = false;
+
+	if ( $store_enqueued ) {
+		return;
+	}
+
+	$asset_file = __DIR__ . '/build/block-store.asset.php';
+	$asset_data = file_exists( $asset_file )
+		? include $asset_file
+		: array(
+			'dependencies' => array( 'wp-data', 'wp-api-fetch' ),
+			'version'      => get_rsvpversion(),
+		);
+
+	wp_enqueue_script(
+		'rsvpmaker-block-store',
+		plugin_dir_url( __FILE__ ) . 'build/block-store.js',
+		$asset_data['dependencies'],
+		$asset_data['version'],
+		true
+	);
+	wp_localize_script( 'rsvpmaker-block-store', 'rsvpmakerSettings', rsvpmaker_rest_array() );
+
+	$store_enqueued = true;
+}
+
 function rsvpmaker_register_block_editor_store() {
     // Only load on block editor
     if ( ! function_exists( 'get_current_screen' ) ) {
@@ -65,9 +92,7 @@ function rsvpmaker_register_block_editor_store() {
         return;
     }
 
-    wp_enqueue_script( 'rsvpmaker-block-store', plugin_dir_url( __FILE__ ) . '../admin/build/block-store.js', array( 'wp-data', 'wp-api-fetch' ), get_rsvpversion(), true );
-
-    wp_localize_script( 'rsvpmaker-block-store', 'rsvpmakerSettings', rsvpmaker_rest_array() );
+	rsvpmaker_enqueue_block_store();
 }
 add_action( 'enqueue_block_editor_assets', 'rsvpmaker_register_block_editor_store' );
 
@@ -79,12 +104,14 @@ function react_admin_script() {
 	global $post;
 	if(isset($_GET['page']) && ('rsvpmaker_settings' == $_GET['page'] )) 
 	{
+		rsvpmaker_enqueue_block_store();
 		wp_enqueue_script(get_rsvpmaker_admin_script_handle('viewScript'));
 		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
 		wp_localize_script(get_rsvpmaker_admin_script_handle('viewScript'), 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}	
 	elseif(isset($_GET['page']) && ('rsvpmaker_details' == $_GET['page'] ) && isset($_GET['post_id'])) 
 	{
+		rsvpmaker_enqueue_block_store();
 		wp_enqueue_script(
 			'rsvpmaker_details', // Handle.
 			plugins_url( 'rsvpmaker/admin/build/event-options.js'), // Block.build.js: We register the block here. Built with Webpack.
@@ -123,6 +150,7 @@ function react_admin_script() {
 
 	if(isset($_GET['page']) && ('rsvpmaker_setup' == $_GET['page'] )) 
 	{
+		rsvpmaker_enqueue_block_store();
 		wp_enqueue_script(
 			'rsvpmaker_setup', // Handle.
 			plugins_url( 'rsvpmaker/admin/build/date-time.js'), // Block.build.js: We register the block here. Built with Webpack.
@@ -147,6 +175,7 @@ function rsvpmaker_frontend_admin () {
 	global $post;
 	if($post && 'rsvpmaker_form' == $post->post_type) 
 	{
+		rsvpmaker_enqueue_block_store();
 		wp_enqueue_script(
 			'rsvpmaker_single_form', // Handle.
 			plugins_url( 'rsvpmaker/admin/build/single-form.js'), // Block.build.js: We register the block here. Built with Webpack.

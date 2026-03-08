@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 11.8.2
+Stable tag: 11.8.6
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -127,7 +127,7 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     See the GNU General Public License at <http://www.gnu.org/licenses/gpl-2.0.html>.
 	
 	RSVPMaker also includes code derived from the software development kits for PayPal, 
-    Stripe and MailChimp under the license of their creators.
+    Stripe, MailChimp, and Postmark under the license of their creators.
 
 == Changelog ==
 

@@ -5,7 +5,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { __experimentalMainDashboardButton as MainDashboardButton } from '@wordpress/edit-post';
 import { Dashicon, Button, Modal } from '@wordpress/components';
 import { useState } from '@wordpress/element';
-import { useRsvpmakerRest } from '../queries.js';
+import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 const { subscribe, useSelect } = wp.data;
 
 const RSVPEmailSidebarPlugin = function() {

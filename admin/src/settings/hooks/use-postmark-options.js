@@ -7,7 +7,7 @@ import { useDispatch } from '@wordpress/data';
 const usePostmarkOptions = () => {
 	const [ postmarkOptions, setPostmarkOptions ] = useState( {} );
 
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const noticesDispatch = useDispatch( noticesStore );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } ).then( ( wpSettings ) => {
@@ -23,9 +23,16 @@ const usePostmarkOptions = () => {
 				rsvpmaker_postmark: postmarkOptions,
 			},
 		} ).then( () => {
-			createSuccessNotice(
-				__( 'Postmark settings saved.', 'rsvpmaker' )
+			const noticeId = `postmark-save-${ Date.now() }`;
+			noticesDispatch.removeAllNotices?.();
+			noticesDispatch.createSuccessNotice(
+				__( 'Postmark settings saved.', 'rsvpmaker' ),
+				{ id: noticeId, isDismissible: true }
 			);
+
+			setTimeout( () => {
+				noticesDispatch.removeNotice?.( noticeId );
+			}, 5000 );
 		} );
 	};
 

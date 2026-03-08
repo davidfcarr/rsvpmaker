@@ -7,7 +7,7 @@ import { useDispatch } from '@wordpress/data';
 const usePaypalOptions = () => {
 	const [ paypalOptions, setPaypalOptions ] = useState( {} );
 
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const noticesDispatch = useDispatch( noticesStore );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } ).then( ( wpSettings ) => {
@@ -23,9 +23,16 @@ const usePaypalOptions = () => {
 				rsvpmaker_paypal_rest_keys: paypalOptions,
 			},
 		} ).then( () => {
-			createSuccessNotice(
-				__( 'PayPal settings saved.', 'rsvpmaker' )
+			const noticeId = `paypal-save-${ Date.now() }`;
+			noticesDispatch.removeAllNotices?.();
+			noticesDispatch.createSuccessNotice(
+				__( 'Payment settings saved.', 'rsvpmaker' ),
+				{ id: noticeId, isDismissible: true }
 			);
+
+			setTimeout( () => {
+				noticesDispatch.removeNotice?.( noticeId );
+			}, 5000 );
 		} );
 	};
 

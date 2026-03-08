@@ -50,7 +50,7 @@ const RsvpmakerSettings = () => {
 	const [ rsvp_options, setRsvpOptions, saveRsvpOptions ] = useRsvpOptions() || [{}, () => {}, () => {}];
 	const [ chimpOptions, setChimpOptions, saveChimpOptions ] = useChimpOptions() || [{}, () => {}, () => {}];
 	const [filter, setFilter] = useState({});
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const { createSuccessNotice, removeAllNotices, removeNotice } = useDispatch( noticesStore );
 	async function myCopyDefaults(filter = {}) {
 		const selectedFilters = Array.isArray(filter)
 			? filter.filter((item) => item.value).map((item) => item.id)
@@ -70,17 +70,20 @@ const RsvpmakerSettings = () => {
 			}
 		});
 		const answer = await response.json();
+		const noticeId = `copy-${ Date.now() }`;
 
 		if(answer.updated) {
 			console.log(answer);
 			let updated = answer.updated;
 			if(updated.length > 500)
 				updated = updated.substring(0,500)+' ...';
-			createSuccessNotice(updated);
+			removeAllNotices();
+			createSuccessNotice(updated, { id: noticeId, isDismissible: true } );
 		}
 		else {
-			createSuccessNotice('Nothing updated');
+			createSuccessNotice('Nothing updated', { id: noticeId, isDismissible: true } );
 		}
+		setTimeout(() => { removeNotice(noticeId); }, 5000);
 	}
 
 	if ( !rsvp_options ) {
@@ -850,7 +853,18 @@ const RsvpmakerSettings = () => {
 			{
 				id: 'options',
 				label: __( 'Options', 'rsvpmaker' ),
-				children: [ 'long_date','short_date','defaulthour','defaultmin','time_format','rsvp_form_title','update_rsvp','rsvp_instructions','rsvp_to', 'rsvp_max','report_security','rsvp_recaptcha_site_key','rsvp_recaptcha_secret','rsvp_captcha','payment_gateway','payment_minimum', 'paypal_currency', 'currency_decimal', 'currency_thousands', 'dashboard', 'dashboard_message','smtp' ],
+				children: [ 'long_date','short_date','defaulthour','defaultmin','time_format','rsvp_form_title','update_rsvp','rsvp_instructions','rsvp_to', 'rsvp_max','report_security','rsvp_recaptcha_site_key','rsvp_recaptcha_secret','rsvp_captcha' ],
+				layout: { type: 'card', isOpened: true, withHeader: true },
+			},
+		],
+	};
+
+	const form2 = {
+		fields: [
+			{
+				id: 'options2',
+				label: __( 'Options', 'rsvpmaker' ),
+				children: [ 'payment_gateway','payment_minimum', 'paypal_currency', 'currency_decimal', 'currency_thousands', 'dashboard', 'dashboard_message','smtp' ],
 				layout: { type: 'card', isOpened: true, withHeader: true },
 			},
 			{
@@ -867,6 +881,7 @@ const RsvpmakerSettings = () => {
 			},
 		],
 	};
+
 	console.log('chimpOptions',chimpOptions);
 	const chimpfields = [
 		{
@@ -978,6 +993,21 @@ const RsvpmakerSettings = () => {
 					} ) )
 				}
 			/>
+			<Notices />
+			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
+			<DataForm
+				data={ rsvp_options }
+				fields={ fields }
+				form={ form2 }
+				onChange={ ( edits ) =>
+					setRsvpOptions( ( current ) => ( {
+						...current,
+						...edits,
+					} ) )
+				}
+			/>
+			<Notices />
+			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
 			<DataForm
 				data={ chimpOptions }
 				fields={ chimpfields }

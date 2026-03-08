@@ -1,5 +1,5 @@
 import React, {useState, useEffect, Suspense} from "react"
-import {useOptions, useOptionsMutation} from './queries.js'
+import {useOptions, useOptionsMutation} from '../queries.js'
 
 export function useSaveControls() {
 const [isSaving,setIsSaving] = useState(false);

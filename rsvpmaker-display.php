@@ -472,7 +472,11 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		$wpdb->show_errors();
 	}
 
-	//add_filter('posts_request','rsvpmaker_modify_query');
+	add_filter('posts_fields', 'rsvpmaker_select',99, 2 );
+	add_filter('posts_join', 'rsvpmaker_join',99, 2 );
+	add_filter('posts_groupby', 'rsvpmaker_groupby',99, 2 );	
+	add_filter('posts_where', 'rsvpmaker_where',99, 2 );
+	add_filter('posts_orderby', 'rsvpmaker_orderby',99, 2 );						
 	$wp_query = new WP_Query( $queryarg );
 
 	return $wp_query;

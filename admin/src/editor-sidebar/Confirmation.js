@@ -4,7 +4,7 @@ import {SelectCtrl} from '../Ctrl.js'
 import { SanitizedHTML } from "../SanitizedHTML.js";
 import {Up,Down,Delete} from '../icons.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
-import { createConfiguredAxios } from '../http-common.js';
+import apiClient, { setupNonceInterceptor } from '../http-common.js';
 import { useSelect } from '@wordpress/data';
 import { useRsvpmakerRest } from '../queries.js';
 
@@ -13,8 +13,11 @@ export default function Confirmation() {
     const [reminderHours,setReminderHours] = useState(1);
     const [addBeforeAfter,setBeforeAfter] = useState('before');
     const rsvpmaker_rest = useRsvpmakerRest();
-    
-    const apiClient = createConfiguredAxios( rsvpmaker_rest );
+        useEffect(() => {
+        if (rsvpmaker_rest?.nonce) {
+        setupNonceInterceptor(rsvpmaker_rest.nonce);
+        }
+    }, [rsvpmaker_rest?.nonce]);
     
     function fetchMessages() {
         return apiClient.get('confirm_remind?event_id='+rsvpmaker_ajax.event_id);

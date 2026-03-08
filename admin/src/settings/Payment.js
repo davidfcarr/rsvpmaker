@@ -1,5 +1,5 @@
 import React, {useState, useEffect, Suspense} from "react"
-import {useOptions, useOptionsMutation} from './queries.js'
+import {useOptions, useOptionsMutation} from '../queries.js'
 import { __experimentalNumberControl as NumberControl, SelectControl, ToggleControl, TextControl, RadioControl } from '@wordpress/components';
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';

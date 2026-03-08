@@ -4,13 +4,11 @@ import { __experimentalNumberControl as NumberControl, SelectControl, ToggleCont
 import { SanitizedHTML } from "./SanitizedHTML.js";
 import {useSaveControls} from './SaveControls';
 import { OptionsToggle,OptRadio,OptSelect,OptText,OptTextArea } from "./OptionControls.js";
-import { createConfiguredAxios } from './http-common.js';
+import apiClient from './http-common.js';
 
 async function myCopyDefaults() {
     let name = newForm;
     
-    const apiClient = createConfiguredAxios( rsvpmaker_rest );
-
     let answer = await apiClient.get('copy_defaults');
     if(answer.data.updated) {
         console.log(answer);

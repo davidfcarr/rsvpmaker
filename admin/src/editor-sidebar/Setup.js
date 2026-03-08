@@ -7,8 +7,7 @@ import FormSetup from './FormSetup.js'
 import Confirmation from './Confirmation.js';
 import Pricing from './Pricing.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
-import { useSelect } from '@wordpress/data';
-import { useRsvpmakerRest } from "../queries.js";
+import { useRsvpmakerRest } from "../useRsvpmakerRest.js";
 
 const onSelect = ( tabName ) => {
     console.log( 'Selecting tab', tabName );

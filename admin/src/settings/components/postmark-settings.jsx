@@ -182,9 +182,9 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 		},
 	*/
 	const restrictedValue = Number(postmarkOptions?.restricted) === 1 ? 1 : 0;
-	const formchildren = (rsvpmaker_rest.postmark_root == "1") ? ['postmark_mode', 'postmark_production_key', 'postmark_sandbox_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails','handle_incoming','restricted']
+	const formchildren = (rsvpmaker_rest.multisite == "1") ? ['postmark_mode', 'postmark_production_key', 'postmark_sandbox_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails','handle_incoming','restricted']
 	 : ['postmark_mode', 'postmark_production_key', 'postmark_sandbox_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails','handle_incoming'];
-	if(restrictedValue === 1 && rsvpmaker_rest.postmark_root == "1" && rsvpmaker_rest.domains && rsvpmaker_rest.domains.length > 0) {
+	if(restrictedValue === 1 && rsvpmaker_rest.multisite == "1" && rsvpmaker_rest.domains && rsvpmaker_rest.domains.length > 0) {
 		formchildren.push('enabled');
 		formchildren.push('sandbox_only');
 	}
@@ -199,9 +199,17 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 		],
 	};
 
+	console.log('rsvpmaker_rest', rsvpmaker_rest);
+/*
+			<p>Multisite: {rsvpmaker_rest.multisite}</p>
+			<p>Postmark Mode: {rsvpmaker_rest.postmark_mode}</p>
+			<p>Postmark Root: {rsvpmaker_rest.postmark_root ? 'Yes' : 'No'}</p>
+*/
+
 	return (
 		<VStack spacing={ 4 }>
 			<SettingsTitle />
+			{rsvpmaker_rest.multisite && rsvpmaker_rest.multisite > 1 && rsvpmaker_rest.postmark_root ? <p>{__( 'Note: By default, Postmark settings are shared across sites in a WordPress network. The root domain appears to already be set to: ', 'rsvpmaker' ) + rsvpmaker_rest.postmark_mode+'. '+__( 'Only set your credentials here if you want to override the root domain settings.', 'rsvpmaker' )}</p> : null}
 			<Notices />
 			<DataForm
 				data={ postmarkOptions }
@@ -221,7 +229,6 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 					} ) );
 				} }
 			/>
-			<p>{__( 'Visit the Basic Settings and Defaults screen to set your default payment gateway to PayPal, Stripe, or both.', 'rsvpmaker' )}</p>
 			<Notices />
 			<SaveButton onClick={ () => { savePostmarkOptions(); } } />
 		</VStack>

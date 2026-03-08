@@ -1,15 +1,25 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import DateTimeMaker from '../DateTimeMaker.js';
 import TemplateControl from './TemplateControl.js';
 import Setup from './Setup.js';
-import {useRSVPDate} from '../queries.js'
+import {useRSVPDate} from '../queries.js';
+import { setupNonceInterceptor } from '../http-common.js';
+import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 
 export default function DateOrTemplate() {
+
     const initialPostStatus = wp?.data?.select( 'core/editor' ).getEditedPostAttribute( 'status' );
     const postmeta = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'meta' );
     const tab = 'basics';
     const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus) || postmeta?._show_rsvpmaker_options);
     const event_id = wp?.data?.select("core/editor").getCurrentPostId();
+    const rsvpmaker_rest = useRsvpmakerRest();
+    useEffect(() => {
+        if (rsvpmaker_rest?.nonce) {
+        setupNonceInterceptor(rsvpmaker_rest.nonce);
+        }
+    }, [rsvpmaker_rest?.nonce]);
+
     const {data,isLoading,isError} = useRSVPDate(event_id);
     if(isError)
         return <p>Error loading event date</p>

@@ -4,13 +4,17 @@ import Checkbox from './Checkbox';
 import { SanitizedHTML } from "../SanitizedHTML.js";
 const { subscribe } = wp.data;
 import {useQuery, useMutation, useQueryClient} from 'react-query';
-import { useRsvpmakerRest } from "../queries.js";
-import { createConfiguredAxios } from '../http-common.js';
+import apiClient, { setupNonceInterceptor } from '../http-common.js';
+import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 
 export default function TemplateProjected (props) {
     const rsvpmaker_rest = useRsvpmakerRest();
     
-    const apiClient = createConfiguredAxios( rsvpmaker_rest );
+    useEffect(() => {
+        if (rsvpmaker_rest?.nonce) {
+        setupNonceInterceptor(rsvpmaker_rest.nonce);
+        }
+    }, [rsvpmaker_rest?.nonce]);
     if(-1 == window.location.href.indexOf('post='))
         return;//don't display if still under construction
     const [ isOpen, setOpen ] = useState( false );

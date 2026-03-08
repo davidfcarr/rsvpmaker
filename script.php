@@ -6,6 +6,7 @@
 function rsvpmaker_rest_array() {
 	global $post, $rsvpmaker_nonce, $rsvp_options;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
+	$post_type = isset( $post->post_type ) ? $post->post_type : '';
 	$time = '';
 	$sked = [];
 	if(isset($post->post_type) && 'rsvpmaker' == $post->post_type) {
@@ -17,14 +18,20 @@ function rsvpmaker_rest_array() {
 	}
 	elseif(isset($post->post_type) && 'rsvpmaker_template' == $post->post_type) {
 		$sked = get_template_sked($post_id);
-		if(!empty($sked['time']))
-			$time = $sked['time'];
+		if(!empty($sked['hour']))
+			$time = $sked['hour'].':'.$sked['minutes'].':00';
 	}
 	$email_template = get_option('rsvpmailer_default_block_template');
 	$email_template_design = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template');
 	$postmark = get_rsvpmaker_postmark_options();
 	$default_incoming_nonce = wp_create_nonce('handle_incoming');
 	$domains = [];
+    if(is_multisite()) {
+       $multisite = get_current_blog_id();
+    }
+    else {
+        $multisite = 0;
+    }        
 
 	if(isset($_GET['page']) && 'rsvpmaker_settings' == $_GET['page'] && is_multisite()) {
 		$sites = get_sites();
@@ -33,11 +40,12 @@ function rsvpmaker_rest_array() {
 		}
 	}
 
-	return array(
+	return apply_filters('rsvpmaker_rest_array', array(
 		'post_id'  => $post_id,
-		'date'    => (empty($event) || empty($event->date)) ? '' : $event->date,
+		'post_type' => $post_type,
+		'date'    => (empty($event) || empty($event->date)) ? date('Y-m-d').' '.$time : $event->date,
 		'time'    => $time,
-		'12hour' => strpos($rsvp_options['time_format'], 'A') !== false,
+		'hour12' => strpos($rsvp_options['time_format'], 'A') !== false,
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 		'rest_url' => rest_url(),
 		'ajaxurl' => admin_url( 'admin-ajax.php' ),
@@ -46,9 +54,11 @@ function rsvpmaker_rest_array() {
 		'default_email_template' => $email_template,
 		'email_design_screen' => $email_template_design,
 		'default_incoming_nonce' => $default_incoming_nonce,
-		'postmark_root' => $postmark['multisite_root'],
+		'postmark_mode' => $postmark['postmark_mode'],
+		'postmark_root' => isset($postmark['root']) ? $postmark['root'] : false,
+		'multisite' => $multisite,
 		'domains' => $domains,
-		);
+		));
 }
 
 function rsvpmaker_admin_enqueue( $hook ) {

@@ -7,7 +7,7 @@ import { useDispatch } from '@wordpress/data';
 const useRsvpOptions = () => {
 	const [ rsvp_options, setRsvpOptions ] = useState( {} );
 
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const noticesDispatch = useDispatch( noticesStore );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } ).then( ( wpSettings ) => {
@@ -23,9 +23,16 @@ const useRsvpOptions = () => {
 				RSVPMAKER_Options: rsvp_options,
 			},
 		} ).then( () => {
-			createSuccessNotice(
-				__( 'Settings saved.', 'rsvpmaker' )
+			const noticeId = `rsvp-save-${ Date.now() }`;
+			noticesDispatch.removeAllNotices?.();
+			noticesDispatch.createSuccessNotice(
+				__( 'Settings saved.', 'rsvpmaker' ),
+				{ id: noticeId, isDismissible: true }
 			);
+
+			setTimeout( () => {
+				noticesDispatch.removeNotice?.( noticeId );
+			}, 5000 );
 		} );
 	};
 

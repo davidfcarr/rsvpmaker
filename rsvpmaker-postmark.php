@@ -8,28 +8,17 @@ use Postmark\Models\Suppressions\SuppressionChangeRequest;
 
 function get_rsvpmaker_postmark_options() {
     global $postmark_settings;
-    $postmark_settings = get_option('rsvpmaker_postmark');
-    if(empty($postmark_settings) && is_multisite()) {
+    $postmark_settings = get_option('rsvpmaker_postmark',array('postmark_mode' => '','root' => false));
+    if($postmark_settings['postmark_mode'] == '' && is_multisite()) {
         $postmark_settings = get_blog_option(1,'rsvpmaker_postmark');
+        if(empty($postmark_settings))
+            $postmark_settings = array('postmark_mode' => '','root' => false);
+        else
+            $postmark_settings['root'] = true;
     }
-    if(empty($postmark_settings)) {
-        $postmark_settings = array();
-        $postmark_settings['postmark_mode'] = '';
-    }
-    if(is_multisite()) {
-       $postmark_settings['multisite_root'] = get_current_blog_id();
-    }
-    else {
-        $postmark_settings['multisite_root'] = 0;
-    }        
-    if(empty($postmark_settings))
-    {
-        $postmark_settings = array();
-        $postmark_settings['postmark_mode'] = '';
-    }
-    elseif(!empty($postmark_settings['enabled']) && !in_array(get_current_blog_id(),$postmark_settings['enabled']))
+    if((!empty($postmark_settings['restricted']) && !empty($postmark_settings['enabled'])) && !in_array(get_current_blog_id(),$postmark_settings['enabled']))
         $postmark_settings['postmark_mode'] = '';//disable
-    elseif(!empty($postmark_settings['sandbox_only']) && in_array(get_current_blog_id(),$postmark_settings['sandbox_only']))
+    if((!empty($postmark_settings['restricted']) && !empty($postmark_settings['sandbox_only'])) && in_array(get_current_blog_id(),$postmark_settings['sandbox_only']))
         $postmark_settings['postmark_mode'] = 'sandbox';
     if(empty($postmark_settings['sender_domains']))
         $postmark_settings['sender_domains'] = array();

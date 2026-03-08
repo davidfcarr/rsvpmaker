@@ -7,7 +7,7 @@ import { useDispatch } from '@wordpress/data';
 const useStripeOptions = () => {
 	const [ stripeOptions, setStripeOptions ] = useState( {} );
 
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const noticesDispatch = useDispatch( noticesStore );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } ).then( ( wpSettings ) => {
@@ -23,9 +23,16 @@ const useStripeOptions = () => {
 				rsvpmaker_stripe_keys: stripeOptions,
 			},
 		} ).then( () => {
-			createSuccessNotice(
-				__( 'Stripe settings saved.', 'rsvpmaker' )
+			const noticeId = `stripe-save-${ Date.now() }`;
+			noticesDispatch.removeAllNotices?.();
+			noticesDispatch.createSuccessNotice(
+				__( 'Payment settings saved.', 'rsvpmaker' ),
+				{ id: noticeId, isDismissible: true }
 			);
+
+			setTimeout( () => {
+				noticesDispatch.removeNotice?.( noticeId );
+			}, 5000 );
 		} );
 	};
 

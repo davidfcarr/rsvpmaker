@@ -7,7 +7,7 @@ import { useDispatch } from '@wordpress/data';
 const useChimpOptions = () => {
 	const [ chimpOptions, setChimpOptions ] = useState( {} );
 
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const noticesDispatch = useDispatch( noticesStore );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } ).then( ( wpSettings ) => {
@@ -26,9 +26,16 @@ const useChimpOptions = () => {
 				chimp: chimpOptions,
 			},
 		} ).then( () => {
-			createSuccessNotice(
-				__( 'Email settings saved.', 'rsvpmaker' )
+			const noticeId = `rsvpmaker-save-${ Date.now() }`;
+			noticesDispatch.removeAllNotices?.();
+			noticesDispatch.createSuccessNotice(
+				__( 'Settings saved.', 'rsvpmaker' ),
+				{ id: noticeId, isDismissible: true }
 			);
+
+			setTimeout( () => {
+				noticesDispatch.removeNotice?.( noticeId );
+			}, 5000 );
 		} );
 	};
 

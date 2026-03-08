@@ -1,16 +1,20 @@
 import React, {useState} from 'react';
 import { TextControl, RadioControl } from '@wordpress/components';
-import { createConfiguredAxios } from '../http-common.js';
+import apiClient, { setupNonceInterceptor } from '../http-common.js';
 import { useSelect } from '@wordpress/data';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { MetaSelectControl, MetaTextControl, MetaRadioControl } from './metadata_components.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
-import { useRsvpmakerRest } from '../queries.js';
+import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 
 export default function Pricing() {
     const rsvpmaker_rest = useRsvpmakerRest();
     
-    const apiClient = createConfiguredAxios( rsvpmaker_rest );
+    useEffect(() => {
+        if (rsvpmaker_rest?.nonce) {
+        setupNonceInterceptor(rsvpmaker_rest.nonce);
+        }
+    }, [rsvpmaker_rest?.nonce]);
     const [status,setStatus] = useState('');
     const [priceToAdd,setPriceToAdd] = useState('0.00');
     const [extraGuestPrice,setExtraGuestPrice] = useState('0.00');
