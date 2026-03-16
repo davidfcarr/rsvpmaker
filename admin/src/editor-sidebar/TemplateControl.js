@@ -14,7 +14,7 @@ export default function TemplateControl (props) {
         return;
 
     return (<div>
-        <h3>RSVPMaker Template {rsvpmaker_ajax.projected_url && <a href={rsvpmaker_ajax.projected_url}>(Create/Update)</a>}</h3>
+        <h3>RSVPMaker Template {rsvpmaker_rest.projected_url && <a href={rsvpmaker_rest.projected_url}>(Create/Update)</a>}</h3>
 			<div class="sked_frequency">
 			<p class="varies"><RSVPMetaToggle
 			label="Varies" 

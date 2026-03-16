@@ -6,7 +6,6 @@ const { DateTimePicker, TimePicker, RadioControl, SelectControl, TextControl, Te
 const { withSelect, withDispatch } = wp.data;
 const { Fragment } = wp.element;
 import apiFetch from '@wordpress/api-fetch';
-import { inputToDate } from '@wordpress/utils';
 import {useRSVPDateMutation} from '../queries'
 
 import { getSettings } from '@wordpress/date';
@@ -22,6 +21,16 @@ const is12HourTime = /a(?!\\)/i.test(
 		.reverse()
 		.join( '' ) // Reverse the string and test for "a" not followed by a slash
 );
+
+function getRsvpmakerRestSettings() {
+	const fromStore = wp?.data?.select?.('rsvpmaker')?.getSettings?.();
+	// The store returns {} as default state, so only trust it if it has data
+	if(fromStore?.post_type) return fromStore;
+	// PHP localizes as rsvpmakerSettings (block bundle) or rsvpmaker_rest (sidebar script)
+	return window?.rsvpmakerSettings?.post_type ? window.rsvpmakerSettings
+		: window?.rsvpmaker_rest?.post_type ? window.rsvpmaker_rest
+		: null;
+}
 
 function HourOptions () {
 	
@@ -365,10 +374,11 @@ var MetaTemplateStartTimeControl = wp.compose.compose(
 
 var MetaDateControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
+		const rsvpmaker_rest = getRsvpmakerRestSettings();
 		return {
 			setMetaValue: function( metaValue ) {
 				metaValue = metaValue.replace('T',' ');
-				apiFetch({path: 'rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id});
+				apiFetch({path: 'rsvpmaker/v1/clearcache/'+rsvpmaker_rest.event_id});
 				dispatch( 'core/editor' ).editPost(
 					{ meta: { [ props.metaKey ]: metaValue } }
 				);
@@ -567,10 +577,11 @@ var MetaEndDateTimeControl = wp.compose.compose(
 
 var RSVPEndDateControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
+		const rsvpmaker_rest = getRsvpmakerRestSettings();
 		return {
 			setMetaValue: function( metaValue ) {
 				metaValue = metaValue.replace('T',' ');
-				apiFetch({path: 'rsvpmaker/v1/clearcache/'+rsvpmaker_ajax.event_id});
+				apiFetch({path: 'rsvpmaker/v1/clearcache/'+rsvpmaker_rest.event_id});
 				dispatch( 'core/editor' ).editPost(
 					{ meta: { [ props.metaKey ]: metaValue } }
 				);
@@ -667,6 +678,7 @@ export function RSVPTimestampControl (props) {
 
 const MetaTimestampControl = wp.compose.compose(
 	withDispatch( function( dispatch, props ) {
+		const rsvpmaker_rest = getRsvpmakerRestSettings();
 		return {
 			setMetaValue: function( metaValue ) {
 				console.log('metats dispatch',metaValue);
@@ -688,11 +700,12 @@ const MetaTimestampControl = wp.compose.compose(
 			else
 				return n;
 		}
+		const rsvpmaker_rest = getRsvpmakerRestSettings();
 
-		const sdate = new Date(rsvpmaker_ajax.eventdata.date);
+		const sdate = new Date(rsvpmaker_rest.eventdata.date);
 		//subtract from js calculated dates / 1000 to get server timestamp
 		console.log('meta ts props',props);
-		const correction = sdate.getTime() - (rsvpmaker_ajax.eventdata.ts_start * 1000);
+		const correction = sdate.getTime() - (rsvpmaker_rest.eventdata.ts_start * 1000);
 		const metadate = new Date();
 		if(props.metaValue)
 			metadate.setTime((props.metaValue * 1000)+correction);

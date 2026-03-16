@@ -2584,7 +2584,7 @@ return sprintf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" da
 /**
  * AJAX handler to store the state of dismissible notices.
  */
-function rsvpmaker_ajax_notice_handler() {
+function rsvpmaker_rest_notice_handler() {
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
     // Pick up the notice "type" - passed via jQuery (the "data-notice" attribute on the notice)

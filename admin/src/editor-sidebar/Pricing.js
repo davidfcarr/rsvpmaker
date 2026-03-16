@@ -1,14 +1,12 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { TextControl, RadioControl } from '@wordpress/components';
 import apiClient, { setupNonceInterceptor } from '../http-common.js';
-import { useSelect } from '@wordpress/data';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { MetaSelectControl, MetaTextControl, MetaRadioControl } from './metadata_components.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
-import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 
-export default function Pricing() {
-    const rsvpmaker_rest = useRsvpmakerRest();
+export default function Pricing(props) {
+    const {rsvpmaker_rest} = props;
     
     useEffect(() => {
         if (rsvpmaker_rest?.nonce) {
@@ -33,7 +31,7 @@ export default function Pricing() {
     const [itemPriceToUpdate,setItemPriceToUpdate] = useState(0);
     
     function fetchPricing() {
-        return apiClient.get('pricing?event_id='+rsvpmaker_ajax.event_id);
+        return apiClient.get('pricing?event_id='+rsvpmaker_rest.event_id);
     }
     const {data,isLoading,isError} = useQuery(['pricing'], fetchPricing, { enabled: true, retry: 2, 
     onSuccess: (data, error, variables, context) => {
@@ -44,7 +42,7 @@ export default function Pricing() {
         
     const queryClient = useQueryClient();
     async function updatePricing (command) {
-        return await apiClient.post('pricing?event_id='+rsvpmaker_ajax.event_id, command);
+        return await apiClient.post('pricing?event_id='+rsvpmaker_rest.event_id, command);
     }
     
     if(isError)
@@ -172,7 +170,7 @@ export default function Pricing() {
 
     return <div>
         <p><a href="https://rsvpmaker.com/knowledge-base/pricing-per-person-and-by-options-like-meal-choice/" target="_blank">Documentation: Pricing Options</a></p>
-        <p><MetaSelectControl label="Payment Gateway" metaKey="_payment_gateway" options={rsvpmaker_ajax.payment_gateway_options.map((value) => { return {'label':value,'value':value}})} /></p>
+        <p><MetaSelectControl label="Payment Gateway" metaKey="_payment_gateway" options={rsvpmaker_rest.payment_gateway_options.map((value) => { return {'label':value,'value':value}})} /></p>
         <p><MetaTextControl label="Currency" metaKey="_rsvp_currency" /></p>
         {isLoading && <p>Loading prices ...</p>}
 

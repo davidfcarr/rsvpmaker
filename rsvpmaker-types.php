@@ -9,9 +9,10 @@ function rsvpmaker_create_post_type() {
 
 	$supports = array( 'title', 'editor', 'author', 'excerpt', 'custom-fields', 'thumbnail', 'revisions','page-attributes','post-formats' );
 
-	register_post_type(
-		'rsvpmaker',
-		array(
+	if ( ! post_type_exists( 'rsvpmaker' ) ) {
+		register_post_type(
+			'rsvpmaker',
+			array(
 
 			'labels'             => array(
 
@@ -58,12 +59,14 @@ function rsvpmaker_create_post_type() {
 
 			'taxonomies'         => array( 'rsvpmaker-type', 'post_tag' ),
 
-		)
-	);
+			)
+		);
+	}
 
-	register_post_type(
-		'rsvpmaker_template',
-		array(
+	if ( ! post_type_exists( 'rsvpmaker_template' ) ) {
+		register_post_type(
+			'rsvpmaker_template',
+			array(
 
 			'labels'             => array(
 
@@ -115,12 +118,14 @@ function rsvpmaker_create_post_type() {
 
 			'taxonomies'         => array( 'rsvpmaker-type', 'post_tag' ),
 
-		)
-	);
+			)
+		);
+	}
 
-	register_post_type(
-		'rsvpmaker_form',
-		array(
+	if ( ! post_type_exists( 'rsvpmaker_form' ) ) {
+		register_post_type(
+			'rsvpmaker_form',
+			array(
 
 			'labels'             => array(
 
@@ -170,8 +175,9 @@ function rsvpmaker_create_post_type() {
 
 			'show_in_rest'       => true,
 
-		)
-	);
+			)
+		);
+	}
 
 	// Add new taxonomy, make it hierarchical (like categories)
 
@@ -337,6 +343,9 @@ function rsvpmaker_form_single($content) {
 
 function create_rsvpemail_post_type() {
     global $rsvp_options;
+			if ( post_type_exists( 'rsvpemail' ) ) {
+				return;
+			}
       register_post_type( 'rsvpemail',
         array(
           'labels' => array(

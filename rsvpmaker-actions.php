@@ -1,5 +1,6 @@
 <?php
 add_action('admin_init', 'rsvpevent_to_email' );
+add_action('init', 'rsvpmaker_register_post_types_early', 0 );
 add_action('init', 'rsvpmaker_init_router' );
 add_action('init', 'rsvp_options_defaults', 1 );
 add_action('init','rsvpmail_unsubscribe');
@@ -109,7 +110,7 @@ if ( isset( $rsvp_options['dashboard'] ) && ! empty( $rsvp_options['dashboard'] 
 add_action( 'wp_ajax_rsvpmaker_date', 'ajax_rsvpmaker_date_handler' );
 add_action( 'wp_ajax_rsvpmaker_meta', 'ajax_rsvpmaker_meta_handler' );
 add_action( 'wp_ajax_rsvpmaker_dateformat', 'ajax_rsvpmaker_dateformat_handler' );
-add_action( 'wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_ajax_notice_handler' );
+add_action( 'wp_ajax_rsvpmaker_dismissed_notice_handler', 'rsvpmaker_rest_notice_handler' );
 add_action( 'wp_ajax_rsvpmaker_template', 'ajax_rsvpmaker_template_handler' );
 
 add_action('init', 'rsvpmaker_submission_post' );
@@ -120,6 +121,11 @@ add_action( 'manage_posts_custom_column', 'rsvpmaker_template_custom_column', 99
 
 add_action('export_wp','rsvpmaker_export_wp');
 add_action('import_end','rsvpmaker_import_end');
+
+function rsvpmaker_register_post_types_early() {
+	rsvpmaker_create_post_type();
+	create_rsvpemail_post_type();
+}
 
 function rsvpmaker_init_router() {
 	global $post;

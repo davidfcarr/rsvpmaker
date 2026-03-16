@@ -9,7 +9,13 @@ import { useSelect } from '@wordpress/data';
 import TemplateProjected from './TemplateProjected.js';
 
 function getRsvpmakerRestSettings() {
-	return wp?.data?.select?.('rsvpmaker')?.getSettings?.() || window?.rsvpmaker_rest || null;
+	const fromStore = wp?.data?.select?.('rsvpmaker')?.getSettings?.();
+	// The store returns {} as default state, so only trust it if it has data
+	if(fromStore?.post_type) return fromStore;
+	// PHP localizes as rsvpmakerSettings (block bundle) or rsvpmaker_rest (sidebar script)
+	return window?.rsvpmakerSettings?.post_type ? window.rsvpmakerSettings
+		: window?.rsvpmaker_rest?.post_type ? window.rsvpmaker_rest
+		: null;
 }
 
 var el = wp.element.createElement;
@@ -44,17 +50,39 @@ const rsvpmaker_rest = getRsvpmakerRestSettings();
 	);
 }
 
+let rsvpSidebarNoticesInitialized = false;
 initRsvpSidebarNotices();
+
 function initRsvpSidebarNotices() {
-const rsvpmaker_rest = getRsvpmakerRestSettings();
-if(!rsvpmaker_rest) {
-	console.log('rsvpmaker_rest not available initRsvpSidebarNotices');
-	return;
+	if(rsvpSidebarNoticesInitialized) return;
+
+	const tryInit = () => {
+		if(rsvpSidebarNoticesInitialized) return true;
+		const rsvpmaker_rest = getRsvpmakerRestSettings();
+		if(!rsvpmaker_rest?.post_type) {
+			return false;
+		}
+		if(rsvpmaker_rest.post_type != 'rsvpmaker_template' && rsvpmaker_rest.post_type != 'rsvpmaker') {
+			rsvpSidebarNoticesInitialized = true;
+			console.log('type check failed initRsvpSidebarNotices',rsvpmaker_rest);
+			return true;
+		}
+		rsvpSidebarNoticesInitialized = true;
+		runRsvpSidebarNotices(rsvpmaker_rest);
+		return true;
+	};
+
+	if(tryInit()) return;
+
+	// Wait for store/localized settings to be available, then run once.
+	const unsubscribeInit = subscribe(() => {
+		if(tryInit()) {
+			unsubscribeInit();
+		}
+	});
 }
-if(rsvpmaker_rest.post_type != 'rsvpmaker_template' && rsvpmaker_rest.post_type != 'rsvpmaker') {
-	console.log('type check failed initRsvpSidebarNotices',rsvpmaker_rest.post_type);
-	return;
-}
+
+function runRsvpSidebarNotices(rsvpmaker_rest) {
 console.log('initRsvpSidebarNotices rsvpmaker_rest now',rsvpmaker_rest);
 
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {

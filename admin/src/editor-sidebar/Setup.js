@@ -103,8 +103,8 @@ return (
 function Form(props) {
     const {eventdata, rsvpmaker_rest} = props;
     return (<div>
-                <div>{rsvpmaker_ajax.form_fields}</div>
-<div><em>{rsvpmaker_ajax.form_type}</em></div>
+                <div>{rsvpmaker_rest.form_fields}</div>
+<div><em>{rsvpmaker_rest.form_type}</em></div>
 <div>
 <RSVPMetaToggle
 label={__("Login required to RSVP",'rsvpmaker')}
@@ -237,14 +237,14 @@ eventdata={eventdata}
 label={__('"Include Event Content with Confirmation"','rsvpmaker')}
 metaKey="_rsvp_confirmation_include_event"
 eventdata={eventdata} />
-<PanelRow>{__('Confirmation Message (exerpt)','rsvpmaker')}: {rsvpmaker_ajax.confirmation_excerpt}</PanelRow>
-{rsvpmaker_ajax.confirmation_links.map( function(x) {return <PanelRow><a href={x.href}>{x.title}</a></PanelRow>} )}
+<PanelRow>{__('Confirmation Message (exerpt)','rsvpmaker')}: {rsvpmaker_rest.confirmation_excerpt}</PanelRow>
+{rsvpmaker_rest.confirmation_links.map( function(x) {return <PanelRow><a href={x.href}>{x.title}</a></PanelRow>} )}
 
 <PanelRow>
 <MetaSelectControl
 label={__("Email Template for Confirmations",'rsvpmaker')}
 metaKey="rsvp_tx_template"
-options={ rsvpmaker_ajax.rsvp_tx_template_choices }
+options={ rsvpmaker_rest.rsvp_tx_template_choices }
 />
 </PanelRow>
 <div>Venue:<br />

@@ -215,10 +215,10 @@ add_action( 'add_meta_boxes', function() {
 	);
 } );
 
-function get_rsvpmaker_ajax() {
-	global $post, $rsvp_options, $current_user, $rsvpmaker_ajax;
-	if(!empty($rsvpmaker_ajax))
-		return $rsvpmaker_ajax;
+function get_rsvpmaker_rest() {
+	global $post, $rsvp_options, $current_user, $rsvpmaker_rest;
+	if(!empty($rsvpmaker_rest))
+		return $rsvpmaker_rest;
 	$post_id = (empty($post->ID)) ? 0 : $post->ID;
 	$post_type = (isset($post->post_type)) ? $post->post_type: '';
 	if(isset($_GET['post_type']))
@@ -245,8 +245,8 @@ function get_rsvpmaker_ajax() {
 			$rsvpmaker_special = get_post_meta($post_id,'_rsvpmaker_special',true);
 		if(!empty($rsvpmaker_special))
 			$top_message = $rsvpmaker_special;
-		$top_message = apply_filters('rsvpmaker_ajax_top_message',$top_message);
-		$bottom_message = apply_filters('rsvpmaker_ajax_bottom_message',$bottom_message);
+		$top_message = apply_filters('rsvpmaker_rest_top_message',$top_message);
+		$bottom_message = apply_filters('rsvpmaker_rest_bottom_message',$bottom_message);
 
 		if($sked)
 		{
@@ -333,12 +333,9 @@ function get_rsvpmaker_ajax() {
 		if($index > 0)
 		$confirmation_email_templates[] = array('label' => $template['slug'], 'value' => $index);
 	}
-
-	//if(('rsvpmaker' == $post_type) || ('rsvpmaker_template' == $post_type))
-	//{
 		$related_documents = rsvpmaker_get_related_documents ();
 		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');
-		$rsvpmaker_ajax = array(
+		$rsvpmaker_rest = array(
 			'projected_label' => $projected_label,
 			'projected_url' => $projected_url,
 			'template_label' => $template_label,
@@ -375,9 +372,7 @@ function get_rsvpmaker_ajax() {
 			'form_links' => rsvpmaker_get_form_links($post_id, $template_id, 'rsvp_options'),
 			'confirmation_links' => rsvpmaker_get_conf_links($post_id, $template_id, 'rsvp_options'));
 
-	//}
-	//}
-	return empty($rsvpmaker_ajax) ? [] : $rsvpmaker_ajax;
+	return empty($rsvpmaker_rest) ? [] : $rsvpmaker_rest;
 }
 
 function rsvpmaker_localize () {
@@ -396,8 +391,8 @@ if($post_type == 'rsvpemail') {
 wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
 wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 
-$rsvpmaker_ajax = get_rsvpmaker_ajax();
-wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_ajax',$rsvpmaker_ajax);
-wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvpmaker_ajax',$rsvpmaker_ajax);
+$rsvpmaker_rest = get_rsvpmaker_rest();
+wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_rest',$rsvpmaker_rest);
+wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvpmaker_rest',$rsvpmaker_rest);
 
 }

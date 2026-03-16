@@ -7,18 +7,9 @@ import {MetaDateControl, MetaEndDateControl, MetaTextControl, MetaSelectControl,
 
 var el = wp.element.createElement;
 const { __ } = wp.i18n; // Import __() from wp.i18n
-
-function related_link() {
-	if(rsvpmaker_ajax && rsvpmaker_ajax.special)
-		{
-		return <div class="rsvp_related_links"></div>;
-		}
-	return <div class="rsvp_related_links"><p><a href={rsvpmaker_ajax.rsvpmaker_details} >RSVP and {__('Event Options','rsvpmaker')}</a></p></div>;	
-	}
-
 	
 const RSVPMakerSidebarPlugin = function() {
-if(typeof rsvpmaker_ajax === 'undefined')
+if(typeof rsvpmaker_rest === 'undefined')
 	return null; //not an rsvpmaker post
 const end_times = Array();
 const end_times_display = Array();
@@ -29,41 +20,23 @@ var time_display = '';
 const rsvpdates = Array();
 
 var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
-if(rsvpmaker_ajax.special)
-	{
-	return (
-		el(
-			wp.editPost.PluginPostStatusInfo,
-			{},
-<div>
-<h3>RSVPMaker {__('Special Document','rsvpmaker')}</h3>
-{rsvpmaker_ajax.top_message}
-																																	<div class="rsvpmaker_related">
-{related_link()}
-</div>
-{(rsvpmaker_ajax.special == 'RSVP Form') && <p><a href="https://rsvpmaker.com/knowledge-base/customize-the-rsvp-form/" target="_blank">{__('Documentation','rsvpmaker')}</a></p>}
-{rsvpmaker_ajax.bottom_message}
-</div>
-		)
-	);
 
-	}
 	return (
 		el(
 			wp.editPost.PluginPostStatusInfo,
 			{},
 <div>
-{(!rsvpmaker_ajax.special && (rsvpmaker.post_type == 'rsvpmaker') && 
+{(rsvpmaker.post_type == 'rsvpmaker' && 
 <div>
 <h3>RSVPMaker {__('Event Date','rsvpmaker')}</h3>
-{rsvpmaker_ajax.top_message}
+{rsvpmaker_rest.top_message}
 <MetaDateControl metaKey='_rsvp_dates' />
 <MetaEndDateTimeControl />
 </div>
 )}
 {((rsvpmaker.post_type == 'rsvpmaker_template') && <div>
-<h3>RSVPMaker Template <a href={rsvpmaker_ajax.projected_url}>(Create/Update)</a></h3>
-{rsvpmaker_ajax.top_message}
+<h3>RSVPMaker Template <a href={rsvpmaker_rest.projected_url}>(Create/Update)</a></h3>
+{rsvpmaker_rest.top_message}
 			<div class="sked_frequency">
 			<p class="varies"><MetaFormToggle
 			label="Varies" 
@@ -222,13 +195,13 @@ metaKey="_rsvp_on"/>
 <p>{__('For complex event pricing and a few other special-purpose options, follow the link below.')}</p>
 <p>{related_link()}</p>
 </div>
-{rsvpmaker_ajax.bottom_message}
+{rsvpmaker_rest.bottom_message}
 </div>
 		)
 	);
 }
 
-if(typeof rsvpmaker_ajax !== 'undefined')
+if(typeof rsvpmaker_rest !== 'undefined')
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {
 	render: RSVPMakerSidebarPlugin,
 } );	
@@ -252,7 +225,7 @@ wp.plugins.registerPlugin( 'rsvpmaker-sidebar-postpublish', {
 	render: RSVPPluginPostPublishPanel,
 } );
 
-if(("undefined" !== typeof rsvpmaker_ajax) && rsvpmaker_ajax.template_url) {
+if(("undefined" !== typeof rsvpmaker_rest) && rsvpmaker_rest.template_url) {
 	wp.data.dispatch('core/notices').createNotice(
 		'info', // Can be one of: success, info, warning, error.
 		__('You are editing one event in a series defined by a template. To make changes you can apply to the whole series of events, switch to editing the template.'), // Text string to display.
@@ -262,15 +235,15 @@ if(("undefined" !== typeof rsvpmaker_ajax) && rsvpmaker_ajax.template_url) {
 			// Any actions the user can perform.
 			actions: [
 				{
-					url: rsvpmaker_ajax.template_url,
-					label: rsvpmaker_ajax.template_label,
+					url: rsvpmaker_rest.template_url,
+					label: rsvpmaker_rest.template_label,
 				},
 			]
 		}
 	);	
 }
 
-if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
+if((typeof rsvpmaker_rest !== 'undefined' ) && rsvpmaker_rest.projected_url) {
 
 		let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
 		let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
@@ -294,7 +267,7 @@ if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
 			wasPreviewingPost = isPreviewingPost;
 	
 			if ( shouldTriggerTemplateNotice ) {
-				var newurl = rsvpmaker_ajax.projected_url.replace('template_list','setup');
+				var newurl = rsvpmaker_rest.projected_url.replace('template_list','setup');
 	wp.data.dispatch('core/notices').createNotice(
 		'info', // Can be one of: success, info, warning, error.
 		__('After updating this template, click'), // Text string to display.
@@ -311,7 +284,7 @@ if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
 					label: ' or ',
 				},
 				{
-					url: rsvpmaker_ajax.projected_url,
+					url: rsvpmaker_rest.projected_url,
 					label: __('Create / Update events'),
 				},
 			]
@@ -334,7 +307,7 @@ if((typeof rsvpmaker_ajax !== 'undefined' ) && rsvpmaker_ajax.projected_url) {
 					label: ' or to update series ',
 				},
 				{
-					url: rsvpmaker_ajax.projected_url,
+					url: rsvpmaker_rest.projected_url,
 					label: __('Create / Update events'),
 				},
 			]
