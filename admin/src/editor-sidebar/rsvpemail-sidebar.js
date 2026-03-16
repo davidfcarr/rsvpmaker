@@ -5,15 +5,13 @@ import { registerPlugin } from '@wordpress/plugins';
 import { __experimentalMainDashboardButton as MainDashboardButton } from '@wordpress/edit-post';
 import { Dashicon, Button, Modal } from '@wordpress/components';
 import { useState } from '@wordpress/element';
-import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 const { subscribe, useSelect } = wp.data;
+const post_type = wp.data.select( 'core/editor' ).getCurrentPostType();
 
 const RSVPEmailSidebarPlugin = function() {
-const type = wp.data.select( 'core/editor' ).getCurrentPostType();
 const post_id = wp.data.select( 'core/editor' ).getCurrentPostId();
-	const rsvpmaker_rest = useRsvpmakerRest();
 
-	if(type != 'rsvpemail')
+	if(post_type != 'rsvpemail')
 		return null;
 	return	el(
 			wp.editPost.PluginPostStatusInfo,
@@ -29,10 +27,11 @@ const post_id = wp.data.select( 'core/editor' ).getCurrentPostId();
 );
 }
 
-if(rsvpmaker.post_type == 'rsvpemail') {
+if(post_type == 'rsvpemail') {
 	registerPlugin( 'rsvpmailer-sidebar-plugin', {
 		render: RSVPEmailSidebarPlugin,
 	} );
+
 
 	let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
 	let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();

@@ -6,7 +6,7 @@ import {Up,Down,Delete} from '../icons.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import apiClient, { setupNonceInterceptor } from '../http-common.js';
 import { useSelect } from '@wordpress/data';
-import { useRsvpmakerRest } from '../queries.js';
+import { useRsvpmakerRest } from '../useRsvpmakerRest.js';
 
 export default function Confirmation() {
     const [status,setStatus] = useState('');

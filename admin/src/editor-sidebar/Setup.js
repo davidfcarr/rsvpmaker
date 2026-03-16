@@ -7,7 +7,6 @@ import FormSetup from './FormSetup.js'
 import Confirmation from './Confirmation.js';
 import Pricing from './Pricing.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
-import { useRsvpmakerRest } from "../useRsvpmakerRest.js";
 
 const onSelect = ( tabName ) => {
     console.log( 'Selecting tab', tabName );
@@ -17,6 +16,7 @@ export default function Setup (props) {
     const [ isOpen, setOpen ] = useState( props.open );
     const {tab,eventdata} = props;
     const start = (tab) ? tab : 'basics';
+    const rsvpmaker_rest = props.rsvpmaker_rest;
     console.log('setup start',start);
 
     if(eventdata.status) {
@@ -80,16 +80,16 @@ return (
         >
             { ( tab ) => {
                 if('basics' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><p><em>{__('Set the date, time, and RSVP parameters for your event, then click Done. Access these options at any time from the RSVP / Event Options button in the sidebar.','rsvpmaker')}</em></p><Basics eventdata={eventdata} /><div></div></div>
+                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><p><em>{__('Set the date, time, and RSVP parameters for your event, then click Done. Access these options at any time from the RSVP / Event Options button in the sidebar.','rsvpmaker')}</em></p><Basics eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} /><div></div></div>
                 else if('form' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Form form_id={eventdata.form_id} event_id={rsvpmaker_ajax.event_id} eventdata={eventdata} /></div>
+                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Form form_id={eventdata.form_id} event_id={rsvpmaker_rest.post_id} eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} /></div>
                 else if('confirmation' == tab.name)
                     return (
-                        <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Confirmation eventdata={eventdata} /></div>
+                        <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Confirmation eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} /></div>
                     )
                     else if('pricing' == tab.name)
                     return (
-                        <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Pricing eventdata={eventdata} /></div>
+                        <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Pricing eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} /></div>
                     )
         } }
         </TabPanel>
@@ -101,7 +101,7 @@ return (
 }
 
 function Form(props) {
-    const {eventdata} = props;
+    const {eventdata, rsvpmaker_rest} = props;
     return (<div>
                 <div>{rsvpmaker_ajax.form_fields}</div>
 <div><em>{rsvpmaker_ajax.form_type}</em></div>
@@ -168,14 +168,13 @@ function Reminders() {
 }
 
 function Basics(props) {
-    const {eventdata} = props;
-    const rsvpmaker_rest = useRsvpmakerRest();
+    const {eventdata, rsvpmaker_rest} = props;
 
     return (
         <div className="guide-page-1-columns">
         <div className="rsvpguide-datetime">
-        {(rsvpmaker.post_type == 'rsvpmaker') && <DateTimeMaker event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
-        {(rsvpmaker.post_type == 'rsvpmaker_template') && <TemplateControl  event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
+        {(rsvpmaker_rest.post_type == 'rsvpmaker') && <DateTimeMaker event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
+        {(rsvpmaker_rest.post_type == 'rsvpmaker_template') && <TemplateControl  event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
         </div>
         <div className="guide-options-column">
         <RSVPMetaToggle

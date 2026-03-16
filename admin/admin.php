@@ -131,13 +131,6 @@ function react_admin_script() {
 
 	elseif( ((isset($_GET['action']) && ('edit' == $_GET['action'] && 'rsvpmaker_template' == $post->post_type )) || (strpos($_SERVER['REQUEST_URI'],'post-new.php') && isset($_GET['post_type']) && 'rsvpmaker_template' == $_GET['post_type'] ) ) )
 	{
-		wp_enqueue_script(
-			'rsvpmaker_meta', // Handle.
-			plugins_url( 'rsvpmaker/admin/build/metabox.js'), // Block.build.js: We register the block here. Built with Webpack.
-			array( 'wp-blocks', 'wp-i18n', 'wp-element','wp-components' ), // Dependencies, defined above.
-			time(),
-			true // Enqueue the script in the footer.
-		);
 		wp_enqueue_style(
 			'rsvpmaker_meta', // Handle.
 			plugins_url( 'rsvpmaker/admin/build/style-index.css'), // Block.build.js: We register the block here. Built with Webpack.
@@ -346,7 +339,8 @@ function get_rsvpmaker_ajax() {
 		$related_documents = rsvpmaker_get_related_documents ();
 		//rsvpmaker_debug_log($related_documents,'related documents for gutenberg');
 		$rsvpmaker_ajax = array(
-			'projected_label' => $projected_label,'projected_url' => $projected_url,
+			'projected_label' => $projected_label,
+			'projected_url' => $projected_url,
 			'template_label' => $template_label,
 			'template_url' => $template_url,
 			'ajax_nonce'    => wp_create_nonce('ajax_nonce'),

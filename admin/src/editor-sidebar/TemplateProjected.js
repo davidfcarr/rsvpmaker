@@ -1,4 +1,4 @@
-import React, {useState} from "react"
+import React, {useState, useEffect} from "react"
 const { Modal } = wp.components;
 import Checkbox from './Checkbox';
 import { SanitizedHTML } from "../SanitizedHTML.js";

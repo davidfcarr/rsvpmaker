@@ -39,6 +39,23 @@ function rsvpmaker_rest_array() {
 			$domains[] = $site->domain;
 		}
 	}
+	$template_label = '';
+	$template_url = '';
+	$projected_label = '';
+	$projected_url = '';
+	$sked = get_template_sked($post_id);
+	if($sked)
+	{
+		$projected_label = __('Create/update events from template','rsvpmaker');
+		$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id);
+		//$template_msg = sked_to_text($sked);
+	}
+	$template_id = (int) get_post_meta($post_id,'_meet_recur',true);
+	if($template_id && !$sked)
+	{
+	$template_label = __('Edit Template','rsvpmaker');
+	$template_url = admin_url('post.php?action=edit&post='.$template_id);
+	}
 
 	return apply_filters('rsvpmaker_rest_array', array(
 		'post_id'  => $post_id,
@@ -47,7 +64,12 @@ function rsvpmaker_rest_array() {
 		'time'    => $time,
 		'hour12' => strpos($rsvp_options['time_format'], 'A') !== false,
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
+		'admin_url' => admin_url(),
 		'rest_url' => rest_url(),
+		'template_label' => $template_label,
+		'template_url' => $template_url,
+		'projected_label' => $projected_label,
+		'projected_url' => $projected_url,
 		'ajaxurl' => admin_url( 'admin-ajax.php' ),
 		'rsvpmaker_json_url' => rest_url( 'rsvpmaker/v1/' ),
 		'timelord' => $rsvpmaker_nonce['value'],

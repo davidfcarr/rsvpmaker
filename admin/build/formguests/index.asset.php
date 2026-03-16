@@ -1,1 +1,1 @@
-<?php return array('dependencies' => array('react-jsx-runtime', 'wp-blocks'), 'version' => '3bf44267fa70dd92057c');
+<?php return array('dependencies' => array('react-jsx-runtime', 'wp-blocks'), 'version' => '91f19a46d53671a366a2');
