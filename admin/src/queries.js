@@ -1,8 +1,10 @@
 import React, {useState} from "react"
 import apiClient from './http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
+import { useRsvpmakerRest } from "./useRsvpmakerRest.js";
 
 export function useOptions(tab = '') {
+    const rsvpmaker_rest = useRsvpmakerRest();
     function fetchOptions(queryobj) {
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return apiClient.get('rsvp_options'+queryjoin+'tab='+tab);
@@ -60,6 +62,7 @@ export function useOptionsMutation(setChanges,makeNotification) {
 }
 
 export function useRSVPDate(eventID) {
+    const rsvpmaker_rest = useRsvpmakerRest();
     function fetchRSVPDate(queryobj) {
         const queryjoin = (rsvpmaker_rest.rest_url.includes('?')) ? '&' : '?';
         return apiClient.get('rsvp_event_date'+queryjoin+'event_id='+eventID);
@@ -85,6 +88,7 @@ export function useCopyDefaults() {
 
 export function useRSVPDateMutation(eventID) {
     const queryClient = useQueryClient();
+    const rsvpmaker_rest = useRsvpmakerRest();
     console.log('useRSVPDateMutation called with');
     console.log('useRSVPDateMutation queryClient',queryClient);
 

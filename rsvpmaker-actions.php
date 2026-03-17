@@ -83,6 +83,8 @@ add_action('shutdown','save_rsvpmakers');
 if(isset($_GET['reset_rsvpmakers']))
 	delete_transient('rsvpmakers');
 
+add_action( 'enqueue_block_assets', 'rsvpmaker_enqueue_block_assets' );
+
 add_action( 'wp_enqueue_scripts', 'rsvpmaker_event_scripts', 10000 );
 
 add_action('init','rsvpmaker_rewrite_flush');

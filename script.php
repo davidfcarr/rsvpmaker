@@ -183,13 +183,10 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	global $post, $rsvpscript;
 	$scriptversion = get_rsvpversion().'.1';
 
-	$rsvpmailer_editor_stylesheet = get_option('rsvpmailer_editor_stylesheet');
-	//rsvpmaker_debug_log($rsvpmailer_editor_stylesheet,'$rsvpmailer_editor_stylesheet');
-	if($rsvpmailer_editor_stylesheet)
-		wp_enqueue_style( 'rsvpmaker_editor_style', $rsvpmailer_editor_stylesheet, array(), time(), 'all' );
 	if(is_network_admin())
 		return;
-	rsvpmaker_event_scripts(); // want the front end scripts, too
+	// rsvpmaker_event_scripts() is hooked to wp_enqueue_scripts for frontend only
+	// Styles for block editor are enqueued via rsvpmaker_enqueue_block_editor_assets()
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
 	if ( ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) ) || ( isset( $_GET['post_type'] ) && (( $_GET['post_type'] == 'rsvpmaker' ) || ( $_GET['post_type'] == 'rsvpmaker_template' )) ) || ( ( isset( $_GET['page'] ) &&
 	( ( strpos( $_GET['page'], 'rsvp_report' ) !== false ) || ( strpos( $_GET['page'], 'rsvpmaker-admin.php' ) !== false ) || ( strpos( $_GET['page'], 'toast' ) !== false ) ) ) ) ) {
@@ -211,6 +208,16 @@ function rsvpmaker_admin_enqueue( $hook ) {
 	$hastabs = apply_filters('rsvpmaker_tab_pages',$hastabs);
 	if($hastabs)
 		wp_enqueue_script( 'rsvpmaker_tabs', plugin_dir_url( __FILE__ ) . 'tabs.js', array( 'jquery', 'rsvpmaker_js' ), $scriptversion, true );
+}
+
+function rsvpmaker_enqueue_block_assets() {
+	if ( ! is_admin() ) {
+		return;
+	}
+	$scriptversion = get_rsvpversion();
+	global $rsvp_options;
+	$myStyleUrl = ( isset( $rsvp_options['custom_css'] ) && $rsvp_options['custom_css'] ) ? $rsvp_options['custom_css'] : plugins_url( 'style.css', __FILE__ );
+	wp_enqueue_style( 'rsvp_style', $myStyleUrl, array(), $scriptversion );
 }
 
 function rsvpmaker_event_scripts($frontend = true) {

@@ -4392,6 +4392,8 @@ body {
 
 function rsvpmailer_gutenberg_editor_css()
 {
+if(!is_admin())
+	return;
 global $post;
 if(!is_rsvpemail())
 	return;
@@ -4404,7 +4406,7 @@ wp_default_styles($wp_styles);
   $version = time();
   wp_enqueue_style('rsvpmailer-editor-css', $css, [], get_rsvpversion());
 }
-add_action('enqueue_block_editor_assets', 'rsvpmailer_gutenberg_editor_css',1);
+add_action('enqueue_block_assets', 'rsvpmailer_gutenberg_editor_css',1);
 
 function rsvpmaker_get_style_substitutions() {
 	global $style_sub;
