@@ -179,9 +179,9 @@ function rsvpmaker_rest_array() {
 		));
 }
 
-function rsvpmaker_admin_enqueue( $hook ) {
+function rsvpmaker_admin_enqueue(  ) {
 	global $post, $rsvpscript;
-	$scriptversion = get_rsvpversion().'.1';
+	$scriptversion = get_rsvpversion().'.2';
 
 	if(is_network_admin())
 		return;
@@ -193,8 +193,9 @@ function rsvpmaker_admin_enqueue( $hook ) {
 		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 		wp_enqueue_script( 'jquery-ui-dialog' );
 		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1', 'all' );
-		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery', 'rsvpmaker_js' ), $scriptversion, true );
+		wp_enqueue_script( 'rsvpmaker_admin_script', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery' ), $scriptversion, true );
 		wp_enqueue_style( 'rsvpmaker_admin_style', plugin_dir_url( __FILE__ ) . 'admin.css', array('wp-components'), $scriptversion, 'all' );
+		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	}
 	if(isset($_GET['page']) && 'rsvpmaker_settings' == $_GET['page'] ) {
 	wp_enqueue_script( 'rsvpmaker_react_settings', plugin_dir_url( __FILE__ ) . 'admin/build/settings/adminui.js', array(), $scriptversion, true );
@@ -220,7 +221,7 @@ function rsvpmaker_enqueue_block_assets() {
 	wp_enqueue_style( 'rsvp_style', $myStyleUrl, array(), $scriptversion );
 }
 
-function rsvpmaker_event_scripts($frontend = true) {
+function rsvpmaker_event_scripts() {
 	$scriptversion = get_rsvpversion();
 	global $post, $rsvpmaker_nonce;
 	$post_id       = isset( $post->ID ) ? $post->ID : 0;
@@ -233,6 +234,8 @@ function rsvpmaker_event_scripts($frontend = true) {
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	wp_enqueue_script( 'wp-tinymce' );
 	wp_enqueue_script( 'rsvpmaker_timezone', plugins_url( 'jstz.min.js', __FILE__ ), array(), $scriptversion, true );
+	if(is_admin())
+		rsvpmaker_admin_enqueue();
 } // end event scripts
 
 function rsvpmaker_jquery_inline( $routine, $atts = array() ) {

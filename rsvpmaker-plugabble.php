@@ -3700,7 +3700,6 @@ function rsvpmaker_template_list() {
 		}
 
 
-
 		if ( isset( $_GET['override_template'] ) || ( isset( $_GET['t'] ) && isset( $_GET['overconfirm'] ) ) ) {
 
 
@@ -3912,6 +3911,176 @@ function rsvpmaker_template_list() {
 		}
 
 
+		if ( isset( $_GET['new_template'] ) && isset( $_GET['event'] ) ) {
+
+
+			$e = (int) $_GET['event'];
+			$event = get_post( $e );
+			$newpost = array(
+
+				'post_title'   => $event->post_title,
+
+				'post_content' => $event->post_content,
+
+				'post_type'    => 'rsvpmaker_template',
+
+				'post_author'  => $current_user->ID,
+
+				'post_status'  => 'publish',
+
+			);
+
+			$t = wp_insert_post( $newpost );
+
+				printf( '<div class="notice success notice-sodium_crypto_core_ristretto255_scalar_add( $x:string, $y:string )"><h1>Template created for %s</h1><p><a href="%s">Edit</a></p></div>', $event->post_title, get_edit_post_link( $t ) );
+
+				$results = $wpdb->get_results( $wpdb->prepare("select * from %i WHERE post_id=%d",$wpdb->postmeta,$e) );
+				$docopy = array( '_add_timezone', '_convert_timezone', '_calendar_icons', 'tm_sidebar', 'sidebar_officers' );
+
+				if ( is_array( $results ) ) {
+
+					foreach ( $results as $row ) {
+
+						if ( ( strpos( $row->meta_key, 'rsvp' ) && ( $row->meta_key != '_rsvp_dates' ) ) || ( in_array( $row->meta_key, $docopy ) ) ) {
+
+							update_post_meta( $t, $row->meta_key, $row->meta_value );
+
+							$copied[] = $row->meta_key;
+
+						}
+
+					}
+				}
+			$ts = get_rsvp_date( $e );
+
+			$tsexplode = preg_split( '/[\s:]/', $ts );
+			$template = array(
+
+				'week'      => array( 0 ),
+
+				'dayofweek' => array( 0 ),
+
+				'hour'      => $tsexplode[1],
+
+				'minutes'   => $tsexplode[2],
+
+			);
+
+			new_template_schedule( $t, $template );
+
+		} 
+
+
+
+		if ( isset( $_POST['event_to_template'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+
+
+			$e = (int) $_POST['event_to_template'];
+
+
+
+			$ts = get_rsvp_date( $e );
+
+
+
+			$tsexplode = preg_split( '/[\s:]/', $ts );
+
+
+
+			$event = get_post( $e );
+
+
+
+			$newpost = array(
+
+				'post_title'   => $event->post_title,
+
+				'post_content' => $event->post_content,
+
+				'post_type'    => 'rsvpmaker_template',
+
+				'post_author'  => $current_user->ID,
+
+				'post_status'  => 'publish',
+
+			);
+
+
+
+			$t = wp_insert_post( $newpost );
+
+
+
+			$template = array(
+
+				'week'      => array( 0 ),
+
+				'dayofweek' => array( 0 ),
+
+				'hour'      => $tsexplode[1],
+
+				'minutes'   => $tsexplode[2],
+
+			);
+
+
+
+			new_template_schedule( $t, $template );
+
+
+
+			printf( '<h1>Template updated based on contents of event for %s</h1>', rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) );
+
+
+
+			$sql = $wpdb->prepare("select * from %i WHERE post_id=%d", $wpdb->postmeta, $e);
+
+
+
+			$results = $wpdb->get_results( $sql );
+
+
+
+			$docopy = array( '_add_timezone', '_convert_timezone', '_calendar_icons', 'tm_sidebar', 'sidebar_officers' );
+
+
+
+			if ( is_array( $results ) ) {
+
+
+
+				foreach ( $results as $row ) {
+
+
+
+					if ( ( strpos( $row->meta_key, 'rsvp' ) && ( $row->meta_key != '_rsvp_dates' ) ) || ( in_array( $row->meta_key, $docopy ) ) ) {
+
+
+
+						update_post_meta( $t, $row->meta_key, $row->meta_value );
+
+
+
+						$copied[] = $row->meta_key;
+
+					}
+
+				}
+
+			}
+
+
+
+			if ( ! empty( $copied ) ) {
+
+
+
+				printf( '<p>Settings copied: %s</p>', implode( ', ', $copied ) );
+
+			}
+
+		}
 
 		if ( empty( $_REQUEST['t'] ) ) {
 

@@ -3854,6 +3854,19 @@ function get_more_related( $post, $post_id, $t, $parent_tag ) {
 				'meta'   => array( 'class' => 'rsvpmaker-overwrite-template' ),
 
 			);
+			$args[] = array(
+
+				'parent' => $parent_tag,
+
+				'title'  => __( 'New Template Based On Event' ),
+
+				'id'     => 'rsvpmaker-new-template',
+
+				'href'   => admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&new_template=1&event=' . intval( $post->ID ) ),
+
+				'meta'   => array( 'class' => 'rsvpmaker-new-template' ),
+
+			);
 		}
 		if ( 'rsvpmaker_template' == $post->post_type ) {
 			$args[] = array(

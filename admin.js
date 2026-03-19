@@ -72,6 +72,7 @@ jQuery( document ).ready(
 		$( 'select.rsvpsort' ).change(
 			function() {
 				var sort   = $( this ).val();
+				console.log('sort change',sort);
 				var parts  = window.location.href.split( '?' );
 				var url    = parts[0] + '?post_type=rsvpmaker&rsvpsort=' + sort;
 				var top    = $( '#bulk-action-selector-top' ).val();

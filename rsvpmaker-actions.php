@@ -13,7 +13,7 @@ add_action('admin_init','rsvpmaker_queue_post_type');
 
 add_action( 'admin_bar_menu', 'toolbar_rsvpmaker', 99 );
 
-add_action( 'admin_enqueue_scripts', 'rsvpmaker_admin_enqueue' );
+add_action( 'admin_enqueue_scripts', 'rsvpmaker_event_scripts' );
 add_action( 'admin_head', 'rsvpmaker_template_admin_title' );
 
 add_action('admin_init', 'rsvpmaker_plugin_add_privacy_policy_content' );
@@ -85,7 +85,7 @@ if(isset($_GET['reset_rsvpmakers']))
 
 add_action( 'enqueue_block_assets', 'rsvpmaker_enqueue_block_assets' );
 
-add_action( 'wp_enqueue_scripts', 'rsvpmaker_event_scripts', 10000 );
+add_action( 'wp_enqueue_scripts', 'rsvpmaker_event_scripts', 1000 );
 
 add_action('init','rsvpmaker_rewrite_flush');
 function rsvpmaker_rewrite_flush() {

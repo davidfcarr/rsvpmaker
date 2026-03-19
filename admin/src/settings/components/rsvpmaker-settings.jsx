@@ -981,7 +981,12 @@ const RsvpmakerSettings = () => {
 	return (
 		<VStack spacing={ 4 }>
 			<SettingsTitle />
+			<div id="floating-save" style={{  width: '60%', textAlign: 'right', padding: '5px', position: 'fixed', bottom: '50px', right: '10px', zIndex: 100 }}>
 			<Notices />
+			<div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px', borderRadius: '5px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
+			</div>
+			</div>
 			<DataForm
 				data={ rsvp_options }
 				fields={ fields }
@@ -993,8 +998,6 @@ const RsvpmakerSettings = () => {
 					} ) )
 				}
 			/>
-			<Notices />
-			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
 			<DataForm
 				data={ rsvp_options }
 				fields={ fields }
@@ -1006,8 +1009,6 @@ const RsvpmakerSettings = () => {
 					} ) )
 				}
 			/>
-			<Notices />
-			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
 			<DataForm
 				data={ chimpOptions }
 				fields={ chimpfields }
@@ -1019,8 +1020,6 @@ const RsvpmakerSettings = () => {
 					} ) )
 				}
 			/>
-			<Notices />
-			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
 			<p>{__('* For date format settings, see','rsvpmaker')}: <a href="https://www.php.net/manual/en/function.date.php" target="_blank" rel="noopener noreferrer">{__('PHP date() function documentation','rsvpmaker')}</a></p>
 			<p>{__('** For reCAPTCHA credentials, see','rsvpmaker')}: <a href="https://console.cloud.google.com/security/recaptcha" target="_blank" rel="noopener noreferrer">{__('Google Cloud reCAPTCHA dashboard','rsvpmaker')}</a></p>
 			<h2>{__('Copy Defaults to Events','rsvpmaker')}</h2>
