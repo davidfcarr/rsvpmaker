@@ -131,6 +131,10 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 11.9 =
+
+* Code cleanup
+
 = 11.8.2 =
 
 * Revamped RSVPMaker Settings screen using the DataForm component

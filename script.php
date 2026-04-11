@@ -97,6 +97,13 @@ function rsvpmaker_rest_array() {
 	}
 
 	$confirm = rsvp_get_confirm($post_id,true);
+	if ( ! $confirm ) {
+		$confirm = (object) array(
+			'ID' => 0,
+			'post_parent' => 0,
+			'post_content' => '',
+		);
+	}
 	$excerpt = strip_tags($confirm->post_content);
 	$excerpt = (strlen($excerpt) > 100) ? substr($excerpt, 0, 100).' ...' : $excerpt;
 	$confirmation_type = '';
@@ -109,11 +116,18 @@ function rsvpmaker_rest_array() {
 	if(empty($form_id))
 		$form_id = (int) $rsvp_options['rsvp_form'];
 	$fpost = get_post($form_id);
-	if(!$fpost)
+	if(!$fpost && !empty($post_id))
 	{
 		delete_post_meta($post_id,'_rsvp_form');
 		$form_id = (int) $rsvp_options['rsvp_form'];
-		$form = get_post($form_id);
+		$fpost = get_post($form_id);
+	}
+	if ( ! $fpost ) {
+		$fpost = (object) array(
+			'ID' => 0,
+			'post_parent' => 0,
+			'post_content' => '',
+		);
 	}
 	$form_customize = admin_url('?post_id='. $post_id. '&customize_form='.$fpost->ID);
 	$guest = (strpos($fpost->post_content,'rsvpmaker-guests')) ? 'Yes' : 'No';
