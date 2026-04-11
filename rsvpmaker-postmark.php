@@ -113,7 +113,7 @@ return printf('<p>Postmark Email Settings can now be found on a the <a href="%s"
         if(empty($postmark_settings['sandbox_only']))
             $postmark_settings['sandbox_only'] = array();
         if(empty($postmark_settings['postmark_load_alert_emails']))
-            $postmark_settings['postmark_load_alert_emails'] = postmark_admin_email();
+            $postmark_settings['postmark_load_alert_emails'] = rsvpmaker_postmark_admin_email();
     echo '<p>To fill in these variables, first <a href="https://account.postmarkapp.com/sign_up" target="_blank">create a Postmark account</a>. Postmark provides reliable email deliver for both broadcast / mailing list messages and transactional messages such as RSVP confirmations. Premium add-ons and customization services for managing email forwarding and metered access for multisite site owners are available from <a href="mailto:david@rsvpmaker.com" target="_blank">david@rsvpmaker.com</a>.</p>';        
     printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker-admin.php&tab=email'));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
@@ -238,7 +238,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     ,$wpdb->postmeta,$to,$post_id));
     }
 
-    $hash = postmark_batch_hash($batch,$recipients);
+    $hash = rsvpmaker_postmark_batch_hash($batch,$recipients);
     error_log('postmark broadcast hash '.$hash);
     if(rsvpmaker_postmark_duplicate($hash)) {
         error_log('rsvpmaker postmark broadcast duplicate message ');
@@ -298,7 +298,7 @@ function rsvpmaker_postmark_chunked_batches() {
 	}
         $postmark_options = get_rsvpmaker_postmark_options();
         if(!empty($postmark_options['notify_batch_send']))
-            wp_mail(postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
+            wp_mail(rsvpmaker_postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
         if($doneafterthis) {
             $title = get_the_title($batchrow->post_id);
             $mail['subject'] = 'Sent: '.$title;
@@ -306,7 +306,7 @@ function rsvpmaker_postmark_chunked_batches() {
             $mail['from'] = $mail['to'] = get_option('admin_email');
             $mail['fromname'] = get_option('blogname');
             rsvpmailer($mail);
-            $postmark_admin = postmark_admin_email();
+            $postmark_admin = rsvpmaker_postmark_admin_email();
             if($postmark_admin != $mail['to']) {
                 $mail['to'] = $postmark_admin;
                 rsvpmailer($mail);
@@ -331,13 +331,7 @@ function rsvpmaker_postmark_send($mail) {
     return $result;
 }
 
-function rsvpmail_clear_allforwarders($blog_id) {
-    if($blog_id != 1)
-        switch_to_blog(1);
-    delete_transient('allforwarders_'.$blog_id);
-    if($blog_id != 1)
-        switch_to_blog($blog_id);    
-}
+
 
 add_action('init','rsvpmail_local_address_check');
 function rsvpmail_local_address_check() {
@@ -451,7 +445,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     }
     rsvpmaker_testlog('postmark_incoming_forwarders',$forwarders);
     //wp_suspend_cache_addition(true);
-    $admin_email = postmark_admin_email();
+    $admin_email = rsvpmaker_postmark_admin_email();
     $result = '';
 
     if($admin_email == $emailobj->From && 'stop' == $emailobj->Subject) {
@@ -692,7 +686,7 @@ function rsvpmaker_postmark_batch_send($batch) {
     $postmark_settings = get_rsvpmaker_postmark_options();
     $postmark_settings_key = ('production' == $postmark_settings['postmark_mode']) ? $postmark_settings['postmark_production_key'] : $postmark_settings['postmark_sandbox_key'];
     $client = new PostmarkClient($postmark_settings_key);
-    $hash = postmark_batch_hash($batch);
+    $hash = rsvpmaker_postmark_batch_hash($batch);
     if(rsvpmaker_postmark_duplicate($hash))
         return;
     $responses = $client->sendEmailBatch($batch);
@@ -724,7 +718,7 @@ function rsvpmaker_postmark_batch_send($batch) {
     return $output;
 }
 
-function postmark_batch_hash ($batch,$recipients = null) {
+function rsvpmaker_postmark_batch_hash ($batch,$recipients = null) {
     if($recipients)
         $rlist = implode('',$recipients);
     else {
@@ -737,7 +731,7 @@ function postmark_batch_hash ($batch,$recipients = null) {
 
 function rsvpmaker_postmark_duplicate($hash) {
     global $wpdb;
-    check_postmark_tally_version();
+    rsvpmaker_check_postmark_tally_version();
 	$sql = $wpdb->prepare("select count(*) duplicates, subject, recipients, blog_id FROM %i where hash=%s AND time > DATE_SUB(NOW(), INTERVAL 120 MINUTE)",$wpdb->base_prefix."postmark_tally",$hash);
 	$row = $wpdb->get_row($sql);
     if(!empty($row->duplicates))
@@ -858,7 +852,7 @@ function rsvpmaker_postmark_show_sent_log() {
                 printf('<h3>Clicks: %d <a href="%s">(details)</a></h3>',$clickcount,$detailsurl);
                 foreach($clicklog as $tag => $items)
                 {
-                    $title = ('misc' == $tag) ? 'miscellaneous' : postmark_tag_to_title($tag);
+                    $title = ('misc' == $tag) ? 'miscellaneous' : rsvpmaker_postmark_tag_to_title($tag);
                     if(empty($title))
                         $title = 'miscellaneous';
                     printf('<p><strong>%s</strong> %s clicks</p>',$title,sizeof($items));
@@ -886,7 +880,7 @@ function rsvpmaker_postmark_show_sent_log() {
                 printf('<h3>Opens: %d <a href="%s">(details)</a></h3>',$opencount,$detailsurl);                    
                 foreach($opened as $tag => $items) 
                     {
-                        $title = ('misc' == $tag) ? 'miscellaneous' : postmark_tag_to_title($tag);
+                        $title = ('misc' == $tag) ? 'miscellaneous' : rsvpmaker_postmark_tag_to_title($tag);
                         if(empty($title))
                             $title = 'miscellaneous';
                         printf('<p><strong>%s</strong> (<a href="%s">Details</a>) %s opens</p>',$title,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$tag),sizeof($items));
@@ -999,7 +993,7 @@ function rsvpmaker_postmark_suppressions() {
 }
 }
 
-function postmark_tag_to_title($tag) {
+function rsvpmaker_postmark_tag_to_title($tag) {
 global $wpdb;
 $prefix = $wpdb->base_prefix;
 $parts = explode('-',$tag);
@@ -1045,7 +1039,7 @@ else
     update_option('postmark_tally_version',$version);
 }
 
-function check_postmark_tally_version() {
+function rsvpmaker_check_postmark_tally_version() {
     $version = (int) (is_multisite()) ? get_blog_option(1,'postmark_tally_version') : get_option('postmark_tally_version');
     if($version < 2)
         rsvpmaker_postmark_log_table();
@@ -1070,13 +1064,13 @@ function rsvpmaker_option_postmark_settings($option) {
     return $option;
 }
 
-function postmark_admin_email() {
+function rsvpmaker_postmark_admin_email() {
     return (is_multisite()) ? get_blog_option(1,'admin_email') : get_option('admin_email');
 }
 
-function postmark_forwarder_tester() {
+function rsvpmaker_postmark_forwarder_tester() {
     $recipients = $combined = $original_to = $original_cc = [];
-    $data = postmark_incoming_test();
+    $data = rsvpmaker_postmark_incoming_test();
     $original = '';
     $output = '';
     if(!empty($data->To))
@@ -1117,7 +1111,7 @@ function postmark_forwarder_tester() {
                 //$site_id = is_multisite() ? rsvpmail_site_id($domain_lookup) : 1;
                 $site_id = rsvpmail_site_id($domain_lookup);
                 if($site_id) {
-                    $list = postmark_resolve_email($femail, $site_id);
+                    $list = rsvpmaker_postmark_resolve_email($femail, $site_id);
                     if(empty($list))
                         $output .= '<p>No match for '.$femail.'/'.$site_id.'</p>';
                     else
@@ -1134,13 +1128,9 @@ function postmark_forwarder_tester() {
     return $output.'<pre>'.var_export($data,true).'</pre>';
 }
 
-function postmark_site_id($domain_lookup) {
-    $domains = ['op'=>109,'demo'=>22,'libertylakers.org'=>300];
-    $site_id = (empty($domains[$domain_lookup])) ? false : $domains[$domain_lookup];
-    return $site_id;
-}
 
-function postmark_resolve_email($femail, $site_id) {
+
+function rsvpmaker_postmark_resolve_email($femail, $site_id) {
     $recipients = [];
     $list[22]['members'] = ['member1@example.com','member2@example.com','member3@example.com'];
     $list[22]['officers'] = ['officer1@example.com','officer2@example.com','demo-vpm@toastmost.org'];
@@ -1150,7 +1140,7 @@ function postmark_resolve_email($femail, $site_id) {
     return $recipients;
 }
 
-function postmark_incoming_test() {
+function rsvpmaker_postmark_incoming_test() {
 $json = '{
     "FromName": "David F. Carr",
     "MessageStream": "inbound",
@@ -1386,9 +1376,9 @@ $json = '{
 return json_decode($json);
 }
 
-add_shortcode('postmark_forwarder_tester','postmark_forwarder_tester');
+add_shortcode('postmark_forwarder_tester','rsvpmaker_postmark_forwarder_tester');
 
-function postmark_delete_supression($email) {
+function rsvpmaker_postmark_delete_supression($email) {
     $postmark_settings = get_rsvpmaker_postmark_options();
     $client = new PostmarkClient($postmark_settings['postmark_production_key']);
     $suppressionChanges = array(new SuppressionChangeRequest($email));
@@ -1397,4 +1387,13 @@ function postmark_delete_supression($email) {
     $messageStream = "outbound";
     $result2 = $client->deleteSuppressions($suppressionChanges, $messageStream);
     return $result;
+}
+
+// Restored for cross-plugin compatibility.
+function rsvpmail_clear_allforwarders($blog_id) {
+    if($blog_id != 1)
+        switch_to_blog(1);
+    delete_transient('allforwarders_'.$blog_id);
+    if($blog_id != 1)
+        switch_to_blog($blog_id);    
 }

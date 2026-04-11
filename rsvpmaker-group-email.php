@@ -4,34 +4,7 @@
 Group Email Functions
 */
 
-function rsvpmaker_relay_active_lists() {
 
-	$active = get_option( 'rsvpmaker_discussion_active' );
-
-	$lists = array();
-
-	if ( ! $active ) {
-
-		return array();
-	}
-
-	$vars = get_option( 'rsvpmaker_discussion_member' );
-
-	if ( ! empty( $vars['password'] ) ) {
-
-		$lists['member'] = $vars['user'];
-	}
-
-	$vars = get_option( 'rsvpmaker_discussion_officer' );
-
-	if ( ! empty( $vars['password'] ) ) {
-
-		$lists['officer'] = $vars['user'];
-	}
-
-	return $lists;
-
-}
 
 function rsvpmaker_relay_manual_test() {
 	rsvpmaker_admin_heading(__('Manually Trigger Check of Email Lists','rsvpmaker'),__FUNCTION__);
@@ -213,7 +186,7 @@ function rsvpmaker_relay_queue() {
 	return nl2br($log);
 }
 
-function group_emails_extract( $text ) {
+function rsvpmaker_group_emails_extract( $text ) {
 	preg_match_all( "/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $text, $emails );
 	$emails = $emails[0];
 	$unique = array();
@@ -228,7 +201,7 @@ function group_emails_extract( $text ) {
 	return $unique;
 
 }
-function get_mime_type( &$structure ) {
+function rsvpmaker_get_mime_type( &$structure ) {
 
 	$primary_mime_type = array( 'TEXT', 'MULTIPART', 'MESSAGE', 'APPLICATION', 'AUDIO', 'IMAGE', 'VIDEO', 'OTHER' );
 
@@ -251,7 +224,7 @@ function rsvpmaker_get_part( $stream, $msg_number, $mime_type, $structure = fals
 
 	if ( $structure ) {
 
-		if ( $mime_type == get_mime_type( $structure ) ) {
+		if ( $mime_type == rsvpmaker_get_mime_type( $structure ) ) {
 
 			if ( ! $part_number ) {
 
@@ -368,7 +341,7 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 
 	if ( $list_type == 'member' ) {
 
-		$members = get_site_members();
+		$members = rsvpmaker_get_site_members();
 
 		foreach ( $members as $member ) {
 
@@ -396,11 +369,11 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 
 	$subject_prefix = empty( $vars['subject_prefix'] ) ? '' : $vars['subject_prefix'];
 
-	$whitelist = ( empty( $vars['whitelist'] ) ) ? array() : group_emails_extract( $vars['whitelist'] );
+	$whitelist = ( empty( $vars['whitelist'] ) ) ? array() : rsvpmaker_group_emails_extract( $vars['whitelist'] );
 
-	$blocked = ( empty( $vars['blocked'] ) ) ? array() : group_emails_extract( $vars['blocked'] );
+	$blocked = ( empty( $vars['blocked'] ) ) ? array() : rsvpmaker_group_emails_extract( $vars['blocked'] );
 
-	$additional_recipients = ( empty( $vars['additional_recipients'] ) ) ? array() : group_emails_extract( $vars['additional_recipients'] );
+	$additional_recipients = ( empty( $vars['additional_recipients'] ) ) ? array() : rsvpmaker_group_emails_extract( $vars['additional_recipients'] );
 
 	if ( ! empty( $additional_recipients ) ) {
 
@@ -885,56 +858,7 @@ function rsvpmaker_relay_duplicate( $message_id ) {
 	return $wpdb->get_var( $wpdb->prepare("SELECT post_id FROM %i WHERE meta_value=%s ",$wpdb->postmeta,$message_id) );
 }
 
-function rsvpmaker_qemail ($mail, $recipients) {
-	$recipients = rsvpmaker_recipients_no_problems($recipients);
-	error_log('rsvpmaker_qemail '.implode(', ',$recipients));
-	global $current_user;
-	if(is_multisite()) // send through root blog
-	{
-		if(!rsvpmaker_postmark_is_active())
-			switch_to_blog(1);
-	}	
-	if(strpos($mail['html'],'<body')) {
-		preg_match('|<bod[^>]+>(.+)</body>|is',$mail['html'],$match);
-		if(!empty($match[1])) {
-			$_html = $mail['html'];
-			$mail['html'] = $match[1];	
-		}
-	}
-	$qpost['post_content'] = $mail['html'];
-	$qpost['post_title'] = $mail['subject'];
-	$qpost['post_type'] = 'rsvpemail';
-	$qpost['post_author'] = $current_user->ID;
-	$qpost['post_status'] = 'rsvpmessage';
-	if(!empty($mail['post_id']))
-		$qpost['ID'] = $mail['post_id'];
-	$from = $mail['from'];
-	$fromname = $mail['fromname'];
 
-	if(!empty($qpost['post_content']) && !empty($from))  
-		$post_id = wp_insert_post($qpost);
-
-	if($post_id) {
-		//add_post_meta($post_id,'imap_message_id',$headerinfo->message_id);
-		add_post_meta($post_id,'rsvprelay_from',$from);
-		if(empty($fromname))
-			$fromname = $from;
-		if(!empty($_html))
-			add_post_meta($post_id,'_rsvpmail_html',$_html);
-		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
-		if(rsvpmaker_postmark_is_active()) {
-			error_log('rsvpmaker_postmark_broadcast id '.$post_id);
-			rsvpmaker_postmark_broadcast($recipients,$post_id);
-		}
-		else {
-			foreach($recipients as $email)
-				add_post_meta($post_id,'rsvprelay_to',$email);
-		}
-		$mail['html'] = 'hidden';
-	}
-	if(is_multisite())
-		restore_current_blog();
-}
 
 function rsvpmaker_relay_queue_monitor () {
 	rsvpmaker_admin_heading(__('Group Email Log','rsvpmaker'),__FUNCTION__);
@@ -1000,7 +924,7 @@ function rsvpmaker_relay_queue_monitor () {
 	}
 }
 
-function hosts_and_subs_test () {
+function rsvpmaker_hosts_and_subs_test () {
 	if(wp_is_json_request())
 		return;
 	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
@@ -1079,9 +1003,9 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL, $addr
 	if(empty($recipients) && ('members' == $slug_and_id['slug']) && get_option('rsvpmaker_discussion_active')) {
 		$users = get_users('blog_id='.$slug_and_id['blog_id']);
 		$vars = get_option( 'rsvpmaker_discussion_members');
-		$blocked = ( empty( $vars['blocked'] ) ) ? array() : group_emails_extract( $vars['blocked'] );
-		$whitelist = ( empty( $vars['whitelist'] ) ) ? array() : group_emails_extract( $vars['whitelist'] );
-		$additional_recipients = ( empty( $vars['additional_recipients'] ) ) ? array() : group_emails_extract( $vars['additional_recipients'] );
+		$blocked = ( empty( $vars['blocked'] ) ) ? array() : rsvpmaker_group_emails_extract( $vars['blocked'] );
+		$whitelist = ( empty( $vars['whitelist'] ) ) ? array() : rsvpmaker_group_emails_extract( $vars['whitelist'] );
+		$additional_recipients = ( empty( $vars['additional_recipients'] ) ) ? array() : rsvpmaker_group_emails_extract( $vars['additional_recipients'] );
 		foreach($users as $user) {
 			if(!rsvpmail_is_problem($user->user_email) && !in_array($user->user_email,$blocked)) {
 				$email = $user->user_email;
@@ -1127,7 +1051,7 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 	return $slug_and_id;
 }
 
-add_shortcode('hosts_and_subs_test','hosts_and_subs_test');
+add_shortcode('hosts_and_subs_test','rsvpmaker_hosts_and_subs_test');
 
 function rsvpmaker_expand_recipients($email) {
 	$email = strtolower($email);
@@ -1353,4 +1277,88 @@ function rsvpmail_get_member_emails( $blog_id = 0 ) {
 		$emails[] = strtolower( $member->user_email );
 	}
 	return $emails;
+}
+
+
+// Restored for cross-plugin compatibility.
+function rsvpmaker_qemail ($mail, $recipients) {
+	$recipients = rsvpmaker_recipients_no_problems($recipients);
+	error_log('rsvpmaker_qemail '.implode(', ',$recipients));
+	global $current_user;
+	if(is_multisite()) // send through root blog
+	{
+		if(!rsvpmaker_postmark_is_active())
+			switch_to_blog(1);
+	}	
+	if(strpos($mail['html'],'<body')) {
+		preg_match('|<bod[^>]+>(.+)</body>|is',$mail['html'],$match);
+		if(!empty($match[1])) {
+			$_html = $mail['html'];
+			$mail['html'] = $match[1];	
+		}
+	}
+	$qpost['post_content'] = $mail['html'];
+	$qpost['post_title'] = $mail['subject'];
+	$qpost['post_type'] = 'rsvpemail';
+	$qpost['post_author'] = $current_user->ID;
+	$qpost['post_status'] = 'rsvpmessage';
+	if(!empty($mail['post_id']))
+		$qpost['ID'] = $mail['post_id'];
+	$from = $mail['from'];
+	$fromname = $mail['fromname'];
+
+	if(!empty($qpost['post_content']) && !empty($from))  
+		$post_id = wp_insert_post($qpost);
+
+	if($post_id) {
+		//add_post_meta($post_id,'imap_message_id',$headerinfo->message_id);
+		add_post_meta($post_id,'rsvprelay_from',$from);
+		if(empty($fromname))
+			$fromname = $from;
+		if(!empty($_html))
+			add_post_meta($post_id,'_rsvpmail_html',$_html);
+		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
+		if(rsvpmaker_postmark_is_active()) {
+			error_log('rsvpmaker_postmark_broadcast id '.$post_id);
+			rsvpmaker_postmark_broadcast($recipients,$post_id);
+		}
+		else {
+			foreach($recipients as $email)
+				add_post_meta($post_id,'rsvprelay_to',$email);
+		}
+		$mail['html'] = 'hidden';
+	}
+	if(is_multisite())
+		restore_current_blog();
+}
+
+
+// Restored for cross-plugin compatibility.
+function rsvpmaker_relay_active_lists() {
+
+	$active = get_option( 'rsvpmaker_discussion_active' );
+
+	$lists = array();
+
+	if ( ! $active ) {
+
+		return array();
+	}
+
+	$vars = get_option( 'rsvpmaker_discussion_member' );
+
+	if ( ! empty( $vars['password'] ) ) {
+
+		$lists['member'] = $vars['user'];
+	}
+
+	$vars = get_option( 'rsvpmaker_discussion_officer' );
+
+	if ( ! empty( $vars['password'] ) ) {
+
+		$lists['officer'] = $vars['user'];
+	}
+
+	return $lists;
+
 }

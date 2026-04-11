@@ -1,0 +1,84 @@
+Orphan Prune Risk Report
+Generated: 2026-04-11T12:56:38+00:00
+
+Summary
+Absent functions analyzed: 57
+High risk (referenced by other plugins): 0
+Low risk (no external refs found): 57
+
+Grouped By Origin File
+
+[admin/rsvpmaker-fake-editor.php]
+low	rsvpmaker_fake_editor	external_refs=0
+
+[rsvpmaker-admin.php]
+low	rsvp_confirm_url	external_refs=0
+low	rsvp_customize_form_url	external_refs=0
+low	rsvp_form_url	external_refs=0
+low	rsvpmaker_admin_page_top	external_refs=0
+low	rsvpmaker_create_calendar_page	external_refs=0
+low	rsvpmaker_doc	external_refs=0
+low	rsvpmaker_form_summary	external_refs=0
+low	rsvpmaker_import_cleanup	external_refs=0
+low	rsvpmaker_join_special	external_refs=0
+low	rsvpmaker_menu_security	external_refs=0
+low	rsvpmaker_override	external_refs=0
+low	rsvpmaker_paypal_config_ajax	external_refs=0
+low	rsvptimes	external_refs=0
+
+[rsvpmaker-display.php]
+low	is_rsvpmaker	external_refs=0
+low	rsvp_ical_split	external_refs=0
+low	rsvpmaker_archive_pages	external_refs=0
+low	rsvpmaker_compact	external_refs=0
+low	rsvpmaker_loop_excerpt_render	external_refs=0
+low	rsvpmaker_posts_to_exclude	external_refs=0
+low	rsvpmaker_template_events_where	external_refs=0
+low	rsvpmaker_type_dateorder	external_refs=0
+low	rsvpmaker_where_schedule	external_refs=0
+
+[rsvpmaker-email.php]
+low	RSVPMaker_draw_blastoptions	external_refs=0
+low	RSVPMaker_extract_email	external_refs=0
+low	rsvpmail_patterns	external_refs=0
+low	rsvpmailer_add_editors_note	external_refs=0
+low	rsvpmailer_template_preview	external_refs=0
+low	rsvpmaker_cronmail_check_duplicate	external_refs=0
+low	rsvpmaker_emailguestsignup	external_refs=0
+
+[rsvpmaker-plugabble.php]
+low	rsvp_form_setup_form	external_refs=0
+low	rsvpmaker_cap_filter_test	external_refs=0
+
+[rsvpmaker-util.php]
+low	get_rsvp_event	external_refs=0
+low	rsvp_simple_price	external_refs=0
+low	rsvp_simple_price_label	external_refs=0
+low	rsvpmail_editor_style	external_refs=0
+low	rsvpmaker_admin_heading_help	external_refs=0
+low	rsvpmaker_atts	external_refs=0
+low	rsvpmaker_end_date	external_refs=0
+low	rsvpmaker_inliner	external_refs=0
+low	rsvpmaker_notice	external_refs=0
+low	rsvpmaker_print_word	external_refs=0
+low	rsvpmaker_time_format	external_refs=0
+low	rsvpmaker_update_help	external_refs=0
+low	rsvpmaker_update_start_time	external_refs=0
+
+[rsvpmaker.php]
+low	rsvpmaker_custom_payment	external_refs=0
+low	rsvpmaker_wp_editor	external_refs=0
+
+[unknown]
+low	rsvpmaker_ajax_guest_lookup	external_refs=0
+low	rsvpmaker_check_mailchimp_email	external_refs=0
+low	rsvpmaker_customize_forms_and_messages	external_refs=0
+low	rsvpmaker_get_spreadsheet_data	external_refs=0
+low	rsvpmaker_guestfield	external_refs=0
+low	rsvpmaker_inline_array	external_refs=0
+low	rsvpmaker_no_mce_plugins	external_refs=0
+low	rsvpmaker_postmark_site_id	external_refs=0
+low	rsvpmaker_stripe_latest_logged	external_refs=0
+low	rsvpmaker_widgetlink	external_refs=0
+
+High Risk External Reference Details

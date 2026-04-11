@@ -6,7 +6,7 @@ add_action('init', 'rsvp_options_defaults', 1 );
 add_action('init','rsvpmail_unsubscribe');
 add_action('init','rsvpmail_confirm_subscribe');
 //add_action('plugins_loaded','rsvpmail_list_rsvpmodal_controller',1); //trying to get this earlier than init
-add_action('init', 'remove_save_content_filters', 99 );
+add_action('init', 'rsvpmaker_remove_save_content_filters', 99 );
 add_action('init','rsvpmaker_create_nonce',1);
 add_action('init','rsvphoney_login',1);
 add_action('admin_init','rsvpmaker_queue_post_type');
@@ -23,17 +23,17 @@ add_action('admin_init', 'rsvpmaker_add_one' );
 add_action('admin_init', 'rsvpmaker_editors' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvp_csv' );
-add_action('admin_init', 'additional_editors_setup' );
-add_action('admin_init', 'cpevent_activate' );
+add_action('admin_init', 'rsvpmaker_additional_editors_setup' );
+add_action('admin_init', 'rsvpmaker_cpevent_activate' );
 
 //add_action('admin_init', 'rsvpmaker_setup_post' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvpmaker_customize_document' );
 
-add_action( 'admin_menu', 'my_events_menu' );
-add_action( 'admin_menu', 'my_rsvpemails_menu' );
+//add_action( 'admin_menu', 'rsvpmaker_my_events_menu' );
+//add_action( 'admin_menu', 'my_rsvpemails_menu' );
 //todo checkthis?
-add_action( 'admin_menu', 'my_rsvpemail_menu' );
+//add_action( 'admin_menu', 'my_rsvpemail_menu' );
 add_action( 'admin_menu', 'rsvpmaker_admin_menu' );
 
 add_action( 'admin_notices', 'rsvpmaker_admin_notice' );
@@ -41,7 +41,7 @@ add_action( 'admin_notices', 'rsvpmaker_admin_notice' );
 add_action( 'current_screen', 'rsvp_print', 999 );
 add_action( 'export_wp', 'export_rsvpmaker' );
 add_action( 'import_end', 'import_rsvpmaker' );
-add_action( 'log_paypal', 'log_paypal' );
+add_action( 'log_paypal', 'rsvpmaker_log_paypal' );
 add_action( 'manage_posts_extra_tablenav', 'rsvpmaker_sort_message' );
 //add_action( 'pre_get_posts', 'rsvpmaker_archive_pages' );
 add_action( 'plugins_loaded', 'rsvpmaker_load_plugin_textdomain' );
@@ -135,7 +135,7 @@ function rsvpmaker_init_router() {
 	rsvpmaker_create_post_type();
 	create_rsvpemail_post_type();
 	if ( isset( $_GET['rsvpmaker_cron_email_preview'] ) ) {
-		previewtest();// email preview
+		rsvpmaker_previewtest();// email preview
 	}
 	rsvp_options_defaults();
 	rsvpmaker_localdate();

@@ -429,7 +429,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 }
 
-function stripe_form_wrapper( $atts, $content ) {
+function rsvpmaker_stripe_form_wrapper( $atts, $content ) {
 
 	global $post;
 
@@ -510,7 +510,7 @@ function stripe_form_wrapper( $atts, $content ) {
 	return $content;
 }
 
-function remove_save_content_filters() {
+function rsvpmaker_remove_save_content_filters() {
 
 	if ( isset( $_REQUEST['_locale'] ) && ( $_REQUEST['_locale'] == 'user' ) ) {
 
@@ -611,7 +611,7 @@ function rsvpmaker_get_form_id( $slug ) {
 		return $forms[ $slug ];
 }
 
-add_action( 'set_current_user', 'remove_save_content_filters', 99 );
+add_action( 'set_current_user', 'rsvpmaker_remove_save_content_filters', 99 );
 
 // not necessary, static block
 function rsvpmaker_formchimp( $atts, $content ) {
@@ -820,6 +820,7 @@ else {
 	printf('<input type="hidden" name="is_order" value="%s" />',esc_attr($attributes['order']));
 }
 rsvphoney_ui();
+echo rsvp_form_jquery();
 if(!empty($attributes['sale'])) {
 	$amount = floatval($attributes['sale']);
 	$item_label = (empty($attributes['item_label'])) ? __('Item','rsvpmaker') : $attributes['item_label'];
@@ -886,3 +887,1388 @@ form.addEventListener("submit", (event) => {
 <?php
 }
 
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function save_replay_rsvp() {
+
+		global $wpdb;
+
+		global $rsvp_options;
+
+		global $rsvp_id;
+
+		if ( isset( $_POST['replay_rsvp'] ) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+
+			if ( get_magic_quotes_gpc() ) {
+
+				$_POST = array_map( 'stripslashes_deep', $_POST );
+			}
+
+			$req_uri = trim( sanitize_text_field($_POST['replay_rsvp']) );
+
+			$req_uri .= ( strpos( $req_uri, '?' ) ) ? '&' : '?';
+
+			// sanitize input
+
+			foreach ( $_POST['profile'] as $name => $value ) {
+
+				$rsvp[ $name ] = sanitize_text_field( $value );
+			}
+
+			if ( isset( $_POST['note'] ) ) {
+
+				$note = sanitize_text_field( $_POST['note'] );
+
+			} else {
+				$note = '';
+			}
+
+			$answer = 'YES';
+
+			$event = ( ! empty( $_POST['event'] ) ) ? (int) $_POST['event'] : 0;
+
+			if ( ! $event ) {
+
+				die( 'Event ID not set' );
+			}
+
+			// page hasn't loaded yet, so retrieve post variables based on event
+
+			$post = get_post( $event );
+
+			// get rsvp_to
+
+			$custom_fields = get_post_custom( $post->ID );
+
+			$rsvp_to = $custom_fields['_rsvp_to'][0];
+
+			$rsvp_confirm = rsvp_get_confirm( $post->ID );
+
+			// if permalinks are not turned on, we need to append to query string not add our own ?
+
+			if ( ! is_admin() && isset( $custom_fields['_rsvp_captcha'][0] ) && $custom_fields['_rsvp_captcha'][0] ) {
+
+				if ( ! isset( $_SESSION['captcha_key'] ) ) {
+
+					session_start();
+				}
+
+				if ( $_SESSION['captcha_key'] != md5( $_POST['captcha'] ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'security code not entered correctly! Please try again.' ) );
+
+					exit();
+
+				}
+			}
+
+			if ( ! is_admin() && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) ) {
+
+				if ( ! rsvpmaker_recaptcha_check( $rsvp_options['rsvp_recaptcha_site_key'], $rsvp_options['rsvp_recaptcha_secret'] ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'failed recaptcha test' ) );
+
+					exit();
+
+				}
+			}
+
+			if ( isset( $_POST['required'] ) || empty( $rsvp['email'] ) ) {
+
+				$required = explode( ',', $_POST['required'] );
+
+				if ( ! in_array( 'email', $required ) ) {
+
+					$required[] = 'email';
+				}
+
+				$missing = '';
+
+				foreach ( $required as $r ) {
+					$r = sanitize_text_field($r);
+					if ( empty( $rsvp[ $r ] ) ) {
+
+						$missing .= $r . ' ';
+					}
+				}
+
+				if ( $missing != '' ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'missing required fields: ' . esc_attr( $missing ) ) );
+
+					exit();
+
+				}
+			}
+
+			if ( preg_match_all( '/http/', $_POST['note'], $matches ) > 2 ) {
+
+				header( 'Location: ' . $req_uri . '&err=Invalid input' );
+
+				exit();
+
+			}
+
+			if ( preg_match( '|//|', implode( ' ', $rsvp ) ) ) {
+
+				header( 'Location: ' . $req_uri . '&err=Invalid input' );
+
+				exit();
+
+			}
+
+			if ( isset( $rsvp['email'] ) ) {
+
+				// assuming the form includes email, test to make sure it's a valid one
+
+				if ( ! apply_filters( 'rsvmpmaker_spam_check', $rsvp['email'] ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'Invalid input.' ) );
+
+					exit();
+
+				}
+
+				if ( ! filter_var( $rsvp['email'], FILTER_VALIDATE_EMAIL ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'Invalid email.' ) );
+
+					exit();
+
+				}
+			}
+
+			if ( isset( $_POST['onfile'] ) ) {
+
+				$sql = $wpdb->prepare( "SELECT details FROM %s WHERE event=%d AND email LIKE %s AND first LIKE %s AND last LIKE %s  ORDER BY id DESC", $wpdb->prefix . "rsvpmaker", $event, $rsvp['email'], $rsvp['first'], $rsvp['last'] );
+
+				$details = $wpdb->get_var( $sql );
+
+				if ( $details ) {
+
+					$contact = unserialize( $details );
+
+				} else {
+					$contact = rsvpmaker_profile_lookup( $rsvp['email'] );
+				}
+
+				if ( $contact ) {
+
+					foreach ( $contact as $name => $value ) {
+
+						if ( ! isset( $rsvp[ $name ] ) ) {
+
+							$rsvp[ $name ] = $value;
+						}
+					}
+				}
+			}
+
+			global $current_user; // if logged in
+
+			$future = is_rsvpmaker_future( $event, 1 ); // if start time in the future (or within one hour)
+
+			$yesno = ( $future ) ? 1 : 2;// 2 for replay
+
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID);
+
+			rsvpmaker_capture_email( $rsvp );
+
+			$rsvp_id = ( isset( $_POST['rsvp_id'] ) ) ? (int) $_POST['rsvp_id'] : 0;
+
+			if ( $rsvp_id ) {
+				$wpdb->update($wpdb->prefix . 'rsvpmaker',$nv,array('id'=>$rsvp_id));
+			} else {
+				$wpdb->insert($wpdb->prefix . 'rsvpmaker',$nv);
+				$rsvp_id = $wpdb->insert_id;
+
+				$sql = $wpdb->prepare("SELECT date FROM %i WHERE event=%d ",$wpdb->prefix . "rsvpmaker_event",$event);
+
+				if ( empty( $wpdb->get_var( $sql ) ) ) {
+					$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event' => $event, 'post_title' => $post->post_title, 'date'=>get_rsvp_date( $event )));
+				}
+			}
+			if(!is_admin())
+			setcookie( 'rsvp_for_' . $event, $rsvp_id, time() + ( 60 * 60 * 24 * 90 ), '/', sanitize_text_field($_SERVER['SERVER_NAME']) );
+
+			if ( $future ) {
+
+				$cleanmessage = '';
+
+				foreach ( $rsvp as $name => $value ) {
+
+					$label = get_post_meta( $event, 'rsvpform' . $name, true );
+
+					if ( $label ) {
+
+						$name = $label;
+					}
+
+					$cleanmessage .= $name . ': ' . $value . "\n";// labels from form
+
+				}
+
+				$subject = __( 'You registered for ', 'rsvpmaker' ) . ' ' . esc_html( $post->post_title );
+
+				if ( ! empty( $_POST['note'] ) ) {
+
+					$cleanmessage .= ' Note: ' . sanitize_textarea_field( stripslashes( $_POST['note'] ) );
+				}
+
+				rsvp_notifications( $rsvp, $rsvp_to, $subject, $cleanmessage, $rsvp_confirm );
+
+			} else {
+
+				// cron for follow up messages
+
+				$sql = $wpdb-prepare("SELECT * 
+
+FROM %i 
+
+WHERE meta_key REGEXP '_rsvp_reminder_msg_[0-9]{1,2}'
+
+AND  `post_id` = %d",$wpdb->postmeta,$event);
+
+				$results = $wpdb->get_results( $sql );
+
+				if ( $results ) {
+
+					foreach ( $results as $row ) {
+
+						$parts = explode( '_msg_', $row->meta_key );
+
+						$hours = $parts[1];
+
+						rsvpmaker_replay_cron( $event, $rsvp_id, $hours );
+
+					}
+				}
+			}
+
+			$landing_id = (int) $_POST['landing_id'];
+
+			$passcode = get_post_meta( $landing_id, '_webinar_passcode', true );
+
+			$landing_permalink = $req_uri . '&webinar=' . $passcode . '&e=' . $rsvp['email'];
+
+			header( 'Location: ' . $landing_permalink );
+
+			exit();
+
+		}
+
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function save_rsvp($postdata, $live = true) {
+
+		global $wpdb;
+
+		global $rsvp_options;
+
+		global $post;
+
+		global $rsvp_id;
+
+		global $rsvpdata;
+		global $current_user; // if logged in
+
+		global $rsvpmaker_coupon_message;
+
+		$payment_details = '';
+
+		$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
+		if ( $currency == 'usd' ) {
+			$currency = '$';
+		} elseif ( $currency == 'eur' ) {
+			$currency = '€';
+		}
+		else {
+			$currency = strtoupper($currency).' ';
+		}
+
+		$rsvp['fee_total'] = 0;
+
+		$rsvp_id = ( isset( $postdata['rsvp_id'] ) ) ? (int) $postdata['rsvp_id'] : 0;
+
+		$cleanmessage = '';
+
+		if ( isset( $postdata['withdraw'] ) ) {
+
+			foreach ( $postdata['withdraw'] as $withdraw_id ) {
+
+				$wpdb->query( 'UPDATE ' . $wpdb->prefix . "rsvpmaker SET yesno=0 WHERE id=".intval($withdraw_id) );
+
+			}
+		}
+		$test = ($live) ? wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) : true;
+		if ( $test) {
+
+			$postdata = stripslashes_deep( $postdata );
+
+			// sanitize input
+
+			foreach ( $postdata['profile'] as $name => $value ) {
+				$rsvp[ $name ] = sanitize_text_field( $value );
+			}
+			if ( isset( $postdata['note'] ) ) {
+
+				$note = sanitize_textarea_field( $postdata['note'] );
+
+			} else {
+				$note = '';
+			}
+
+			$yesno = (int) $postdata['yesno'];
+
+			$answer = ( $yesno ) ? __( 'YES', 'rsvpmaker' ) : __( 'NO', 'rsvpmaker' );
+
+			$event = ( ! empty( $postdata['event'] ) ) ? (int) $postdata['event'] : 0;
+
+			if ( ! $event ) {
+
+				return 'Event ID not set';
+			}
+			if(!get_post_meta($event,'_rsvp_on'))
+				return;
+
+			// page hasn't loaded yet, so retrieve post variables based on event
+
+			$post = get_post( $event );
+
+			// get rsvp_to
+
+			$custom_fields = get_post_custom( $post->ID );
+
+			$rsvp_to = empty($custom_fields['_rsvp_to'][0]) ? $rsvp_options['rsvp_to'] : $custom_fields['_rsvp_to'][0];
+
+			$rsvp_confirm = rsvp_get_confirm( $post->ID );
+
+			$rsvp_max = empty($custom_fields['_rsvp_max'][0]) ? 0 : $custom_fields['_rsvp_max'][0];
+
+			$count = $wpdb->get_var( $wpdb->prepare("SELECT count(*) FROM %i WHERE event=%d AND yesno=1",$wpdb->prefix . "rsvpmaker",$event) );
+
+			// if permalinks are not turned on, we need to append to query string not add our own ?
+
+			$guest_sql = array();
+
+			$guest_text = array();
+
+			if ( is_admin() ) {
+
+				$req_uri = admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $event );
+
+			} else {
+
+				$req_uri = add_query_arg('e',$rsvp['email'],get_permalink($event));
+
+			}
+
+			if ( ! is_admin() && isset( $custom_fields['_rsvp_captcha'][0] ) && $custom_fields['_rsvp_captcha'][0] ) {
+
+				if ( ! isset( $_SESSION['captcha_key'] ) ) {
+
+					session_start();
+				}
+
+				if ( $_SESSION['captcha_key'] != md5( $postdata['captcha'] ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'security code not entered correctly! Please try again.' ) );
+
+					exit();
+
+				}
+			}
+
+			if ( ! is_admin() && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! empty( $rsvp_options['rsvp_recaptcha_secret'] ) ) {
+
+				if ( ! rsvpmaker_recaptcha_check( $rsvp_options['rsvp_recaptcha_site_key'], $rsvp_options['rsvp_recaptcha_secret'] ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'failed recaptcha test' ) );
+
+					exit();
+
+				}
+			}
+
+			if ( isset( $postdata['required'] ) || empty( $rsvp['email'] ) ) {
+				if(isset( $postdata['required'] ))
+				$required = explode( ',', $postdata['required'] );
+
+				if ( ! in_array( 'email', $required ) ) {
+					$required[] = 'email';
+				}
+
+				$missing = '';
+
+				if(!empty($required))
+				foreach ( $required as $r ) {
+					$r = sanitize_text_field($r);
+					if ( empty( $rsvp[ $r ] ) ) {
+						$missing .= $r . ' ';
+					}
+				}
+
+				if ( $missing != '' ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'missing required fields: ' . $missing ) );
+
+					exit();
+
+				}
+			}
+
+			if ( ! isset( $rsvp['first'] ) ) {
+
+				$rsvp['first'] = '';
+			}
+
+			if ( ! isset( $rsvp['last'] ) ) {
+
+				$rsvp['last'] = '';
+			}
+			if(!empty($postdata['coupon_code']))
+				$rsvp['coupon_code'] = $postdata['coupon_code'];
+
+			if ( isset( $postdata['note'] ) && preg_match_all( '/http/', $postdata['note'], $matches ) > 2 ) {
+
+				header( 'Location: ' . $req_uri . '&err=Invalid input' );
+
+				exit();
+
+			}
+
+			if ( preg_match( '|//|', implode( ' ', $rsvp ) ) ) {
+
+				header( 'Location: ' . $req_uri . '&err=Invalid input' );
+
+				exit();
+
+			}
+
+			if ( isset( $rsvp['email'] ) ) {
+
+				// assuming the form includes email, test to make sure it's a valid one
+
+				if ( ! apply_filters( 'rsvmpmaker_spam_check', $rsvp['email'] ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'Invalid input.' ) );
+
+					exit();
+
+				}
+
+				if ( ! filter_var( $rsvp['email'], FILTER_VALIDATE_EMAIL ) ) {
+
+					header( 'Location: ' . $req_uri . '&err=' . urlencode( 'Invalid email.' ) );
+
+					exit();
+
+				}
+			}
+			if ( empty( $rsvp_id ) ) {
+				//fix for patchstack report
+				$sql = $wpdb->prepare('SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email=%s AND first=%s AND last=%s AND event=%d ", $rsvp['email'], $rsvp['first'], $rsvp['last'], $post->ID);
+				$duplicate_check = $wpdb->get_var( $sql );
+
+				if ( $duplicate_check ) {
+
+					$rsvp_id = $duplicate_check;
+
+				}
+			}
+
+			$owed = 0;
+			$paid = 0;
+
+			if ( $rsvp_id ) {
+
+				$sql = $wpdb->prepare("SELECT * FROM %i WHERE email !='' AND id=%d",$wpdb->prefix .'rsvpmaker',$rsvp_id);
+				$rsvp_row = $wpdb->get_row( $sql );
+				$details =  empty($rsvp_row) ? '' : $rsvp_row->details;
+				$paid = empty($rsvp_row) ? 0 : $rsvp_row->amountpaid;
+
+				if ( $details ) {
+					//patchstack fix
+					$contact = unserialize( $details, array('allowed_classes' => false) );
+
+					if ( is_array( $contact ) ) {
+
+						foreach ( $contact as $name => $value ) {
+
+							if ( ! isset( $rsvp[ $name ] ) ) {
+
+								$rsvp[ $name ] = $value;
+							}
+						}
+					}
+				} else {
+					$rsvp_id = null;
+				}
+			}
+
+			$rsvp['payingfor'] = '';
+
+			if ( isset( $postdata['payingfor'] ) && is_array( $postdata['payingfor'] ) ) {
+
+				$rsvp['fee_total'] = 0;
+
+				$participants = 0;
+
+				foreach ( $postdata['payingfor'] as $index => $value ) {
+
+					$value = (int) $value;
+
+					$unit = sanitize_text_field( $postdata['unit'][ $index ] );
+
+					$price = (float) $postdata['price'][ $index ];
+					$cost = $value * $price;
+					$rsvp['payingfor'] .= "<div>$value $unit @ " .$currency. number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency']."</div>\n";
+
+					$rsvp['fee_total'] += $cost;
+
+					$participants += $value;
+
+				}
+			}
+
+			if ( isset( $postdata['timeslot'] ) && is_array( $postdata['timeslot'] ) ) {
+
+				$participants = $rsvp['participants'] = (int) $postdata['participants'];
+
+				$rsvp['timeslots'] = ''; // ignore anything retrieved from prev rsvps
+
+				foreach ( $postdata['timeslot'] as $slot ) {
+
+					if ( ! empty( $rsvp['timeslots'] ) ) {
+
+						$rsvp['timeslots'] .= ', ';
+					}
+
+					$rsvp['timeslots'] .= rsvpmaker_date( 'g:i A', sanitize_text_field($slot) );
+
+				}
+			}
+
+			if ( ! isset( $participants ) && $yesno ) {
+
+				// if they didn't specify # of participants (paid tickets or volunteers), count the host plus guests
+
+				$participants = 1;
+
+				if ( ! empty( $postdata['guest']['first'] ) ) {
+
+					foreach ( $postdata['guest']['first'] as $first ) {
+
+						if ( $first ) {
+							$participants++;
+						}
+					}
+				}
+				if ( isset( $postdata['guestdelete'] ) ) {
+					$participants -= sizeof( $postdata['guestdelete'] );
+				}
+			}
+
+			if ( ! $yesno ) {
+
+				$participants = 0; // if they said no, they don't count
+			}
+
+			if(isset($postdata['full_price'])) {
+				$price = floatval($postdata['full_price']);
+				$rsvp['full_price'] = $price;
+				$unit = 'Multi-event discount';
+				$index = 0;
+			} 
+			elseif(isset($postdata['guest_count_price'])) {
+				$index = (int) $postdata['guest_count_price'];
+				$per = rsvp_get_pricing($event);
+				$price = $per[ $index ]->price;
+				$unit = $per[ $index ]->unit;
+			}
+			if ( $participants && !empty($price) ) {
+				$cleanmessage .= '<div>' . __( 'Participants', 'rsvpmaker' ) . ": $participants</div>\n";
+				$multiple = (!empty( $per[ $index ]) && isset( $per[ $index ]->price_multiple ) ) ? (int) $per[ $index ]->price_multiple : 1;
+
+				if ( $multiple > 1 ) {
+					$rsvp['fee_total'] = $price;
+					if ( $participants > $multiple ) {
+						$rsvp['payingfor'] .= '<div>'.$per[$index]->unit.'</div>';
+						if($per[$index]->extra_guest_price) {
+							$extra_guests = $participants - $multiple;
+							$extra_fee = $per[$index]->extra_guest_price * $extra_guests;
+							$rsvp['payingfor'] .= '<div>'.$extra_guests.' additional guests @ '.$per[$index]->extra_guest_price.'</div>';
+							$rsvp['fee_total'] += $per[$index]->extra_guest_price * ($participants - $multiple);
+						}
+						else {
+							$multiple_warning = '<div style="color:red;">' . "Warning: party of $participants exceeds reservation size" . '</div>';
+							$rsvp['payingfor'] .= $multiple_warning;
+						}
+					} else {
+						$padguests = $multiple - $participants;
+						$participants = $multiple;
+					}
+				} else {
+					$rsvp['fee_total'] = $price * $participants;
+				}
+
+				$rsvp['payingfor'] .= "<div>$participants $unit @ " .$currency. number_format( $price, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] )."</div>\n";
+
+				$rsvp['pricechoice'] = $index;
+
+			}
+
+			if(!empty($rsvp['fee_total'])) {
+				$pricewas = $rsvp['fee_total'];
+			}
+			if ( ! empty( $rsvpmaker_coupon_message ) ) {
+				$rsvp['coupon'] = $rsvpmaker_coupon_message;
+			}
+
+			$item_pricing = rsvpmaker_item_pricing($post->ID);
+			$itemlog = '';
+			if(sizeof(((array) $item_pricing))) {
+				$field_labels = rsvpmaker_form_field_labels($post->ID);
+				$pricing_vars = get_object_vars($item_pricing);
+				$item_fees = [];
+				$item_count = [];
+				foreach($pricing_vars as $index => $slugv) {
+					$slugv = (array) $slugv;
+					if(sizeof($slugv))
+					foreach($slugv as $slugindex => $v) {
+						$item_count[$index.':'.$slugindex] = 0;
+					}
+				}
+				foreach($rsvp as $rsvpkey => $rsvpvalue) {
+					$itemlog .= $rsvpkey . ' ' . $rsvpvalue.' '; 
+					if(!empty($item_pricing->$rsvpkey))
+						$itemlog .= ' pricing key match for '.$rsvpkey.' ';
+					if(!empty($item_pricing->$rsvpkey) && !empty($item_pricing->$rsvpkey->$rsvpvalue))
+						{
+							$item_count[$rsvpkey.':'.$rsvpvalue] = (empty($item_count[$rsvpkey.':'.$rsvpvalue])) ? 1 : $item_count[$rsvpkey.':'.$rsvpvalue] + 1;
+							$item_fees[$rsvpkey.':'.$rsvpvalue] = floatval($item_pricing->$rsvpkey->$rsvpvalue);
+							$rsvp['fee_total'] += floatval($item_pricing->$rsvpkey->$rsvpvalue);
+						}
+				}
+			}
+
+			if ( isset( $postdata['guest'] ) ) {
+				foreach($postdata['guest'] as $key => $gv) {
+					foreach($gv as $index => $value) {
+						if(empty($gvs[$index]))
+							$gvs[$index] = array();
+						$gvs[$index][$key] = $value;
+					}
+				}
+			}
+
+			if ( !empty($gvs) && !empty(sizeof((array) $item_pricing)) ) {
+				foreach($gvs as $key => $gv) {
+					foreach($gv as $rsvpkey => $rsvpvalue) {
+						if(!empty($item_pricing->$rsvpkey) && !empty($item_pricing->$rsvpkey->$rsvpvalue))
+						{
+						$item_count[$rsvpkey.':'.$rsvpvalue] = (empty($item_count[$rsvpkey.':'.$rsvpvalue])) ? 1 : $item_count[$rsvpkey.':'.$rsvpvalue] + 1;
+						$item_fees[$rsvpkey.':'.$rsvpvalue] = floatval($item_pricing->$rsvpkey->$rsvpvalue);
+						$price_before = $rsvp['fee_total'];
+						$rsvp['fee_total'] += floatval($item_pricing->$rsvpkey->$rsvpvalue);
+						}
+					}
+				}
+			}
+			if(!empty($item_count) && sizeof($item_count)) {
+				foreach($item_count as $rsvpkey => $count) {
+					if($count) {
+						$parts = explode(':',$rsvpkey);
+						$label = (empty($field_labels[$parts[0]])) ? $parts[0] : $field_labels[$parts[0]];
+						$rsvp['payingfor'] .= '<div>'.$label.':'.$parts[1]." $count @ ".$currency.$item_fees[$rsvpkey]."</div>";
+					}
+				}
+			}
+
+			if(!empty($rsvp['fee_total'])) {
+				$pricewas = $rsvp['fee_total'];
+				$rsvp['fee_total'] = rsvpmaker_check_coupon_code( $rsvp['fee_total'], $postdata, $participants );
+				$owedwas = $rsvp['fee_total'] - $paid;
+				$rsvp['amountpaid'] = $paid;
+				$rsvp = rsvpmaker_gift_certificate($rsvp);
+				$paid = $rsvp['amountpaid'];
+				$owed = $rsvp['fee_total'] - $paid;
+				if($pricewas != $rsvp['fee_total'])
+					$rsvp['payingfor'] .= sprintf("<div>Before coupon %s%s</div><div>Coupon discount - %s%s</div>",$currency,number_format($pricewas,2),$currency,number_format($pricewas - $rsvp["fee_total"],2));
+				if($owedwas != $owed)
+					$rsvp['payingfor'] .= sprintf("<div>Total %s%s</div><div>Gift certificate applied - %s%s</div>",$currency,number_format($rsvp["fee_total"],2),$currency,number_format($owedwas - $owed,2));
+				$rsvp['payingfor'] .= '<div class="payment_details_total"><strong>= ' .$currency. number_format( $rsvp['fee_total'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']) . "</strong></div>\n";
+			}
+
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'owed'=>$owed,'fee_total'=>$rsvp['fee_total']);
+			if(!empty($postdata['multi_event_price'])) {
+				$nv['amountpaid'] = floatval($postdata['multi_event_price']);
+				$nv['owed'] = 0;
+			}
+
+			rsvpmaker_capture_email( $rsvp );
+
+			if ( $rsvp_id ) {
+				if($owed) {
+					$snapshot = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE id=%d OR master_rsvp=%d ORDER BY master_rsvp, id",$wpdb->prefix . "rsvpmaker",$rsvp_id,$rsvp_id)); //get host, followed by guests
+					if($snapshot && !intval($snapshot[0]->owed)) {
+						update_post_meta($snapshot[0]->event,'_rsvp_snapshot_'.$snapshot[0]->id.'_'.$snapshot[0]->amountpaid,$snapshot);
+					}
+				}
+				$wpdb->update($wpdb->prefix . 'rsvpmaker',$nv,array('id'=>$rsvp_id));
+				$wpdb->show_errors();
+			} else {
+
+				$count++;
+
+				if ( $rsvp_max && ( $count > $rsvp_max ) ) {
+
+					$cleanmessage .= '<div style="color:red;">' . __( 'Max RSVP count limit reached, entry not added for:', 'rsvpmaker' ) . "\n" . $rsvp['first'] . ' ' . $rsvp['last'] . '</div>';
+
+					$rsvp_id = 0;
+
+				} else {
+					$wpdb->insert($wpdb->prefix . 'rsvpmaker',$nv);
+					$rsvp_id = $wpdb->insert_id;
+
+					$sql = $wpdb->prepare("SELECT date FROM %i WHERE event=%d ",$wpdb->prefix . "rsvpmaker_event",$event);
+
+					if ( empty( $wpdb->get_var( $sql ) ) ) {
+						$wpdb->insert($wpdb->prefix . 'rsvpmaker_event',array('event'=>$event, 'post_title'=>$post->post_title, 'date'=> get_rsvp_date( $event )));
+					}
+				}
+			}
+
+			if (!is_admin() && ! empty( $rsvp_options['send_payment_reminders'] ) && isset( $price ) && ( $price > 0 ) ) {
+				rsvpmaker_payment_reminder_cron( $rsvp_id );
+			}
+			if(!is_admin())
+			{
+				setcookie( 'rsvp_for_' . $post->ID, $rsvp_id, time() + 60 * 60 * 24 * 90, '/', sanitize_text_field($_SERVER['SERVER_NAME']) );
+				setcookie( 'rsvpmaker', $rsvp_id, time() + 60 * 60 * 24 * 90, '/', sanitize_text_field($_SERVER['SERVER_NAME']) );	
+			}
+			if ( isset( $postdata['timeslot'] ) ) {
+
+				$participants = (int) $postdata['participants'];
+
+				// clear previous response, if any
+
+				$wpdb->query( $wpdb->prepare("DELETE FROM %i WHERE rsvp=",$wpdb->prefix . "rsvp_volunteer_time",$rsvp_id));
+
+				foreach ( $postdata['timeslot'] as $slot ) {
+
+					$slot = (int) $slot;
+
+					$sql = $wpdb->prepare( 'INSERT INTO ' . $wpdb->prefix . 'rsvp_volunteer_time SET time=%d, event=%d, rsvp=%d, participants=%d', $slot, $post->ID, $rsvp_id, $participants );
+
+					$wpdb->query( $sql );
+
+				}
+			}
+
+			// get start date
+
+			$rows = get_rsvp_dates( $event );
+
+			$row = $rows[0];
+
+			$date = rsvpdate_shortcode( array( 'format' => '%b %e' ) );
+
+			foreach ( $rsvp as $name => $value ) {
+
+				$label = get_post_meta( $post->ID, 'rsvpform' . $name, true );
+
+				if ( $label ) {
+
+					$name = $label;
+				}
+
+				if ( ! empty( $value ) ) {
+
+					$cleanmessage .= $name . ': ' . $value . "\n";// labels from rsvp form
+				}
+			}
+
+			$guestof = (empty($rsvp['first'])) ? '' : $rsvp['first'] . ' ';
+			$guestof .=  (empty($rsvp['last'])) ? '' : $rsvp['last'];
+			$guestnv = array();
+
+			if ( isset( $postdata['guest']['first'] ) ) {
+
+				foreach ( $postdata['guest']['first'] as $index => $first ) {
+
+					$last = ( !empty( $postdata['guest']['last']) && !empty($postdata['guest']['last'][ $index ]) ) ? sanitize_text_field($postdata['guest']['last'][ $index ]) : '';
+					if ( ! empty( $first ) ) {						
+						$guestnv[$index] = array('event'=>$event, 'yesno'=>$yesno, 'master_rsvp'=>$rsvp_id, 'guestof'=>$guestof, 'first' => $first, 'last' => $last,'details'=>serialize($gvs[$index]));
+						$guest_text[ $index ] = sprintf( "Guest: %s %s\n", $first, $last );
+						$guest_list[ $index ] = sprintf( '%s %s', $first, $last );
+						$lastguest = $index;
+					}
+				}
+			}
+
+			if ( ! empty( $padguests ) ) {
+
+				for ( $i = 0; $i < $padguests; $i++ ) {
+
+					$index = $i + 100;
+
+					$tbd = $i + 1;
+					$guestnv[$index] = array('event'=>$event, 'yesno'=>$yesno, 'master_rsvp'=>$rsvp_id, 'guestof'=>$guestof, 'first' => 'Placeholder', 'last' =>$tbd);
+					$guest_text[ $index ] = sprintf( "Guest: %s %s\n", 'Placeholder', 'Guest TBD ' . $tbd );
+
+					$guest_list[ $index ] = sprintf( '%s %s', 'Placeholder', 'Guest TBD ' . $tbd );
+
+					$newrow[ $index ]['first'] = 'Placeholder';
+
+					$newrow[ $index ]['last'] = 'Guest TBD ' . $tbd;
+
+				}
+			}
+
+			if ( sizeof( $guestnv ) ) {
+				foreach ( $postdata['guest'] as $field => $column ) {
+					foreach ( $column as $index => $value ) {
+						if ( empty( $guest_text[ $index ] ) ) {
+							$guest_text[ $index ] = '';
+						}
+						if ( isset( $guest_sql[ $index ] ) ) {
+							$newrow[ $index ][ $field ] = $value;
+							if ( ( $field != 'first' ) && ( $field != 'last' ) && ( $field != 'id' ) ) {
+								$guest_text[ $index ] .= sprintf( "%s: %s\n", $field, $value );
+								$guestlast = (empty($postdata['guest']['last'][ $index ])) ? '' : sanitize_text_field($postdata['guest']['last'][ $index ]);
+								$guest_list[ $index ] = sprintf( '%s %s', $first, $guestlast );
+							}
+						}
+					}
+				}
+			}
+
+			$keep_guests = '';
+
+			if ( sizeof( $guestnv ) ) {
+
+				foreach ( $guestnv as $index => $nv ) {
+
+					$id = ( isset( $postdata['guest']) && isset( $postdata['guest']['id']) && isset( $postdata['guest']['id'][ $index ] ) ) ? (int) $postdata['guest']['id'][ $index ] : 0;
+
+					if ( $id ) {
+						$keep_guests .= " AND id != $id";
+						$wpdb->update($wpdb->prefix . 'rsvpmaker', $nv,array('id'=>$id));// $sql = 'UPDATE ' . $wpdb->prefix . 'rsvpmaker ' . $sql . ' WHERE id=' . $id;
+					} else {
+						$count++;
+						if ( $rsvp_max && ( $count > $rsvp_max ) ) {
+							$guest_text[ $index ] = '<div style="color:red;">' . __( 'Max RSVP count limit reached, entry not added for:', 'rsvpmaker' ) . "\n" . $guest_text[ $index ] . '</div>';
+							$guest_list[ $index ] = '<div style="color:red;">' . __( 'Max RSVP count limit reached, entry not added for:', 'rsvpmaker' ) . "\n" . $guest_text[ $index ] . '</div>';
+						} else {
+							$guests_to_add[] = $nv;
+						}
+					}
+				}
+			}
+			if($rsvp_id) {
+				$missing_guests = "delete from ".$wpdb->prefix."rsvpmaker WHERE master_rsvp= ".intval($rsvp_id).$keep_guests;
+				$wpdb->query($missing_guests);
+			}
+
+			if(!empty($guests_to_add)) {
+				foreach($guests_to_add as $nv)
+					$wpdb->insert($wpdb->prefix . 'rsvpmaker', $nv);
+			}
+
+			$guestparty = rsvpmaker_guestparty($rsvp_id);
+			//fix
+			if ( $guestparty ) {
+				$cleanmessage .= $guestparty;
+			}
+
+			if ( ! empty( $multiple_warning ) ) {
+
+				$cleanmessage .= $multiple_warning;
+			}
+
+			if ( ! is_admin() ) {
+
+				if ( ! empty( $postdata['note'] ) ) {
+
+					$cleanmessage .= ' Note: ' . stripslashes( $postdata['note'] );
+				}
+
+				$include_event = get_post_meta( $post->ID, '_rsvp_confirmation_include_event', true );
+
+				if ( $include_event ) {
+
+					$embed = rsvpmaker_event_to_embed( $post->ID, $post, 'confirmation' );
+
+					$cleanmessage .= "\n\n" . $embed['content'];
+
+				}
+
+				$receipt_code = get_post_meta($post->ID,'rsvpmaker_receipt_'.$rsvp_id,true);
+				if(!$receipt_code) {
+					$receipt_code = wp_generate_password(20,false,false);
+					update_post_meta($post->ID,'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
+				}	
+				$cleanmessage = sprintf('<p><a href="%s">%s</a></p>',add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($post->ID)),__('Print Receipt','rsvpmaker'))."\n".$cleanmessage;
+				if($rsvp['fee_total']) {
+					$url = get_permalink($post->ID);
+					$url = add_query_arg('rsvp',$rsvp_id,$url);
+					$url = add_query_arg('e',$rsvp['email'],$url);
+					$cleanmessage = sprintf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>'."\n",$url,$url).$cleanmessage;	
+				}
+
+				$rsvpdata['rsvpdetails'] = rsvpmaker_guestparty($rsvp_id,true);
+				$rsvpdata['rsvpmessage'] = $rsvp_confirm; // confirmation message from editor
+
+				$rsvpdata['rsvpyesno'] = $answer;
+				$rsvpdata['yesno'] = $yesno;
+				$rsvpdata['rsvpdate'] = $date;
+
+				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID, false, $rsvp['email'], $rsvp_id );
+				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
+
+				if($live)
+				rsvp_notifications_via_template( $rsvp, $rsvp_to, $rsvpdata );
+
+			}
+
+			do_action( 'rsvp_recorded', $rsvp );
+			if($live) {
+				header( 'Location: ' . $req_uri . '&rsvp=' . $rsvp_id .'&timelord='.rsvpmaker_nonce('value').'&ts='.time().'#rsvpmaker_top' );
+				exit();	
+			}
+			else {
+				return sprintf('<p><a href="%s">%s</a></p>',$req_uri . '&rsvp=' . $rsvp_id .'&ts='.time().'#rsvpmaker_top',$post->post_title);
+			}
+		}
+
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvpmaker_basic_form( $form = '' ) {
+
+		global $rsvp_options;
+
+		global $post;
+
+		if ( empty( $form ) ) {
+
+			$form = get_post_meta( $post->ID, '_rsvp_form', true );
+		}
+
+		if ( empty( $form ) ) {
+			$form = $rsvp_options['rsvp_form'];
+		}
+
+		if ( is_numeric( $form ) ) {
+			$fpost = get_post( $form );
+			if(empty($fpost) || empty($fpost->post_content) || !strpos($fpost->post_content,'rsvpmaker/'))
+			{
+				$form = upgrade_rsvpform(false,$form);
+				$fpost = get_post($form);
+			}
+			echo do_blocks( $fpost->post_content );
+
+		} else {
+			echo do_shortcode( $form );
+		}
+
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvpguests( $atts ) {
+
+		if ( is_admin() || wp_is_json_request() ) {
+
+			return;
+		}
+		return rsvp_form_guests($atts);
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvpprofiletable( $atts, $content = null ) {
+
+		global $profile;
+
+		if ( ! isset( $atts['show_if_empty'] ) || ! ( isset( $profile[ $atts['show_if_empty'] ] ) && $profile[ $atts['show_if_empty'] ] ) ) {
+
+			return do_shortcode( $content );
+
+		} else {
+
+			$p = get_post_permalink();
+
+			$p .= ( strpos( $p, '?' ) ) ? '&blank=1' : '?blank=1';
+
+			return '
+
+<p id="profiledetails">' . __( 'Profile details on file. To update profile, or RSVP for someone else', 'rsvpmaker' ) . ' <a href="' . $p . '">' . __( 'fetch a blank form', 'rsvpmaker' ) . '</a></p>
+
+<input type="hidden" name="onfile" value="1" />';
+
+		}
+
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvpfield( $atts ) {
+
+		global $profile;
+
+		global $rsvp_required_field;
+
+		global $guestextra;
+
+		global $current_user;
+
+		// synonyms
+
+		if ( isset( $atts['text'] ) && ! isset( $atts['textfield'] ) ) {
+			$atts['textfield'] = $atts['text'];
+		}
+
+		if ( isset( $atts['select'] ) && ! isset( $atts['selectfield'] ) ) {
+			$atts['selectfield'] = $atts['select'];
+		}
+
+		if ( is_admin() && ! isset( $_REQUEST['edit_rsvp'] ) ) {
+
+			$output = '';
+
+			$guestfield = ( isset( $atts['guestfield'] ) ) ? (int) $atts['guestfield'] : 0;
+
+			$guestoptions = array( __( 'main form', 'rsvpmaker' ), __( 'main+guest', 'rsvpmaker' ), __( 'guest form only', 'rsvpmaker' ) );
+
+			$goptions = '';
+
+			foreach ( $guestoptions as $index => $option ) {
+
+				$s = ( $index == $guestfield ) ? ' selected="selected" ' : '';
+
+				$goptions .= '<option value="' . $index . '" ' . $s . '>' . $option . '</option>';
+
+			}
+
+			$private = ( isset( $atts['private'] ) && $atts['private'] ) ? ' checked="checked" ' : '';
+
+			if ( isset( $atts['textfield'] ) ) {
+
+				$field = $atts['textfield'];
+
+				if ( ( $field == 'email' ) || ( $field == 'first' ) || ( $field == 'last' ) ) {
+
+					return;
+				}
+
+				if ( strpos( $field, 'hone' ) && empty( $atts['private'] ) ) {
+
+					$private = ' checked="checked" ';
+				}
+
+				$label = ucfirst( str_replace( '_', ' ', $field ) );
+
+				global $extrafield;
+
+				$extrafield++;
+
+				$output = '<select name="type' . $extrafield . '" id="type' . $extrafield . '"><option value="text" selected="selected">text</option><option value="hidden">hidden</option><option value="radio">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select> ' . __( 'Show', 'rsvpmaker' ) . ': <select id="guest' . $extrafield . '" name="guest' . $extrafield . '">' . $goptions . '</select>
+
+<input type="checkbox" id="private' . $extrafield . '" name="private' . $extrafield . '" value="1" ' . $private . ' /> ' . __( 'private', 'rsvpmaker' ) . '
+
+<br /><input type="text" name="extra' . $extrafield . '" id="extra' . $extrafield . '" value="' . esc_attr( $label ) . '"  class="text ui-widget-content ui-corner-all" />';
+
+			}
+
+			if ( isset( $atts['hidden'] ) ) {
+
+				$field = $atts['hidden'];
+
+				if ( ( $field == 'email' ) || ( $field == 'email' ) || ( $field == 'email' ) ) {
+
+					return;
+				}
+
+				$label = ucfirst( str_replace( '_', ' ', $field ) );
+
+				global $extrafield;
+
+				$extrafield++;
+
+				$output = '<select id="type' . $extrafield . '"><option value="text">text</option><option value="hidden" selected="selected">hidden</option><option value="radio">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select><input type="hidden" id="guest' . $extrafield . '" />
+
+<input type="hidden" id="private' . $extrafield . '" name="private' . $extrafield . '" /> 
+
+<br /><input type="text" id="extra' . $extrafield . '" value="' . esc_attr( $label ) . '"  class="text ui-widget-content ui-corner-all" />';
+
+			}
+
+			if ( isset( $atts['radio'] ) ) {
+
+				$field = $atts['radio'];
+
+				if ( ( $field == 'email' ) || ( $field == 'email' ) || ( $field == 'email' ) ) {
+
+					return;
+				}
+
+				$label = ucfirst( str_replace( '_', ' ', $field ) );
+
+				global $extrafield;
+
+				$extrafield++;
+
+				$output = '<select id="type' . $extrafield . '"><option value="text">text</option><option value="hidden">hidden</option><option value="radio"  selected="selected">radio</option><option value="select">select</option><option value="checkbox">checkbox</option></select> ' . __( 'Show', 'rsvpmaker' ) . ': <select id="guest' . $extrafield . '" name="guest' . $extrafield . '">' . $goptions . '</select>
+
+<input type="checkbox" id="private' . $extrafield . '" name="private' . $extrafield . '" value="1" ' . $private . ' /> ' . __( 'private', 'rsvpmaker' ) . '
+
+<br /><input type="text" id="extra' . $extrafield . '" value="' . esc_attr( $label ) . ':' . esc_attr( $atts['options'] ) . '"  class="text ui-widget-content ui-corner-all" />';
+
+			}
+
+			if ( isset( $atts['selectfield'] ) ) {
+
+				$field = $atts['selectfield'];
+
+				if ( ( $field == 'email' ) || ( $field == 'email' ) || ( $field == 'email' ) ) {
+
+					return;
+				}
+
+				if ( strpos( $field, 'hone' ) && empty( $atts['private'] ) ) {
+
+					$private = ' checked="checked" ';
+				}
+
+				$label = ucfirst( str_replace( '_', ' ', $field ) );
+
+				global $extrafield;
+
+				$extrafield++;
+
+				$output = '<select id="type' . $extrafield . '"><option value="text">text</option><option value="hidden">hidden</option><option value="radio">radio</option><option value="select" selected="selected">select</option><option value="checkbox">checkbox</option></select> 
+
+' . __( 'Show', 'rsvpmaker' ) . ': <select id="guest' . $extrafield . '" name="guest' . $extrafield . '">' . $goptions . '</select> <input type="checkbox" id="private' . $extrafield . '" name="private' . $extrafield . '" value="1" ' . $private . ' /> ' . __( 'private', 'rsvpmaker' ) . '		
+
+<br /><input type="text" id="extra' . $extrafield . '" value="' . esc_attr( $label . ':' . $atts['options'] ) . '"  class="text ui-widget-content ui-corner-all" />';
+
+			}
+
+			return $output;
+
+		}
+
+		// front end behavior
+
+		if ( isset( $atts['textfield'] ) ) {
+
+			$field = str_replace( ' ', '_', $atts['textfield'] );// preg_replace('/[^a-zA-Z0-9_]/','_',$atts["textfield"]);
+
+			$meta = ( is_user_logged_in() ) ? get_user_meta( $current_user->ID, $field, true ) : '';
+
+			$profile[ $field ] = ( isset( $profile[ $field ] ) ) ? $profile[ $field ] : $meta;
+
+			if ( ! is_admin() && ! empty( $profile[ $field ] ) && isset( $atts['private'] ) && $atts['private'] ) {
+
+				$output = '<span  class="onfile ' . $field . '" >' . __( 'private data on file', 'rsvpmaker' ) . '</span>';
+
+			} else {
+
+				$size = ( isset( $atts['size'] ) ) ? ' size="' . $atts['size'] . '" ' : '';
+
+				$data = ( isset( $profile[ $field ] ) ) ? ' value="' . $profile[ $field ] . '" ' : '';
+
+				$output = '<input  class="' . $field . '" type="text" name="profile[' . $field . ']" id="' . $field . '" ' . $size . $data . ' />';
+
+			}
+		}
+
+		if ( isset( $atts['hidden'] ) ) {
+
+			$field = $atts['hidden'];
+
+			$meta = ( is_user_logged_in() ) ? get_user_meta( $current_user->ID, $field, true ) : '';
+
+			$profile[ $field ] = ( isset( $profile[ $field ] ) ) ? $profile[ $field ] : $meta;
+
+			$size = ( isset( $atts['size'] ) ) ? ' size="' . $atts['size'] . '" ' : '';
+
+			$data = ( isset( $profile[ $field ] ) ) ? ' value="' . $profile[ $field ] . '" ' : '';
+
+			$output = '<input  class="' . $field . '" type="hidden" name="profile[' . $field . ']" id="' . $field . '" ' . $size . $data . ' />';
+
+		} elseif ( isset( $atts['selectfield'] ) ) {
+
+			$field = $atts['selectfield'];
+
+			$meta = ( is_user_logged_in() ) ? get_user_meta( $current_user->ID, $field, true ) : '';
+
+			$profile[ $field ] = ( isset( $profile[ $field ] ) ) ? $profile[ $field ] : $meta;
+
+			if ( ! is_admin() && ! empty( $profile[ $field ] ) && isset( $atts['private'] ) && $atts['private'] ) {
+
+				return '<span  class="onfile ' . $field . '" >' . __( 'private data on file', 'rsvpmaker' ) . '</span>';
+			}
+
+			$selected = ( isset( $atts['selected'] ) ) ? trim( $atts['selected'] ) : '';
+
+			if ( ! empty( $profile[ $field ] ) ) {
+
+				$selected = $profile[ $field ];
+			}
+
+			$output = '<span  class="' . $field . '"><select class="' . $field . '" name="profile[' . $field . ']" id="' . $field . '" >' . "\n";
+
+			if ( isset( $atts['options'] ) ) {
+
+				$o = explode( ',', $atts['options'] );
+
+				foreach ( $o as $i ) {
+
+					$i = trim( $i );
+
+					$s = ( $selected == $i ) ? ' selected="selected" ' : '';
+
+					$output .= '<option value="' . $i . '" ' . $s . '>' . $i . '</option>' . "\n";
+
+				}
+			}
+
+			$output .= '</select></span>' . "\n";
+
+		} elseif ( isset( $atts['checkbox'] ) ) {
+
+			$field = $atts['checkbox'];
+
+			$value = $atts['value'];
+
+			$ischecked = ( isset( $atts['checked'] ) ) ? ' checked="checked" ' : '';
+
+			$meta = ( is_user_logged_in() ) ? get_user_meta( $current_user->ID, $field, true ) : '';
+
+			$profile[ $field ] = ( isset( $profile[ $field ] ) ) ? $profile[ $field ] : $meta;
+
+			if ( ! empty( $profile[ $field ] ) && isset( $atts['private'] ) && $atts['private'] ) {
+
+				return '<span  class="onfile ' . $field . '" >' . __( 'private data on file', 'rsvpmaker' ) . '</span>';
+			}
+
+			if ( isset( $profile[ $field ] ) ) {
+
+				$ischecked = ' checked="checked" ';
+			}
+
+			$output = '<input class="' . $field . '" type="checkbox" name="profile[' . $field . ']" id="' . $field . '" value="' . $value . '" ' . $ischecked . '/>';
+
+		} elseif ( isset( $atts['radio'] ) ) {
+
+			$field = $atts['radio'];
+
+			$meta = ( is_user_logged_in() ) ? get_user_meta( $current_user->ID, $field, true ) : '';
+
+			$profile[ $field ] = ( isset( $profile[ $field ] ) ) ? $profile[ $field ] : $meta;
+
+			if ( ! empty( $profile[ $field ] ) && isset( $atts['private'] ) && $atts['private'] ) {
+
+				return '<span  class="onfile ' . $field . '" >' . __( 'private data on file', 'rsvpmaker' ) . '</span>';
+			}
+
+			$sep = ( isset( $atts['sep'] ) ) ? $atts['sep'] : ' ';
+
+			$checked = ( isset( $atts['checked'] ) ) ? trim( $atts['checked'] ) : '';
+
+			if ( isset( $profile[ $field ] ) ) {
+
+				$checked = $profile[ $field ];
+			}
+
+			if ( isset( $atts['options'] ) ) {
+
+				$o = explode( ',', $atts['options'] );
+
+				$radio = array();
+
+				foreach ( $o as $i ) {
+
+					$i = trim( $i );
+
+					$ischecked = ( $checked == $i ) ? ' checked="checked" ' : '';
+
+					$radio[] = '<span  class="' . $field . '"><input class="' . $field . '" type="radio" name="profile[' . $field . ']" id="' . $field . $i . '" class="' . $field . '"  value="' . $i . '"  ' . $ischecked . '/> ' . $i . '</span> ';
+
+				}
+			}
+
+			$output = implode( $sep, $radio );
+
+		}
+
+		if ( isset( $atts['required'] ) || isset( $atts['require'] ) ) {
+
+			$output = '<span class="required">' . $output . '</span>';
+
+			$rsvp_required_field[ $field ] = $field;
+
+		}
+
+		if ( isset( $atts['demo'] ) ) {
+
+			$demo = "<div>Shortcode:</div>\n<p><strong>[</strong>rsvpfield";
+
+			foreach ( $atts as $name => $value ) {
+
+				if ( $name == 'demo' ) {
+
+					continue;
+				}
+
+				$demo .= ' ' . $name . '="' . $value . '"';
+
+			}
+
+			$demo .= "<strong>]</strong></p>\n";
+
+			$demo .= "<div>HTML:</div>\n<pre>" . htmlentities( $output ) . "</pre>\n";
+
+			$demo .= "<div>Profile:</div>\n<pre>" . var_export( $profile, true ) . "</pre>\n";
+
+			$demo .= "<div>Display:</div>\n<p>";
+
+			$output = $demo . $output . '</p>';
+
+		}
+
+		if ( isset( $atts['guestfield'] ) && $atts['guestfield'] ) {
+
+			$guestextra[ $field ] = $atts;
+
+			if ( $atts['guestfield'] == 2 ) {
+
+				return; // guest only don't display on main form
+			}
+		}
+
+		if ( $field == 'email' ) {
+
+			$output .= '<div id="rsvp_email_lookup"></div>';
+		}
+
+		return $output;
+
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvpnote() {
+
+	global $rsvp_row;
+
+	return ( isset( $rsvp_row->note ) ) ? $rsvp_row->note : '';
+
+}

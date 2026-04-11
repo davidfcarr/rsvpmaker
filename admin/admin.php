@@ -15,7 +15,7 @@
  //legacy from old create guten block
 include 'init.php';
 
-function create_block_admin_block_init() {
+function rsvpmaker_create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build' ); //placeholder block, includes defined
 	register_block_type( __DIR__ . '/build/upcoming' );
 	register_block_type( __DIR__ . '/build/excerpt' );
@@ -96,11 +96,11 @@ function rsvpmaker_register_block_editor_store() {
 }
 add_action( 'enqueue_block_editor_assets', 'rsvpmaker_register_block_editor_store' );
 
-add_action( 'init', 'create_block_admin_block_init' );
+add_action( 'init', 'rsvpmaker_create_block_admin_block_init' );
 
-add_action('admin_enqueue_scripts', 'react_admin_script');
+add_action('admin_enqueue_scripts', 'rsvpmaker_react_admin_script');
 
-function react_admin_script() {
+function rsvpmaker_react_admin_script() {
 	global $post;
 	if(isset($_GET['page']) && ('rsvpmaker_settings' == $_GET['page'] )) 
 	{
@@ -238,7 +238,7 @@ function get_rsvpmaker_rest() {
 		$complex_template = get_post_meta($post_id,'complex_template',true);
 		$chosen_gateway = get_rsvpmaker_payment_gateway ();
 		$edit_payment_confirmation = admin_url('?payment_confirmation&post_id='.$post_id);
-		$sked = get_template_sked($post_id);
+		$sked = rsvpmaker_get_template_sked($post_id);
 		if(!empty($post->post_content) && strpos($post->post_content,'wp:rsvpmaker/formfield'))
 			$rsvpmaker_special = 'RSVP Form';
 		else
@@ -252,7 +252,7 @@ function get_rsvpmaker_rest() {
 		{
 			$projected_label = __('Create/update events from template','rsvpmaker');
 			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id);
-			$template_msg = sked_to_text($sked);
+			$template_msg = rsvpmaker_sked_to_text($sked);
 		}
 		$template_id = (int) get_post_meta($post_id,'_meet_recur',true);
 		if($template_id && !$sked)
@@ -271,7 +271,7 @@ function get_rsvpmaker_rest() {
 	if(empty($date))
 	{
 	//$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
-	$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
+	$sked = rsvpmaker_get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 	if(empty($sked))
 		$sked = array();
 	}

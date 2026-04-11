@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.8.9
+* Version: 11.9
 */
 
 function get_rsvpversion() {
-	return '11.8.9';
+	return '11.9';
 }
 
 global $wp_version;
@@ -703,16 +703,12 @@ function rsvpmaker_includes() {
 	$plugins_dir   = plugin_dir_path( __DIR__ );
 	$rsvpmaker_dir = trailingslashit(plugin_dir_path( __FILE__ ));
 
-	if ( file_exists( $plugins_dir . 'rsvpmaker-custom.php' ) ) {
-		include_once $plugins_dir . 'rsvpmaker-custom.php';
-	}
-
 	include $rsvpmaker_dir . 'rsvpmaker-util.php';
 	include $rsvpmaker_dir . 'rsvpmaker-types.php';
 	include $rsvpmaker_dir . 'rsvpmaker-admin.php';
 	include $rsvpmaker_dir . 'rsvpmaker-api-endpoints.php';
 	include $rsvpmaker_dir . 'rsvpmaker-display.php';
-	include $rsvpmaker_dir . 'rsvpmaker-plugabble.php';
+	include $rsvpmaker_dir . 'rsvpmaker-template.php';
 	include $rsvpmaker_dir . 'mailchimp-api-master/src/MailChimp.php';
 	include $rsvpmaker_dir . 'rsvpmaker-email.php';
 	include $rsvpmaker_dir . 'rsvpmaker-privacy.php';
@@ -745,7 +741,7 @@ if ( version_compare( PHP_VERSION, '5.3.0' ) >= 0 ) {
 }
 
 // make sure new rules will be generated for custom post type - flush for admin but not for regular site visitors
-function cpevent_activate() {
+function rsvpmaker_cpevent_activate() {
 	global $wpdb, $rsvp_options;
 	if(!$rsvp_options)
 		$rsvp_options = rsvp_options_defaults();
@@ -833,7 +829,7 @@ rsvpmail_problem_init();
 	update_option( 'RSVPMAKER_Options', $rsvp_options );
 }
 
-register_activation_hook( __FILE__, 'cpevent_activate' );
+register_activation_hook( __FILE__, 'rsvpmaker_cpevent_activate' );
 
 function rsvpmaker_deactivate() {
 
@@ -884,7 +880,7 @@ function rsvpmaker_single_template_hierarchy($templates) {
 	return $templates;
 }
 
-function log_paypal( $message ) {
+function rsvpmaker_log_paypal( $message ) {
 
 	global $post;
 
@@ -939,7 +935,7 @@ if ( ! function_exists( 'rsvpmaker_permalink_query' ) ) {
 	}
 } // end function exists
 
-function format_cddate( $year, $month, $day, $hours, $minutes ) {
+function rsvpmaker_format_cddate( $year, $month, $day, $hours, $minutes ) {
 
 	$month = (int) $month;
 
@@ -1101,33 +1097,7 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 
 }
 
-function rsvpmaker_custom_payment( $method, $paid, $rsvp_id, $event, $tx_id = 0 ) {
 
-	global $wpdb;
-
-	$charge = $paid;
-
-	$paid_amounts = get_post_meta( $event, '_paid_' . $rsvp_id );
-
-	if ( ! empty( $paid_amounts ) ) {
-
-		foreach ( $paid_amounts as $payment ) {
-
-			$paid += $payment;
-		}
-	}
-
-	$wpdb->query( $wpdb->prepare('UPDATE %i SET amountpaid=%s WHERE id=%d ',$wpdb->prefix . "rsvpmaker",$paid,$rsvp_id) );
-
-	add_post_meta( $event, '_' . $method . '_' . $tx_id, $charge );
-
-	add_post_meta( $event, '_paid_' . $rsvp_id, $charge );
-
-	delete_post_meta( $event, '_open_invoice_' . $rsvp_id );
-
-	delete_post_meta( $event, '_invoice_' . $rsvp_id );
-
-}
 
 function add_rsvpmaker_roles() {
 
@@ -1177,16 +1147,7 @@ function add_rsvpmaker_roles() {
 	}
 
 }
-function rsvpmaker_wp_editor( $content, $editor_id, $settings = array() ) {
-	if ( function_exists( 'do_blocks' ) ) { // gutenberg world
 
-		printf( '<p><textarea rows="10" cols="80" id="%s" name=%s>%s</textarea></p>', esc_attr( $editor_id ), esc_attr( $editor_id ), wp_kses_post( $content ) );
-
-	} else {
-		wp_editor( $content, $editor_id, $settings );
-	}
-
-}
 
 function rsvpmaker_dequeue_script() {
 

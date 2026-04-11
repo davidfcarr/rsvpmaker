@@ -14,6 +14,7 @@ export default function DateOrTemplate(props) {
     const [openModal,setOpenModal] = useState(('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus) || postmeta?._show_rsvpmaker_options);
     const event_id = wp?.data?.select("core/editor").getCurrentPostId();
     const rsvpmaker_rest = props.rsvpmaker_rest;
+    const isNewRsvpmakerDocument = (rsvpmaker_rest?.post_type == 'rsvpmaker') && (('draft' == initialPostStatus) || ('auto-draft' == initialPostStatus));
     useEffect(() => {
         if (rsvpmaker_rest?.nonce) {
         setupNonceInterceptor(rsvpmaker_rest.nonce);
@@ -31,14 +32,16 @@ export default function DateOrTemplate(props) {
         return;
     if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
         eventdata.tzchoices = [];
+    const hasValidEventDate = Number.isFinite(Date.parse(eventdata?.date));
     
     return (
 <div className="date-or-template">
 {rsvpmaker_rest.top_message}
-<Setup rsvpmaker_rest={rsvpmaker_rest} open={openModal} setOpenModal={setOpenModal} tab={tab}  eventdata={eventdata} /> 
+<Setup rsvpmaker_rest={rsvpmaker_rest} open={openModal} setOpenModal={setOpenModal} tab={tab}  eventdata={eventdata} allowMissingDate={isNewRsvpmakerDocument} /> 
 {( (rsvpmaker_rest.post_type == 'rsvpmaker') && 
 <div>
-{!openModal && (rsvpmaker_rest.post_type == 'rsvpmaker') && <DateTimeMaker rsvpmaker_rest={rsvpmaker_rest} event_id={event_id} eventdata={eventdata} />}
+{!openModal && hasValidEventDate && <DateTimeMaker rsvpmaker_rest={rsvpmaker_rest} event_id={event_id} eventdata={eventdata} />}
+{!openModal && !hasValidEventDate && !isNewRsvpmakerDocument && <p><em>not a dated event</em></p>}
 </div>
 )}
 {(!openModal && (rsvpmaker_rest.post_type == 'rsvpmaker_template') && <TemplateControl rsvpmaker_rest={rsvpmaker_rest} event_id={event_id} eventdata={eventdata} />

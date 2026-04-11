@@ -233,7 +233,8 @@ var MetaEndDateControl = wp.compose.compose(
 		}
 	} ),
 	withSelect( function( select, props ) {
-		let metaValue = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[props.timeKey];
+		const meta = select( 'core/editor' ).getEditedPostAttribute( 'meta' ) || {};
+		let metaValue = meta[props.timeKey];
 		var hour = '';
 		var minutes = '';
 		var parts;
@@ -245,32 +246,41 @@ var MetaEndDateControl = wp.compose.compose(
 			{	
 				parts = ['12','00'];
 				if(props.type == 'date') {
-					var time = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_rsvp_date'];
-					var p = time.split('/ :/');
-					var h = parseInt(p[1])+1;
-					if(h < 10)
-					hour = '0'+h.toString();
-					hour = h.toString();
-					parts = [hour,p[2]];
+					var time = meta['_rsvp_date'];
+					if ((typeof time === 'string') && time.length) {
+						var p = time.split('/ :/');
+						var h = parseInt(p[1], 10) + 1;
+						if (!isNaN(h)) {
+							if(h < 10)
+							hour = '0'+h.toString();
+							else
+							hour = h.toString();
+							parts = [hour,p[2] ? p[2] : '00'];
+						}
+					}
 				}
 				else {
-					hour = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_sked_hour'];
-					minutes = select( 'core/editor' ).getEditedPostAttribute( 'meta' )['_sked_minutes'];
+					hour = meta['_sked_hour'];
+					minutes = meta['_sked_minutes'];
 					var h = parseInt(hour)+1;
-					if(h < 10)
-					hour = '0'+h.toString();
-					hour = h.toString();
-					parts = [hour,minutes];
+					if(!isNaN(h)) {
+						if(h < 10)
+						hour = '0'+h.toString();
+						else
+						hour = h.toString();
+						parts = [hour, minutes ? minutes : '00'];
+					}
 				}
 
 				}
-		let display = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[props.statusKey];
+		let display = meta[props.statusKey];
 		return {
 			parts: parts,
 			display: display,
 			//metaValue: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ],
 		}
 	} ) )( function( props ) {
+		const safeParts = Array.isArray(props.parts) ? props.parts : ['12','00'];
 		//inner function to handle change
 		function getTimeValues(){
 			var hour = document.querySelector( '#endhour option:checked' );
@@ -326,10 +336,10 @@ var MetaEndDateControl = wp.compose.compose(
 				props.setDisplay( content );
 			}}
 		/> 
-		End Time<br /><select id="endhour" value={props.parts[0]} onChange={ handleChange }>
+		End Time<br /><select id="endhour" value={safeParts[0]} onChange={ handleChange }>
 		<HourOptions />
 		</select>	
-		<select id="endminutes" value={props.parts[1]} onChange={ handleChange } >
+		<select id="endminutes" value={safeParts[1]} onChange={ handleChange } >
 		<MinutesOptions />
 		</select>	
 		</div>
@@ -589,23 +599,30 @@ var RSVPEndDateControl = wp.compose.compose(
 		}
 	} ),
 	withSelect( function( select, props ) {
-		let current = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ props.metaKey ];
+		const meta = select( 'core/editor' ).getEditedPostAttribute( 'meta' ) || {};
+		let current = meta[ props.metaKey ];
 		
 		if(!current)
 		{
-			let datestring = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_rsvp_dates' ];
-			let timestring = select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_endfirsttime' ];
-			if(timestring) {
+			let datestring = meta[ '_rsvp_dates' ];
+			let timestring = meta[ '_endfirsttime' ];
+			if(timestring && (typeof datestring === 'string') && (datestring.indexOf(' ') > -1)) {
 				let parts = datestring.split(' ');
-				current = parts[0] + ' ' + timestring;
+				current = (parts[0] ? parts[0] : '') + ' ' + timestring;
+			}
+			else if((typeof datestring === 'string') && datestring.length) {
+				let startdate = new Date(datestring);
+				if(!Number.isNaN(startdate.getTime())) {
+					startdate.setTime(startdate.getTime() + 60 * 1000);
+					let hour = startdate.getHours();
+					if(hour < 10)
+						hour = '0'+hour;
+					const minutes = ('00' + startdate.getMinutes()).slice(-2);
+					current = hour+':'+minutes+':00';
+				}
 			}
 			else {
-				let startdate = new Date(datestring);
-				startdate.setTime(startdate.getTime() + 60 * 1000);
-				current = startdate.getHours();
-				if(current < 10)
-				current = '0'+current;
-				current = current+':'+startdate.getMinutes()+':00';
+				current = null;
 			}
 		}		
 		return {
@@ -639,12 +656,12 @@ var RSVPEndDateControl = wp.compose.compose(
 
 export function RSVPTimestampControl (props) {
 	const {metaKey, eventdata} = props;
-	const {meta} = eventdata;
+	const meta = eventdata?.meta || {};
 	console.log('RSVPTimestampControl metaKey',metaKey);
 	console.log('RSVPTimestampControl meta',meta);
-	const value = meta[metaKey];
+	const value = meta?.[metaKey];
     console.log('RSVPTimestampControl value',value);
-	const {mutate:datemutate} = useRSVPDateMutation(eventdata.event);
+	const {mutate:datemutate} = useRSVPDateMutation(eventdata?.event);
 
 	function pad(n) {
 		if(n < 10)
@@ -653,9 +670,10 @@ export function RSVPTimestampControl (props) {
 			return n;
 	}
 
-	const sdate = new Date(eventdata.date);
+	const sdate = new Date(eventdata?.date);
 	//subtract from js calculated dates / 1000 to get server timestamp
-	const correction = sdate.getTime() - (eventdata.ts_start * 1000);
+	const tsStart = Number(eventdata?.ts_start || 0);
+	const correction = Number.isNaN(sdate.getTime()) ? 0 : sdate.getTime() - (tsStart * 1000);
 	const metadate = new Date();
 	const set = (value * 1000)+correction;
 	metadate.setTime(set);
@@ -664,6 +682,8 @@ export function RSVPTimestampControl (props) {
 
 	function save() {
 		const sdate = new Date(date+' '+time);
+		if(Number.isNaN(sdate.getTime()))
+			return;
 		datemutate({'metaKey':metaKey,'metaValue':(sdate.getTime()-correction)/1000});
 	}
 
@@ -701,11 +721,12 @@ const MetaTimestampControl = wp.compose.compose(
 				return n;
 		}
 		const rsvpmaker_rest = getRsvpmakerRestSettings();
-
-		const sdate = new Date(rsvpmaker_rest.eventdata.date);
+		const eventdata = rsvpmaker_rest?.eventdata || {};
+		const sdate = new Date(eventdata.date);
 		//subtract from js calculated dates / 1000 to get server timestamp
 		console.log('meta ts props',props);
-		const correction = sdate.getTime() - (rsvpmaker_rest.eventdata.ts_start * 1000);
+		const tsStart = Number(eventdata.ts_start || 0);
+		const correction = Number.isNaN(sdate.getTime()) ? 0 : sdate.getTime() - (tsStart * 1000);
 		const metadate = new Date();
 		if(props.metaValue)
 			metadate.setTime((props.metaValue * 1000)+correction);
@@ -715,6 +736,8 @@ const MetaTimestampControl = wp.compose.compose(
 	
 		function save() {
 			const sdate = new Date(date+' '+time);
+			if(Number.isNaN(sdate.getTime()))
+				return;
 			props.setMetaValue((sdate.getTime()-correction)/1000);
 			setMessage('New date will be recorded when you save/publish/update');
 		}

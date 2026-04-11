@@ -201,7 +201,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 * @param string $str String to wrap in XML CDATA tag.
 	 * @return string
 	 */
-	function wxr_cdata( $str ) {
+	function rsvpmaker_wxr_cdata( $str ) {
 		if ( ! seems_utf8( $str ) ) {
 			$str = utf8_encode( $str );
 		}
@@ -218,7 +218,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @return string Site URL.
 	 */
-	function wxr_site_url() {
+	function rsvpmaker_wxr_site_url() {
 		// Multisite: the base URL.
 		if ( is_multisite() ) {
 			return network_home_url();
@@ -236,12 +236,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param object $category Category Object
 	 */
-	function wxr_cat_name( $category ) {
+	function rsvpmaker_wxr_cat_name( $category ) {
 		if ( empty( $category->name ) ) {
 			return;
 		}
 
-		echo '<wp:cat_name>' . wxr_cdata( $category->name ) . "</wp:cat_name>\n";
+		echo '<wp:cat_name>' . rsvpmaker_wxr_cdata( $category->name ) . "</wp:cat_name>\n";
 	}
 
 	/**
@@ -251,12 +251,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param object $category Category Object
 	 */
-	function wxr_category_description( $category ) {
+	function rsvpmaker_wxr_category_description( $category ) {
 		if ( empty( $category->description ) ) {
 			return;
 		}
 
-		echo '<wp:category_description>' . wxr_cdata( $category->description ) . "</wp:category_description>\n";
+		echo '<wp:category_description>' . rsvpmaker_wxr_cdata( $category->description ) . "</wp:category_description>\n";
 	}
 
 	/**
@@ -266,12 +266,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param object $tag Tag Object
 	 */
-	function wxr_tag_name( $tag ) {
+	function rsvpmaker_wxr_tag_name( $tag ) {
 		if ( empty( $tag->name ) ) {
 			return;
 		}
 
-		echo '<wp:tag_name>' . wxr_cdata( $tag->name ) . "</wp:tag_name>\n";
+		echo '<wp:tag_name>' . rsvpmaker_wxr_cdata( $tag->name ) . "</wp:tag_name>\n";
 	}
 
 	/**
@@ -281,12 +281,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param object $tag Tag Object
 	 */
-	function wxr_tag_description( $tag ) {
+	function rsvpmaker_wxr_tag_description( $tag ) {
 		if ( empty( $tag->description ) ) {
 			return;
 		}
 
-		echo '<wp:tag_description>' . wxr_cdata( $tag->description ) . "</wp:tag_description>\n";
+		echo '<wp:tag_description>' . rsvpmaker_wxr_cdata( $tag->description ) . "</wp:tag_description>\n";
 	}
 
 	/**
@@ -296,12 +296,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param object $term Term Object
 	 */
-	function wxr_term_name( $term ) {
+	function rsvpmaker_wxr_term_name( $term ) {
 		if ( empty( $term->name ) ) {
 			return;
 		}
 
-		echo '<wp:term_name>' . wxr_cdata( $term->name ) . "</wp:term_name>\n";
+		echo '<wp:term_name>' . rsvpmaker_wxr_cdata( $term->name ) . "</wp:term_name>\n";
 	}
 
 	/**
@@ -311,12 +311,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param object $term Term Object
 	 */
-	function wxr_term_description( $term ) {
+	function rsvpmaker_wxr_term_description( $term ) {
 		if ( empty( $term->description ) ) {
 			return;
 		}
 
-		echo "\t\t<wp:term_description>" . wxr_cdata( $term->description ) . "</wp:term_description>\n";
+		echo "\t\t<wp:term_description>" . rsvpmaker_wxr_cdata( $term->description ) . "</wp:term_description>\n";
 	}
 
 	/**
@@ -326,7 +326,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param WP_Term $term Term object.
 	 */
-	function wxr_term_meta( $term ) {
+	function rsvpmaker_wxr_term_meta( $term ) {
 		global $wpdb;
 
 		$termmeta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->termmeta WHERE term_id = %d", $term->term_id ) );
@@ -345,7 +345,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 				 * @param object $meta     Current meta object.
 				 */
 				if ( ! apply_filters( 'wxr_export_skip_termmeta', false, $meta->meta_key, $meta ) ) {
-					printf( "\t\t<wp:termmeta>\n\t\t\t<wp:meta_key>%s</wp:meta_key>\n\t\t\t<wp:meta_value>%s</wp:meta_value>\n\t\t</wp:termmeta>\n", wxr_cdata( $meta->meta_key ), wxr_cdata( $meta->meta_value ) );
+					printf( "\t\t<wp:termmeta>\n\t\t\t<wp:meta_key>%s</wp:meta_key>\n\t\t\t<wp:meta_value>%s</wp:meta_value>\n\t\t</wp:termmeta>\n", rsvpmaker_wxr_cdata( $meta->meta_key ), rsvpmaker_wxr_cdata( $meta->meta_value ) );
 				}
 			}
 		}
@@ -360,7 +360,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @param array $post_ids Array of post IDs to filter the query by. Optional.
 	 */
-	function wxr_authors_list( array $post_ids = null ) {
+	function rsvpmaker_wxr_authors_list( array $post_ids = null ) {
 		global $wpdb;
 
 		if ( ! empty( $post_ids ) ) {
@@ -383,11 +383,11 @@ function rsvpmaker_export_wp( $args = array() ) {
 			foreach ( $authors as $author ) {
 				echo "\t<wp:author>";
 				echo '<wp:author_id>' . intval( $author->ID ) . '</wp:author_id>';
-				echo '<wp:author_login>' . wxr_cdata( $author->user_login ) . '</wp:author_login>';
-				echo '<wp:author_email>' . wxr_cdata( $author->user_email ) . '</wp:author_email>';
-				echo '<wp:author_display_name>' . wxr_cdata( $author->display_name ) . '</wp:author_display_name>';
-				echo '<wp:author_first_name>' . wxr_cdata( $author->first_name ) . '</wp:author_first_name>';
-				echo '<wp:author_last_name>' . wxr_cdata( $author->last_name ) . '</wp:author_last_name>';
+				echo '<wp:author_login>' . rsvpmaker_wxr_cdata( $author->user_login ) . '</wp:author_login>';
+				echo '<wp:author_email>' . rsvpmaker_wxr_cdata( $author->user_email ) . '</wp:author_email>';
+				echo '<wp:author_display_name>' . rsvpmaker_wxr_cdata( $author->display_name ) . '</wp:author_display_name>';
+				echo '<wp:author_first_name>' . rsvpmaker_wxr_cdata( $author->first_name ) . '</wp:author_first_name>';
+				echo '<wp:author_last_name>' . rsvpmaker_wxr_cdata( $author->last_name ) . '</wp:author_last_name>';
 				echo "</wp:author>\n";
 			}
 		}
@@ -398,7 +398,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @since 3.1.0
 	 */
-	function wxr_nav_menu_terms() {
+	function rsvpmaker_wxr_nav_menu_terms() {
 		$nav_menus = wp_get_nav_menus();
 		if ( empty( $nav_menus ) || ! is_array( $nav_menus ) ) {
 			return;
@@ -408,8 +408,8 @@ function rsvpmaker_export_wp( $args = array() ) {
 				echo "\t<wp:term>";
 				echo '<wp:term_id>' . intval( $menu->term_id ) . '</wp:term_id>';
 				echo '<wp:term_taxonomy>nav_menu</wp:term_taxonomy>';
-				echo '<wp:term_slug>' . wxr_cdata( $menu->slug ) . '</wp:term_slug>';
-				wxr_term_name( $menu );
+				echo '<wp:term_slug>' . rsvpmaker_wxr_cdata( $menu->slug ) . '</wp:term_slug>';
+				rsvpmaker_wxr_term_name( $menu );
 				echo "</wp:term>\n";
 			}
 		}
@@ -420,7 +420,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 *
 	 * @since 2.3.0
 	 */
-	function wxr_post_taxonomy() {
+	function rsvpmaker_wxr_post_taxonomy() {
 		$post = get_post();
 
 		$taxonomies = get_object_taxonomies( $post->post_type );
@@ -430,7 +430,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 		$terms = wp_get_object_terms( $post->ID, $taxonomies );
 		if ( $terms ) {
 			foreach ( (array) $terms as $term ) {
-				echo "\t\t<category domain=\"{$term->taxonomy}\" nicename=\"{$term->slug}\">" . wxr_cdata( $term->name ) . "</category>\n";
+				echo "\t\t<category domain=\"{$term->taxonomy}\" nicename=\"{$term->slug}\">" . rsvpmaker_wxr_cdata( $term->name ) . "</category>\n";
 			}
 		}
 	}
@@ -441,13 +441,13 @@ function rsvpmaker_export_wp( $args = array() ) {
 	 * @param string $meta_key
 	 * @return bool
 	 */
-	function wxr_filter_postmeta( $return_me, $meta_key ) {
+	function rsvpmaker_wxr_filter_postmeta( $return_me, $meta_key ) {
 		if ( '_edit_lock' == $meta_key ) {
 			$return_me = true;
 		}
 		return $return_me;
 	}
-	add_filter( 'wxr_export_skip_postmeta', 'wxr_filter_postmeta', 10, 2 );
+	add_filter( 'wxr_export_skip_postmeta', 'rsvpmaker_wxr_filter_postmeta', 10, 2 );
 
 	?>
 <!-- This is a WordPress eXtended RSS file generated by WordPress as an export of your site. -->
@@ -490,11 +490,11 @@ function rsvpmaker_export_wp( $args = array() ) {
 	<pubDate><?php echo date( 'D, d M Y H:i:s +0000' ); ?></pubDate>
 	<language><?php bloginfo_rss( 'language' ); ?></language>
 	<wp:wxr_version><?php echo WXR_VERSION; ?></wp:wxr_version>
-	<wp:base_site_url><?php echo wxr_site_url(); ?></wp:base_site_url>
+	<wp:base_site_url><?php echo rsvpmaker_wxr_site_url(); ?></wp:base_site_url>
 	<wp:base_blog_url><?php bloginfo_rss( 'url' ); ?></wp:base_blog_url>
 		<?php
 		if ( $filecount == 1 ) {
-			wxr_authors_list( $post_ids );
+			rsvpmaker_wxr_authors_list( $post_ids );
 			?>
 
 			<?php
@@ -503,12 +503,12 @@ function rsvpmaker_export_wp( $args = array() ) {
 					?>
 	<wp:category>
 		<wp:term_id><?php echo intval( $c->term_id ); ?></wp:term_id>
-		<wp:category_nicename><?php echo wxr_cdata( $c->slug ); ?></wp:category_nicename>
-		<wp:category_parent><?php echo wxr_cdata( $c->parent ? $cats[ $c->parent ]->slug : '' ); ?></wp:category_parent>
+		<wp:category_nicename><?php echo rsvpmaker_wxr_cdata( $c->slug ); ?></wp:category_nicename>
+		<wp:category_parent><?php echo rsvpmaker_wxr_cdata( $c->parent ? $cats[ $c->parent ]->slug : '' ); ?></wp:category_parent>
 									<?php
-									wxr_cat_name( $c );
-									wxr_category_description( $c );
-									wxr_term_meta( $c );
+									rsvpmaker_wxr_cat_name( $c );
+									rsvpmaker_wxr_category_description( $c );
+									rsvpmaker_wxr_term_meta( $c );
 									?>
 	</wp:category>
 					<?php
@@ -521,11 +521,11 @@ function rsvpmaker_export_wp( $args = array() ) {
 					?>
 	<wp:tag>
 		<wp:term_id><?php echo intval( $t->term_id ); ?></wp:term_id>
-		<wp:tag_slug><?php echo wxr_cdata( $t->slug ); ?></wp:tag_slug>
+		<wp:tag_slug><?php echo rsvpmaker_wxr_cdata( $t->slug ); ?></wp:tag_slug>
 									<?php
-									wxr_tag_name( $t );
-									wxr_tag_description( $t );
-									wxr_term_meta( $t );
+									rsvpmaker_wxr_tag_name( $t );
+									rsvpmaker_wxr_tag_description( $t );
+									rsvpmaker_wxr_term_meta( $t );
 									?>
 	</wp:tag>
 					<?php
@@ -537,14 +537,14 @@ function rsvpmaker_export_wp( $args = array() ) {
 				foreach ( $terms as $t ) :
 					?>
 	<wp:term>
-		<wp:term_id><?php echo wxr_cdata( $t->term_id ); ?></wp:term_id>
-		<wp:term_taxonomy><?php echo wxr_cdata( $t->taxonomy ); ?></wp:term_taxonomy>
-		<wp:term_slug><?php echo wxr_cdata( $t->slug ); ?></wp:term_slug>
-		<wp:term_parent><?php echo wxr_cdata( $t->parent ? $terms[ $t->parent ]->slug : '' ); ?></wp:term_parent>
+		<wp:term_id><?php echo rsvpmaker_wxr_cdata( $t->term_id ); ?></wp:term_id>
+		<wp:term_taxonomy><?php echo rsvpmaker_wxr_cdata( $t->taxonomy ); ?></wp:term_taxonomy>
+		<wp:term_slug><?php echo rsvpmaker_wxr_cdata( $t->slug ); ?></wp:term_slug>
+		<wp:term_parent><?php echo rsvpmaker_wxr_cdata( $t->parent ? $terms[ $t->parent ]->slug : '' ); ?></wp:term_parent>
 									<?php
-									wxr_term_name( $t );
-									wxr_term_description( $t );
-									wxr_term_meta( $t );
+									rsvpmaker_wxr_term_name( $t );
+									rsvpmaker_wxr_term_description( $t );
+									rsvpmaker_wxr_term_meta( $t );
 									?>
 	</wp:term>
 					<?php
@@ -553,7 +553,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 			?>
 			<?php
 			if ( 'all' == $args['content'] ) {
-				wxr_nav_menu_terms();}
+				rsvpmaker_wxr_nav_menu_terms();}
 			?>
 
 			<?php
@@ -596,7 +596,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 		</title>
 		<link><?php the_permalink_rss(); ?></link>
 		<pubDate><?php echo mysql2date( 'D, d M Y H:i:s +0000', get_post_time( 'Y-m-d H:i:s', true ), false ); ?></pubDate>
-		<dc:creator><?php echo wxr_cdata( get_the_author_meta( 'login' ) ); ?></dc:creator>
+		<dc:creator><?php echo rsvpmaker_wxr_cdata( get_the_author_meta( 'login' ) ); ?></dc:creator>
 		<guid isPermaLink="false"><?php the_guid(); ?></guid>
 		<description></description>
 		<content:encoded>
@@ -608,7 +608,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 					 *
 					 * @param string $post_content Content of the current post.
 					 */
-					echo wxr_cdata( apply_filters( 'the_content_export', $post->post_content ) );
+					echo rsvpmaker_wxr_cdata( apply_filters( 'the_content_export', $post->post_content ) );
 					?>
 		</content:encoded>
 		<excerpt:encoded>
@@ -620,25 +620,25 @@ function rsvpmaker_export_wp( $args = array() ) {
 					 *
 					 * @param string $post_excerpt Excerpt for the current post.
 					 */
-					echo wxr_cdata( apply_filters( 'the_excerpt_export', $post->post_excerpt ) );
+					echo rsvpmaker_wxr_cdata( apply_filters( 'the_excerpt_export', $post->post_excerpt ) );
 					?>
 		</excerpt:encoded>
 		<wp:post_id><?php echo intval( $post->ID ); ?></wp:post_id>
-		<wp:post_date><?php echo wxr_cdata( $post->post_date ); ?></wp:post_date>
-		<wp:post_date_gmt><?php echo wxr_cdata( $post->post_date_gmt ); ?></wp:post_date_gmt>
-		<wp:comment_status><?php echo wxr_cdata( $post->comment_status ); ?></wp:comment_status>
-		<wp:ping_status><?php echo wxr_cdata( $post->ping_status ); ?></wp:ping_status>
-		<wp:post_name><?php echo wxr_cdata( $post->post_name ); ?></wp:post_name>
-		<wp:status><?php echo wxr_cdata( $post->post_status ); ?></wp:status>
+		<wp:post_date><?php echo rsvpmaker_wxr_cdata( $post->post_date ); ?></wp:post_date>
+		<wp:post_date_gmt><?php echo rsvpmaker_wxr_cdata( $post->post_date_gmt ); ?></wp:post_date_gmt>
+		<wp:comment_status><?php echo rsvpmaker_wxr_cdata( $post->comment_status ); ?></wp:comment_status>
+		<wp:ping_status><?php echo rsvpmaker_wxr_cdata( $post->ping_status ); ?></wp:ping_status>
+		<wp:post_name><?php echo rsvpmaker_wxr_cdata( $post->post_name ); ?></wp:post_name>
+		<wp:status><?php echo rsvpmaker_wxr_cdata( $post->post_status ); ?></wp:status>
 		<wp:post_parent><?php echo intval( $post->post_parent ); ?></wp:post_parent>
 		<wp:menu_order><?php echo intval( $post->menu_order ); ?></wp:menu_order>
-		<wp:post_type><?php echo wxr_cdata( $post->post_type ); ?></wp:post_type>
-		<wp:post_password><?php echo wxr_cdata( $post->post_password ); ?></wp:post_password>
+		<wp:post_type><?php echo rsvpmaker_wxr_cdata( $post->post_type ); ?></wp:post_type>
+		<wp:post_password><?php echo rsvpmaker_wxr_cdata( $post->post_password ); ?></wp:post_password>
 		<wp:is_sticky><?php echo intval( $is_sticky ); ?></wp:is_sticky>
 					<?php	if ( $post->post_type == 'attachment' ) : ?>
-		<wp:attachment_url><?php echo wxr_cdata( wp_get_attachment_url( $post->ID ) ); ?></wp:attachment_url>
+		<wp:attachment_url><?php echo rsvpmaker_wxr_cdata( wp_get_attachment_url( $post->ID ) ); ?></wp:attachment_url>
 		<?php endif; ?>
-					<?php wxr_post_taxonomy(); ?>
+					<?php rsvpmaker_wxr_post_taxonomy(); ?>
 					<?php
 					$postmeta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE post_id = %d", $post->ID ) );
 					if ( $postmeta ) {
@@ -660,8 +660,8 @@ function rsvpmaker_export_wp( $args = array() ) {
 							}
 							?>
 		<wp:postmeta>
-			<wp:meta_key><?php echo wxr_cdata( $meta->meta_key ); ?></wp:meta_key>
-			<wp:meta_value><?php echo wxr_cdata( $meta->meta_value ); ?></wp:meta_value>
+			<wp:meta_key><?php echo rsvpmaker_wxr_cdata( $meta->meta_key ); ?></wp:meta_key>
+			<wp:meta_value><?php echo rsvpmaker_wxr_cdata( $meta->meta_value ); ?></wp:meta_value>
 		</wp:postmeta>
 							<?php
 		endforeach;
@@ -674,15 +674,15 @@ function rsvpmaker_export_wp( $args = array() ) {
 							?>
 		<wp:comment>
 			<wp:comment_id><?php echo intval( $c->comment_ID ); ?></wp:comment_id>
-			<wp:comment_author><?php echo wxr_cdata( $c->comment_author ); ?></wp:comment_author>
-			<wp:comment_author_email><?php echo wxr_cdata( $c->comment_author_email ); ?></wp:comment_author_email>
+			<wp:comment_author><?php echo rsvpmaker_wxr_cdata( $c->comment_author ); ?></wp:comment_author>
+			<wp:comment_author_email><?php echo rsvpmaker_wxr_cdata( $c->comment_author_email ); ?></wp:comment_author_email>
 			<wp:comment_author_url><?php echo esc_url_raw( $c->comment_author_url ); ?></wp:comment_author_url>
-			<wp:comment_author_IP><?php echo wxr_cdata( $c->comment_author_IP ); ?></wp:comment_author_IP>
-			<wp:comment_date><?php echo wxr_cdata( $c->comment_date ); ?></wp:comment_date>
-			<wp:comment_date_gmt><?php echo wxr_cdata( $c->comment_date_gmt ); ?></wp:comment_date_gmt>
-			<wp:comment_content><?php echo wxr_cdata( $c->comment_content ); ?></wp:comment_content>
-			<wp:comment_approved><?php echo wxr_cdata( $c->comment_approved ); ?></wp:comment_approved>
-			<wp:comment_type><?php echo wxr_cdata( $c->comment_type ); ?></wp:comment_type>
+			<wp:comment_author_IP><?php echo rsvpmaker_wxr_cdata( $c->comment_author_IP ); ?></wp:comment_author_IP>
+			<wp:comment_date><?php echo rsvpmaker_wxr_cdata( $c->comment_date ); ?></wp:comment_date>
+			<wp:comment_date_gmt><?php echo rsvpmaker_wxr_cdata( $c->comment_date_gmt ); ?></wp:comment_date_gmt>
+			<wp:comment_content><?php echo rsvpmaker_wxr_cdata( $c->comment_content ); ?></wp:comment_content>
+			<wp:comment_approved><?php echo rsvpmaker_wxr_cdata( $c->comment_approved ); ?></wp:comment_approved>
+			<wp:comment_type><?php echo rsvpmaker_wxr_cdata( $c->comment_type ); ?></wp:comment_type>
 			<wp:comment_parent><?php echo intval( $c->comment_parent ); ?></wp:comment_parent>
 			<wp:comment_user_id><?php echo intval( $c->user_id ); ?></wp:comment_user_id>
 							<?php
@@ -706,8 +706,8 @@ function rsvpmaker_export_wp( $args = array() ) {
 									}
 									?>
 			<wp:commentmeta>
-				<wp:meta_key><?php echo wxr_cdata( $meta->meta_key ); ?></wp:meta_key>
-				<wp:meta_value><?php echo wxr_cdata( $meta->meta_value ); ?></wp:meta_value>
+				<wp:meta_key><?php echo rsvpmaker_wxr_cdata( $meta->meta_key ); ?></wp:meta_key>
+				<wp:meta_value><?php echo rsvpmaker_wxr_cdata( $meta->meta_value ); ?></wp:meta_value>
 			</wp:commentmeta>
 									<?php
 				  endforeach;

@@ -330,7 +330,7 @@ class RSVPMaker_Sked_Controller extends WP_REST_Controller {
 	}
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
-		$sked = get_template_sked( intval($request['post_id']) );
+		$sked = rsvpmaker_get_template_sked( intval($request['post_id']) );
 
 		return new WP_REST_Response( $sked, 200 );
 
@@ -752,7 +752,7 @@ class RSVPMaker_Signed_Up extends WP_REST_Controller {
 
 		$event = (int) $_GET['event'];
 
-		$output = signed_up_ajax( $event );
+		$output = rsvpmaker_signed_up_ajax( $event );
 
 		return new WP_REST_Response( $output, 200 );
 
@@ -2033,7 +2033,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		);
 		$response['chimp'] = get_option('chimp',$options);
 		if($response['chimp'] && !empty($response['chimp']['chimp-key']) )
-			$response['chimp_lists'] = mailchimp_list_array($response['chimp']['chimp-key']);
+			$response['chimp_lists'] = rsvpmaker_mailchimp_list_array($response['chimp']['chimp-key']);
 		else
 			$response['chimp_lists'] = [];
 		$response['test'] = 'x';
@@ -2085,7 +2085,7 @@ class RSVP_Chimp_Lists extends WP_REST_Controller {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		$chimp = get_option('chimp');
 		if($chimp && !empty($chimp['chimp-key']) )
-			$response['chimp_lists'] = mailchimp_list_array($chimp['chimp-key']);
+			$response['chimp_lists'] = rsvpmaker_mailchimp_list_array($chimp['chimp-key']);
 		else
 			$response['chimp_lists'] = [];
 		return new WP_REST_Response( $response, 200 );
@@ -2974,8 +2974,8 @@ function get_rsvpmaker_projected_api($t) {
 	global $rsvp_options,$post;
 	$title = get_the_title($t);
 	$return = array('title'=>$title,'dates'=>[]);
-	$sched_result = get_events_by_template( $t );
-	$holidays = commonHolidays();
+	$sched_result = rsvpmaker_get_events_by_template( $t );
+	$holidays = rsvpmaker_commonHolidays();
 	$return['action'] = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t );
 	$exists = [];
 	$now = time();
@@ -2995,7 +2995,7 @@ function get_rsvpmaker_projected_api($t) {
 		$event->type = 'existing';
 		$return['dates'][] = $event;
 	}
-	$projected = rsvpmaker_get_projected( get_template_sked( $t ) );
+	$projected = rsvpmaker_get_projected( rsvpmaker_get_template_sked( $t ) );
 	if ( $projected && is_array( $projected ) ) {
 		foreach ( $projected as $i => $ts ) {
 			if($ts < $now)
@@ -3087,7 +3087,7 @@ class RSVP_PayPalPaid extends WP_REST_Controller {
 
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
-	$response = paypal_verify_rest ();
+	$response = rsvpmaker_paypal_verify_rest ();
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
 }//end class

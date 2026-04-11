@@ -80,7 +80,7 @@ return (
         >
             { ( tab ) => {
                 if('basics' == tab.name)
-                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><p><em>{__('Set the date, time, and RSVP parameters for your event, then click Done. Access these options at any time from the RSVP / Event Options button in the sidebar.','rsvpmaker')}</em></p><Basics eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} /><div></div></div>
+                    return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><p><em>{__('Set the date, time, and RSVP parameters for your event, then click Done. Access these options at any time from the RSVP / Event Options button in the sidebar.','rsvpmaker')}</em></p><Basics eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} allowMissingDate={props.allowMissingDate} /><div></div></div>
                 else if('form' == tab.name)
                     return <div className="rsvpsettings-tab-contents"><div className="modal-save"><button onClick={close}>Done</button></div><Form form_id={eventdata.form_id} event_id={rsvpmaker_rest.post_id} eventdata={eventdata} rsvpmaker_rest={rsvpmaker_rest} /></div>
                 else if('confirmation' == tab.name)
@@ -168,12 +168,12 @@ function Reminders() {
 }
 
 function Basics(props) {
-    const {eventdata, rsvpmaker_rest} = props;
+    const {eventdata, rsvpmaker_rest, allowMissingDate} = props;
 
     return (
         <div className="guide-page-1-columns">
         <div className="rsvpguide-datetime">
-        {(rsvpmaker_rest.post_type == 'rsvpmaker') && <DateTimeMaker event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
+        {(rsvpmaker_rest.post_type == 'rsvpmaker') && <DateTimeMaker event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} allowMissingDate={allowMissingDate} />}
         {(rsvpmaker_rest.post_type == 'rsvpmaker_template') && <TemplateControl  event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} />}
         </div>
         <div className="guide-options-column">

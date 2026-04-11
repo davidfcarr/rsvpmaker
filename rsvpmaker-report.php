@@ -1475,3 +1475,250 @@ function rsvp_report_unpaid() {
 		echo '</form>';
 	}
 
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvp_report_shortcode( $atts ) {
+
+	if ( ! isset( $atts['public'] ) || ( $atts['public'] == '0' ) ) {
+
+		if ( ! is_user_logged_in() ) {
+
+			return sprintf( /* translators: login link */    __( 'You must <a href="%s">login</a> to view this.', 'rsvpmaker' ), login_redirect( $_SERVER['REQUEST_URI'] ) );
+		}
+	}
+
+	global $post;
+
+	$permalink = get_permalink( $post->ID );
+
+	$permalink .= ( strpos( $permalink, '?' ) ) ? '&rsvp_print=1&' . rsvpmaker_nonce('query') : '?rsvp_print=1&' . rsvpmaker_nonce('query');
+
+	ob_start();
+
+	rsvp_report();
+
+	$report = ob_get_clean();
+
+	return str_replace( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp' ), $permalink, $report );
+
+}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvp_csv() {
+
+		if ( ! isset( $_GET['rsvp_csv'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) { 
+			die( 'Security error' );
+		}
+
+		global $wpdb;
+		$fields  = array_map('sanitize_text_field',$_GET['fields']);
+		if(isset($_GET['allcontacts'])) {
+			$sql = $wpdb->prepare("SELECT * FROM %i WHERE master_rsvp=0 ORDER BY timestamp DESC",$wpdb->prefix . "rsvpmaker");
+			$name = 'all-contacts';
+		}
+		else {
+			$eventid = (int) $_GET['event'];
+			$post    = get_post( $eventid );	
+			$sql = $wpdb->prepare("SELECT * FROM %i WHERE event=%d ORDER BY yesno DESC, master_rsvp, last, first",$wpdb->prefix . "rsvpmaker",$eventid);
+			$name = $post->post_name;
+		}
+
+		header( 'Content-Type: text/csv' );
+
+		header( 'Content-Disposition: attachment;filename="' . $name . '-' . date( 'Y-m-d-H-i' ) . '.csv"' );
+
+		header( 'Cache-Control: max-age=0' );
+
+		$out = fopen( 'php://output', 'w' );
+
+		fputcsv( $out, $fields );
+		$results = $wpdb->get_results( $sql, ARRAY_A );
+
+		$rows = sizeof( $results );
+		if(!empty($phonecol))
+		$phonecells = $phonecol . '1:' . $phonecol . ( $rows + 1 );
+
+		if ( is_array( $results ) ) {
+
+			foreach ( $results as $row ) {
+
+				//$index++;
+
+				$row['yesno'] = ( $row['yesno'] ) ? 'YES' : 'NO';
+
+				if ( $row['details'] ) {
+
+					$details = unserialize( $row['details'] );
+					$row = array_merge( $row, $details );
+
+				}
+				$newrow = array();
+
+				if ( is_array( $fields ) ) {
+
+					foreach ( $fields as $column => $name ) {
+						if ( isset( $row[ $name ] ) ) {
+							$newrow[] = strip_tags($row[ $name ]);
+
+						} else {
+							$newrow[] = '';
+						}
+					}
+				}
+
+				fputcsv( $out, $newrow );
+
+			}
+		}
+
+		fclose( $out );
+
+		exit();
+
+	}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvp_report_api () {
+	global $wpdb;
+	$events_table = $wpdb->prefix.'rsvpmaker_event';
+	$rsvp_table = $wpdb->prefix.'rsvpmaker';
+	$sql = $wpdb->prepare("select events.post_title, events.date, rsvps.first, rsvps.last, rsvps.email, rsvps.fee_total, rsvps.amountpaid, rsvps.owed, rsvps.details, rsvps.note, rsvps.guestof, rsvps.master_rsvp from %i events JOIN %i rsvps ON events.event = rsvps.event WHERE rsvps.yesno && events.enddate > NOW() order by ts_start, master_rsvp, first, last",$events_table,$rsvp_table);
+	$results = $wpdb->get_results($sql, ARRAY_A);
+	$eventrows = [];
+	$fields = ['first','last','email','fee_total','amountpaid','owed'];
+	foreach($results as $row) {
+		if ( $row['details'] ) {
+			$details = unserialize( $row['details'] );
+			$row = array_merge( $row, $details );
+		}
+		unset($row['id']);
+		unset($row['yesno']);
+		unset($row['user_id']);
+		unset($row['details']);
+		unset($row['ts_start']);
+		unset($row['participants']);
+		$row['payingfor'] = str_replace("\n",'',str_replace('</',' </',$row['payingfor']));
+		$row['payingfor'] = strip_tags($row['payingfor']);
+		$parts = explode(' ',$row['date']);
+		$row['date'] = $parts[0];
+		foreach($row as $field => $value) {
+			if(!in_array($field, $fields) && !in_array($field,['post_title','date']))
+				$fields[] = $field;
+		}
+		$eventrows[] = $row;
+	}
+
+	return array('rsvp'=>$eventrows,'fields'=>$fields);
+}
+
+
+// Moved from rsvpmaker-util.php during cleanup
+function rsvp_report_table() {
+
+	?>
+
+<style>
+
+table#rsvptable {
+
+	border-collapse: collapse;
+
+}
+
+table#rsvptable td, table#rsvptable td {
+
+border: thin solid #555;
+
+padding: 3px;
+
+text-align: left;
+
+}
+
+</style>
+
+	<?php
+
+	global $wpdb, $rsvp_options;
+
+	$fields = array_map('sanitize_text_field',$_GET['fields']);
+
+	$eventid   = (int) $_GET['event'];
+	$event_row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE event=%d",$wpdb->prefix . "rsvpmaker_event",$eventid) );
+
+	$date = $event_row->date;
+
+	$t = rsvpmaker_strtotime( $date );
+
+	$title = esc_html( $event_row->post_title ) . ' ' . rsvpmaker_date( $rsvp_options['long_date'], $t );
+
+	echo "<h2>$title</h2>\n<table id=\"rsvptable\"><tr>\n";
+
+	// Create new PHPExcel object
+
+	if ( is_array( $fields ) ) {
+
+		foreach ( $fields as $column => $name ) {
+
+			echo "<th>$name</th>";
+
+		}
+	}
+
+	echo '</tr>';
+
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE event=%d ORDER BY yesno DESC, master_rsvp, last, first", $wpdb->prefix . "rsvpmaker",$eventid);
+
+	$results = $wpdb->get_results( $sql, ARRAY_A );
+
+	$rows = sizeof( $results );
+	if(!empty($phonecol))
+	$phonecells = $phonecol . '1:' . $phonecol . ( $rows + 1 );
+
+	if ( is_array( $results ) ) {
+
+		foreach ( $results as $row ) {
+
+			//$index++;
+
+			$row['yesno'] = ( $row['yesno'] ) ? 'YES' : 'NO';
+
+			if ( $row['details'] ) {
+
+				$details = unserialize( $row['details'] );
+
+				$row = array_merge( $row, $details );
+
+			}
+
+			echo '<tr>';
+
+			if ( is_array( $fields ) ) {
+
+				foreach ( $fields as $column => $name ) {
+
+					if ( isset( $row[ $name ] ) ) {
+
+						printf( '<td>%s</td>', strip_tags( $row[ $name ] ) );
+
+					} else {
+						echo '<td></td>';
+					}
+				}
+			}
+
+			echo '</tr>';
+
+		}
+	}
+
+		echo '</table>';
+
+}

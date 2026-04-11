@@ -18,7 +18,7 @@ function rsvpmakerDefaultHolidays() {
     return $holiday;
 }
 
-function commonHolidays($year = '') {
+function rsvpmaker_commonHolidays($year = '') {
     if(!$year)
         $year = date('Y');
     $schedule = rsvpmakerDefaultHolidays();

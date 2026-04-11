@@ -1,6 +1,6 @@
 <?php
 
-$paypal_rest_keys = get_rspmaker_paypal_rest_keys();
+$paypal_rest_keys = rsvpmaker_get_rspmaker_paypal_rest_keys();
 
 function rsvpmaker_paypal_test_connection($type = 'live') {
   global $paypal_rest_keys;
@@ -44,7 +44,7 @@ try {
 return '<span style="color:green; font-weight:bold">'.__('Connected','rsvpmaker').'</span>';
 }
 
-function paypal_verify_rest () {
+function rsvpmaker_paypal_verify_rest () {
     global $wpdb, $rsvp_options, $paypal_rest_keys;
     $paid = $paidnow = $owed = $fee_total = $paidbefore = 0;
     $rsvptable = $wpdb->prefix.'rsvpmaker';
@@ -314,7 +314,7 @@ function rsvpmaker_paypay_button_embed($atts) {
 global $rsvp_options;
 global $paypal_rest_keys, $post;
 if(!$paypal_rest_keys)
-  $paypal_rest_keys = get_rspmaker_paypal_rest_keys();
+  $paypal_rest_keys = rsvpmaker_get_rspmaker_paypal_rest_keys();
 
 $currency = 'USD';
 if(isset($atts['currencyCode']))

@@ -575,7 +575,9 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 	return ob_get_clean();
 
 }
-function stripe_log_by_email( $email, $months = 0 ) {
+
+// Restored for cross-plugin compatibility.
+function rsvpmaker_stripe_log_by_email( $email, $months = 0 ) {
 
 	global $wpdb;
 
@@ -612,11 +614,11 @@ function stripe_log_by_email( $email, $months = 0 ) {
 
 		foreach ( $vars as $name => $value ) {
 
-				$log .= $name . ': ' . $value . "\n";
+			$log .= $name . ': ' . $value . "\n";
 
 		}
 
-			$log .= "\n";
+		$log .= "\n";
 
 	}
 
@@ -625,6 +627,7 @@ function stripe_log_by_email( $email, $months = 0 ) {
 }
 
 function rsvpmaker_stripe_payment_log( $vars, $confkey ) {
+
 	global $post, $current_user, $wpdb;
 	$vars['timestamp'] = rsvpmaker_date( 'r' );
 	if ( ! empty( $vars['email'] ) ) {
@@ -701,7 +704,7 @@ function rsvpmaker_stripe_report() {
 	$detail = '';
 
 	if ( isset( $_GET['history'] ) ) {
-		$detail = stripe_balance_history( (int) $_GET['history'] );
+		$detail = rsvpmaker_stripe_balance_history( (int) $_GET['history'] );
 		echo '<p><em>See below for more detail.</em></p>';
 	}
 	$keys = get_rsvpmaker_stripe_keys();
@@ -731,18 +734,7 @@ function rsvpmaker_stripe_report() {
 		echo '<h2>Detailed Output from Stripe API</h2>'.$detail;	
 }
 
-function stripe_latest_logged() {
-	global $wpdb;
-	$keys = get_rsvpmaker_stripe_keys();
-	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
-		return;
-	}
-	$stripetable = rsvpmaker_money_table();
-	if ( ! $wpdb->get_results( "show tables like '$stripetable' " ) ) {
-		stripe_balance_history( 200, false );
-	}
-	return $wpdb->get_var( $wpdb->prepare("SELECT date FROM %i ORDER BY date DESC",$stripetable) );
-}
+
 
 function rsvpmaker_stripe_transactions_list( $limit = 50, $where = '' ) {
 	global $wpdb;
@@ -750,31 +742,17 @@ function rsvpmaker_stripe_transactions_list( $limit = 50, $where = '' ) {
 	return $wpdb->get_results( "SELECT name,email,description,date,status,transaction_id,amount,fee, format((amount - fee),2) as yield FROM $stripetable $where ORDER BY date DESC LIMIT 0, $limit " );
 }
 
-function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
-	global $wpdb;
-	$stripetable = rsvpmaker_money_table();
-	return $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE user_id=0 ".( $recent ) ? ' AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ' : ''." ORDER BY date DESC",$stripetable) );
+
+
+
+
+add_action( 'stripe_balance_history_cron', 'rsvpmaker_stripe_balance_history_cron' );
+
+function rsvpmaker_stripe_balance_history_cron() {
+	rsvpmaker_stripe_balance_history( 20, false );
 }
 
-function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = '' ) {
-	global $wpdb;
-	$keys = get_rsvpmaker_stripe_keys();
-	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
-		return;
-	}
-	
-	$stripetable  = rsvpmaker_money_table();
-	
-	return $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE user_id=%d ".( $start_date ) ? " AND date > '$start_date' " : ''." ORDER BY date DESC",$stripetable,$user_id) );
-}
-
-add_action( 'stripe_balance_history_cron', 'stripe_balance_history_cron' );
-
-function stripe_balance_history_cron() {
-	stripe_balance_history( 20, false );
-}
-
-function stripe_balance_history( $limit = 20 ) {
+function rsvpmaker_stripe_balance_history( $limit = 20 ) {
 	global $wpdb;
 	ob_start();
 	$keys = get_rsvpmaker_stripe_keys();
@@ -960,4 +938,26 @@ function rsvpmaker_stripe_transactions() {
 			'export'  => $export,
 		);
 	}
+}
+
+
+// Restored for cross-plugin compatibility.
+function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = '' ) {
+	global $wpdb;
+	$keys = get_rsvpmaker_stripe_keys();
+	if ( empty( $keys ) || empty( $keys['pk'] ) ) {
+		return;
+	}
+	
+	$stripetable  = rsvpmaker_money_table();
+	
+	return $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE user_id=%d ".( $start_date ) ? " AND date > '$start_date' " : ''." ORDER BY date DESC",$stripetable,$user_id) );
+}
+
+
+// Restored for cross-plugin compatibility.
+function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
+	global $wpdb;
+	$stripetable = rsvpmaker_money_table();
+	return $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE user_id=0 ".( $recent ) ? ' AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ' : ''." ORDER BY date DESC",$stripetable) );
 }

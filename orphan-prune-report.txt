@@ -1,0 +1,84 @@
+Orphan Function Prune Report
+Generated: 2026-04-11T12:52:53+00:00
+
+Tracked functions: 74
+Present/restored (currently defined): 17
+Absent/removed: 57
+
+=== Present/Restored ===
+get_rsvpmaker_archive_link	rsvpmaker-display.php
+rsvpmail_clear_allforwarders	rsvpmaker-postmark.php
+rsvpmaker_edit_link	rsvpmaker-util.php
+rsvpmaker_long_date	rsvpmaker-util.php
+rsvpmaker_mailchimp_init	rsvpmaker-email.php
+rsvpmaker_prettydate	rsvpmaker-util.php
+rsvpmaker_qemail	rsvpmaker-group-email.php
+rsvpmaker_relay_active_lists	rsvpmaker-group-email.php
+rsvpmaker_strftime	rsvpmaker-util.php
+rsvpmaker_stripe_latest_transaction_by_user	rsvpmaker-stripe.php
+rsvpmaker_stripe_log_by_email	rsvpmaker-stripe.php
+rsvpmaker_stripe_transactions_no_user	rsvpmaker-stripe.php
+rsvpmaker_template_fields	rsvpmaker-display.php
+rsvpmaker_template_join	rsvpmaker-display.php
+rsvpmaker_template_orderby	rsvpmaker-display.php
+rsvpmaker_template_where	rsvpmaker-display.php
+rsvp_report_this_post	rsvpmaker-display.php
+
+=== Absent/Removed ===
+get_rsvp_event
+is_rsvpmaker
+rsvpmailer_add_editors_note
+rsvpmailer_template_preview
+rsvpmail_editor_style
+rsvpmail_patterns
+rsvpmaker_admin_heading_help
+rsvpmaker_admin_page_top
+rsvpmaker_ajax_guest_lookup
+rsvpmaker_archive_pages
+rsvpmaker_atts
+rsvpmaker_cap_filter_test
+rsvpmaker_check_mailchimp_email
+rsvpmaker_compact
+rsvpmaker_create_calendar_page
+rsvpmaker_cronmail_check_duplicate
+rsvpmaker_customize_forms_and_messages
+rsvpmaker_custom_payment
+rsvpmaker_doc
+RSVPMaker_draw_blastoptions
+rsvpmaker_emailguestsignup
+rsvpmaker_end_date
+RSVPMaker_extract_email
+rsvpmaker_fake_editor
+rsvpmaker_form_summary
+rsvpmaker_get_spreadsheet_data
+rsvpmaker_guestfield
+rsvpmaker_import_cleanup
+rsvpmaker_inliner
+rsvpmaker_inline_array
+rsvpmaker_join_special
+rsvpmaker_loop_excerpt_render
+rsvpmaker_menu_security
+rsvpmaker_notice
+rsvpmaker_no_mce_plugins
+rsvpmaker_override
+rsvpmaker_paypal_config_ajax
+rsvpmaker_postmark_site_id
+rsvpmaker_posts_to_exclude
+rsvpmaker_print_word
+rsvpmaker_stripe_latest_logged
+rsvpmaker_template_events_where
+rsvpmaker_time_format
+rsvpmaker_type_dateorder
+rsvpmaker_update_help
+rsvpmaker_update_start_time
+rsvpmaker_where_schedule
+rsvpmaker_widgetlink
+rsvpmaker_wp_editor
+rsvptimes
+rsvp_confirm_url
+rsvp_customize_form_url
+rsvp_form_setup_form
+rsvp_form_url
+rsvp_ical_split
+rsvp_simple_price
+rsvp_simple_price_label

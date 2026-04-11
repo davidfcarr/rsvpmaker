@@ -6,23 +6,29 @@ import {RSVPMetaToggle} from './editor-sidebar/metadata_components.js';
 const { __ } = wp.i18n; // Import __() from wp.i18n
 
 export default function DateTimeMaker(props) {
-    const {event_id, eventdata, isLoadingDates} = props;
+    const {event_id, eventdata, isLoadingDates, allowMissingDate = false} = props;
     const [error,setError] = useState('');
     const {mutate:datemutate} = useRSVPDateMutation(event_id);
-    if(typeof eventdata === 'string')
-        return;
-    if(!eventdata.tzchoices || !Array.isArray(eventdata.tzchoices))
-        eventdata.tzchoices = [];
-    const d = new Date();
+    if(!eventdata || (typeof eventdata === 'string'))
+        return null;
+    const tzchoices = Array.isArray(eventdata.tzchoices) ? eventdata.tzchoices : [];
     const is12Hour = true;
-    const date = new Date(eventdata.date);
-    const endDate = new Date(eventdata.enddate);
-    const elapsed = endDate.getTime() - date.getTime();
+    const startMs = Date.parse(eventdata.date);
+    const endMs = Date.parse(eventdata.enddate);
+    const hasValidStart = Number.isFinite(startMs);
+    const hasValidEnd = Number.isFinite(endMs);
+    if(!hasValidStart && !allowMissingDate)
+        return <p><em>not a dated event</em></p>;
+    const date = hasValidStart ? new Date(startMs) : new Date();
+    const endDate = hasValidEnd ? new Date(endMs) : new Date(date.getTime() + 60 * 60 * 1000);
+    const elapsed = Math.max(0, endDate.getTime() - date.getTime());
 
     function sqlDate(date) {
         console.log(typeof date);
         if(typeof date == 'string')
             date = new Date(date);
+        if(!(date instanceof Date) || Number.isNaN(date.getTime()))
+            date = new Date();
         console.log('date for sqlDate',date);
         var pad = function(num) { return ('00'+num).slice(-2) };
         return date.getFullYear()         + '-' +
@@ -35,8 +41,10 @@ export default function DateTimeMaker(props) {
 
     function setDate(datestring) {
         const dateobj = new Date(datestring);
+        if(Number.isNaN(dateobj.getTime()))
+            return;
         const m = dateobj.getTime();
-        const m_end = m+ (elapsed) ? elapsed : 0;
+        const m_end = m + (elapsed || 0);
         //console.log('setDate value',dateobj);
         const newendDate = new Date();
         newendDate.setTime(m_end);
@@ -49,7 +57,8 @@ export default function DateTimeMaker(props) {
 
     function setEndDate(datestring) {
         const newendDate = new Date(datestring);
-        const endsqldate = sqlDate(newendDate);
+        if(Number.isNaN(newendDate.getTime()))
+            return;
         datemutate({'enddate':sqlDate(newendDate)});
     }
 
@@ -71,8 +80,8 @@ export default function DateTimeMaker(props) {
             __nextRemoveResetButton
         />
         {error && <p style={{'color':'red'}}>{error}</p>}
-        <SelectCtrl label="Date Display Options" value={eventdata.display_type} options={[{'label':'Show Start Time Only','value':''},{'label':'Show Both Start and End Time','value':'set'},{'label':'Show Date Only, No Times','value':'allday'}]} onChange={(value) => { setOther('display_type',value); } } />
-        {eventdata.display_type != '' && (
+        <SelectCtrl label="Date Display Options" value={eventdata.display_type || ''} options={[{'label':'Show Start Time Only','value':''},{'label':'Show Both Start and End Time','value':'set'},{'label':'Show Date Only, No Times','value':'allday'}]} onChange={(value) => { setOther('display_type',value); } } />
+        {(eventdata.display_type || '') != '' && (
         <div className="rsvp-end-date"><h3>End Date and Time</h3>
         <DateTimePicker
             currentDate={ endDate }
@@ -83,7 +92,7 @@ export default function DateTimeMaker(props) {
         />
         </div>
         )}
-        <SelectCtrl label="Time Zone" value={eventdata.timezone} options={eventdata.tzchoices.map((choice) => {return {'label':choice,'value':choice}})} onChange={(value) => { setOther('timezone',value); } } />
+        <SelectCtrl label="Time Zone" value={eventdata.timezone || ''} options={tzchoices.map((choice) => {return {'label':choice,'value':choice}})} onChange={(value) => { setOther('timezone',value); } } />
         <RSVPMetaToggle
 label={__('Collect RSVPs','rsvpmaker')} 
 metaKey="_rsvp_on" eventdata={eventdata} />

@@ -17,7 +17,7 @@ function rsvpmaker_rest_array() {
 		}
 	}
 	elseif(isset($post->post_type) && 'rsvpmaker_template' == $post->post_type) {
-		$sked = get_template_sked($post_id);
+		$sked = rsvpmaker_get_template_sked($post_id);
 		if(!empty($sked['hour']))
 			$time = $sked['hour'].':'.$sked['minutes'].':00';
 	}
@@ -54,7 +54,7 @@ function rsvpmaker_rest_array() {
 		$template_msg = '';
 		$top_message = '';
 		$bottom_message= '';
-		$sked = get_template_sked($post_id);
+		$sked = rsvpmaker_get_template_sked($post_id);
 		$top_message = apply_filters('rsvpmaker_rest_top_message',$top_message);
 		$bottom_message = apply_filters('rsvpmaker_rest_bottom_message',$bottom_message);
 
@@ -62,7 +62,7 @@ function rsvpmaker_rest_array() {
 		{
 			$projected_label = __('Create/update events from template','rsvpmaker');
 			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id);
-			$template_msg = sked_to_text($sked);
+			$template_msg = rsvpmaker_sked_to_text($sked);
 		}
 		$template_id = (int) get_post_meta($post_id,'_meet_recur',true);
 		if($template_id && !$sked)
@@ -81,7 +81,7 @@ function rsvpmaker_rest_array() {
 	if(empty($date))
 	{
 	//$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
-	$sked = get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
+	$sked = rsvpmaker_get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
 	if(empty($sked))
 		$sked = array();
 	}

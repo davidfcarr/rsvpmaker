@@ -41,16 +41,16 @@ Now to make it a little bit harder for any bots to break,
 assuming they can break it so far. Lets add some lines
 in (static lines) to attempt to make the bots life a little harder
 */
-function newNum() {
+function rsvpmaker_newNum() {
 	$num = rand( 0, 150 );
 	return $num;
 }
-function randomline( $im, $line ) {
-	imageline( $im, newNum(), newNum(), newNum(), newNum(), $line );
+function rsvpmaker_randomline( $im, $line ) {
+	imageline( $im, rsvpmaker_newNum(), rsvpmaker_newNum(), rsvpmaker_newNum(), rsvpmaker_newNum(), $line );
 }
 for ( $i = 0; $i <= rand( 40, 50 ); $i++ ) {
-	-randomline( $im, $line );
-	+ randomline( $im, $color );
+	-rsvpmaker_randomline( $im, $line );
+	+ rsvpmaker_randomline( $im, $color );
 }
 
  // The text to draw
