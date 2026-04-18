@@ -38,8 +38,8 @@ var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
 const rsvpmaker_rest = getRsvpmakerRestSettings();
 	return (
 		el(
-			wp.editPost.PluginPostStatusInfo,
-			{},
+			wp.editor.PluginDocumentSettingPanel,
+			{ title: __('RSVPMaker', 'rsvpmaker'), className: 'rsvpmaker-document-panel', initialOpen: true },
 <div>
 <QueryClientProvider client={queryClient}>
 <DateOrTemplate rsvpmaker_rest={rsvpmaker_rest} />
@@ -164,7 +164,7 @@ wp.data.dispatch('core/notices').createNotice(
 
 }
 
-var PluginPostPublishPanel = wp.editPost.PluginPostPublishPanel;
+var PluginPostPublishPanel = wp.editor.PluginPostPublishPanel;
 
 function RSVPPluginPostPublishPanel() {
     return el(
@@ -264,7 +264,7 @@ wp.data.dispatch('core/notices').createNotice(
 const RSVPEmailSidebarPlugin = function() {
 	const rsvpmaker_rest = getRsvpmakerRestSettings();
 	return	el(
-			wp.editPost.PluginPostStatusInfo,
+			wp.editor.PluginPostStatusInfo,
 			{},
 <div><h3>{__('Email Editor','rsvpmaker')}</h3><p>{__('Use the WordPress editor to compose the body of your message, with the post title as your subject line. View post will display your content in an email template, with a user interface for addressing options.','rsvpmaker')}</p>
 <p><a href="https://rsvpmaker.com/knowledge-base/using-rsvp-mailer/" target="_blank">Documentation</a></p>

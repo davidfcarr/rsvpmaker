@@ -785,7 +785,8 @@ function rsvpmaker_postmark_show_sent_log() {
     $days = isset($_GET['days']) ? intval($_GET['days']) : 31;
     
     if(isset($_GET['monthly'])) {
-        $results = $wpdb->get_results($wpdb->prepare("SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM %i ".(($blog_id > 1) ? ' WHERE blog_id='.intval($blog_id).' ' : '') ." group by blog_id, ym order by ".(isset($_GET['by_volume'])) ? 'total DESC' : 'blog_id, ym DESC',$table));
+        $sql = $wpdb->prepare("SELECT blog_id, sum(count) total, DATE_FORMAT(time,'%Y-%m') as ym FROM %i ".(($blog_id > 1) ? ' WHERE blog_id='.intval($blog_id).' ' : '') ." group by blog_id, ym order by ".((isset($_GET['by_volume'])) ? 'total DESC' : 'blog_id, ym DESC'),$table);
+        $results = $wpdb->get_results($sql);
         if($results) {
             echo '<h2>Monthly Volume</h2>';
             if(!isset($_GET['by_volume'])) {
@@ -805,8 +806,10 @@ function rsvpmaker_postmark_show_sent_log() {
         }
     }
     echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
-    printf('<p>See summary <a href="%s">by month</a> | <a href="%s">by volume</a></p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'));
+    printf('<p>See summary <a href="%s">by month</a> | <a href="%s">by volume</a> | Or <a href="%s">show opens/clicks</a> (opens / clicks)</p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&clicks=1'));
     $grandtotal = 0;
+
+    echo '<div id="postmark_sent_log_details" style="display:'.(isset($_GET['details']) || isset($_GET['clicks']) ? 'block' : 'none').'">';
     
     $results = $wpdb->get_results($wpdb->prepare("SELECT sum(count) total, blog_id FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) ".($blog_id > 1) ? ' AND blog_id='.$blog_id : ''." group by blog_id",$table,$days));
     foreach($results as $row) {
@@ -892,34 +895,10 @@ function rsvpmaker_postmark_show_sent_log() {
                 echo '<p>No email opens detected - check whether open tracking and link tracking are active on the Postmark server.</p>';
             }
 
-            if(1 == $blog_id) {
-                if(!wp_get_schedule('rsvpmaker_postmark_suppressions')) {
-                    wp_schedule_event( rsvpmaker_strtotime('23:00:00'), 'daily', 'rsvpmaker_postmark_suppressions' );
-                }
-                $ignore = get_option('ignore_postmark_supressions');	
-                $suppressions = $client->getSuppressions('broadcast');
-                if(isset($suppressions['suppressions'])) {
-                    echo '<p>Suppressions (bad or blocked): ';
-                    foreach($suppressions['suppressions'] as $s) {
-                        $email = strtolower($s['EmailAddress']);
-                        if(is_array($ignore) && in_array($email,$ignore)) {
-                            $suppressionChanges = array(new SuppressionChangeRequest($email));
-                            $messageStream = "broadcast";
-                            $result = $client->deleteSuppressions($suppressionChanges, $messageStream);                        
-                            $messageStream = "outbound";
-                            $result = $client->deleteSuppressions($suppressionChanges, $messageStream);
-                            continue;
-                        }
-                        else {
-                            echo $email.' '.$s['CreatedAt'].' ';
-                            rsvpmail_add_problem($email,$s['SuppressionReason']);    
-                        }
-                    } 
-                    echo '<p>';
-                }            
-            }
         }
     }
+
+    echo '</div>';
 
     $days = (isset($_GET['days'])) ? intval($_GET['days']) : 31;
     printf('<form method="get" action="%s">Showing outgoing message data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> days <button>Change</button></form>',admin_url('edit.php'),$days);
@@ -943,6 +922,33 @@ function rsvpmaker_postmark_show_sent_log() {
         printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)).' '.$row->time,$row->count,$row->blog_id,$recipients,$prompt);
     }
     echo '</tbody></table>';
+
+    if(1 == $blog_id) {
+        if(!wp_get_schedule('rsvpmaker_postmark_suppressions')) {
+            wp_schedule_event( rsvpmaker_strtotime('23:00:00'), 'daily', 'rsvpmaker_postmark_suppressions' );
+        }
+        $ignore = get_option('ignore_postmark_supressions');	
+        $suppressions = $client->getSuppressions('broadcast');
+        if(isset($suppressions['suppressions'])) {
+            echo '<p>Suppressions (bad or blocked): ';
+            foreach($suppressions['suppressions'] as $s) {
+                $email = strtolower($s['EmailAddress']);
+                if(is_array($ignore) && in_array($email,$ignore)) {
+                    $suppressionChanges = array(new SuppressionChangeRequest($email));
+                    $messageStream = "broadcast";
+                    $result = $client->deleteSuppressions($suppressionChanges, $messageStream);                        
+                    $messageStream = "outbound";
+                    $result = $client->deleteSuppressions($suppressionChanges, $messageStream);
+                    continue;
+                }
+                else {
+                    echo $email.' '.$s['CreatedAt'].' ';
+                    rsvpmail_add_problem($email,$s['SuppressionReason']);    
+                }
+            } 
+            echo '<p>';
+        }            
+    }
 
     $sql = $wpdb->prepare("SELECT meta_value from %i WHERE meta_key='rsvpmail_postmark_error' ORDER BY meta_id DESC LIMIT 100",$wpdb->postmeta);
 

@@ -23,7 +23,7 @@ var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
 
 	return (
 		el(
-			wp.editPost.PluginPostStatusInfo,
+			wp.editor.PluginPostStatusInfo,
 			{},
 <div>
 {(rsvpmaker.post_type == 'rsvpmaker' && 
@@ -206,7 +206,7 @@ wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {
 	render: RSVPMakerSidebarPlugin,
 } );	
 
-var PluginPostPublishPanel = wp.editPost.PluginPostPublishPanel;
+var PluginPostPublishPanel = wp.editor.PluginPostPublishPanel;
 
 function RSVPPluginPostPublishPanel() {
     return el(
