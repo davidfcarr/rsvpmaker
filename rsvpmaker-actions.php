@@ -30,10 +30,7 @@ add_action('admin_init', 'rsvpmaker_cpevent_activate' );
 add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvpmaker_customize_document' );
 
-//add_action( 'admin_menu', 'rsvpmaker_my_events_menu' );
-//add_action( 'admin_menu', 'my_rsvpemails_menu' );
-//todo checkthis?
-//add_action( 'admin_menu', 'my_rsvpemail_menu' );
+add_action( 'admin_menu', 'my_rsvpemail_menu' );
 add_action( 'admin_menu', 'rsvpmaker_admin_menu' );
 
 add_action( 'admin_notices', 'rsvpmaker_admin_notice' );

@@ -1450,7 +1450,7 @@ foreach($results as $row)
 }
 
 if(!empty($postvars['custom_list'])) {
-	preg_match_all ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", sanitize_textarea_field($postvars['custom_list']), $emails);
+	preg_match_all ("/\b[A-z0-9][\w.+-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", sanitize_textarea_field($postvars['custom_list']), $emails);
 	if(!empty($emails[0]))
 	{
 		$sending_to[] = 'custom list';
@@ -6067,8 +6067,8 @@ function get_rsvpemail_from_settings() {
 		return $from;
 	}
 
-	$from['email-from'] = get_option('blogname');
-	$from['email-name'] = get_option('admin_email');
+	$from['email-from'] = get_option('admin_email');
+	$from['email-name'] = get_option('blogname');
 	$from['mailing_address'] = get_option('mailing_address');
 	$from['company'] = $from['email-from'];
 	update_option('rsvpemail_from_settings',$from);
