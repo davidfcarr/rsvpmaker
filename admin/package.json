@@ -23,7 +23,7 @@
 	"devDependencies": {
 		"@wordpress/scripts": "^31.5.0",
 		"dotenv-cli": "^7.4.1",
-		"serialize-javascript": ">=7.0.3",
+		"serialize-javascript": ">=7.0.5",
 		"ws": ">=8.17.1"
 	},
 	"dependencies": {
@@ -35,7 +35,7 @@
 		"react-clock": "^4.2.0",
 		"react-query": "^3.39.3",
 		"react-time-picker": "^6.2.0",
-		"serialize-javascript": ">=7.0.3",
+		"serialize-javascript": ">=7.0.5",
 		"ws": ">=8.17.1"
 	}
 }
