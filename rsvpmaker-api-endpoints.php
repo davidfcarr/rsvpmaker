@@ -684,6 +684,13 @@ class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 
+					'args'                => array(
+						'email_search' => array(
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_email',
+						),
+					),
+
 				),
 
 			)
@@ -703,7 +710,7 @@ class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 
 		$event = $request['event'];
 
-		$email = sanitize_email( $_GET['email_search'] );
+		$email = $request['email_search'];
 
 		$output = ajax_rsvp_email_lookup( $email, $event );
 
