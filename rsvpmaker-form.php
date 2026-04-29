@@ -827,6 +827,7 @@ if(!empty($attributes['sale'])) {
 	printf( '<p>%s<input type="hidden" name="sale_item_name" value="%s"> @ %s <input type="number" name="sale_item_count" value="1" />',esc_html($item_label),esc_attr($item_label),esc_html($amount) );
 	echo '<input type="hidden" name="sale_item_amount" value="'.esc_attr($amount).'" />';
 }
+echo rsvp_form_jquery();
 echo rsvpmaker_basic_form( $attributes['form_id'] );
 wp_nonce_field('rsvpmaker_contact','contact_confidential');
 printf('<input type="hidden" name="user_id" value="%d" >',esc_attr($user_id));
