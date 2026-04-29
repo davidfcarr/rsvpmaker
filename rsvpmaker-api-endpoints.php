@@ -3357,6 +3357,62 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 	}//end handle
 }//end class
 
+class RSVP_Default_Diff extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'default_diff';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $rsvp_options;
+		$future = rsvpmaker_get_future_events();
+		$templates = rsvpmaker_get_templates();
+		$diff = array('form'=>[],'confirmation'=>[]);
+		foreach($templates as $event) {
+			$confirmation = get_post_meta($event->ID,'_rsvp_confirm',true);
+			$form = get_post_meta($event->ID,'_rsvp_form',true);
+			if(!empty($form) && $form != $rsvp_options['rsvp_form'])
+				$diff['form'][] = array('event_id'=>$event->ID,'title'=>$event->post_title.' (Template)','document_id'=>$form);
+			if(!empty($confirmation) && $confirmation != $rsvp_options['rsvp_confirm'])
+				$diff['confirmation'][] = array('event_id'=>$event->ID,'title'=>$event->post_title.' (Template)','document_id'=>$confirmation);
+		}
+		foreach($future as $event) {
+			$confirmation = get_post_meta($event->ID,'_rsvp_confirm',true);
+			$form = get_post_meta($event->ID,'_rsvp_form',true);
+			$date = rsvpmaker_date($rsvp_options['short_date'],$event->ts_start,$event->timezone);
+			if(!empty($form) && $form != $rsvp_options['rsvp_form'])
+				$diff['form'][] = array('event_id'=>$event->ID,'title'=>$event->post_title.' ('.$date.')','document_id'=>$form);
+			if(!empty($confirmation) && $confirmation != $rsvp_options['rsvp_confirm'])
+				$diff['confirmation'][] = array('event_id'=>$event->ID,'title'=>$event->post_title.' ('.$date.')','document_id'=>$confirmation);
+		}
+	return new WP_REST_Response($diff, 200 );
+	}//end handle
+}//end class
+
 add_action('rest_api_init',
 	function () {
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -3451,5 +3507,7 @@ add_action('rest_api_init',
 		$contact->register_routes();
 		$chimplist = new RSVP_Chimp_Lists();
 		$chimplist->register_routes();
+		$default_diff = new RSVP_Default_Diff();
+		$default_diff->register_routes();
 	}
 );

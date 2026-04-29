@@ -1526,6 +1526,7 @@ function rsvp_template_checkboxes( $t ) {
 		global $current_user,$rsvp_options;
 
 		$nomeeting = $editlist = $add_one = $add_date_checkbox = $event_options = $updatelist = '';
+		$donotproject = false;
 
 		$template = rsvpmaker_get_template_sked( $t );
 

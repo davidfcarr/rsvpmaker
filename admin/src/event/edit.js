@@ -1,4 +1,4 @@
-const { __ } = wp.i18n;
+import { __ } from '@wordpress/i18n';
 const { InspectorControls, useBlockProps } = wp.blockEditor;
 const { SelectControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';

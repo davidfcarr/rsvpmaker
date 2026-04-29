@@ -1,6 +1,6 @@
 import { TabPanel } from '@wordpress/components';
 import Forms from './Forms.js'
-import { RsvpmakerSettings, PaymentSettings, PostmarkSettings } from "./components";
+import { RsvpmakerSettings, PaymentSettings, PostmarkSettings, ConfirmationSettings } from "./components";
 import './style.css';
 
 export default function RSVPAdmin (props) {
@@ -26,6 +26,11 @@ export default function RSVPAdmin (props) {
                     className: 'nav-tab',
                 },
                 {
+                    name: 'confirmation',
+                    title: 'Confirmation Message',
+                    className: 'nav-tab',
+                },
+                {
                     name: 'payment',
                     title: 'Payment',
                     className: 'nav-tab',
@@ -47,6 +52,8 @@ export default function RSVPAdmin (props) {
                     return <RsvpmakerSettings />
                 if('payment' == tab.name)
                     return <PaymentSettings />
+                if('confirmation' == tab.name)
+                    return <ConfirmationSettings />
                 if('forms' == tab.name)
                     return <Forms form_id={props.form_id} />
                 if('postmark' == tab.name)

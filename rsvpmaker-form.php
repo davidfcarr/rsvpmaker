@@ -123,7 +123,7 @@ function rsvp_form_text( $atts, $content ) {
 
 	$required = '';
 	$required_marker = '';
-	if ( isset( $atts['required'] ) || isset( $atts['require'] ) ) {
+	if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
 		$rsvp_required_field[ $slug ] = $slug;
 		$required                     = 'required';
 		$required_marker = ' <span class="rsvprequiredfield">*</span>';
@@ -2209,7 +2209,7 @@ function rsvpfield( $atts ) {
 
 		}
 
-		if ( isset( $atts['required'] ) || isset( $atts['require'] ) ) {
+		if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
 
 			$output = '<span class="required">' . $output . '</span>';
 

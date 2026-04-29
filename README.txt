@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 11.9.2
+Stable tag: 11.9.4
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -130,6 +130,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe, MailChimp, and Postmark under the license of their creators.
 
 == Changelog ==
+
+= 11.9.3 =
+
+* Make default confirmation message more visible in Settings screen
+* Fix required fields error in RSVP form code
 
 = 11.9 =
 

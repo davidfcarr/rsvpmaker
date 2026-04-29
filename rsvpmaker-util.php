@@ -728,7 +728,7 @@ function rsvpmaker_short_date( $post_id, $and_time = false, $end_time = false ) 
 
 		$time        = wp_date( $time_format, $timerow->ts_start );
 
-		$output     .= ' ' . $time;
+		$output     .= ' '.__('at','rsvpmaker').' ' . $time;
 
 	}
 
@@ -752,7 +752,7 @@ function rsvpmaker_short_date( $post_id, $and_time = false, $end_time = false ) 
 
 			$time    = wp_date( $time_format, $timerow->ts_end );
 
-			$output .= ' ' . $time;
+			$output     .= ' '.__('at','rsvpmaker').' ' . $time;
 
 		}
 
@@ -1038,14 +1038,13 @@ function get_events_rsvp_on( $limit = 0 ) {
 
 }
 function is_rsvpmaker_deadline_future( $post_id ) {
+	$post_type = get_post_type( $post_id );
 
-	global $post;
-
-	if('rsvpmaker_template' == $post->post_type)
+	if ( 'rsvpmaker_template' == $post_type )
 
 		return true;
 
-	if('rsvpmaker' != $post->post_type)
+	if ( 'rsvpmaker' != $post_type )
 
 		return false;
 
@@ -1087,22 +1086,19 @@ function is_rsvpmaker_deadline_future( $post_id ) {
 
 }
 function get_next_rsvp_on() {
+	$events = get_events_rsvp_on( 20 );
 
-	$events = rsvpmaker_get_future_events_by_meta(
+	if ( ! is_array( $events ) || empty( $events ) ) {
+		return null;
+	}
 
-		array(
+	foreach ( $events as $event ) {
+		if ( ! empty( $event->ID ) && is_rsvpmaker_deadline_future( $event->ID ) ) {
+			return $event;
+		}
+	}
 
-			'meta_key'   => '_rsvp_on',
-
-			'meta_value' => 1,
-
-		),
-
-		1
-
-	);
-
-	return (is_array($events) && !empty($events[0])) ? $events[0] : null;
+	return null;
 
 }
 
@@ -1510,7 +1506,10 @@ function rsvpmaker_get_future_events_by_meta( $kv, $limit = '', $output = OBJECT
 	global $wpdb;
 
 	$wpdb->show_errors();
-	$startfrom = ( $offset_hours ) ? ' DATE_SUB("' . rsvpmaker_get_sql_now() . '", INTERVAL ' . $offset_hours . ' HOUR) ' : '"' . rsvpmaker_get_sql_now() . '"';
+	$startfrom = rsvpmaker_get_sql_now();
+	if ( $offset_hours ) {
+		$startfrom = rsvpmaker_date( 'Y-m-d H:i:s', time() - ( HOUR_IN_SECONDS * (int) $offset_hours ) );
+	}
 		$sql = $wpdb->prepare("SELECT DISTINCT ID, ID as postID, posts.*, events.date as datetime, date_format(date,'%%M %%e, %%Y') as dateformatted, events.enddate, events.display_type, meta.meta_value
 
 		 FROM %i posts
@@ -1521,7 +1520,7 @@ function rsvpmaker_get_future_events_by_meta( $kv, $limit = '', $output = OBJECT
 
 		 WHERE (events.date > %s OR events.enddate > %s) AND post_status='publish' 
 
-		 AND meta_key=%s ", $wpdb->posts,$wpdb->prefix . 'rsvpmaker_event',$startfrom,$wpdb->postmeta,$kv['meta_key']);
+		 AND meta_key=%s ", $wpdb->posts, $wpdb->prefix . 'rsvpmaker_event', $wpdb->postmeta, $startfrom, $startfrom, $kv['meta_key']);
 
 	if ( isset( $kv['meta_value'] ) ) {
 
@@ -1536,7 +1535,7 @@ function rsvpmaker_get_future_events_by_meta( $kv, $limit = '', $output = OBJECT
 		$sql .= $wpdb->prepare(" AND meta_value $comparison %s",$kv['meta_value']);
 
 	}
-	$sql .= ' ORDER BY a1.date ';
+	$sql .= ' ORDER BY events.date ';
 	if ( ! empty( $limit ) ) {
 		$sql .= ' LIMIT 0,' . $limit . ' ';
 

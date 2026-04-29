@@ -16,7 +16,7 @@ import { useDispatch } from '@wordpress/data';
 const SettingsTitle = () => {
 	return (
 		<Heading level={ 1 }>
-			{ __( 'RSVP Maker General Settings', 'rsvpmaker' ) }
+			{ __( 'RSVPMaker General Settings', 'rsvpmaker' ) }
 		</Heading>
 	);
 };
@@ -29,7 +29,7 @@ const EditLink = (props) => {
 	}, [post_id]);
 	return (
 		<div>
-		<p><a target="_blank" href={'/wp-admin/post.php?post='+post_id+'&action=edit'}>{props.field.label}</a> {props.field.description}</p>
+		<p><strong>{props.field.label}</strong> <a target="_blank" href={'/wp-admin/post.php?post='+post_id+'&action=edit'}>Edit</a> {props.field.description}</p>
 		<div>Preview:</div>
 		<div dangerouslySetInnerHTML={{ __html: postContent }} />
 		</div>
@@ -105,7 +105,7 @@ const RsvpmakerSettings = () => {
 			Edit: 'toggle',
 		},
 		{
-			id: 'show_timezone',
+			id: 'add_timezone',
 			label: __( 'Show Timezone', 'rsvpmaker' ),
 			type: 'boolean',
 			Edit: 'toggle',
@@ -846,7 +846,7 @@ const RsvpmakerSettings = () => {
 			{
 				id: 'defaults',
 				label: __( 'Alternatives', 'rsvpmaker' ),
-				children: [ 'rsvp_on','calendar_icons','show_timezone','convert_timezone','rsvp_yesno','social_title_date','confirmation_include_event','rsvpmaker_send_confirmation_email','rsvp_count','rsvp_count_party','send_payment_reminders',
+				children: [ 'rsvp_on','calendar_icons','add_timezone','convert_timezone','rsvp_yesno','social_title_date','confirmation_include_event','rsvpmaker_send_confirmation_email','rsvp_count','rsvp_count_party','send_payment_reminders',
 'login_required','show_attendees' ],
 				layout: { type: 'card', withHeader: true },
 			},
@@ -981,7 +981,7 @@ const RsvpmakerSettings = () => {
 	return (
 		<VStack spacing={ 4 }>
 			<SettingsTitle />
-			<div id="floating-save" style={{  width: '60%', textAlign: 'right', padding: '5px', position: 'fixed', bottom: '50px', right: '10px', zIndex: 100 }}>
+			<div id="floating-save" style={{  width: '60%', textAlign: 'left', padding: '5px', position: 'fixed', bottom: '50px', left: '200px', zIndex: 100,}}>
 			<Notices />
 			<div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px', borderRadius: '5px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
 			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />

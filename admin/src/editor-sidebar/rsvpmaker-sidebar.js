@@ -90,7 +90,13 @@ console.log('initRsvpSidebarNotices rsvpmaker_rest now',rsvpmaker_rest);
 if(rsvpmaker_rest.post_type == 'rsvpmaker_template' || rsvpmaker_rest.post_type == 'rsvpmaker') {
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {
 	render: RSVPMakerSidebarPlugin,
-} );	
+} );
+// Force the panel open regardless of stored user preference
+const editPostDispatch = wp.data.dispatch( 'core/edit-post' ) || wp.data.dispatch( 'core/preferences' );
+const isPanelOpen = wp.data.select( 'core/edit-post' )?.isEditorPanelOpened?.( 'rsvpmaker-sidebar-plugin/rsvpmaker-document-panel' );
+if ( ! isPanelOpen ) {
+	wp.data.dispatch( 'core/edit-post' ).toggleEditorPanelOpened( 'rsvpmaker-sidebar-plugin/rsvpmaker-document-panel' );
+}
 }
 
 console.log('post type check',rsvpmaker_rest.post_type);

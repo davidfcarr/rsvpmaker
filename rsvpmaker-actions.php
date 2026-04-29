@@ -131,6 +131,15 @@ function rsvpmaker_init_router() {
 	add_rsvpmaker_roles();
 	rsvpmaker_create_post_type();
 	create_rsvpemail_post_type();
+	if ( isset( $_GET['rsvpnext'] ) ) {
+		$events = get_events_rsvp_on(1);
+		$hash = isset($_GET['anchor']) ? '#rsvpnow' : '';
+		if($events) {
+			$event = $events[0];
+			wp_redirect(get_permalink($event->ID) . $hash);
+			exit;
+		}
+	}
 	if ( isset( $_GET['rsvpmaker_cron_email_preview'] ) ) {
 		rsvpmaker_previewtest();// email preview
 	}
