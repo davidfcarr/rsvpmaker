@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 11.9.4
+Stable tag: 11.9.5
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -131,6 +131,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 11.9.5 =
+
+* Revamped admin notices
+* Optimized blocks and other React components with code splitting (helped by Github Copilot)
+
 = 11.9.3 =
 
 * Make default confirmation message more visible in Settings screen
@@ -168,27 +173,3 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 * Fix glitch with get_events_by_template function
 * Updates to Cleanup RSVPMaker tool for removing duplicate entries
 
-= 11.6.8 =
-
-* SQL hardening with $wpdb->prepare
-
-= 11.6.4 =
-
-* Integration with forthcoming Quick Playground plugin
-* Reduced use of inline Javascript
-
-= 11.6.2 =
-
-* Updated code for clearing cache, setting post type permalinks
-
-= 11.6 =
-
-* Fix for setting end date, multidate events
-
-= 11.5.8 =
-
-* Streamlined queries, logging functions (set WP_MEMORY_LIMIT and RSVPMAKER_DEBUG in wp-config.php for detailed output)
-
-= 11.5.6 =
-
-* Streamlined queries, new caching strategy
