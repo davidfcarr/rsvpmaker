@@ -25,7 +25,8 @@ const EditLink = (props) => {
 	const [postContent, setPostContent] = useState('<p>Loading...</p>');
 	const post_id = props.data[props.field.id];
 	useEffect(() => {
-		fetch('/wp-json/rsvpmaker/v1/preview/do_blocks?post_id='+post_id).then((response) => response.json()).then((data) => { setPostContent(data); }).catch((error) => { console.error('Error fetching block content:', error); });
+		const previewUrl = rsvpmaker_rest.rest_url + 'rsvpmaker/v1/preview/do_blocks?post_id=' + post_id;
+		fetch(previewUrl).then((response) => response.json()).then((data) => { setPostContent(data); }).catch((error) => { console.error('Error fetching block content:', error); });
 	}, [post_id]);
 	return (
 		<div>
@@ -47,7 +48,7 @@ const DefaultDiff = () => {
 		setLoading(true);
 		setError(null);
 		try {
-			const response = await fetch('/wp-json/rsvpmaker/v1/default_diff');
+			const response = await fetch(rsvpmaker_rest.rest_url + 'rsvpmaker/v1/default_diff');
 			if (!response.ok) {
 				throw new Error('Failed to fetch');
 			}
@@ -64,7 +65,7 @@ const DefaultDiff = () => {
 		setIsResetting(true);
 		setError(null);
 		try {
-			const url = new URL('/wp-json/rsvpmaker/v1/copy_defaults', window.location.origin);
+			const url = new URL('rsvpmaker/v1/copy_defaults', rsvpmaker_rest.rest_url);
 			url.searchParams.append('filter[]', 'rsvp_confirm');
 
 			const response = await fetch(url.toString(), {

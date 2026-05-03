@@ -851,9 +851,10 @@ console.log(form);
 async function sendData() {
   // Associate the FormData object with the form element
   const formData = new FormData(form);
+  const contactUrl = "<?php echo esc_url( rest_url( 'rsvpmaker/v1/contact_form' ) ); ?>";
 
   try {
-    const response = await fetch("/wp-json/rsvpmaker/v1/contact_form", {
+    const response = await fetch(contactUrl, {
       method: "POST",
       // Set the FormData instance as the request body
       body: formData,

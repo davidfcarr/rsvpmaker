@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const baseURL = (window.rsvpmaker && window.rsvpmaker.json_url)
+  ? window.rsvpmaker.json_url
+  : '/?rest_route=/rsvpmaker/v1/';
+
 const client = axios.create({
-  baseURL: '/wp-json/rsvpmaker/v1/',
+  baseURL,
   headers: {
     "Content-type": "application/json",
   },

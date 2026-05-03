@@ -630,7 +630,13 @@ function rsvpmaker_upcoming( $atts = array() ) {
 <div id="rsvpmaker-<?php the_ID(); ?>" <?php post_class(); ?> itemscope itemtype="http://schema.org/Event" >  
 
 <h1 class="rsvpmaker-entry-title"><a class="rsvpmaker-entry-title-link" href="<?php the_permalink(); ?>"  itemprop="url"><span itemprop="name"><?php the_title(); ?></span></a></h1>
-
+<?php
+if(!empty($atts['featured_image']) && has_post_thumbnail()) {
+	echo '<div class="rsvpmaker-featured-image">';
+	the_post_thumbnail($atts['featured_image']);
+	echo '</div>';
+}
+?>
 <div class="rsvpmaker-entry-content">
 
 			<?php
@@ -2518,6 +2524,9 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		}
 	}
 	elseif ( $event = get_rsvpmaker_event($post_id) ) {
+		if(!isset($event->display_type)){
+			error_log('missing display type for event '.$post_id. ' '.var_export($event, true) );
+		}
 		$dateblock = '<span class="rsvp_date_block"></span>';
 
 		global $last_time;
@@ -2527,10 +2536,10 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
 			$dateblock .= mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
-			if ( $event->display_type == 'none' ) {
+			if ( !empty($event->display_type) && $event->display_type == 'none' ) {
 				return '';
 			}
-			elseif ( $event->display_type == 'set' ) {
+			elseif ( !empty($event->display_type) && $event->display_type == 'set' ) {
 				$tzcode = strpos( $time_format, 'T' );
 
 				if ( $tzcode ) {
@@ -2547,7 +2556,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 				$dateblock .= '</span>';
 
-			} elseif ( empty($event->display_type) || ( $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+			} elseif ( empty($event->display_type) || ( !empty($event->display_type) && $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
 
 				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
 
@@ -2571,7 +2580,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		// gcal link
 
 		if ( ( ( ! empty( $rsvp_options['calendar_icons'] ) && ! isset( $custom_fields['_calendar_icons'][0] ) ) || ! empty( $custom_fields['_calendar_icons'][0] ) ) ) {
-			$end_time = $event->enddate;
+			$end_time = !empty($event->enddate) ? $event->enddate : null;
 			$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
 			if ( rsvpmaker_is_email_context() ) {
 				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), $permalink . $j . 'ical=1', $tzbutton );
@@ -2624,9 +2633,13 @@ function future_rsvp_links( $atts = array() ) {
 		$url = (isset($atts['server'])) ? '#rsvpnow' : get_permalink( $event->ID ) . '#rsvpnow';
 
 		$datetime = rsvpmaker_date( $rsvp_options['long_date'], $event->ts_start ) . ' ' . rsvpmaker_date( $rsvp_options['time_format'], $event->ts_start );
-
-		$output .= sprintf( '<li><a href="%s">%s</a></li>', esc_url_raw( $url ), esc_html( $event->post_title . ' ' . $datetime ) );
-
+		$output .= sprintf( '<li><a href="%s">%s', esc_url_raw( $url ), esc_html( $event->post_title . ' ' . $datetime ) );
+if(!empty($atts['featured_image']) && has_post_thumbnail($event->ID)) {
+	$output .= '<div class="rsvpmaker-featured-image">';
+	$output .= get_the_post_thumbnail($event->ID, $atts['featured_image']);
+	$output .= '</div>';
+}
+	$output .= '</a></li>';
 		$event->post_content = '';
 
 	}
@@ -3656,3 +3669,4 @@ function rsvpmaker_date_title( $title, $sep = '&raquo;', $seplocation = 'left' )
 		return $title;
 
 }
+

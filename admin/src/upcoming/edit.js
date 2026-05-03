@@ -84,7 +84,7 @@ export default function Edit(props) {
         class UpcomingInspector extends Component {
 	
             render() {
-                const { attributes: { calendar, excerpt, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author, itemcolor, itembg, itemfontsize }, setAttributes, isSelected } = this.props;
+                const { attributes: { calendar, excerpt, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author, itemcolor, itembg, itemfontsize, featured_image }, setAttributes, isSelected } = this.props;
                 const fontSizes = [
                     {
                         name: __( 'Small' ),
@@ -105,6 +105,24 @@ export default function Edit(props) {
                         name: __( 'Extra Large' ),
                         slug: 'xlarge',
                         size: 14,
+                    }
+                ];
+                const featuredImageOptions = [
+                    {
+                        label: __( 'None','rsvpmaker' ),
+                        value: '',
+                    },
+                    {
+                        label: __( 'Medium (up to 300 px)' ),
+                        value: 'medium'
+                    },
+                    {
+                        label: __( 'Medium Large (up to 768 px)' ),
+                        value: 'medium_large'
+                    },
+                    {
+                        label: __( 'Large (up to 1024 px)' ),
+                        value: 'large',
                     }
                 ];
                 const fallbackFontSize = 10;
@@ -188,6 +206,12 @@ export default function Edit(props) {
                     { label: 'Yes', value: false },
                 ] }
                 onChange={ ( hideauthor ) => { setAttributes( { hideauthor: hideauthor } ) } }
+            />
+                        <SelectControl
+                label={__("Featured Image",'rsvpmaker')}
+                value={ featured_image }
+                options={ featuredImageOptions }
+                onChange={ ( featured_image ) => { setAttributes( { featured_image: featured_image } ) } }
             />
                         <TextControl
                 label={__("Text to show for no events listed",'rsvpmaker')}

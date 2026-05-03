@@ -489,7 +489,7 @@ if($('#formvars')) {
 						if(dropdown.className.includes('rsvpmaker_menu_type')) {
 							const match = dropdown.className.match(/rsvpmaker_menu_type_([^\s]+)/);
 							if(match && match[1]) {
-								fetch('/wp-json/rsvpmaker/v1/type/'+match[1]).then((response) => {
+								fetch(rsvpmaker_rest.rsvpmaker_json_url+'type/'+match[1]).then((response) => {
 									return response.json(); 
 								} ).then((json) => {
 									inners.push('');
@@ -513,7 +513,7 @@ if($('#formvars')) {
 							}
 						}
 						else {
-							fetch('/wp-json/rsvpmaker/v1/future').then((response) => {
+							fetch(rsvpmaker_rest.rsvpmaker_json_url+'future').then((response) => {
 								return response.json(); 
 							} ).then((json) => {
 								inners.push('');

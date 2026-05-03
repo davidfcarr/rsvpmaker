@@ -43,7 +43,7 @@ export default function Edit(props) {
     const [formOptions,setFormOptions] = useState([]);
     console.log('form_id',form_id);
     async function getForm() {
-        const url = "/wp-json/rsvpmaker/v1/rsvp_form?form_id="+form_id+"&post_id=0&contact=1"
+        const url = (window.rsvpmaker && window.rsvpmaker.json_url ? window.rsvpmaker.json_url : '/?rest_route=/rsvpmaker/v1/') + "rsvp_form?form_id="+form_id+"&post_id=0&contact=1";
         console.log('url',url);
         try {
             const response = await fetch(url);

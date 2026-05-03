@@ -22,7 +22,7 @@ export default function Forms (props) {
         setIsError(false);
         try {
             let name = newForm;
-            const url = new URL('/wp-json/rsvpmaker/v1/rsvp_form', window.location.origin);
+            const url = new URL('rsvpmaker/v1/rsvp_form', rsvpmaker_rest.rest_url);
             url.searchParams.set('form_id', (formId || '') + name);
             url.searchParams.set('post_id', wp?.data?.select("core/editor")?.getCurrentPostId() || '');
             url.searchParams.set('contact', props.contact ? '1' : '0');
@@ -84,7 +84,7 @@ if(isError)
             return newdata;
         });
         try {
-            const url = new URL('/wp-json/rsvpmaker/v1/rsvp_form', window.location.origin);
+            const url = new URL('rsvpmaker/v1/rsvp_form', rsvpmaker_rest.rest_url);
             url.searchParams.set('form_id', formId || '');
             url.searchParams.set('post_id', wp?.data?.select("core/editor")?.getCurrentPostId() || '');
             const response = await fetch(url.toString(), {

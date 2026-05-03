@@ -60,7 +60,7 @@ export default function Edit(props) {
     
 	if(rsvpupcoming && (rsvpupcoming.length > 2))
 	{
-		typelist = 'API urls for  this site:\n'+window.location.protocol+'//'+window.location.hostname+'/wp-json/rsvpmaker/v1/future\n';
+		typelist = 'API urls for  this site:\n'+rsvpmaker.json_url+'future\n';
 		rsvptypes.forEach(showTypes);	
 	}
 

@@ -552,7 +552,8 @@ echo '<div style="background-color: #fff; padding: 10px; margin-top: 20px;">';
 <p>See the <a href="https://rsvpmaker.com/knowledge-base/rsvp-report-google-sheet-with-api-access/">Google Sheets example</a>.</p>
 <?php
 	if($rsvp_report_api_code) {
-		printf('<p id="api_link">API access URL: <a href="%s">%s</a></p>',site_url('/wp-json/rsvpmaker/v1/rsvp_report?code='.$rsvp_report_api_code),site_url('/wp-json/rsvpmaker/v1/rsvp_report?code='.$rsvp_report_api_code));
+		$api_url = add_query_arg('code', $rsvp_report_api_code, rest_url('rsvpmaker/v1/rsvp_report'));
+		printf('<p id="api_link">API access URL: <a href="%s">%s</a></p>', esc_url($api_url), esc_html($api_url));
 		printf('<p id="api_link"><a href="%s">Reset API Access Key</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&enable_api=1#api_link'));
 	}
 	else

@@ -16,6 +16,10 @@
       "type": "number",
       "default": 5
     },
+    "featured_image": {
+      "type": "string",
+      "default": ""
+    },
     "skipfirst": {
       "type": "boolean",
       "default": false

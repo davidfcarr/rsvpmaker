@@ -1148,12 +1148,8 @@ return $txt;
 
 //add_action('admin_init','rsvpmaker_create_calendar_page');
 
-
-
 function rsvpmaker_essentials () {
 	global $rsvp_options, $current_user;
-	$cleared = get_option('cleared_rsvpmaker_notices');
-	$cleared = is_array($cleared) ? $cleared : array();
 	$message = '';
 	if(isset($_POST["create_calendar_page"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 		$content = (function_exists('register_block_type')) ? '<!-- wp:rsvpmaker/upcoming {"calendar":"1","nav":"both"} /-->' : '[rsvpmaker_upcoming calendar="1" days="180" posts_per_page="10" type="" one="0" hideauthor="1" past="0" no_events="No events currently listed" nav="bottom"]';
@@ -1191,39 +1187,200 @@ function rsvpmaker_essentials () {
 			$message .= '<p>Confirmation message (can be edited in RSVPMaker Settings): '.$conf_message.'</p>';
 		}
 		else
-			$message .= printf('<p><a href="%s">%s</a></p>',admin_url('options-privacy.php'),__('Set up your privacy page','rsvpmaker'));
+			$message .= sprintf('<p><a href="%s">%s</a></p>',admin_url('options-privacy.php'),__('Set up your privacy page','rsvpmaker'));
 		update_option('RSVPMAKER_Options',$rsvp_options);
 	}
 	$message .= '<p>'.__('You can set additional options, including default settings for RSVPMaker events, on the','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php').'">'.__('RSVPMaker settings page','rsvpmaker').'</a>.</p>';
 	echo '<div class="notice notice-success is-dismissible">'.$message.'</div>';
 }
 
-function rsvpmaker_admin_notice() {
+function rsvpmaker_docs_notice() {
+	if ( !current_user_can('manage_options') ) {
+		return;
+	}
+	$uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+	if ( stripos($uri, 'rsvp') === false ) {
+		return;
+	}
+	$cleared = get_option('cleared_rsvpmaker_notices');
+	$cleared = is_array($cleared) ? $cleared : array();
+	$message = sprintf(
+		__('See the <a href="%s" target="_blank">RSVPMaker Knowledge Base</a> for documentation and support resources on events, event templates, and display options.', 'rsvpmaker'),
+		'https://rsvpmaker.com/knowledge-base/'
+	);
+	$message = apply_filters('rsvpmaker_docs_notice_message', $message);
+	$message = '<p>' . $message . '</p>';
+	echo rsvpmaker_admin_notice_format($message, 'rsvpmaker-docs', $cleared, 'info');
+}
+add_action('admin_notices', 'rsvpmaker_docs_notice');
 
-if(isset($_GET['action']) && ($_GET['action'] == 'edit'))
-	return; //don't clutter edit page with admin notices. Gutenberg hides them anyway.
-if(isset($_GET['post_type']) && ($_GET['post_type'] == 'rsvpmaker') && !isset($_GET['page']))
-	return; //don't clutter post listing page with admin notices
-if(isset($_POST["rsvpmaker_essentials"]))
-	rsvpmaker_essentials();
+function rsvpmaker_admin_notice_should_skip() {
+	if ( isset($_GET['action']) && ('edit' === $_GET['action']) ) {
+		return true; // don't clutter edit page with admin notices. Gutenberg hides them anyway.
+	}
+	if ( isset($_GET['post_type']) && ('rsvpmaker' === $_GET['post_type']) && !isset($_GET['page']) ) {
+		return true; // don't clutter post listing page with admin notices.
+	}
+	return false;
+}
 
-if(isset($_GET['payment_key_test'])) {
-	echo '<div class="notice notice-info"><p><div>Checking payment API connections</div>';
+function rsvpmaker_admin_notice_payment_key_test() {
+	if ( !isset($_GET['payment_key_test']) ) {
+		return;
+	}
+
+	$payments = '<p><strong>'.__('Checking payment API connections','rsvpmaker').'</strong></p>';
 	$paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
 	if(!empty($paypal_rest_keys['client_secret']) && !empty($paypal_rest_keys['client_id']))
-		echo '<div>PayPal production key: '.rsvpmaker_paypal_test_connection().'</div>';
+		$payments .= '<p>PayPal production key: '.rsvpmaker_paypal_test_connection().'</p>';
 	if(!empty($paypal_rest_keys['sandbox_client_secret']) && !empty($paypal_rest_keys['sandbox_client_id']) )
-		echo '<div>PayPal sandbox key: '.rsvpmaker_paypal_test_connection('sandbox').'</div>';
+		$payments .= '<p>PayPal sandbox key: '.rsvpmaker_paypal_test_connection('sandbox').'</p>';
 	$stripe_keys = get_option('rsvpmaker_stripe_keys');
 	if(!empty($stripe_keys['pk']) && !empty($stripe_keys['sk']))
-		echo '<div>Stripe production key :'.rsvpmaker_stripe_validate($stripe_keys['pk'],$stripe_keys['sk']).'</div>';
+		$payments .= '<p>Stripe production key: '.rsvpmaker_stripe_validate($stripe_keys['pk'],$stripe_keys['sk']).'</p>';
 	if(!empty($stripe_keys['sandbox_sk']) && !empty($stripe_keys['sandbox_pk']) )
-		echo '<div>Stripe sandbox key: '.rsvpmaker_stripe_validate($stripe_keys['sandbox_pk'],$stripe_keys['sandbox_sk']).'</div>';
+		$payments .= '<p>Stripe sandbox key: '.rsvpmaker_stripe_validate($stripe_keys['sandbox_pk'],$stripe_keys['sandbox_sk']).'</p>';
 	$chosen_gateway = get_rsvpmaker_payment_gateway ();
 	if($chosen_gateway)
-		printf('<p>Payment gateway defaults to: %s</p>',$chosen_gateway);
-	echo '</p></div>';
+		$payments .= '<p>'.sprintf(__('Payment gateway defaults to: %s','rsvpmaker'), esc_html($chosen_gateway)).'</p>';
+	echo '<div class="notice notice-info">'.$payments.'</div>';
 }
+
+function rsvpmaker_admin_notice_calendar_section($wpdb, &$rsvp_options, &$essential_labels) {
+	if( !empty($rsvp_options['eventpage']) || get_option('noeventpageok') || is_plugin_active('rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php') ) {
+		return '';
+	}
+
+	$sql = "SELECT ID from $wpdb->posts WHERE post_type='page' AND post_status='publish' AND (post_content LIKE '%rsvpmaker_upcoming%' OR post_content LIKE '%wp:rsvpmaker%') ";
+	$front = get_option('page_on_front');
+	if($front)
+		$sql .= " AND ID != $front ";
+	if($id = $wpdb->get_var($sql)) {
+		$rsvp_options['eventpage'] = get_permalink($id);
+		update_option('RSVPMAKER_Options',$rsvp_options);
+		return '';
+	}
+
+	$message = __('RSVPMaker can add a calendar or events listing page to your site automatically, which you can then add to your website menu.','rsvpmaker');
+	$message2 = __('Create page','rsvpmaker');
+	$message3 = __('Turn off this warning','rsvpmaker');
+	$essential_labels[] = __('Calendar page','rsvpmaker');
+	$section = sprintf('<p>%s</p>
+	<p><input type="checkbox" id="create_calendar" name="create_calendar_page" value="1" checked="checked"> %s</p>
+	<p id="create_calendar_clear"><input type="checkbox" name="clear_calendar_page_notice" value="1" checked="checked"> %s<p>',$message,$message2,$message3);
+	$section .= "<script>
+	jQuery(document).ready(function( $ ) {
+		$('#create_calendar_clear').hide();
+		$('#create_calendar').click(function(event) {
+			$('#create_calendar_clear').show();
+		});
+	});
+	</script>";
+	return $section;
+}
+
+function rsvpmaker_admin_notice_timezone_section($timezone_string, &$essential_labels) {
+	if ( (!empty($timezone_string) && !isset($_GET['timezone'])) || isset($_POST['timezone_string']) ) {
+		return '';
+	}
+	$essential_labels[] = __('Timezone','rsvpmaker');
+
+	$choices = wp_timezone_choice('');
+	$choices = str_replace('selected="selected"','',$choices);
+	$message = sprintf('<p>%s %s. %s</p>',__('RSVPMaker needs you to','rsvpmaker'),__('set the timezone for your website','rsvpmaker'), __('Confirm if the choice below is correct or make another choice by region/city.','rsvpmaker') );
+	return sprintf('<p>%s</p>
+<p>
+<select id="timezone_string" name="timezone_string">
+%s
+</select>
+</p>
+<script>
+(function() {
+	var tzstring = "";
+	if (typeof jstz !== "undefined" && jstz.determine) {
+		try {
+			tzstring = jstz.determine().name();
+		} catch (e) {
+			// fall through to Intl fallback
+		}
+	}
+	if (!tzstring && typeof Intl !== "undefined" && Intl.DateTimeFormat) {
+		try {
+			tzstring = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		} catch (e) {
+			// no-op
+		}
+	}
+	if (!tzstring) {
+		return;
+	}
+	var select = document.getElementById("timezone_string");
+	if (!select) {
+		return;
+	}
+	var found = false;
+	for (var i = 0; i < select.options.length; i++) {
+		if (select.options[i].value === tzstring) {
+			select.value = tzstring;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		var option = new Option(tzstring, tzstring, true, true);
+		select.insertBefore(option, select.firstChild);
+	}
+	console.log("RSVPMaker detected timezone:", tzstring);
+})();
+</script>
+', $message, $choices);
+}
+
+function rsvpmaker_admin_notice_privacy_section($rsvp_options, &$essential_labels) {
+	if ( isset($rsvp_options['privacy_confirmation']) && !isset($_GET['test']) ) {
+		return '';
+	}
+	$essential_labels[] = __('Privacy policy','rsvpmaker');
+
+	$privacy_page = rsvpmaker_check_privacy_page();
+	if($privacy_page) {
+		$message = __('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox. This may be important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php#privacy_consent').'">('.__('more details','rsvpmaker').')</a>';
+		return sprintf('<p>%s</p><input type="radio" name="privacy_confirmation" value="1" checked="checked" /> %s <input type="radio" name="privacy_confirmation" value="no" /> %s - %s</p>',$message,__('Yes','rsvpmaker'),__('No','rsvpmaker'),__('Add checkbox?','rsvpmaker'));
+	}
+
+	return '<p>'.__('You may want for your RSVPMaker forms to include a privacy policy confirmation checkbox, particularly if any site visitors are covered by the European Union\'s GDPR or similar privacy regulations.','rsvpmaker').' '.__('First, you must register a privacy page with WordPress','rsvpmaker').': <a href="'.admin_url('options-privacy.php').'">'.admin_url('options-privacy.php').'</a></p>';
+}
+
+function rsvpmaker_admin_notice_permalinks_section(&$essential_labels) {
+	$structure = get_option('permalink_structure');
+	if (!empty($structure)) {
+		return '';
+	}
+
+	$essential_labels[] = __('Permalinks','rsvpmaker');
+	$settings_url = admin_url('options-permalink.php');
+	$api_url = rest_url('rsvpmaker/v1/future');
+
+	return sprintf(
+		'<p><strong>%s</strong> %s</p><p><a href="%s">%s</a></p><p><em>%s</em><br /><a target="_blank" href="%s">%s</a></p>',
+		__('Pretty permalinks are currently set to Plain.','rsvpmaker'),
+		__('RSVPMaker editor integrations use REST API calls and are more reliable when permalinks are set to Post name or another pretty structure.','rsvpmaker'),
+		esc_url($settings_url),
+		esc_html__('Open Permalink Settings','rsvpmaker'),
+		esc_html__('REST API URL for this site (works with plain permalinks when generated correctly):','rsvpmaker'),
+		esc_url($api_url),
+		esc_html($api_url)
+	);
+}
+
+function rsvpmaker_admin_notice() {
+
+if(rsvpmaker_admin_notice_should_skip())
+	return;
+if(isset($_POST['rsvpmaker_essentials']))
+	rsvpmaker_essentials();
+
+rsvpmaker_admin_notice_payment_key_test();
 
 global $wpdb;
 global $rsvp_options;
@@ -1232,65 +1389,12 @@ global $post;
 $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
-$basic_options = '';
-
-if( empty($rsvp_options["eventpage"]) && !get_option('noeventpageok') && !is_plugin_active('rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php') )
-	{
-	$sql = "SELECT ID from $wpdb->posts WHERE post_type='page' AND post_status='publish' AND post_content LIKE '%rsvpmaker_upcoming%' ";
-	$front = get_option('page_on_front');
-	if($front)
-		$sql .= " AND ID != $front ";
-	if($id =$wpdb->get_var($sql))
-		{
-		$rsvp_options["eventpage"] = get_permalink($id);
-		update_option('RSVPMAKER_Options',$rsvp_options);
-		}
-	else {
-		$message = __('RSVPMaker can add a calendar or events listing page to your site automatically, which you can then add to your website menu.','rsvpmaker');
-		$message2 = __('Create page','rsvpmaker');
-		$message3 = __('Turn off this warning','rsvpmaker');
-		$basic_options = sprintf('<p>%s</p>
-		<p><input type="checkbox" id="create_calendar" name="create_calendar_page" value="1" checked="checked"> %s</p>
-		<p id="create_calendar_clear"><input type="checkbox" name="clear_calendar_page_notice" value="1" checked="checked"> %s<p>',$message,$message2,$message3);
-		$basic_options .= "<script>
-		jQuery(document).ready(function( $ ) {
-		$('#create_calendar_clear').hide();
-		$('#create_calendar').click(function(event) {
-			$('#create_calendar_clear').show();
-		});		
-	});
-		</script>";
-		}	
-}
-
-if((empty($timezone_string) || isset($_GET['timezone'])) && !isset($_POST['timezone_string']) ) {
-$choices = wp_timezone_choice('');
-$choices = str_replace('selected="selected"','',$choices);
-$message = sprintf('<p>%s %s. %s</p>',__('RSVPMaker needs you to','rsvpmaker'),__('set the timezone for your website','rsvpmaker'), __('Confirm if the choice below is correct or make another choice by region/city.','rsvpmaker') );
-$basic_options .= sprintf('<p>%s</p>
-<p>
-<select id="timezone_string" name="timezone_string">
-<script>'."
-var tz = jstz.determine();
-var tzstring = tz.name();
-document.write('<option selected=\"selected\" value=\"' + tzstring + '\">' + tzstring + '</option>');
-</script>
-%s
-</select>
-",$message,$choices);
-}
-
-if(!isset($rsvp_options["privacy_confirmation"]) || isset($_GET['test']) )
-	{
-		$privacy_page = rsvpmaker_check_privacy_page();
-		if($privacy_page)
-			{
-				$message = __('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox. This may be important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php#privacy_consent').'">('.__('more details','rsvpmaker').')</a>';
-				$basic_options .= sprintf('<p>%s</p><input type="radio" name="privacy_confirmation" value="1" checked="checked" /> %s <input type="radio" name="privacy_confirmation" value="no" /> %s - %s</p>',$message,__('Yes','rsvpmaker'),__('No','rsvpmaker'),__('Add checkbox?','rsvpmaker'));
-			}
-		else
-			$basic_options .= '<p>'.__('You may want for your RSVPMaker forms to include a privacy policy confirmation checkbox, particularly if any site visitors are covered by the European Union\'s GDPR or similar privacy regulations.','rsvpmaker').' '.__('First, you must register a privacy page with WordPress','rsvpmaker').': <a href="'.admin_url('options-privacy.php').'">'.admin_url('options-privacy.php').'</a></p>';
-	}
+$notice = array();
+$essential_labels = array();
+$basic_options  = rsvpmaker_admin_notice_calendar_section($wpdb, $rsvp_options, $essential_labels);
+$basic_options .= rsvpmaker_admin_notice_timezone_section($timezone_string, $essential_labels);
+$basic_options .= rsvpmaker_admin_notice_privacy_section($rsvp_options, $essential_labels);
+$basic_options .= rsvpmaker_admin_notice_permalinks_section($essential_labels);
 
 if(!empty($basic_options)) {
 	$message = sprintf('<h3>%s</h3><form method="post" action="%s">
@@ -1332,31 +1436,23 @@ if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 	}
 }
 
-	if(isset($_GET["smtptest"]))
-		{
-		$mail["to"] = $rsvp_options["rsvp_to"];
-	$mail["from"] = get_bloginfo('admin_email');
-	$mail["fromname"] = "RSVPMaker";
-	$mail["subject"] = __("Testing SMTP email notification",'rsvpmaker');
-	$mail["html"] = '<p>'. __('Test from RSVPMaker.','rsvpmaker').'</p>';
-	$result = rsvpmailer($mail);
-	echo '<div class="updated" style="background-color:#fee;">'."<strong>".__('Sending test email','rsvpmaker').' '.$result .'</strong> <a href="'.admin_url('index.php?smtptest=1&debug=1').'">(debug)</a></div>';
-		}
-
-	if(!empty($_GET["rsvp_form_reset"]))
-		{
-		$target = (int) $_GET["rsvp_form_reset"];
-		upgrade_rsvpform (true, $target);
-		echo '<div class="updated" ><p>'."<strong>".__('RSVP Form Updated (default and future events)','rsvpmaker').'</strong></p></div>';
-		}
 	if(!empty($notice))
 	{
 		if(isset($_GET['show_rsvpmaker_notices']))
 			echo implode("\n",$notice);
 		else {
 			$size = sizeof($notice);
-			$message = __('RSVPMaker notices for administrator','rsvpmaker').': '.$size;
-			$message .= sprintf(' - <a href="%s">%s</a>',admin_url('?show_rsvpmaker_notices=1'),__('Display','rsvpmaker'));
+			$link = esc_url(add_query_arg('show_rsvpmaker_notices', '1'));
+			$message = '<p>'.__('RSVPMaker notices for administrator','rsvpmaker').': '.$size;
+			if(!empty($essential_labels)) {
+				$essential_labels = array_values(array_unique($essential_labels));
+				$shown = array_slice($essential_labels, 0, 2);
+				$message .= ' - '.esc_html(implode(', ', $shown));
+				if(sizeof($essential_labels) > sizeof($shown))
+					$message .= ' +'.(sizeof($essential_labels) - sizeof($shown));
+			}
+			$message .= sprintf(' - <a href="%s">%s</a>', $link, __('Display','rsvpmaker'));
+			$message .= '</p>';
 			echo rsvpmaker_admin_notice_format($message, 'RSVPMaker', $cleared, $type='info');	
 		}
 	}
@@ -2453,7 +2549,7 @@ function rsvpmaker_admin_notice_format($message, $slug, $cleared, $type='info')
 if(in_array($slug,$cleared))
 	return;
 return sprintf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notice="%s">
-<p>%s</p>
+%s
 </div>',esc_attr($type),esc_attr($slug),$message);
 }
 
@@ -2463,9 +2559,16 @@ return sprintf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" da
 function rsvpmaker_rest_notice_handler() {
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
-    // Pick up the notice "type" - passed via jQuery (the "data-notice" attribute on the notice)
-    $cleared[] = sanitize_text_field($_REQUEST['type']);
-    update_option('cleared_rsvpmaker_notices',$cleared);
+if(!current_user_can('manage_options')) {
+	wp_send_json_error(array('message' => 'forbidden'), 403);
+}
+// Pick up the notice "type" passed via jQuery (the "data-notice" attribute on the notice).
+if(isset($_REQUEST['type']) && $_REQUEST['type']) {
+	$cleared[] = sanitize_text_field($_REQUEST['type']);
+	$cleared = array_values(array_unique($cleared));
+	update_option('cleared_rsvpmaker_notices',$cleared);
+}
+wp_send_json_success();
 }
 
 function rsvpmaker_debug_log($msg, $context = '') {

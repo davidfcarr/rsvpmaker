@@ -209,7 +209,7 @@ class RSVPMakerByJSON extends WP_Widget {
 
 		}
 		$slug = strtolower( preg_replace( '/[^a-zA-Z0-9]/', '', $title ) );
-		$url = ( $instance['url'] ) ? $instance['url'] : site_url( '/wp-json/rsvpmaker/v1/future' );
+		$url = ( $instance['url'] ) ? $instance['url'] : rest_url( 'rsvpmaker/v1/future' );
 		$limit = ( $instance['limit'] ) ? $instance['limit'] : 0;
 		$morelink = ( $instance['morelink'] ) ? $instance['morelink'] : '';
 		global $rsvp_options;
@@ -249,7 +249,7 @@ var jsonwidget<?php echo esc_attr( $slug ); ?> = new RSVPJsonWidget('rsvpjsonwid
 	function form( $instance ) {
 		$title = ( isset( $instance['title'] ) ) ? esc_attr( $instance['title'] ) : '';
 		if ( function_exists( 'rsvpmaker_upcoming' ) ) {
-			$url = ( isset( $instance['url'] ) ) ? $instance['url'] : site_url( '/wp-json/rsvpmaker/v1/future' );
+			$url = ( isset( $instance['url'] ) ) ? $instance['url'] : rest_url( 'rsvpmaker/v1/future' );
 		} else {
 
 			$url = ( isset( $instance['url'] ) ) ? $instance['url'] : 'rsvpmaker.com/wp-json/rsvpmaker/v1/future';

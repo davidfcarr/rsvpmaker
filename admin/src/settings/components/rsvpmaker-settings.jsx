@@ -25,7 +25,8 @@ const EditLink = (props) => {
 	const [postContent, setPostContent] = useState('<p>Loading...</p>');
 	const post_id = props.data[props.field.id];
 	useEffect(() => {
-		fetch('/wp-json/rsvpmaker/v1/preview/do_blocks?post_id='+post_id).then((response) => response.json()).then((data) => { setPostContent(data); }).catch((error) => { console.error('Error fetching block content:', error); });
+		const previewUrl = rsvpmaker_rest.rest_url + 'rsvpmaker/v1/preview/do_blocks?post_id=' + post_id;
+		fetch(previewUrl).then((response) => response.json()).then((data) => { setPostContent(data); }).catch((error) => { console.error('Error fetching block content:', error); });
 	}, [post_id]);
 	return (
 		<div>
@@ -56,7 +57,7 @@ const RsvpmakerSettings = () => {
 			? filter.filter((item) => item.value).map((item) => item.id)
 			: Object.keys(filter || {}).filter((key) => !!filter[key]);
 
-		const url = new URL('/wp-json/rsvpmaker/v1/copy_defaults', window.location.origin);
+		const url = new URL('rsvpmaker/v1/copy_defaults', rsvpmaker_rest.rest_url);
 		selectedFilters.forEach((item) => {
 			url.searchParams.append('filter[]', item);
 		});

@@ -154,7 +154,7 @@ function rsvpmaker_react_admin_script() {
 		wp_enqueue_style(
 			'rsvpmaker_setup', // Handle.
 			plugins_url( 'rsvpmaker/admin/build/style-index.css'), // Block.build.js: We register the block here. Built with Webpack.
-			array('wp-components','wp-blocks','wp-element'), // Dependencies, defined above.
+			array('wp-components'), // Only valid style handles as dependencies.
 			time()
 		);
 		wp_enqueue_style(get_rsvpmaker_admin_script_handle('style'));
@@ -381,14 +381,14 @@ function rsvpmaker_localize () {
 
 	if(isset($_GET['post_type']))
 	$post_type = $_GET['post_type'];
-wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
+wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvpmaker', array('post_type' => $post_type,'json_url' => rest_url('rsvpmaker/v1/')) );
 if($post_type == 'rsvpemail') {
 	wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'related_documents', rsvpmaker_get_related_documents ($post->ID,'rsvpemail'));
 	$template = get_option('rsvpmailer_default_block_template');
 	wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvp_email_template', array('default' => $template,'edit_url' => admin_url('post.php?action=edit&post='.$template),'more'=>admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template')));
 }
 
-wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker', array('post_type' => $post_type,'json_url', site_url('/wp-json/rsvpmaker/v1/')) );
+wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker', array('post_type' => $post_type,'json_url' => rest_url('rsvpmaker/v1/')) );
 wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 
 $rsvpmaker_rest = get_rsvpmaker_rest();

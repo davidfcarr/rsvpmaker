@@ -862,7 +862,6 @@ function rsvpmaker_single_template_hierarchy($templates) {
 	global $post;
 	if(isset($post->post_type) && ($post->post_type == 'rsvpmaker'))
 	{
-		error_log('rsvpmaker single template '.var_export($templates,true));
 		$index = strpos($templates[0],'php') ? array_search('single.php',$templates) : array_search('single',$templates);
 		// prefer the page template, doesn't emphasize date posted as much in most themes
 		if($index) {
@@ -875,7 +874,6 @@ function rsvpmaker_single_template_hierarchy($templates) {
 			$templates[] = 'single';
 			}
 		}
-		error_log('rsvpmaker single template modified '.var_export($templates,true));
 	}
 	return $templates;
 }

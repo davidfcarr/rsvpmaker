@@ -503,7 +503,7 @@ submitButton.addEventListener('click', function(ev) {
 ev.preventDefault();
 var name = document.getElementById('stripe-checkout-name').value;
 var email = document.getElementById('stripe-checkout-email').value;
-var successurl = '<?php echo site_url( '/wp-json/rsvpmaker/v1/stripesuccess/' . $idempotency_key ); ?>';
+var successurl = '<?php echo esc_url( rest_url( 'rsvpmaker/v1/stripesuccess/' . $idempotency_key ) ); ?>';
 if((name == '') || (email == '')){
 	cardResult.innerHTML = 'Name and email are both required';
 	return;

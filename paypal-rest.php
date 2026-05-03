@@ -205,9 +205,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
   else
       $paypal_client_id = $paypal_rest_keys['client_id'];
-  $verify = '/wp-json/rsvpmaker/v1/paypal_paid?'; //($rsvp_id) ? '/?paypal_verify=1&rsvp='.$rsvp_id.'&event='.$post->ID : 
-  foreach($vars as $key => $value)
-    $verify .= '&'.$key.'='.$value;
+  $verify = add_query_arg($vars, rest_url('rsvpmaker/v1/paypal_paid'));
   $vars['amount'] = $amount;
   $vars['description'] = $description;
   $vars['post_id'] = $post->ID;

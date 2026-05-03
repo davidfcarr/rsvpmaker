@@ -35,7 +35,7 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes, setAttributes, attributes: { limit, skipfirst } } = props;
+	const { attributes, setAttributes, attributes: { limit, skipfirst, featured_image } } = props;
     const [preview, setPreview] = useState(null);
 
     useEffect(() => {
@@ -44,6 +44,24 @@ export default function Edit(props) {
             setPreview(p);
         } );
     }, [attributes]);
+    const featuredImageOptions = [
+        {
+            label: __( 'None','rsvpmaker' ),
+            value: '',
+        },
+        {
+            label: __( 'Medium (up to 300 px)' ),
+            value: 'medium'
+        },
+        {
+            label: __( 'Medium Large (up to 768 px)' ),
+            value: 'medium_large'
+        },
+        {
+            label: __( 'Large (up to 1024 px)' ),
+            value: 'large',
+        }
+    ];
 
     return (
 				<Fragment>
@@ -61,6 +79,13 @@ export default function Edit(props) {
 		help={__('For example, to pick up after an embedded date block that features the first event in the series.')}
         onChange={ ( skipfirst ) => { setAttributes( { skipfirst } ) } }
     />
+    <SelectControl
+label={__("Featured Image",'rsvpmaker')}
+value={ featured_image }
+options={ featuredImageOptions }
+onChange={ ( featured_image ) => { setAttributes( { featured_image: featured_image } ) } }
+/>
+
                     </InspectorControls>
                     {preview && <div dangerouslySetInnerHTML={{__html: preview}}></div>}
                     {!preview && <p>Future RSVP Links loading ...</p>}
