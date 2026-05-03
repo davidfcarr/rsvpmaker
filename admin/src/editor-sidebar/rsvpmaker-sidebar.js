@@ -1,12 +1,12 @@
-import {useState} from 'react';
+import {useState, lazy, Suspense} from 'react';
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
 const { Panel, PanelBody, PanelRow } = wp.components;
-import DateOrTemplate from './DateOrTemplate.js';
 import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();
 import { useSelect } from '@wordpress/data';
-import TemplateProjected from './TemplateProjected.js';
+
+const DateOrTemplate = lazy(() => import('./DateOrTemplate.js'));
 
 function getRsvpmakerRestSettings() {
 	const fromStore = wp?.data?.select?.('rsvpmaker')?.getSettings?.();
@@ -42,7 +42,9 @@ const rsvpmaker_rest = getRsvpmakerRestSettings();
 			{ title: __('RSVPMaker', 'rsvpmaker'), className: 'rsvpmaker-document-panel', initialOpen: true },
 <div>
 <QueryClientProvider client={queryClient}>
+<Suspense fallback={<p><em>Loading RSVPMaker tools ...</em></p>}>
 <DateOrTemplate rsvpmaker_rest={rsvpmaker_rest} />
+</Suspense>
 {rsvpmaker_rest.bottom_message}
 </QueryClientProvider>
 </div>

@@ -1,10 +1,11 @@
-import React, {useState, useEffect, Suspense} from "react"
+import React, {useState, lazy, Suspense} from "react"
 import { TabPanel, SelectControl, RadioControl } from '@wordpress/components';
-import General from './General.js'
-import Security from './Security.js'
-import Payment from './Payment.js'
-import Email from './Email.js'
-import Forms from './Forms.js'
+
+const General = lazy(() => import('./General.js'));
+const Security = lazy(() => import('./Security.js'));
+const Payment = lazy(() => import('./Payment.js'));
+const Email = lazy(() => import('./Email.js'));
+const Forms = lazy(() => import('./Forms.js'));
 
 export default function RSVPAdmin (props) {
     const onSelect = ( tabName ) => {
@@ -82,15 +83,15 @@ export default function RSVPAdmin (props) {
         >
             { ( tab ) => {
                 if('general' == tab.name)
-                    return <General addChange={addChange} setChanges={setChanges} changes={changes} />
+                    return <Suspense fallback={<p>Loading tab ...</p>}><General addChange={addChange} setChanges={setChanges} changes={changes} /></Suspense>
                 if('security' == tab.name)
-                    return <Security  addChange={addChange} setChanges={setChanges} changes={changes} />
+                    return <Suspense fallback={<p>Loading tab ...</p>}><Security  addChange={addChange} setChanges={setChanges} changes={changes} /></Suspense>
                 if('payment' == tab.name)
-                    return <Payment  addChange={addChange} setChanges={setChanges} changes={changes} />
+                    return <Suspense fallback={<p>Loading tab ...</p>}><Payment  addChange={addChange} setChanges={setChanges} changes={changes} /></Suspense>
                 if('forms' == tab.name)
-                    return <Forms form_id={props.form_id} addChange={addChange} setChanges={setChanges} changes={changes} />
+                    return <Suspense fallback={<p>Loading tab ...</p>}><Forms form_id={props.form_id} addChange={addChange} setChanges={setChanges} changes={changes} /></Suspense>
                 if('email' == tab.name)
-                    return <Email addChange={addChange} setChanges={setChanges} changes={changes} />
+                    return <Suspense fallback={<p>Loading tab ...</p>}><Email addChange={addChange} setChanges={setChanges} changes={changes} /></Suspense>
                else
                 return <section><p>{ tab.title }</p></section>
         } }
