@@ -6,6 +6,9 @@
 	"description" : "Wrapper for the main content of the email. Typically embedded within the RSVP Email Body Wrapper block.",
 	"icon": "email-alt",
 	"category": "rsvpmaker",
+	"postTypes": [
+		"rsvpemail"
+	],
 	"keywords": [
 		"RSVPMaker",
 		"Wrapper",

@@ -12,7 +12,7 @@ const RSVP_VARIATION_NAME = 'rsvpmaker/rsvpmaker-loop';
 
 wp.blocks.registerBlockVariation( 'core/query', {
     name: RSVP_VARIATION_NAME,
-    title: 'RSVPMaker Upcoming Loop Blocks',
+    title: 'RSVPMaker Upcoming Query Loop',
 	category: "rsvpmaker",
 	keywords: [
 		 "RSVPMaker", 
@@ -95,7 +95,7 @@ const EVENT_VARIATION_NAME = 'rsvpmaker/loop-event';
 
 wp.blocks.registerBlockVariation( 'core/query', {
     name: EVENT_VARIATION_NAME,
-    title: 'RSVPMaker Query Loop Next Event',
+    title: 'RSVPMaker Next Event Query Loop',
 	category: "rsvpmaker",
 	keywords: [
 		 "RSVPMaker", 
@@ -176,7 +176,7 @@ const CALENDAR_VARIATION_NAME = 'rsvpmaker/loop-plus-calendar';
 
 wp.blocks.registerBlockVariation( 'core/query', {
     name: CALENDAR_VARIATION_NAME,
-	title: 'RSVPMaker Upcoming Query Loop + Calendar',
+	title: 'RSVPMaker Upcoming + Calendar Query Loop',
 	category: "rsvpmaker",
     description: 'Sets up the WordPress Query Loop with RSVPMaker template, plus a calendar up top',
 	keywords: [
@@ -261,7 +261,7 @@ const RSVPCOVER_VARIATION_NAME = 'rsvpmaker/loop-cover';
 
 wp.blocks.registerBlockVariation( 'core/query', {
     name: RSVPCOVER_VARIATION_NAME,
-    title: 'RSVPMaker Upcoming Query Loop with Cover',
+    title: 'RSVPMaker Upcoming + Cover Query Loop',
     description: 'Sets up the WordPress Query Loop with RSVPMaker template with the post title embedded in a cover block',
 	category: "rsvpmaker",
 	keywords: [

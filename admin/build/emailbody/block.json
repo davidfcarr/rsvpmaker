@@ -6,6 +6,9 @@
   "description": "Wrapper that defines properties such as the background color of the email",
   "icon": "email-alt",
   "category": "rsvpmaker",
+  "postTypes": [
+    "rsvpemail"
+  ],
   "keywords": [
     "RSVPMaker",
     "Wrapper",

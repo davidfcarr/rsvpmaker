@@ -5,6 +5,9 @@
 	"title": "RSVPField Radio Buttons",
 	"icon": "forms",
 	"category": "rsvpmaker",
+	"postTypes": [
+		"rsvpmaker_form"
+	],
 	"keywords": [
 		"RSVPMaker",
 		"Form",

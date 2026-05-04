@@ -5,6 +5,9 @@
   "title": "RSVPField Note",
   "icon": "forms",
   "category": "rsvpmaker",
+  "postTypes": [
+    "rsvpmaker_form"
+  ],
   "keywords": [
     "RSVPMaker",
     "Form",

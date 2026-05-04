@@ -17,6 +17,55 @@ function rsvpmaker_block_category( $categories, $post ) {
 	);
 }
 
+function rsvpmaker_limit_form_blocks_to_forms( $allowed_block_types, $editor_context ) {
+	$form_only_blocks = array(
+		'rsvpmaker/formchimp',
+		'rsvpmaker/formfield',
+		'rsvpmaker/guests',
+		'rsvpmaker/formnote',
+		'rsvpmaker/formradio',
+		'rsvpmaker/formselect',
+		'rsvpmaker/formtextarea',
+	);
+
+	$email_only_blocks = array(
+		'rsvpmaker/emailcontent',
+		'rsvpmaker/emailbody',
+	);
+
+	$post_type = '';
+	if ( ! empty( $editor_context->post ) && ! empty( $editor_context->post->post_type ) ) {
+		$post_type = $editor_context->post->post_type;
+	} elseif ( ! empty( $editor_context->post_type ) ) {
+		$post_type = $editor_context->post_type;
+	}
+
+	$blocks_to_hide = array();
+	if ( 'rsvpmaker_form' !== $post_type ) {
+		$blocks_to_hide = array_merge( $blocks_to_hide, $form_only_blocks );
+	}
+	if ( 'rsvpemail' !== $post_type ) {
+		$blocks_to_hide = array_merge( $blocks_to_hide, $email_only_blocks );
+	}
+
+	if ( empty( $blocks_to_hide ) ) {
+		return $allowed_block_types;
+	}
+
+	if ( true === $allowed_block_types ) {
+		$registered = WP_Block_Type_Registry::get_instance()->get_all_registered();
+		return array_values( array_diff( array_keys( $registered ), $blocks_to_hide ) );
+	}
+
+	if ( is_array( $allowed_block_types ) ) {
+		return array_values( array_diff( $allowed_block_types, $blocks_to_hide ) );
+	}
+
+	return $allowed_block_types;
+}
+
+add_filter( 'allowed_block_types_all', 'rsvpmaker_limit_form_blocks_to_forms', 20, 2 );
+
 add_action( 'init', function(){
 global $rsvp_options;
 
