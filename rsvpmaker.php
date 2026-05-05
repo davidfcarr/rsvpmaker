@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.9.5
+* Version: 11.9.7
 */
 
 function get_rsvpversion() {
-	return '11.9.5';
+	return '11.9.7';
 }
 
 global $wp_version;
@@ -22,10 +22,6 @@ global $default_tz;
 global $rsvpmaker_event;
 global $rsvpmakers;
 $default_tz = date_default_timezone_get();
-
-if ( version_compare( $wp_version, '3.0', '<' ) ) {
-	exit( __( 'RSVPmaker plugin requires WordPress 3.0 or greater', 'rsvpmaker' ) );
-}
 
 function rsvpmaker_load_plugin_textdomain() {
 	load_plugin_textdomain( 'rsvpmaker', false, basename( dirname( __FILE__ ) ) . '/translations/' );
@@ -39,7 +35,7 @@ $locale = get_locale();
 
 function rsvp_options_defaults() {
 
-	global $rsvp_options;
+	global $rsvp_options, $wpdb;
 
 	if ( empty( $rsvp_options ) ) {
 		$rsvp_options = array();
@@ -165,6 +161,9 @@ function rsvp_options_defaults() {
 
 	}
 
+	//fix any forms assigned the wrong post type
+	$wpdb->query("update $wpdb->posts set post_type='rsvpmaker_form' where post_content LIKE '%wp:rsvpmaker/formfield%' and post_content LIKE '%\"slug\":\"first\"%' AND (post_type != 'rsvpmaker_form' and post_type != 'revision');");
+
 	if ( empty( $rsvp_options['rsvp_form'] ) || isset( $_GET['reset_form'] ) ) {
 
 		if ( function_exists( 'do_blocks' ) && ! class_exists( 'Classic_Editor' ) ) {
@@ -223,7 +222,7 @@ function rsvp_options_defaults() {
 
 		$data['post_author'] = 1;
 
-		$data['post_type'] = 'rsvpmaker';
+		$data['post_type'] = 'rsvpmaker_form';
 
 		$rsvp_options['rsvp_form'] = wp_insert_post( $data );
 
@@ -239,7 +238,7 @@ function rsvp_options_defaults() {
 
 		$data['post_status'] = 'publish';
 
-		$data['post_type'] = 'rsvpmaker';
+		$data['post_type'] = 'rsvpmaker_form';
 
 		$data['post_author'] = 1;
 

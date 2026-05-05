@@ -83,15 +83,20 @@ class ChoiceInspector extends Component {
 	const { attributes, setAttributes, className } = this.props;
 	const choices =attributes.choicearray.join('\n');
 	function setLabel(label) {
-		let simpleSlug = label.trim().toLowerCase();
-		simpleSlug = simpleSlug.replace(/[^a-z0-9]+/g,'_');
-		if('first_name' == simpleSlug)
-			simpleSlug = 'first';
-		if('last_name' == simpleSlug)
-			simpleSlug = 'last';
+		label = label.trim();
+		if(attributes.slug && attributes.slug.length > 10)
+			{//don't change slug every time label changes, just the first time when slug is blank
+			setAttributes({label: label});
+			return;
+			}
+		let simpleSlug = label.trim().toLowerCase().replaceAll(/[^A-Za-z0-9]+/g,'_');
+		if (simpleSlug.length > 20) {
+			simpleSlug = simpleSlug.substring(0, 20) ;
+		}
+		simpleSlug += '_' + Date.now();
 		setAttributes({slug: simpleSlug});
 		setAttributes({label: label});
-		setAttributes({guestform: true});
+		setAttributes({guestform: true});//true by default when label is set, but can be turned off in inspector. This just makes it more likely that the field will be included on the guest form, which is the most common use case.
 	}
 		
 	function setChoices(choices) {

@@ -11,6 +11,7 @@ const { PanelBody, SelectControl, TextControl, TextareaControl, ToggleControl, R
  * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
  */
 import './editor.scss';
+import { applyFieldLabelChange } from '../form-field-label';
 
 /**
  * The edit function describes the structure of your block in the context of the
@@ -21,7 +22,7 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes: { label, slug, choicearray, guestform, defaultToFirst }, setAttributes, isSelected } = props;
+	const { attributes: { label, fieldnote, slug, choicearray, guestform, defaultToFirst }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 	const blockProps = useBlockProps();
 	return (
@@ -29,9 +30,11 @@ export default function Edit(props) {
 	<ChoiceInspector {...props} />
 	<div { ...blockProps }>
 	<div className={ props.className }>
-<p><label>{label}:</label> <span>{choicearray.map(function(opt, i){
+	<p><label>{label}:</label></p>
+	{fieldnote && <p><em>{fieldnote}</em></p>}
+	<div style={{ marginLeft: '1.25em' }}><span>{choicearray.map(function(opt, i){
 			return <div className="rsvp-form-radio"><input type="radio" className={slug} name={profilename} id={slug} value={opt} checked={defaultToFirst && i == 0} /> {opt} </div>;
-		})}</span></p>
+		})}</span></div>
 {isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }
 	</div>
 	</div>
@@ -44,15 +47,13 @@ class ChoiceInspector extends Component {
 	const { attributes, setAttributes, className } = this.props;
 	const choices =attributes.choicearray.join('\n');
 	function setLabel(label) {
-		let simpleSlug = label.trim().toLowerCase();
-		simpleSlug = simpleSlug.replace(/[^a-z0-9]+/g,'_');
-		if('first_name' == simpleSlug)
-			simpleSlug = 'first';
-		if('last_name' == simpleSlug)
-			simpleSlug = 'last';
-		setAttributes({slug: simpleSlug});
-		setAttributes({label: label});
-		setAttributes({guestform: true});
+		applyFieldLabelChange({
+			label,
+			attributes,
+			setAttributes,
+			slugLockLength: 0,
+			setGuestform: true,
+		});
 	}
 		
 	function setChoices(choices) {
@@ -65,6 +66,11 @@ class ChoiceInspector extends Component {
 				label={ __( 'Label', 'rsvpmaker' ) }
 				value={ attributes.label }
 				onChange={ ( label ) => setLabel(label) }
+			/>
+			<TextControl
+				label={ __( 'Field Note (optional additional information)', 'rsvpmaker' ) }
+				value={ attributes.fieldnote || '' }
+				onChange={ ( fieldnote ) => setAttributes( { fieldnote } ) }
 			/>
 			<TextareaControl
 				label={ __( 'Choices', 'rsvpmaker' ) }

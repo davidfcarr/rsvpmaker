@@ -424,481 +424,6 @@ if(isset($_POST["unit"]))
 
 
 
-  // Avoid name collisions.
-class RSVPMAKER_Options
-      {
-          // this variable will hold url to the plugin  
-          var $plugin_url;
-
-          // name for our options in the DB
-          var $db_option = 'RSVPMAKER_Options';
-
-          // Initialize the plugin
-          function __construct()
-          {
-              $this->plugin_url = plugins_url('',__FILE__).'/';
-
-              // add options Page
-              add_action('admin_menu', array(&$this, 'admin_menu'));
-
-          }
-
-          // hook the options page
-          function admin_menu()
-          {
-			add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin', 17);
-			add_options_page('RSVPMaker Postmark + Advanced Email', 'RSVPMaker Mailing List and Group Email', 'manage_options', basename(__FILE__), array(&$this, 'handle_options'), 18);
-          }
-
-          // handle plugin options
-          function get_options()
-          {
-              global $rsvp_options;
-              return $rsvp_options;
-          }
-
-          // Set up everything
-          function install()
-          {
-              // set default options
-              $this->get_options();
-          }
-
-          // handle the options page
-          function handle_options()
-          {
-			if(!empty($_POST) && !isset($_POST['rsvpelist']) && !wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
-				wp_die('nonce security error');
-			if(!empty($_POST['rsvpmaker_save_form']) && !empty($_POST['form_id']))
-			{
-				$forms = rsvpmaker_get_forms();
-				$forms[sanitize_text_field($_POST['rsvpmaker_save_form'])] = (int) $_POST['form_id'];
-				update_option('rsvpmaker_forms',$forms);
-			}
-
-			$options = $this->get_options();
-			  if(isset($_POST["payment_option"])) {
-              $newoptions = array_map('sanitize_text_field',stripslashes_deep($_POST["payment_option"]));
-				$newoptions["stripe"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'stripe')) ? 1 : 0;
-				$newoptions["cash_or_custom"] = (isset($_POST['payment_gateway']) && ($_POST['payment_gateway'] == 'cash_or_custom')) ? 1 : 0;
-				$nfparts = explode('|',$_POST["currency_format"]);
-				$newoptions["currency_decimal"] = sanitize_text_field($nfparts[0]);
-				$newoptions["currency_thousands"] = sanitize_text_field($nfparts[1]);
-
-				foreach($newoptions as $name => $value)
-				  $options[$name] = sanitize_text_field($value);
-
-                  update_option($this->db_option, $options);
-
-				  if(isset($_POST['rsvpmaker_stripe_keys']))
-				  {
-					//don't overwrite keys that are not displayed
-					$stripe_keys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_stripe_keys']);
-
-					if(!isset($stripe_keys['sk']) || !isset($stripe_keys['sandbox_pk']))
-					{
-						$prev = get_option('rsvpmaker_stripe_keys');
-						if(!isset($stripe_keys['sk']))
-							{
-								$stripe_keys['sk'] = $prev['sk'];
-								$stripe_keys['pk'] = $prev['pk'];
-							}
-						if(!isset($stripe_keys['sandbox_sk']))
-						{
-							$stripe_keys['sandbox_sk'] = $prev['sandbox_sk'];
-							$stripe_keys['sandbox_pk'] = $prev['sandbox_pk'];
-						}
-					}
-					update_option('rsvpmaker_stripe_keys',$stripe_keys);
-				  }
-				if(isset($_POST['rsvpmaker_paypal_rest_keys']))
-				{
-					$pkeys = array_map( 'sanitize_text_field', $_POST['rsvpmaker_paypal_rest_keys']);
-
-					if(!isset($pkeys['client_id']) || !isset($keys['sandbox_client_id']))
-					{
-						$prev = get_option('rsvpmaker_paypal_rest_keys');
-						if(!isset($pkeys['client_id']))
-							{
-								$pkeys['client_id'] = $prev['client_id'];
-								$pkeys['client_secret'] = $prev['client_secret'];
-							}
-						if(!isset($pkeys['sandbox_client_id']))
-						{
-							$pkeys['sandbox_client_id'] = $prev['sandbox_client_id'];
-							$pkeys['sandbox_client_secret'] = $prev['sandbox_client_secret'];
-					}
-					}
-				update_option('rsvpmaker_paypal_rest_keys',$pkeys);
-				}
-
-				  $paypal_rest_keys = get_option('rsvpmaker_paypal_rest_keys');
-
-                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - payments.','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php&payment_key_test=1').'">',__('Test Keys','rsvpmaker').'</a></p>'.rsvpmaker_default_gateway_check( get_rsvpmaker_payment_gateway () ).'</div>';
-			  }	
-
-			  if(isset($_POST["enotify_option"])) {
-				  //print_r($_POST["enotify_option"]);
-				$newoptions = array_map( 'sanitize_text_field', stripslashes_deep($_POST["enotify_option"] ) );
-				foreach($newoptions as $name => $value)
-				  $options[$name] = sanitize_text_field($value);
-
-                  update_option($this->db_option, $options);
-                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - email server.','rsvpmaker').'</p></div>';
-			  }	
-
-			  if(isset($_POST["security_option"])) {
-				foreach($_POST["security_option"] as $index => $value) {
-					$newoptions[sanitize_text_field($index)] = sanitize_text_field($value);
-				}
-				$newoptions["additional_editors"] = (isset($_POST["security_option"]["additional_editors"]) && $_POST["security_option"]["additional_editors"]) ? 1 : 0;
-				foreach($newoptions as $name => $value)
-				  $options[$name] = sanitize_text_field($value);
-                update_option($this->db_option, $options);
-                  echo '<div class="updated fade"><p>'.__('Plugin settings saved - security.','rsvpmaker').'</p></div>';
-				  //print_r($newoptions);
-			  }	
-
-			  if (isset($_POST['submitted'])) {
-
-                  $newoptions = stripslashes_deep($_POST["option"]);
-                  $newoptions["rsvp_on"] = (isset($_POST["option"]["rsvp_on"]) && $_POST["option"]["rsvp_on"]) ? 1 : 0;
-                  $newoptions["confirmation_include_event"] = (isset($_POST["option"]["confirmation_include_event"]) && $_POST["option"]["confirmation_include_event"]) ? 1 : 0;
-                  $newoptions['rsvpmaker_send_confirmation_email'] = (isset($_POST["option"]['rsvpmaker_send_confirmation_email']) && $_POST["option"]['rsvpmaker_send_confirmation_email']) ? 1 : 0;
-                  $newoptions["login_required"] = (isset($_POST["option"]["login_required"]) && $_POST["option"]["login_required"]) ? 1 : 0;
-                  $newoptions["rsvp_captcha"] = (isset($_POST["option"]["rsvp_captcha"]) && $_POST["option"]["rsvp_captcha"]) ? 1 : 0;
-				  if(isset($_POST["option"]["rsvp_recaptcha_site_key"])) {
-                  $newoptions["rsvp_recaptcha_site_key"] = sanitize_text_field($_POST["option"]["rsvp_recaptcha_site_key"]);
-                  $newoptions["rsvp_recaptcha_secret"] = sanitize_text_field($_POST["option"]["rsvp_recaptcha_secret"]);		  
-				  }
-                  $newoptions["rsvp_yesno"] = (isset($_POST["option"]["rsvp_yesno"]) && $_POST["option"]["rsvp_yesno"]) ? 1 : 0;
-                  $newoptions["calendar_icons"] = (isset($_POST["option"]["calendar_icons"]) && $_POST["option"]["calendar_icons"]) ? 1 : 0;
-                  $newoptions["convert_timezone"] = (isset($_POST["option"]["convert_timezone"]) && $_POST["option"]["convert_timezone"]) ? 1 : 0;
-                  $newoptions["social_title_date"] = (isset($_POST["option"]["social_title_date"]) && $_POST["option"]["social_title_date"]) ? 1 : 0;
-                  $newoptions["rsvp_count"] = (isset($_POST["option"]["rsvp_count"]) && $_POST["option"]["rsvp_count"]) ? 1 : 0;
-                  $newoptions["show_attendees"] = (isset($_POST["option"]["show_attendees"]) && $_POST["option"]["show_attendees"]) ? 1 : 0;
-                  $newoptions["debug"] = (isset($_POST["option"]["debug"]) && $_POST["option"]["debug"]) ? 1 : 0;
-
-				  $newoptions["dbversion"] = $options["dbversion"]; // gets set by db upgrade routine
-
-				$newoptions["eventpage"] = sanitize_text_field($_POST["option"]["eventpage"]);
-                  $newoptions["log_email"] = (isset($_POST["option"]["log_email"]) && $_POST["option"]["log_email"]) ? 1 : 0;
-
-				foreach($newoptions as $name => $value) {
-					if($name == 'rsvplink')
-						$options[$name] = $value;
-					else
-						$options[$name] = sanitize_text_field($value);
-				}
-
-                  update_option($this->db_option, $options);
-
-				  echo '<div class="updated fade"><p>Plugin settings saved.</p></div>';
-				  if(isset($_POST['defaultoverride'])) {
-					$future = rsvpmaker_get_future_events();
-					$fcount = sizeof($future);
-					$templates = rsvpmaker_get_templates();
-					$tcount = sizeof($templates);
-					$future = array_merge($future,$templates);
-					foreach($future as $event) {
-						foreach($_POST['defaultoverride'] as $slug) {
-							$dbslug = '_'.sanitize_text_field($slug);
-							update_post_meta($event->ID, $dbslug, $options[$slug]);
-							//printf('<p>updating %s %s %s</p>',$event->ID, $dbslug, $options[$slug]);
-						}						  
-					}
-				printf('<p>Updating %s for %s events and %s templates',esc_html(implode(', ',$_POST['defaultoverride']), $fcount, $tcount ));  
-				}
-			  }
-
-              // URL for form submit, equals our current page
-$action_url = admin_url('options-general.php?page=rsvpmaker-admin.php');
-global $wpdb;
-$defaulthour = (isset($options["defaulthour"])) ? ( (int) $options["defaulthour"]) : 19;
-$defaultmin = (isset($options["defaultmin"])) ? ( (int) $options["defaultmin"]) : 0;
-$houropt = $minopt ="";
-
-for($i=0; $i < 24; $i++)
-	{
-	$selected = ($i == $defaulthour) ? ' selected="selected" ' : '';
-	$padded = ($i < 10) ? '0'.$i : $i;
-	if($i == 0)
-		$twelvehour = "12 a.m.";
-	elseif($i == 12)
-		$twelvehour = "12 p.m.";
-	elseif($i > 12)
-		$twelvehour = ($i - 12) ." p.m.";
-	else		
-		$twelvehour = $i." a.m.";
-
-	$houropt .= sprintf('<option  value="%s" %s>%s / %s:</option>',$padded,$selected,$twelvehour,$padded);
-	}
-for($i=0; $i < 60; $i += 5)
-	{
-	$selected = ($i == $defaultmin) ? ' selected="selected" ' : '';
-	$padded = ($i < 10) ? '0'.$i : $i;
-	$minopt .= sprintf('<option  value="%s" %s>%s</option>',$padded,$selected,$padded);
-	}
-
-if(isset($_POST['timezone_string']))
-{
-	$tz = sanitize_text_field($_POST['timezone_string']);
-	update_option('timezone_string',$tz);
-	echo '<div class="notice notice-info"><p>'. __('Timezone set to','rsvpmaker').' '.$tz.'</p></div>';
-}
-
-?>
-
-<div class="wrap" style="max-width:950px !important;">
-
-    <h2 class="rsvpmaker-nav-tab-wrapper nav-tab-wrapper">
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(empty($_REQUEST['legacy']) ) echo 'nav-tab-active'; ?>" href="#email"><?php esc_html_e('Mailing List','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'group_email' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#groupemail"><?php esc_html_e('Group Email','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'mailpoet' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#mailpoet"><?php esc_html_e('MailPoet','rsvpmaker');?></a>
-      <a class="rsvpmaker-nav-tab nav-tab <?php if(!empty($_REQUEST['tab']) && 'security' == $_REQUEST['tab'] ) echo 'nav-tab-active'; ?>" href="#security"><?php esc_html_e('Editing/Sending Rights','rsvpmaker');?></a>
-    </h2>
-
-    <div id='sections' class="rsvpmaker">
-<section id="email" class="rsvpmaker">
-<?php
-global $RSVPMaker_Email_Options;
-if(empty($RSVPMaker_Email_Options))
-$RSVPMaker_Email_Options = new RSVPMaker_Email_Options();
-$RSVPMaker_Email_Options->handle_options();
-?>
-</section>
-<section id="groupemail" class="rsvpmaker">
-<form action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>" method="post">
-<?php rsvpmaker_nonce(); 
-rsvpmaker_admin_heading(__('Group Email','rsvpmaker'),__FUNCTION__,'group_email');
-?>
-<?php
-do_action('group_email_admin_notice');
-
-echo '<p>'.__('Membership oriented websites can use this feature to relay messages from any member with a user account to all other members. Members can unsubscribe.','rsvpmaker').'</p>';
-
-$hooksays = wp_get_schedule('rsvpmaker_relay_init_hook');
-
-if(isset($_POST['rsvpmaker_discussion_server']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
-	update_option('rsvpmaker_discussion_server',sanitize_text_field($_POST['rsvpmaker_discussion_server']));
-if(isset($_POST['rsvpmaker_discussion_member']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
-	$newarray = array();
-	foreach($_POST['rsvpmaker_discussion_member'] as $index => $value)
-		$newarray[$index] = sanitize_textarea_field($value);
-	update_option('rsvpmaker_discussion_member',$newarray);	
-}
-if(isset($_POST['rsvpmaker_discussion_officer']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
-	$newarray = array();
-	foreach($_POST['rsvpmaker_discussion_officer'] as $index => $value)
-		$newarray[$index] = sanitize_textarea_field($value);
-	update_option('rsvpmaker_discussion_officer',$newarray);
-}
-if(isset($_POST['rsvpmaker_discussion_extra']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
-	$newarray = array();
-	foreach($_POST['rsvpmaker_discussion_extra'] as $index => $value)
-		$newarray[$index] = sanitize_textarea_field($value);
-	update_option('rsvpmaker_discussion_extra',$newarray);
-}
-if(isset($_POST['rsvpmaker_discussion_bot']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
-	$newarray = array();
-	foreach($_POST['rsvpmaker_discussion_bot'] as $index => $value)
-		$newarray[$index] = sanitize_textarea_field($value);
-	update_option('rsvpmaker_discussion_bot',$newarray);
-}
-if(isset($_POST['rsvpmaker_discussion_active']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
-	update_option('rsvpmaker_discussion_active',(int) $_POST['rsvpmaker_discussion_active']);
-	deactivate_plugins('wp-mailster/wp-mailster.php',false,false);
-	if(!wp_get_schedule('rsvpmaker_relay_init_hook')) {
-		if(rsvpmaker_postmark_is_live()) {
-			echo '<p>Postmark integration is active</p>';
-		}
-		else {
-			wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
-			echo '<p>Activating rsvpmaker_relay_init_hook</p>';	
-		}
-	}
-	update_option('rsvpmaker_email_queue_limit',intval($_POST['rsvpmaker_email_queue_limit']));
-}
-elseif(isset($_POST))
-	wp_unschedule_hook( 'rsvpmaker_relay_init_hook' );
-
-$active = (int) get_option('rsvpmaker_discussion_active');
-
-$limit = (int) get_option('rsvpmaker_email_queue_limit');
-if(empty($limit))
-	$limit = 10;
-
-$server = get_option('rsvpmaker_discussion_server');
-if(empty($server))
-	{
-	$server = '{localhost:995/pop3/ssl/novalidate-cert}';
-	update_option('rsvpmaker_discussion_server',$server);
-	}
-$member = get_option('rsvpmaker_discussion_member',array());
-$officer = get_option('rsvpmaker_discussion_officer',array());
-
-if(is_plugin_active( 'wp-mailster/wp-mailster.php' ) )
-	{
-	echo '<div style="border: thin dotted red; padding: 10px; margin: 5px;">';
-		$sql = "SELECT * FROM ".$wpdb->prefix."mailster_lists WHERE name LIKE 'Member%' ";
-		$row = $wpdb->get_row($sql);
-		if(!empty($row->list_mail) && empty($member) ){
-			$member = array('user' => $row->list_mail,'password' => $row->mail_in_pw, 'subject_prefix' => 'Members:'.get_option('blogname'), 'whitelist' => '','additional_recipients' => '', 'blocked' => '');
-			update_option('rsvpmaker_discussion_member',$member);
-			echo '<p>'.__('Importing Member List settings from WP Mailster','rsvpmaker').'</p>';
-		}
-		$sql = "SELECT * FROM ".$wpdb->prefix."mailster_lists WHERE name LIKE 'Officer%' ";
-		$row = $wpdb->get_row($sql);
-		if(!empty($row->list_mail) && empty($officer) ){
-			$officer = array('user' => $row->list_mail,'password' => $row->mail_in_pw, 'subject_prefix' => 'Officers:'.get_option('blogname'), 'whitelist' => '','additional_recipients' => '', 'blocked' => '');
-			update_option('rsvpmaker_discussion_officer',$officer);
-			echo '<p>'.__('Importing Officer List settings from WP Mailster','rsvpmaker').'</p>';
-		}
-	echo '<p>'.__('If you activate this feature, WP Mailster will be deactivated','rsvpmaker').'</p>';
-	echo '</div>';
-	}
-
-$postmark = get_rsvpmaker_postmark_options();
-if(!empty($postmark['handle_incoming'])) {
-echo '<p>Incoming messages are being handled through the Postmark integration.</a>';
-}
-else {
-	echo '<p>Configured to use POP3 servers for incoming messages.</p>';
-	echo rsvpmaker_relay_get_pop('member');
-	echo rsvpmaker_relay_get_pop('officer');
-	echo rsvpmaker_relay_get_pop('extra');
-	echo rsvpmaker_relay_get_pop('bot');
-}
-
-printf('<p><label>Activate</label> <input type="radio" name="rsvpmaker_discussion_active" value="1" %s /> Yes <input type="radio" name="rsvpmaker_discussion_active" value="0" %s /> No</p>',($active) ? ' checked="checked" ' : '',(!$active) ? ' checked="checked" ' : '');
-
-if(empty($postmark['handle_incoming'])) {
-printf('<p><label>Server</label> <input type="text" name="rsvpmaker_discussion_server" value="%s" /></p>',esc_attr($server));
-printf('<p><label>Queue Limit</label> <input type="text" name="rsvpmaker_email_queue_limit" value="%s" /></p>', $limit);
-}
-$member = get_option('rsvpmaker_discussion_member');
-if(empty($member))
-	$member = array('user' => '','password' => '','subject_prefix' => 'Members:'.get_option('blogname'), 'whitelist' => '', 'blocked' => '','additional_recipients' => '');
-
-rsvpmaker_print_group_list_options('member', $member);
-
-if(is_plugin_active( 'rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php' ))
-{
-
-	//officers section
-	$officer = get_option('rsvpmaker_discussion_officer');
-	if(empty($officer))
-		$officer = array('user' => '','password' => '', 'subject_prefix' => 'Officer:'.get_option('blogname'),  'whitelist' => '', 'blocked' => '','additional_recipients' => '');
-	rsvpmaker_print_group_list_options('officer', $officer);
-}
-
-$extra = get_option('rsvpmaker_discussion_extra');
-if(empty($extra))
-	$extra = array('user' => '','password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '','additional_recipients' => '');
-rsvpmaker_print_group_list_options('extra', $extra);
-echo '<p><em>'.__('Use for small custom distribution lists. Or use to forward an email you want to share to WordPress, then edit further with RSVP Mailer before sending.','rsvpmaker').'</em></p>';
-
-if(!empty($postmark['handle_incoming'])) {
-	echo '<p>Postmark integration takes over the "bot" account function</p>';
-}
-else {
-$bot = get_option('rsvpmaker_discussion_bot');
-if(empty($bot))
-	$bot = array('user' => '','password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '','additional_recipients' => '');
-rsvpmaker_print_group_list_options('bot', $bot);
-echo '<p><em>'.__('Use for automations triggered by an email.','rsvpmaker').'</em></p>';
-}
-if(isset($_REQUEST['tab']) && $_REQUEST['tab'] == 'groupemail')
-{
-?>
-<input type="hidden" id="activetab" value="groupemail" />
-<?php	
-}
-?>
-<input type="hidden" name="tab" value="groupemail">
-<button>Submit</button>
-</form>
-
-<h3>Using the Bot Account</h3>
-<p>Email sent to the bot account can be processed using a WordPress action where the email content is past in the form of post variables (subject as post_title, content as post_content). Example:</p>
-<pre>
-add_action('rsvpmaker_autoreply','my_post_to_email',10,5);
-function my_post_to_email($email_as_post, $email_user, $from, $to, $fromname = '') {
-	$myemail = 'mytrustedemail@gmail.com';
-	if($from == $myemail) {
-	$email_as_post['post_type'] = 'post';
-	$email_as_post['post_status'] = 'draft';
-	$id = wp_insert_post($email_as_post);
-	wp_mail($myemail,'Draft '.$id.' '.$email_as_post['post_title'],'Edit draft '.$id);
-	}
-}
-</pre>
-
-</section>
-<section id="email" class="mailpoet">
-<div id="mailpoet">
-<?php rsvpmaker_admin_heading('MailPoet Integration','mailpoet'); ?>
-<h2>MailPoet Integration</h2>
-<p>MailPoet is a WordPress plugin and web service for sending email newsletters and other mass email, with the permission of the recipients.</p>
-<p>You can add RSVPMaker events or event listings to the content of a MailPoet newsletter using a modified versions of the RSVPMaker Shortcodes (see the <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>">Content for Email</a> screen and the <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker Shortcodes Documentation</a>).</p>
-<?php
-	if (class_exists(\MailPoet\API\API::class)) {
-		$mailpoet_api = \MailPoet\API\API::MP('v1');
-		$lists = $mailpoet_api->getLists();
-		if(isset($_POST['rsvpmaker_mailpoet_list'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
-		{
-			$listok = (int) $_POST['rsvpmaker_mailpoet_list'];
-			update_option('rsvpmaker_mailpoet_list',$listok);
-			echo '<div class="notice notice-success"><p>MailPoet List Set</p></div>';
-		}
-		else
-			$listok = get_option('rsvpmaker_mailpoet_list');
-		$o = '<option value="">Choose List</option>';
-		foreach($lists as $list) {
-			$s = ($list['id'] == $listok) ? ' selected="selected" ' : '';
-			$o .= sprintf('<option value="%d" %s>%s</option>',$list['id'], $s, $list['name']);
-		}
-	printf('<form method="post" action="%s"><p>List to use with "Add me to your email list" checkbox <select name="rsvpmaker_mailpoet_list">%s</select><button>Update</button></p>%s</form>',site_url(sanitize_text_field($_SERVER['REQUEST_URI'])),$o,rsvpmaker_nonce());
-	}
-	else
-		echo '<p>MailPoet not enabled</p>';
-?>
-</section>
-<section id="security" class="rsvpmaker">
-<h3><?php esc_html_e('Who Can Publish and Send Email?','rsvpmaker');?></h3>
-<form method="post" action="<?php echo admin_url('options-general.php?page=rsvpmaker-admin.php'); ?>">
-<p><?php esc_html_e('By default, only the administrator has this right, but you can add it to other roles.','rsvpmaker');?></p>
-<?php $allroles = get_editable_roles(  ); 
-foreach($allroles as $slug => $properties)
-{
-if($slug == 'administrator')
-	continue;
-	echo esc_html($properties["name"]);
-	if(isset($properties["capabilities"]['publish_rsvpemails']))
-		printf(' %s <input type="checkbox" name="remove_cap[%s]" value="1" /> %s <br />',__('can publish and send broadcasts','rsvpmaker'),$slug,__('Remove','rsvpmaker'));
-	elseif(isset($properties["capabilities"]['edit_rsvpemails']))
-		printf(' %s <input type="checkbox" name="remove_cap[%s]" value="1" /> %s <br />',__('can edit draft emails','rsvpmaker'),$slug,__('Remove','rsvpmaker'));
-	else
-		printf(' %s <input type="radio" name="add_cap[%s]" value="edit" /> %s <input type="radio" name="add_cap[%s]" value="publish" /> %s <br />',__('grant right to','rsvpmaker'),$slug,__('Edit','rsvpmaker'),$slug,__('Publish and Send','rsvpmaker'));
-}
-rsvpmaker_nonce();
-submit_button();
-?>
-</form>
-</section>
-</div><!-- sections -->
-
-<?php
-	}
-}
-// create new instance of the class
-$RSVPMAKER_Options = new RSVPMAKER_Options();
-////print_r($RSVPMAKER_Options);
-if (isset($RSVPMAKER_Options)) {
-// register the activation function by passing the reference to our instance
-register_activation_hook(__FILE__, array(&$RSVPMAKER_Options, 'install'));             
-}
-
 
 
 function rsvpmaker_print_group_list_options($list_type, $vars) {
@@ -949,12 +474,16 @@ if(!empty($rsvp_options['additional_editors']))
 	add_submenu_page('edit.php?post_type=rsvpmaker', __("Share Templates",'rsvpmaker'), __("Share Templates",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_share", "rsvpmaker_share" );
 add_submenu_page('edit.php?post_type=rsvpmaker', __("Multiple Events (without a template)",'rsvpmaker'), __("Multiple Events (without a template)",'rsvpmaker'), 'edit_rsvpmakers', "rsvpmaker_setup&quick=5", "rsvpmaker_setup" );
 add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'RSVPMaker Payments', 'rsvpmaker' ), __( 'RSVPMaker Payments', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_stripe_report', 'rsvpmaker_stripe_report' );
-add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'Settings', 'rsvpmaker' ), __( 'Settings', 'rsvpmaker' ), 'edit_rsvpmakers', 'rsvpmaker_settings', 'rsvpmaker_react_admin' );
+add_submenu_page( 'edit.php?post_type=rsvpmaker', __( 'Settings', 'rsvpmaker' ), __( 'Settings', 'rsvpmaker' ), 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin' );
 add_submenu_page('tools.php',__('Import/Export RSVPMaker'),__('Import/Export RSVPMaker'),'manage_options','rsvpmaker_export_screen','rsvpmaker_export_screen');
 add_submenu_page('tools.php',__('Cleanup RSVPMaker'),__('Cleanup RSVPMaker'),'manage_options','rsvpmaker_cleanup','rsvpmaker_cleanup');
 add_submenu_page('edit.php','Email Promos','Email Promos','edit_others_posts','rsvpmail_latest_posts_notification_setup','rsvpmail_latest_posts_notification_setup');
 if(!empty($rsvp_options['debug']))
 	add_submenu_page('tools.php',__('RSVPMaker Debug Log'),__('RSVPMaker Debug Log'),'manage_options','rsvpmaker_show_debug_log','rsvpmaker_show_debug_log');
+}
+
+function rsvpmaker_register_settings_page() {
+	add_options_page('RSVPMaker Settings', 'RSVPMaker Settings', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin');
 }
 
 function rsvpmaker_highlight_report_menu_item() {
@@ -987,6 +516,104 @@ function rsvpmaker_columns($defaults) {
     return $defaults;
 }
 
+add_filter( 'manage_rsvpmaker_form_posts_columns', 'rsvpmaker_form_edit_columns' );
+function rsvpmaker_form_edit_columns( $column_array ) {
+	$updated_columns = array();
+	foreach ( $column_array as $key => $label ) {
+		$updated_columns[ $key ] = $label;
+		if ( 'title' === $key ) {
+			$updated_columns['rsvpmaker_form_usage'] = __( 'Form Usage', 'rsvpmaker' );
+		}
+	}
+	if ( empty( $updated_columns['rsvpmaker_form_usage'] ) ) {
+		$updated_columns['rsvpmaker_form_usage'] = __( 'Form Usage', 'rsvpmaker' );
+	}
+	return $updated_columns;
+}
+
+function rsvpmaker_form_usage_summary( $form_id ) {
+	global $wpdb, $rsvp_options;
+
+	$form_id = (int) $form_id;
+	if ( ! $form_id ) {
+		return '';
+	}
+
+	if ( ! empty( $rsvp_options['rsvp_form'] ) && ( (int) $rsvp_options['rsvp_form'] === $form_id ) ) {
+		return __( 'Default', 'rsvpmaker' );
+	}
+
+	$postmeta_table = $wpdb->postmeta;
+	$posts_table = $wpdb->posts;
+	$events_table = $wpdb->prefix . 'rsvpmaker_event';
+
+	$template_count = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*)
+			FROM %i pm
+			INNER JOIN %i p ON p.ID = pm.post_id
+			WHERE pm.meta_key = '_rsvp_form'
+			AND pm.meta_value = %s
+			AND p.post_type = 'rsvpmaker_template'
+			AND p.post_status NOT IN ('trash','auto-draft')",
+			$postmeta_table,
+			$posts_table,
+			(string) $form_id
+		)
+	);
+
+	$upcoming_count = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*)
+			FROM %i pm
+			INNER JOIN %i p ON p.ID = pm.post_id
+			INNER JOIN %i e ON e.event = p.ID
+			WHERE pm.meta_key = '_rsvp_form'
+			AND pm.meta_value = %s
+			AND p.post_type = 'rsvpmaker'
+			AND p.post_status NOT IN ('trash','auto-draft')
+			AND e.date >= CURDATE()",
+			$postmeta_table,
+			$posts_table,
+			$events_table,
+			(string) $form_id
+		)
+	);
+
+	$contact_count = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*)
+			FROM %i p
+			WHERE p.post_status NOT IN ('trash','auto-draft')
+			AND p.post_type NOT IN ('revision','nav_menu_item','attachment','rsvpmaker_form')
+			AND (
+				p.post_content LIKE %s
+				OR p.post_content LIKE %s
+			)",
+			$posts_table,
+			'%wp:rsvpmaker/contact {"form_id":' . $form_id . '%',
+			'%form_id="' . $form_id . '"%'
+		)
+	);
+
+	$summary = array();
+	if ( $template_count ) {
+		$summary[] = sprintf( __( 'Templates: %d', 'rsvpmaker' ), $template_count );
+	}
+	if ( $upcoming_count ) {
+		$summary[] = sprintf( __( 'Upcoming: %d', 'rsvpmaker' ), $upcoming_count );
+	}
+	if ( $contact_count ) {
+		$summary[] = sprintf( __( 'Contact: %d', 'rsvpmaker' ), $contact_count );
+	}
+
+	if ( empty( $summary ) ) {
+		return __( 'Unassigned', 'rsvpmaker' );
+	}
+
+	return implode( ' | ', $summary );
+}
+
 function rsvpmaker_template_custom_column($column_name, $post_id) {
 	if('template_schedule' == $column_name) {
 		error_log('custom column for template schedule '.$post_id);
@@ -1006,8 +633,12 @@ function rsvpmaker_template_custom_column($column_name, $post_id) {
 
 function rsvpmaker_custom_column($column_name, $post_id) {
 	global $wpdb, $rsvp_options, $event, $post;
+	if ( 'rsvpmaker_form_usage' === $column_name ) {
+		echo esc_html( rsvpmaker_form_usage_summary( $post_id ) );
+		return;
+	}
 	$event = get_rsvpmaker_event($post_id);
-	if(!$event && ('rsvpmaker_template' != $post->post_type) && ('rsvpemail' !=  $post->post_type)) {
+	if(!$event && ('rsvpmaker_template' != $post->post_type) && ('rsvpemail' !=  $post->post_type) && ('rsvpmaker_form' != $post->post_type)) {
 			return;
 	}
     if( $column_name == 'event_dates' ) {

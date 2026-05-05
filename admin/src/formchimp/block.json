@@ -4,7 +4,7 @@
   "name": "rsvpmaker/formchimp",
 	"title": "RSVPField Mailing List Checkbox",
 	"icon": "forms",
-	"category": "rsvpmaker",
+	"category": "rsvpmaker-form",
 	"postTypes": [
 		"rsvpmaker_form"
 	],

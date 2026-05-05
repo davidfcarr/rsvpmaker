@@ -12,6 +12,7 @@ import apiFetch from '@wordpress/api-fetch';
  * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
  */
 import './editor.scss';
+import { applyFieldLabelChange } from '../form-field-label';
 
 /**
  * The edit function describes the structure of your block in the context of the
@@ -22,13 +23,15 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes: { label, slug, rows, guestform }, setAttributes, isSelected } = props;
+	const { attributes: { label, fieldnote, slug, rows, guestform }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
 			<TextAreaInspector {...props} />
 			<div className={ props.className }>
-<p><label>{label}:</label></p> <p><textarea inert tabindex="-1" rows={rows} className={slug} type="text" name={profilename} id={slug}></textarea></p>
+<p><label>{label}:</label></p>
+{fieldnote && <p><em>{fieldnote}</em></p>}
+<div style={{ marginLeft: '1.25em' }}><textarea inert tabindex="-1" rows={rows} className={slug} type="text" name={profilename} id={slug}></textarea></div>
 <div><em>{__('Set properties in sidebar. Intended for use within an RSVPMaker registration form.','rsvpmaker')}</em></div>
 			</div>
 			</Fragment>
@@ -39,12 +42,12 @@ class TextAreaInspector extends Component {
 	render() {
 	const { attributes, setAttributes, className } = this.props;
 	function setLabel(label) {
-		const slug = attributes.slug;
-		let simpleSlug = label.replaceAll(/[^A-Za-z0-9]+/g,'_');
-		simpleSlug = simpleSlug.trim().toLowerCase();
-		setAttributes({slug: simpleSlug});
-		setAttributes({label: label});
-		setAttributes({guestform: true});
+		applyFieldLabelChange({
+			label,
+			attributes,
+			setAttributes,
+			setGuestform: true,
+		});
 	}
 		return (
 			<InspectorControls key="fieldinspector">
@@ -53,6 +56,11 @@ class TextAreaInspector extends Component {
 				label={ __( 'Label', 'rsvpmaker' ) }
 				value={ attributes.label }
 				onChange={ ( label ) => setLabel( label  ) }
+			/>
+			<TextControl
+				label={ __( 'Field Note (optional additional information)', 'rsvpmaker' ) }
+				value={ attributes.fieldnote || '' }
+				onChange={ ( fieldnote ) => setAttributes( { fieldnote } ) }
 			/>
     <SelectControl
         label="Rows"

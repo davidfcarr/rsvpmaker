@@ -4,7 +4,7 @@
   "name": "rsvpmaker/formnote",
 	"title": "RSVPField Note",
 	"icon": "forms",
-	"category": "rsvpmaker",
+	"category": "rsvpmaker-form",
 	"postTypes": [
 		"rsvpmaker_form"
 	],
@@ -17,6 +17,10 @@
 		"label": {
 			"type": "string",
 			"default": "Note"
+		},
+		"fieldnote": {
+			"type": "string",
+			"default": ""
 		}
 	},
 	"version": "2",

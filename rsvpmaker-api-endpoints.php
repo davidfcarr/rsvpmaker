@@ -1893,6 +1893,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		$actions = [];
 		$changes = 0;
 		$status = [];
+		$mergeresult = array();
 		if(!empty($json)) {
 			$data = json_decode(trim($json));
 			if(is_array($data)) {
@@ -1901,9 +1902,53 @@ class RSVP_Options_Json extends WP_REST_Controller {
 						if('option' == $o->type) {
 							update_option($o->key,sanitize_rsvpopt($o->value));
 						}
+						elseif('option_raw' == $o->type) {
+							$key = sanitize_key($o->key);
+							if('rsvpmaker_discussion_active' == $key) {
+								$active = intval($o->value);
+								update_option($key, $active);
+								if($active) {
+									if(function_exists('deactivate_plugins')) {
+										deactivate_plugins('wp-mailster/wp-mailster.php', false, false);
+									}
+									if(!wp_get_schedule('rsvpmaker_relay_init_hook') && !rsvpmaker_postmark_is_live()) {
+										wp_schedule_event( strtotime('+2 minutes'), 'doubleminute', 'rsvpmaker_relay_init_hook' );
+									}
+								}
+								else {
+									wp_unschedule_hook('rsvpmaker_relay_init_hook');
+								}
+							}
+							elseif('rsvpmaker_email_queue_limit' == $key) {
+								update_option($key, intval($o->value));
+							}
+							else {
+								update_option($key, sanitize_rsvpopt($o->value));
+							}
+						}
 						elseif('meta' == $o->type)
 						{
 							update_post_meta($o->post_id,$o->key,sanitize_rsvpopt($o->value));
+						}
+						elseif('email_cap_update' == $o->type)
+						{
+							$role_updates = (array) $o->value;
+							foreach($role_updates as $role_slug => $level) {
+								$role_slug = sanitize_key($role_slug);
+								$level = sanitize_key($level);
+								if(empty($role_slug) || !get_role($role_slug) || ('administrator' == $role_slug)) {
+									continue;
+								}
+								if(function_exists('remove_rsvpemail_caps_role')) {
+									remove_rsvpemail_caps_role($role_slug);
+								}
+								if('edit' == $level && function_exists('add_rsvpemail_caps_role')) {
+									add_rsvpemail_caps_role($role_slug, false);
+								}
+								elseif('publish' == $level && function_exists('add_rsvpemail_caps_role')) {
+									add_rsvpemail_caps_role($role_slug, true);
+								}
+							}
 						}
 						elseif('action' == $o->type)
 						{
@@ -2046,6 +2091,77 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		$c = ($c && !empty($c->post_content)) ? do_blocks($c->post_content) : '<p>Error retrieving message.</p>';
 		$response['confirmation_message'] = $c;
 		$response['stylesheet_url'] = plugins_url('rsvpmaker/style.css');
+
+		$postmark = get_rsvpmaker_postmark_options();
+		$response['group_email'] = array(
+			'active' => (int) get_option('rsvpmaker_discussion_active'),
+			'server' => get_option('rsvpmaker_discussion_server', '{localhost:995/pop3/ssl/novalidate-cert}'),
+			'queue_limit' => (int) get_option('rsvpmaker_email_queue_limit', 10),
+			'postmark_handle_incoming' => !empty($postmark['handle_incoming']),
+			'is_toastmasters' => (function_exists('is_plugin_active')) ? is_plugin_active('rsvpmaker-for-toastmasters/rsvpmaker-for-toastmasters.php') : false,
+			'member' => get_option('rsvpmaker_discussion_member', array('user' => '', 'password' => '', 'subject_prefix' => 'Members:'.get_option('blogname'), 'whitelist' => '', 'blocked' => '', 'additional_recipients' => '')),
+			'officer' => get_option('rsvpmaker_discussion_officer', array('user' => '', 'password' => '', 'subject_prefix' => 'Officer:'.get_option('blogname'), 'whitelist' => '', 'blocked' => '', 'additional_recipients' => '')),
+			'extra' => get_option('rsvpmaker_discussion_extra', array('user' => '', 'password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '', 'additional_recipients' => '')),
+			'bot' => get_option('rsvpmaker_discussion_bot', array('user' => '', 'password' => '', 'subject_prefix' => '', 'whitelist' => get_option('admin_email'), 'blocked' => '', 'additional_recipients' => '')),
+		);
+
+		$mailpoet_api_class = '\\MailPoet\\API\\API';
+		$mailpoet_enabled = class_exists($mailpoet_api_class) && is_callable(array($mailpoet_api_class, 'MP'));
+		$response['mailpoet'] = array(
+			'enabled' => $mailpoet_enabled,
+			'selected_list' => (int) get_option('rsvpmaker_mailpoet_list'),
+			'lists' => array(),
+		);
+		if($response['mailpoet']['enabled']) {
+			try {
+				$mailpoet_api = call_user_func(array($mailpoet_api_class, 'MP'), 'v1');
+				if(is_object($mailpoet_api) && method_exists($mailpoet_api, 'getLists')) {
+					$lists = $mailpoet_api->getLists();
+					if(is_array($lists)) {
+						foreach($lists as $list) {
+							if(!empty($list['id']) && !empty($list['name'])) {
+								$response['mailpoet']['lists'][] = array(
+									'value' => (int) $list['id'],
+									'label' => sanitize_text_field($list['name']),
+								);
+							}
+						}
+					}
+				}
+				else {
+					$response['mailpoet']['enabled'] = false;
+					$response['mailpoet']['error'] = 'MailPoet API incompatibility: getLists not available.';
+				}
+			}
+			catch(Exception $e) {
+				$response['mailpoet']['enabled'] = false;
+				$response['mailpoet']['error'] = $e->getMessage();
+			}
+		}
+
+		$response['email_role_caps'] = array();
+		if(!function_exists('get_editable_roles') && defined('ABSPATH')) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+		}
+		$allroles = function_exists('get_editable_roles') ? get_editable_roles() : array();
+		foreach($allroles as $slug => $properties) {
+			if('administrator' == $slug) {
+				continue;
+			}
+			$level = 'none';
+			if(isset($properties['capabilities']['publish_rsvpemails'])) {
+				$level = 'publish';
+			}
+			elseif(isset($properties['capabilities']['edit_rsvpemails'])) {
+				$level = 'edit';
+			}
+			$response['email_role_caps'][] = array(
+				'slug' => $slug,
+				'name' => $properties['name'],
+				'level' => $level,
+			);
+		}
+
 		return new WP_REST_Response( $response, 200 );
 	}
 }
@@ -2093,9 +2209,26 @@ class RSVP_Chimp_Lists extends WP_REST_Controller {
 }
 
 function sanitize_rsvpopt($value) {
-	if(strpos($value,'</'))
+	if(is_array($value)) {
+		$output = array();
+		foreach($value as $key => $item) {
+			$output[sanitize_key($key)] = sanitize_rsvpopt($item);
+		}
+		return $output;
+	}
+
+	if(is_object($value)) {
+		return sanitize_rsvpopt((array) $value);
+	}
+
+	if(is_bool($value) || is_int($value) || is_float($value)) {
+		return $value;
+	}
+
+	$value = (string) $value;
+	if(strpos($value,'</') !== false)
 		$value = wp_kses_post($value);
-	elseif(strpos($value,"\n"))
+	elseif(strpos($value,"\n") !== false)
 		$value = sanitize_textarea_field($value);
 	else
 		$value = sanitize_text_field($value);

@@ -32,6 +32,7 @@ add_action('admin_init', 'rsvpmaker_customize_document' );
 
 add_action( 'admin_menu', 'my_rsvpemail_menu' );
 add_action( 'admin_menu', 'rsvpmaker_admin_menu' );
+add_action( 'admin_menu', 'rsvpmaker_register_settings_page' );
 
 add_action( 'admin_notices', 'rsvpmaker_admin_notice' );
 

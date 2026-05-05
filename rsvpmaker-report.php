@@ -562,7 +562,7 @@ echo '</div>';
 	}
 // end rsvp report
 
-function format_rsvp_row($row, $fields, $pricing = null) {
+function format_rsvp_row($row, $fields, $pricing = null, $form_label_to_slug = []) {
 	global $post, $rsvpmaker_additional_fields,$rsvp_options;
 	$owed_list = '';
 	if(!empty($row['event'])) {
@@ -610,7 +610,21 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 	if ( $row['details'] ) {
 		$details = unserialize( $row['details'] );
 	}
-
+	foreach ( $form_label_to_slug as $label => $slug ) {
+		if ( isset( $details[ $slug ] ) && ! empty( $details[ $slug ] ) ) {
+			echo '<div><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $details[ $slug ] ) . '</div>';
+		}
+		else {
+			$slug = preg_replace('/[^a-z0-9]/','_',$slug);
+			if ( isset( $details[ $slug ] ) && ! empty( $details[ $slug ] ) ) {
+				echo '<div><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $details[ $slug ] ) . '</div>';
+			}
+			elseif(isset($_GET['debug'])) {
+			echo '<div><strong>' . esc_html( $label ) . ' not found:</strong> ' . esc_html( $slug ) . '</div>';
+			}
+		}
+	}
+	/*
 	if ( $pricing && isset( $details['fee_total'] ) ) {
 		echo '<div style="font-weight: bold;">' . __( 'fee_total', 'rsvpmaker' ) . ': ' . esc_html( number_format($details['fee_total'],2) ) . '</div>';
 	}
@@ -622,7 +636,7 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 	if ( $row['amountpaid'] > 0 ) {
 		echo '<div style="color: #006400;font-weight: bold;">' . __( 'Paid', 'rsvpmaker' ) . ': ' . esc_html( $row['amountpaid'] ) . ' - '.sprintf('<a href="%s">Transaction List</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_stripe_report&email='.$row['email'])).'</div>';
 	}
-
+	*/
 	if ( isset( $details['fee_total'] ) ) {
 		$owed = $details['fee_total'] - $row['amountpaid'];
 		if ( $owed ) {
@@ -641,13 +655,14 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 	}
 
 	echo '<p>';
-
+/*
 	if ( $row['details'] ) {
 
 		$details    = unserialize( $row['details'] );
 		$newdetails = array();
 		if ( is_array( $details ) ) {
 			foreach ( $details as $name => $value ) {
+				$name = preg_replace('/[\s]/','_',$name);
 				if(('id' == $name) || ('details' == $name))
 					continue;
 				if ( $value ) {
@@ -655,6 +670,7 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 						$update = true;
 					}
 					$label = get_post_meta( $row['event'], 'rsvpform' . $name, true );
+					//printf('<p><strong>label: %s</strong> name %s</p>',$label,$name);
 					if ( $label ) {
 						$name = $label;
 					}
@@ -670,17 +686,53 @@ function format_rsvp_row($row, $fields, $pricing = null) {
 			}
 		}
 	}
-
+*/
 	if ( $row['note'] ) {
 		echo ' note: ' . nl2br( esc_attr( $row['note'] ) ) . '<br />';
 	}
 	return $owed_list;
 }
 
+function rsvpmaker_report_form_label_to_slug( $event_id = 0 ) {
+	global $rsvp_options;
+	$form_label_to_slug = [
+		__( 'Yes/No', 'rsvpmaker' )      => 'yesno',
+		__( 'First Name', 'rsvpmaker' )  => 'first',
+		__( 'Last Name', 'rsvpmaker' )   => 'last',
+		__( 'Email', 'rsvpmaker' )       => 'email',
+		__( 'Guest Of', 'rsvpmaker' )    => 'guestof',
+		__( 'Amount Paid', 'rsvpmaker' ) => 'amountpaid',
+		__( 'Owed', 'rsvpmaker' )        => 'owed',
+		__( 'Fee Total', 'rsvpmaker' )   => 'fee_total',
+	];
+
+	if ( ! empty( $event_id ) ) {
+		$form_id = get_post_meta( $event_id, '_rsvp_form', true );
+		if ( empty( $form_id ) ) {
+			$form_id = $rsvp_options['rsvp_form'];
+		}
+		if ( $form_id ) {
+			$form_post = get_post( $form_id );
+			if ( $form_post && $form_post->post_content ) {
+				foreach ( parse_blocks( $form_post->post_content ) as $block ) {
+					if ( ( ! empty( $block['attrs']['label'] ) ) && ! empty( $block['attrs']['slug'] ) ) {
+						$label = ! empty( $block['attrs']['label'] ) ? $block['attrs']['label'] : $block['attrs']['slug'];
+						$form_label_to_slug[ $label ] = $block['attrs']['slug'];
+					}
+				}
+			}
+		}
+	}
+
+	return $form_label_to_slug;
+}
+
 function format_rsvp_details( $results, $editor_options = true, $check_guests = false ) {
 
 		global $rsvp_options, $wpdb, $post, $rsvpmaker_additional_fields;
+		$form_label_to_slug = rsvpmaker_report_form_label_to_slug( ! empty( $post->ID ) ? $post->ID : 0 );
 		$pricing = get_post_meta($post->ID,'pricing',true);
+
 		$update      = false;
 
 		$missing = $owed_list = '';
@@ -708,7 +760,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 			} else {
 				$nonmembers++;
 			}
-			$owed_list .= format_rsvp_row($row,$fields, $pricing);
+			$owed_list .= format_rsvp_row($row,$fields, $pricing, $form_label_to_slug );
 
 			$is_unpaid = !empty($row['fee_total']) && '0.00' != $row['fee_total'] && '0.00' != $row['owed'] && !empty($row['owed']);
 			if($is_unpaid)
@@ -725,7 +777,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 					foreach($g as $grow) {
 						$grow['yesno'] = '';
 						$grow['guestof'] = '';
-						format_rsvp_row($grow,$guestfields,$pricing);
+						format_rsvp_row($grow,$guestfields,$pricing,$form_label_to_slug);
 					}
 					echo '</blockquote>';
 				}
@@ -829,25 +881,6 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 
 				$fields[] = 'timestamp';
 
-				foreach ( $fields as $field ) {
-
-					// no duplicates, please
-
-					$i = preg_replace( '/[^a-z0-9]/', '_', strtolower( $field ) );
-
-					if ( $i == 'first_name' ) {
-
-						$i = 'first';
-					}
-
-					if ( $i == 'last_name' ) {
-
-						$i = 'last';
-					}
-
-					$newfields[ $i ] = $i;
-
-				};
 				?>
 
 <div id="excel" name="excel" style="padding: 10px; border: thin dotted #333; width: 300px;margin-top: 30px;">
@@ -862,10 +895,12 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 					echo sprintf( '<input type="hidden" name="%s" value="%s" />', esc_attr( $name ), esc_attr( $value ) );
 				}
 
-				foreach ( $newfields as $i => $field ) {
+				foreach ( $form_label_to_slug as $label => $i ) {
 					if(empty($_GET['event']) && in_array($field,array('yesno','fee_total','owed','amountpaid')))//don't apply to contact form
 						continue;
-					echo '<input type="checkbox" name="fields[]" value="' . $i . '" checked="checked" /> ' . $field . "<br />\n";
+					if(strpos($i,'lunch') !== false && $post->ID == 14035) //hack for 62toast.com
+						$i = 'lunch_options: sandwiches include housemade cookie and chips';
+					echo '<input type="checkbox" name="fields[]" value="' . $i . '" checked="checked" /> ' . $label . "<br />\n";
 				}
 
 				echo '<input type="checkbox" name="rsvp_print" value="1"> '.__('Format for printing','rsvpmaker').'<br />';
@@ -1519,6 +1554,7 @@ function rsvp_csv() {
 
 		global $wpdb;
 		$fields  = array_map('sanitize_text_field',$_GET['fields']);
+		$eventid = 0;
 		if(isset($_GET['allcontacts'])) {
 			$sql = $wpdb->prepare("SELECT * FROM %i WHERE master_rsvp=0 ORDER BY timestamp DESC",$wpdb->prefix . "rsvpmaker");
 			$name = 'all-contacts';
@@ -1530,6 +1566,20 @@ function rsvp_csv() {
 			$name = $post->post_name;
 		}
 
+		$form_label_to_slug = rsvpmaker_report_form_label_to_slug( $eventid );
+		$form_slug_to_label = array_flip( $form_label_to_slug );
+		$field_slugs = [];
+		$field_labels = [];
+		foreach ( $fields as $field ) {
+			if ( isset( $form_label_to_slug[ $field ] ) ) {
+				$field_slugs[]  = $form_label_to_slug[ $field ];
+				$field_labels[] = $field;
+			} else {
+				$field_slugs[]  = $field;
+				$field_labels[] = isset( $form_slug_to_label[ $field ] ) ? $form_slug_to_label[ $field ] : $field;
+			}
+		}
+
 		header( 'Content-Type: text/csv' );
 
 		header( 'Content-Disposition: attachment;filename="' . $name . '-' . date( 'Y-m-d-H-i' ) . '.csv"' );
@@ -1538,7 +1588,7 @@ function rsvp_csv() {
 
 		$out = fopen( 'php://output', 'w' );
 
-		fputcsv( $out, $fields );
+		fputcsv( $out, $field_labels );
 		$results = $wpdb->get_results( $sql, ARRAY_A );
 
 		$rows = sizeof( $results );
@@ -1561,9 +1611,9 @@ function rsvp_csv() {
 				}
 				$newrow = array();
 
-				if ( is_array( $fields ) ) {
+				if ( is_array( $field_slugs ) ) {
 
-					foreach ( $fields as $column => $name ) {
+					foreach ( $field_slugs as $column => $name ) {
 						if ( isset( $row[ $name ] ) ) {
 							$newrow[] = strip_tags($row[ $name ]);
 
@@ -1651,6 +1701,20 @@ text-align: left;
 
 	$fields = array_map('sanitize_text_field',$_GET['fields']);
 
+	$form_label_to_slug = rsvpmaker_report_form_label_to_slug( (int) $_GET['event'] );
+	$form_slug_to_label = array_flip( $form_label_to_slug );
+	$field_slugs = [];
+	$field_labels = [];
+	foreach ( $fields as $field ) {
+		if ( isset( $form_label_to_slug[ $field ] ) ) {
+			$field_slugs[]  = $form_label_to_slug[ $field ];
+			$field_labels[] = $field;
+		} else {
+			$field_slugs[]  = $field;
+			$field_labels[] = isset( $form_slug_to_label[ $field ] ) ? $form_slug_to_label[ $field ] : $field;
+		}
+	}
+
 	$eventid   = (int) $_GET['event'];
 	$event_row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE event=%d",$wpdb->prefix . "rsvpmaker_event",$eventid) );
 
@@ -1664,9 +1728,9 @@ text-align: left;
 
 	// Create new PHPExcel object
 
-	if ( is_array( $fields ) ) {
+	if ( is_array( $field_labels ) ) {
 
-		foreach ( $fields as $column => $name ) {
+		foreach ( $field_labels as $column => $name ) {
 
 			echo "<th>$name</th>";
 
@@ -1701,9 +1765,9 @@ text-align: left;
 
 			echo '<tr>';
 
-			if ( is_array( $fields ) ) {
+			if ( is_array( $field_slugs ) ) {
 
-				foreach ( $fields as $column => $name ) {
+				foreach ( $field_slugs as $column => $name ) {
 
 					if ( isset( $row[ $name ] ) ) {
 

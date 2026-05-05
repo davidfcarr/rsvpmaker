@@ -6,15 +6,27 @@ function rsvpmaker_check_string($value) {
 }
 
 function rsvpmaker_block_category( $categories, $post ) {
-	return array_merge(
-		$categories,
-		array(
-			array(
-				'slug' => 'rsvpmaker',
-				'title' => __( 'RSVPMaker', 'rsvpmaker' ),
-			),
-		)
+	$post_type = '';
+	if ( ! empty( $post->post_type ) ) {
+		$post_type = $post->post_type;
+	} elseif ( ! empty( $post->post->post_type ) ) {
+		$post_type = $post->post->post_type;
+	}
+
+	$custom_categories = array();
+	if ( 'rsvpmaker_form' === $post_type ) {
+		$custom_categories[] = array(
+			'slug'  => 'rsvpmaker-form',
+			'title' => __( 'RSVPMaker Form Fields', 'rsvpmaker' ),
+		);
+	}
+
+	$custom_categories[] = array(
+		'slug'  => 'rsvpmaker',
+		'title' => __( 'RSVPMaker', 'rsvpmaker' ),
 	);
+
+	return array_merge( $custom_categories, $categories );
 }
 
 function rsvpmaker_limit_form_blocks_to_forms( $allowed_block_types, $editor_context ) {
@@ -27,6 +39,23 @@ function rsvpmaker_limit_form_blocks_to_forms( $allowed_block_types, $editor_con
 		'rsvpmaker/formselect',
 		'rsvpmaker/formtextarea',
 	);
+
+	$core_form_document_blocks = array(
+		'core/paragraph',
+		'core/heading',
+		'core/image',
+		'core/list',
+		'core/separator',
+		'core/spacer',
+		'core/group',
+		'core/columns',
+		'core/column',
+		'core/buttons',
+		'core/button',
+		'core/row',
+	);
+
+	$form_document_allowed_blocks = array_merge( $form_only_blocks, $core_form_document_blocks );
 
 	$email_only_blocks = array(
 		'rsvpmaker/emailcontent',
@@ -46,6 +75,22 @@ function rsvpmaker_limit_form_blocks_to_forms( $allowed_block_types, $editor_con
 	}
 	if ( 'rsvpemail' !== $post_type ) {
 		$blocks_to_hide = array_merge( $blocks_to_hide, $email_only_blocks );
+	}
+
+	if ( 'rsvpmaker_form' === $post_type ) {
+		$registered = WP_Block_Type_Registry::get_instance()->get_all_registered();
+		$registered_keys = array_keys( $registered );
+		$available_for_forms = array_values( array_intersect( $form_document_allowed_blocks, $registered_keys ) );
+
+		if ( true === $allowed_block_types ) {
+			return $available_for_forms;
+		}
+
+		if ( is_array( $allowed_block_types ) ) {
+			return array_values( array_intersect( $allowed_block_types, $available_for_forms ) );
+		}
+
+		return $available_for_forms;
 	}
 
 	if ( empty( $blocks_to_hide ) ) {

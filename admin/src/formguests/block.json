@@ -4,7 +4,7 @@
   "name": "rsvpmaker/guests",
 	"title": "RSVPField Guests",
 	"icon": "forms",
-	"category": "rsvpmaker",
+	"category": "rsvpmaker-form",
 	"postTypes": [
 		"rsvpmaker_form"
 	],
