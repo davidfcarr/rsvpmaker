@@ -3655,6 +3655,9 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 
 	$rsvp_options['rsvplink'] = get_rsvp_link( $rsvp['event'], false, $rsvp['email'], $rsvp['id'] );
 	$rsvpupdate_link = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
+	if ( ! empty( $rsvp['fee_total'] ) ) {
+		$rsvpupdate_link .= '<p><em>' . __( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
+	}
 
 	$notification_body = str_replace('[rsvpupdate]',$rsvpupdate_link,$notification_body);
 	$notification_body = rsvpmaker_email_html($notification_body);
@@ -6290,60 +6293,132 @@ function rsvpmaker_get_confirmation_options( $post_id = 0, $documents = array() 
 
 }
 
+function rsvpmaker_lookup_copy_email_send( $event, $row ) {
+	global $rsvp_options;
+
+	$event = (int) $event;
+	if ( empty( $event ) || empty( $row->id ) || empty( $row->email ) ) {
+		return false;
+	}
+
+	$event_post = get_post( $event );
+	if ( empty( $event_post ) ) {
+		return false;
+	}
+
+	$copy_link = add_query_arg(
+		array(
+			'e'    => $row->email,
+			'copy' => (int) $row->id,
+			't'    => time(),
+		),
+		get_permalink( $event )
+	) . '#rsvpnow';
+
+	$mail['to'] = $row->email;
+	$mail['from'] = empty( $rsvp_options['rsvp_to'] ) ? get_option( 'admin_email' ) : $rsvp_options['rsvp_to'];
+	$mail['fromname'] = get_bloginfo( 'name' );
+	$mail['subject'] = sprintf( __( 'Your RSVP lookup link for %s', 'rsvpmaker' ), wp_specialchars_decode( get_the_title( $event ), ENT_QUOTES ) );
+	$mail['html'] = sprintf(
+		'<p>%s</p><p><a href="%s">%s</a></p><p>%s</p>',
+		esc_html__( 'Use this secure link to copy details from your previous RSVP into this form.', 'rsvpmaker' ),
+		esc_url( $copy_link ),
+		esc_html__( 'Copy Previous RSVP Details', 'rsvpmaker' ),
+		esc_html__( 'If you did not request this link, you can ignore this email.', 'rsvpmaker' )
+	);
+
+	rsvpmailer( $mail );
+	return true;
+}
+
+function rsvpmaker_lookup_update_email_send( $event, $row ) {
+	global $rsvp_options;
+
+	$event = (int) $event;
+	if ( empty( $event ) || empty( $row->id ) || empty( $row->email ) ) {
+		return false;
+	}
+
+	$event_post = get_post( $event );
+	if ( empty( $event_post ) ) {
+		return false;
+	}
+
+	$update_link = add_query_arg(
+		array(
+			'e'      => $row->email,
+			'update' => (int) $row->id,
+			't'      => time(),
+		),
+		get_permalink( $event )
+	) . '#rsvpnow';
+
+	$mail['to'] = $row->email;
+	$mail['from'] = empty( $rsvp_options['rsvp_to'] ) ? get_option( 'admin_email' ) : $rsvp_options['rsvp_to'];
+	$mail['fromname'] = get_bloginfo( 'name' );
+	$mail['subject'] = sprintf( __( 'Your RSVP update link for %s', 'rsvpmaker' ), wp_specialchars_decode( get_the_title( $event ), ENT_QUOTES ) );
+	$mail['html'] = sprintf(
+		'<p>%s</p><p><a href="%s">%s</a></p><p>%s</p>',
+		esc_html__( 'Use this secure link to review or update your RSVP registration.', 'rsvpmaker' ),
+		esc_url( $update_link ),
+		esc_html__( 'Update RSVP Registration', 'rsvpmaker' ),
+		esc_html__( 'If you did not request this link, you can ignore this email.', 'rsvpmaker' )
+	);
+
+	rsvpmailer( $mail );
+	return true;
+}
+
 function ajax_rsvp_email_lookup( $email, $event ) {
 
-	$p = get_permalink( $event );
-
 	if ( ! rsvpmail_contains_email( $email ) ) {
-
-		return;
+		return '<div class="previous_rsvp_prompt_note">' . __( 'Please enter a valid email address.', 'rsvpmaker' ) . '</div>';
 	}
 
 	global $wpdb;
 
 	$wpdb->show_errors();
 
-	$sql = $wpdb->prepare( 'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE email LIKE %s AND event=%d', $email, $event );
+	$sql = $wpdb->prepare(
+		'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE email LIKE %s AND event=%d AND master_rsvp=0 ORDER BY id DESC',
+		$email,
+		$event
+	);
 
-	$results = $wpdb->get_results( $sql );
+	$row = $wpdb->get_row( $sql );
 
-	if ( $results ) {
+	$sql_any = $wpdb->prepare(
+		'SELECT * FROM ' . $wpdb->prefix . 'rsvpmaker WHERE email LIKE %s AND master_rsvp=0 ORDER BY id DESC',
+		$email
+	);
 
-		$out = '<div class="previous_rsvp_prompt">' . __( 'Did you RSVP previously?', 'rsvpmaker' ) . '</div>';
+	$any_row = $wpdb->get_row( $sql_any );
 
-		foreach ( $results as $row ) {
-
-			$out .= 'RSVP ';
-
-			$out .= ( $row->yesno ) ? __( 'YES', 'rsvpmaker' ) : __( 'NO', 'rsvpmaker' );
-
-			$out .= esc_html( ' ' . $row->first . ' ' . $row->last );
-
-			$sql = $wpdb->prepare( 'SELECT count(*) FROM %i WHERE master_rsvp=%d', $wpdb->prefix . 'rsvpmaker', intval( $row->id ) );
-
-			$guests = $wpdb->get_var( $sql );
-
-			if ( $guests ) {
-				$out .= ' + ' . esc_html( $guests ) . ' ' . __( 'guests', 'rsvpmaker' );
+	if ( ! empty( $row ) ) {
+		$throttle_key = 'rsvpmaker_lookup_mail_update_' . md5( strtolower( trim( $email ) ) . '|' . (int) $event );
+		if ( ! get_transient( $throttle_key ) ) {
+			$sent = rsvpmaker_lookup_update_email_send( $event, $row );
+			if ( $sent ) {
+				set_transient( $throttle_key, 1, 5 * MINUTE_IN_SECONDS );
 			}
-
-			return sprintf(
-				'<div><a href="%s">%s</a> %s</div>',
-				add_query_arg(
-					array(
-						'e'      => $row->email,
-						'update' => $row->id,
-					),
-					$p
-				).'#rsvpnow',
-				__( 'Click to Update', 'rsvpmaker' ),
-				$out
-			);
-
 		}
-	} else {
-		return;
+
+		return '<div class="previous_rsvp_prompt_note">' . __( 'Please check your inbox for a secure RSVP update link for this event.', 'rsvpmaker' ) . '</div>';
 	}
+
+	if ( ! empty( $any_row ) ) {
+		$throttle_key = 'rsvpmaker_lookup_mail_copy_' . md5( strtolower( trim( $email ) ) . '|' . (int) $event );
+		if ( ! get_transient( $throttle_key ) ) {
+			$sent = rsvpmaker_lookup_copy_email_send( $event, $any_row );
+			if ( $sent ) {
+				set_transient( $throttle_key, 1, 5 * MINUTE_IN_SECONDS );
+			}
+		}
+
+		return '<div class="previous_rsvp_prompt_note">' . __( 'Please check your inbox for a secure RSVP link to copy prior details into this form.', 'rsvpmaker' ) . '</div>';
+	}
+
+	return '<div class="previous_rsvp_prompt_note">' . __( 'No registration associated with that email address was found.', 'rsvpmaker' ) . '</div>';
 
 }
 

@@ -114,29 +114,76 @@ if($('#formvars')) {
 			return true;
 	});
 
-	//search for previous rsvps
+	// Secure lookup flow: explicit lookup panel + quiet auto-check on main email field.
 	var searchRequest = null;
+	var autoLookupEmail = '';
+	var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
-	$(function () {
-		var minlength = 3;
-
-		$("#email").keyup(function () {
-			var that = this;
-			value = $(this).val();
-			var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-			var post_id = $('#event').val();
-			if ((value.length >= minlength ) && (value.match(mailformat)) ) {
-				if (searchRequest != null) 
-					searchRequest.abort();
-				var data = {
-					'email_search': value,
-				};
-				jQuery.get(email_lookup, data, function(response) {
-				$('#rsvp_email_lookup').html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">'+response+'</div>');
-				});
+	function renderLookupResponse(targetSelector, response, showNotFound) {
+		if(!response) {
+			if(showNotFound) {
+				$(targetSelector).html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">No registration associated with that email address was found for this event.</div>');
 			}
+			else {
+				$(targetSelector).html('');
+			}
+			return;
+		}
+		var inboxMessage = /check your inbox/i.test(response);
+		if (showNotFound || inboxMessage) {
+			$(targetSelector).html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">'+response+'</div>');
+		}
+		else {
+			$(targetSelector).html('');
+		}
+	}
+
+	function runEmailLookup(value, targetSelector, showNotFound) {
+		if (!value || !value.match(mailformat)) {
+			if(showNotFound) {
+				$(targetSelector).html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">Please enter a valid email address.</div>');
+			}
+			return;
+		}
+		if (searchRequest != null) {
+			searchRequest.abort();
+		}
+		var data = {
+			'email_search': value,
+		};
+		searchRequest = jQuery.get(email_lookup, data, function(response) {
+			renderLookupResponse(targetSelector, response, showNotFound);
 		});
-	});	
+	}
+
+	$('#rsvp_lookup_toggle').on('click', function(event) {
+		event.preventDefault();
+		$('#rsvp_lookup_panel').toggle();
+		if($('#rsvp_lookup_panel').is(':visible')) {
+			$('#rsvp_lookup_email').trigger('focus');
+		}
+	});
+
+	$('#rsvp_lookup_submit').on('click', function(event) {
+		event.preventDefault();
+		runEmailLookup($('#rsvp_lookup_email').val(), '#rsvp_email_lookup_manual', true);
+	});
+
+	$('#rsvp_lookup_email').on('keydown', function(event) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			$('#rsvp_lookup_submit').trigger('click');
+		}
+	});
+
+	$('#email').on('change blur', function () {
+		var value = $(this).val();
+		if (value === autoLookupEmail) {
+			return;
+		}
+		autoLookupEmail = value;
+		runEmailLookup(value, '#rsvp_email_lookup', false);
+	});
 }
 /** end form js */
 		$('.wp-block-rsvpmaker-formfield input').change( function () {

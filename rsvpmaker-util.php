@@ -1836,6 +1836,12 @@ function get_rsvpmaker_stripe_keys($sandbox = false) {
 
 function rsvpmaker_get_rspmaker_paypal_rest_keys() {
 	$paypal_rest_keys = get_option( 'rsvpmaker_paypal_rest_keys' );
+	if ( ! is_array( $paypal_rest_keys ) ) {
+		$paypal_rest_keys = array();
+	}
+	if ( empty( $paypal_rest_keys['webhook'] ) ) {
+		$paypal_rest_keys['webhook'] = trailingslashit( home_url( 'wp-json/rsvpmaker/v1/paypal_webhook' ) );
+	}
 	return $paypal_rest_keys;
 }
 
@@ -3431,6 +3437,84 @@ function get_rsvp_email() {
 	}
 	return $email;
 }
+
+function rsvpmaker_session_profile_cookie_name() {
+	return 'rsvpmaker_session_profile';
+}
+
+function rsvpmaker_session_profile_save( $profile ) {
+	if ( is_admin() || empty( $profile ) || ! is_array( $profile ) ) {
+		return;
+	}
+
+	$exclude = array(
+		'id',
+		'event',
+		'yesno',
+		'participants',
+		'user_id',
+		'timestamp',
+		'owed',
+		'amountpaid',
+		'fee_total',
+		'payingfor',
+		'pricechoice',
+		'master_rsvp',
+		'guestof',
+		'details',
+		'gift_certificate',
+		'is_gift_certificate',
+		'multi_event_price',
+	);
+
+	$saved = array();
+	foreach ( $profile as $name => $value ) {
+		$name = sanitize_key( $name );
+		if ( empty( $name ) || in_array( $name, $exclude, true ) ) {
+			continue;
+		}
+		if ( is_scalar( $value ) ) {
+			$saved[ $name ] = sanitize_text_field( $value );
+		}
+	}
+
+	if ( empty( $saved ) ) {
+		return;
+	}
+
+	$payload = rawurlencode( wp_json_encode( $saved ) );
+	setcookie( rsvpmaker_session_profile_cookie_name(), $payload, 0, '/', sanitize_text_field( $_SERVER['SERVER_NAME'] ) );
+	$_COOKIE[ rsvpmaker_session_profile_cookie_name() ] = $payload;
+}
+
+function rsvpmaker_session_profile_get() {
+	if ( empty( $_COOKIE[ rsvpmaker_session_profile_cookie_name() ] ) ) {
+		return array();
+	}
+
+	$raw_cookie = wp_unslash( $_COOKIE[ rsvpmaker_session_profile_cookie_name() ] );
+	if ( ! is_string( $raw_cookie ) || ( strlen( $raw_cookie ) > 5000 ) ) {
+		return array();
+	}
+
+	$json = rawurldecode( $raw_cookie );
+	$data = json_decode( $json, true );
+	if ( ! is_array( $data ) ) {
+		return array();
+	}
+
+	$profile = array();
+	foreach ( $data as $name => $value ) {
+		$name = sanitize_key( $name );
+		if ( empty( $name ) || ! is_scalar( $value ) ) {
+			continue;
+		}
+		$profile[ $name ] = sanitize_text_field( $value );
+	}
+
+	return $profile;
+}
+
 function rsvpmaker_parent( $post_id ) {
 	global $wpdb;
 	return $wpdb->get_var( $wpdb->prepare("SELECT post_parent FROM %i WHERE ID=%d",$wpdb->posts,$post_id) );
@@ -4908,6 +4992,43 @@ function rsvpmaker_confirm_payment($rsvp_id, $rsvp_to = '') {
 	}
 
 }
+
+function rsvpmaker_event_has_pricing( $event_id ) {
+	$event_id = (int) $event_id;
+	if ( empty( $event_id ) ) {
+		return false;
+	}
+
+	$pricing = function_exists( 'rsvp_get_pricing' ) ? rsvp_get_pricing( $event_id ) : get_post_meta( $event_id, 'pricing', true );
+	if ( is_array( $pricing ) && ! empty( $pricing ) ) {
+		return true;
+	}
+
+	$item_prices = get_post_meta( $event_id, '_rsvp_item_prices', true );
+	if ( empty( $item_prices ) ) {
+		return false;
+	}
+
+	$stack = array( $item_prices );
+	while ( ! empty( $stack ) ) {
+		$current = array_pop( $stack );
+		if ( is_object( $current ) ) {
+			$current = get_object_vars( $current );
+		}
+		if ( is_array( $current ) ) {
+			foreach ( $current as $value ) {
+				if ( is_array( $value ) || is_object( $value ) ) {
+					$stack[] = $value;
+				} elseif ( is_numeric( $value ) && ( floatval( $value ) > 0 ) ) {
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 
 	global $post, $wpdb, $rsvp_options;
@@ -4915,6 +5036,106 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 	$guestparty = '';
 
 	$exclude = array('first','last','id','yesno','event','owed','amountpaid','master_rsvp','guestof','participants','user_id','timestamp','payingfor','fee_total','pricechoice');
+	$pricing_field_slugs = array( 'amountpaid', 'owed', 'fee_total', 'payingfor', 'pricechoice' );
+
+	$strip_generated_suffix = function( $value ) {
+		$cleaned = preg_replace( '/([_\-\s])?\d{10,}$/', '', (string) $value );
+		return trim( (string) $cleaned, " _-\t\n\r\0\x0B" );
+	};
+
+	$normalize = function( $value ) {
+		return preg_replace( '/[^a-z0-9]/', '_', strtolower( (string) $value ) );
+	};
+
+	$label_map = array();
+	if ( function_exists( 'rsvpmaker_report_form_label_to_slug' ) ) {
+		$label_to_slug = rsvpmaker_report_form_label_to_slug( ! empty( $post->ID ) ? (int) $post->ID : 0 );
+		if ( is_array( $label_to_slug ) ) {
+			foreach ( $label_to_slug as $label => $slug ) {
+				$slug = (string) $slug;
+				if ( '' === $slug ) {
+					continue;
+				}
+				$label_map[ $slug ] = $label;
+				$label_map[ $normalize( $slug ) ] = $label;
+				$stripped_slug = $strip_generated_suffix( $slug );
+				if ( '' !== $stripped_slug ) {
+					$label_map[ $stripped_slug ] = $label;
+					$label_map[ $normalize( $stripped_slug ) ] = $label;
+				}
+			}
+		}
+	}
+
+	$format_detail_lines = function( $row ) use ( $exclude, $label_map, $normalize, $strip_generated_suffix, $pricing_field_slugs ) {
+		$detail_lines = '';
+		if ( ! is_array( $row ) ) {
+			return $detail_lines;
+		}
+
+		$consumed = array();
+		if ( ! empty( $label_map ) ) {
+			$label_to_slug = array();
+			if ( function_exists( 'rsvpmaker_report_form_label_to_slug' ) ) {
+				$event_id = ! empty( $row['event'] ) ? (int) $row['event'] : 0;
+				$label_to_slug = rsvpmaker_report_form_label_to_slug( $event_id );
+			}
+			if ( is_array( $label_to_slug ) ) {
+				foreach ( $label_to_slug as $label => $slug ) {
+					$slug = (string) $slug;
+					if ( in_array( $normalize( $slug ), $pricing_field_slugs, true ) ) {
+						continue;
+					}
+					$candidates = array(
+						$slug,
+						$normalize( $slug ),
+						$strip_generated_suffix( $slug ),
+						$normalize( $strip_generated_suffix( $slug ) ),
+					);
+					foreach ( $candidates as $candidate ) {
+						if ( '' === $candidate || ! isset( $row[ $candidate ] ) || empty( $row[ $candidate ] ) ) {
+							continue;
+						}
+						$detail_lines .= '<br>' . esc_html( $label ) . ': ' . esc_html( $row[ $candidate ] );
+						$consumed[ $normalize( $candidate ) ] = true;
+						break;
+					}
+				}
+			}
+		}
+
+		foreach ( $row as $key => $value ) {
+			if ( in_array( $key, $exclude, true ) || empty( $value ) ) {
+				continue;
+			}
+
+			$normalized_key = $normalize( $key );
+			if ( isset( $consumed[ $normalized_key ] ) ) {
+				continue;
+			}
+
+			$stripped_key = $strip_generated_suffix( $key );
+			$label = '';
+			if ( isset( $label_map[ $key ] ) ) {
+				$label = $label_map[ $key ];
+			} elseif ( isset( $label_map[ $normalized_key ] ) ) {
+				$label = $label_map[ $normalized_key ];
+			} elseif ( ( '' !== $stripped_key ) && isset( $label_map[ $stripped_key ] ) ) {
+				$label = $label_map[ $stripped_key ];
+			} elseif ( ( '' !== $stripped_key ) && isset( $label_map[ $normalize( $stripped_key ) ] ) ) {
+				$label = $label_map[ $normalize( $stripped_key ) ];
+			}
+
+			if ( '' === $label ) {
+				$fallback_key = ( '' !== $stripped_key ) ? $stripped_key : $key;
+				$label = ucwords( str_replace( '_', ' ', $fallback_key ) );
+			}
+
+			$detail_lines .= '<br>' . esc_html( $label ) . ': ' . esc_html( $value );
+		}
+
+		return $detail_lines;
+	};
 
 	if($master) {
 
@@ -4939,7 +5160,8 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 		}
 
 		$row = rsvp_row_to_profile( $row );
-		if($row['fee_total'] > 0) {
+		$event_has_pricing = ! empty( $row['event'] ) && function_exists( 'rsvpmaker_event_has_pricing' ) ? rsvpmaker_event_has_pricing( (int) $row['event'] ) : false;
+		if ( $event_has_pricing && ! empty( $row['fee_total'] ) && ( $row['fee_total'] > 0 ) ) {
 
 			$guestparty .= wp_kses_post($row['payingfor']);
 
@@ -4988,16 +5210,7 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 		$guestparty .= sprintf('<p class="noprint"><a href="%s">%s</a></p>',add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($row['event'])),__('Print Receipt','rsvpmaker'));
 		}
 		$guestparty .= '<p>'.$row['first'].' '.$row['last'];
-
-		foreach($row as $key => $value) {
-
-			if(in_array($key,$exclude))
-
-				continue;
-
-			$guestparty .= '<br>'.ucwords(str_replace('_',' ',$key)).': '.$value;
-
-		}
+		$guestparty .= $format_detail_lines( $row );
 
 		$guestparty .= '</p>';
 
@@ -5022,16 +5235,7 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 			$row = rsvp_row_to_profile( $row );
 
 			$guestparty .= '<p>'.$row['first'].' '.$row['last'];
-
-			foreach($row as $key => $value) {
-
-				if(in_array($key,$exclude))
-
-					continue;
-
-				$guestparty .= '<br>'.ucwords(str_replace('_',' ',$key)).': '.$value;
-
-			}
+			$guestparty .= $format_detail_lines( $row );
 
 			$guestparty .= '</p>';
 

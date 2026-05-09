@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 11.9.7
+* Version: 11.9.8
 */
 
 function get_rsvpversion() {
-	return '11.9.7';
+	return '11.9.8';
 }
 
 global $wp_version;
@@ -406,6 +406,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 		'webhook' => array( 'type' => 'string' ),
 		'sandbox_pk' => array( 'type' => 'string' ),
 		'sandbox_sk' => array( 'type' => 'string' ),
+		'mode' => array( 'type' => 'string' ),
 	);
 	$stripe_schema  = array(
 		'type'                 => 'object',
@@ -417,7 +418,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 		'rsvpmaker_stripe_keys',
 		array(
 			'type'              => 'object',
-			'default'           => array('sk'=>'','pk'=>'','webhook'=>'','sandbox_pk'=>'','sandbox_sk'=>''),
+			'default'           => array('sk'=>'','pk'=>'','webhook'=>'','sandbox_pk'=>'','sandbox_sk'=>'','mode'=>'production'),
 			'sanitize_callback' => 'rsvpmaker_sanitize_options',
 			'show_in_rest'      => array(
 				'schema' => $stripe_schema,
@@ -442,7 +443,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 	);
 	register_setting(
 		'options',
-		'rsvpmaker_paypal_keys',
+		'rsvpmaker_paypal_rest_keys',
 		array(
 			'type'              => 'object',
 			'default'           => array('client_id'=>'','client_secret'=>'','webhook'=>'','sandbox_client_id'=>'','sandbox_client_secret'=>'','funding_sources'=>'','excluded_funding_sources'=>'','mode'=>'','sandbox'=>0),
@@ -458,6 +459,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 		'webhook' => array( 'type' => 'string' ),
 		'sandbox_pk' => array( 'type' => 'string' ),
 		'sandbox_sk' => array( 'type' => 'string' ),
+		'mode' => array( 'type' => 'string' ),
 	);
 	$stripe_schema  = array(
 		'type'                 => 'object',
@@ -469,7 +471,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 		'rsvpmaker_stripe_keys',
 		array(
 			'type'              => 'object',
-			'default'           => array('sk'=>'','pk'=>'','webhook'=>'','sandbox_pk'=>'','sandbox_sk'=>''),
+			'default'           => array('sk'=>'','pk'=>'','webhook'=>'','sandbox_pk'=>'','sandbox_sk'=>'','mode'=>'production'),
 			'sanitize_callback' => 'rsvpmaker_sanitize_options',
 			'show_in_rest'      => array(
 				'schema' => $stripe_schema,

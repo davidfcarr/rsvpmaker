@@ -146,7 +146,6 @@ function rsvp_form_text( $atts, $content ) {
 	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:%s</label></p>%s<div style="margin-left:1.25em;"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></div></div>', esc_attr( $required ), esc_html( $label ), $required_marker, $fieldnote_html, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ) );
 
 	if ( $slug == 'email' ) {
-
 		$content .= '<div id="rsvp_email_lookup"></div>';
 	}
 
@@ -759,6 +758,122 @@ function rsvpmaker_form_field_labels($post_id) {
 	return $field_labels;
 }
 
+function rsvpmaker_confirmation_field_label( $event_id, $field_name ) {
+	$event_id = (int) $event_id;
+	$field_name = (string) $field_name;
+	if ( empty( $event_id ) || ( '' === $field_name ) ) {
+		return $field_name;
+	}
+
+	$normalize = function( $value ) {
+		return preg_replace( '/[^a-z0-9]/', '_', strtolower( (string) $value ) );
+	};
+
+	$strip_generated_suffix = function( $value ) {
+		$cleaned = preg_replace( '/([_\-\s])?\d{10,}$/', '', (string) $value );
+		return trim( (string) $cleaned, " _-\t\n\r\0\x0B" );
+	};
+
+	$slug_to_label = array();
+	$add_map = function( $slug, $label ) use ( &$slug_to_label, $normalize, $strip_generated_suffix ) {
+		$slug = (string) $slug;
+		$label = (string) $label;
+		if ( '' === $slug || '' === $label ) {
+			return;
+		}
+
+		$slug_to_label[ $slug ] = $label;
+		$slug_to_label[ $normalize( $slug ) ] = $label;
+
+		$stripped_slug = $strip_generated_suffix( $slug );
+		if ( '' !== $stripped_slug ) {
+			$slug_to_label[ $stripped_slug ] = $label;
+			$slug_to_label[ $normalize( $stripped_slug ) ] = $label;
+		}
+	};
+
+	if ( function_exists( 'rsvpmaker_report_form_label_to_slug' ) ) {
+		$label_to_slug = rsvpmaker_report_form_label_to_slug( $event_id );
+		if ( is_array( $label_to_slug ) ) {
+			foreach ( $label_to_slug as $label => $slug ) {
+				$add_map( $slug, $label );
+			}
+		}
+	}
+
+	$form_labels = rsvpmaker_form_field_labels( $event_id );
+	if ( is_array( $form_labels ) ) {
+		foreach ( $form_labels as $slug => $label ) {
+			$add_map( $slug, $label );
+		}
+	}
+
+	if ( isset( $slug_to_label[ $field_name ] ) ) {
+		return $slug_to_label[ $field_name ];
+	}
+
+	$normalized_field = $normalize( $field_name );
+	if ( isset( $slug_to_label[ $normalized_field ] ) ) {
+		return $slug_to_label[ $normalized_field ];
+	}
+
+	$stripped_field = $strip_generated_suffix( $field_name );
+	if ( ( '' !== $stripped_field ) && isset( $slug_to_label[ $stripped_field ] ) ) {
+		return $slug_to_label[ $stripped_field ];
+	}
+
+	$stripped_normalized_field = $normalize( $stripped_field );
+	if ( isset( $slug_to_label[ $stripped_normalized_field ] ) ) {
+		return $slug_to_label[ $stripped_normalized_field ];
+	}
+
+	$legacy_label = get_post_meta( $event_id, 'rsvpform' . $field_name, true );
+	if ( ! empty( $legacy_label ) ) {
+		return $legacy_label;
+	}
+
+	return ( '' !== $stripped_field ) ? $stripped_field : $field_name;
+}
+
+function rsvpmaker_confirmation_message_fields( $event_id, $rsvp ) {
+	if ( ! is_array( $rsvp ) ) {
+		return '';
+	}
+
+	$lines = '';
+	if ( function_exists( 'rsvpmaker_report_form_label_to_slug' ) ) {
+		$form_label_to_slug = rsvpmaker_report_form_label_to_slug( (int) $event_id );
+		if ( is_array( $form_label_to_slug ) ) {
+			foreach ( $form_label_to_slug as $label => $slug ) {
+				if ( isset( $rsvp[ $slug ] ) && ! empty( $rsvp[ $slug ] ) ) {
+					$lines .= $label . ': ' . $rsvp[ $slug ] . "\n";
+					continue;
+				}
+
+				$normalized_slug = preg_replace( '/[^a-z0-9]/', '_', $slug );
+				if ( isset( $rsvp[ $normalized_slug ] ) && ! empty( $rsvp[ $normalized_slug ] ) ) {
+					$lines .= $label . ': ' . $rsvp[ $normalized_slug ] . "\n";
+				}
+			}
+		}
+	}
+
+	if ( '' !== $lines ) {
+		return $lines;
+	}
+
+	foreach ( $rsvp as $name => $value ) {
+		if ( empty( $value ) ) {
+			continue;
+		}
+
+		$name = rsvpmaker_confirmation_field_label( $event_id, $name );
+		$lines .= $name . ': ' . $value . "\n";
+	}
+
+	return $lines;
+}
+
 add_shortcode('rsvpmaker_contact_form_output','rsvpmaker_contact_form_capture_output');
 function rsvpmaker_contact_form_capture_output($attributes) {
 	if(isset($_GET['check_coupon']))
@@ -1098,23 +1213,12 @@ function save_replay_rsvp() {
 			}
 			if(!is_admin())
 			setcookie( 'rsvp_for_' . $event, $rsvp_id, time() + ( 60 * 60 * 24 * 90 ), '/', sanitize_text_field($_SERVER['SERVER_NAME']) );
+			rsvpmaker_session_profile_save( $rsvp );
 
 			if ( $future ) {
 
 				$cleanmessage = '';
-
-				foreach ( $rsvp as $name => $value ) {
-
-					$label = get_post_meta( $event, 'rsvpform' . $name, true );
-
-					if ( $label ) {
-
-						$name = $label;
-					}
-
-					$cleanmessage .= $name . ': ' . $value . "\n";// labels from form
-
-				}
+				$cleanmessage .= rsvpmaker_confirmation_message_fields( $event, $rsvp );
 
 				$subject = __( 'You registered for ', 'rsvpmaker' ) . ' ' . esc_html( $post->post_title );
 
@@ -1376,9 +1480,13 @@ function save_rsvp($postdata, $live = true) {
 				}
 			}
 			if ( empty( $rsvp_id ) ) {
-				//fix for patchstack report
-				$sql = $wpdb->prepare('SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE email=%s AND first=%s AND last=%s AND event=%d ", $rsvp['email'], $rsvp['first'], $rsvp['last'], $post->ID);
-				$duplicate_check = $wpdb->get_var( $sql );
+				// Prefer updating an existing RSVP for this email/event instead of creating duplicates.
+				$sql = $wpdb->prepare(
+					'SELECT id FROM ' . $wpdb->prefix . "rsvpmaker WHERE event=%d AND email=%s AND master_rsvp=0 ORDER BY id DESC",
+					$post->ID,
+					$rsvp['email']
+				);
+				$duplicate_check = (int) $wpdb->get_var( $sql );
 
 				if ( $duplicate_check ) {
 
@@ -1656,6 +1764,7 @@ function save_rsvp($postdata, $live = true) {
 			{
 				setcookie( 'rsvp_for_' . $post->ID, $rsvp_id, time() + 60 * 60 * 24 * 90, '/', sanitize_text_field($_SERVER['SERVER_NAME']) );
 				setcookie( 'rsvpmaker', $rsvp_id, time() + 60 * 60 * 24 * 90, '/', sanitize_text_field($_SERVER['SERVER_NAME']) );	
+				rsvpmaker_session_profile_save( $rsvp );
 			}
 			if ( isset( $postdata['timeslot'] ) ) {
 
@@ -1684,20 +1793,7 @@ function save_rsvp($postdata, $live = true) {
 
 			$date = rsvpdate_shortcode( array( 'format' => '%b %e' ) );
 
-			foreach ( $rsvp as $name => $value ) {
-
-				$label = get_post_meta( $post->ID, 'rsvpform' . $name, true );
-
-				if ( $label ) {
-
-					$name = $label;
-				}
-
-				if ( ! empty( $value ) ) {
-
-					$cleanmessage .= $name . ': ' . $value . "\n";// labels from rsvp form
-				}
-			}
+			$cleanmessage .= rsvpmaker_confirmation_message_fields( $post->ID, $rsvp );
 
 			$guestof = (empty($rsvp['first'])) ? '' : $rsvp['first'] . ' ';
 			$guestof .=  (empty($rsvp['last'])) ? '' : $rsvp['last'];
@@ -1836,6 +1932,9 @@ function save_rsvp($postdata, $live = true) {
 
 				$rsvp_options['rsvplink'] = get_rsvp_link( $post->ID, false, $rsvp['email'], $rsvp_id );
 				$rsvpdata['rsvpupdate'] = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
+				if ( ! empty( $rsvp['fee_total'] ) ) {
+					$rsvpdata['rsvpupdate'] .= '<p><em>' . __( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
+				}
 
 				if($live)
 				rsvp_notifications_via_template( $rsvp, $rsvp_to, $rsvpdata );
@@ -2262,7 +2361,6 @@ function rsvpfield( $atts ) {
 		}
 
 		if ( $field == 'email' ) {
-
 			$output .= '<div id="rsvp_email_lookup"></div>';
 		}
 

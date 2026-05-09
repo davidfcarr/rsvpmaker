@@ -50,30 +50,60 @@ function rsvpmaker_paypal_verify_rest () {
     $rsvptable = $wpdb->prefix.'rsvpmaker';
         $request_body = file_get_contents('php://input');        
         $data = json_decode($request_body);
+        if(empty($data) || empty($data->rsvp_tx) || empty($data->id) || empty($data->status))
+          return array('status' => 'Invalid PayPal payload');
         $saved = get_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);
         if(empty($saved))
           return array('status' => 'Pending transaction not found');
         delete_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);//one time use
+        if(
+          empty($data->purchase_units[0]->amount->value)
+          || abs(floatval($data->purchase_units[0]->amount->value) - floatval($saved['amount'])) > 0.01
+        )
+          return array('status' => 'Payment amount mismatch');
+        if(!empty($rsvp_options['paypal_currency']) && !empty($data->purchase_units[0]->amount->currency_code) && strtoupper($data->purchase_units[0]->amount->currency_code) !== strtoupper($rsvp_options['paypal_currency']))
+          return array('status' => 'Payment currency mismatch');
+        if('COMPLETED' !== strtoupper($data->status))
+          return array('status' => 'Payment not completed');
         $rsvp_id = (empty($saved['rsvp'])) ? 0 : $saved['rsvp'];
         $rsvp_to = $rsvp_options['rsvp_to'];
         $paidnow = floatval($saved['amount']);
         $status = $data->status.' payment of '.number_format( $paidnow, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'].' from '.$data->payer->name->given_name.' '.$data->payer->name->surname;
         $event_id = 0;
+        $already_processed = false;
         if($rsvp_id) {
           $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id=%d",$rsvptable,$rsvp_id));
-          $details = unserialize($row->details);
+          if(empty($row))
+            return array('status' => 'RSVP record not found');
+          $details = maybe_unserialize($row->details);
+          if(!is_array($details))
+            $details = array();
           $paidbefore = (empty($row->amountpaid)) ? 0 : floatval($row->amountpaid);
-          $paid = ($paidbefore) ? $paidbefore + $paidnow : $paidnow;
           $fee_total = floatval($row->fee_total);
-          $calculation = "$fee_total - $paid";
-          $owed = $fee_total - $paid;
-          if($details['gift_certificate']) {
+          $event_id = $row->event;
+          if(!empty($details['paypal_transaction_id']) && $details['paypal_transaction_id'] === $data->id) {
+            $already_processed = true;
+            $paid = $paidbefore;
+            $owed = $fee_total - $paidbefore;
+            $status = 'Payment already recorded: '.number_format( $paidbefore, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'];
+          }
+          else {
+            $paid = ($paidbefore) ? $paidbefore + $paidnow : $paidnow;
+            $owed = $fee_total - $paid;
+            $details['paypal_transaction_id'] = $data->id;
+            $details['paypal_capture_status'] = $data->status;
+            $details['paypal_payment_amount'] = $paidnow;
+            $details['paypal_payment_currency'] = $data->purchase_units[0]->amount->currency_code;
+            $details['paypal_payment_processed_at'] = current_time('mysql');
+          }
+          if(!empty($details['gift_certificate'])) {
             $gift = get_option($details['gift_certificate']);
             $balance_was = $fee_total - $paidbefore;
           }
-          $event_id = $row->event;
-          $updatesql = $wpdb->prepare("UPDATE %i SET amountpaid=%s, owed=%s WHERE id=%d",$rsvptable,$paid,$owed,$rsvp_id);
-          $wpdb->query($updatesql);
+          if(!$already_processed) {
+            $updatesql = $wpdb->prepare("UPDATE %i SET amountpaid=%s, owed=%s, details=%s WHERE id=%d",$rsvptable,$paid,$owed,maybe_serialize($details),$rsvp_id);
+            $wpdb->query($updatesql);
+          }
         }
         $gift_certificate = '';
         $atts['name'] = $data->payer->name->given_name.' '.$data->payer->name->surname;
@@ -86,40 +116,44 @@ function rsvpmaker_paypal_verify_rest () {
         if(!empty($saved['is_gift_certificate'])) {
           $gift_certificate = rsvpmaker_gift_certificate_create($atts['amount'],$atts);
         }
-        $existing = rsvpmaker_money_tx($atts);
-        do_action('rsvpmaker_paypal_confirmation_tracking',$data,$saved);
-        $postdata = null;
-        if(isset($saved['rsvpmulti'])) {
-          $postdata = get_transient($saved['rsvpmulti']);
-          $postdata['yesno'] = 1;
-          if($postdata && is_array($postdata)) {
-            $status .= '<p>'.__('Event registrations saved.','rsvpmaker').'</p>';
-            $status .= '<p>'.__('Use the links below to update any of the individual events.','rsvpmaker').'</p>';
-            foreach($postdata['rsvpmultievent'] as $event_id) {
-              $event_id = intval($event_id);
-              if($event_id) {
-              $postdata['event'] = $event_id;
-              $status .= save_rsvp($postdata,false);
+        $existing = $already_processed ? null : rsvpmaker_money_tx($atts);
+        if(!$already_processed) {
+          do_action('rsvpmaker_paypal_confirmation_tracking',$data,$saved);
+          $postdata = null;
+          if(isset($saved['rsvpmulti'])) {
+            $postdata = get_transient($saved['rsvpmulti']);
+            $postdata['yesno'] = 1;
+            if($postdata && is_array($postdata)) {
+              $status .= '<p>'.__('Event registrations saved.','rsvpmaker').'</p>';
+              $status .= '<p>'.__('Use the links below to update any of the individual events.','rsvpmaker').'</p>';
+              foreach($postdata['rsvpmultievent'] as $event_id) {
+                $event_id = intval($event_id);
+                if($event_id) {
+                $postdata['event'] = $event_id;
+                $status .= save_rsvp($postdata,false);
+                }
               }
+              $confirmation = rsvp_get_confirm(0);
+              $mail['html'] = $status.$confirmation.'<p>'.$postdata['description'].'</p>';
+              $mail['subject'] = 'CONFIRMING RSVP for '.intval($postdata['events_count']).' events';
+              $mail['to'] = $postdata['profile']['email'];
+              $mail['from'] = $rsvp_to;
+              rsvpmailer($mail);
+              $mail['subject'] = 'RSVP for '.intval($postdata['events_count']).' events';
+              $mail['to'] = $rsvp_options['rsvp_to'];
+              $mail['from'] = $postdata['profile']['email'];
+              $mail['fromname'] = $postdata['profile']['first'].' '.$postdata['profile']['last'];
+              rsvpmailer($mail);
             }
-            $confirmation = rsvp_get_confirm(0);
-            $mail['html'] = $status.$confirmation.'<p>'.$postdata['description'].'</p>';
-            $mail['subject'] = 'CONFIRMING RSVP for '.intval($postdata['events_count']).' events';
-            $mail['to'] = $postdata['profile']['email'];
-            $mail['from'] = $rsvp_to;
-            rsvpmailer($mail);
-            $mail['subject'] = 'RSVP for '.intval($postdata['events_count']).' events';
-            $mail['to'] = $rsvp_options['rsvp_to'];
-            $mail['from'] = $postdata['profile']['email'];
-            $mail['fromname'] = $postdata['profile']['first'].' '.$postdata['profile']['last'];
-            rsvpmailer($mail);
           }
           else
             $status .= " ERROR processing multi-event registration";
+          if($rsvp_id) {
+            rsvpmaker_confirm_payment($rsvp_id,$rsvp_to);
+          }
         }
         $rsvp_receipt_link = '';
         if($rsvp_id) {
-          rsvpmaker_confirm_payment($rsvp_id,$rsvp_to);
           $receipt_code = get_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,true);
           if(!$receipt_code) {
             $receipt_code = wp_generate_password(20,false,false);

@@ -2059,6 +2059,7 @@ class RSVP_Options_Json extends WP_REST_Controller {
 				$response['paypal']['mode'] = ($pp['sandbox']) ? 'sandbox' : 'production';
 				$response['paypal']['funding_sources'] = empty($pp['funding_sources']) ? '' : $pp['funding_sources'];
 				$response['paypal']['excluded_funding_sources'] = empty($pp['excluded_funding_sources']) ? '' : $pp['excluded_funding_sources'];
+				$response['paypal']['webhook'] = empty($pp['webhook']) ? trailingslashit( home_url( 'wp-json/rsvpmaker/v1/paypal_webhook' ) ) : $pp['webhook'];
 			}
 
 		$response['rsvp_options'] = $rsvp_options;
