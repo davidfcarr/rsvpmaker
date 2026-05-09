@@ -80,7 +80,7 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 
 function rsvp_field_apply_default( $content, $slug, $default ) {
 
-	if ( strpos( $content, 'type="text"' ) || strpos( $content, 'type="email"' ) ) {
+	if ( strpos( $content, 'type="text"' ) || strpos( $content, 'type="email"' ) || strpos( $content, 'type="tel"' ) ) {
 
 		$content = str_replace( 'value=""', 'value="' . $default . '"', $content );
 

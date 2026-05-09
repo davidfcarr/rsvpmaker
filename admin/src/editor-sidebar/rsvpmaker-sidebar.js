@@ -93,12 +93,19 @@ if(rsvpmaker_rest.post_type == 'rsvpmaker_template' || rsvpmaker_rest.post_type 
 wp.plugins.registerPlugin( 'rsvpmaker-sidebar-plugin', {
 	render: RSVPMakerSidebarPlugin,
 } );
-// Force the panel open regardless of stored user preference
-const editPostDispatch = wp.data.dispatch( 'core/edit-post' ) || wp.data.dispatch( 'core/preferences' );
-const isPanelOpen = wp.data.select( 'core/edit-post' )?.isEditorPanelOpened?.( 'rsvpmaker-sidebar-plugin/rsvpmaker-document-panel' );
-if ( ! isPanelOpen ) {
-	wp.data.dispatch( 'core/edit-post' ).toggleEditorPanelOpened( 'rsvpmaker-sidebar-plugin/rsvpmaker-document-panel' );
-}
+// PluginDocumentSettingPanel ignores `initialOpen` once the user has a stored panel preference.
+// The panel is controlled entirely by the core/edit-post store, so we force it open explicitly.
+// We run twice: once synchronously (handles stored-closed preference) and once after React's
+// first render via requestAnimationFrame (handles the case where the initial store state hasn't
+// settled yet when the synchronous check runs).
+const panelId = 'rsvpmaker-sidebar-plugin/rsvpmaker-document-panel';
+const ensureRsvpPanelOpen = () => {
+	if ( ! wp.data.select( 'core/edit-post' )?.isEditorPanelOpened?.( panelId ) ) {
+		wp.data.dispatch( 'core/edit-post' ).toggleEditorPanelOpened( panelId );
+	}
+};
+ensureRsvpPanelOpen();
+requestAnimationFrame( ensureRsvpPanelOpen );
 }
 
 console.log('post type check',rsvpmaker_rest.post_type);

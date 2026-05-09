@@ -40,7 +40,7 @@ const EditLink = (props) => {
 const SaveButton = ( { label, onClick } ) => {
 	return (
 		<div>
-			<Button variant="primary" onClick={ onClick } __next40pxDefaultSize>
+			<Button type="button" variant="primary" onClick={ onClick } __next40pxDefaultSize>
 				{ label || __( 'Save', 'rsvpmaker' ) }
 			</Button>
 		</div>
@@ -51,40 +51,51 @@ const RsvpmakerSettings = () => {
 	const [ rsvp_options, setRsvpOptions, saveRsvpOptions ] = useRsvpOptions() || [{}, () => {}, () => {}];
 	const [ chimpOptions, setChimpOptions, saveChimpOptions ] = useChimpOptions() || [{}, () => {}, () => {}];
 	const [filter, setFilter] = useState({});
-	const { createSuccessNotice, removeAllNotices, removeNotice } = useDispatch( noticesStore );
+	const { createErrorNotice, createSuccessNotice, removeAllNotices, removeNotice } = useDispatch( noticesStore );
 	async function myCopyDefaults(filter = {}) {
 		const selectedFilters = Array.isArray(filter)
 			? filter.filter((item) => item.value).map((item) => item.id)
 			: Object.keys(filter || {}).filter((key) => !!filter[key]);
 
-		const url = new URL('rsvpmaker/v1/copy_defaults', rsvpmaker_rest.rest_url);
-		selectedFilters.forEach((item) => {
-			url.searchParams.append('filter[]', item);
-		});
-
-		//not in editor context, rsvpmaker_rest should be available.
-		const response = await fetch(url.toString(), {
-			method: 'GET',
-			headers: {
-				'X-WP-Nonce': rsvpmaker_rest.nonce,
-				'Content-Type': 'application/json'
-			}
-		});
-		const answer = await response.json();
 		const noticeId = `copy-${ Date.now() }`;
 
-		if(answer.updated) {
-			console.log(answer);
-			let updated = answer.updated;
-			if(updated.length > 500)
-				updated = updated.substring(0,500)+' ...';
+		try {
+			const url = new URL('rsvpmaker/v1/copy_defaults', rsvpmaker_rest.rest_url);
+			selectedFilters.forEach((item) => {
+				url.searchParams.append('filter[]', item);
+			});
+
+			const response = await fetch(url.toString(), {
+				method: 'GET',
+				headers: {
+					'X-WP-Nonce': rsvpmaker_rest.nonce,
+					'Content-Type': 'application/json'
+				}
+			});
+			const answer = await response.json();
+
+			if ( ! response.ok ) {
+				throw new Error(answer?.message || __('Copy Defaults request failed.', 'rsvpmaker'));
+			}
+
+			if(answer.updated) {
+				console.log(answer);
+				let updated = answer.updated;
+				if(updated.length > 500)
+					updated = updated.substring(0,500)+' ...';
+				removeAllNotices();
+				createSuccessNotice(updated, { id: noticeId, isDismissible: true } );
+			}
+			else {
+				createSuccessNotice(__('Nothing updated', 'rsvpmaker'), { id: noticeId, isDismissible: true } );
+			}
+		} catch ( error ) {
+			console.error('Copy defaults error', error);
 			removeAllNotices();
-			createSuccessNotice(updated, { id: noticeId, isDismissible: true } );
+			createErrorNotice(error?.message || __('Copy Defaults failed.', 'rsvpmaker'), { id: noticeId, isDismissible: true } );
+		} finally {
+			setTimeout(() => { removeNotice(noticeId); }, 5000);
 		}
-		else {
-			createSuccessNotice('Nothing updated', { id: noticeId, isDismissible: true } );
-		}
-		setTimeout(() => { removeNotice(noticeId); }, 5000);
 	}
 
 	if ( !rsvp_options ) {
@@ -982,9 +993,9 @@ const RsvpmakerSettings = () => {
 	return (
 		<VStack spacing={ 4 }>
 			<SettingsTitle />
-			<div id="floating-save" style={{  width: '60%', textAlign: 'left', padding: '5px', position: 'fixed', bottom: '50px', left: '200px', zIndex: 100,}}>
+			<div id="floating-save" style={{  width: '60%', textAlign: 'left', padding: '5px', position: 'fixed', bottom: '50px', left: '200px', zIndex: 100, pointerEvents: 'none' }}>
 			<Notices />
-			<div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px', borderRadius: '5px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+			<div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px', borderRadius: '5px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', pointerEvents: 'auto' }}>
 			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
 			</div>
 			</div>
@@ -1036,7 +1047,14 @@ const RsvpmakerSettings = () => {
 				}
 			/>
 			<Notices />
-			<SaveButton label={__('Copy Defaults', 'rsvpmaker')} onClick={ () => {myCopyDefaults(filter)} } />
+			<SaveButton
+				label={__('Copy Defaults', 'rsvpmaker')}
+				onClick={ async ( event ) => {
+					event.preventDefault();
+					event.stopPropagation();
+					await myCopyDefaults(filter);
+				} }
+			/>
 		</VStack>
 	);
 };

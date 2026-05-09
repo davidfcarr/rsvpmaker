@@ -5549,7 +5549,15 @@ function rsvpmaker_the_post($post_object, $context = 'post loaded') {
 		$rsvpmaker_event = $wpdb->get_row($wpdb->prepare("SELECT *, event as ID from %i WHERE event=%d",$wpdb->prefix."rsvpmaker_event",$post_object->ID));
 		if(!$rsvpmaker_event) // not an event document
 			{
-				$rsvpmaker_event = (object) array('event'=>$post_object->ID,'ts_start'=>1,'ts_end'=>1,'date'=>'');
+				$rsvpmaker_event = (object) array(
+					'event'        => $post_object->ID,
+					'ts_start'     => 1,
+					'ts_end'       => 1,
+					'date'         => '',
+					'enddate'      => '',
+					'display_type' => '',
+					'timezone'     => wp_timezone_string(),
+				);
 			}
 		$rsvpmakers[] = $rsvpmaker_event;
 		return $rsvpmaker_event;
@@ -5568,7 +5576,14 @@ function rsvpmakers_add($event) {
 	$rsvpmakers = get_rsvpmakers();
 	$found = rsvpmakers_find_match($event_id, $rsvpmakers);
 	if(!$found) {
-		$add = (object) array('event'=>(empty($event->event)) ? $event->ID : $event->event,'ts_start'=>$event->ts_start, 'display_type'=>$event->display_type,'timezone'=>$event->timezone,'date'=>$event->date,'enddate'=>$event->enddate);
+		$add = (object) array(
+			'event'        => ( empty( $event->event ) ) ? $event->ID : $event->event,
+			'ts_start'     => $event->ts_start,
+			'display_type' => isset( $event->display_type ) ? $event->display_type : '',
+			'timezone'     => isset( $event->timezone ) ? $event->timezone : wp_timezone_string(),
+			'date'         => isset( $event->date ) ? $event->date : '',
+			'enddate'      => isset( $event->enddate ) ? $event->enddate : '',
+		);
 		$rsvpmakers[] = $add;
 		//error_log('add_event '.sizeof($rsvpmakers).' '.var_export($add,true));
 	}

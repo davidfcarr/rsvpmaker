@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 11.9.8
+Stable tag: 11.9.9
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 

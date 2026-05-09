@@ -1413,6 +1413,7 @@ function rsvpmaker_allowed_profile_fields_for_event( $event_id ) {
 		'first' => true,
 		'last'  => true,
 		'email' => true,
+		'phone' => true,
 		'note'  => true,
 	);
 
@@ -1438,9 +1439,10 @@ function rsvpmaker_allowed_profile_fields_for_event( $event_id ) {
 	$form_source = (string) $form_post->post_content;
 
 	$patterns = array(
-		'/"field"\s*:\s*"([A-Za-z0-9_]+)"/',
-		'/\bfield\s*=\s*"([A-Za-z0-9_]+)"/',
-		'/\bfield\s*=\s*([A-Za-z0-9_]+)/',
+		'/"slug"\s*:\s*"([A-Za-z0-9_]+)"/',
+		'/name="profile\[([A-Za-z0-9_]+)\]"/',
+		'/\bslug\s*=\s*"([A-Za-z0-9_]+)"/',
+		'/\bslug\s*=\s*([A-Za-z0-9_]+)/',
 	);
 
 	foreach ( $patterns as $pattern ) {
@@ -2537,7 +2539,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ) );
 
-		if ( (int) $weeks[0] == 0 ) {
+		if ( ! isset( $weeks[0] ) || (int) $weeks[0] == 0 ) {
 
 			$s = __( 'Schedule Varies', 'rsvpmaker' );
 
@@ -2575,6 +2577,8 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		}
 	}
 	elseif ( $event = get_rsvpmaker_event($post_id) ) {
+		$event_display_type = isset( $event->display_type ) ? $event->display_type : '';
+		$event_enddate      = isset( $event->enddate ) ? $event->enddate : '';
 		if(!isset($event->display_type)){
 			error_log('missing display type for event '.$post_id. ' '.var_export($event, true) );
 		}
@@ -2587,10 +2591,10 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
 
 			$dateblock .= mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
-			if ( !empty($event->display_type) && $event->display_type == 'none' ) {
+			if ( !empty($event_display_type) && $event_display_type == 'none' ) {
 				return '';
 			}
-			elseif ( !empty($event->display_type) && $event->display_type == 'set' ) {
+			elseif ( !empty($event_display_type) && $event_display_type == 'set' ) {
 				$tzcode = strpos( $time_format, 'T' );
 
 				if ( $tzcode ) {
@@ -2607,7 +2611,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 				$dateblock .= '</span>';
 
-			} elseif ( empty($event->display_type) || ( !empty($event->display_type) && $event->display_type != 'allday' ) && ! strpos( $event->display_type, '|' ) ) {
+			} elseif ( empty($event_display_type) || ( !empty($event_display_type) && $event_display_type != 'allday' ) && ! strpos( $event_display_type, '|' ) ) {
 
 				$dateblock .= '<span class="time">' . rsvpmaker_date( ' ' . $time_format, $t ) . '</span>';
 
@@ -2620,8 +2624,8 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 				} else {
 					$atts['time'] = $event->date;
 
-					if ( $event->display_type == 'set' ) {
-						$atts['end'] = $event->enddate;
+					if ( $event_display_type == 'set' ) {
+						$atts['end'] = $event_enddate;
 					}
 
 					$tzbutton = rsvpmaker_timezone_converter( $atts );
@@ -2631,12 +2635,12 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		// gcal link
 
 		if ( ( ( ! empty( $rsvp_options['calendar_icons'] ) && ! isset( $custom_fields['_calendar_icons'][0] ) ) || ! empty( $custom_fields['_calendar_icons'][0] ) ) ) {
-			$end_time = !empty($event->enddate) ? $event->enddate : null;
+			$end_time = ! empty( $event_enddate ) ? $event_enddate : null;
 			$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
 			if ( rsvpmaker_is_email_context() ) {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), $permalink . $j . 'ical=1', $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event_enddate ), $permalink . $j . 'ical=1', $tzbutton );
 			} else {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event->enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event_enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
 			}
 		} elseif ( ! empty( $custom_fields['_convert_timezone'][0] ) ) { // convert button without calendar icons
 			$dateblock .= '<div class="rsvpcalendar_buttons">' . $tzbutton . '</div>';
@@ -2655,7 +2659,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 	return array(
 		'dateblock' => $dateblock,
-		'dur'       => empty($event) ? null : $event->display_type,
+		'dur'       => empty($event) ? null : $event_display_type,
 		'last_time' => $last_time,
 		'firstrow'  => $firstrow,
 	);
@@ -3054,7 +3058,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 
 	$rsvp_id = get_rsvp_id( $e );
 	if ( $rsvp_id && $e ) {
-		$sql = $wpdb->prepare("SELECT * FROM %i WHERE id=%d and email=%s",$wpdb->prefix . "rsvpmaker",$rsvp_id,$e);
+		$sql = $wpdb->prepare("SELECT * FROM %i WHERE id=%d AND email=%s AND event=%d",$wpdb->prefix . "rsvpmaker",$rsvp_id,$e,$post->ID);
 		$rsvprow = $wpdb->get_row( $sql, ARRAY_A );
 
 		if(!$rsvprow) {
@@ -3267,6 +3271,18 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 						continue;
 					}
 					$filtered_profile[ $key ] = sanitize_text_field( $value );
+				}
+
+				if ( ! empty( $copyrow['email'] ) ) {
+					$filtered_profile['email'] = sanitize_email( $copyrow['email'] );
+				}
+
+				if ( ! empty( $copyrow['phone'] ) ) {
+					$filtered_profile['phone'] = sanitize_text_field( $copyrow['phone'] );
+				}
+
+				if ( ! empty( $copyrow['phone_type'] ) ) {
+					$filtered_profile['phone_type'] = sanitize_text_field( $copyrow['phone_type'] );
 				}
 
 				unset( $filtered_profile['id'], $filtered_profile['event'], $filtered_profile['master_rsvp'], $filtered_profile['guestof'], $filtered_profile['details'] );

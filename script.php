@@ -212,10 +212,14 @@ function rsvpmaker_admin_enqueue(  ) {
 		wp_localize_script( 'rsvpmaker_admin_script', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	}
 	if(isset($_GET['page']) && 'rsvpmaker_settings' == $_GET['page'] ) {
-	wp_enqueue_script( 'rsvpmaker_react_settings', plugin_dir_url( __FILE__ ) . 'admin/build/settings/adminui.js', array(), $scriptversion, true );
+	$settings_script = plugin_dir_path( __FILE__ ) . 'admin/build/settings/adminui.js';
+	$settings_style = plugin_dir_path( __FILE__ ) . 'admin/build/settings/style-adminui.css';
+	$settings_script_version = file_exists( $settings_script ) ? filemtime( $settings_script ) : $scriptversion;
+	$settings_style_version = file_exists( $settings_style ) ? filemtime( $settings_style ) : $scriptversion;
+	wp_enqueue_script( 'rsvpmaker_react_settings', plugin_dir_url( __FILE__ ) . 'admin/build/settings/adminui.js', array(), $settings_script_version, true );
 	wp_enqueue_style( 'wp-components' );
 	wp_enqueue_style( 'wp-block-library' );
-	wp_enqueue_style( 'rsvpmaker_react_settings_style', plugin_dir_url( __FILE__ ) . 'admin/build/settings/style-adminui.css', array('wp-components','wp-block-library'), $scriptversion, 'all' );
+	wp_enqueue_style( 'rsvpmaker_react_settings_style', plugin_dir_url( __FILE__ ) . 'admin/build/settings/style-adminui.css', array('wp-components','wp-block-library'), $settings_style_version, 'all' );
 	}
 
 	wp_localize_script( 'rsvpmaker_react_settings', 'rsvpmaker_rest', rsvpmaker_rest_array() );

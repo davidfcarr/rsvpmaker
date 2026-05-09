@@ -483,7 +483,7 @@ if(!empty($rsvp_options['debug']))
 }
 
 function rsvpmaker_register_settings_page() {
-	add_options_page('RSVPMaker Settings', 'RSVPMaker Settings', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin');
+	add_options_page('RSVPMaker', 'RSVPMaker', 'manage_options', 'rsvpmaker_settings', 'rsvpmaker_react_admin');
 }
 
 function rsvpmaker_highlight_report_menu_item() {
@@ -2465,6 +2465,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				$update_post['post_content'] = $post->post_content;
 				$update_post['post_excerpt'] = $post->post_excerpt;
 				wp_update_post($update_post);
+				rsvpmaker_copy_metadata($t, $target_id);
 				$ts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$target_id));
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				update_post_meta($target_id,"_meet_recur",$t);
