@@ -22,7 +22,7 @@ export default function Edit() {
 	const RSVP_TEMPLATE = [
 		['rsvpmaker/rsvpdateblock'],
 		['rsvpmaker/excerpt'],
-		['core/read-more',{"content":"Read More \u003e\u003e","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], 
+		['core/read-more',{"content":"Read More","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], 
 		['rsvpmaker/button'],
 	];
 

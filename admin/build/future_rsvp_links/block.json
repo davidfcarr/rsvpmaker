@@ -18,6 +18,26 @@
       "type": "number",
       "default": 5
     },
+    "days": {
+      "type": "number",
+      "default": 180
+    },
+    "posts_per_page": {
+      "type": "number",
+      "default": 5
+    },
+    "type": {
+      "type": "string",
+      "default": ""
+    },
+    "time": {
+      "type": "number",
+      "default": 1
+    },
+    "date_format": {
+      "type": "string",
+      "default": "%A %B %e, %Y"
+    },
     "featured_image": {
       "type": "string",
       "default": ""
@@ -25,6 +45,10 @@
     "skipfirst": {
       "type": "boolean",
       "default": false
+    },
+    "rsvp_only": {
+      "type": "boolean",
+      "default": true
     }
   },
   "version": "1",

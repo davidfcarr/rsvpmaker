@@ -12,6 +12,10 @@
     "Calendar"
   ],
   "attributes": {
+    "limit": {
+      "type": "number",
+      "default": 10
+    },
     "days": {
       "type": "number",
       "default": 180
@@ -31,6 +35,18 @@
     "date_format": {
       "type": "string",
       "default": "%A %B %e, %Y"
+    },
+    "featured_image": {
+      "type": "string",
+      "default": ""
+    },
+    "skipfirst": {
+      "type": "boolean",
+      "default": false
+    },
+    "rsvp_only": {
+      "type": "boolean",
+      "default": false
     }
   },
   "version": "1",

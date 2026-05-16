@@ -84,7 +84,7 @@ export default function Edit(props) {
         class UpcomingInspector extends Component {
 	
             render() {
-                const { attributes: { calendar, excerpt, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author, itemcolor, itembg, itemfontsize, featured_image }, setAttributes, isSelected } = this.props;
+                const { attributes: { calendar, excerpt, days, posts_per_page, hideauthor, no_events, nav, type, exclude_type, author, itemcolor, itembg, itemfontsize, featured_image, rsvp_only }, setAttributes, isSelected } = this.props;
                 const fontSizes = [
                     {
                         name: __( 'Small' ),
@@ -213,6 +213,11 @@ export default function Edit(props) {
                 options={ featuredImageOptions }
                 onChange={ ( featured_image ) => { setAttributes( { featured_image: featured_image } ) } }
             />
+                        <div style={{marginTop: '15px'}}>
+                        <input type="checkbox" id="rsvp_only" checked={rsvp_only} onChange={(e) => { setAttributes( { rsvp_only: e.target.checked } ) }} />
+                        <label htmlFor="rsvp_only" style={{marginLeft: '5px'}}>{__("RSVP On Only", 'rsvpmaker')}</label>
+                        <p style={{margin: '5px 0 0 25px', fontSize: '12px', color: '#666'}}>{__('Only include events where the _rsvp_on postmeta flag is enabled.', 'rsvpmaker')}</p>
+                        </div>
                         <TextControl
                 label={__("Text to show for no events listed",'rsvpmaker')}
                 value={ no_events }

@@ -35,8 +35,34 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes, setAttributes, attributes: { limit, skipfirst, featured_image } } = props;
+	const { attributes, setAttributes, attributes: { posts_per_page, days, type, time, date_format, skipfirst, featured_image, rsvp_only } } = props;
+    const [rsvptypes, setTypes] = useState([]);
     const [preview, setPreview] = useState(null);
+
+    useEffect(() => {
+        if (typeof attributes.limit !== 'undefined' && String(attributes.limit) !== String(attributes.posts_per_page)) {
+            setAttributes({ posts_per_page: attributes.limit, limit: attributes.limit });
+            return;
+        }
+        if (typeof attributes.limit === 'undefined' && typeof attributes.posts_per_page !== 'undefined') {
+            setAttributes({ limit: attributes.posts_per_page });
+        }
+    }, []);
+
+    useEffect(() => {
+        const t = [{value: '', label: 'None selected (optional)'}];
+        apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
+            if(Array.isArray(types))
+                types.map( function(type) { if(type.slug && type.name) t.push({value: type.slug, label: type.name }) } );
+            else {
+                var typesarray = Object.values(types);
+                typesarray.map( function(type) { if(type.slug && type.name) t.push({value: type.slug, label: type.name }) } );
+            }
+        }).catch(err => {
+            console.log(err);
+        });
+        setTypes(t);
+    }, []);
 
     useEffect(() => {
         apiFetch( {path: addQueryArgs('/rsvpmaker/v1/preview/future-rsvp-links', attributes) } ).then( ( p ) => {
@@ -68,10 +94,60 @@ export default function Edit(props) {
                 <div { ...useBlockProps() }>
                     <InspectorControls key="futurersvpinspector">
 <SelectControl
-        label={__("Limit",'rsvpmaker')}
-        value={ limit }
-        options={ [{label:'3',value: '3'},{label:'5',value: '5'},{label:'7',value: '7'},{label:'10',value: '10'}] }
-        onChange={ ( limit ) => { setAttributes( { limit } ) } }
+        label={__("Events Per Page",'rsvpmaker')}
+        value={ posts_per_page }
+        options={ [{value: 5, label: 5},
+			{value: 10, label: 10},
+			{value: 15, label: 15},
+			{value: 20, label: 20},
+			{value: 25, label: 25},
+			{value: 30, label: 30},
+			{value: 35, label: 35},
+			{value: 40, label: 40},
+			{value: 45, label: 45},
+			{value: 50, label: 50},
+			{value: '-1', label: 'No limit'}]}
+        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page, limit: posts_per_page } ) } }
+    />
+					<SelectControl
+        label={__("Date Range",'rsvpmaker')}
+        value={ days }
+        options={ [{value: 5, label: 5},
+			{value: 30, label: '30 Days'},
+			{value: 60, label: '60 Days'},
+			{value: 90, label: '90 Days'},
+			{value: 180, label: '180 Days'},
+			{value: 366, label: '1 Year'}] }
+        onChange={ ( days ) => { setAttributes( { days: days } ) } }
+    />
+					<SelectControl
+        label={__("Event Type",'rsvpmaker')}
+        value={ type }
+        options={ rsvptypes }
+        onChange={ ( type ) => { setAttributes( { type: type } ) } }
+    />
+			<SelectControl
+        label={__("Date Format",'rsvpmaker')}
+        value={ date_format }
+        options={ [
+            { label: 'Thursday August 8, 2019', value: '%A %B %e, %Y' },
+            { label: 'August 8, 2019', value: '%B %e, %Y' },
+            { label: 'August 8', value: '%B %e' },
+            { label: 'Aug. 8', value: '%h. %e' },
+            { label: '8 August 2019', value: '%e %B %Y' },
+        ] }
+        onChange={ ( date_format ) => { setAttributes( { date_format: date_format } ) } }
+    />
+			<ToggleControl
+        label={__("Include Time",'rsvpmaker')}
+        checked={ !!Number(time) }
+        onChange={ ( time ) => { setAttributes( { time: time ? 1 : 0 } ) } }
+    />
+    <ToggleControl
+        label={__("RSVP On Only",'rsvpmaker')}
+        checked={ rsvp_only }
+        help={__('Only include events where the _rsvp_on postmeta flag is enabled.')}
+        onChange={ ( rsvp_only ) => { setAttributes( { rsvp_only } ) } }
     />
 <ToggleControl
         label={__("Skip First Date",'rsvpmaker')}

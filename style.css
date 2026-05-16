@@ -82,6 +82,9 @@ display: inline-block; margin: 0; margin-right: 5px; width: 50px;
 #rsvpform textarea {
 max-width: 90%;
 }
+.rsvp-input-line {
+    margin-left: 1.25em;
+}
 .guest-email-signup label {
     display: block;
     padding: 0;

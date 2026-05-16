@@ -40,10 +40,11 @@ export default function Edit(props) {
     const { attributes, setAttributes, isSelected } = props;
     const {form_id} = attributes;
     const [form,setForm] = useState([]);
+    const [previewHtml,setPreviewHtml] = useState('');
     const [formOptions,setFormOptions] = useState([]);
     console.log('form_id',form_id);
     async function getForm() {
-        const url = (window.rsvpmaker && window.rsvpmaker.json_url ? window.rsvpmaker.json_url : '/?rest_route=/rsvpmaker/v1/') + "rsvp_form?form_id="+form_id+"&post_id=0&contact=1";
+        const url = (window.rsvpmaker && window.rsvpmaker.json_url ? window.rsvpmaker.json_url : '/?rest_route=/rsvpmaker/v1/') + "rsvp_form?form_id="+form_id+"&post_id=0&contact=1&order="+encodeURIComponent(attributes.order || '')+"&gateway="+encodeURIComponent(attributes.gateway || 'Default')+"&gift="+encodeURIComponent(attributes.gift || '0')+"&subject_label="+encodeURIComponent(attributes.subject_label || 'Subject');
         console.log('url',url);
         try {
             const response = await fetch(url);
@@ -54,6 +55,10 @@ export default function Edit(props) {
             const json = await response.json();
             if(json && json.form)
                 setForm(json.form);
+            if(json && json.contact_form_rendered)
+                setPreviewHtml(json.contact_form_rendered);
+            else if(json && json.rendered_form)
+                setPreviewHtml(json.rendered_form);
             if(json && json.form_id)
                 setAttributes({'form_id':json.form_id});
             if(json && json.form_options) {
@@ -67,9 +72,7 @@ export default function Edit(props) {
     }
     useEffect(() => {
         getForm();
-      }, [form_id]);
-    if(!form.length)
-    getForm();
+            }, [form_id, attributes.order, attributes.gateway, attributes.gift, attributes.subject_label]);
 
     const fieldslist = [{'label':'Field containing order information','value':''}];
     if(form.length > 0)
@@ -113,8 +116,9 @@ export default function Edit(props) {
         </InspectorControls>
         {form.length == 0 && <p>Loading form</p>}
         {isSelected && <div>See sidebar for form options</div>}
-        {form.length > 0 && !attributes.order.length && <TextControl label='Subject' />}
-        {form.length > 0 &&
+        {form.length > 0 && previewHtml && <SanitizedHTML innerHTML={previewHtml} />}
+        {form.length > 0 && !previewHtml && !attributes.order.length && <TextControl label='Subject' />}
+        {form.length > 0 && !previewHtml &&
         form.map((block, blockindex) => {
             const isrsvp = block.blockName && block.blockName.indexOf('rsvpmaker') > -1;
             console.log('block',block);
@@ -136,7 +140,7 @@ export default function Edit(props) {
             );
         })
         }
-        {form.length > 0 && <p><button>Send</button></p>}
+        {form.length > 0 && !previewHtml && <p><button>Send</button></p>}
         </div>
     );
 }

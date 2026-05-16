@@ -24,7 +24,7 @@ import './editor.scss';
  */
 export default function Edit(props) {
 	const blockProps = useBlockProps();
-	const { attributes: { number_of_posts }, setAttributes, isSelected } = props;
+	const { attributes: { number_of_posts, rsvp_only }, setAttributes, isSelected } = props;
 	const [preview, setPreview] = useState([]);
 	
 	const fetchPreview = async () => {
@@ -59,6 +59,11 @@ export default function Edit(props) {
 	{label: '10 (next +9)', value:10}] }
 		onChange={ ( number_of_posts ) => { setAttributes( { number_of_posts } ) } }
 />
+<div style={{marginTop: '15px'}}>
+<input type="checkbox" id="rsvp_only" checked={rsvp_only} onChange={(e) => { setAttributes( { rsvp_only: e.target.checked } ) }} />
+<label htmlFor="rsvp_only" style={{marginLeft: '5px'}}>{__("RSVP On Only", 'rsvpmaker')}</label>
+<p style={{margin: '5px 0 0 25px', fontSize: '12px', color: '#666'}}>{__('Only include events where the _rsvp_on postmeta flag is enabled.', 'rsvpmaker')}</p>
+</div>
 </InspectorControls>
 <RawHTML>{preview}</RawHTML>
 {!preview && <p>Loading...</p>}

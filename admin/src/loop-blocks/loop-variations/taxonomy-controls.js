@@ -46,7 +46,6 @@ const getTermIdByTermValue = ( terms, termValue ) => {
 };
 
 export function RSVPTaxonomyControls( props ) {
-	console.log('RSVPTaxonomyControls props',props);
 	if(!props)
 		return <></>
 	const { attributes:{query}, setAttributes } = props;
@@ -56,7 +55,6 @@ export function RSVPTaxonomyControls( props ) {
 	if ( ! taxonomies || taxonomies.length === 0 ) {
 		return null;
 	}
-	console.log('taxonomies obj',taxonomies);
 	let rsvptax;
 	let excludeIds;
 	const exclude = (query.excludeType) ? query.excludeType : 0;
@@ -69,8 +67,6 @@ export function RSVPTaxonomyControls( props ) {
 				if('rsvpmaker-type' == taxonomy.slug) {
 					rsvptax = taxonomy;
 					excludeIds = termIds;
-					console.log('termIds',termIds);
-					console.log('excludeIds',excludeIds);
 
 				return (
 					<TaxonomyItem
@@ -97,8 +93,6 @@ export function RSVPTaxonomyControls( props ) {
  * @return {JSX.Element} The rendered component.
  */
 function TaxonomyItem( { taxonomy, termIds, onChange } ) {
-	console.log('taxonomy item taxonomy',taxonomy);
-	console.log('TaxonomyItem termids',termIds);
 	const [ search, setSearch ] = useState( '' );
 	const [ value, setValue ] = useState( EMPTY_ARRAY );
 	const [ suggestions, setSuggestions ] = useState( EMPTY_ARRAY );

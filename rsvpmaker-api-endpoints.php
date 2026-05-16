@@ -1794,7 +1794,7 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		}
 
 		$response['form_id'] = $form_id;
-		$response['post_status'] = $post->post_status;
+		$response['post_status'] = $form->post_status;
 		$response['form_title'] = $form->post_title;
 		$response['form_parent'] = ($form->post_parent) ? $form->post_parent : 0;
 		$response['default_form'] = $rsvp_options['rsvp_form'];
@@ -1805,6 +1805,20 @@ class RSVPMaker_Form extends WP_REST_Controller {
 		$response['is_default'] = ($form_id == $rsvp_options['rsvp_form']);
 		$response['is_inherited'] = ($form_id == $template_form);
 		$response['form'] = parse_blocks($form->post_content);
+		$response['rendered_form'] = do_blocks($form->post_content);
+		if(isset($_GET['contact']) && 'undefined' != $_GET['contact']) {
+			$contact_attributes = array(
+				'form_id' => $form_id,
+				'order' => empty($_GET['order']) ? '' : sanitize_text_field(wp_unslash($_GET['order'])),
+				'gateway' => empty($_GET['gateway']) ? 'Default' : sanitize_text_field(wp_unslash($_GET['gateway'])),
+				'gift' => empty($_GET['gift']) ? '0' : sanitize_text_field(wp_unslash($_GET['gift'])),
+				'subject_label' => empty($_GET['subject_label']) ? __('Subject','rsvpmaker') : sanitize_text_field(wp_unslash($_GET['subject_label'])),
+				'preview' => true,
+			);
+			ob_start();
+			rsvpmaker_contact_form_output($contact_attributes);
+			$response['contact_form_rendered'] = ob_get_clean();
+		}
 		$response['form_options'][] = array('value'=>'','label'=>__('Select/Edit Form','rsvpmaker'));
 
 		if($custom_form)

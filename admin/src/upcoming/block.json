@@ -68,6 +68,10 @@
             "hideauthor": {
                 "type": "boolean",
                 "default": false
+            },
+            "rsvp_only": {
+                "type": "boolean",
+                "default": false
             }
         },
 	"version": "1",

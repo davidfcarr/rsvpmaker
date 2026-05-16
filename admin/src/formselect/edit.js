@@ -31,7 +31,7 @@ export default function Edit(props) {
 	<div { ...blockProps }>
 	<p><label>{label}:</label></p>
 	{fieldnote && <p><em>{fieldnote}</em></p>}
-	<div style={{ marginLeft: '1.25em' }}><span><select className={slug} name={profilename} id={slug} >{choicearray.map(function(opt, i){
+	<div className="rsvp-input-line"><span><select className={slug} name={profilename} id={slug} >{choicearray.map(function(opt, i){
 			return <option value={ opt }>{opt}</option>;
 		})}</select></span></div>
 {isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }

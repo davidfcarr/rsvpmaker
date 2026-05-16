@@ -21,9 +21,7 @@ export function RSVPExclude (props) {
                     var typesarray = Object.values(types);
                     typesarray.map( function(type) { if(type.slug && type.name) t.push({value: type.slug, label: type.name }) } );
                 }
-        }).catch(err => {
-            console.log(err);
-        });
+        }).catch(() => {});
         setTypes(t);
     }, []);
 

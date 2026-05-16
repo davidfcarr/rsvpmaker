@@ -35,9 +35,19 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes, setAttributes, attributes: { posts_per_page, days, type, time, date_format } } = props;
+	const { attributes, setAttributes, attributes: { posts_per_page, days, type, time, date_format, skipfirst, featured_image, rsvp_only } } = props;
     const [rsvptypes, setTypes] = useState([]);
     const [preview, setPreview] = useState(null);
+
+    useEffect(() => {
+        if (typeof attributes.limit !== 'undefined' && String(attributes.limit) !== String(attributes.posts_per_page)) {
+            setAttributes({ posts_per_page: attributes.limit, limit: attributes.limit });
+            return;
+        }
+        if (typeof attributes.limit === 'undefined' && typeof attributes.posts_per_page !== 'undefined') {
+            setAttributes({ limit: attributes.posts_per_page });
+        }
+    }, []);
 
     useEffect(() => {
         const t = [{value: '', label: 'None selected (optional)'}];
@@ -47,10 +57,6 @@ export default function Edit(props) {
                 else {
                     var typesarray = Object.values(types);
                     typesarray.map( function(type) { if(type.slug && type.name) t.push({value: type.slug, label: type.name }) } );
-                    console.log(type.slug);
-                    console.log(typeof type.slug);
-                    console.log(type.name);
-                    console.log(typeof type.name);
                 }
         }).catch(err => {
             console.log(err);
@@ -66,15 +72,34 @@ export default function Edit(props) {
         } );
     }, [attributes]);
 
+    const featuredImageOptions = [
+        {
+            label: __( 'None','rsvpmaker' ),
+            value: '',
+        },
+        {
+            label: __( 'Medium (up to 300 px)' ),
+            value: 'medium'
+        },
+        {
+            label: __( 'Medium Large (up to 768 px)' ),
+            value: 'medium_large'
+        },
+        {
+            label: __( 'Large (up to 1024 px)' ),
+            value: 'large',
+        }
+    ];
+
 
     return (
 				<Fragment>
                 <div { ...useBlockProps() }>
                     <InspectorControls key="eventlistinginspector">
-                        					<SelectControl
-        label={__("Events Per Page",'rsvpmaker')}
-        value={ posts_per_page }
-        options={ [{value: 5, label: 5},
+					<SelectControl
+                label={__("Events Per Page",'rsvpmaker')}
+                value={ posts_per_page }
+                options={ [{value: 5, label: 5},
 			{value: 10, label: 10},
 			{value: 15, label: 15},
 			{value: 20, label: 20},
@@ -85,7 +110,7 @@ export default function Edit(props) {
 			{value: 45, label: 45},
 			{value: 50, label: 50},
 			{value: '-1', label: 'No limit'}]}
-        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page: posts_per_page } ) } }
+        onChange={ ( posts_per_page ) => { setAttributes( { posts_per_page, limit: posts_per_page } ) } }
     />
 					<SelectControl
         label={__("Date Range",'rsvpmaker')}
@@ -118,9 +143,27 @@ export default function Edit(props) {
     />
 				<ToggleControl
         label={__("Include Time",'rsvpmaker')}
-        checked={ time }
-        onChange={ ( time ) => { setAttributes( { time: time } ) } }
+                checked={ !!Number(time) }
+                onChange={ ( time ) => { setAttributes( { time: time ? 1 : 0 } ) } }
     />
+    <ToggleControl
+        label={__("RSVP On Only",'rsvpmaker')}
+        checked={ rsvp_only }
+        help={__('Only include events where the _rsvp_on postmeta flag is enabled.')}
+        onChange={ ( rsvp_only ) => { setAttributes( { rsvp_only } ) } }
+    />
+<ToggleControl
+        label={__("Skip First Date",'rsvpmaker')}
+        checked={ skipfirst }
+		help={__('For example, to pick up after an embedded date block that features the first event in the series.')}
+        onChange={ ( skipfirst ) => { setAttributes( { skipfirst } ) } }
+    />
+    <SelectControl
+label={__("Featured Image",'rsvpmaker')}
+value={ featured_image }
+options={ featuredImageOptions }
+onChange={ ( featured_image ) => { setAttributes( { featured_image: featured_image } ) } }
+/>
                     </InspectorControls>
                     {preview && <div dangerouslySetInnerHTML={{__html: preview}}></div>}
                     {!preview && <p>RSVPMaker Events Listing loading ...</p>}

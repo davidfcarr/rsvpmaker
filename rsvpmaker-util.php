@@ -4022,8 +4022,6 @@ function mailpoet_rsvpmaker_shortcode( $shortcode, $newsletter, $subscriber, $qu
 
 		$link    = ( empty( $atts['link'] ) ) ? $match[0] : $atts['link'];		
 
-		//$content = sprintf( '<p><a href="%s">Watch on YouTube: %s<br /><img src="%s" width="320" height="180" /></a></p>', $link, $link, $image );
-
 		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s</p><a href="%s" style="text-align: center; padding-top: 130px; height: 640px; width:360px; background-image: url(%s); background-size: contain; background-repeat: no-repeat; margin-left: auto; margin-right: auto; %s"><div><img src="%s" ></div></a>', $link, $link, 'display: block; width: 100%; height: 300px;', $image, $link, plugins_url('rsvpmaker/images/youtube-button-100px.png') );
 
 	}
@@ -4069,11 +4067,11 @@ function rsvpmaker_youtube_email($content) {
 
 	},$content);
 
-	$pattern = '/(?<!")(https:\/\/www.youtube.com\/watch\?v=|https:\/\/www.youtube.com\/embed\/|https:\/\/youtu.be\/)([^\s<]+)/';
+	$pattern = '/(?<!")((?:https:\/\/(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|https:\/\/youtu\.be\/)[^\s<]+)/i';
 
 		$content = preg_replace_callback($pattern,function ($match) {
 
-			return empty($match[2]) ? '' : "\n\n".rsvpmaker_YouTubeEmailFormat('https://www.youtube.com/watch?v='.$match[2])."\n\n";
+			return empty($match[1]) ? '' : "\n\n".rsvpmaker_YouTubeEmailFormat($match[1])."\n\n";
 
 		},$content);
 

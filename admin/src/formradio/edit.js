@@ -32,7 +32,7 @@ export default function Edit(props) {
 	<div className={ props.className }>
 	<p><label>{label}:</label></p>
 	{fieldnote && <p><em>{fieldnote}</em></p>}
-	<div style={{ marginLeft: '1.25em' }}><span>{choicearray.map(function(opt, i){
+	<div className="rsvp-input-line"><span>{choicearray.map(function(opt, i){
 			return <div className="rsvp-form-radio"><input type="radio" className={slug} name={profilename} id={slug} value={opt} checked={defaultToFirst && i == 0} /> {opt} </div>;
 		})}</span></div>
 {isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }

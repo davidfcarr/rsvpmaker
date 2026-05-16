@@ -6123,46 +6123,122 @@ esc_html_e("These apply to any of the supported email distriution methods.",'rsv
 }
 
 function rsvpmaker_YouTubeEmailFormat($youtubelink) {
-    $id = '1234';
-    preg_match('/(https:\/\/www.youtube.com\/watch\?v=|https:\/\/youtu.be\/)([^?&]+)/',$youtubelink,$match);
-    if(!empty($match[2]))
-        $id = $match[2];
-	$src = rsvpmail_youtube_preview_image($id);
-	if($src) //successfully created image
-		return '<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'"><img src="'.$src.'" style="width:600px;" /></a></figure>';
-	else //placeholder - maybe still uploading?
-		return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'"} -->
-    <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:500px;height:283px;text-align:center;padding-top:150px;margin-bottom:-140px;background-size:contain;background-repeat:no-repeat;overflow:hidden;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
+	$id = '1234';
+	$is_shorts = false;
+
+	if(preg_match('#youtube\.com/shorts/([A-Za-z0-9_-]{6,})#i',$youtubelink,$m)) {
+		$id = $m[1];
+		$is_shorts = true;
+	}
+	elseif(preg_match('#youtu\.be/([A-Za-z0-9_-]{6,})#i',$youtubelink,$m)) {
+		$id = $m[1];
+	}
+	elseif(preg_match('#[\?&]v=([A-Za-z0-9_-]{6,})#i',$youtubelink,$m)) {
+		$id = $m[1];
+	}
+
+	$src = rsvpmail_youtube_preview_image($id, $is_shorts);
+	if($src) { //successfully created image
+		$display_width = $is_shorts ? 280 : 320;
+		return '<figure class="wp-block-image aligncenter size-large is-resized"><a href="'.$youtubelink.'" style="max-width:'.$display_width.'px;"><img src="'.$src.'" style="max-width:'.$display_width.'px;" /></a></figure>';
+	} else { //placeholder - maybe still uploading?
+		$placeholder_width = $is_shorts ? 280 : 320;
+		$placeholder_height = $is_shorts ? 500 : 180;
+		$placeholder_padding = $is_shorts ? 215 : 90;
+		$placeholder_margin = $is_shorts ? -215 : -90;
+		return '<!-- wp:rsvpmaker/youtube-email {"youtubelink":"'.$youtubelink.'","isShorts":'.($is_shorts ? 'true' : 'false').'} -->
+    <div><a href="'.$youtubelink.'" style="display:block;margin-left:auto;margin-right:auto;width:'.$placeholder_width.'px;height:'.$placeholder_height.'px;text-align:center;padding-top:'.$placeholder_padding.'px;margin-bottom:'.$placeholder_margin.'px;background-size:contain;background-repeat:no-repeat;overflow:hidden;text-decoration:none;background-image:url(https://img.youtube.com/vi/'.$id.'/mqdefault.jpg)"><img class="youtube-email-icon" style="object-fit:contain;max-width:100%;max-height:100%;opacity:0.6" src="'.plugins_url('rsvpmaker/images/youtube-button-100px.png').'"/></a></div>
     <!-- /wp:rsvpmaker/youtube-email -->';
+	}
 }
 
-function rsvpmail_youtube_preview_image($id) {
-	$post_id = 0;
-	$image = 'https://img.youtube.com/vi/'.$id.'/mqdefault.jpg';
-	require_once(ABSPATH . 'wp-admin/includes/media.php');
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
-    require_once(ABSPATH . 'wp-admin/includes/image.php');
-    $attach_id = media_sideload_image($image, $post_id, 'youtube thumbnail for '.$image, 'id' );
-	$meta = wp_get_attachment_metadata($attach_id);
-	if(empty($meta['file']))
-		return '';
-	$src = imagecreatefrompng(plugin_dir_path( __FILE__ ) .'images/youtube-button-100px.png');
+function rsvpmail_youtube_preview_image($id, $is_shorts = false) {
 	$up = wp_upload_dir();
-	$file = str_replace('\\','/',$up['basedir']).'/'.$meta['file'];
-	$dest = imagecreatefromjpeg($file);
+	$youtube_dir = trailingslashit($up['basedir']) . 'youtube-thumbnails';
+	if(!is_dir($youtube_dir) && !wp_mkdir_p($youtube_dir))
+		return '';
+
+	$cache_suffix = $is_shorts ? '-shorts' : '';
+	$filename = 'youtube-' . $id . $cache_suffix . '.jpg';
+	$combined_file = trailingslashit($youtube_dir) . $filename;
+	$combined_url = trailingslashit($up['baseurl']) . 'youtube-thumbnails/' . $filename;
+	if(file_exists($combined_file)) {
+		if(filesize($combined_file) > 1024)
+			return $combined_url . '?t=' . filemtime($combined_file);
+		@unlink($combined_file);
+	}
+
+	$thumbnail_qualities = array('maxresdefault', 'sddefault', 'hqdefault', 'mqdefault');
+	$thumbnail_bytes = '';
+	foreach($thumbnail_qualities as $quality) {
+		$thumbnail_url = 'https://img.youtube.com/vi/' . $id . '/' . $quality . '.jpg';
+		$response = wp_remote_get($thumbnail_url, array('timeout' => 20));
+		if(is_wp_error($response))
+			continue;
+		$code = wp_remote_retrieve_response_code($response);
+		$body = wp_remote_retrieve_body($response);
+		if(($code >= 200) && ($code < 300) && !empty($body)) {
+			$thumbnail_bytes = $body;
+			break;
+		}
+	}
+
+	if(empty($thumbnail_bytes))
+		return '';
+
+	$dest = @imagecreatefromstring($thumbnail_bytes);
+	if(!$dest)
+		return '';
+
 	$dest_width = imagesx($dest);
 	$dest_height = imagesy($dest);
-	$xpos = ($dest_width / 2) - 50;
-	$ypos = $dest_height / 2;
-	rsvpmaker_imagecopymerge_alpha($dest, $src, $xpos, $ypos, 0,0,100, 70, 80);
-	$meta['file'] = preg_replace('/mqdefaul.+\.jpg/','youtube-'.$id.'.png',$meta['file']);
-	$file = str_replace('\\','/',$up['basedir']).'/'.$meta['file'];
-	if(file_exists($file))
-		unlink($file);
-	imagepng($dest,$file);
-	$image_url = $up['baseurl'].'/'.$meta['file'];
-	wp_delete_attachment($attach_id,true);//delete temp file
-	return $image_url.'?t='.time();
+
+	if($is_shorts && $dest_width > 0 && $dest_height > 0) {
+		$target_width = 280;
+		$target_height = 500;
+		$target_ratio = $target_width / $target_height;
+		$source_ratio = $dest_width / $dest_height;
+
+		if($source_ratio > $target_ratio) {
+			$crop_width = (int) round($dest_height * $target_ratio);
+			$crop_height = $dest_height;
+			$crop_x = (int) round(($dest_width - $crop_width) / 2);
+			$crop_y = 0;
+		}
+		else {
+			$crop_width = $dest_width;
+			$crop_height = (int) round($dest_width / $target_ratio);
+			$crop_x = 0;
+			$crop_y = (int) round(($dest_height - $crop_height) / 2);
+		}
+
+		$portrait = imagecreatetruecolor($target_width, $target_height);
+		if($portrait) {
+			imagecopyresampled($portrait, $dest, 0, 0, $crop_x, $crop_y, $target_width, $target_height, $crop_width, $crop_height);
+			imagedestroy($dest);
+			$dest = $portrait;
+		}
+	}
+
+	$play_button_path = plugin_dir_path(__FILE__) . 'images/youtube-button-100px.png';
+	$src = file_exists($play_button_path) ? @imagecreatefrompng($play_button_path) : false;
+	if($src) {
+		$final_width = imagesx($dest);
+		$final_height = imagesy($dest);
+		$button_width = 100;
+		$button_height = 70;
+		$xpos = (int) round(($final_width / 2) - 50);
+		$ypos = (int) round(($final_height / 2) - 35);
+		rsvpmaker_imagecopymerge_alpha($dest, $src, $xpos, $ypos, 0, 0, $button_width, $button_height, 80);
+		imagedestroy($src);
+	}
+
+	$saved = imagejpeg($dest, $combined_file, 85);
+	imagedestroy($dest);
+	if(!$saved || !file_exists($combined_file))
+		return '';
+
+	return $combined_url . '?t=' . filemtime($combined_file);
 }
 
 function rsvpmaker_imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct){

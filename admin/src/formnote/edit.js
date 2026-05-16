@@ -29,7 +29,7 @@ export default function Edit(props) {
 			<div { ...blockProps }>
 			<p><label>{label}:</label></p>
 			{fieldnote && <p><em>{fieldnote}</em></p>}
-			<div style={{ marginLeft: '1.25em' }}><textarea name="note" inert tabindex="-1"></textarea></div>
+			<div className="rsvp-input-line"><textarea name="note" inert tabindex="-1"></textarea></div>
 			<div><em>{__('Note for bottom of RSVP form. Only one allowed. Use RSVPField Text Area for any additional text fields. Set properties in sidebar. Intended for use within an RSVPMaker registration form.','rsvpmaker')}</em></div>
 			</div>
 			</Fragment>

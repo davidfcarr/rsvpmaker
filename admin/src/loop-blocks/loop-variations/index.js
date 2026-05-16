@@ -1,6 +1,7 @@
 import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
 import { addFilter } from '@wordpress/hooks';
+import { useEffect } from '@wordpress/element';
 import {RSVPEventOrder} from './event-order';
 import RSVPControls from './rsvpslot';
 import {RSVPTaxonomyControls} from './taxonomy-controls';
@@ -62,6 +63,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 </svg>,
     attributes: {
         namespace: RSVP_VARIATION_NAME,
+		rsvp_only: false,
         query: {
             perPage: 20,
             pages: 0,
@@ -75,6 +77,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
             inherit: false,
 			eventOrder: 'future',
 			excludeType: 0,
+			rsvp_only: false,
         },
     },
 	allowedControls: [ 'inherit', 'taxQuery', 'search', 'sticky', 'author' ],
@@ -82,7 +85,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 		[
 			'core/post-template',
 			{"layout":{"type":"grid","columnCount":2}},
-			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/loop-blocks'] ],
+			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/rsvpdateblock'], ['rsvpmaker/excerpt'], ['core/read-more',{"content":"Read More","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], ['rsvpmaker/button'] ],
 		],
 		[ 'core/query-pagination' ],
 		[ 'core/query-no-results', {}, [['core/paragraph', {"content": "No events found."}] ]],
@@ -145,6 +148,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 </svg>,
     attributes: {
         namespace: EVENT_VARIATION_NAME,
+		rsvp_only: false,
         query: {
             perPage: 1,
             pages: 0,
@@ -158,6 +162,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
             inherit: false,
 			eventOrder: 'future',
 			excludeType: 0,
+			rsvp_only: false,
         },
     },
 	allowedControls: [ 'inherit', 'taxQuery', 'search', 'sticky', 'author' ],
@@ -165,7 +170,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 		[
 			'core/post-template',
 			{"layout":{"type":"grid","columnCount":1}},
-			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/loop-blocks'] ],
+			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/rsvpdateblock'], ['rsvpmaker/excerpt'], ['core/read-more',{"content":"Read More","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], ['rsvpmaker/button'] ],
 		],
 	],
     scope: [ 'inserter','transform' ],
@@ -226,6 +231,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 </svg>,
     attributes: {
         namespace: CALENDAR_VARIATION_NAME,
+		rsvp_only: false,
         query: {
             perPage: 20,
             pages: 0,
@@ -238,6 +244,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
             sticky: '',
             inherit: false,
 			eventOrder: 'future',
+			rsvp_only: false,
 			excludeType: 0,
         },
     },
@@ -247,7 +254,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 		[
 			'core/post-template',
 			{"layout":{"type":"grid","columnCount":2}},
-			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/loop-blocks'] ],
+			[ [ 'core/post-title',  {"isLink":true}  ], [ 'core/post-featured-image' ], ['rsvpmaker/rsvpdateblock'], ['rsvpmaker/excerpt'], ['core/read-more',{"content":"Read More","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], ['rsvpmaker/button'] ],
 		],
 		[ 'core/query-pagination' ],
 		[ 'core/query-no-results', {}, [ ['core/paragraph', {"content": "No events found."}] ] ],
@@ -311,6 +318,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 </svg>,
     attributes: {
         namespace: RSVPCOVER_VARIATION_NAME,
+		rsvp_only: false,
         query: {
             p: 0,
             perPage: 20,
@@ -324,6 +332,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
             sticky: '',
             inherit: false,
 			eventOrder: 'future',
+			rsvp_only: false,
 			excludeType: 0,
         },
     },
@@ -332,7 +341,7 @@ wp.blocks.registerBlockVariation( 'core/query', {
 		[
 			'core/post-template',
 			{"layout":{"type":"grid","columnCount":1}},
-			[ [ 'core/cover', {"useFeaturedImage":true,"dimRatio":50,"overlayColor":"contrast","isUserOverlayColor":true,"isDark":false}, [['core/post-title',  {"textAlign":"center","isLink":true,"style": {"elements":{"link":{"color":{"text":"#ffffff"}}}},"textColor":"#ffffff"}]] ], ['rsvpmaker/loop-blocks'] ],
+			[ [ 'core/cover', {"useFeaturedImage":true,"dimRatio":50,"overlayColor":"contrast","isUserOverlayColor":true,"isDark":false}, [['core/post-title',  {"textAlign":"center","isLink":true,"style": {"elements":{"link":{"color":{"text":"#ffffff"}}}},"textColor":"#ffffff"}]] ], ['rsvpmaker/rsvpdateblock'], ['rsvpmaker/excerpt'], ['core/read-more',{"content":"Read More","style":{"spacing":{"padding":{"bottom":"var:preset|spacing|10"}}}} ], ['rsvpmaker/button'] ],
 		],
 		[ 'core/query-pagination' ],
 		[ 'core/query-no-results', {}, [ ['core/paragraph', {"content": "No events found."}] ] ],
@@ -345,7 +354,24 @@ wp.blocks.registerBlockVariation( 'core/query', {
 export const withRSVPQueryControls = ( BlockEdit ) => ( props ) => {
     if ( isRSVPVariation( props ) ) {
  		// If the inherit prop is false, add all the controls.
-		const { attributes } = props;
+		const { attributes, setAttributes } = props;
+		const query = attributes.query || {};
+
+		// Keep top-level and query-level rsvp_only aligned for stable editor preview re-renders.
+		useEffect(() => {
+			const topLevel = attributes.rsvp_only;
+			const queryLevel = query.rsvp_only;
+
+			if ( typeof topLevel === 'boolean' && queryLevel !== topLevel ) {
+				setAttributes( { query: { ...query, rsvp_only: topLevel } } );
+				return;
+			}
+
+			if ( typeof queryLevel === 'boolean' && topLevel !== queryLevel ) {
+				setAttributes( { rsvp_only: queryLevel } );
+			}
+		}, [ attributes.rsvp_only, query.rsvp_only ]);
+
 		if ( attributes.query.inherit === false ) {
 			return (
 				<>
