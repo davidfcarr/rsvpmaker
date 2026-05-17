@@ -1148,6 +1148,12 @@ if(!is_admin() || empty($_GET['post_type']) || ($_GET['post_type'] != 'rsvpmaker
 	{
 		return $wp_query;
 	}
+
+	// Only apply these list-order filters on the RSVPMaker list table screen.
+	if ( basename( sanitize_text_field( wp_unslash( $_SERVER['SCRIPT_NAME'] ) ) ) !== 'edit.php' ) {
+		return $wp_query;
+	}
+
 add_filter('posts_join', 'rsvpmaker_join',99, 2 );
 add_filter('posts_groupby', 'rsvpmaker_groupby',99, 2 );
 $sort = rsvpmaker_get_rsvpsort();
@@ -3699,19 +3705,7 @@ if(!empty($_POST["rsvpmaker_new_post"])  && wp_verify_nonce(rsvpmaker_nonce_data
 		}
 	}
 
-	//post-new.php?post_type=rsvpmaker
-	if(strpos(sanitize_text_field($_SERVER['REQUEST_URI']),'post-new.php') && isset($_GET['post_type']))
-	{
-		$post_type = $_GET['post_type'];
-		//if(('rsvpmaker' == $post_type) || ('rsvpmaker_template' == $post_type)) {
-		if('rsvpmaker' == $post_type) {
-			$url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup');
-			if ('rsvpmaker_template' == $post_type)
-				$url .= '&new_template=1';
-			wp_redirect($url);
-			die();
-		}
-	}
+
 }
 
 

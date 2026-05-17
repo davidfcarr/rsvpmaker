@@ -3,7 +3,7 @@
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 /**
  * React hook that is used to mark the block wrapper element.
@@ -11,11 +11,11 @@ import { __ } from '@wordpress/i18n';
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
  */
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
 import apiFetch from '@wordpress/api-fetch';
 import { addQueryArgs } from '@wordpress/url';
-const { Component, Fragment } = wp.element;
-const { Panel, PanelBody, TextControl, RadioControl, ColorPicker, SelectControl } = wp.components;
+const { Fragment } = wp.element;
+const { PanelBody, RadioControl, SelectControl } = wp.components;
 import React, { useState, useEffect } from 'react';
 
 /**
@@ -35,57 +35,146 @@ import './editor.scss';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes, setAttributes, isSelected } = props;
+    const { attributes, setAttributes } = props;
+    const {
+        itembg,
+        itemcolor,
+        nav,
+        type,
+        event_type_colors = {},
+    } = attributes;
     const [cal, setCal] = useState(null);
-    const [rsvptypes, setRSVPTypes] = useState([]);
+    const [rsvptypes, setRSVPTypes] = useState([
+        { value: '', label: __( 'Any', 'rsvpmaker' ) },
+    ]);
 
     useEffect(() => {
-        apiFetch( {path: addQueryArgs( '/rsvpmaker/v1/calendar', attributes)} ).then( ( x ) => {
-            setCal(x.calendar);
-        } );
-        rsvptypes.push({value: '', label: 'Any'});
-        apiFetch( {path: 'rsvpmaker/v1/types'} ).then( types => {
-            if(Array.isArray(types))
-                    types.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
-                else {
-                    var typesarray = Object.values(types);
-                    typesarray.map( function(type) { if(type.slug && type.name) rsvptypes.push({value: type.slug, label: type.name }) } );
-                }
-            setRSVPTypes(rsvptypes);
-        }).catch(err => {
-            console.log(err);
-        });	    
-    }, [attributes]);
-    
+        const requestAttributes = {
+            ...attributes,
+            event_type_colors: JSON.stringify( attributes.event_type_colors || {} ),
+        };
 
-    /* <RadioControl label="Calendar Item Font Size" selected={itemfontsize} options={[{'label':'x-small','value':'x-small'},{'label':'xx-small','value':'xx-small'},{'label':'small','value':'small'},{'label':'medium','value':'medium'}]} onChange={ (change) => setAttributes({'itemfontsize':change}) }	/> */
-    
-    class ExcerptInspector extends Component {
-	
-            render() {
-                const { attributes: {itembg, itemcolor, itemfontsize, nav, date_format, type}, setAttributes, isSelected } = this.props;
-                    return (
-                        <div>
-                    <InspectorControls key="calendarinspector">
-                    <PanelBody title={ __( 'RSVPMaker Calendar', 'rsvpmaker' ) } >
-                    <RadioControl label="Position of Navigation Links" selected={nav} options={[{'label':'bottom','value':'bottom'},{'label':'top','value':'top'},{'label':'both','value':'both'}]} onChange={ function( change ) { setAttributes( {'nav':change} ); } }	/>
-                    <SelectControl
-                label={__("Event Type",'rsvpmaker')}
-                value={ type }
-                options={ rsvptypes }
-                onChange={ ( type ) => { setAttributes( { type: type } ) } } />
-                    <p>Calendar Item Text Color</p>
-                    <ColorPicker color={itemcolor} onChange={ (change) => setAttributes ({'itemcolor':change}) } />
-                    <p>Calendar Item Background Color</p>
-                    <ColorPicker color={itembg} onChange={(change) => setAttributes({'itembg':change}) } />
-                    </PanelBody>
-            </InspectorControls>
-            </div>
-        );	} }
+        apiFetch( { path: addQueryArgs( '/rsvpmaker/v1/calendar', requestAttributes ) } ).then( ( x ) => {
+            setCal( x.calendar );
+        } );
+    }, [attributes]);
+
+    useEffect(() => {
+        apiFetch( { path: 'rsvpmaker/v1/types' } )
+            .then( ( types ) => {
+                const typeList = Array.isArray( types ) ? types : Object.values( types || {} );
+                const options = [
+                    { value: '', label: __( 'Any', 'rsvpmaker' ) },
+                ];
+
+                typeList.forEach( ( typeItem ) => {
+                    if ( typeItem?.slug && typeItem?.name ) {
+                        options.push( { value: typeItem.slug, label: typeItem.name } );
+                    }
+                } );
+
+                setRSVPTypes( options );
+            } )
+            .catch( ( err ) => {
+                console.log( err );
+            } );
+    }, []);
+
+    const setTypeColorMode = ( slug, mode ) => {
+        const nextColors = { ...event_type_colors };
+
+        if ( mode === 'default' ) {
+            delete nextColors[slug];
+        } else if ( ! nextColors[slug] ) {
+            nextColors[slug] = itembg;
+        }
+
+        setAttributes( { event_type_colors: nextColors } );
+    };
+
+    const setTypeColor = ( slug, color ) => {
+        const nextColors = { ...event_type_colors };
+
+        if ( color ) {
+            nextColors[slug] = color;
+        } else {
+            delete nextColors[slug];
+        }
+
+        setAttributes( { event_type_colors: nextColors } );
+    };
+
     return (
 				<Fragment>
                 <div { ...useBlockProps() }>
-                        <ExcerptInspector {...props}/>
+                        <InspectorControls key="calendarinspector">
+                            <PanelBody title={ __( 'RSVPMaker Calendar', 'rsvpmaker' ) }>
+                                <RadioControl
+                                    label={ __( 'Position of Navigation Links', 'rsvpmaker' ) }
+                                    selected={ nav }
+                                    options={ [
+                                        { label: 'bottom', value: 'bottom' },
+                                        { label: 'top', value: 'top' },
+                                        { label: 'both', value: 'both' },
+                                    ] }
+                                    onChange={ ( change ) => setAttributes( { nav: change } ) }
+                                />
+                                <SelectControl
+                                    label={ __( 'Event Type', 'rsvpmaker' ) }
+                                    value={ type }
+                                    options={ rsvptypes }
+                                    onChange={ ( selectedType ) => setAttributes( { type: selectedType } ) }
+                                />
+                            </PanelBody>
+                            <PanelColorSettings
+                                title={ __( 'Default Calendar Item Colors', 'rsvpmaker' ) }
+                                colorSettings={ [
+                                    {
+                                        label: __( 'Text color', 'rsvpmaker' ),
+                                        onChange: ( color ) => setAttributes( { itemcolor: color } ),
+                                        value: itemcolor,
+                                    },
+                                    {
+                                        label: __( 'Background color', 'rsvpmaker' ),
+                                        onChange: ( color ) => setAttributes( { itembg: color } ),
+                                        value: itembg,
+                                    },
+                                ] }
+                            />
+                            <PanelBody title={ __( 'Event Type Background Colors', 'rsvpmaker' ) } initialOpen={ false }>
+                                { rsvptypes
+                                    .filter( ( typeOption ) => typeOption.value )
+                                    .map( ( typeOption ) => {
+                                        const hasCustom = !! event_type_colors[typeOption.value];
+
+                                        return (
+                                            <div key={ typeOption.value } style={ { marginBottom: '16px' } }>
+                                                <SelectControl
+                                                    label={ sprintf( __( '%s background', 'rsvpmaker' ), typeOption.label ) }
+                                                    value={ hasCustom ? 'custom' : 'default' }
+                                                    options={ [
+                                                        { label: __( 'Use default', 'rsvpmaker' ), value: 'default' },
+                                                        { label: __( 'Use custom color', 'rsvpmaker' ), value: 'custom' },
+                                                    ] }
+                                                    onChange={ ( mode ) => setTypeColorMode( typeOption.value, mode ) }
+                                                />
+                                                { hasCustom && (
+                                                    <PanelColorSettings
+                                                        title={ sprintf( __( '%s custom color', 'rsvpmaker' ), typeOption.label ) }
+                                                        colorSettings={ [
+                                                            {
+                                                                label: __( 'Background color', 'rsvpmaker' ),
+                                                                onChange: ( color ) => setTypeColor( typeOption.value, color ),
+                                                                value: event_type_colors[typeOption.value],
+                                                            },
+                                                        ] }
+                                                    />
+                                                ) }
+                                            </div>
+                                        );
+                                    } ) }
+                            </PanelBody>
+                        </InspectorControls>
                         {cal && (
                         <>
                         <div dangerouslySetInnerHTML={{__html: cal}} />

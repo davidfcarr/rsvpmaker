@@ -32,6 +32,10 @@
       "type": "string",
       "default": "x-small"
     },
+    "event_type_colors": {
+      "type": "object",
+      "default": {}
+    },
     "type": {
       "type": "string",
       "default": ""

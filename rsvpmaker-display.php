@@ -236,7 +236,7 @@ function rsvpmaker_select( $select, $query = null ) {
 }
 
 function is_rsvpmaker_query($query) {
-	return ( (strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') && !strpos($_SERVER['REQUEST_URI'],'template')  && !strpos($_SERVER['REQUEST_URI'],'form')) || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
+	return ( ((!is_admin()) && strpos($_SERVER['REQUEST_URI'],'post_type=rsvpmaker') && !strpos($_SERVER['REQUEST_URI'],'template')  && !strpos($_SERVER['REQUEST_URI'],'form')) || (strpos($_SERVER["REQUEST_URI"],'wp-json/') && strpos($_SERVER["REQUEST_URI"],'/rsvpmaker')) || (!empty($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') || (isset($query->tax_query) && in_array('rsvpmaker-type',$query->tax_query->queries)) );
 }
 
 function rsvpmaker_join( $join, $query = null ) {
@@ -875,7 +875,39 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$atts['itembg'] = (empty($atts['itembg'])) ? '#00000' : $atts['itembg'];
 	$atts['itemcolor'] = (empty($atts['itemcolor'])) ? '#FFFFFF' : $atts['itemcolor'];
 	$atts['itemfontsize'] = (empty($atts['itemfontsize'])) ? 'x-small' : $atts['itemfontsize'];
-	$itemstyle = sprintf('color:%s;background-color:%s;font-size:%spx',$atts['itemcolor'],$atts['itembg'],$atts['itemfontsize']);
+
+	$default_itembg = sanitize_hex_color( $atts['itembg'] );
+	if ( empty( $default_itembg ) ) {
+		$default_itembg = '#000000';
+	}
+
+	$default_itemcolor = sanitize_hex_color( $atts['itemcolor'] );
+	if ( empty( $default_itemcolor ) ) {
+		$default_itemcolor = '#FFFFFF';
+	}
+
+	$type_color_map = array();
+	if ( ! empty( $atts['event_type_colors'] ) ) {
+		$raw_type_colors = $atts['event_type_colors'];
+
+		if ( is_string( $raw_type_colors ) ) {
+			$decoded_type_colors = json_decode( wp_unslash( $raw_type_colors ), true );
+			if ( is_array( $decoded_type_colors ) ) {
+				$raw_type_colors = $decoded_type_colors;
+			}
+		}
+
+		if ( is_array( $raw_type_colors ) ) {
+			foreach ( $raw_type_colors as $type_slug => $type_color ) {
+				$clean_slug = sanitize_title( $type_slug );
+				$clean_color = sanitize_hex_color( $type_color );
+
+				if ( ! empty( $clean_slug ) && ! empty( $clean_color ) ) {
+					$type_color_map[ $clean_slug ] = $clean_color;
+				}
+			}
+		}
+	}
 
 	$date_format = ( isset( $atts['date_format'] ) ) ? $atts['date_format'] : $rsvp_options['short_date'];
 	$debug = '';
@@ -992,8 +1024,22 @@ function rsvpmaker_calendar( $atts = array() ) {
 				$msg = sprintf( '%s %s %s', $post->post_title, $post->datetime, $post->meta_id );
 
 			}
+
+			$itembg_for_post = $default_itembg;
+			$event_types = get_the_terms( $post->ID, 'rsvpmaker-type' );
+			if ( is_array( $event_types ) ) {
+				foreach ( $event_types as $event_type ) {
+					if ( ! empty( $event_type->slug ) && ! empty( $type_color_map[ $event_type->slug ] ) ) {
+						$itembg_for_post = $type_color_map[ $event_type->slug ];
+						break;
+					}
+				}
+			}
+
+			$itemstyle = sprintf( 'color:%s;background-color:%s;font-size:%spx', $default_itemcolor, $itembg_for_post, $atts['itemfontsize'] );
+			$item_style_attr = esc_attr( $itemstyle );
 			foreach($keys as $key)
-				$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a style="'.$itemstyle.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a  style="'.$itemstyle.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
+				$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a style="'.$item_style_attr.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a  style="'.$item_style_attr.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
 
 	endwhile;
 
