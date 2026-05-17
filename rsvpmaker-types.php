@@ -243,6 +243,20 @@ function rsvpmaker_create_post_type() {
 		update_option('RSVPMAKER_Options',$rsvp_options);
 	}
 
+	// Register _show_rsvpmaker_options with REST so Gutenberg can read and save it.
+	// Without this registration, editPost({meta:{_show_rsvpmaker_options:false}}) called when
+	// the Setup modal closes marks the post perpetually dirty (the edit is recorded locally but
+	// never included in the REST save payload, so the dirty flag is never cleared).
+	$show_opts_args = array(
+		'type'          => 'boolean',
+		'single'        => true,
+		'default'       => false,
+		'show_in_rest'  => true,
+		'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+	);
+	register_post_meta( 'rsvpmaker', '_show_rsvpmaker_options', $show_opts_args );
+	register_post_meta( 'rsvpmaker_template', '_show_rsvpmaker_options', $show_opts_args );
+
 }
 
 add_filter('the_content','rsvpmaker_form_single');

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react"
+import React, {useState, useEffect, useRef} from "react"
 const { Modal } = wp.components;
 import Checkbox from './Checkbox';
 import { SanitizedHTML } from "../SanitizedHTML.js";
@@ -29,31 +29,33 @@ export default function TemplateProjected (props) {
         setOpen(true);
     }
 
-    let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
-    let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
-    let wasPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
-    // determine whether to show notice
-    subscribe( () => {
-        const isSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
-        const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
-        const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
-        const hasActiveMetaBoxes = wp.data.select( 'core/edit-post' ).hasMetaBoxes();
-        
-        // Save metaboxes on save completion, except for autosaves that are not a post preview.
-        const shouldTriggerTemplateNotice = (
-                ( wasSavingPost && ! isSavingPost && ! wasAutosavingPost ) ||
-                ( wasAutosavingPost && wasPreviewingPost && ! isPreviewingPost )
-            );
+    const wasSavingPost = useRef( wp.data.select( 'core/editor' ).isSavingPost() );
+    const wasAutosavingPost = useRef( wp.data.select( 'core/editor' ).isAutosavingPost() );
+    const wasPreviewingPost = useRef( wp.data.select( 'core/editor' ).isPreviewingPost() );
+    // determine whether to show notice — registered once on mount, cleaned up on unmount
+    useEffect( () => {
+        const unsubscribe = subscribe( () => {
+            const isSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+            const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+            const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
 
-        // Save current state for next inspection.
-        wasSavingPost = isSavingPost;
-        wasAutosavingPost = isAutosavingPost;
-        wasPreviewingPost = isPreviewingPost;
+            // Save metaboxes on save completion, except for autosaves that are not a post preview.
+            const shouldTriggerTemplateNotice = (
+                    ( wasSavingPost.current && ! isSavingPost && ! wasAutosavingPost.current ) ||
+                    ( wasAutosavingPost.current && wasPreviewingPost.current && ! isPreviewingPost )
+                );
 
-        if ( shouldTriggerTemplateNotice ) {
-            setOpen(true);
-        }
-});
+            // Save current state for next inspection.
+            wasSavingPost.current = isSavingPost;
+            wasAutosavingPost.current = isAutosavingPost;
+            wasPreviewingPost.current = isPreviewingPost;
+
+            if ( shouldTriggerTemplateNotice ) {
+                setOpen(true);
+            }
+        } );
+        return unsubscribe;
+    }, [] );
 
     function fetchProjected() {
         const parts = window.location.href.split('?');

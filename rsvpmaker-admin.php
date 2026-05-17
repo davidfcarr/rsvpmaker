@@ -2623,8 +2623,6 @@ $post_meta_infos = $wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_valu
 $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
 $deadlinedays = $deadlinehours = $regdays = $reghours = 0;
 $meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');
-if(isset($_POST['metadata_only']))
-	$meta_protect[] = '_thumbnail_id';
 
 		if (count($post_meta_infos)!=0) {
 			foreach ($post_meta_infos as $meta_info) {
