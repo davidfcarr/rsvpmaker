@@ -288,8 +288,14 @@ function rsvpmaker_where( $where, $query = null ) {
 	if ( isset( $_REQUEST['cm'] ) ) {
 
 		$date = rsvp_url_date_query();
+		$expire_after_end = ! empty( $query->query_vars['expireAfterEnd'] ) || ( isset( $rsvpmaker_atts['expireAfterEnd'] ) && $rsvpmaker_atts['expireAfterEnd'] );
 
-		$where .= " AND ( ( rsvpdates.date >= '" . $date . "' ) OR ( rsvpdates.enddate >= '" . $date . "' ))";
+		if ( $expire_after_end ) {
+			$now_ts = current_time('timestamp');
+			$where .= " AND rsvpdates.ts_end > $now_ts ";
+		} else {
+			$where .= " AND ( ( rsvpdates.date >= '" . $date . "' ) OR ( rsvpdates.enddate >= '" . $date . "' ))";
+		}
 
 		if ( ! empty( $datelimit ) ) {
 
@@ -316,8 +322,14 @@ function rsvpmaker_where( $where, $query = null ) {
 	} elseif ( isset( $_GET['startdate'] ) ) {
 
 		$d = sanitize_text_field( $_GET['startdate'] );
+		$expire_after_end = ! empty( $query->query_vars['expireAfterEnd'] ) || ( isset( $rsvpmaker_atts['expireAfterEnd'] ) && $rsvpmaker_atts['expireAfterEnd'] );
 
-		$where .= " AND ( (rsvpdates.date > '$d') OR (rsvpdates.enddate > '$d') ) ";
+		if ( $expire_after_end ) {
+			$now_ts = current_time('timestamp');
+			$where .= " AND rsvpdates.ts_end > $now_ts ";
+		} else {
+			$where .= " AND ( (rsvpdates.date > '$d') OR (rsvpdates.enddate > '$d') ) ";
+		}
 
 		if ( ! empty( $datelimit ) ) {
 
@@ -328,8 +340,17 @@ function rsvpmaker_where( $where, $query = null ) {
 
 	} else {
 		$curdate = rsvpmaker_date('Y-m-d');
+		$expire_after_end = ! empty( $query->query_vars['expireAfterEnd'] ) || ( isset( $rsvpmaker_atts['expireAfterEnd'] ) && $rsvpmaker_atts['expireAfterEnd'] );
 
-		$where .= " AND ( ( rsvpdates.date > '$curdate' OR rsvpdates.enddate > '$curdate' ) )";
+		if ( $expire_after_end ) {
+			// Only show events where the end time (as a Unix timestamp) is in the future
+			$now_ts = current_time('timestamp');
+			error_log('DEBUG rsvpmaker expireAfterEnd: now_ts=' . $now_ts . ' query_vars=' . var_export($query->query_vars['expireAfterEnd'], true) . ' atts=' . var_export($rsvpmaker_atts['expireAfterEnd'] ?? 'not set', true));
+			$where .= " AND rsvpdates.ts_end > $now_ts ";
+		} else {
+			// Show events where either start or end date is in the future (default behavior)
+			$where .= " AND ( ( rsvpdates.date > '$curdate' OR rsvpdates.enddate > '$curdate' ) )";
+		}
 
 		if ( ! empty( $datelimit ) ) {
 
@@ -408,6 +429,12 @@ function rsvpmaker_custom_query_params( $args, $request ) {
 	$exclude_type = $request->get_param('excludeType');
 	if ( ! empty( $exclude_type ) ) {
 		$args['excludeType'] = sanitize_text_field( $exclude_type );
+	}
+
+	$expire_after_end = $request->get_param('expireAfterEnd');
+	$expire_after_end_enabled = ! empty( $expire_after_end ) && 'false' !== $expire_after_end && '0' !== $expire_after_end;
+	if ( $expire_after_end_enabled ) {
+		$args['expireAfterEnd'] = true;
 	}
 
 	$rsvp_only = $request->get_param('rsvp_only');
@@ -2910,12 +2937,16 @@ function rsvpmaker_pre_get_posts($query) {
 function rsvpmaker_query_loop_filter($pre_render, $parsed_block) {
 	global $wp_query, $newqueryargs, $rsvpmakers_displayed;
 	if ( isset( $parsed_block['attrs']['namespace'] ) && rsvpmaker_is_loop_namespace( $parsed_block['attrs']['namespace'] ) ) {
-		if(empty($parsed_block['attrs']['query']['eventOrder']) && empty($parsed_block['attrs']['query']['excludeType']) && empty($parsed_block['attrs']['query']['rsvp_only']))
+		if(empty($parsed_block['attrs']['query']['eventOrder']) && empty($parsed_block['attrs']['query']['excludeType']) && empty($parsed_block['attrs']['query']['expireAfterEnd']) && empty($parsed_block['attrs']['query']['rsvp_only']))
 			{
 				return $pre_render;
 			}
 		$newqueryargs['eventOrder'] = (empty($parsed_block['attrs']['query']['eventOrder'])) ? 'future' : $parsed_block['attrs']['query']['eventOrder'];
 		$newqueryargs['excludeType'] = (empty($parsed_block['attrs']['query']['excludeType'])) ? '' : $parsed_block['attrs']['query']['excludeType'];
+		$expire_after_end = ! empty( $parsed_block['attrs']['query']['expireAfterEnd'] ) && 'false' !== $parsed_block['attrs']['query']['expireAfterEnd'] && '0' !== $parsed_block['attrs']['query']['expireAfterEnd'];
+		if ( $expire_after_end ) {
+			$newqueryargs['expireAfterEnd'] = true;
+		}
 		// Convert rsvp_only to meta_key/meta_value for WP_Query
 		$rsvp_only = false;
 		if ( isset( $parsed_block['attrs']['rsvp_only'] ) ) {
@@ -2984,6 +3015,11 @@ function rsvpmaker_apply_query_loop_filters( $default_query, $block ) {
 	$exclude_type = ! empty( $parsed_query['excludeType'] ) ? $parsed_query['excludeType'] : ( ! empty( $block_query['excludeType'] ) ? $block_query['excludeType'] : ( isset( $default_query['excludeType'] ) ? $default_query['excludeType'] : '' ) );
 	if ( ! empty( $exclude_type ) ) {
 		$newqueryargs['excludeType'] = $exclude_type;
+	}
+
+	$expire_after_end = ! empty( $parsed_query['expireAfterEnd'] ) ? $parsed_query['expireAfterEnd'] : ( ! empty( $block_query['expireAfterEnd'] ) ? $block_query['expireAfterEnd'] : ( isset( $default_query['expireAfterEnd'] ) ? $default_query['expireAfterEnd'] : false ) );
+	if ( ! empty( $expire_after_end ) && 'false' !== $expire_after_end && '0' !== $expire_after_end ) {
+		$newqueryargs['expireAfterEnd'] = true;
 	}
 
 	$rsvp_only = false;

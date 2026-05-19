@@ -3,6 +3,7 @@ import { PanelBody } from '@wordpress/components';
 import { addFilter } from '@wordpress/hooks';
 import { useEffect } from '@wordpress/element';
 import {RSVPEventOrder} from './event-order';
+import {RSVPExpireAfterEnd} from './expire-after-end';
 import RSVPControls from './rsvpslot';
 import {RSVPTaxonomyControls} from './taxonomy-controls';
 import RSVPQuery from './query-parameters.js'
@@ -383,8 +384,7 @@ export const withRSVPQueryControls = ( BlockEdit ) => ( props ) => {
 								'rsvpmaker'
 							) }
 						>
-						<RSVPEventOrder {...props} />
-						<RSVPTaxonomyControls {...props} />
+						<RSVPEventOrder {...props} />					<RSVPExpireAfterEnd {...props} />						<RSVPTaxonomyControls {...props} />
 						<RSVPQuery {...props} />
                         <RSVPControls.Slot fillProps={ { ...props } } />
 						<p><em>To change between 2 columns and 1 columns, click on the layout or use the Document Outline to select the Post Template. A Columns control will be displayed in the sidebar.</em></p>
