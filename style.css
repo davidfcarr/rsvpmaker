@@ -95,6 +95,34 @@ max-width: 90%;
 display: block;
 }
 
+#rsvpform label,
+.wp-block-rsvpmaker-formfield label,
+.wp-block-rsvpmaker-formselect label,
+.wp-block-rsvpmaker-formtextarea label,
+.wp-block-rsvpmaker-formradio label,
+.wp-block-rsvpmaker-formnote label,
+.guest-email-signup label {
+    color: #111 !important;
+}
+
+#rsvpform,
+#rsvpform p,
+#rsvpform label,
+#rsvpform .rsvp-input-line,
+#rsvpform .wp-block-rsvpmaker-formfield,
+#rsvpform .wp-block-rsvpmaker-formselect,
+#rsvpform .wp-block-rsvpmaker-formtextarea,
+#rsvpform .wp-block-rsvpmaker-formradio,
+#rsvpform .wp-block-rsvpmaker-formnote,
+.wp-block-rsvpmaker-formfield,
+.wp-block-rsvpmaker-formselect,
+.wp-block-rsvpmaker-formtextarea,
+.wp-block-rsvpmaker-formradio,
+.wp-block-rsvpmaker-formnote,
+.guest-email-signup {
+    text-align: left !important;
+}
+
 .wp-block-rsvpmaker-formselect select {
     width: 50%;
 }
