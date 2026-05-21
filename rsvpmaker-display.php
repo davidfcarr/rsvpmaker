@@ -2933,6 +2933,10 @@ function rsvpmaker_add_expire_after_end_data_attrs_to_query_loop( $block_content
 		return $block_content;
 	}
 
+	if ( isset( $_GET['cm'] ) ) {
+		return $block_content;
+	}
+
 	$namespace = isset( $parsed_block['attrs']['namespace'] ) ? $parsed_block['attrs']['namespace'] : '';
 	if ( ! rsvpmaker_is_loop_namespace( $namespace ) ) {
 		return $block_content;

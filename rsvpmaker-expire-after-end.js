@@ -5,7 +5,7 @@
 		}
 
 		var currentUrl = new window.URL( window.location.href );
-		if ( currentUrl.searchParams.has( 'rsvpmaker_refresh' ) ) {
+		if ( currentUrl.searchParams.has( 'rsvpmaker_refresh' ) || currentUrl.searchParams.has( 'cm' ) ) {
 			return;
 		}
 
