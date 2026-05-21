@@ -249,6 +249,7 @@ function rsvpmaker_event_scripts() {
 	wp_register_style( 'rsvp_style', $myStyleUrl, array(), $scriptversion );
 	wp_enqueue_style( 'rsvp_style' );
 	wp_enqueue_script( 'rsvpmaker_js', plugins_url( 'rsvpmaker.js', __FILE__ ), array(), $scriptversion, true );
+	wp_enqueue_script( 'rsvpmaker_expire_after_end', plugins_url( 'rsvpmaker-expire-after-end.js', __FILE__ ), array(), $scriptversion, true );
 	wp_localize_script( 'rsvpmaker_js', 'rsvpmaker_rest', rsvpmaker_rest_array() );
 	wp_enqueue_script( 'wp-tinymce' );
 	wp_enqueue_script( 'rsvpmaker_timezone', plugins_url( 'jstz.min.js', __FILE__ ), array(), $scriptversion, true );
