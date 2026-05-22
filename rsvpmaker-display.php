@@ -2918,6 +2918,60 @@ function rsvpmaker_is_loop_namespace( $namespace ) {
 	return ( false !== strpos( $namespace, 'rsvpmaker' ) && false !== strpos( $namespace, 'loop' ) );
 }
 
+function rsvpmaker_first_post_id_from_query_loop_content( $block_content ) {
+	if ( empty( $block_content ) || ! is_string( $block_content ) ) {
+		return 0;
+	}
+	if ( preg_match( '/(?:^|\s)post-(\d+)(?:\s|")/', $block_content, $matches ) ) {
+		return intval( $matches[1] );
+	}
+	return 0;
+}
+
+function rsvpmaker_add_expire_after_end_data_attrs_to_query_loop( $block_content, $parsed_block, $block = null ) {
+	if ( empty( $block_content ) || ! is_array( $parsed_block ) ) {
+		return $block_content;
+	}
+
+	if ( isset( $_GET['cm'] ) ) {
+		return $block_content;
+	}
+
+	$namespace = isset( $parsed_block['attrs']['namespace'] ) ? $parsed_block['attrs']['namespace'] : '';
+	if ( ! rsvpmaker_is_loop_namespace( $namespace ) ) {
+		return $block_content;
+	}
+
+	$query_attrs      = isset( $parsed_block['attrs']['query'] ) && is_array( $parsed_block['attrs']['query'] ) ? $parsed_block['attrs']['query'] : array();
+	$expire_after_end = ! empty( $query_attrs['expireAfterEnd'] ) && 'false' !== $query_attrs['expireAfterEnd'] && '0' !== $query_attrs['expireAfterEnd'];
+	if ( ! $expire_after_end ) {
+		return $block_content;
+	}
+
+	$first_ts_end = 0;
+	$post_id      = rsvpmaker_first_post_id_from_query_loop_content( $block_content );
+	if ( $post_id ) {
+		$event = get_rsvpmaker_event( $post_id );
+		if ( $event && isset( $event->ts_end ) ) {
+			$first_ts_end = intval( $event->ts_end );
+		}
+	}
+
+	if ( ! class_exists( 'WP_HTML_Tag_Processor' ) ) {
+		return $block_content;
+	}
+	$processor = new WP_HTML_Tag_Processor( $block_content );
+	if ( ! $processor->next_tag() ) {
+		return $block_content;
+	}
+	$processor->set_attribute( 'data-rsvpmaker-expire-after-end', '1' );
+	if ( $first_ts_end > 0 ) {
+		$processor->set_attribute( 'data-rsvpmaker-first-ts-end', strval( $first_ts_end ) );
+	}
+	return $processor->get_updated_html();
+}
+add_filter( 'render_block_core/query', 'rsvpmaker_add_expire_after_end_data_attrs_to_query_loop', 10, 3 );
+
 function rsvpmaker_pre_get_posts($query) {
 	if(isset($query->query['post_type']) && $query->query['post_type'] == 'rsvpmaker') {
 		if(isset($_GET['excludeType']))
@@ -4029,4 +4083,3 @@ function rsvpmaker_date_title( $title, $sep = '&raquo;', $seplocation = 'left' )
 		return $title;
 
 }
-
