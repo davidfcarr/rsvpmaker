@@ -1591,7 +1591,9 @@ function rsvp_get_confirm($post_id, $return_post = false) {
 		}			
 		if(!strpos($conf_post->post_content,'!-- /wp'))//if it's not Gutenberg content
 			$conf_post->post_content = wpautop($conf_post->post_content);
+		rsvpmaker_push_event_post( $post_id );
 		$conf_post->post_content = do_blocks($conf_post->post_content);
+		rsvpmaker_pop_event_post();
 		$title = (!empty($post->post_title)) ? $post->post_title : 'not set';
 		$context = (is_admin()) ? 'admin' : 'not admin';
 		$log = sprintf('retrieve conf post ID %s for %s %s',$id,$title,$context);
@@ -1643,7 +1645,9 @@ function rsvp_get_reminder($post_id,$hours) {
 	$event_title = get_the_title($post_id);
 	$dateblock = rsvp_date_block_email( $post_id );
 
+	rsvpmaker_push_event_post( $post_id );
 	$conf_post->post_content = rsvpmaker_email_html($conf_post->post_content);
+	rsvpmaker_pop_event_post();
 	$conf_post->post_content = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$conf_post->post_content;
 	return $conf_post;
 }

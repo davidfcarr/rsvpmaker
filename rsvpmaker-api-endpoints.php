@@ -427,7 +427,9 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 				$message_post = get_post( $message_id );
 
+				rsvpmaker_push_event_post( $rsvp_post_id );
 				$vars['payment_confirmation_message'] = rsvpmaker_email_html( $message_post->post_content );
+				rsvpmaker_pop_event_post();
 
 			}
 
@@ -2599,9 +2601,11 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 		else {
 			$response['confirmation_source'] = '?';
 		}
-
 $response["confirmation"] = $confirm_post;
+$response["confirmation"] = $confirm_post;
+rsvpmaker_push_event_post( $post_id );
 $response['confirmation']->html = do_blocks($response["confirmation"]->post_content);
+rsvpmaker_pop_event_post();
 $response['reminder'] = [];
 $sql = $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key LIKE '_rsvp_reminder_msg_%' ORDER BY meta_key",$wpdb->postmeta,$post_id);
 $results = $wpdb->get_results($sql);
@@ -2612,7 +2616,9 @@ if($results)
 		$rpost = get_post($row->meta_value);
 		if($rpost) {
 			$rpost->hour = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
+			rsvpmaker_push_event_post( $post_id );
 			$rpost->html = do_blocks($rpost->post_content);
+			rsvpmaker_pop_event_post();
 			$response['reminder'][] = $rpost;
 		}
 	}
@@ -2625,7 +2631,9 @@ if($payment_confirmation)
 	$pconf = get_post($payment_confirmation);
 	if($pconf) {
 	$response['payment_confirmation'] = $pconf;
+	rsvpmaker_push_event_post( $post_id );
 	$response['payment_confirmation']->html = do_blocks($pconf->post_content);
+	rsvpmaker_pop_event_post();
 	}
 }
 $response['edit_url'] = admin_url('post.php?action=edit&post=');

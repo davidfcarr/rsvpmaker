@@ -1986,10 +1986,14 @@ function rsvpmaker_basic_form( $form = '' ) {
 				$form = upgrade_rsvpform(false,$form);
 				$fpost = get_post($form);
 			}
+			rsvpmaker_push_event_post( $post );
 			echo do_blocks( $fpost->post_content );
+			rsvpmaker_pop_event_post();
 
 		} else {
+			rsvpmaker_push_event_post( $post );
 			echo do_shortcode( $form );
+			rsvpmaker_pop_event_post();
 		}
 
 	}
