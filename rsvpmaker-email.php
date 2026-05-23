@@ -3632,6 +3632,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	$rsvp_to_array = explode(",", $rsvp_to);
 	$rsvpdata['rsvpmessage'] = '';
 	$message_id = get_post_meta($post->ID,'_rsvp_confirm',true);
+	rsvpmaker_push_event_post( $post );
 	if($message_id)
 	{
 	  $message_post = get_post($message_id);
@@ -3643,6 +3644,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	  $message_post = get_post($message_id);
 	  $rsvpdata['rsvpmessage'] .= rsvpmaker_email_html($message_post->post_content);
 	}
+	rsvpmaker_pop_event_post();
 
 	$notification_subject = $templates['confirmation_after_payment']['subject'];
 	foreach($rsvpdata as $field => $value)

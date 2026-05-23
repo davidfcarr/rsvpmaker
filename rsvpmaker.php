@@ -21,7 +21,51 @@ global $wp_version;
 global $default_tz;
 global $rsvpmaker_event;
 global $rsvpmakers;
+global $rsvpeventpost;
 $default_tz = date_default_timezone_get();
+
+function rsvpmaker_push_event_post( $event_post = null ) {
+	global $post, $rsvpeventpost, $rsvpeventpost_stack;
+
+	if ( ! isset( $rsvpeventpost_stack ) || ! is_array( $rsvpeventpost_stack ) ) {
+		$rsvpeventpost_stack = array();
+	}
+
+	$rsvpeventpost_stack[] = ( isset( $rsvpeventpost ) && is_object( $rsvpeventpost ) ) ? $rsvpeventpost : null;
+
+	if ( empty( $event_post ) ) {
+		if ( ! empty( $rsvpeventpost ) ) {
+			$event_post = $rsvpeventpost;
+		} elseif ( ! empty( $post ) ) {
+			$event_post = $post;
+		}
+	} elseif ( is_numeric( $event_post ) ) {
+		$event_post = get_post( (int) $event_post );
+	}
+
+	if ( is_object( $event_post ) && ! empty( $event_post->ID ) ) {
+		$rsvpeventpost = $event_post;
+	} else {
+		unset( $rsvpeventpost );
+	}
+
+	return isset( $rsvpeventpost ) ? $rsvpeventpost : null;
+}
+
+function rsvpmaker_pop_event_post() {
+	global $rsvpeventpost, $rsvpeventpost_stack;
+
+	if ( ! empty( $rsvpeventpost_stack ) && is_array( $rsvpeventpost_stack ) ) {
+		$previous = array_pop( $rsvpeventpost_stack );
+		if ( is_object( $previous ) && ! empty( $previous->ID ) ) {
+			$rsvpeventpost = $previous;
+			return $rsvpeventpost;
+		}
+	}
+
+	unset( $rsvpeventpost );
+	return null;
+}
 
 function rsvpmaker_load_plugin_textdomain() {
 	load_plugin_textdomain( 'rsvpmaker', false, basename( dirname( __FILE__ ) ) . '/translations/' );
@@ -1169,4 +1213,3 @@ function rsvpautog( $content ) {
 	return $content;
 
 }
-
