@@ -4,3 +4,67 @@
  *
  * Replace them with your own styles or remove the file completely.
  */
+
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea {
+	display: flex;
+	align-items: center;
+}
+
+.wp-block-rsvpmaker-contact label, .wp-block-rsvpmaker-contact input,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield > p,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield > label,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield > .rsvp-input-line,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > p,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > label,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > .rsvp-input-line,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > p,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > label,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > .rsvp-input-line {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.wp-block-rsvpmaker-contact label,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield > p,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield > label,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > p,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > label,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > p,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > label {
+	width: 12rem;
+	margin: 0;
+}
+
+.wp-block-rsvpmaker-contact input,
+.contact-subject input,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield > .rsvp-input-line,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > .rsvp-input-line,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > .rsvp-input-line {
+	flex: 1;
+	min-width: 0;
+	margin-left: 0;
+}
+
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield .rsvp-input-line input,
+.contact-subject input,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect .rsvp-input-line select {
+    display: inline-block;
+	width: 100%;
+}
+
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea .rsvp-input-line textarea,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formnote .rsvp-input-line textarea {
+    display: block;
+    width: 100%;
+}
+
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect .rsvp-input-line select {
+	max-width: 28rem;
+}
+
+.wp-block-rsvpmaker-contact textarea, .rsvp-textarea-line, .rsvp-textarea-line textarea {
+    width: 80%;
+    height: 5em;
+}

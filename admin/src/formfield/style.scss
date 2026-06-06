@@ -4,6 +4,52 @@
  *
  * Replace them with your own styles or remove the file completely.
  */
-.wp-block-rsvpmaker-formfield label {
-	display: block;
+
+.wp-block-rsvpmaker-formfield.rsvp-label-inline > label,
+.wp-block-rsvpmaker-formfield.rsvp-label-inline > p,
+.wp-block-rsvpmaker-formfield.rsvp-label-inline > .rsvp-input-line {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.wp-block-rsvpmaker-formfield.rsvp-label-inline {
+	display: flex;
+	align-items: center;
+}
+
+.wp-block-rsvpmaker-formfield.rsvp-label-inline > label,
+.wp-block-rsvpmaker-formfield.rsvp-label-inline > p {
+	width: 12rem;
+	margin: 0;
+}
+
+.wp-block-rsvpmaker-formfield.rsvp-label-inline > .rsvp-input-line {
+	flex: 1;
+	min-width: 0;
+	margin-left: 0.5em;
+}
+
+.wp-block-rsvpmaker-formfield .rsvp-input-line input {
+	width: auto;
+}
+
+.wp-block-rsvpmaker-formfield .rsvp-input-line input[type='text'],
+.wp-block-rsvpmaker-formfield .rsvp-input-line input[type='url'],
+.wp-block-rsvpmaker-formfield .rsvp-input-line input[type='email'],
+.wp-block-rsvpmaker-formfield .rsvp-input-line input[type='password'] {
+	width: 80%;
+}
+
+.wp-block-rsvpmaker-formfield.rsvp-label-inline .rsvp-input-line input[type='text'],
+.wp-block-rsvpmaker-formfield.rsvp-label-inline .rsvp-input-line input[type='url'],
+.wp-block-rsvpmaker-formfield.rsvp-label-inline .rsvp-input-line input[type='email'],
+.wp-block-rsvpmaker-formfield.rsvp-label-inline .rsvp-input-line input[type='password'] {
+	width: 100%;
+}
+
+.rsvp-fieldnote {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 2em;
+    font-style: italic;
 }

@@ -1,7 +1,7 @@
 const { __ } = wp.i18n;
 const { Fragment } = wp.element;
 const { Component } = wp.element;
-const { InspectorControls } = wp.blockEditor;
+const { InspectorControls, useBlockProps } = wp.blockEditor;
 const { PanelBody, SelectControl, TextControl, TextareaControl, ToggleControl, RadioControl } = wp.components;
 import apiFetch from '@wordpress/api-fetch';
 
@@ -24,14 +24,16 @@ import { applyFieldLabelChange } from '../form-field-label';
  */
 export default function Edit(props) {
 	const { attributes: { label, fieldnote, slug, rows, guestform }, setAttributes, isSelected } = props;
+	const blockProps = useBlockProps();
+
 	var profilename = 'profile['+slug+']';
 			return (
 			<Fragment>
 			<TextAreaInspector {...props} />
-			<div className={ props.className }>
+			<div { ...blockProps }>
 <p><label>{label}:</label></p>
 {fieldnote && <p><em>{fieldnote}</em></p>}
-<div className="rsvp-input-line"><textarea inert tabindex="-1" rows={rows} className={slug} type="text" name={profilename} id={slug}></textarea></div>
+<div className="rsvp-textarea-line"><textarea inert tabindex="-1" rows={rows} className={slug} type="text" name={profilename} id={slug}></textarea></div>
 <div><em>{__('Set properties in sidebar. Intended for use within an RSVPMaker registration form.','rsvpmaker')}</em></div>
 			</div>
 			</Fragment>

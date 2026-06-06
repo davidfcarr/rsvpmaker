@@ -6,3 +6,37 @@
 .wp-block-rsvpmaker-formselect label {
 	display: block;
 }
+
+.wp-block-rsvpmaker-formselect.rsvp-label-inline > label,
+.wp-block-rsvpmaker-formselect.rsvp-label-inline > p,
+.wp-block-rsvpmaker-formselect.rsvp-label-inline > .rsvp-input-line {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.wp-block-rsvpmaker-formselect.rsvp-label-inline {
+	display: flex;
+	align-items: center;
+}
+
+.wp-block-rsvpmaker-formselect.rsvp-label-inline > label,
+.wp-block-rsvpmaker-formselect.rsvp-label-inline > p {
+	width: 12rem;
+	margin: 0;
+}
+
+.wp-block-rsvpmaker-formselect.rsvp-label-inline > .rsvp-input-line {
+	flex: 1;
+	min-width: 0;
+	margin-left: 0.5em;
+}
+
+
+.wp-block-rsvpmaker-formselect .rsvp-input-line select {
+	display: inline-block;
+	width: 90%;
+}
+
+.wp-block-rsvpmaker-formselect.rsvp-label-inline select {
+	width: 100%;
+}

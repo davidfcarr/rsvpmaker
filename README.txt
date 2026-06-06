@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 12.0.3
+Stable tag: 12.0.5
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -130,6 +130,16 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe, MailChimp, and Postmark under the license of their creators.
 
 == Changelog ==
+
+= 12.0.5 =
+
+* Improved coverage of WordPress core block support in RSVP Email using inline styles.
+
+= 12.0.4 =
+
+* Search by email or subject added to Postmark email log screen.
+* Other Postmark enhancements, including setting from address to forwardto-username@domain when replyto is set to the email of a user account.
+* Tighter checks for events no longer in the future.
 
 = 12.0.1 =
 

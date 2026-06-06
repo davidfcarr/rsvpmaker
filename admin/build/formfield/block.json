@@ -37,6 +37,14 @@
     "required": {
       "type": "string",
       "default": ""
+    },
+    "labelPosition": {
+      "type": "string",
+      "default": "stacked"
+    },
+    "fieldType": {
+      "type": "string",
+      "default": "text"
     }
   },
   "version": "2",

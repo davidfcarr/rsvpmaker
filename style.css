@@ -85,6 +85,10 @@ max-width: 90%;
 .rsvp-input-line {
     margin-left: 1.25em;
 }
+.rsvp-input-line input, .rsvp-input-line select {
+    display: inline-block;
+    width: 80%;
+}
 .guest-email-signup label {
     display: block;
     padding: 0;

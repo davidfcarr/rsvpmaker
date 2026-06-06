@@ -216,6 +216,9 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     else
         $mail['ReplyTo'] = get_option('admin_email');
     $mail['From'] = ($message_stream == $postmark_settings['postmark_tx_slug']) ? $postmark_settings['postmark_tx_from'] : $postmark_settings['postmark_broadcast_from'];
+    $forwardto_from = rsvpmaker_postmark_forwardto_from_replyto($mail['ReplyTo']);
+    if($forwardto_from)
+        $mail['From'] = $forwardto_from;
     $fromname = get_post_meta($post_id,'rsvprelay_fromname',true);
     if(empty($fromname))
         $fromname = get_bloginfo('name');
@@ -283,11 +286,12 @@ function rsvpmaker_postmark_chunked_batches() {
 	$results = $wpdb->get_results($sql);
     error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
 	if($results) {
+    $last_batchrow = null;
 	foreach($results as $index => $batchrow) {
-	if(10 == $index)
-		continue;
-    $doneafterthis = sizeof($results) - $index == 1;
+    if(10 == $index)
+        break;
 	$recipients = unserialize($batchrow->meta_value);
+        $last_batchrow = $batchrow;
         //returns number sent, 'duplicate message' or null
 	$batch_result = rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
 	if($batch_result)
@@ -299,10 +303,12 @@ function rsvpmaker_postmark_chunked_batches() {
         $postmark_options = get_rsvpmaker_postmark_options();
         if(!empty($postmark_options['notify_batch_send']))
             wp_mail(rsvpmaker_postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
-        if($doneafterthis) {
-            $title = get_the_title($batchrow->post_id);
+    }
+	if(!rsvpmaker_postmark_pending_batch_count()) {
+		if($last_batchrow) {
+			$title = get_the_title($last_batchrow->post_id);
             $mail['subject'] = 'Sent: '.$title;
-            $mail['html'] = sprintf('<p>The RSVPMaker Mailer for Postmark email broadcast is complete.</p> </p>See the results on the <a href="%s">Postmark Email Log</a> page. </p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag=rsvpemail-'.get_current_blog_id().'-'.$batchrow->post_id));
+            $mail['html'] = sprintf('<p>The RSVPMaker Mailer for Postmark email broadcast is complete.</p> </p>See the results on the <a href="%s">Postmark Email Log</a> page. </p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag=rsvpemail-'.get_current_blog_id().'-'.$last_batchrow->post_id));
             $mail['from'] = $mail['to'] = get_option('admin_email');
             $mail['fromname'] = get_option('blogname');
             rsvpmailer($mail);
@@ -311,16 +317,24 @@ function rsvpmaker_postmark_chunked_batches() {
                 $mail['to'] = $postmark_admin;
                 rsvpmailer($mail);
             }
-            wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
         }
-	
+        wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
     }
+	else {
+		error_log('keeping postmark chunked batches schedule active: '.rsvpmaker_postmark_pending_batch_count().' batches remain');
+	}
 	}
     else {
         error_log('ending postmark chunked batches');
         wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
     }
     //wp_suspend_cache_addition(false);
+}
+
+function rsvpmaker_postmark_pending_batch_count() {
+	global $wpdb;
+	$sql = $wpdb->prepare("SELECT count(*) FROM %i WHERE meta_key='rsvprelay_to_batch'",$wpdb->postmeta);
+	return (int) $wpdb->get_var($sql);
 }
 
 function rsvpmaker_postmark_send($mail) {
@@ -406,13 +420,8 @@ function rsvpmail_local_domains_and_prefixes() {
 
 function rsvpmail_recipients_by_email_parts($breakdown, $email = null) {
     $allforwarders = get_transient('allforwarders_'.$breakdown['blog_id']);
-    //error_log('breakdown/allforwarders postmark line 299');
-    //error_log(var_export($breakdown,true));
-    //error_log(var_export($allforwarders,true));
     if(empty($email) || empty($allforwarders) || empty($allforwarders[$email])) {
-        //not cached 
         $allforwarders = rsvpmail_get_consolidated_forwarders($breakdown['blog_id'],$breakdown['subdomain'],$breakdown['domain']);
-        //error_log('allforwarders '.var_export($allforwarders,true));
         set_transient('allforwarders_'.$breakdown['blog_id'],$allforwarders,DAY_IN_SECONDS);
     }
     return $allforwarders;
@@ -627,16 +636,20 @@ function rsvpmaker_postmark_array($source, $message_stream = 'broadcast', $slug_
 }
 
 function rsvpmaker_postmark_array_from($from,$slug_and_id,$reply_to,$postmark_settings) {
-	$rparts = explode('@',$reply_to);
+    $forwardto_from = rsvpmaker_postmark_forwardto_from_replyto($reply_to,$slug_and_id);
+    if($forwardto_from)
+        return $forwardto_from;
+
+    $rparts = explode('@',$reply_to);
 	$good_domains = $postmark_settings['sender_domains'];
 	if(in_array($rparts[1],$good_domains))
 	{	
-		$from = $reply_to;
+		return $reply_to;
 	}
 	elseif(is_array($slug_and_id)) {
-		$user = get_user_by('email',$reply_to);
-		if($user) {
-			$from = 'forwardto-'.$user->user_login.'@'.$slug_and_id['domain'];
+        $user = get_user_by('email',$reply_to);
+		if($user && !strpos($user->user_login,'@')) {
+            $from = 'forwardto-'.$user->user_login.'@'.rsvpmaker_postmark_sender_domain($slug_and_id);
 		}
 		elseif(is_array($slug_and_id) && in_array($slug_and_id['domain'],$good_domains))
 		{	
@@ -647,6 +660,39 @@ function rsvpmaker_postmark_array_from($from,$slug_and_id,$reply_to,$postmark_se
 		}	
 	}
 	return $from;
+}
+
+function rsvpmaker_postmark_sender_domain($slug_and_id = NULL) {
+    if(is_multisite()) {
+        $home = get_blog_option(1,'home');
+    }
+    elseif(is_array($slug_and_id) && !empty($slug_and_id['blog_id'])) {
+        $home = get_blog_option($slug_and_id['blog_id'],'home');
+    }
+    else {
+        $home = get_option('home');
+    }
+    if(empty($home))
+        $home = get_site_url();
+    $domain = parse_url(strtolower($home), PHP_URL_HOST);
+    if(empty($domain))
+        return '';
+    return preg_replace('/^www\./','',$domain);
+}
+
+function rsvpmaker_postmark_forwardto_from_replyto($reply_to,$slug_and_id = NULL) {
+    $reply_to_email = sanitize_email($reply_to);
+    if(empty($reply_to_email) && preg_match('/<([^>]+)>/',$reply_to,$matches))
+        $reply_to_email = sanitize_email($matches[1]);
+    if(empty($reply_to_email))
+        return '';
+    $user = get_user_by('email',$reply_to_email);
+    if(!$user || strpos($user->user_login,'@'))
+        return '';
+    $domain = rsvpmaker_postmark_sender_domain($slug_and_id);
+    if(empty($domain))
+        return '';
+    return 'forwardto-'.$user->user_login.'@'.$domain;
 }
 
 function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
@@ -776,6 +822,330 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
     }
 }
 
+function rsvpmaker_postmark_message_timestamp($message) {
+    $date_keys = array('ReceivedAt','SubmittedAt','MessageDate','Date');
+    foreach($date_keys as $key) {
+        if(!empty($message[$key])) {
+            $ts = strtotime($message[$key]);
+            if($ts)
+                return $ts;
+        }
+    }
+    return 0;
+}
+
+function rsvpmaker_postmark_message_value($message, $key, $default = null) {
+    if(is_array($message)) {
+        if(array_key_exists($key,$message))
+            return $message[$key];
+        $alt_keys = array(
+            strtolower($key),
+            preg_replace('/_/', '', strtolower($key)),
+        );
+        foreach($alt_keys as $alt_key) {
+            if(array_key_exists($alt_key,$message))
+                return $message[$alt_key];
+        }
+    }
+    if(is_object($message)) {
+        if($message instanceof ArrayAccess && isset($message[$key]))
+            return $message[$key];
+        if(isset($message->$key))
+            return $message->$key;
+    }
+    return $default;
+}
+
+function rsvpmaker_postmark_debug_to_array($v, $depth = 0) {
+    if($depth > 6) return '...';
+    if(is_object($v) && ($v instanceof Traversable)) {
+        $out = array();
+        foreach($v as $k => $val) {
+            $out[$k] = rsvpmaker_postmark_debug_to_array($val, $depth + 1);
+        }
+        return $out;
+    }
+    if(is_array($v)) {
+        return array_map(function($val) use ($depth) { return rsvpmaker_postmark_debug_to_array($val, $depth + 1); }, $v);
+    }
+    return $v;
+}
+
+function rsvpmaker_postmark_debug_collection($response, $key) {
+    $collection = rsvpmaker_postmark_message_value($response,$key,array());
+    if($collection instanceof Traversable)
+        return iterator_to_array($collection);
+    if(is_array($collection))
+        return $collection;
+    return array();
+}
+
+function rsvpmaker_postmark_extract_recipient($message) {
+    // Opens/clicks API uses 'Recipient' (plain string)
+    $r = rsvpmaker_postmark_message_value($message, 'Recipient', '');
+    if(is_scalar($r) && '' !== (string)$r) return (string)$r;
+    // Messages API uses 'Recipients' (array of email strings)
+    $list = rsvpmaker_postmark_message_value($message, 'Recipients', null);
+    if(null !== $list) {
+        if(is_object($list) && ($list instanceof ArrayAccess)) {
+            $first = $list[0];
+            if(is_scalar($first)) return (string)$first;
+        }
+        if(is_array($list) && !empty($list)) return (string)$list[0];
+        if(is_scalar($list)) return (string)$list;
+    }
+    return '';
+}
+
+function rsvpmaker_postmark_normalize_message_row($message, $stream_label, $stream_id) {
+    $str = function($v) { return is_scalar($v) ? (string) $v : ''; };
+    $recipient = rsvpmaker_postmark_extract_recipient($message);
+    $row = array(
+        'Subject'    => $str(rsvpmaker_postmark_message_value($message,'Subject','')),
+        'To'         => $recipient,
+        'Recipient'  => $recipient,
+        'Status'     => $str(rsvpmaker_postmark_message_value($message,'Status','')),
+        'MessageID'  => $str(rsvpmaker_postmark_message_value($message,'MessageID','')),
+        'Opens'      => (int) rsvpmaker_postmark_message_value($message,'Opens',0),
+        'Delivered'  => $str(rsvpmaker_postmark_message_value($message,'Delivered','')),
+        'DeliveredAt'=> $str(rsvpmaker_postmark_message_value($message,'DeliveredAt','')),
+        'ReceivedAt' => $str(rsvpmaker_postmark_message_value($message,'ReceivedAt','')),
+        'SubmittedAt'=> $str(rsvpmaker_postmark_message_value($message,'SubmittedAt','')),
+        'MessageDate'=> $str(rsvpmaker_postmark_message_value($message,'MessageDate','')),
+        'Date'       => $str(rsvpmaker_postmark_message_value($message,'Date','')),
+        'Clicks'     => (int) rsvpmaker_postmark_message_value($message,'Clicks',0),
+        'stream_label' => $stream_label,
+        'stream_id'    => $stream_id,
+    );
+    $row['_ts'] = rsvpmaker_postmark_message_timestamp($row);
+    return $row;
+}
+
+function rsvpmaker_postmark_enrich_message_row($client, $row, &$details_cache, $force = array()) {
+    $msg_id = !empty($row['MessageID']) ? (string) $row['MessageID'] : '';
+    if(empty($msg_id)) {
+        if(!empty($force['delivered']) && empty($row['Delivered']))
+            $row['Delivered'] = 'true';
+        return $row;
+    }
+
+    $need_details = empty($row['Subject'])
+        || empty($row['Status'])
+        || empty($row['Delivered'])
+        || empty($row['DeliveredAt'])
+        || !isset($row['Opens'])
+        || !isset($row['Clicks'])
+        || !is_numeric($row['Opens'])
+        || !is_numeric($row['Clicks'])
+        || (intval($row['Opens']) === 0 && intval($row['Clicks']) === 0 && empty($row['DeliveredAt']) && empty($row['Delivered']));
+
+    if($need_details && !array_key_exists($msg_id, $details_cache)) {
+        $details_cache[$msg_id] = array();
+        try {
+            $details = $client->getOutboundMessageDetails($msg_id);
+            $details_cache[$msg_id] = rsvpmaker_postmark_debug_to_array($details);
+        }
+        catch(PostmarkException $e) {
+            $details_cache[$msg_id] = array();
+        }
+    }
+
+    if(!empty($details_cache[$msg_id])) {
+        $details = $details_cache[$msg_id];
+        if(empty($row['Subject']))
+            $row['Subject'] = (string) rsvpmaker_postmark_message_value($details,'Subject','');
+        if(empty($row['Status']))
+            $row['Status'] = (string) rsvpmaker_postmark_message_value($details,'Status','');
+        if(empty($row['Delivered']))
+            $row['Delivered'] = (string) rsvpmaker_postmark_message_value($details,'Delivered','');
+        if(empty($row['DeliveredAt']))
+            $row['DeliveredAt'] = (string) rsvpmaker_postmark_message_value($details,'DeliveredAt','');
+        if(!isset($row['Opens']) || intval($row['Opens']) === 0)
+            $row['Opens'] = (int) rsvpmaker_postmark_message_value($details,'Opens',0);
+        if(!isset($row['Clicks']) || intval($row['Clicks']) === 0)
+            $row['Clicks'] = (int) rsvpmaker_postmark_message_value($details,'Clicks',0);
+        if(empty($row['_ts'])) {
+            $row['ReceivedAt'] = empty($row['ReceivedAt']) ? (string) rsvpmaker_postmark_message_value($details,'ReceivedAt','') : $row['ReceivedAt'];
+            $row['SubmittedAt'] = empty($row['SubmittedAt']) ? (string) rsvpmaker_postmark_message_value($details,'SubmittedAt','') : $row['SubmittedAt'];
+            $row['MessageDate'] = empty($row['MessageDate']) ? (string) rsvpmaker_postmark_message_value($details,'MessageDate','') : $row['MessageDate'];
+            $row['Date'] = empty($row['Date']) ? (string) rsvpmaker_postmark_message_value($details,'Date','') : $row['Date'];
+        }
+    }
+
+    if(!empty($force['delivered']) && empty($row['Delivered']) && empty($row['DeliveredAt']) && (empty($row['Status']) || false === stripos($row['Status'],'deliver')))
+        $row['Delivered'] = 'true';
+
+    $row['_ts'] = rsvpmaker_postmark_message_timestamp($row);
+    return $row;
+}
+
+function rsvpmaker_postmark_search_stream_messages($client, $stream_id, $stream_label, $recipient = '', $subject = '', $status_filter = 'all', $debug = false) {
+    // Only pass delivery-status filters to this endpoint; engagement (opened/clicked) uses a separate function
+    $api_status = ('delivered' === $status_filter) ? 'delivered' : NULL;
+    $results = array();
+    $details_cache = array();
+    $response = $client->getOutboundMessages(100, 0, $recipient ?: NULL, NULL, NULL, $subject ?: NULL, $api_status, NULL, NULL, NULL, $stream_id);
+    if($debug) {
+        $params = array('count'=>100,'recipient'=>$recipient?:null,'subject'=>$subject?:null,'status'=>$api_status,'messagestream'=>$stream_id);
+        $raw = rsvpmaker_postmark_debug_to_array($response);
+        $messages_debug = rsvpmaker_postmark_debug_collection($response,'Messages');
+        $msg_count = count($messages_debug);
+        $sample = $msg_count ? array_slice(array_map('rsvpmaker_postmark_debug_to_array',$messages_debug), 0, 3) : array();
+        echo '<details open><summary><strong>Debug: getOutboundMessages &mdash; '.$stream_label.' ('.$stream_id.')</strong></summary>';
+        echo '<p><strong>Params:</strong> <code>'.esc_html(json_encode($params)).'</code></p>';
+        echo '<p><strong>TotalCount:</strong> '.esc_html((string) rsvpmaker_postmark_message_value($raw,'TotalCount','?')).' | <strong>Messages in response:</strong> '.$msg_count.'</p>';
+        if($sample) echo '<pre style="overflow:auto;max-height:300px;background:#f6f7f7;padding:10px">'.esc_html(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)).'</pre>';
+        echo '</details>';
+    }
+    $messages = rsvpmaker_postmark_message_value($response,'Messages',array());
+    if(empty($messages) || !(is_array($messages) || $messages instanceof Traversable))
+        return $results;
+    foreach($messages as $message) {
+        $row = rsvpmaker_postmark_normalize_message_row($message,$stream_label,$stream_id);
+        $results[] = rsvpmaker_postmark_enrich_message_row($client, $row, $details_cache, array('delivered' => ('delivered' === $status_filter)));
+    }
+    return $results;
+}
+
+function rsvpmaker_postmark_search_stream_engagement($client, $stream_id, $stream_label, $recipient = '', $subject = '', $type = 'opens', $debug = false) {
+    $results = array();
+    if('opens' === $type) {
+        $response = $client->getOpenStatistics(100, 0, $recipient ?: NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $stream_id);
+        $items = $response->Opens;
+        $status_label = 'Opened';
+    } else {
+        $response = $client->getClickStatistics(100, 0, $recipient ?: NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, $stream_id);
+        $items = $response->Clicks;
+        $status_label = 'Clicked';
+    }
+    if($debug) {
+        $endpoint = ('opens' === $type) ? 'getOpenStatistics' : 'getClickStatistics';
+        $response_key = ('opens' === $type) ? 'Opens' : 'Clicks';
+        $params = array('count'=>100,'recipient'=>$recipient?:null,'messagestream'=>$stream_id);
+        $raw = rsvpmaker_postmark_debug_to_array($response);
+        $items_debug = rsvpmaker_postmark_debug_collection($response,$response_key);
+        $item_count = count($items_debug);
+        $sample = $item_count ? array_slice(array_map('rsvpmaker_postmark_debug_to_array',$items_debug), 0, 3) : array();
+        echo '<details open><summary><strong>Debug: '.$endpoint.' &mdash; '.$stream_label.' ('.$stream_id.')</strong></summary>';
+        echo '<p><strong>Params:</strong> <code>'.esc_html(json_encode($params)).'</code></p>';
+        echo '<p><strong>TotalCount:</strong> '.esc_html((string) rsvpmaker_postmark_message_value($raw,'TotalCount','?')).' | <strong>Items in response:</strong> '.$item_count.'</p>';
+        if($sample) echo '<pre style="overflow:auto;max-height:300px;background:#f6f7f7;padding:10px">'.esc_html(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)).'</pre>';
+        echo '</details>';
+    }
+    if(empty($items) || !(is_array($items) || $items instanceof Traversable))
+        return $results;
+    $str = function($v) { return is_scalar($v) ? (string)$v : ''; };
+    $details_cache = array();
+    $seen = array();
+    foreach($items as $item) {
+        $msg_id = $str(rsvpmaker_postmark_message_value($item,'MessageID',''));
+        if(!empty($msg_id)) {
+            if(isset($seen[$msg_id])) continue;
+            $seen[$msg_id] = true;
+        }
+        $subj = $str(rsvpmaker_postmark_message_value($item,'Subject',''));
+        $recip = $str(rsvpmaker_postmark_message_value($item,'Recipient',''));
+        $received = $str(rsvpmaker_postmark_message_value($item,'ReceivedAt',''));
+        $row = array(
+            'Subject'     => $subj,
+            'To'          => $recip,
+            'Recipient'   => $recip,
+            'Status'      => $status_label,
+            'MessageID'   => $msg_id,
+            'Opens'       => ('opens' === $type) ? 1 : 0,
+            'Clicks'      => ('opens' !== $type) ? 1 : 0,
+            'Delivered'   => '',
+            'DeliveredAt' => '',
+            'ReceivedAt'  => $received,
+            'SubmittedAt' => '',
+            'MessageDate' => '',
+            'Date'        => '',
+            'stream_label' => $stream_label,
+            'stream_id'    => $stream_id,
+        );
+        $row = rsvpmaker_postmark_enrich_message_row($client, $row, $details_cache);
+        if(!empty($subject) && false === stripos((string) $row['Subject'], $subject))
+            continue;
+        $results[] = $row;
+    }
+    return $results;
+}
+
+function rsvpmaker_postmark_status_flags($message) {
+    $status = strtolower(isset($message['Status']) ? $message['Status'] : '');
+    $opens   = isset($message['Opens'])  ? intval($message['Opens'])  : 0;
+    $clicks  = isset($message['Clicks']) ? intval($message['Clicks']) : 0;
+    $opened  = ($opens  > 0) || (strpos($status,'open') !== false);
+    $clicked = ($clicks > 0) || (strpos($status,'link') !== false) || (strpos($status,'click') !== false);
+    $processed = (!empty($message['MessageID']) || !empty($status));
+    $delivered = (strpos($status,'deliver') !== false) || !empty($message['DeliveredAt']) || (!empty($message['Delivered']) && 'false' !== strtolower((string) $message['Delivered']));
+    return array(
+        'opened'    => $opened,
+        'clicked'   => $clicked,
+        'processed' => $processed,
+        'delivered' => $delivered,
+    );
+}
+
+function rsvpmaker_postmark_matches_status_filter($message, $status_filter = 'all') {
+    if(empty($status_filter) || 'all' === $status_filter)
+        return true;
+    $flags = rsvpmaker_postmark_status_flags($message);
+    if('opened'    === $status_filter) return !empty($flags['opened']);
+    if('clicked'   === $status_filter) return !empty($flags['clicked']);
+    if('delivered' === $status_filter) return !empty($flags['delivered']);
+    return true;
+}
+
+function rsvpmaker_postmark_status_badges($message) {
+    $flags = rsvpmaker_postmark_status_flags($message);
+    $output = '';
+    $output .= sprintf('<span class="postmark-status-badge %s">Opened</span>',$flags['opened']    ? 'on' : 'off');
+    $output .= sprintf('<span class="postmark-status-badge %s">Clicked</span>',$flags['clicked']   ? 'on' : 'off');
+    $output .= sprintf('<span class="postmark-status-badge %s">Delivered</span>',$flags['delivered'] ? 'on' : 'off');
+    $output .= sprintf('<span class="postmark-status-badge %s">Processed</span>',$flags['processed'] ? 'on' : 'off');
+    return $output;
+}
+
+function rsvpmaker_postmark_merge_status_rows($base_rows, $status_rows) {
+    if(empty($base_rows) || empty($status_rows))
+        return $base_rows;
+
+    $base_index = array();
+    foreach($base_rows as $index => $row) {
+        if(!empty($row['MessageID']))
+            $base_index[(string) $row['MessageID']] = $index;
+    }
+
+    foreach($status_rows as $status_row) {
+        if(empty($status_row['MessageID']))
+            continue;
+        $msg_id = (string) $status_row['MessageID'];
+        if(!isset($base_index[$msg_id]))
+            continue;
+        $target_index = $base_index[$msg_id];
+        if(!empty($status_row['Opens']))
+            $base_rows[$target_index]['Opens'] = max(intval($base_rows[$target_index]['Opens']), intval($status_row['Opens']));
+        if(!empty($status_row['Clicks']))
+            $base_rows[$target_index]['Clicks'] = max(intval($base_rows[$target_index]['Clicks']), intval($status_row['Clicks']));
+        if(!empty($status_row['Delivered']))
+            $base_rows[$target_index]['Delivered'] = $status_row['Delivered'];
+        if(!empty($status_row['DeliveredAt']))
+            $base_rows[$target_index]['DeliveredAt'] = $status_row['DeliveredAt'];
+        if(empty($base_rows[$target_index]['Subject']) && !empty($status_row['Subject']))
+            $base_rows[$target_index]['Subject'] = $status_row['Subject'];
+        if(empty($base_rows[$target_index]['To']) && !empty($status_row['To']))
+            $base_rows[$target_index]['To'] = $status_row['To'];
+        if(empty($base_rows[$target_index]['Recipient']) && !empty($status_row['Recipient']))
+            $base_rows[$target_index]['Recipient'] = $status_row['Recipient'];
+        if(empty($base_rows[$target_index]['Status']) && !empty($status_row['Status']))
+            $base_rows[$target_index]['Status'] = $status_row['Status'];
+        $base_rows[$target_index]['_ts'] = rsvpmaker_postmark_message_timestamp($base_rows[$target_index]);
+    }
+
+    return $base_rows;
+}
+
 function rsvpmaker_postmark_show_sent_log() {
     rsvpmaker_admin_heading('Postmark Email Log',__FUNCTION__);
     global $wpdb,$rsvp_options;
@@ -806,6 +1176,130 @@ function rsvpmaker_postmark_show_sent_log() {
         }
     }
     echo '<p>Postmark is the service we use for reliable email delivery. Here is a record of emails submitted to the Postmark service within the last month.</p>';
+
+    $search_recipient = isset($_GET['pm_recipient']) ? strtolower(sanitize_text_field(wp_unslash($_GET['pm_recipient']))) : '';
+    $search_subject = isset($_GET['pm_subject']) ? strtolower(sanitize_text_field(wp_unslash($_GET['pm_subject']))) : '';
+    $search_status = isset($_GET['pm_status']) ? sanitize_key(wp_unslash($_GET['pm_status'])) : 'all';
+    if(!in_array($search_status,array('all','opened','clicked','delivered'),true))
+        $search_status = 'all';
+    $pm_debug = !empty($_GET['pm_debug']);
+    $run_search = (!empty($search_recipient) || !empty($search_subject) || ('all' !== $search_status) || $pm_debug);
+
+    echo '<style>
+    .postmark-search-grid { display:grid; grid-template-columns: minmax(200px,1fr) minmax(200px,1fr) minmax(160px,220px) auto; gap: 12px; align-items:end; margin: 12px 0 18px 0; }
+    .postmark-search-grid label { display:block; font-weight:600; margin-bottom:4px; }
+    .postmark-search-grid input[type="text"], .postmark-search-grid input[type="email"], .postmark-search-grid select { width:100%; }
+    .postmark-status-badge { display:inline-block; margin:0 6px 6px 0; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:600; border:1px solid #ccd0d4; }
+    .postmark-status-badge.on { background:#e8f7ec; color:#0f5132; border-color:#7fd19a; }
+    .postmark-status-badge.off { background:#f8f9fa; color:#6c757d; border-color:#d0d7de; }
+    @media (max-width: 782px) { .postmark-search-grid { grid-template-columns: 1fr; } }
+    </style>';
+
+    printf('<form method="get" action="%s">',admin_url('edit.php'));
+    echo '<input type="hidden" name="post_type" value="rsvpemail">';
+    echo '<input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log">';
+    if(isset($_GET['blog_id']))
+        printf('<input type="hidden" name="blog_id" value="%d">',intval($_GET['blog_id']));
+    if(isset($_GET['days']))
+        printf('<input type="hidden" name="days" value="%d">',intval($_GET['days']));
+    echo '<h3>Search Postmark Streams</h3>';
+    echo '<p>Search sent messages across broadcast and transactional streams by recipient email and/or subject keywords.</p>';
+    echo '<div class="postmark-search-grid">';
+    printf('<div><label for="pm_recipient">Recipient</label><input type="text" id="pm_recipient" name="pm_recipient" value="%s" placeholder="name@example.com"></div>',esc_attr($search_recipient));
+    printf('<div><label for="pm_subject">Subject Keywords</label><input type="text" id="pm_subject" name="pm_subject" value="%s" placeholder="meeting reminder"></div>',esc_attr($search_subject));
+    printf('<div><label for="pm_status">Status</label><select id="pm_status" name="pm_status"><option value="all" %s>All</option><option value="opened" %s>Opened</option><option value="clicked" %s>Clicked</option><option value="delivered" %s>Delivered</option></select></div>',selected($search_status,'all',false),selected($search_status,'opened',false),selected($search_status,'clicked',false),selected($search_status,'delivered',false));
+    echo '<div><button class="button button-primary">Search</button></div>';
+    echo '</div>';
+    printf('<p><label><input type="checkbox" name="pm_debug" value="1" %s> Show debug info (raw API query &amp; response)</label></p>',checked($pm_debug,true,false));
+    echo '</form>';
+
+    if($run_search) {
+        if(rsvpmaker_postmark_is_active()) {
+            $postmark_settings = get_rsvpmaker_postmark_options();
+            $postmark_settings_key = ('production' == $postmark_settings['postmark_mode']) ? $postmark_settings['postmark_production_key'] : $postmark_settings['postmark_sandbox_key'];
+            $client = new PostmarkClient($postmark_settings_key);
+            $stream_map = array(
+                'Broadcast' => empty($postmark_settings['postmark_broadcast_slug']) ? 'broadcast' : $postmark_settings['postmark_broadcast_slug'],
+                'Transactional' => empty($postmark_settings['postmark_tx_slug']) ? 'outbound' : $postmark_settings['postmark_tx_slug'],
+            );
+            $search_results = array();
+            $all_results_fallback = array();
+            try {
+                foreach($stream_map as $label => $stream_id) {
+                    if('opened' === $search_status) {
+                        $stream_results = rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'opens',$pm_debug);
+                        $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'clicks',$pm_debug));
+                        $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_messages($client,$stream_id,$label,$search_recipient,$search_subject,'delivered',$pm_debug));
+                    } elseif('clicked' === $search_status) {
+                        $stream_results = rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'clicks',$pm_debug);
+                    } elseif('all' === $search_status) {
+                        $stream_results = rsvpmaker_postmark_search_stream_messages($client,$stream_id,$label,$search_recipient,$search_subject,'all',$pm_debug);
+                        if(!empty($stream_results))
+                            $all_results_fallback = array_merge($all_results_fallback,$stream_results);
+                        $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'opens',$pm_debug));
+                        $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'clicks',$pm_debug));
+                        $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_messages($client,$stream_id,$label,$search_recipient,$search_subject,'delivered',$pm_debug));
+                    } else {
+                        $stream_results = rsvpmaker_postmark_search_stream_messages($client,$stream_id,$label,$search_recipient,$search_subject,$search_status,$pm_debug);
+                        if('delivered' === $search_status) {
+                            $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'opens',$pm_debug));
+                            $stream_results = rsvpmaker_postmark_merge_status_rows($stream_results, rsvpmaker_postmark_search_stream_engagement($client,$stream_id,$label,$search_recipient,$search_subject,'clicks',$pm_debug));
+                        }
+                    }
+                    if(!empty($stream_results))
+                        $search_results = array_merge($search_results,$stream_results);
+                }
+            }
+            catch(PostmarkException $e) {
+                printf('<p><strong>Search error:</strong> %s</p>',esc_html($e->getMessage()));
+                $search_results = array();
+            }
+
+            if('all' !== $search_status) {
+                $search_results = array_values(array_filter($search_results,function($row) use ($search_status) {
+                    return rsvpmaker_postmark_matches_status_filter($row,$search_status);
+                }));
+            }
+            elseif(empty($search_results) && !empty($all_results_fallback)) {
+                $search_results = $all_results_fallback;
+            }
+
+            if(!empty($search_results)) {
+                usort($search_results,function($a,$b){
+                    return (($b['_ts'] ?? 0) <=> ($a['_ts'] ?? 0));
+                });
+            }
+
+            if(!empty($search_results)) {
+                printf('<p><strong>%d</strong> matching messages found across both streams.</p>',count($search_results));
+                echo '<table class="wp-list-table widefat striped"><thead><tr><th>Subject</th><th>Date / Time</th><th>Recipient</th><th>Stream</th><th>Status</th></tr></thead><tbody>';
+                foreach($search_results as $row) {
+                    $subject = !empty($row['Subject']) ? $row['Subject'] : '(no subject)';
+                    $recipient = !empty($row['To']) ? $row['To'] : (isset($row['Recipient']) ? $row['Recipient'] : '');
+                    $status = !empty($row['Status']) ? $row['Status'] : 'Unknown';
+                    $ts = !empty($row['_ts']) ? intval($row['_ts']) : 0;
+                    $when = $ts ? rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,$ts) : 'n/a';
+                    printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s<br><small>%s</small></td><td>%s<br><small>%s</small></td></tr>',
+                        esc_html($subject),
+                        esc_html($when),
+                        esc_html($recipient),
+                        esc_html($row['stream_label']),
+                        esc_html($row['stream_id']),
+                        rsvpmaker_postmark_status_badges($row),
+                        esc_html($status)
+                    );
+                }
+                echo '</tbody></table>';
+            }
+            else {
+                echo '<p>No matching sent messages found in broadcast or transactional streams.</p>';
+            }
+        }
+        else {
+            echo '<p>Postmark search is available when Postmark integration is active.</p>';
+        }
+    }
+
     printf('<p>See summary <a href="%s">by month</a> | <a href="%s">by volume</a> | Or <a href="%s">show opens/clicks</a> (opens / clicks)</p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&by_volume=1'),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&clicks=1'));
     $grandtotal = 0;
 
@@ -832,7 +1326,7 @@ function rsvpmaker_postmark_show_sent_log() {
         $offset = 0;
         $recipient = NULL;
         $target_tag = isset($_GET['tag']) ? sanitize_text_field($_GET['tag']) : NULL;
-        if($client) {
+        if($client) { try {
             $clicks = $client->getClickStatistics(500,$offset,$recipient,$target_tag);
             $clickcount = 0;
             if(!empty($clicks['clicks'])) {
@@ -895,7 +1389,9 @@ function rsvpmaker_postmark_show_sent_log() {
                 echo '<p>No email opens detected - check whether open tracking and link tracking are active on the Postmark server.</p>';
             }
 
-        }
+        } catch(PostmarkException $e) {
+            printf('<p><strong>Postmark stats error:</strong> %s</p>',esc_html($e->getMessage()));
+        } }
     }
 
     echo '</div>';

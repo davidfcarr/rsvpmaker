@@ -41,6 +41,10 @@
     "defaultToFirst": {
       "type": "boolean",
       "default": false
+    },
+    "labelPosition": {
+      "type": "string",
+      "default": "stacked"
     }
   },
   "version": "2",

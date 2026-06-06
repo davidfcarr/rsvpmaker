@@ -22,20 +22,20 @@ import { applyFieldLabelChange } from '../form-field-label';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes: { label, fieldnote, slug, required, guestform }, setAttributes, isSelected } = props;
+	const { attributes: { label, fieldnote, slug, required, guestform, labelPosition, fieldType }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
-	const blockProps = useBlockProps();
+	const isInlineLabel = labelPosition === 'inline';
+	const wrapperClassName = isInlineLabel ? 'rsvp-label-inline' : '';
+	const blockProps = useBlockProps({ className: wrapperClassName });
 			return (
 			<Fragment>
 			<FieldInspector {...props} />
 			<div { ...blockProps }>
-			<div className={ props.className }>
-<p><label>{label}:</label></p>
-{fieldnote && <p><em>{fieldnote}</em></p>}
-<div className="rsvp-input-line"><span className={required}><input className={slug} inert tabindex="-1" type="text" name={profilename} id={slug} value="" /></span></div>
+<label>{label}:</label>
+<div className="rsvp-input-line"><span className={required}><input className={slug} inert tabIndex="-1" type={fieldType || 'text'} name={profilename} id={slug} value="" /></span></div>
+				</div>
+{fieldnote && <div className="rsvp-fieldnote">{fieldnote}</div>}
 {isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }
-				</div>
-				</div>
 			</Fragment>
 			);
 }
@@ -68,6 +68,32 @@ class FieldInspector extends Component {
 				label={ __( 'Field Note (optional additional information)', 'rsvpmaker' ) }
 				value={ attributes.fieldnote || '' }
 				onChange={ ( fieldnote ) => setAttributes( { fieldnote } ) }
+			/>
+			<SelectControl
+				label={ __( 'Field Label Position', 'rsvpmaker' ) }
+				value={ attributes.labelPosition || 'stacked' }
+				options={ [
+					{ label: __( 'On separate line', 'rsvpmaker' ), value: 'stacked' },
+					{ label: __( 'Inline (left of field)', 'rsvpmaker' ), value: 'inline' },
+				] }
+				onChange={ ( labelPosition ) => setAttributes( { labelPosition } ) }
+			/>
+			<SelectControl
+				label={ __( 'Input Type', 'rsvpmaker' ) }
+				value={ attributes.fieldType || 'text' }
+				options={ [
+					{ label: __( 'Text', 'rsvpmaker' ), value: 'text' },
+					{ label: __( 'Email', 'rsvpmaker' ), value: 'email' },
+					{ label: __( 'Telephone', 'rsvpmaker' ), value: 'tel' },
+					{ label: __( 'Number', 'rsvpmaker' ), value: 'number' },
+					{ label: __( 'Date/Time (local)', 'rsvpmaker' ), value: 'datetime-local' },
+					{ label: __( 'Date', 'rsvpmaker' ), value: 'date' },
+					{ label: __( 'Time', 'rsvpmaker' ), value: 'time' },
+					{ label: __( 'URL', 'rsvpmaker' ), value: 'url' },
+					{ label: __( 'Password', 'rsvpmaker' ), value: 'password' },
+					{ label: __( 'Color', 'rsvpmaker' ), value: 'color' },
+				] }
+				onChange={ ( fieldType ) => setAttributes( { fieldType } ) }
 			/>
 			<ToggleControl
 				label={ __( 'Required', 'rsvpmaker' ) }

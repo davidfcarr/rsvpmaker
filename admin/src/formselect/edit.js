@@ -22,20 +22,22 @@ import { applyFieldLabelChange } from '../form-field-label';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes: { label, fieldnote, slug, choicearray, guestform }, setAttributes, isSelected } = props;
-	const blockProps = useBlockProps();
+	const { attributes: { label, fieldnote, slug, choicearray, guestform, labelPosition }, setAttributes, isSelected } = props;
 	var profilename = 'profile['+slug+']';
+	const isInlineLabel = labelPosition === 'inline';
+	const wrapperClassName = isInlineLabel ? 'rsvp-label-inline' : '';
+	const blockProps = useBlockProps({ className: wrapperClassName });
 	return (
 	<Fragment>
 	<ChoiceInspector {...props} />
 	<div { ...blockProps }>
 	<p><label>{label}:</label></p>
-	{fieldnote && <p><em>{fieldnote}</em></p>}
 	<div className="rsvp-input-line"><span><select className={slug} name={profilename} id={slug} >{choicearray.map(function(opt, i){
 			return <option value={ opt }>{opt}</option>;
 		})}</select></span></div>
-{isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }
 	</div>
+{fieldnote && <div className="rsvp-fieldnote">{fieldnote}</div>}
+{isSelected && (<div><em>{__('Set form label and other properties in sidebar. For use within an RSVPMaker registration form.','rsvpmaker')}</em></div>) }
 	</Fragment>
 	);
 }
@@ -68,6 +70,15 @@ class ChoiceInspector extends Component {
 				label={ __( 'Field Note (optional additional information)', 'rsvpmaker' ) }
 				value={ attributes.fieldnote || '' }
 				onChange={ ( fieldnote ) => setAttributes( { fieldnote } ) }
+			/>
+			<SelectControl
+				label={ __( 'Field Label Position', 'rsvpmaker' ) }
+				value={ attributes.labelPosition || 'stacked' }
+				options={ [
+					{ label: __( 'On separate line', 'rsvpmaker' ), value: 'stacked' },
+					{ label: __( 'Inline (left of field)', 'rsvpmaker' ), value: 'inline' },
+				] }
+				onChange={ ( labelPosition ) => setAttributes( { labelPosition } ) }
 			/>
 			<TextareaControl
 				label={ __( 'Choices', 'rsvpmaker' ) }

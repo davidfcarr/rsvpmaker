@@ -20,6 +20,63 @@ import './style.scss';
 import Edit from './edit';
 import save from './save';
 import metadata from './block.json';
+import { InnerBlocks, useBlockProps } from '@wordpress/block-editor';
+
+const deprecated = [
+	{
+		save: ( props ) => {
+			const { className } = props;
+			const legacyWhiteStyle = {
+				backgroundColor: '#fff',
+				color: '#000',
+				padding: '5px',
+				marginLeft: 'auto',
+				marginRight: 'auto',
+				maxWidth: '600px',
+				border: 'thin solid gray',
+				minHeight: '20px',
+				marginBottom: '5px',
+			};
+			const blockProps = useBlockProps.save( { className, style: legacyWhiteStyle } );
+			return <div { ...blockProps }><InnerBlocks.Content /></div>;
+		},
+	},
+	{
+		save: ( props ) => {
+			const { className } = props;
+			const legacyGrayStyle = {
+				backgroundColor: '#efefef',
+				color: '#000',
+				padding: '5px',
+				marginLeft: 'auto',
+				marginRight: 'auto',
+				maxWidth: '600px',
+				border: 'thin solid gray',
+				minHeight: '20px',
+				marginBottom: '5px',
+			};
+			const blockProps = useBlockProps.save( { className, style: legacyGrayStyle } );
+			return <div { ...blockProps }><InnerBlocks.Content /></div>;
+		},
+	},
+	{
+		save: ( props ) => {
+			const { attributes, className } = props;
+			const bodyStyle = {
+				backgroundColor: attributes.backgroundColor,
+				color: attributes.color,
+				padding: attributes.padding,
+				marginLeft: attributes.marginLeft,
+				marginRight: attributes.marginRight,
+				maxWidth: attributes.maxWidth,
+				border: attributes.border,
+				minHeight: '20px',
+			};
+			const blockProps = useBlockProps.save( { className, style: bodyStyle } );
+			return <div { ...blockProps }><InnerBlocks.Content /></div>;
+		},
+	},
+];
 
 /**
  * Every block starts by registering a new block type definition.
@@ -36,6 +93,7 @@ registerBlockType( metadata.name, {
 	 * @see ./save.js
 	 */
 	save,
+	deprecated,
 	transforms: {
 		to: [
 			{

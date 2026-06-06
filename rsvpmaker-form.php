@@ -80,7 +80,7 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 
 function rsvp_field_apply_default( $content, $slug, $default ) {
 
-	if ( strpos( $content, 'type="text"' ) || strpos( $content, 'type="email"' ) || strpos( $content, 'type="tel"' ) ) {
+	if ( strpos( $content, 'value=""' ) !== false ) {
 
 		$content = str_replace( 'value=""', 'value="' . $default . '"', $content );
 
@@ -129,9 +129,12 @@ function rsvp_form_text( $atts, $content ) {
 		$required                     = 'required';
 		$required_marker = ' <span class="rsvprequiredfield">*</span>';
 	}
-	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
+	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div class="rsvp-fieldnote">%s</div>', esc_html( $atts['fieldnote'] ) );
 
-	if(isset($atts['type']))
+	if ( isset( $atts['fieldType'] ) && ! empty( $atts['fieldType'] ) ) {
+		$type = sanitize_key( $atts['fieldType'] );
+	}
+	elseif(isset($atts['type']))
 		$type = $atts['type'];
 	elseif ( strpos( $slug, 'email' ) !== false ) {	// if "email" is anywhere in the slug, use email type	
 		$type = 'email';
@@ -143,7 +146,14 @@ function rsvp_form_text( $atts, $content ) {
 		$type = 'text';
 	}
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %srsvpblock"><p><label>%s:%s</label></p>%s<div class="rsvp-input-line"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></div></div>', esc_attr( $required ), esc_html( $label ), $required_marker, $fieldnote_html, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ) );
+	$allowed_types = array( 'text', 'email', 'tel', 'number', 'datetime-local', 'date', 'time', 'url', 'password', 'color' );
+	if ( ! in_array( $type, $allowed_types, true ) ) {
+		$type = 'text';
+	}
+
+	$inline_class = ( isset( $atts['labelPosition'] ) && 'inline' === $atts['labelPosition'] ) ? 'rsvp-label-inline ' : '';
+
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %s%srsvpblock"><p><label>%s:%s</label></p><div class="rsvp-input-line"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></div></div>%s', esc_attr( $inline_class ), esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ), $fieldnote_html );
 
 	if ( $slug == 'email' ) {
 		$content .= '<div id="rsvp_email_lookup"></div>';
@@ -171,7 +181,7 @@ function rsvp_form_textarea( $atts, $content = '' ) {
 	$rows = ( empty( $atts['rows'] ) ) ? '3' : $atts['rows'];
 
 	$required = '';
-	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
+	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div class="rsvp-fieldnote">%s</div>', esc_html( $atts['fieldnote'] ) );
 
 	$content = sprintf( '<div class="wp-block-rsvpmaker-formtextarea %srsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-input-line"><textarea rows="%d" class="%s" type="text" name="profile[%s]" id="%s"></textarea></div></div>', esc_attr( $required ), esc_html( $label ), $fieldnote_html, esc_attr( $rows ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ) );
 
@@ -195,7 +205,8 @@ function rsvp_form_select( $atts, $content = '' ) {
 	$label = $atts['label'];
 
 	$required = '';
-	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
+	$inline_class = ( isset( $atts['labelPosition'] ) && 'inline' === $atts['labelPosition'] ) ? 'rsvp-label-inline ' : '';
+	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div class="rsvp-fieldnote">%s</div>', esc_html( $atts['fieldnote'] ) );
 
 	$choices = '';
 
@@ -207,7 +218,7 @@ function rsvp_form_select( $atts, $content = '' ) {
 		}
 	}
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formselect %srsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-input-line"><span><select class="%s" name="profile[%s]" id="%s">%s</select></span></div></div>', esc_attr( $required ), esc_html( $label ), $fieldnote_html, esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ), $choices );
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formselect %s%srsvpblock"><p><label>%s:</label></p><div class="rsvp-input-line"><span><select class="%s" name="profile[%s]" id="%s">%s</select></span></div></div>%s', esc_attr( $inline_class ), esc_attr( $required ), esc_html( $label ), esc_attr( $slug ), esc_attr( $slug ), esc_attr( $slug ), $choices, $fieldnote_html );
 
 	return rsvp_form_field( $atts, $content );
 
@@ -230,7 +241,7 @@ function rsvp_form_radio( $atts, $content = '' ) {
 	$choices = '';
 	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
 
-	$pricing = rsvpmaker_item_pricing($post->ID);
+	$pricing = isset($post->ID) ? rsvpmaker_item_pricing($post->ID) : null;
 	$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
 	if ( $currency == 'usd' ) {
 		$currency = '$';
@@ -252,7 +263,7 @@ function rsvp_form_radio( $atts, $content = '' ) {
 
 	$required = '';
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formradio %s rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-input-line">%s</div></div>', esc_attr( $required ), esc_html( $label ), $fieldnote_html, $choices );
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formradio %s rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-radio-input-line">%s</div></div>', esc_attr( $required ), esc_html( $label ), $fieldnote_html, $choices );
 
 	return rsvp_form_field( $atts, $content );
 
@@ -301,7 +312,7 @@ function rsvp_form_note( $atts = array() ) {
 	$label = ( empty( $atts['label'] ) ) ? 'Note' : esc_html( $atts['label'] );
 	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
 
-	return sprintf( '<div class="wp-block-rsvpmaker-formnote rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-input-line"><textarea name="note"></textarea></div></div>', $label, $fieldnote_html );
+	return sprintf( '<div class="wp-block-rsvpmaker-formnote rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-textarea-line"><textarea name="note"></textarea></div></div>', $label, $fieldnote_html );
 
 }
 
@@ -424,7 +435,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests (max per party)', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
 		}	
 	}
-	if ( !strpos($post->post_type,'svpmaker') || $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
+	if ( isset($post->post_type) && strpos($post->post_type,'svpmaker') && $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
 		$output = '<h3>'.esc_html__('Add Guests','rsvpmaker').'</h3><p><input type="hidden" id="starting_count" value="'.esc_attr($count).'" /> <input type="number" id="people_in_party" name="people_in_party" min="1" value="'.esc_attr($count).'" style="width: 50px;" > '.__('People in party').'</p><p><strong id="rsvphost"># 1 (You)</strong></p>'."\n".$output;
 	}
 
@@ -938,7 +949,7 @@ if(empty($attributes['order']) && empty($attributes['sale']))
 {
 	$button_label = __('Send','rsvpmaker');
 	$subject_label = (empty($attributes['subject_label'])) ? 'Subject' : $attributes['subject_label'];
-	printf('<div class="wp-block-rsvpmaker-formfield"><p><label>%s:</label></p><div class="rsvp-input-line"><input type="text" name="contact_subject"></div></div>',esc_html($subject_label));	
+	printf('<div class="wp-block-rsvpmaker-formfield"><div class="wp-block-rsvpmaker-formfield rsvp-label-inline"><p><label>%s:</label></p><div class="rsvp-input-line"><input type="text" name="contact_subject"></div></div></div>',esc_html($subject_label));	
 }
 else {
 	$button_label = __('Submit','rsvpmaker');

@@ -20,6 +20,22 @@ import './style.scss';
 import Edit from './edit';
 import save from './save';
 import metadata from './block.json';
+import { InnerBlocks, useBlockProps } from '@wordpress/block-editor';
+
+const deprecated = [
+	{
+		save: ( props ) => {
+			const { attributes, className } = props;
+			const bodyStyle = {
+				backgroundColor: attributes.backgroundColor,
+				color: attributes.color,
+				padding: attributes.padding,
+			};
+			const blockProps = useBlockProps.save( { className, style: bodyStyle } );
+			return <div { ...blockProps }><InnerBlocks.Content /></div>;
+		},
+	},
+];
 
 /**
  * Every block starts by registering a new block type definition.
@@ -36,6 +52,7 @@ registerBlockType( metadata.name, {
 	 * @see ./save.js
 	 */
 	save,
+	deprecated,
 	transforms: {
 		to: [
 			{

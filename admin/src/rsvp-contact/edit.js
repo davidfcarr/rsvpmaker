@@ -117,7 +117,7 @@ export default function Edit(props) {
         {form.length == 0 && <p>Loading form</p>}
         {isSelected && <div>See sidebar for form options</div>}
         {form.length > 0 && previewHtml && <SanitizedHTML innerHTML={previewHtml} />}
-        {form.length > 0 && !previewHtml && !attributes.order.length && <TextControl label='Subject' />}
+        {form.length > 0 && !previewHtml && !attributes.order.length && <div className="wp-block-rsvpmaker-formfield"><div className="wp-block-rsvpmaker-formfield rsvp-label-inline"><p><label>Subject:</label></p><div className="rsvp-input-line"><input type="text" name="contact_subject" /></div></div></div>}
         {form.length > 0 && !previewHtml &&
         form.map((block, blockindex) => {
             const isrsvp = block.blockName && block.blockName.indexOf('rsvpmaker') > -1;
