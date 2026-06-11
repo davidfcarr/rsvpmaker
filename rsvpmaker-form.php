@@ -78,91 +78,6 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 
 }
 
-function rsvp_field_apply_default( $content, $slug, $default ) {
-
-	if ( strpos( $content, 'value=""' ) !== false ) {
-
-		$content = str_replace( 'value=""', 'value="' . $default . '"', $content );
-
-	} elseif ( strpos( $content, '</textarea>' ) ) {
-
-		$content = str_replace( '</textarea>', $default . '</textarea>', $content );
-	}
-
-	$find = 'value="' . $default . '"';
-
-	if ( strpos( $content, '</select>' ) ) {
-
-		$content = str_replace( $find, $find . ' selected="selected"', $content );
-
-	} elseif ( strpos( $content, 'type="radio"' ) ) {
-
-		$content = str_replace( $find, $find . ' checked="checked"', $content );
-	}
-
-	return $content;
-
-}
-
-function rsvp_form_text( $atts, $content ) {
-
-	global $post;
-
-	global $rsvp_required_field;
-
-	if ( empty( $atts['slug'] ) || empty( $atts['label'] ) ) {
-
-		return;
-	}
-
-	$slug = $atts['slug'];
-	if ( strpos( $slug, ' ' ) ) {
-		$slug = preg_replace( '/[^a-zA-Z0-9_]/', '_', $slug );
-	}
-
-	$label = $atts['label'];
-
-	$required = '';
-	$required_marker = '';
-	if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
-		$rsvp_required_field[ $slug ] = $slug;
-		$required                     = 'required';
-		$required_marker = ' <span class="rsvprequiredfield">*</span>';
-	}
-	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div class="rsvp-fieldnote">%s</div>', esc_html( $atts['fieldnote'] ) );
-
-	if ( isset( $atts['fieldType'] ) && ! empty( $atts['fieldType'] ) ) {
-		$type = sanitize_key( $atts['fieldType'] );
-	}
-	elseif(isset($atts['type']))
-		$type = $atts['type'];
-	elseif ( strpos( $slug, 'email' ) !== false ) {	// if "email" is anywhere in the slug, use email type	
-		$type = 'email';
-		}
-	elseif ( strpos( $slug, 'phone' ) !== false ) {	// if "phone" is anywhere in the slug, use tel type	
-		$type = 'tel';
-	}
-	else {
-		$type = 'text';
-	}
-
-	$allowed_types = array( 'text', 'email', 'tel', 'number', 'datetime-local', 'date', 'time', 'url', 'password', 'color' );
-	if ( ! in_array( $type, $allowed_types, true ) ) {
-		$type = 'text';
-	}
-
-	$inline_class = ( isset( $atts['labelPosition'] ) && 'inline' === $atts['labelPosition'] ) ? 'rsvp-label-inline ' : '';
-
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %s%srsvpblock"><p><label>%s:%s</label></p><div class="rsvp-input-line"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></div></div>%s', esc_attr( $inline_class ), esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ), $fieldnote_html );
-
-	if ( $slug == 'email' ) {
-		$content .= '<div id="rsvp_email_lookup"></div>';
-	}
-
-	return rsvp_form_field( $atts, $content );
-
-}
-
 function rsvp_form_textarea( $atts, $content = '' ) {
 
 	global $post;
@@ -269,6 +184,65 @@ function rsvp_form_radio( $atts, $content = '' ) {
 
 }
 
+function rsvp_form_text( $atts, $content ) {
+
+	global $post;
+
+	global $rsvp_required_field;
+
+	if ( empty( $atts['slug'] ) || empty( $atts['label'] ) ) {
+
+		return;
+	}
+
+	$slug = $atts['slug'];
+	if ( strpos( $slug, ' ' ) ) {
+		$slug = preg_replace( '/[^a-zA-Z0-9_]/', '_', $slug );
+	}
+
+	$label = $atts['label'];
+
+	$required = '';
+	$required_marker = '';
+	if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
+		$rsvp_required_field[ $slug ] = $slug;
+		$required                     = 'required';
+		$required_marker = ' <span class="rsvprequiredfield">*</span>';
+	}
+	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div class="rsvp-fieldnote">%s</div>', esc_html( $atts['fieldnote'] ) );
+
+	if ( isset( $atts['fieldType'] ) && ! empty( $atts['fieldType'] ) ) {
+		$type = sanitize_key( $atts['fieldType'] );
+	}
+	elseif(isset($atts['type']))
+		$type = $atts['type'];
+	elseif ( strpos( $slug, 'email' ) !== false ) {	// if "email" is anywhere in the slug, use email type	
+		$type = 'email';
+		}
+	elseif ( strpos( $slug, 'phone' ) !== false ) {	// if "phone" is anywhere in the slug, use tel type	
+		$type = 'tel';
+	}
+	else {
+		$type = 'text';
+	}
+
+	$allowed_types = array( 'text', 'email', 'tel', 'number', 'datetime-local', 'date', 'time', 'url', 'password', 'color' );
+	if ( ! in_array( $type, $allowed_types, true ) ) {
+		$type = 'text';
+	}
+
+	$inline_class = ( isset( $atts['labelPosition'] ) && 'inline' === $atts['labelPosition'] ) ? 'rsvp-label-inline ' : '';
+
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %s%srsvpblock"><p><label>%s:%s</label></p><div class="rsvp-input-line"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></div></div>', esc_attr( $inline_class ), esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ) );
+	
+	if ( $slug == 'email' ) {
+		$content .= '<div id="rsvp_email_lookup"></div>';
+	}
+
+	return rsvp_form_field( $atts, $content ) . $fieldnote_html;
+
+}
+
 function rsvp_form_field( $atts, $content = '' ) {
 
 	// same for all field types
@@ -304,6 +278,32 @@ function rsvp_form_field( $atts, $content = '' ) {
 	$default = $profile[ $slug ];
 
 	return rsvp_field_apply_default( $content, $slug, $default );
+
+}
+
+function rsvp_field_apply_default( $content, $slug, $default ) {
+
+	if ( strpos( $content, 'value=""' ) !== false ) {
+
+		$content = str_replace( 'value=""', 'value="' . $default . '"', $content );
+
+	} elseif ( strpos( $content, '</textarea>' ) ) {
+
+		$content = str_replace( '</textarea>', $default . '</textarea>', $content );
+	}
+
+	$find = 'value="' . $default . '"';
+
+	if ( strpos( $content, '</select>' ) ) {
+
+		$content = str_replace( $find, $find . ' selected="selected"', $content );
+
+	} elseif ( strpos( $content, 'type="radio"' ) ) {
+
+		$content = str_replace( $find, $find . ' checked="checked"', $content );
+	}
+
+	return $content;
 
 }
 

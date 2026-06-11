@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/nomeeting",
+  "title": "No Meeting Dates",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Displays a list of exceptions to a regularly schedule, such as holidays or other days when the regularly scheduled meeting will not take place.",
+  "keywords": [
+    "RSVPMaker",
+    "Events",
+    "No Meeting",
+    "Listing",
+    "Calendar",
+    "Exceptions"
+  ],
+  "attributes": {
+    "weeks": {
+      "type": "number",
+      "default": 5
+    },
+    "headline": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "1",
+  "supports": {
+    "html": false,
+    "color": {
+      "link": true
+    }
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

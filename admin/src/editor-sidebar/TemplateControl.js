@@ -37,6 +37,12 @@ export default function TemplateControl (props) {
 			<p class="every"><RSVPMetaToggle
 			label="Every" 
 			metaKey="_sked_Every" eventdata={eventdata} /></p>
+			<p class="every"><RSVPMetaToggle
+			label="Even (week of year)" 
+			metaKey="_sked_Even" eventdata={eventdata} /></p>
+			<p class="every"><RSVPMetaToggle
+			label="Odd (week of year)" 
+			metaKey="_sked_Odd" eventdata={eventdata} /></p>
 			</div>
 			<p><RSVPMetaToggle
 			label="Sunday" 

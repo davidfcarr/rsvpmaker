@@ -1228,123 +1228,146 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 }
 
 function rsvpmaker_get_projected($template) {
+    if (!isset($template["week"])) {
+        return array();
+    }
 
-if(!isset($template["week"]))
-	return;
+    $projected = array();
+    
+    // Normalize $weeks array
+    $weeks = is_array($template["week"]) ? $template["week"] : array($template["week"]);
+    
+    // Normalize $dows array (handle day names vs numbers)
+    $dows = !empty($template["dayofweek"]) ? (is_array($template["dayofweek"]) ? $template["dayofweek"] : array($template["dayofweek"])) : array(0);
 
-$th = strtotime($template['hour']);
+    // Target Time Calculation
+    $hour = isset($template['hour']) ? $template['hour'] : '00';
+    $minutes = isset($template['minutes']) ? $template['minutes'] : '00';
+    $target_time = sprintf('%02d:%02d:00', $hour, $minutes);
 
-//backward compatability
-if(is_array($template["week"]))
-	{
-		$weeks = $template["week"];
-		$dows = (empty($template["dayofweek"])) ? 0 : $template["dayofweek"];
-	}
-else
-	{
-		$weeks[0] = $template["week"];
-		$dows[0] = isset($template["dayofweek"]) ? $template["dayofweek"] : 0;
-	}
-
-$cy = date("Y");
-$cm = date("m");
-
-if(!empty($template["stop"]))
-	{
-	$stopdate = rsvpmaker_strtotime($template["stop"].' 23:59:59');
-	}
-
-if(empty($dows))
-	$dows = array(0 => 0);
-foreach($weeks as $week)
-foreach($dows as $dow) {
-$i = 0;
-$startdaytxt = rsvpmaker_projected_datestring($dow,$week,$template);
-$ts = rsvpmaker_strtotime($startdaytxt);
-if(!$ts) {
-	echo 'Error parsing '.$startdaytxt;
-	return;
-}
-if($week == 6)
-	{
-	$i = 0;
-	if(empty($stopdate))
-		$stopdate = rsvpmaker_strtotime('+6 months');
-	else
-		echo 'stopdate set';
-	if(isset($_GET["start"]))
-		$ts = rsvpmaker_strtotime($_GET["start"]);
-	while($ts < $stopdate)
-		{
-		$projected[$ts] = $ts; // add numeric value for 1 week
-		$ts = $ts + WEEK_IN_SECONDS;
-		$i++;
-		if($i > 52)
-			break;
+    // Calculate Stop Date Bounds
+    if (!empty($template["stop"])) {
+        $stopdate = rsvpmaker_strtotime($template["stop"] . ' 23:59:59');
+    } else {
+        // Broaden fallback projection to 12 months for odd/even intervals
+        $is_frequent = in_array('every', $weeks) || in_array('even', $weeks) || in_array('odd', $weeks) || in_array(6, $weeks);
+        $fallback_period = $is_frequent ? '+6 months' : '+12 months';
+		if(isset($_GET["extramonths"]) && is_numeric($_GET["extramonths"]) && $_GET["extramonths"] > 0) {
+			$fallback_period = '+' . intval($_GET["extramonths"]) . ' months';
 		}
-	}
-else {
-	if(isset($_GET["start"]))
-		$ts = rsvpmaker_strtotime($_GET["start"]);
-	if(empty($stopdate))
-		$stopdate = rsvpmaker_strtotime('+12 months');
-	if($week == 0) {
-		$i = 0;
-		$firstdaytxt = rsvpmaker_projected_datestring($dow,0,$template);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
-		$tcount = rsvpmaker_strtotime($firstdaytxt);
-		for($tcount; $tcount < $stopdate; $tcount+= MONTH_IN_SECONDS )
-		{
-		$firstdaytxt = rsvpmaker_projected_datestring($dow,0,$template,$tcount);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
-		$ts = rsvpmaker_strtotime($firstdaytxt);
-		$projected[$ts] = $ts;
-		$i++;
-		if($i > 10)
-			break;
-		}	
-	}
-	else
-		{
-			$i = 0;
-			$ts = time();
-			$startmonth = rsvpmaker_date('F Y',$ts);
-			for($i = 0; $i < 50; $i++) //($ts; $ts < $stopdate; $ts+= MONTH_IN_SECONDS )
-			{
-				$ts = strtotime($startmonth." + $i month");
-				$datetext = rsvpmaker_projected_datestring($dow,$week,$template,$ts);//rsvpmaker_day($dow,'rsvpmaker_strtotime').' '.$template['hour'].':'.$template['minutes'];
+        $stopdate = rsvpmaker_strtotime($fallback_period);
+    }
 
-				$ts = rsvpmaker_strtotime($datetext);
-				if(!$ts)
-				{
-					echo 'Error parsing date string '.$datetext;
-					return;
-				}
-				if(isset($stopdate) && $ts > $stopdate) {
-					break;
-				}
-				$projected[$ts] = $ts;
-				}
-		}
-	}
+    // Set Initial Start Time Context
+    $current_time = isset($_GET["start"]) ? rsvpmaker_strtotime($_GET["start"]) : time();
+
+    // Map word-based indexes to numbers, including our new Odd and Even targets
+    $week_map = array(
+        'varies' => 0, 'first' => 1, 'second' => 2, 'third' => 3, 
+        'fourth' => 4, 'last' => 5, 'every' => 6, 'odd' => 7, 'even' => 8
+    );
+
+    foreach ($weeks as $week) {
+        $week_key = is_numeric($week) ? (int)$week : (isset($week_map[strtolower($week)]) ? $week_map[strtolower($week)] : 0);
+
+        foreach ($dows as $dow) {
+            if (!is_numeric($dow)) {
+                $dow_numeric = date('w', strtotime($dow));
+            } else {
+                $dow_numeric = (int)$dow;
+            }
+
+            // --- CASE: EVERY, ODD, OR EVEN WEEK ---
+            if ($week_key === 6 || $week_key === 7 || $week_key === 8) { 
+                $startdaytxt = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime') . ' ' . rsvpmaker_date('Y-m-d', $current_time) . ' ' . $target_time;
+                $ts = rsvpmaker_strtotime($startdaytxt);
+                
+                if (!$ts) continue;
+
+                $loop_count = 0;
+                while ($ts <= $stopdate && $loop_count < 52) {
+                    if ($ts >= $current_time) {
+                        
+                        // Conditionals for filtering Odd / Even sequences over the year
+                        if ($week_key === 7 || $week_key === 8) {
+                            $year = date('Y', $ts);
+                            // Get the 1st day of the current calculation year
+                            $first_of_year = strtotime("January 1st, $year 00:00:00");
+                            $target_day_name = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime');
+                            
+                            // Find the very first occurrence of that day in the year
+                            $first_occurrence = strtotime("first $target_day_name of January $year 00:00:00");
+                            
+                            // Calculate how many weeks have passed since the first instance
+                            $weeks_passed = floor(($ts - $first_occurrence) / WEEK_IN_SECONDS);
+                            $occurrence_index = (int)$weeks_passed + 1; // 1st occurrence = 1, 2nd = 2, etc.
+
+                            if ($week_key === 7 && ($occurrence_index % 2 === 0)) {
+                                // Skip even occurrences if looking for Odd
+                                $ts += WEEK_IN_SECONDS;
+                                $loop_count++;
+                                continue;
+                            }
+                            if ($week_key === 8 && ($occurrence_index % 2 !== 0)) {
+                                // Skip odd occurrences if looking for Even
+                                $ts += WEEK_IN_SECONDS;
+                                $loop_count++;
+                                continue;
+                            }
+                        }
+
+                        $projected[$ts] = $ts;
+                    }
+                    $ts += WEEK_IN_SECONDS;
+                    $loop_count++;
+                }
+            } 
+            // --- CASE: VARIES ---
+            elseif ($week_key === 0) {
+                $loop_count = 0;
+                $tcount = $current_time;
+
+                while ($tcount <= $stopdate && $loop_count < 12) {
+                    $firstdaytxt = rsvpmaker_date('Y-m', $tcount) . '-01 ' . $target_time;
+                    $ts = rsvpmaker_strtotime($firstdaytxt);
+                    
+                    if ($ts && $ts >= $current_time && $ts <= $stopdate) {
+                        $projected[$ts] = $ts;
+                    }
+                    $tcount = strtotime("+1 month", $tcount);
+                    $loop_count++;
+                }
+            } 
+            // --- CASE: MONTHLY ORDINAL WEEK (1st, 2nd, 3rd, 4th, Last) ---
+            else {
+                $start_month_ts = $current_time;
+                
+                for ($i = 0; $i < 12; $i++) {
+                    $eval_time = strtotime("+$i month", $start_month_ts);
+                    $weektext = rsvpmaker_week($week_key, 'rsvpmaker_strtotime'); 
+                    $day_name = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime');
+
+                    $datetext = sprintf('%s %s of %s %s', $weektext, $day_name, rsvpmaker_date('F Y', $eval_time), $target_time);
+                    $ts = rsvpmaker_strtotime($datetext);
+
+                    if (!$ts) continue;
+                    if ($ts > $stopdate) break; 
+
+                    if ($ts >= $current_time) {
+                        $projected[$ts] = $ts;
+                    }
+                }
+            }
+        }
+    }
+
+    if (empty($projected)) {
+        return array();
+    }
+
+    ksort($projected);
+    return $projected;
 }
-
-//order by timestamp
-if(empty($projected))
-	return array();
-//timezone correction
-foreach($projected as $index => $value) {
-	$checkhour = (int) rsvpmaker_date('G',$value);
-	$diff =  $th - $checkhour; 
-	if($diff) {
-		$value+= ($diff * HOUR_IN_SECONDS);
-		unset($projected[$index]);
-		$projected[$value] = $value;
-	}
-}
-ksort($projected);
-
-return $projected;
-}
-
 // RSVPMaker Replay Follow up
 
 function rsvpmaker_replay_cron($post_id, $rsvp_id, $hours) {
@@ -2462,7 +2485,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 						break;
 					}
 				if(!empty($_POST['metadata_only'])) {
-					rsvpmaker_copy_metadata($t, $target_id);
+					rsvpmaker_copy_metadata($t, $target_id, $sked);
 					$update_messages .= '<div class="updated">Updated: metadata for event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
 					continue;
 				}
@@ -2471,7 +2494,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				$update_post['post_content'] = $post->post_content;
 				$update_post['post_excerpt'] = $post->post_excerpt;
 				wp_update_post($update_post);
-				rsvpmaker_copy_metadata($t, $target_id);
+				rsvpmaker_copy_metadata($t, $target_id, $sked);
 				$ts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$target_id));
 				update_post_meta($target_id,"_updated_from_template",$ts);
 				update_post_meta($target_id,"_meet_recur",$t);
@@ -2479,6 +2502,8 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				$end_time = (empty($template['end'])) ? '' : $template['end'];
 				$event = get_rsvpmaker_event($target_id);
 				$cddate = isset($event->date) ? $event->date : '';
+				delete_post_meta($target_id,'_nomeeting');
+
 				if(!empty($cddate))
 					{
 					$parts = explode(' ',$cddate);
@@ -2578,34 +2603,28 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 
 if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))  )
 {
-	$my_post['post_title'] = __('No Meeting','rsvpmaker').': '.$post->post_title;
-	$my_post['post_content'] = sanitize_textarea_field($_POST["nomeeting_note"]);
+	$my_post['post_title'] = sanitize_textarea_field(wp_unslash($_POST["nomeeting_title"]));;
+	$my_post['post_content'] = rsvpautog( sanitize_textarea_field(wp_unslash($_POST["nomeeting_note"])));
 	$my_post['post_status'] = current_user_can('publish_rsvpmakers') ? 'publish' : 'draft';
 	$my_post['post_author'] = $current_user->ID;
 	$my_post['post_type'] = 'rsvpmaker';
 
 	if(!strpos($_POST["nomeeting"],'-'))
 		{ //update vs new post
-			$id = (int) $_POST["nomeeting"];
-			$sql = $wpdb->prepare("UPDATE %i SET post_title=%s, post_content=%s WHERE ID=%d",$wpdb->posts,$my_post['post_title'],$my_post['post_content'],$id);
-			$wpdb->show_errors();
-			$return = $wpdb->query($sql);
-			if($return == false)
-				$update_messages .= '<div class="updated">'."Error: $sql.</div>\n";
-			else
-				$update_messages .=  '<div class="updated">Updated: no meeting <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($id).'">View</a></div>';	
+			$my_post['ID'] = (int) $_POST["nomeeting"];
+			wp_update_post($my_post);
+			update_post_meta($my_post['ID'],'_nomeeting',true);
 		}
 	else
 		{
-			$cddate = sanitize_text_field($_POST["nomeeting"]).' 00:00:00';
+			$cddate = sanitize_text_field($_POST["nomeeting"]).' '.$template['hour'].':' . $template['minute'] . ':00';
 			$my_post['post_name'] = $my_post['post_title'] . '-' .$cddate;
-
-// Insert the post into the database
   			if($post_id = wp_insert_post( $my_post ) )
 				{
 				add_rsvpmaker_date($post_id,$cddate,'allday','',0,$timezone);
 				$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';	
 				add_post_meta($post_id,'_meet_recur',$t,true);
+				update_post_meta($post_id,'_nomeeting',true);
 				}
 		}		
 }
@@ -2614,8 +2633,47 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 	die();
 }
 
-function rsvpmaker_copy_metadata($source_id, $target_id) {
+function rsvpmaker_nomeeting_list($atts) {
+	global $wpdb;
+	$rsvpmaker_table = get_rsvpmaker_event_table();
+	$weeks = (isset($atts['weeks'])) ? (int) $atts['weeks'] : 5;
+	$headline = (isset($atts['headline'])) ? esc_html($atts['headline']) : '';
+	$sql = "SELECT ID, $wpdb->posts.post_title, post_content, ts_start FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id JOIN $rsvpmaker_table ON $rsvpmaker_table.event = $wpdb->posts.ID WHERE meta_key='_nomeeting' AND post_type='rsvpmaker' AND post_status='publish' AND date > CURRENT_DATE AND date < DATE_ADD(CURRENT_DATE, INTERVAL $weeks WEEK) ORDER BY date ASC"; 
+	$results = $wpdb->get_results($sql);
+	$output = '';
+	if(is_array($results)) {
+		foreach($results as $row) {
+			if(!empty($atts['checkboxes'])) {
+				$output .= sprintf('<p><input type="checkbox" name="update_from_template[]" value="%d"> Restore: %s</p>',$row->ID,esc_html($row->post_title.' '.rsvpmaker_date('F jS, Y',$row->ts_start)));
+			}
+			else
+			$output .= sprintf('<p>%s</p>',esc_html($row->post_title.' '.rsvpmaker_date('F jS, Y',$row->ts_start)));
+		}
+	}
+	if(!empty($headline) && !empty($output))
+		$output = sprintf('<h2>%s</h2>',$headline).$output;
+	return $output;
+}
+
+add_shortcode('rsvpmaker_nomeeting_list','rsvpmaker_nomeeting_list');
+
+function rsvpmaker_copy_metadata($source_id, $target_id, $sked = array()) {
 global $wpdb;
+if(!empty($sked)) {
+	$event = get_rsvpmaker_event($target_id);
+	if((strpos($event->date,$sked['start_time']) === false) || (strpos($event->enddate,$sked['end']) === false) || $sked['duration'] != $event->display_type) {
+		$parts = explode(' ',$event->date);
+		$cddate = $parts[0].' '.$sked['start_time'];
+		$end = $parts[0].' '.$sked['end'];
+		error_log('update_rsvpmaker_date '.$target_id.' '.$cddate.' '.$end.' '.$sked['duration']);
+		update_rsvpmaker_date($target_id,$cddate,$end,$sked['duration']);
+	}
+	$sked_keys = array('hour','minutes','duration','end');
+	foreach($sked_keys as $key) {
+		if(isset($sked[$key]))
+			update_post_meta($target_id,'_'.$key,$sked[$key]);
+	}
+}
 $log = '';
 //copy metadata
 $meta_keys = array();

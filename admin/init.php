@@ -261,7 +261,7 @@ register_meta( 'post', '_rsvp_currency', $args );
 			return current_user_can('edit_posts');
 		}
 	);
-	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
+	$template_fields = array('_sked_Varies','_sked_First','_sked_Second','_sked_Third','_sked_Fourth','_sked_Last','_sked_Every','_sked_Even','_sked_Odd','_sked_Sunday','_sked_Monday','_sked_Tuesday','_sked_Wednesday','_sked_Thursday','_sked_Friday','_sked_Saturday');
 	foreach($template_fields as $field)
 		register_meta( 'post', $field, $args );	
 	register_meta( 'post', 'rsvpautorenew', $args );

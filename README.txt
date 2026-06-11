@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 12.0.5
+Stable tag: 12.0.8
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -130,6 +130,18 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
     Stripe, MailChimp, and Postmark under the license of their creators.
 
 == Changelog ==
+
+= 12.0.8 =
+
+* Remove add_meta_box for iframe editor compatability
+
+= 12.0.7 =
+
+* Tools for recording "no meeting" dates (exceptions to your regular schedule) on the Create/Update screen. Use the new No Meeting block to display those dates.
+
+= 12.0.6 =
+
+* More choices for RSVP form formatting
 
 = 12.0.5 =
 

@@ -908,11 +908,6 @@ global $post;
 </div><?php
 }
 
-function my_rsvpemails_menu() {
-if(!function_exists('do_blocks'))
-add_meta_box( 'BlastBox', 'RSVPMaker Email Options', 'RSVPMaker_email_notice', 'rsvpemail', 'normal', 'high' );
-}
-
 add_action('admin_init','save_rsvpemail_data');
 
 //legacy
@@ -1916,6 +1911,21 @@ echo $events_dropdown;
 </select>	
 </p>
 </div>
+<?php
+if(isset($_GET['no_style'])) {
+	$no_style = intval($_GET['no_style']);
+	update_post_meta($post_id,'rsvpmail_no_style',$no_style);
+}
+else
+	$no_style = get_post_meta($post->ID,'_rsvpmail_no_style',true);
+if($no_style)
+{
+printf('<p><a href="%s?no_style=0"> %s</a></p>',get_permalink($post->ID),__('Include default styles','rsvpmaker'));
+}
+else {
+printf('<p><a href="%s?no_style=1"> %s</a></p>',get_permalink($post->ID),__('Exclude default styles','rsvpmaker'));
+}
+?>
 </div><!--end more options -->
 </div><!--end nonchimp -->
 <div><input type="checkbox" name="send_check" value="1"> Prompt for list confirmation before sending</div>
@@ -4091,14 +4101,33 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 		<!-- controls go here -->
 		<article>
 		<div class="entry-content">
-		<div id="email-content" style="padding:5px;margin-left:auto;margin-right:auto;max-width:600px;border:thin solid gray;box-sizing:border-box;width:100%;">
+		<div id="email-content" style="padding:5px;margin-left:auto;margin-right:auto;border:thin solid gray;box-sizing:border-box;width:100%;">
 
 		<!-- editors note goes here -->
 
 			<?php
 			//print_r($post);
 			the_post();
-			the_content();
+			$content = get_the_content();
+			$head_pattern = '/<head\b[^>]*>(.*?)<\/head>/is';
+echo preg_replace_callback($head_pattern, function($matches) {
+    // $matches[1] contains everything strictly *inside* the <head> tags
+    $head_contents = $matches[1];
+    
+    // Target the <style>...</style> block inside the head contents
+    $style_pattern = '/<style\b[^>]*>.*?<\/style>/is';
+    
+    if (preg_match($style_pattern, $head_contents, $style_matches)) {
+        // Remove line endings from the matched style block
+        $flattened_style = str_replace(array("\r", "\n"), '', $style_matches[0]);
+        
+        // Return only the flattened style block (replacing the whole head section)
+        return $flattened_style;
+    }
+    
+    // If no style block was found, return nothing (empties the head)
+    return '';
+}, $content);
 			if(!strpos($post->post_content,'*|LIST:DESCRIPTION|*'))
 			{
 			?>
@@ -6084,6 +6113,9 @@ function rsvpmaker_email_html ($post_or_html, $post_id = 0) {
 		$html = do_shortcode($html);
 	if(strpos($html,'youtu'))
 		$html = rsvpmaker_youtube_email($html);
+	if(isset($_GET['no_style']))
+		update_post_meta($post_id,'rsvpmail_no_style',intval($_GET['no_style']));
+	if(empty(get_post_meta($post_id,'rsvpmail_no_style',true)) && empty($_GET['no_style']))
 	$html = rsvpmail_filter_style($html);
 	$html = str_replace('loading="lazy"','',$html);
 	$html = preg_replace('/<(figure|figcaption)/','<div',$html);

@@ -51,6 +51,7 @@ function rsvpmaker_create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build/emailbody' );
 	register_block_type( __DIR__ . '/build/emailcontent' );
 	register_block_type( __DIR__ . '/build/countdown' );
+	register_block_type( __DIR__ . '/build/nomeeting' );
 
 }
 
@@ -194,26 +195,6 @@ function rsvpmaker_react_admin() {
 	global $rsvp_options;
 	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'"></div>';
 }
-
-function rsvpmaker_template_callback() {
-	?>
-	<div id="rsvpmaker-template-metabox">
-		Loading Create/Update from Template
-	</div>
-	<?php
-}
-
-add_action( 'add_meta_boxes', function() {
-	global $post;
-	//if('rsvpmaker-template' == $post->post_type)
-	add_meta_box(
-		'rsvpmaker-create-update',
-		'RSVPMaker Create/Update',
-		'rsvpmaker_template_callback',
-		'rsvpmaker_template',
-		'advanced'
-	);
-} );
 
 function get_rsvpmaker_rest() {
 	global $post, $rsvp_options, $current_user, $rsvpmaker_rest;

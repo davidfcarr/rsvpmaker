@@ -5,10 +5,10 @@
  * Replace them with your own styles or remove the file completely.
  */
 
-.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield,
-.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect,
-.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea {
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formfield .wp-block-rsvpmaker-formfield,
+.wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect .wp-block-rsvpmaker-formselect {
 	display: flex;
+    width: 100%;
 	align-items: center;
 }
 
@@ -43,6 +43,7 @@
 .wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formselect > .rsvp-input-line,
 .wp-block-rsvpmaker-contact #rsvpmaker_contact_form .wp-block-rsvpmaker-formtextarea > .rsvp-input-line {
 	flex: 1;
+    flex-basis: 100%;
 	min-width: 0;
 	margin-left: 0;
 }

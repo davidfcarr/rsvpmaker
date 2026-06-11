@@ -424,7 +424,7 @@ if($('#formvars')) {
 								}
 							);
 							fluxbutton[id]                = document.createElement( "A" );
-							fluxbutton[id].innerHTML      = 'Switch Timzeone?';
+							fluxbutton[id].innerHTML      = 'Switch Time Zone?';
 							fluxbutton[id].className      = 'tzswitch';
 							fluxbutton[id].style.fontSize = 'small';
 							document.getElementById( id ).appendChild( fluxbutton[id] );

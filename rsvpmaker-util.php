@@ -315,6 +315,7 @@ function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 		$ts_start = rsvpmaker_strtotime($date);
 
 		$sql = $wpdb->prepare("UPDATE %i SET date=%s, ts_start=%d WHERE event=%d ",$event_table,$date,$ts_start,$event_post_id);
+		error_log('rsvpmaker_update_event_field date '.$sql);
 		delete_transient('rsvpmakers');
 
 	}
@@ -330,16 +331,19 @@ function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 		$ts_end = rsvpmaker_strtotime($enddate);
 
 		$sql = $wpdb->prepare("UPDATE %i SET enddate=%s, ts_end=%d WHERE event=%d ",$event_table,$enddate,$ts_end,$event_post_id);
+		error_log('rsvpmaker_update_event_field date '.$sql);
 
 	}
 
 	else {
 
 		$sql = $wpdb->prepare("UPDATE %i SET %i=%s WHERE event=%d ",$event_table,$field,$value,$event_post_id);
+		error_log('rsvpmaker_update_event_field date '.$sql);
 
 	}
 
-	$wpdb->query($sql);
+	$result = $wpdb->query($sql);
+	error_log('rsvpmaker_update_event_field result '.var_export($result,true));
 
 }
 
@@ -1143,6 +1147,10 @@ function rsvpmaker_set_template_defaults( $post_id ) {
 	update_post_meta( $post_id, '_sked_Last', '' );
 
 	update_post_meta( $post_id, '_sked_Every', '' );
+
+	update_post_meta( $post_id, '_sked_Even', '' );
+
+	update_post_meta( $post_id, '_sked_Odd', '' );
 
 	update_post_meta( $post_id, '_sked_Sunday', '' );
 
@@ -3179,7 +3187,7 @@ function rsvpmaker_get_day_array() {
 	return array( 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' );
 }
 function rsvpmaker_get_week_array() {
-	return array( 'Varies', 'First', 'Second', 'Third', 'Fourth', 'Last', 'Every' );
+	return array( 'Varies', 'First', 'Second', 'Third', 'Fourth', 'Last', 'Every','Even','Odd' );
 }
 function rsvpmaker_get_template_sked( $post_id ) {
 	if(!rsvpmaker_is_template($post_id)) {
@@ -3277,11 +3285,10 @@ function rsvpmaker_get_template_sked( $post_id ) {
 
 		$end = $t + HOUR_IN_SECONDS;
 
-		$sked['end'] = date('H:i:s',$end);
-
 		update_post_meta($post_id,'_sked_end',$sked['end']);
 
 		}
+		$sked['end'] = date('H:i:s',$end);
 
 		//backward compatability
 
@@ -4424,7 +4431,7 @@ function rsvpmail_remove_problem($email) {
 
 	$wpdb->query($wpdb->prepare("DELETE from %i where email LIKE %s ",$table,$email));
 
-	do_action('rsvpmail_remove_problme',$email);
+	do_action('rsvpmail_remove_problem',$email);
 
 }
 function rsvpmail_problem_init() {
