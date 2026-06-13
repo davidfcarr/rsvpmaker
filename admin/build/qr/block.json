@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/qr",
+  "title": "QR Code",
+  "icon": "calendar-alt",
+  "category": "rsvpmaker",
+  "description": "Generates a QR code for the RSVP link of an event or another specified URL.",
+  "keywords": [
+    "RSVPMaker",
+    "QR Code"
+  ],
+  "attributes": {
+    "pixel": {
+      "type": "number",
+      "default": 5
+    },
+    "rsvpnow": {
+      "type": "boolean",
+      "default": false
+    },
+    "url": {
+      "type": "string",
+      "default": "permalink"
+    },
+    "queryString": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "version": "1",
+  "supports": {
+    "html": false,
+    "color": {
+      "link": true
+    }
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

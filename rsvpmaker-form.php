@@ -10,9 +10,9 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 
 <!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
 
-<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required","fieldType":"email"} /-->
 
-<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone","fieldType":"tel"} /-->
 
 <!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} /-->
 

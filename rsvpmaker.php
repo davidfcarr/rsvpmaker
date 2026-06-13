@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.0.8
+* Version: 12.0.9
 */
 
 function get_rsvpversion() {
-	return '12.0.8';
+	return '12.0.9';
 }
 
 global $wp_version;
@@ -725,7 +725,8 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'rsvpmaker-postmark.php';
 	include $rsvpmaker_dir . 'holidays.php';
 	include $rsvpmaker_dir . 'rsvpmaker-patterns.php';
-	include $rsvpmaker_dir . '/admin/admin.php';
+	include $rsvpmaker_dir . 'admin/admin.php';
+	include $rsvpmaker_dir . 'rsvpmaker-qr.php';
 }
 
 $gateways = get_rsvpmaker_payment_options();
@@ -1147,7 +1148,6 @@ function add_rsvpmaker_roles() {
 
 }
 
-
 function rsvpmaker_dequeue_script() {
 
 	wp_dequeue_script( 'tiny_mce' );
@@ -1169,4 +1169,5 @@ function rsvpautog( $content ) {
 	return $content;
 
 }
+
 

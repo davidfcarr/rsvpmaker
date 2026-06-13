@@ -267,10 +267,7 @@ function rsvpmaker_form_single($content) {
 		return $content.' failed check '.var_export($_REQUEST,true);
 
 	if(strpos($post->post_content,'wp:rsvpmaker/formfield')) {
-		if(current_user_can('edit_post',$post->ID)) {
-			return '<p><em>This form is meant for use as part of an event, but you can edit it here.</em></p><div id="rsvpmaker-single-form" form_id="'.$post->ID.'">Loading form editor ...</div>';
-		}
-		$add_to_top = '<div><h2>Form Preview</h2></div>';
+		$add_to_top = sprintf('<div><p><strong>%s</strong>: %s</p></div>',__('Form Preview','rsvpmaker'),__('This form is meant to be embedded within an event as its RSVP registration form or used as part of a contact form. It\'s not functional in this view.','rsvpmaker'));
 		$content = $add_to_top."\n".$content;
 	}
 	elseif(isset($_POST['rsvpmultievent']))

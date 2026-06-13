@@ -1674,9 +1674,9 @@ class RSVPMaker_Form extends WP_REST_Controller {
 
 <!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
 
-<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required","fieldType":"email"} /-->
 
-<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone"} /-->
+<!-- wp:rsvpmaker/formfield {"label":"Phone","slug":"phone","fieldType":"tel"} /-->
 
 <!-- wp:rsvpmaker/formselect {"label":"Phone Type","slug":"phone_type","choicearray":["Mobile Phone","Home Phone","Work Phone"]} /-->
 
@@ -3573,6 +3573,46 @@ class RSVP_Default_Diff extends WP_REST_Controller {
 	}//end handle
 }//end class
 
+class RSVP_QR_Code extends WP_REST_Controller {
+
+	public function register_routes() {
+
+		$namespace = 'rsvpmaker/v1';
+		$path      = 'qr';
+
+		register_rest_route(
+			$namespace,
+			'/' . $path,
+			array(
+
+				array(
+
+					'methods'             => array('POST','GET'),
+
+					'callback'            => array( $this, 'get_items' ),
+
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+
+				),
+
+			)
+		);
+	}
+
+	public function get_items_permissions_check( $request ) {
+		return true;
+	}
+
+	public function get_items( $request ) {
+		global $post;
+		$attributes = $_GET;
+		$attributes['html'] = false;
+		$post = get_post($attributes['post_id']);
+		$qr['image'] = rsvpmaker_qr($attributes);
+	return new WP_REST_Response($qr, 200 );
+	}//end handle
+}//end class
+
 add_action('rest_api_init',
 	function () {
 		$rsvpmaker_sked_controller = new RSVPMaker_Sked_Controller();
@@ -3669,5 +3709,7 @@ add_action('rest_api_init',
 		$chimplist->register_routes();
 		$default_diff = new RSVP_Default_Diff();
 		$default_diff->register_routes();
+		$qr = new RSVP_QR_Code();
+		$qr->register_routes();
 	}
 );

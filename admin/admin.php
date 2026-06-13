@@ -52,6 +52,7 @@ function rsvpmaker_create_block_admin_block_init() {
 	register_block_type( __DIR__ . '/build/emailcontent' );
 	register_block_type( __DIR__ . '/build/countdown' );
 	register_block_type( __DIR__ . '/build/nomeeting' );
+	register_block_type( __DIR__ . '/build/qr' );
 
 }
 
