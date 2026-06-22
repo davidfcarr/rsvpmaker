@@ -63,10 +63,11 @@ export default function Edit(props) {
         <InspectorControls key="qrinspector">
 
 <TextControl
-        label={__("Enter URL or 'permalink' to for current post",'rsvpmaker')}
+        label={__("URL",'rsvpmaker')}
         value={ url }
         onChange={ ( url ) => { setAttributes( { url } ) } }
     />
+    <p><em>{__("Enter the URL to encode. Defaults to the 'permalink' URL of the current post. You can also enter 'home' for the homepage URL.",'rsvpmaker')}</em></p>
 <TextControl
         label={__("Query String (optional)",'rsvpmaker')}
         value={ queryString }
@@ -78,7 +79,7 @@ export default function Edit(props) {
         checked={ rsvpnow }
         onChange={ ( rsvpnow ) => { setAttributes( { rsvpnow } ) } }
     />
-    <p><em>{__("If set, the link takes user to form, rather than top of post.",'rsvpmaker')}</em></p>
+    <p><em>{__("If set, the link takes user to the top of the form, rather than top of post.",'rsvpmaker')}</em></p>
 <SelectControl
         label={__("Pixel Size",'rsvpmaker')}
         value={ pixel }

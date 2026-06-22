@@ -15,6 +15,7 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import apiFetch from '@wordpress/api-fetch';
 import { addQueryArgs } from '@wordpress/url';
 import React, { useState, useEffect } from 'react';
+const { ToggleControl } = wp.components;
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -34,8 +35,9 @@ import { BlockControls, AlignmentToolbar } from '@wordpress/block-editor';
  * @return {WPElement} Element to render.
  */
 export default function Edit(props) {
-	const { attributes, attributes: {alignment}, context: {postId}, setAttributes, isSelected } = props;
+	const { attributes, attributes: {alignment, qr}, context: {postId}, setAttributes, isSelected } = props;
     const [dateblock, setDateBlock] = useState(null);
+    const [qrCode, setQrCode] = useState(null);
 
     console.log('post id '+postId);
 
@@ -45,8 +47,26 @@ export default function Edit(props) {
         } );
     }, [alignment]);
     
+    useEffect(() => {
+        if(qr) {
+        apiFetch( {path: '/rsvpmaker/v1/qr?post_id='+postId} ).then( ( x ) => {
+            setQrCode(x.image);
+        } );
+        }
+        else {
+            setQrCode(null);
+        }
+    }, [qr]);
+
     return (
                 <div { ...useBlockProps() }>
+        <InspectorControls>
+            <ToggleControl
+                    label={__("Show QR Code",'rsvpmaker')}
+                    checked={ qr }
+                    onChange={ ( qr ) => { setAttributes( { qr } ) } }
+                />
+        </InspectorControls>
         <BlockControls>
           <AlignmentToolbar
             value={alignment}
@@ -62,6 +82,7 @@ export default function Edit(props) {
                         <p>Loading ...</p>
                         </>
                         )}
+            {qrCode ? <div className="rsvpqr"><img src={qrCode} alt="QR code" /></div> : null}
         </div>
     );
 }

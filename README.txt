@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 5.6
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 12.0.9
+Stable tag: 12.1
 
 Event and email marketing. Register guests and collect payment by PayPal or Stripe. Send invitations and newsletters.
 
@@ -131,9 +131,15 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 12.1 =
+
+* QR code can be displayed as part of the RSVPMaker Date Block component. Toggle it on in the block settings if it's manually added to the body of the event post. Or display it in an ad hoc fashion by adding ?qr=1 to the end of the url.
+* Separate QR code block now allows you to put "home" in the url field as a shortcut for the home page url, "permalink" for the permalink for the post/page/event document, or a specific url.
+* Added a couple of patterns for event listings, including one with the QR code embedded.
+
 = 12.0.9 =
 
-* QR Code generator based on https://sourceforge.net/projects/phpqrcode/ for permalink or specified address
+* QR Code generator based on https://sourceforge.net/projects/phpqrcode/ for permalink or specified address. QR codes are saved as downloadable images that can be used in print promotions.
 
 = 12.0.8 =
 

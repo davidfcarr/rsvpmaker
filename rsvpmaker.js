@@ -122,7 +122,7 @@ if($('#formvars')) {
 	function renderLookupResponse(targetSelector, response, showNotFound) {
 		if(!response) {
 			if(showNotFound) {
-				$(targetSelector).html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">No registration associated with that email address was found for this event.</div>');
+				$(targetSelector).html('<div style="border: medium solid gray; padding: 5px; background-color:#fff; color: gray;">No registration associated with that email address was found for this event.</div>');
 			}
 			else {
 				$(targetSelector).html('');
@@ -131,7 +131,7 @@ if($('#formvars')) {
 		}
 		var inboxMessage = /check your inbox/i.test(response);
 		if (showNotFound || inboxMessage) {
-			$(targetSelector).html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">'+response+'</div>');
+			$(targetSelector).html('<div style="border: medium solid gray; padding: 5px; background-color:#fff; color: gray;">'+response+'</div>');
 		}
 		else {
 			$(targetSelector).html('');

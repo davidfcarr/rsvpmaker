@@ -4776,6 +4776,8 @@ function rsvpmaker_email_merge_style_attr($tag, $style) {
 		$merged = preg_replace('/;{2,}/',';',$merged);
 		return preg_replace('/style\s*=\s*\'[^\']*\'/i','style="'.esc_attr($merged).'"',$tag,1);
 	}
+	if(strpos($tag,'/') !== false)
+		return preg_replace('/\/>$/',' style="'.esc_attr(trim($style)).'" />',$tag,1);
 	return preg_replace('/>$/',' style="'.esc_attr(trim($style)).'">',$tag,1);
 }
 
@@ -7013,7 +7015,7 @@ function ajax_rsvp_email_lookup( $email, $event ) {
 			}
 		}
 
-		return '<div class="previous_rsvp_prompt_note">' . __( 'Please check your inbox for a secure RSVP update link for this event.', 'rsvpmaker' ) . '</div>';
+		return '<div class="previous_rsvp_prompt_note">' . __( 'Check your inbox for a secure link you can use to fill this form with details you\'ve provided previously.', 'rsvpmaker' ) . '</div>';
 	}
 
 	if ( ! empty( $any_row ) ) {
@@ -7025,7 +7027,7 @@ function ajax_rsvp_email_lookup( $email, $event ) {
 			}
 		}
 
-		return '<div class="previous_rsvp_prompt_note">' . __( 'Please check your inbox for a secure RSVP link to copy prior details into this form.', 'rsvpmaker' ) . '</div>';
+		return '<div class="previous_rsvp_prompt_note">' . __( 'Check your inbox for a secure link you can use to fill this form with details you\'ve provided previously.', 'rsvpmaker' ) . '</div>';
 	}
 
 	return '<div class="previous_rsvp_prompt_note">' . __( 'No registration associated with that email address was found.', 'rsvpmaker' ) . '</div>';

@@ -2180,9 +2180,9 @@ function rsvpdateblock( $atts = array() ) {
 	global $post;
 	if(isset($atts['post_id']))
 		$post = get_post(intval($atts['post_id']));
-	$dateblock = rsvpmaker_format_event_dates( $post->ID );
+	$dateblock = rsvpmaker_format_event_dates( $post->ID, rsvpmaker_is_template($post->ID), $atts );
 	$alignclass = (empty($atts['alignment'])) ? '' : 'has-text-align-'.$atts['alignment'];
-	return '<div class="dateblock '.$alignclass.'">' . $dateblock . "\n</div>\n";
+	return '<div class="dateblock '.$alignclass.'">' . $dateblock. "\n</div>\n";
 }
 
 function rsvptitledate($atts) {
@@ -2207,12 +2207,11 @@ function rsvptitledate($atts) {
 	printf('<a href="%s" %s %s>%s</a>',$permalink,$style,$alignclass,$title);
 }
 
-function rsvpmaker_format_event_dates( $post_id, $template = false ) {
+function rsvpmaker_format_event_dates( $post_id, $template = false, $atts = array() ) {
 
 	global $post, $rsvp_options;
 
 	if ( is_admin() ) {
-
 		return;
 	}
 
@@ -2325,6 +2324,9 @@ function rsvpmaker_format_event_dates( $post_id, $template = false ) {
 
 			$dateblock .= '<div class="rsvpcalendar_buttons">' . $tzbutton . '</div>';
 		}
+
+		if(!empty($_GET['qr']) || !empty($atts['qr']))
+			$dateblock .= rsvpmaker_qr([]);
 
 		$dateblock .= '</div>';// end of dateblock div
 

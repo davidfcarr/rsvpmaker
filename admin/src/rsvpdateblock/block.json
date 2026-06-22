@@ -15,6 +15,10 @@
 		"alignment": {
 			"type": "string",
 			"default": ""
+		},
+		"qr": {
+			"type": "boolean",
+			"default": false
 		}
         },
 	"version": "1",

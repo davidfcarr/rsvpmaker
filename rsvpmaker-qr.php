@@ -15,7 +15,9 @@ function rsvpmaker_qr($atts) {
     ), $atts, 'rsvpmaker_qr' );
 
     if(empty($atts['url']) ||  !strpos($atts['url'], '://')) {
-        if(empty($post->ID))
+        if('home' === $atts['url'])
+            $atts['url'] = home_url();
+        elseif(empty($post->ID))
             return '';
         else
             $atts['url'] = get_permalink($post->ID);
@@ -31,7 +33,6 @@ function rsvpmaker_qr($atts) {
     if (!file_exists($path)) {
         wp_mkdir_p($path);
     }
-    $atts['url'] = esc_url($atts['url']);
     // $ecc stores error correction capability('L')
     $ecc = 'L';
     $frame_Size = 3;
@@ -45,7 +46,7 @@ function rsvpmaker_qr($atts) {
     // Displaying the stored QR code from directory
     $src = $upload_dir['baseurl'] . '/qr/' . basename($file);
     if($atts['html']) {
-        return sprintf("%s<a href='%s'><img src='%s'></a>%s", $atts['before'], $atts['url'], $src, $atts['after']);
+        return sprintf('%s<a href="%s" target="_blank"><img src="%s"></a>%s', $atts['before'], esc_url($atts['url']), esc_url($src), $atts['after']);
     } else {
         return $src;
     }

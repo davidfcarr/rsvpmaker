@@ -169,6 +169,12 @@ function rsvp_default_content_from_template($content) {
 
 	global $wpdb, $post;
 
+	if(isset($_GET['post_type']) && $_GET['post_type'] == 'rsvpmaker_form') {
+		return '<!-- wp:rsvpmaker/formfield {"label":"First Name","slug":"first","guestform":true,"sluglocked":true,"required":"required"} /-->
+			<!-- wp:rsvpmaker/formfield {"label":"Last Name","slug":"last","guestform":true,"sluglocked":true,"required":"required"} /-->
+			<!-- wp:rsvpmaker/formfield {"label":"Email","slug":"email","sluglocked":true,"required":"required"} /-->';
+	}
+
 	if(isset($_GET['t'])) {
 
 		$t = intval($_GET['t']);
@@ -3763,6 +3769,20 @@ function rsvpmaker_get_more_related( $post, $post_id, $t, $parent_tag ) {
 
 			);
 		}
+		$args[] = array(
+
+				'parent' => $parent_tag,
+
+				'title'  => __( 'Show QR Code' ),
+
+				'id'     => 'rsvpmaker-qr-code',
+
+				'href'   => add_query_arg( array( 'qr' => 1,  ), get_permalink( $post->ID ) ),
+
+				'meta'   => array( 'class' => 'rsvpmaker-qr-code' ),
+
+		);
+
 		if ( 'rsvpmaker_template' == $post->post_type ) {
 			$args[] = array(
 				'id'     => 'rsvpmaker_create_update',
@@ -5040,7 +5060,7 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 
 	$guestparty = '';
 
-	$exclude = array('first','last','id','yesno','event','owed','amountpaid','master_rsvp','guestof','participants','user_id','timestamp','payingfor','fee_total','pricechoice');
+	$exclude = array('first','last','id','yesno','event','owed','amountpaid','master_rsvp','guestof','participants','user_id','timestamp','payingfor','fee_total','pricechoice','form_id');
 	$pricing_field_slugs = array( 'amountpaid', 'owed', 'fee_total', 'payingfor', 'pricechoice' );
 
 	$strip_generated_suffix = function( $value ) {
@@ -5948,3 +5968,14 @@ function rsvpmaker_localdate() {
 }
 
 
+function is_rsvpmaker() {
+	global $post;
+
+	if ( ! $post ) {
+
+		return false;
+
+	}
+
+	return ( 'rsvpmaker' === get_post_type( $post->ID ) );
+}

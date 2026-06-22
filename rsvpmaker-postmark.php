@@ -468,6 +468,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $tx_from = trim(strtolower($postmark_settings['postmark_tx_from']));
     $broadcast_from = trim(strtolower($postmark_settings['postmark_broadcast_from']));
     $flattened = (function_exists('wpt_all_flattened_forwarders')) ? wpt_all_flattened_forwarders() : array();
+    error_log('postmark flattened forwarders '.var_export($flattened,true));
 
     //test new approach
     $from = strtolower($emailobj->From);
@@ -502,8 +503,15 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
             }
         if(!empty($flattened[$email])) {
             foreach($flattened[$email] as $to) {
-                if(!in_array($to,$recipients))
+                if(!in_array($to,$recipients)) {
+                    if(!empty($flattened[$to])) {
+                        foreach($flattened[$to] as $t)
+                            if(!in_array($t,$recipients))
+                                $recipients[] = $t;
+                    }
+                    else
                     $recipients[] = $to;
+                }
             }
             continue;
         }

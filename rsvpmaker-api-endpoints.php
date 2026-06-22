@@ -3409,6 +3409,7 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 		$post_id = intval($postdata['post_id']);
 		$post = get_post($post_id);
 		$unique_id = (empty($postdata['form_id'])) ? '' : sanitize_text_field($postdata['form_id']);
+		$rsvp_form_id = intval($postdata['rsvp_form_id']);
 		$is_order = empty($postdata['is_order']) ? false : sanitize_text_field($postdata['is_order']);
 		$gateway = (empty($postdata['gateway'])) ? '' : sanitize_text_field($postdata['gateway']);
 		$email_to = $rsvp_options['rsvp_to'];
@@ -3470,7 +3471,7 @@ class RSVP_Contact_Form extends WP_REST_Controller {
 		if ( !is_email($rsvp['email']) ) {
 			return new WP_REST_Response(array('error'=>'not a valid email: '.$rsvp['email']), 200 );
 		}
-		$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'event'=>0, 'note' => $note, 'details'=>serialize( $rsvp ),'user_id'=>$current_user->ID,'note'=>$note);
+		$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'event'=>0, 'note' => $note, 'details'=>serialize( $rsvp ),'user_id'=>$current_user->ID,'note'=>$note, 'form_id'=>$rsvp_form_id);
 		$wpdb->insert($wpdb->prefix.'rsvpmaker',$nv);
 		$id = $wpdb->insert_id;
 		$sitename = get_option('sitename');

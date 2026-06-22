@@ -47,9 +47,7 @@ register_block_pattern(
 <!-- /wp:query-no-results --></div>
 <!-- /wp:query -->
 
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->',
+<!-- wp:rsvpmaker/nomeeting /-->',
         )
     ); 
 
@@ -82,7 +80,10 @@ register_block_pattern(
 <!-- /wp:post-template --></div>
 <!-- /wp:query -->
 
-<!-- wp:rsvpmaker/future-rsvp-links {"skipfirst":true} /--></div>
+<!-- wp:rsvpmaker/future-rsvp-links {"skipfirst":true} /-->
+
+<!-- wp:rsvpmaker/nomeeting /-->
+</div>
 <!-- /wp:group -->',
         )
     ); 
@@ -133,6 +134,9 @@ register_block_pattern(
 <!-- /wp:rsvpmaker/button -->
 <!-- /wp:post-template --></div>
 <!-- /wp:query -->
+
+<!-- wp:rsvpmaker/nomeeting /-->
+
 </div>
 <!-- /wp:group -->',
         )
@@ -205,6 +209,80 @@ register_block_pattern(
 <!-- /wp:rsvpmaker/button -->
 <!-- /wp:post-template --></div>
 <!-- /wp:query -->',
+        )
+    ); 
+
+register_block_pattern(
+        'rsvpmaker/next-summary-nomeetings',
+        array(
+            'title'       => __( 'Next RSVP Event, plus summary + no meetings list', 'rsvpmaker' ),
+            'description' => __( 'Show the next event, plus a summary of others for which RSVPs are being collected, followed by a summary of dates where there is no meeting.', 'rsvpmaker' ),
+            'categories'    => ['rsvpmaker'],
+            'content'     => '<!-- wp:group {"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:query {"queryId":0,"query":{"perPage":"1","pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0,"rsvp_only":true},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
+<div class="wp-block-query"><!-- wp:post-template {"layout":{"type":"grid","columnCount":1}} -->
+<!-- wp:post-title {"level":4,"isLink":true} /-->
+
+<!-- wp:post-featured-image /-->
+
+<!-- wp:rsvpmaker/loop-blocks -->
+<div class="wp-block-rsvpmaker-loop-blocks"><!-- wp:rsvpmaker/rsvpdateblock /-->
+
+<!-- wp:rsvpmaker/excerpt /-->
+
+<!-- wp:rsvpmaker/button -->
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button {"style":{"color":{"background":"#f71b1b"},"className":"rsvplink","border":{"radius":"14px"}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-background wp-element-button" href="#rsvpnow" style="border-radius:14px;background-color:#f71b1b">RSVP Now!</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+<!-- /wp:rsvpmaker/button --></div>
+<!-- /wp:rsvpmaker/loop-blocks -->
+<!-- /wp:post-template --></div>
+<!-- /wp:query -->
+
+<!-- wp:query {"queryId":0,"query":{"perPage":"5","pages":0,"offset":"1","postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0,"rsvp_only":true},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
+<div class="wp-block-query"><!-- wp:post-template {"layout":{"type":"grid","columnCount":1}} -->
+<!-- wp:post-featured-image {"isLink":true,"width":"300px"} /-->
+
+<!-- wp:rsvpmaker/title-date {"style":{"spacing":{"padding":{"top":"0","bottom":"0","left":"0","right":"0"},"margin":{"top":"0","bottom":"0","left":"0","right":"0"}},"typography":{"lineHeight":"1"}}} /-->
+<!-- /wp:post-template --></div>
+<!-- /wp:query -->
+
+<!-- wp:rsvpmaker/nomeeting /--></div>
+<!-- /wp:group -->',
+        )
+    ); 
+
+register_block_pattern(
+        'rsvpmaker/qr-codes',
+        array(
+            'title'       => __( 'QR Codes', 'rsvpmaker' ),
+            'description' => __( 'QR Codes for home page and RSVP Events.', 'rsvpmaker' ),
+            'categories'    => ['rsvpmaker','qr','qr code'],
+            'content'     => '<!-- wp:group {"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:paragraph -->
+<p>Links to home page:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:rsvpmaker/qr {"url":"home","queryString":"?qr=1"} /-->
+
+<!-- wp:paragraph -->
+<p>Links to events:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:query {"queryId":0,"query":{"perPage":"10","pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0,"rsvp_only":true},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
+<div class="wp-block-query"><!-- wp:post-template {"layout":{"type":"grid","columnCount":1}} -->
+<!-- wp:post-title {"level":4,"isLink":true} /-->
+
+<!-- wp:rsvpmaker/loop-blocks -->
+<div class="wp-block-rsvpmaker-loop-blocks"><!-- wp:rsvpmaker/rsvpdateblock /-->
+
+<!-- wp:rsvpmaker/qr {"queryString":"?qr=1"} /--></div>
+<!-- /wp:rsvpmaker/loop-blocks -->
+<!-- /wp:post-template --></div>
+<!-- /wp:query --></div>
+<!-- /wp:group -->',
         )
     ); 
 

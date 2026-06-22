@@ -1117,11 +1117,11 @@ function rsvpmail_email_to_parts($email,$blog_id = 0) {
 				$blog_id = $match[1];
 			if(!$blog_id) {
 				$sql = $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE domain=%s",$match[1].'.'.$match[3]);
-				$blog_id = $wpdb->get_var($sql);
+				$sub_blog_id = $blog_id = $wpdb->get_var($sql);
 			}
 		}
 		if($blog_id) {
-			$fkey = empty($match[2]) ? 'members' : $match[2];
+			$fkey = (!empty($sub_blog_id) && empty($match[2])) ? 'members' : $match[2];
 			return array('subdomain'=>$match[1],'fwdkey'=>$fkey,'domain'=>$match[3],'blog_id'=>$blog_id);
 		}
 		else {
@@ -1144,6 +1144,11 @@ function rsvpmail_email_to_parts($email,$blog_id = 0) {
 		return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>1);
 	else
 		return false;
+}
+
+add_shortcode('rsvpmail_email_to_parts','rsvpmail_email_to_parts_test');
+function rsvpmail_email_to_parts_test($atts) {
+	return '<pre>'.var_export(rsvpmail_email_to_parts($atts['email'], intval($atts['blog_id'])),true).'</pre>';
 }
 
 function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {

@@ -204,10 +204,12 @@ function rsvp_form_text( $atts, $content ) {
 
 	$required = '';
 	$required_marker = '';
+	$required_key = '';
 	if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
 		$rsvp_required_field[ $slug ] = $slug;
 		$required                     = 'required';
 		$required_marker = ' <span class="rsvprequiredfield">*</span>';
+		$required_key = ' required="required" ';
 	}
 	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div class="rsvp-fieldnote">%s</div>', esc_html( $atts['fieldnote'] ) );
 
@@ -233,7 +235,7 @@ function rsvp_form_text( $atts, $content ) {
 
 	$inline_class = ( isset( $atts['labelPosition'] ) && 'inline' === $atts['labelPosition'] ) ? 'rsvp-label-inline ' : '';
 
-	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %s%srsvpblock"><p><label>%s:%s</label></p><div class="rsvp-input-line"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""/></span></div></div>', esc_attr( $inline_class ), esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ) );
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formfield %s%srsvpblock"><p><label>%s:%s</label></p><div class="rsvp-input-line"><span class="%s"><input class="%s" type="%s" name="profile[%s]" id="%s" value=""%s/></span></div></div>', esc_attr( $inline_class ), esc_attr( $required ), esc_html( $label ), $required_marker, esc_attr( $required ), esc_attr( $slug ), esc_attr( $type ), esc_attr( $slug ), esc_attr( $slug ), $required_key );
 	
 	if ( $slug == 'email' ) {
 		$content .= '<div id="rsvp_email_lookup"></div>';
@@ -275,7 +277,7 @@ function rsvp_form_field( $atts, $content = '' ) {
 		return $content;
 	}
 
-	$default = $profile[ $slug ];
+	$default = empty($profile[ $slug ]) ? '' : $profile[ $slug ];
 
 	return rsvp_field_apply_default( $content, $slug, $default );
 
@@ -758,8 +760,11 @@ function rsvpmaker_item_pricing($post_id) {
 	return $item_prices;
 }
 
-function rsvpmaker_form_field_labels($post_id) {
-	$form = get_post(get_post_meta($post_id,'_rsvp_form',true));
+function rsvpmaker_form_field_labels($post_id, $form_id = 0) {
+	global $rsvp_options;
+	if(empty($post_id) && empty($form_id))
+		$form_id = $rsvp_options['rsvp_form'];
+	$form = ($form_id) ? get_post($form_id) : get_post(get_post_meta($post_id,'_rsvp_form',true));
 	$field_labels = [];
 	if($form and isset($form->post_content)) {
 		$fields = rsvpmaker_data_from_document($form->post_content);
@@ -938,7 +943,16 @@ function rsvpmaker_contact_form_output($attributes) {
 		return;
 	}
 
-global $current_user, $rsvp_options, $post;
+global $current_user, $rsvp_options, $post, $profile, $wpdb;
+$profile = [];
+if(isset($_GET['copy'])) {
+	$rsvp_id = intval($_GET['copy']);
+	$rsvprow = (array) $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rsvpmaker WHERE id=$rsvp_id");
+	if($rsvprow) {
+		$profile = rsvp_row_to_profile($rsvprow);
+	}
+} 
+
 $is_preview = !empty($attributes['preview']);
 $post_id = (isset($post->ID)) ? $post->ID : 0;
 $user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
@@ -949,7 +963,7 @@ if(empty($attributes['order']) && empty($attributes['sale']))
 {
 	$button_label = __('Send','rsvpmaker');
 	$subject_label = (empty($attributes['subject_label'])) ? 'Subject' : $attributes['subject_label'];
-	printf('<div class="wp-block-rsvpmaker-formfield"><div class="wp-block-rsvpmaker-formfield rsvp-label-inline"><p><label>%s:</label></p><div class="rsvp-input-line"><input type="text" name="contact_subject"></div></div></div>',esc_html($subject_label));	
+	printf('<div class="wp-block-rsvpmaker-formfield"><div class="wp-block-rsvpmaker-formfield rsvp-label-inline"><p><label>%s: <span class="rsvprequiredfield">*</span></label></p><div class="rsvp-input-line"><input type="text" name="contact_subject" required="required" ></div></div></div>',esc_html($subject_label));	
 }
 else {
 	$button_label = __('Submit','rsvpmaker');
@@ -1021,6 +1035,10 @@ async function sendData() {
 
 // Take over form submission
 form.addEventListener("submit", (event) => {
+if (!form.checkValidity()) {
+    form.reportValidity(); 
+    return;
+  }
   event.preventDefault();
   sendData();
 });
@@ -1738,7 +1756,8 @@ function save_rsvp($postdata, $live = true) {
 				$rsvp['payingfor'] .= '<div class="payment_details_total"><strong>= ' .$currency. number_format( $rsvp['fee_total'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']) . "</strong></div>\n";
 			}
 
-			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'owed'=>$owed,'fee_total'=>$rsvp['fee_total']);
+			$rsvp_form_id = intval($postdata['rsvp_form_id']);
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'owed'=>$owed,'fee_total'=>$rsvp['fee_total'], 'form_id'=>$rsvp_form_id);
 			if(!empty($postdata['multi_event_price'])) {
 				$nv['amountpaid'] = floatval($postdata['multi_event_price']);
 				$nv['owed'] = 0;
@@ -2002,6 +2021,7 @@ function rsvpmaker_basic_form( $form = '' ) {
 		} else {
 			echo do_shortcode( $form );
 		}
+		printf('<input type="hidden" name="rsvp_form_id" value="%s" />',esc_attr($form));
 
 	}
 

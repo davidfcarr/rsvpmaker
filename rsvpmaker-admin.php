@@ -3452,13 +3452,13 @@ $wp_admin_bar->add_node( $args );
 
 $noview = true;
 $argarg = rsvpmaker_get_related_documents ();
-if(empty($argarg))
-return;
+if(!empty($argarg))
 	foreach($argarg as $args) {
 		$wp_admin_bar->add_node($args);
 		if($args['id'] == 'view-event')
 		$wp_admin_bar->remove_node( 'view' );
 	}
+
 }
 
 function rsvpmaker_quick_post() {

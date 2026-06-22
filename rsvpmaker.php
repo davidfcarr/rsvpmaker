@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.0.9
+* Version: 12.1
 */
 
 function get_rsvpversion() {
-	return '12.0.9';
+	return '12.1';
 }
 
 global $wp_version;
@@ -767,6 +767,7 @@ $sql = "CREATE TABLE `{$wpdb->prefix}rsvpmaker` (
   `note` text   CHARACTER SET  utf8 COLLATE utf8_general_ci NOT NULL,
   `participants` INT NOT NULL DEFAULT '0',
   `user_id` INT NOT NULL DEFAULT '0',
+  `form_id` INT NOT NULL DEFAULT '0',
   `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
