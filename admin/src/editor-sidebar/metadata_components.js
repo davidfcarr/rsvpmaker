@@ -484,7 +484,7 @@ var MetaFormToggle = wp.compose.compose(
 export function RSVPMetaToggle(props) {
 	if(!props)
 		return <p>Reloading ...</p>
-	const {eventdata, metaKey, label} = props;
+	const {eventdata, metaKey, label, unsetVariesOnSelect} = props;
 	const {event,meta} = eventdata;
 	if(!meta)
 		return <p><em>Saving ...</em></p>
@@ -496,7 +496,11 @@ export function RSVPMetaToggle(props) {
 
 	return <div class="rsvpmaker_toggles"><FormToggle checked={value} 
 	onChange={ function(  ) {
-		const change = {'metaKey':metaKey,'metaValue':!value};
+		const nextValue = !value;
+		if(unsetVariesOnSelect && nextValue && meta['_sked_Varies']) {
+			datemutate({'metaKey':'_sked_Varies','metaValue':false});
+		}
+		const change = {'metaKey':metaKey,'metaValue':nextValue};
 		datemutate(change);
 			console.log( 'update toggle to', change );
 		} }	

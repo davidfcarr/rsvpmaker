@@ -21,28 +21,28 @@ export default function TemplateControl (props) {
 			metaKey="_sked_Varies" eventdata={eventdata} /></p>
 			<p class="weeknumber"><RSVPMetaToggle
 			label="First" 
-			metaKey="_sked_First"  eventdata={eventdata} /></p>
+			metaKey="_sked_First" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="weeknumber"><RSVPMetaToggle
 			label="Second" 
-			metaKey="_sked_Second" eventdata={eventdata} /></p>
+			metaKey="_sked_Second" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="weeknumber"><RSVPMetaToggle
 			label="Third" 
-			metaKey="_sked_Third" eventdata={eventdata} /></p>
+			metaKey="_sked_Third" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="weeknumber"><RSVPMetaToggle
 			label="Fourth" 
-			metaKey="_sked_Fourth"  eventdata={eventdata} /></p>
+			metaKey="_sked_Fourth" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="weeknumber"><RSVPMetaToggle
 			label="Last" 
-			metaKey="_sked_Last" eventdata={eventdata} /></p>
+			metaKey="_sked_Last" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="every"><RSVPMetaToggle
 			label="Every" 
-			metaKey="_sked_Every" eventdata={eventdata} /></p>
+			metaKey="_sked_Every" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="every"><RSVPMetaToggle
 			label="Even (week of year)" 
-			metaKey="_sked_Even" eventdata={eventdata} /></p>
+			metaKey="_sked_Even" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="every"><RSVPMetaToggle
 			label="Odd (week of year)" 
-			metaKey="_sked_Odd" eventdata={eventdata} /></p>
+			metaKey="_sked_Odd" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			</div>
 			<p><RSVPMetaToggle
 			label="Sunday" 

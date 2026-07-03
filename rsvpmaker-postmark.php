@@ -211,8 +211,9 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     $mail['Subject'] = do_shortcode($mpost->post_title);
     $mail['MessageStream'] = $message_stream;
     $mail['Tag'] = rsvpemail_tag($post_id);
-    if(isset($meta['rsvprelay_from'][0]))
-        $mail['ReplyTo'] = $meta['rsvprelay_from'][0];
+    $reply_to = get_post_meta($post_id,'rsvprelay_from',true);
+    if(!empty($reply_to))
+        $mail['ReplyTo'] = $reply_to;
     else
         $mail['ReplyTo'] = get_option('admin_email');
     $mail['From'] = ($message_stream == $postmark_settings['postmark_tx_slug']) ? $postmark_settings['postmark_tx_from'] : $postmark_settings['postmark_broadcast_from'];
@@ -360,7 +361,7 @@ function rsvpmail_local_address_check() {
 }
 
 function rsvpmail_is_local_address($email) {
-    $local_domains = rsvpmail_local_domains_and_prefixes();
+    $local_domains = rsvpmail_local_domains_and_subdomains();
     $email = strtolower($email);
     $parts = explode('@',$email);
     if(sizeof($parts) > 1) {
@@ -378,7 +379,7 @@ function rsvpmail_is_local_address($email) {
     return false;
 }
 
-function rsvpmail_local_domains_and_prefixes() {
+function rsvpmail_local_domains_and_subdomains() {
     $domainkeys = (is_multisite()) ?  get_blog_option(1,'rsvpmail_local_domains') : get_option('rsvpmail_local_domains');
     if(!empty($domainkeys))
         return $domainkeys;
@@ -418,6 +419,7 @@ function rsvpmail_local_domains_and_prefixes() {
 	return $domainkeys; 
 }
 
+//$breakdown = array('blog_id' => 1, 'subdomain' => 'd207tm', 'domain' => 'org');
 function rsvpmail_recipients_by_email_parts($breakdown, $email = null) {
     $allforwarders = get_transient('allforwarders_'.$breakdown['blog_id']);
     if(empty($email) || empty($allforwarders) || empty($allforwarders[$email])) {
@@ -441,6 +443,198 @@ function rsvpmaker_postmark_incoming_list_signup($emailobj, $forwarders) {
             $first = implode(' ',$parts);
         }
     $result = rsvpmaker_guest_list_add($email, $first, $last, 'incoming_email_signup', false);
+}
+
+add_shortcode('rsvpmaker_valid_mailing_lists','rsvpmaker_valid_mailing_lists_shortcode');
+
+function rsvpmaker_valid_mailing_lists_shortcode($atts) {
+    global $current_user;
+    $emailObj = (object) array('Subject' => 'here is a prospective member','HtmlBody' => '<p>Test</p><p><a href="david@carrcommunications.com">david@carrcommunications.com</p>','TextBody' => '','From' => $current_user->user_email,'To' => '','Cc' => '','Bcc' => '','ReplyTo' => '');
+    $list_targets = rsvpmaker_valid_mailing_lists();
+    $output = '<h3>List targets</h3><ul>';
+    foreach($list_targets as $type => $emails) {
+        $output .= sprintf('<li>%s<ul>',$type);
+        foreach($emails as $index => $email) {
+            $output .= sprintf('<li>%s: %s</li>',$index,$email);
+        }
+        $output .= '</ul></li>';
+    }
+    $output .= '</ul>';
+    $test_emails = (!empty($atts['emails'])) ? explode(',',$atts['emails']) : ['dd@d207tm.org','pdq@d207tm.org','officers@d207tm.org','members@d207tm.org','d7backup@d207tm.org','d7backup-officers@d207tm.org','d7backup-zoom@d207tm.org','nonesuch@d207tm.org','david@carrcommunications.com','forwardto-1@d207tm.org','forwardto-chris@d207tm.org','op-info@toastmost.org'];
+    $from = $emailObj->From;
+
+    $flattened = rsvpmaker_all_flattened_forwarders();
+    $output .= '<h3>Test Emails</h3>';
+    foreach($test_emails as $email) {
+        $result = rsvpmaker_postmark_incoming_forwarder_parse($email, $list_targets);
+        $output .= sprintf('<p>%s = %s</p>',$email,var_export($result,true));
+        if('info' == $result['type']) {
+            $from = is_multisite() ? get_blog_option($result['blog_id'],'admin_email') : get_option('admin_email');
+            do_action('rsvpmaker_postmark_autoreply',$emailObj,$result['blog_id'],$from);
+            $output .= sprintf('<p>Autoreply action called for %s from %s %s</p>',$email,$from,htmlentities(var_export($emailObj,true)));
+        }
+        if('forwarder' == $result['type']) {
+            if(!empty($flattened[$email])) {
+                $output .= sprintf('<p>Flattened forwarder for %s = %s</p>',$email,var_export($flattened[$email],true));
+            }
+            else {
+                $output .= sprintf('<p>No flattened forwarder for %s</p>',$email);
+            }
+        }
+        elseif('forwardto' == $result['type']) {
+            $list = rsvpmaker_forward_to_user($result['forwarder_slug']);
+            $output .= sprintf('<p>Forwardto list for %s %s</p>',$email,var_export($list,true));
+        }
+        elseif('members' == $result['type']) {
+            $list = rsvpmaker_get_mailing_list_forwarders($result['blog_id'],$result['type'],$from);
+            $output .= sprintf('<p>Members list for %s = %d %s %s</p>',$email,$result['blog_id'],var_export($list,true),$from);
+        }
+        elseif('officers' == $result['type']) {
+            $list = rsvpmaker_get_mailing_list_forwarders($result['blog_id'],$result['type'],$from);
+            $output .= sprintf('<p>Officers list for %s = %d %s %s</p>',$email,$result['blog_id'],var_export($list,true),$from);
+        }
+        else {
+            $output .= sprintf('<p>No match for %s</p>',$email);
+        }
+    }
+
+    $output .= sprintf('<p>Flattened forwarders: %s</p>',var_export($flattened,true));
+
+    return $output;
+}
+
+function rsvpmaker_valid_mailing_lists($cache_ok = true) {
+    if(is_multisite() && !is_main_site())
+        switch_to_blog(1);
+    if($cache_ok)
+        $lists = get_transient('rsvpmaker_valid_mailing_lists');
+    if(!empty($lists))
+        return $lists;
+    $members = array();
+    $officers = array();
+    $subdomains = array();
+    $subdomain_id = array();
+    $domain_id = array();
+    $domains = array();
+    $info = array();
+    $id_by = array();
+    if(is_multisite()) {
+        $sites = get_sites(array('number'=>1000));
+        foreach($sites as $site) {
+            $parts = explode('.',$site->domain);
+            if(sizeof($parts) > 2) {
+                $prefix = array_shift($parts);
+                $domain = implode('.',$parts);
+                $subdomains[] = $prefix;
+                $id_by[$prefix] = $site->blog_id;
+                $domains[] = $domain;
+                $members[] = $prefix.'@'.$domain;
+                $members[] = $prefix.'-members@'.$domain;
+                $officers[] = $prefix.'-officers@'.$domain;
+                $info[] = $prefix.'-info@'.$domain;
+            }
+            else {
+                $domain = $site->domain;
+                $id_by[$domain] = $site->blog_id;
+                $domains[] = $domain;
+                $subdomains[] = '';
+                $members[] = 'members@'.$domain;
+                $officers[] = 'officers@'.$domain;
+                $info[] = 'info@'.$domain;
+            }
+        }
+    }
+    else {
+        $url = get_option('siteurl');
+        $domain = str_replace('www.','',parse_url(strtolower($url), PHP_URL_HOST));
+        $domains[] = $domain;
+        $id_by[$domain] = 1;
+        $subdomains[] = '';
+        $members[] = 'members@'.$domain;
+        $officers[] = 'officers@'.$domain;
+        $info[] = 'info@'.$domain;
+    }
+    $lists = array('members' => $members, 'officers' => $officers, 'info' => $info, 'subdomains' => $subdomains, 'id_by' => $id_by, 'domains' => $domains);
+    set_transient('rsvpmaker_valid_mailing_lists',$lists,HOUR_IN_SECONDS);
+    if(is_multisite())
+        restore_current_blog();
+    return $lists;
+}
+
+function rsvpmaker_postmark_incoming_forwarder_parse($email, $list_targets) {
+    if(!is_email($email))
+        return false;
+    $parts = explode('@',$email);
+    $prefix_parts = explode('-',$parts[0]);
+    $prefix_parts_size = sizeof($prefix_parts);
+    $forwarder_slug = '';
+    $prefix = '';
+    if('forwardto' == $prefix_parts[0] && 2 == $prefix_parts_size) {
+        $type = 'forwardto';
+        $blog_id = 0;
+        $prefix = '';
+        $forwarder_slug = $prefix_parts[1];
+    }
+    elseif(in_array($email,$list_targets['members'])) {
+        $type = 'members';
+        if($prefix_parts_size > 1 && !empty($list_targets['id_by'][$prefix_parts[0]])) {
+            $blog_id = isset($list_targets['id_by'][$prefix_parts[0]]) ? $list_targets['id_by'][$prefix_parts[0]] : 0;
+        }
+        elseif($prefix_parts_size == 1 && in_array($prefix_parts[0], $list_targets['subdomains']) && !empty($list_targets['id_by'][$prefix_parts[0]])) {
+            $blog_id = $list_targets['id_by'][$prefix_parts[0]];
+        }
+        elseif($prefix_parts_size == 1 && !empty($list_targets['id_by'][$parts[1]])) {
+            $blog_id = $list_targets['id_by'][$parts[1]];
+        }
+        else {
+            return false;
+        }
+    }
+    elseif(in_array($email,$list_targets['officers'])) {
+        $type = 'officers';
+        if($prefix_parts_size > 1 && !empty($list_targets['id_by'][$prefix_parts[0]])) {
+            $blog_id = $list_targets['id_by'][$prefix_parts[0]];
+            $prefix = $prefix_parts[0];
+        }
+        elseif($prefix_parts_size == 1 && !empty($list_targets['id_by'][$parts[1]])) {
+            $blog_id = $list_targets['id_by'][$parts[1]];
+            $prefix = '';
+        }
+        else {
+            return false;
+        }
+    }
+    elseif(in_array($email,$list_targets['info'])) {
+        $type = 'info';
+        $forwarder_slug = 'info';
+        if($prefix_parts_size > 1 && !empty($list_targets['id_by'][$prefix_parts[0]])) {
+            $blog_id = $list_targets['id_by'][$prefix_parts[0]];
+            $prefix = $prefix_parts[0];
+        }
+        elseif($prefix_parts_size == 1 && !empty($list_targets['id_by'][$parts[1]])) {
+            $blog_id = $list_targets['id_by'][$parts[1]];
+            $prefix = '';
+        }
+        else {
+            return false;
+        }
+    }
+    elseif ($prefix_parts_size > 1 && !empty($list_targets['id_by'][$prefix_parts[0]])) {
+        $type = 'forwarder';
+        $blog_id = is_numeric($prefix_parts[0]) ? intval($prefix_parts[0]) : (isset($list_targets['id_by'][$prefix_parts[0]]) ? $list_targets['id_by'][$prefix_parts[0]] : 0);
+        $prefix = $prefix_parts[0];
+        $forwarder_slug = $prefix_parts[1];
+    }
+    elseif(!empty($list_targets['id_by'][$parts[1]])) {
+        $type = 'forwarder';
+        $blog_id = is_numeric($prefix_parts[0]) ? intval($prefix_parts[0]) : (isset($list_targets['id_by'][$prefix_parts[0]]) ? $list_targets['id_by'][$prefix_parts[0]] : 0);
+        $prefix = '';
+        $forwarder_slug = $prefix_parts[0];
+    }
+    else {
+        return false;
+    }
+    return array('type' => $type, 'blog_id' => $blog_id, 'subdomain' => $prefix, 'forwarder_slug' => $forwarder_slug,'domain' => $parts[1]);
 }
 
 function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
@@ -467,8 +661,8 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $postmark_settings = get_rsvpmaker_postmark_options();
     $tx_from = trim(strtolower($postmark_settings['postmark_tx_from']));
     $broadcast_from = trim(strtolower($postmark_settings['postmark_broadcast_from']));
-    $flattened = (function_exists('wpt_all_flattened_forwarders')) ? wpt_all_flattened_forwarders() : array();
-    error_log('postmark flattened forwarders '.var_export($flattened,true));
+    $list_targets = rsvpmaker_valid_mailing_lists();
+    $flattened = rsvpmaker_all_flattened_forwarders();
 
     //test new approach
     $from = strtolower($emailobj->From);
@@ -478,6 +672,60 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $sent = [];
     foreach($forwarders as $email) {
         $email = trim(strtolower($email));
+        $result = rsvpmaker_postmark_incoming_forwarder_parse($email, $list_targets);
+        $blog_id = $result['blog_id'];
+        $blacklist = (1 == $blog_id) ? get_option('rsvpmail_blacklist') : get_blog_option($blog_id, 'rsvpmail_blacklist');
+        if(is_array($blacklist) && in_array($from,$blacklist))
+            {   
+                error_log("$from on rvspmail_blacklist for $blog_id");
+                rsvpmaker_testlog('postmark_incoming_output',$testoutput);
+                continue;
+            }
+        $output .= sprintf('<p>%s = %s</p>',$email,var_export($result,true));
+        if('info' == $result['type']) {
+            $from = is_multisite() ? get_blog_option($result['blog_id'],'admin_email') : get_option('admin_email');
+            do_action('rsvpmaker_postmark_autoreply',$emailObj,$result['blog_id'],$from);
+            error_log(sprintf('Autoreply action called for %s from %s %s',$email,$from,htmlentities(var_export($emailObj,true))));
+        }
+        if('forwarder' == $result['type']) {
+            if(!empty($flattened[$email])) {
+                $recipients = array_merge($recipients,$flattened[$email]);
+            }
+            else {
+                error_log('No flattened forwarder for '.$email);
+            }
+        }
+        elseif('forwardto' == $result['type']) {
+            $list = rsvpmaker_forward_to_user($result['forwarder_slug']);
+            $recipients = array_merge($recipients,$list);
+        }
+        elseif('members' == $result['type']) {
+            $list = rsvpmaker_get_mailing_list_forwarders($result['blog_id'],$result['type'],$from);
+            if(is_array($list))
+                $recipients = array_merge($recipients,$list);
+            else {
+                if('BLOCKED' == $list)
+                    error_log('postmark incoming BLOCKED '.$email.' '.$from);
+                else
+                    error_log('postmark incoming no members list for '.$email.' '.$from);
+            }
+            $emailobj->Subject = '[members] '.$emailobj->Subject;
+        }
+        elseif('officers' == $result['type']) {
+            $list = rsvpmaker_get_mailing_list_forwarders($result['blog_id'],$result['type'],$from);
+            if(is_array($list))
+                $recipients = array_merge($recipients,$list);
+            else {
+                if('BLOCKED' == $list)
+                    error_log('postmark incoming BLOCKED '.$email.' '.$from);
+                else
+                    error_log('postmark incoming no officers list for '.$email.' '.$from);
+            }
+            $emailobj->Subject = '[officers] '.$emailobj->Subject;
+        }
+        /*
+        continue;
+
         $blog_id = rsvpmail_is_local_address($email);
         if(!$blog_id) {
             error_log('postmark incoming ignore non-local address '.$email);
@@ -572,9 +820,10 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
             $testoutput .= "\n test recipients".var_export($testrecipients,true);
             error_log('postmark no match for '.$email .' '.$testoutput);
         }
+        */
     }
     if(!empty($recipients)) {
-        //go ahead and send, should not contain duplicates
+        $recipients = array_unique($recipients);
         $batch = rsvpmaker_postmark_batch($emailobj, $recipients, $breakdown);
         $result = rsvpmaker_postmark_batch_send($batch);
         error_log('postmark forwarding for address '.var_export($forwarders,true)."\n".var_export($recipients,true));
@@ -673,31 +922,51 @@ function rsvpmaker_postmark_array_from($from,$slug_and_id,$reply_to,$postmark_se
 function rsvpmaker_postmark_sender_domain($slug_and_id = NULL) {
     if(is_multisite()) {
         $home = get_blog_option(1,'home');
+        $home = parse_url(strtolower($home), PHP_URL_HOST);
+        error_log('rsvpmaker_postmark_sender_domain multisite home '.$home);
     }
     elseif(is_array($slug_and_id) && !empty($slug_and_id['blog_id'])) {
-        $home = get_blog_option($slug_and_id['blog_id'],'home');
+        $home = get_option($slug_and_id['blog_id']);
     }
-    else {
+    if(empty($home)) {
         $home = get_option('home');
     }
     if(empty($home))
         $home = get_site_url();
     $domain = parse_url(strtolower($home), PHP_URL_HOST);
+    error_log('rsvpmaker_postmark_sender_domain '.$domain.' from '.var_export($slug_and_id,true).' based on home '.$home);
     if(empty($domain))
         return '';
     return preg_replace('/^www\./','',$domain);
 }
 
+function rsvpmaker_forward_to_user($login_or_id) {
+    $recipients = array();
+    $user = (is_numeric($login_or_id)) ? get_user_by('id',$login_or_id) : get_user_by('login',$login_or_id);
+    if($user && !empty($user->user_email))
+        $recipients[] = $user->user_email;
+    return $recipients;
+}
+
 function rsvpmaker_postmark_forwardto_from_replyto($reply_to,$slug_and_id = NULL) {
     $reply_to_email = sanitize_email($reply_to);
+    $domain = is_multisite() ? get_blog_option(1,'home') : get_option('home');
+    $domain = parse_url(strtolower($domain), PHP_URL_HOST);
+    error_log('rsvpmaker_postmark_forwardto_from_replyto '.$reply_to.' '.$domain.' '.var_export($slug_and_id,true));
+    if(strpos($reply_to,$domain)) {
+        error_log('rsvpmaker_postmark_forwardto_from_replyto returning '.$reply_to_email);
+        return $reply_to_email;
+    }
     if(empty($reply_to_email) && preg_match('/<([^>]+)>/',$reply_to,$matches))
         $reply_to_email = sanitize_email($matches[1]);
     if(empty($reply_to_email))
         return '';
     $user = get_user_by('email',$reply_to_email);
-    if(!$user || strpos($user->user_login,'@'))
+    if(!$user)
         return '';
-    $domain = rsvpmaker_postmark_sender_domain($slug_and_id);
+    error_log('rsvpmaker_postmark_forwardto_from_replyto '.$user->user_login.' '.$user->ID.' '.$domain);
+    if(strpos($user->user_login,'@') || strpos($user->user_login,'-'))
+        return 'forwardto-'.$user->ID.'@'.$domain;
     if(empty($domain))
         return '';
     return 'forwardto-'.$user->user_login.'@'.$domain;
@@ -797,6 +1066,7 @@ function rsvpmaker_postmark_duplicate($hash) {
 
 function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
 	global $wpdb, $message_blog_id;
+    $name = get_bloginfo('name');
     $postmark = get_rsvpmaker_postmark_options();
 	if(empty($message_blog_id))
 		$message_blog_id = get_current_blog_id();
@@ -822,10 +1092,10 @@ function rsvpmaker_postmark_sent_log($sent, $subject='',$hash='', $tag='') {
         }
         if($score > 500)
         {
-            wp_mail($postmark['postmark_load_alert_emails'],'Heavy email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
+            wp_mail($postmark['postmark_load_alert_emails'],$name . ' - Heavy email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
         }
         elseif(!empty($postmark['volume_warning']) && !empty($overloadmessage)){
-            wp_mail($postmark['postmark_load_alert_emails'],'Recent email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
+            wp_mail($postmark['postmark_load_alert_emails'],$name . ' - Recent email volume on RSVPMaker/Postmark >' .$sent_lately. ' in past 15 minutes',"Heavy use $sent_lately within 15 minutes, warning score $score, resulting in this stream of messages\n".$overloadmessage);
         }
     }
 }
@@ -1462,9 +1732,8 @@ function rsvpmaker_postmark_show_sent_log() {
         foreach($results as $row) {
             preg_match('/inactive addresses: ([^\s]+). Inactive/',$row->meta_value,$matches);
             if(!empty($matches[1])) {
-            if(!rsvpmail_is_problem($matches[1]))
-                rsvpmail_add_problem($matches[1],'inactive address detected in Postmark error log');
-            echo '<li>inactive: '.$matches[1]. ' '.var_export(rsvpmail_is_problem($matches[1]),true). '</li>';
+            // Do not auto-block from historical error-log text. Active suppressions are synced above.
+            echo '<li>inactive (log only): '.$matches[1]. ' '.var_export(rsvpmail_is_problem($matches[1]),true). '</li>';
             }
             else
             echo '<li>'.var_export($matches,true).' '.$row->meta_value.'</li>';

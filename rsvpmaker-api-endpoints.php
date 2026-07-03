@@ -2312,19 +2312,30 @@ class RSVP_Event_Date extends WP_REST_Controller {
 		}
 		$status = $upsql = '';
 		$event = get_rsvpmaker_event($event_id);
+		$timezone = (!empty($event->timezone)) ? $event->timezone : get_option('timezone_string');
 		if(!empty($json)) {
 			delete_transient('rsvpmakers');
 			$data = json_decode(trim($json));
+			if(isset($data->timezone))
+			{
+				$timezone = sanitize_text_field($data->timezone);
+				if ('rsvpmaker_template' == $type) {
+					update_post_meta($event_id,'timezone',$timezone);
+				}
+				else
+					$nv['timezone'] = $timezone;
+			}
+
 			if(isset($data->date)) //retry submission
 			{
-				$ts_start = rsvpmaker_strtotime($data->date);
+				$ts_start = rsvpmaker_strtotime($data->date, $timezone);
 				if(empty($data->enddate) || $data->enddate < $data->date) {
 					$data->enddate = $data->date;
 					$ts_end = $ts_start + 3600; // default to one hour
-					$data->enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end);
+					$data->enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end,$timezone);
 				}
 				else
-					$ts_end = rsvpmaker_strtotime($data->enddate);
+					$ts_end = rsvpmaker_strtotime($data->enddate,$timezone);
 				$nv['date'] = $data->date;
 				$nv['enddate'] = $data->enddate;
 				$nv['ts_start'] = $ts_start;
@@ -2339,29 +2350,18 @@ class RSVP_Event_Date extends WP_REST_Controller {
 			}
 			elseif(isset($data->enddate)) // end date set independently
 			{
-				$ts_end = rsvpmaker_strtotime($data->enddate);
+				$ts_end = rsvpmaker_strtotime($data->enddate,$timezone);
 				if($event) {
 					if(($event->ts_start > $ts_end)) {
 						$event->ts_start = intval($event->ts_start);
 						$ts_end = $event->ts_start + HOUR_IN_SECONDS; // default to one hour after start date
-						$data->enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end);
+						$data->enddate = rsvpmaker_date('Y-m-d H:i:s',$ts_end,$timezone);
 					}
 					$event->enddate = $data->enddate;
 					$event->ts_end = $ts_end;
 				}
 				$nv['enddate'] = $data->enddate;
 				$nv['ts_end'] = $ts_end;
-			}
-			if(isset($data->timezone))
-			{
-				if ('rsvpmaker_template' == $type) {
-					update_post_meta($event_id,'timezone',$data->timezone);
-				}
-				else
-					$nv['timezone'] = $data->timezone;
-				if($event) {
-					$event->timezone = $data->timezone;
-				}
 			}
 			if(isset($data->display_type)) // end date set independently
 			{
@@ -2442,9 +2442,27 @@ class RSVP_Event_Date extends WP_REST_Controller {
 				$meta[$key] = false;
 		}
 		if ('rsvpmaker_template' == $type) {
+			$specific_week_meta = array('_sked_First', '_sked_Second', '_sked_Third', '_sked_Fourth', '_sked_Last', '_sked_Every', '_sked_Even', '_sked_Odd');
 			foreach($templatemeta as $key) {
 				if(empty($meta[$key]))
 					$meta[$key] = false;
+			}
+			$has_specific_week_pattern = false;
+			foreach($specific_week_meta as $key) {
+				if(!empty($meta[$key])) {
+					$has_specific_week_pattern = true;
+					break;
+				}
+			}
+			if($has_specific_week_pattern) {
+				if(!empty($meta['_sked_Varies'])) {
+					$meta['_sked_Varies'] = false;
+					update_post_meta($post_id,'_sked_Varies',false);
+				}
+			}
+			elseif(empty($meta['_sked_Varies'])) {
+				$meta['_sked_Varies'] = true;
+				update_post_meta($post_id,'_sked_Varies',true);
 			}
 			if(empty($meta['_sked_start_time']))
 			{

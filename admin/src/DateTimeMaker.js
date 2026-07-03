@@ -72,24 +72,13 @@ export default function DateTimeMaker(props) {
         <div className="rsvpmaker-date-time">
         <h3>Start Date and Time</h3>
         {isLoadingDates && <p><em>Loading fresh data ...</em></p>}
-            <DateTimePicker
-            currentDate={ date }
-            onChange={ ( newDate ) => {setDate( newDate ); console.log('new date', newDate);} }
-            is12Hour={ is12Hour }
-            __nextRemoveHelpButton
-            __nextRemoveResetButton
-        />
+        <p><input type="datetime-local" value={sqlDate(date)} onChange={(e) => setDate(e.target.value)} /></p>
         {error && <p style={{'color':'red'}}>{error}</p>}
         <SelectCtrl label="Date Display Options" value={eventdata.display_type || ''} options={[{'label':'Show Start Time Only','value':''},{'label':'Show Both Start and End Time','value':'set'},{'label':'Show Date Only, No Times','value':'allday'}]} onChange={(value) => { setOther('display_type',value); } } />
         {(eventdata.display_type || '') != '' && (
         <div className="rsvp-end-date"><h3>End Date and Time</h3>
-        <DateTimePicker
-            currentDate={ endDate }
-            onChange={ ( newDate ) => {setEndDate( newDate ); console.log('new enddate', newDate)} }
-            is12Hour={ is12Hour }
-            __nextRemoveHelpButton
-            __nextRemoveResetButton
-        />
+
+        <p><input type="datetime-local" value={sqlDate(endDate)} onChange={(e) => setEndDate(e.target.value)} /></p>
         </div>
         )}
         <SelectCtrl label="Time Zone" value={eventdata.timezone || ''} options={tzchoices.map((choice) => {return {'label':choice,'value':choice}})} onChange={(value) => { setOther('timezone',value); } } />

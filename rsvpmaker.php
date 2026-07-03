@@ -727,6 +727,7 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'rsvpmaker-patterns.php';
 	include $rsvpmaker_dir . 'admin/admin.php';
 	include $rsvpmaker_dir . 'rsvpmaker-qr.php';
+	include $rsvpmaker_dir . 'rsvpmaker-agenda-item.php';
 }
 
 $gateways = get_rsvpmaker_payment_options();

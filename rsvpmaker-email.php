@@ -1223,6 +1223,52 @@ $text .= $chimpfooter_text;
 return $text;
 }
 
+add_shortcode('rsvpmaker_blogs_by_email', 'rsvpmaker_blogs_by_email_shortcode');
+
+function rsvpmaker_blogs_by_email_shortcode($atts) {
+
+	if(isset($atts['email']))
+		{
+		$blog_urls = rsvpmaker_blogs_by_email($atts['email']);
+		if(!empty($blog_urls)) {
+				return '<p>' . implode('</p><p>',$blog_urls) . '</p>';
+
+		}
+			else
+				return '<div class="">No blogs found for '.$atts['email'].'</div>';
+		}
+}
+
+function rsvpmaker_blogs_by_email($email, $path = '/wp-admin/edit.php?post_type=rsvpemail') {
+	$user = get_user_by('email',sanitize_email($email));
+	if(empty($user))
+		return array('WEB-DOMAIN-GOES-HERE'.$path);
+	if (!is_multisite()) {
+		$url = site_url().$path;
+		$link = sprintf('<a href="%s">%s</a>',$url,$url);		
+		return array($link);
+	}
+	$blog_urls = array();
+	if(isset($email))
+		{
+		if(!empty($user))
+		{
+		$blogs = get_blogs_of_user($user->ID);
+		if(!empty($blogs))
+			{
+			foreach($blogs as $blog)
+				{
+				$url = $blog->siteurl . $path;
+				$blog_urls[] = sprintf('<a href="%s">%s</a>',$url,$url);
+				}
+			}
+	}
+	}
+	if(empty($blog_urls))
+		$blog_urls[] = 'WEB-DOMAIN-GOES-HERE'.$path;
+	return $blog_urls;
+}
+
 function rsvpmaker_personalize_email($content,$to,$description = '', $post_id = 0) {
 if(!strpos($content,'*|'))
 	return $content;
@@ -1244,6 +1290,16 @@ $company = isset($chimp_options['company']) ? esc_attr($chimp_options['company']
 $content = str_replace('*|LIST:COMPANY|*',$company,$content);
 $content = str_replace('*|CURRENT_YEAR|*',date('Y'),$content);
 $content = preg_replace('/<a .+FORWARD.+/','',$content);
+$pattern = '/\*\|SITELINKS:([^|]+)\|\*/';
+$content = preg_replace_callback($pattern, function($matches) use ($to) {
+    // $matches[0] contains the full matched string: "*|SITELINKS:/wp-admin/users.php|*"
+    // $matches[1] contains just the first captured group: "/wp-admin/users.php"
+    $path = $matches[1];
+    $links = rsvpmaker_blogs_by_email($to, $path);
+	if(empty($links))
+		return '<p>No blog links found for '.$to.'</p>';
+	return implode('<br /><br />',$links);
+}, $content);
 $content = preg_replace('/\*\|.+\|\*/','',$content); // not recognized, get rid of it.
 $content = apply_filters('rsvpmaker_personalize_email',$content,$to);
 return $content;

@@ -3266,6 +3266,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 	if (empty($post->post_type) || ( $post->post_type != 'rsvpmaker' ) && ( $post->post_type != 'rsvpmaker_template' )) {
 		return $content;
 	}
+	do_action('rsvpmaker_event_content_top_custom',$post->ID);
 	$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
 	if ( $currency == 'usd' ) {
 		$currency = '$';
@@ -4085,3 +4086,4 @@ function rsvpmaker_date_title( $title, $sep = '&raquo;', $seplocation = 'left' )
 		return $title;
 
 }
+

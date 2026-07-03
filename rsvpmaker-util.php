@@ -651,15 +651,12 @@ function rsvpmaker_fix_timezone( $timezone = '' ) {
 	global $post;
 	if ( empty( $timezone ) ) {
 		$timezone = get_option( 'timezone_string' );
-
 	}
 	if ( isset( $post->ID ) ) {
 		$post_tz = get_post_meta( $post->ID, '_rsvp_timezone_string', true );
 		if ( ! empty( $post_tz ) && $post_tz != $timezone ) {
 			$timezone = $post_tz;
-
 		}
-
 	}
 	if ( ! empty( $timezone ) ) {
 
@@ -672,16 +669,16 @@ function rsvpmaker_restore_timezone() {
 	global $default_tz;
 	date_default_timezone_set( $default_tz );
 }
-function rsvpmaker_strtotime( $string ) {
+function rsvpmaker_strtotime( $string, $timezone = '' ) {
 	if(empty($string))
 		return 0;
 	$string = str_replace( '::', ':', $string );
-	rsvpmaker_fix_timezone();
+	rsvpmaker_fix_timezone($timezone);
 	$t = strtotime( $string );
 	rsvpmaker_restore_timezone();
 	return $t;
 }
-function rsvpmaker_mktime( $hour = null, $minute = null, $second = null, $month = null, $day = null, $year = null ) {
+function rsvpmaker_mktime( $hour = null, $minute = null, $second = null, $month = null, $day = null, $year = null, $timezone = '' ) {
 
 	rsvpmaker_fix_timezone();
 
@@ -3220,10 +3217,14 @@ function rsvpmaker_get_template_sked( $post_id ) {
 			$sked[ $key ] = $row->meta_value;
 		}
 
-		if ( empty( $week ) && empty( $dayofweek ) ) {
-
-			return false; // not a valid template
-
+		// If there is no specific week pattern, default schedule behavior to Varies.
+		$specific_week = array_values( array_filter( $week, function( $index ) {
+			return ( 0 !== intval( $index ) );
+		} ) );
+		if ( empty( $specific_week ) && ! in_array( 0, $week ) ) {
+			$week[] = 0;
+			$sked['Varies'] = 1;
+			update_post_meta( $post_id, '_sked_Varies', true );
 		}
 
 		update_post_meta( $post_id, '_sked_template', true );
@@ -3246,6 +3247,9 @@ function rsvpmaker_get_template_sked( $post_id ) {
 
 			}
 			if ( in_array( 0, $week ) ) { // if any other value is set, Varies doesn't make sense
+				$sked['week'] = array_values( array_filter( $sked['week'], function( $index ) {
+					return ( 0 !== intval( $index ) );
+				} ) );
 				update_post_meta( $post_id, '_sked_Varies', false );
 
 			}
@@ -4418,11 +4422,11 @@ function rsvpmail_add_problem($email,$code) {
 
 	global $wpdb;
 
-	$table = $wpdb->prefix . "rsvpmailer_blocked";
+	$table = $wpdb->base_prefix . "rsvpmailer_blocked";
 
 	$email = trim(strtolower($email));
 
-	$sql = $wpdb->prepare("SELECT code from %i where email=%s",$table,$email);
+	$sql = $wpdb->prepare("SELECT code from {$table} where email=%s",$email);
 	$problem = $wpdb->get_var($sql);
 
 	if( $problem ) {
@@ -4445,11 +4449,11 @@ function rsvpmail_remove_problem($email) {
 
 	global $wpdb;
 
-	$table = $wpdb->prefix . "rsvpmailer_blocked";
+	$table = $wpdb->base_prefix . "rsvpmailer_blocked";
 
 	$email = trim(strtolower($email));
 
-	$wpdb->query($wpdb->prepare("DELETE from %i where email LIKE %s ",$table,$email));
+	$wpdb->query($wpdb->prepare("DELETE from {$table} where email LIKE %s ",$email));
 
 	do_action('rsvpmail_remove_problem',$email);
 
@@ -4485,12 +4489,12 @@ function rsvpmail_is_problem($email) {
 
 	global $wpdb;
 
-	$table = $wpdb->prefix . "rsvpmailer_blocked";
+	$table = $wpdb->base_prefix . "rsvpmailer_blocked";
 
 	$email = trim(strtolower($email));
 
 	//removed AND (code='unsubscribed' OR code LIKE 'blocke%')
-	$sql = $wpdb->prepare("SELECT code from %i where email=%s ",$table,$email);
+	$sql = $wpdb->prepare("SELECT code from {$table} where email=%s ",$email);
 
 	$code = $wpdb->get_var($sql);
 

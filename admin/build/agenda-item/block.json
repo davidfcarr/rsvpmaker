@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "rsvpmaker/agenda-item",
+  "version": "0.1.0",
+  "title": "Agenda Item",
+  "category": "rsvpmaker",
+  "icon": "calendar-alt",
+  "description": "Agenda item with notes and timing.",
+  "keywords": [
+    "rsvpmaker",
+    "agenda",
+    "appointment"
+  ],
+  "postTypes": [
+    "rsvpmaker",
+    "rsvpmaker_template"
+  ],
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Title or description of agenda item"
+    },
+    "itemType": {
+      "type": "string",
+      "default": ""
+    },
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
+    "setDateTime": {
+      "type": "string",
+      "default": ""
+    },
+    "duration": {
+      "type": "number",
+      "default": 60
+    },
+    "displayTime": {
+      "type": "string",
+      "default": ""
+    },
+    "allowNotes": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "textdomain": "rsvpmaker",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}
