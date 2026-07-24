@@ -346,89 +346,6 @@ function rsvpmaker_postmark_send($mail) {
     return $result;
 }
 
-
-
-add_action('init','rsvpmail_local_address_check');
-function rsvpmail_local_address_check() {
-    if(!isset($_GET['rsvpmail_local_address_check']))
-        return;
-    $output = '';
-    $test = ['david@gmail.com','op@toastmost.org','dd@62toast.com','op-vpe@toastmost.org','president@madeup.com','president@superiorspeakers.org','president@clubawesome.org','nonsense-walker@clubawesome.org'];
-    foreach($test as $email) {
-        $output .= sprintf('<p>%s = %s</p>',$email,var_export(rsvpmail_is_local_address($email),true));
-    }
-    wp_die($output);
-}
-
-function rsvpmail_is_local_address($email) {
-    $local_domains = rsvpmail_local_domains_and_subdomains();
-    $email = strtolower($email);
-    $parts = explode('@',$email);
-    if(sizeof($parts) > 1) {
-        $domain = array_pop($parts);
-        $prefix = array_shift($parts);
-        if(strpos($prefix,'-') !== false) {
-            $prefix = explode('-',$prefix);
-            $prefix = array_shift($prefix);
-        }
-    if(isset($local_domains[$prefix]))
-            return $local_domains[$prefix];
-        elseif (isset($local_domains[$domain]))
-            return $local_domains[$domain];
-    }
-    return false;
-}
-
-function rsvpmail_local_domains_and_subdomains() {
-    $domainkeys = (is_multisite()) ?  get_blog_option(1,'rsvpmail_local_domains') : get_option('rsvpmail_local_domains');
-    if(!empty($domainkeys))
-        return $domainkeys;
-    $domainkeys = array();
-    $url = (is_multisite()) ? get_blog_option( 1,'siteurl' ) : get_option( 'siteurl' );
-	$domain = parse_url(strtolower($url), PHP_URL_HOST);
-	$dp = explode('.',$domain);
-	$prefix = '';
-	if(sizeof($dp) > 2)
-		$prefix = array_shift($dp);
-    if('www' == $prefix)
-        $prefix = '';
-	$base_domain = implode('.',$dp);
-    $domainkeys[$base_domain] = 1;
-    if(is_multisite()) {
-        $sites = get_sites(array('number'=>1000));
-        foreach($sites as $site) {
-            if($site->blog_id != 1) {
-                $dp = explode('.',$site->domain);
-                if(sizeof($dp) > 2)
-                    $prefix = array_shift($dp);
-                $domain = implode('.',$dp);
-                if($domain != $base_domain) {
-                    $domainkeys[$domain] = $site->blog_id;
-                }
-                else {
-                    $domainkeys[$prefix] = $site->blog_id;
-                }
-            }
-        }    
-    }
-    if(is_multisite()) {
-        update_blog_option(1,'rsvpmail_local_domains',$domainkeys);
-    }
-    else
-        update_option('rsvpmail_local_domains',$domainkeys);
-	return $domainkeys; 
-}
-
-//$breakdown = array('blog_id' => 1, 'subdomain' => 'd207tm', 'domain' => 'org');
-function rsvpmail_recipients_by_email_parts($breakdown, $email = null) {
-    $allforwarders = get_transient('allforwarders_'.$breakdown['blog_id']);
-    if(empty($email) || empty($allforwarders) || empty($allforwarders[$email])) {
-        $allforwarders = rsvpmail_get_consolidated_forwarders($breakdown['blog_id'],$breakdown['subdomain'],$breakdown['domain']);
-        set_transient('allforwarders_'.$breakdown['blog_id'],$allforwarders,DAY_IN_SECONDS);
-    }
-    return $allforwarders;
-}
-
 function rsvpmaker_postmark_incoming_list_signup($emailobj, $forwarders) {
     set_transient('postmark_incoming_list_input',$emailobj,DAY_IN_SECONDS);
     $email = $emailobj->From;
@@ -503,6 +420,42 @@ function rsvpmaker_valid_mailing_lists_shortcode($atts) {
     return $output;
 }
 
+function rsvpmaker_parse_domain($full_domain) {
+    $parts = explode('.', $full_domain);
+    $count = count($parts);
+    
+    // List of common two-part TLDs (add more as needed for your target audience)
+    $multi_part_tlds = ['co.uk', 'me.uk', 'org.uk', 'ltd.uk', 'com.au', 'net.au', 'co.nz', 'co.za'];
+    
+    // If we have at least 3 parts, check if the last two match a known multi-part TLD
+    if ($count >= 3) {
+        $possible_tld = $parts[$count - 2] . '.' . $parts[$count - 1];
+        
+        if (in_array($possible_tld, $multi_part_tlds)) {
+            // It's a multi-part TLD like example.co.uk
+            if ($count > 3) {
+                // We have a subdomain! (e.g., sub.example.co.uk)
+                $prefix = array_shift($parts); // Extract 'sub'
+                $domain = implode('.', $parts); // Leaves 'example.co.uk'
+                return ['prefix' => $prefix, 'domain' => $domain];
+            } else {
+                // No subdomain (e.g., example.co.uk)
+                return ['prefix' => '', 'domain' => $full_domain];
+            }
+        }
+    }
+    
+    // Fallback standard behavior for 2-part TLDs (like .com, .org)
+    if ($count > 2) {
+        $prefix = array_shift($parts); // Extract 'sub'
+        $domain = implode('.', $parts); // Leaves 'example.com'
+        return ['prefix' => $prefix, 'domain' => $domain];
+    }
+    
+    // Naked domain with standard TLD (e.g., example.com)
+    return ['prefix' => '', 'domain' => $full_domain];
+}
+
 function rsvpmaker_valid_mailing_lists($cache_ok = true) {
     if(is_multisite() && !is_main_site())
         switch_to_blog(1);
@@ -521,10 +474,11 @@ function rsvpmaker_valid_mailing_lists($cache_ok = true) {
     if(is_multisite()) {
         $sites = get_sites(array('number'=>1000));
         foreach($sites as $site) {
+            $parsed = rsvpmaker_parse_domain($site->domain);
+            $prefix = $parsed['prefix'];
+            $domain = $parsed['domain'];
             $parts = explode('.',$site->domain);
-            if(sizeof($parts) > 2) {
-                $prefix = array_shift($parts);
-                $domain = implode('.',$parts);
+            if(!empty($prefix)) {
                 $subdomains[] = $prefix;
                 $id_by[$prefix] = $site->blog_id;
                 $domains[] = $domain;
@@ -674,7 +628,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         $email = trim(strtolower($email));
         $result = rsvpmaker_postmark_incoming_forwarder_parse($email, $list_targets);
         $blog_id = $result['blog_id'];
-        $blacklist = (1 == $blog_id) ? get_option('rsvpmail_blacklist') : get_blog_option($blog_id, 'rsvpmail_blacklist');
+        $blacklist = (!is_multisite() || 1 == $blog_id) ? get_option('rsvpmail_blacklist') : get_blog_option($blog_id, 'rsvpmail_blacklist');
         if(is_array($blacklist) && in_array($from,$blacklist))
             {   
                 error_log("$from on rvspmail_blacklist for $blog_id");
@@ -684,8 +638,8 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         $output .= sprintf('<p>%s = %s</p>',$email,var_export($result,true));
         if('info' == $result['type']) {
             $from = is_multisite() ? get_blog_option($result['blog_id'],'admin_email') : get_option('admin_email');
-            do_action('rsvpmaker_postmark_autoreply',$emailObj,$result['blog_id'],$from);
-            error_log(sprintf('Autoreply action called for %s from %s %s',$email,$from,htmlentities(var_export($emailObj,true))));
+            do_action('rsvpmaker_postmark_autoreply',$emailobj,$result['blog_id'],$from);
+            error_log(sprintf('Autoreply action called for %s from %s %s',$email,$from,htmlentities(var_export($emailobj,true))));
         }
         if('forwarder' == $result['type']) {
             if(!empty($flattened[$email])) {
@@ -723,104 +677,6 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
             }
             $emailobj->Subject = '[officers] '.$emailobj->Subject;
         }
-        /*
-        continue;
-
-        $blog_id = rsvpmail_is_local_address($email);
-        if(!$blog_id) {
-            error_log('postmark incoming ignore non-local address '.$email);
-            continue;
-        }
-        if($email == $tx_from || $email == $broadcast_from) {
-            error_log('postmark incoming ignore tx or broadcast address '.$email);
-            error_log('postmark forwarder '.var_export($forwarders,true));
-            if(sizeof($forwarders) == 1)
-            {
-                error_log('postmark incoming single forwarder '.var_export($emailobj,true));
-                do_action('rsvpmaker_incoming_to_tx_or_broadcast',$emailobj,$post_id);
-            }
-            continue;
-        }
-        $testoutput .= "\n $email after filter\n";
-        $blacklist = (1 == $blog_id) ? get_option('rsvpmail_blacklist') : get_blog_option($blog_id, 'rsvpmail_blacklist');
-        if(is_array($blacklist) && in_array($from,$blacklist))
-            {   
-                $testoutput .= "$from on rvspmail_blacklist\n";
-                rsvpmaker_testlog('postmark_incoming_output',$testoutput);
-                return;
-            }
-        if(!empty($flattened[$email])) {
-            foreach($flattened[$email] as $to) {
-                if(!in_array($to,$recipients)) {
-                    if(!empty($flattened[$to])) {
-                        foreach($flattened[$to] as $t)
-                            if(!in_array($t,$recipients))
-                                $recipients[] = $t;
-                    }
-                    else
-                    $recipients[] = $to;
-                }
-            }
-            continue;
-        }
-        add_post_meta(1,'forwarder_to_check',$email);
-        $breakdown = rsvpmail_email_to_parts($email,$blog_id);
-        $breakdown['slug'] = $breakdown['fwdkey'];
-        $home = is_multisite() ? get_blog_option($breakdown['blog_id'],'home') : get_option('home');
-        $parts = explode('//',$home);
-        $parts = explode('.',$parts[1]);
-        $testoutput .= date('r')."\n $email before filter\n";
-        $email = apply_filters('rsvpmail_email_match',$email,$from,$breakdown,$emailobj);
-
-        if('forwardto' == $breakdown['subdomain']) {
-            $user = get_user_by('login',$breakdown['slug']);
-            if(!empty($user->user_email))
-                $testrecipients[$breakdown['blog_id']][$email] = array($user->user_email);
-        }
-        elseif($breakdown && empty($testrecipients[$breakdown['blog_id']]))
-            $x = $testrecipients[$breakdown['blog_id']] = rsvpmail_recipients_by_email_parts($breakdown, $email);
-
-        $testoutput .= "\n returned from rsvpmail_recipients_by_email_parts ".var_export($x,true);
-        if(!empty($testrecipients[$breakdown['blog_id']][$email]) && is_array($testrecipients[$breakdown['blog_id']][$email])) {
-            $testoutput .= "\n\nSelected list: ";
-            $testoutput .= var_export($testrecipients[$breakdown['blog_id']][$email],true)."\n\n";
-            if(($breakdown['fwdkey'] == 'members') || ($breakdown['fwdkey'] == 'officers'))
-            {
-                $list_recipients = [];
-                foreach($testrecipients[$breakdown['blog_id']][$email] as $to)
-                    if(!in_array($to,$list_recipients))
-                        $list_recipients[] = $to;
-                $testoutput .= "\ntest from address\n".$from."\n";
-                if((in_array($from,$testrecipients[$breakdown['blog_id']][$email])) || (!empty($testrecipients[$breakdown['blog_id']][$email.'_whitelist']) && is_array($testrecipients[$breakdown['blog_id']][$email.'_whitelist']) && in_array($from,$testrecipients[$breakdown['blog_id']][$email.'_whitelist']))) {
-                    $batch = rsvpmaker_postmark_batch($emailobj, $list_recipients, $breakdown);
-                    $result = rsvpmaker_postmark_batch_send($batch);
-                    error_log('postmark mailing list forwarding for '.$email.' '.$emailobj->Subject);
-                    $testoutput .= "\nSEND\n".$result;    
-                }
-                else {
-                    $testoutput .= "\nBLOCK\n";            
-                    $rmail['subject'] = 'BLOCKED '.$emailobj->Subject;
-                    $rmail['to'] = $from;
-                    $rmail['html'] = '<p>'.$from .' is not authorized to send to the '.$email." email list.</p>\n<p>Authorized senders include email addresses associated with member accounts, as well as addresses whitelisted by a website administrator.</p>";
-                    //$rmail['html'] .= '<pre>'.var_export($testrecipients[$breakdown['blog_id']],true).'</pre>';
-                    $rmail['from'] = get_option('admin_email');                
-                    $rmail['fromname'] = get_option('blogname');
-                    rsvpmailer($rmail);
-                }
-                $testoutput .= '<pre>'.var_export($breakdown,true).'</pre>';
-            }
-            else {
-                foreach($testrecipients[$breakdown['blog_id']][$email] as $to)
-                    if(!in_array($to,$recipients))
-                        $recipients[] = $to;
-            }
-        }
-        else {
-            $testoutput .= "\n no match for testrecipients[".$breakdown['blog_id']."][".$email."] \n";
-            $testoutput .= "\n test recipients".var_export($testrecipients,true);
-            error_log('postmark no match for '.$email .' '.$testoutput);
-        }
-        */
     }
     if(!empty($recipients)) {
         $recipients = array_unique($recipients);
@@ -829,7 +685,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
         error_log('postmark forwarding for address '.var_export($forwarders,true)."\n".var_export($recipients,true));
         $testoutput .= "\nSEND\n".$result;
     }
-    rsvpmaker_testlog('postmark_incoming_output',$testoutput);
+    error_log('postmark_incoming_output '.$testoutput);
     return $testoutput;
 }
 
@@ -949,9 +805,12 @@ function rsvpmaker_forward_to_user($login_or_id) {
 }
 
 function rsvpmaker_postmark_forwardto_from_replyto($reply_to,$slug_and_id = NULL) {
+    global $postmark_settings;
+    if(empty($postmark_settings))
+        $postmark_settings = get_rsvpmaker_postmark_options();
     $reply_to_email = sanitize_email($reply_to);
     $domain = is_multisite() ? get_blog_option(1,'home') : get_option('home');
-    $domain = parse_url(strtolower($domain), PHP_URL_HOST);
+    $domain = str_replace('www.','',parse_url(strtolower($domain), PHP_URL_HOST));
     error_log('rsvpmaker_postmark_forwardto_from_replyto '.$reply_to.' '.$domain.' '.var_export($slug_and_id,true));
     if(strpos($reply_to,$domain)) {
         error_log('rsvpmaker_postmark_forwardto_from_replyto returning '.$reply_to_email);
@@ -960,15 +819,17 @@ function rsvpmaker_postmark_forwardto_from_replyto($reply_to,$slug_and_id = NULL
     if(empty($reply_to_email) && preg_match('/<([^>]+)>/',$reply_to,$matches))
         $reply_to_email = sanitize_email($matches[1]);
     if(empty($reply_to_email))
-        return '';
+        return 'info@'.$domain;
     $user = get_user_by('email',$reply_to_email);
     if(!$user)
-        return '';
+        return $postmark_settings['postmark_broadcast_from'];
     error_log('rsvpmaker_postmark_forwardto_from_replyto '.$user->user_login.' '.$user->ID.' '.$domain);
     if(strpos($user->user_login,'@') || strpos($user->user_login,'-'))
         return 'forwardto-'.$user->ID.'@'.$domain;
-    if(empty($domain))
-        return '';
+    if(empty($domain)) {
+        error_log('no domain found in rsvpmaker_postmark_forwardto_from_replyto');
+        return $postmark_settings['postmark_broadcast_from'];
+    }
     return 'forwardto-'.$user->user_login.'@'.$domain;
 }
 
@@ -2175,4 +2036,13 @@ function rsvpmail_clear_allforwarders($blog_id) {
     delete_transient('allforwarders_'.$blog_id);
     if($blog_id != 1)
         switch_to_blog($blog_id);    
+}
+
+function rsvpmaker_reset_forwarder_cache() {
+    if(is_multisite() && !is_main_site())
+        switch_to_blog(1);
+   delete_transient('rsvpmaker_valid_mailing_lists');
+   delete_transient('all_flattened_forwarders');
+   if(is_multisite())
+       restore_current_blog();
 }

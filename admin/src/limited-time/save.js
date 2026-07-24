@@ -4,7 +4,7 @@
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
  */
-const { InnerBlocks } = wp.blockEditor;
+const { InnerBlocks, useBlockProps } = wp.blockEditor;
 
 /**
  * The save function defines the way in which the different attributes should
@@ -15,6 +15,7 @@ const { InnerBlocks } = wp.blockEditor;
  *
  * @return {WPElement} Element to render.
  */
-export default function save({ className }) {
-	return <div className={className}><InnerBlocks.Content /></div>;
+export default function save( { className } ) {
+	const blockProps = useBlockProps.save( { className } );
+	return <div { ...blockProps }><InnerBlocks.Content /></div>;
 }

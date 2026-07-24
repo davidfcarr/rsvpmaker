@@ -4,8 +4,6 @@
 Group Email Functions
 */
 
-
-
 function rsvpmaker_relay_manual_test() {
 	rsvpmaker_admin_heading(__('Manually Trigger Check of Email Lists','rsvpmaker'),__FUNCTION__);
 	//echo 'about to call rsvpmaker_relay_init';
@@ -924,20 +922,6 @@ function rsvpmaker_relay_queue_monitor () {
 	}
 }
 
-function rsvpmaker_hosts_and_subs_test () {
-	if(wp_is_json_request())
-		return;
-	$hosts_and_subdomains = rsvpmaker_get_hosts_and_subdomains();
-	$output = '';
-	$test = array('op@toastmost.org','op-officers@toastmost.org','members@digitalcommunicators.org','members-digitalcommunicators.com@gmail.com','admins@toastmost.org');
-	foreach($test as $email) {
-		$slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
-		$output .= sprintf('<p>%s %s</p>',$email,var_export($slug_and_id,true));
-	}
-	$output .= var_export($hosts_and_subdomains,true);
-	return $output;
-}
-
 function rsvpmaker_get_hosts_and_subdomains() {
     global $wpdb, $hosts_and_subdomains;
 	$hostalias = [];
@@ -1050,8 +1034,6 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 	}
 	return $slug_and_id;
 }
-
-add_shortcode('hosts_and_subs_test','rsvpmaker_hosts_and_subs_test');
 
 function rsvpmaker_expand_recipients($email) {
 	$email = strtolower($email);

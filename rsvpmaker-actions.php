@@ -73,6 +73,8 @@ if(('rsvpmaker' == $post_after->post_type)) {
 
 },10,3);
 
+add_action('wp_update_site;', 'rsvpmaker_reset_forwarder_cache' );
+add_action('wp_initialize_site', 'rsvpmaker_reset_forwarder_cache' );
 add_action( 'user_register', 'RSVPMaker_register_chimpmail' );
 add_action('wp', 'clear_rsvp_cookies' );
 add_action('wp', 'rsvp_reminder_activation' );

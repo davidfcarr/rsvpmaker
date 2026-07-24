@@ -7317,3 +7317,80 @@ function rsvp_daily_reminder() {
 		}
 
 }
+
+function rsvpmaker_extract_email() {
+
+global $wpdb;
+$inchimp = '';
+if(isset($_POST["emails"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+	{
+
+$chimp_options = get_option('chimp');
+
+$apikey = $chimp_options["chimp-key"];
+$listId = $chimp_options["chimp-list"];
+$guestlist = $wpdb->prefix . 'rsvpmaker_guest_email';
+$inguest = [];
+
+	preg_match_all ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", wp_kses_post($_POST["emails"]), $emails);
+	$emails = $emails[0];
+	foreach($emails as $email)
+		{
+			$email = strtolower($email);
+			$unique[$email] = $email;
+		}
+	sort($unique);
+	foreach($unique as $email)
+		{
+		$email = strtolower($email);
+		if(!empty($_POST["in_guestlist"])) {
+			$sql = $wpdb->prepare( "SELECT email FROM $guestlist WHERE email LIKE %s", $email );
+			$in = $wpdb->get_var( $sql );
+			if($in)
+				{
+				$inguest[] = $email;
+				continue;
+				}
+		}
+
+		if(!empty($_POST["in_mailchimp"]))
+			{
+			$hash = md5($email);
+			if(!isset($MailChimp) && !empty($apikey))
+				$MailChimp = new MailChimpRSVP($apikey);
+			$member = $MailChimp->get("/lists/".$listId."/members/".$hash);
+			if(!empty($member["id"]) )
+				{
+				$inchimp .= "\n<br />$email";
+				continue;
+				}
+			}
+		echo "\n<br />$email";
+		}
+if($inchimp)
+	echo "<h3>In MailChimp</h3>$inchimp";
+if(!empty($inguest))
+	echo "<h3>In Guest List</h3>" . implode("\n<br />", $inguest);
+	}
+
+rsvpmaker_admin_heading(__('Extract Email Addresses','rsvpmaker'),__FUNCTION__); ?>
+<p><?php esc_html_e('You can enter an disorganized list of emails mixed in with other text, and this utility will extract just the email addresses.','rsvpmaker');?></p>
+<form id="form1" name="form1" method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_extract_email'); ?>">
+<?php rsvpmaker_nonce(); ?>
+  <p>
+    <textarea name="emails" id="emails" cols="45" rows="5"></textarea>
+  </p>
+  <p><?php esc_html_e('Filter out emails that','rsvpmaker');?>:</p>
+  <p>
+    <input name="in_guestlist" type="checkbox" id="in_guestlist"  />
+  <?php esc_html_e('Are On the Built-in Email List','rsvpmaker');?></p>
+  <p>
+  <p>
+    <input name="in_mailchimp" type="checkbox" id="in_mailchimp"  />
+  <?php esc_html_e('Are Registered in MailChimp','rsvpmaker');?></p>
+  <p>
+    <input type="submit" name="button" id="button" value="Submit" />
+  </p>
+</form>
+<?php
+}

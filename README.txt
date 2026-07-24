@@ -131,6 +131,11 @@ For basic usage, you can also have a look at the [plugin homepage](http://www.rs
 
 == Changelog ==
 
+= 12.1.1 =
+
+* Postmark email functions update
+* Block fine tuning
+
 = 12.1 =
 
 * QR code can be displayed as part of the RSVPMaker Date Block component. Toggle it on in the block settings if it's manually added to the body of the event post. Or display it in an ad hoc fashion by adding ?qr=1 to the end of the url.

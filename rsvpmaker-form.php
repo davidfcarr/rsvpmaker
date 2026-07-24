@@ -311,10 +311,10 @@ function rsvp_field_apply_default( $content, $slug, $default ) {
 
 function rsvp_form_note( $atts = array() ) {
 
-	$label = ( empty( $atts['label'] ) ) ? 'Note' : esc_html( $atts['label'] );
+	$label = ( empty( $atts['label'] ) ) ? __( 'Note', 'rsvpmaker' ) : esc_html( $atts['label'] );
 	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
 
-	return sprintf( '<div class="wp-block-rsvpmaker-formnote rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-textarea-line"><textarea name="note"></textarea></div></div>', $label, $fieldnote_html );
+	return sprintf( '<div class="wp-block-rsvpmaker-formnote rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-textarea-line"><textarea name="note" style="width: %s"></textarea></div></div>', $label, $fieldnote_html,'80%' );
 
 }
 

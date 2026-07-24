@@ -1,7 +1,6 @@
 <?php
 
 function rsvpmaker_create_post_type() {
-
 	global $rsvp_options;
 
 	$menu_label = ( isset( $rsvp_options['menu_label'] ) ) ? $rsvp_options['menu_label'] : __( 'RSVP Events', 'rsvpmaker' );
@@ -101,7 +100,7 @@ function rsvpmaker_create_post_type() {
 				'with_front' => false,
 			),
 
-			'capability_type'    => 'rsvpmaker',
+			'capability_type'    => 'rsvpmaker_template',
 
 			'map_meta_cap'       => true,
 
@@ -223,6 +222,7 @@ function rsvpmaker_create_post_type() {
 
 		)
 	);
+	error_log('rsvpmaker_create_post_type after type and tax definitions');
 
 	global $rsvp_options;
 	if ( isset( $rsvp_options['flush'] ) && $rsvp_options['flush'] ) {

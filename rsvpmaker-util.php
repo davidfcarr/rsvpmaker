@@ -308,6 +308,26 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 
 }
 
+function rsvpmaker_update_event_fields ($event_post_id, $nv) {
+
+	global $wpdb, $post, $rsvp_options;
+
+	$event_table = $wpdb->prefix . 'rsvpmaker_event';
+
+	$set = '';
+	foreach($nv as $field => $value) {
+		if(!empty($set))
+			$set .= ', ';
+		$set .= $wpdb->prepare("%i=%s",$field,$value);
+	}
+	if(!empty($set)) {
+		$sql = $wpdb->prepare("UPDATE %i SET $set WHERE event=%d",$event_table,$event_post_id);
+		error_log('rsvpmaker_update_event_fields '.$sql);
+		$result = $wpdb->query($sql);
+		error_log('rsvpmaker_update_event_fields result '.var_export($result,true));
+	}
+}
+
 function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 
 	global $wpdb, $post, $rsvp_options;
@@ -658,10 +678,8 @@ function rsvpmaker_fix_timezone( $timezone = '' ) {
 			$timezone = $post_tz;
 		}
 	}
-	if ( ! empty( $timezone ) ) {
-
+	if ( ! empty( $timezone ) && ($timezone != '+00:00') ) {
 		date_default_timezone_set( $timezone );
-
 	}
 
 }
@@ -669,18 +687,74 @@ function rsvpmaker_restore_timezone() {
 	global $default_tz;
 	date_default_timezone_set( $default_tz );
 }
-function rsvpmaker_strtotime( $string, $timezone = '' ) {
-	if(empty($string))
-		return 0;
-	$string = str_replace( '::', ':', $string );
-	rsvpmaker_fix_timezone($timezone);
-	$t = strtotime( $string );
-	rsvpmaker_restore_timezone();
-	return $t;
+function rsvpmaker_strtotime( $string, $timezone = '', $baseTimestamp = null ) {
+    if ( empty( $string ) ) {
+        return 0;
+    }
+
+    $string = str_replace( '::', ':', $string );
+
+    // Normalize the timezone string (e.g. convert 'UTC+8' -> '+08:00')
+    $timezone = rsvpmaker_normalize_timezone( $timezone );
+
+    try {
+        $tz_object = new DateTimeZone( $timezone );
+        
+        // Handle base timestamp
+        $base = $baseTimestamp ? "@$baseTimestamp" : 'now';
+        $dt = new DateTime( $base );
+        $dt->setTimezone( $tz_object );
+        
+        // Apply relative or absolute time string
+        $dt->modify( $string );
+        
+        return $dt->getTimestamp();
+    } catch ( Exception $e ) {
+        // Fallback to basic strtotime if timezone parsing fails
+        return strtotime( $string, $baseTimestamp ?? time() );
+    }
 }
+
+/**
+ * Normalizes timezone formats so PHP DateTimeZone accepts them.
+ * Converts 'UTC+8' -> '+08:00', 'UTC-5' -> '-05:00', etc.
+ */
+function rsvpmaker_normalize_timezone( $timezone = '' ) {
+    global $post;
+
+    if ( empty( $timezone ) ) {
+        $timezone = get_option( 'timezone_string' );
+    }
+
+    if ( isset( $post->ID ) ) {
+        $post_tz = get_post_meta( $post->ID, '_rsvp_timezone_string', true );
+        if ( ! empty( $post_tz ) ) {
+            $timezone = $post_tz;
+        }
+    }
+
+    if ( empty( $timezone ) ) {
+        // WordPress fallback if timezone_string option is empty
+        $gmt_offset = get_option( 'gmt_offset', 0 );
+        $timezone = sprintf( '%+03d:00', $gmt_offset );
+    }
+
+    // Convert 'UTC+8', 'UTC-05:00', 'GMT+2', etc. to valid ISO offsets ('+08:00')
+    $timezone = preg_replace( '/^(UTC|GMT)\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$/i', '$2', $timezone );
+    
+    if ( preg_match( '/^([+-])(\d{1,2})(?::?(\d{2}))?$/', $timezone, $matches ) ) {
+        $sign = $matches[1];
+        $hours = str_pad( $matches[2], 2, '0', STR_PAD_LEFT );
+        $minutes = isset( $matches[4] ) ? $matches[4] : '00';
+        $timezone = "{$sign}{$hours}:{$minutes}";
+    }
+
+    return $timezone;
+}
+
 function rsvpmaker_mktime( $hour = null, $minute = null, $second = null, $month = null, $day = null, $year = null, $timezone = '' ) {
 
-	rsvpmaker_fix_timezone();
+	rsvpmaker_fix_timezone($timezone);
 
 	$t = mktime( (int) $hour, (int) $minute, (int) $second, (int) $month, (int) $day, (int) $year );
 
@@ -786,45 +860,82 @@ function rsvpmaker_timestamp_to_time( $t, $add_tz = false, $tz_string = '' ) {
 
 }
 function rsvpmaker_date( $date_format = '', $t = 0, $tzstring = '') {
+    global $post;
 
-	global $post;
+    $t = intval($t);
 
-	$t = intval($t);
+    if ( strpos( $date_format, '%' ) !== false ) {
+        $date_format = rsvpmaker_strftime_format_to_date_format( $date_format );
+    }
+    
+    $post_id = ( empty( $post->ID ) ) ? 0 : $post->ID;
 
-	if ( strpos( $date_format, '%' ) !== false ) {
+    if ( empty( $tzstring ) ) {
+        $tzstring = rsvpmaker_get_timezone_string( $post_id );
+    }
 
-		$date_format = rsvpmaker_strftime_format_to_date_format( $date_format );
+    if ( empty( $date_format ) ) {
+        $date_format = 'F jS, Y g:i A T';
+    }
 
-	}
-	$post_id  = ( empty( $post->ID ) ) ? 0 : $post->ID;
+    if ( empty( $t ) ) {
+        $t = time();
+    }
 
-	if(empty($tzstring))
+    if ( ! is_int( $t ) ) {
+        $t = rsvpmaker_strtotime( $t );
+    }
 
-		$tzstring = rsvpmaker_get_timezone_string( $post_id );
-	$tz       = new DateTimeZone( $tzstring );
-	if ( empty( $date_format ) ) {
+    $is_custom_offset = false;
+    $clean_tzstring   = trim( $tzstring );
 
-		$date_format = 'F jS, Y g:i A T';
+    // --- HANDLE UTC-7 STYLE OFFSETS ---
+    if ( preg_match( '/^UTC([+-])(\d+)(?::(\d+))?$/i', $clean_tzstring, $matches ) ) {
+        $sign    = $matches[1];
+        $hours   = intval( $matches[2] );
+        $minutes = isset( $matches[3] ) ? intval( $matches[3] ) : 0;
 
-	}
+        $offset_seconds = ( ( $hours * 3600 ) + ( $minutes * 60 ) );
+        
+        if ( $sign === '+' ) {
+            $t += $offset_seconds;
+        } else {
+            $t -= $offset_seconds;
+        }
 
-	if ( empty( $t ) ) {
+        $tz               = new DateTimeZone( 'UTC' );
+        $is_custom_offset = true; // Mark this as a manually adjusted offset
+    } else {
+        try {
+            $tz = new DateTimeZone( $clean_tzstring );
+        } catch ( Exception $e ) {
+            $wp_timezone = wp_timezone_string();
+            try {
+                $tz = new DateTimeZone( $wp_timezone );
+            } catch ( Exception $ex ) {
+                $tz = new DateTimeZone( 'UTC' );
+            }
+        }
+    }
+    // ----------------------------------
+    
+    // If it's a custom offset, mask out the timezone identifiers first so they don't print "UTC"
+    if ( $is_custom_offset ) {
+        // We replace unescaped timezone characters (T, e, O, P, p, Z) with a unique placeholder string
+        // This avoids wp_date rendering "UTC", "+00:00", etc.
+        $placeholder  = '___RSVPMAKER_TZ___';
+        $masked_format = preg_replace( '/(?<!\\\\)[TeOPpZ]/', '\\' . implode( '\\', str_split( $placeholder ) ), $date_format );
+        
+        $output = wp_date( $masked_format, $t, $tz );
+        
+        // Swap the placeholder back out with the user's exact requested string (e.g., "UTC-7")
+        $output = str_replace( $placeholder, $clean_tzstring, $output );
+    } else {
+        $output = wp_date( $date_format, $t, $tz );
+    }
 
-		$t = time();
-
-	}
-
-	if ( ! is_int( $t ) ) {
-
-		$t = rsvpmaker_strtotime( $t );
-
-	}
-	$output = wp_date( $date_format, $t, $tz );
-
-	return $output;
-
+    return $output;
 }
-
 function rsvpmaker_date_test() {
 
 	return rsvpmaker_date();
@@ -3197,6 +3308,10 @@ function rsvpmaker_get_template_sked( $post_id ) {
 		return false;
 	}
 	global $wpdb, $rsvp_options;
+	$timezone = get_post_meta($post_id,'_timezone',true);
+	if(empty($timezone))
+		$timezone = get_option('timezone_string');
+	$sked['timezone'] = $timezone;
 	$week_array = rsvpmaker_get_week_array();
 	$day_array = rsvpmaker_get_day_array();
 	$newsked = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key LIKE %s ",$wpdb->postmeta,$post_id,'_sked_%') );
@@ -3263,11 +3378,11 @@ function rsvpmaker_get_template_sked( $post_id ) {
 
 				$sked['start_time'] = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
 
-				$t = strtotime('today '.$sked['start_time']);
+				$t = rsvpmaker_strtotime('today '.$sked['start_time'],$timezone);
 
-				$sked['start_time'] = date('H:i:s',$t);
+				$sked['start_time'] = rsvpmaker_date('H:i:s',$t,$timezone);
 
-				$sked['end'] = date('H:i:s',$t + HOUR_IN_SECONDS);
+				$sked['end'] = rsvpmaker_date('H:i:s',$t + HOUR_IN_SECONDS,$timezone);
 
 			}
 
@@ -3275,9 +3390,9 @@ function rsvpmaker_get_template_sked( $post_id ) {
 
 				$sked['start_time'] = $sked['hour'].':'.$sked['minutes'];
 
-				$t = strtotime('today '.$sked['start_time']);
+				$t = rsvpmaker_strtotime('today '.$sked['start_time'],$timezone);
 
-				$sked['start_time'] = date('H:i:s',$t);
+				$sked['start_time'] = rsvpmaker_date('H:i:s',$t,$timezone);
 
 			}
 
@@ -3285,9 +3400,9 @@ function rsvpmaker_get_template_sked( $post_id ) {
 
 		//sanity check
 
-		$t = strtotime($sked['start_time']);
+		$t = rsvpmaker_strtotime($sked['start_time'],$timezone);
 
-		$end = (empty($sked['end'])) ? 0 : strtotime($sked['end']);
+		$end = (empty($sked['end'])) ? 0 : rsvpmaker_strtotime($sked['end'],$timezone);
 
 		if($t > $end)
 
@@ -3298,7 +3413,7 @@ function rsvpmaker_get_template_sked( $post_id ) {
 		update_post_meta($post_id,'_sked_end',$sked['end']);
 
 		}
-		$sked['end'] = date('H:i:s',$end);
+		$sked['end'] = rsvpmaker_date('H:i:s',$end,$timezone);
 
 		//backward compatability
 
@@ -5385,6 +5500,13 @@ function rsvpmaker_testlog($key,$data) {
 		set_transient($key,$data,DAY_IN_SECONDS);
 
 }
+function rsvp_day_time_check($timestamp, $sked = []) {
+	$day = rsvpmaker_date('l', $timestamp);
+	if(empty($sked['weeks']) || in_array('Varies',$sked['weeks'])) {
+		return true;
+	}
+	return in_array($day,$sked['days']);
+}
 function rsvp_x_day_month($timestamp) {
 
 	global $rsvp_options;
@@ -5983,3 +6105,4 @@ function is_rsvpmaker() {
 
 	return ( 'rsvpmaker' === get_post_type( $post->ID ) );
 }
+

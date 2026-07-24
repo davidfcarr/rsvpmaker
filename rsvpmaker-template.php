@@ -156,7 +156,6 @@ function rsvpmaker_template_list() {
 		}
 
 
-
 		if ( ! empty( $_POST['share_template'] )  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
 
 			update_post_meta( $_POST['share_template'], 'rsvpmaker_shared_template', true );
@@ -982,11 +981,11 @@ function rsvpmaker_template_list() {
 
 
 
-						$time = rsvpmaker_strtotime( $sked['hour'] . ':' . $sked['minutes'] );
+						$time = rsvpmaker_strtotime( $sked['hour'] . ':' . $sked['minutes'], $sked['timezone'] );
 
 
 
-						$s .= ' ' . rsvpmaker_date( $rsvp_options['time_format'], $time );
+						$s .= ' ' . rsvpmaker_date( $rsvp_options['time_format'], $time, $sked['timezone'] );
 
 
 
@@ -1518,9 +1517,10 @@ function rsvp_template_checkboxes( $t ) {
 		global $current_user,$rsvp_options;
 
 		$nomeeting = $editlist = $add_one = $add_date_checkbox = $event_options = $updatelist = '';
-		$donotproject = false;
+		$donotproject = [];
 
 		$template = rsvpmaker_get_template_sked( $t );
+		rsvpmaker_correct_date( $template, $t );
 
 		$post = get_post( $t );
 
@@ -1571,15 +1571,18 @@ function rsvp_template_checkboxes( $t ) {
 
 		$schedule = '';
 
+		$check_schedule = [];
+
 		if ( empty($weeks) || $weeks[0] == 0 ) {
 
 			$schedule = __( 'Schedule Varies', 'rsvpmaker' );
-
+			$check_schedule['weeks'][] = 'Varies';
 		} else {
 
 			foreach ( $weeks as $week ) {
-
-				$schedule .= rsvpmaker_week( $week ) . ' ';
+				$w = rsvpmaker_week( $week );
+				$check_schedule['weeks'][] = $w;
+				$schedule .= $w . ' ';
 			}
 
 			$schedule .= ' / ';
@@ -1587,8 +1590,9 @@ function rsvp_template_checkboxes( $t ) {
 			if ( ! empty( $dows ) && is_array( $dows ) ) {
 
 				foreach ( $dows as $dow ) {
-
-					$schedule .= rsvpmaker_day( $dow ) . ' ';
+					$d = rsvpmaker_day( $dow );
+					$check_schedule['days'][] = $d;
+					$schedule .= $d . ' ';
 				}
 			}
 		}
@@ -1627,21 +1631,26 @@ function rsvp_template_checkboxes( $t ) {
 
 		$cm = rsvpmaker_date( 'm' );
 
-		$cd = rsvpmaker_date( 'j' );
+		$cd = rsvpmaker_date( 'j');
 
 		global $current_user;
 
 		$sched_result = rsvpmaker_get_events_by_template( $t );
 		$holidays = rsvpmaker_commonHolidays();
 		$add_date_checkbox = $updatelist = $editlist = $nomeeting = '';
+		$correction = $projected = rsvpmaker_get_projected( $template );
+		$already_set = array();
+		foreach($sched_result as $p) {
+			$already_set[] = rsvpmaker_strtotime($p->datetime, $template['timezone']);
+		}
 
 		if ( $sched_result ) {
 
 			foreach ( $sched_result as $index => $sched ) {
 
-				$thistime = rsvpmaker_strtotime( $sched->datetime );
+				$thistime = rsvpmaker_strtotime( $sched->datetime,$template['timezone'] );
 				$holiday_check = rsvpmaker_holiday_check($thistime,$holidays);
-				$fulldate = rsvpmaker_date( $rsvp_options['long_date'] . ' ' . $rsvp_options['time_format'], $thistime );
+				$fulldate = rsvpmaker_date( $rsvp_options['long_date'] . ' ' . $rsvp_options['time_format'], $thistime, $template['timezone'] );
 
 				$a = ( $index % 2 ) ? '' : 'alternate';
 
@@ -1652,25 +1661,25 @@ function rsvp_template_checkboxes( $t ) {
 					$newtime = str_replace( $tparts[1], $his, $sched->datetime );
 
 					$timechange = sprintf( '<input type="hidden" name="timechange[%d]" value="%s" />', $sched->ID, $newtime );
-
+					$timechange = sprintf( '<input type="hidden" name="timechange[%d]" value="%s" />', $sched->ID, $newtime );
 					if ( empty( $timechangemessage ) ) {
 
-						$timechangemessage = '<p>' . __( 'Start time for updated events will be changed to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $rsvp_options['time_format'], rsvpmaker_strtotime( $newtime ) );
+						$timechangemessage = '<p>' . __( 'Start time for updated events will be changed to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $rsvp_options['time_format'], rsvpmaker_strtotime( $newtime, $template['timezone'] ), $template['timezone'] );
 						echo wp_kses_post($timechangemessage);
 					}
 				} else {
 					$timechange = '';
 				}
 
-				$donotproject[] = rsvpmaker_date( 'Y-m-j', $thistime );
+				$donotproject[] = rsvpmaker_date( 'Y-m-j', $thistime, $template['timezone'] );
 
-				$nomeeting .= sprintf( '<option value="%s">%s (%s)</option>', $sched->postID, date( 'F j, Y', $thistime ), __( 'Already Scheduled', 'rsvpmaker' ) );
+				$nomeeting .= sprintf( '<option value="%s">%s (%s)</option>', $sched->postID, rsvpmaker_date( 'F j, Y', $thistime, $template['timezone'] ), __( 'Already Scheduled', 'rsvpmaker' ) );
 
-				$cy = date( 'Y', $thistime ); // advance starting time
+				$cy = rsvpmaker_date( 'Y', $thistime, $template['timezone'] ); // advance starting time
 
-				$cm = rsvpmaker_date( 'm', $thistime );
+				$cm = rsvpmaker_date( 'm', $thistime, $template['timezone'] );
 
-				$cd = rsvpmaker_date( 'j', $thistime );
+				$cd = rsvpmaker_date( 'j', $thistime, $template['timezone'] );
 
 				if ( strpos( $sched->post_title, 'o Meeting:' ) ) {
 
@@ -1694,7 +1703,22 @@ function rsvp_template_checkboxes( $t ) {
 				$schedoptions = sprintf( ' (<a href="%s">Options</a>)', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=' ) . $sched->ID );
 
 				$class = (get_post_meta($sched->postID,'_nomeeting',true)) ? 'nomeeting' : 'update_from_template';
-				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="%s" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $class, $timechange, $edit, $sched->postID, $d, rsvp_x_day_month($thistime), get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft . $schedoptions );
+				$schedule_note = rsvp_x_day_month($thistime);
+				if(!rsvp_day_time_check($thistime, $check_schedule)) {
+					$schedule_note .= ' <span style="color:red;">' . __( 'Does not match template schedule', 'rsvpmaker' ) . '</span>';
+					$c = false;
+					foreach($correction as $i => $ts) {
+						if(!in_array($ts,$already_set)) {
+							$correction[$i] = false;
+							$c = $ts;
+							break;
+						}
+					}
+				}
+				else {
+					$c = false;
+				}
+				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="%s" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $class, $timechange, $edit, $sched->postID, $d, $schedule_note, get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft . $schedoptions );
 				$template_update = get_post_meta( $sched->postID, '_updated_from_template', true );
 
 				if ( ! empty( $template_update ) && ( $template_update != $sched->post_modified ) ) {
@@ -1707,6 +1731,9 @@ function rsvp_template_checkboxes( $t ) {
 				$mod        .= rsvpmaker_sametime( $sched->datetime, $sched->ID );
 				$hwarn = ($holiday_check) ? $holiday_check['hwarn'] : '';
 				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="%s" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s %s</p>', $a, $sched->postID, $class, __( 'Update', 'rsvpmaker' ), $sched->post_title . $ifdraft, $fulldate, $hwarn, $mod, $timechange );
+				if ( $c ) {
+					$updatelist .= sprintf( '<p class="correction" style="margin-left: 10px"><input type="checkbox" name="correct_date[%d]" value="%s" /> Correct Date to %s ? <span style="color:red">Does not match template schedule</span>.</p>', $sched->postID, rsvpmaker_date('Y-m-d H:i:s',$c, $template['timezone']), rsvpmaker_date('F d, Y',$c, $template['timezone']) );
+				}
 			}
 		}
 
@@ -1720,12 +1747,11 @@ function rsvp_template_checkboxes( $t ) {
 			. $updatelist . "\n</fieldset>\n";
 		}
 
-		$projected = rsvpmaker_get_projected( $template );
 		if(isset($_GET['debug']))
 			print_r($projected);
 		if ( $projected && is_array( $projected ) ) {
 			foreach ( $projected as $i => $ts ) {
-				$add_date_checkbox .= rsvpmaker_add_date_checkbox($i,$ts,$donotproject, $holidays);
+				$add_date_checkbox .= rsvpmaker_add_date_checkbox($i,$ts,$donotproject, $holidays, $template['timezone']);
 				if ( empty( $add_one ) ) {
 					$add_one = str_replace( 'type="checkbox"', 'type="hidden"', $add_date_checkbox );
 				}
@@ -1803,16 +1829,17 @@ function rsvp_template_checkboxes( $t ) {
 
 		}
 
+		print_r($template);
 		$projected = rsvpmaker_get_projected( $template );
 
 		if ( $projected && is_array( $projected ) ) {
 			foreach ( $projected as $i => $ts ) {
 
-				$today = rsvpmaker_date( 'd', $ts );
+				$today = rsvpmaker_date( 'd', $ts, $template['timezone'] );
 
-				$cm = rsvpmaker_date( 'n', $ts );
+				$cm = rsvpmaker_date( 'n', $ts, $template['timezone'] );
 
-				$y = date( 'Y', $ts );
+				$y = rsvpmaker_date( 'Y', $ts, $template['timezone'] );
 
 				$y2 = $y + 1;
 
@@ -1823,12 +1850,12 @@ function rsvp_template_checkboxes( $t ) {
 					continue; // omit dates past
 				}
 
-				if ( isset( $donotproject ) && is_array( $donotproject ) && in_array( date( 'Y-m-j', $ts ), $donotproject ) ) {
+				if ( isset( $donotproject ) && is_array( $donotproject ) && in_array( rsvpmaker_date( 'Y-m-j', $ts, $template['timezone'] ), $donotproject ) ) {
 
 					continue;
 				}
 
-				$nomeeting .= sprintf( '<option value="%s">%s</option>', date( 'Y-m-d', $ts ), date( 'F j, Y', $ts ) );
+				$nomeeting .= sprintf( '<option value="%s">%s</option>', rsvpmaker_date( 'Y-m-d', $ts, $template['timezone'] ), rsvpmaker_date( 'F j, Y', $ts, $template['timezone'] ) );
 
 				?>
 
@@ -1866,7 +1893,7 @@ function rsvp_template_checkboxes( $t ) {
 
 			  </select> 
 
-				<?php esc_html_e( 'Day', 'rsvpmaker' ); ?> 
+				<?php esc_html_e( 'Day', 'rsvpmaker' ); ?>
 
 			<select name="recur_day[<?php echo esc_attr($i); ?>]"> 
 
@@ -2186,15 +2213,15 @@ function rsvpmaker_next_or_recent( $template_id ) {
 
 
 // Moved from rsvpmaker-util.php during cleanup
-function rsvpmaker_add_date_checkbox($i,$ts,$donotproject = [],$holidays=[]) {
+function rsvpmaker_add_date_checkbox($i,$ts,$donotproject = [],$holidays=[], $timezone = 'UTC') {
 $post = get_post(intval($_GET['t']));
 	ob_start();
 
-				$today = rsvpmaker_date( 'd', $ts );
+				$today = rsvpmaker_date( 'd', $ts, $timezone );
 
-				$cm = rsvpmaker_date( 'n', $ts );
+				$cm = rsvpmaker_date( 'n', $ts, $timezone );
 
-				$y = date( 'Y', $ts );
+				$y = rsvpmaker_date( 'Y', $ts, $timezone );
 
 				$y0 = $y - 1;
 
@@ -2216,7 +2243,7 @@ $post = get_post(intval($_GET['t']));
 					$nomeeting = '';
 				}
 
-				$nomeeting .= sprintf( '<option value="%s">%s</option>', date( 'Y-m-d', $ts ), date( 'F j, Y', $ts ) );
+				$nomeeting .= sprintf( '<option value="%s">%s</option>', rsvpmaker_date( 'Y-m-d', $ts, $timezone ), rsvpmaker_date( 'F j, Y', $ts, $timezone ) );
 
 				?>
 

@@ -21,6 +21,13 @@ import Edit from './edit';
 import save from './save';
 import metadata from './block.json';
 
+const { InnerBlocks } = wp.blockEditor;
+
+// Keep old className-only serialization valid so legacy content parses without recovery loss.
+const saveLegacyClassNameOnly = ( { className } ) => {
+	return <div className={ className }><InnerBlocks.Content /></div>;
+};
+
 /**
  * Every block starts by registering a new block type definition.
  *
@@ -36,6 +43,11 @@ registerBlockType( metadata.name, {
 	 * @see ./save.js
 	 */
 	save,
+	deprecated: [
+		{
+			save: saveLegacyClassNameOnly,
+		},
+	],
 	transforms: {
 		to: [
 			{

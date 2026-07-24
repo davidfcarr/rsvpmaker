@@ -1035,7 +1035,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 			if(1 == sizeof($keys)) {
 				$time = ( $post->display_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $t, false, $post->timezone );
 				if ( ( $post->display_type == 'set' ) && ! empty( $end )  ) {
-					$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end, false, $post->timezone ) );	
+					$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end, $post->timezone ) );	
 				}	
 			}
 			else 
@@ -1980,9 +1980,9 @@ function rsvpmaker_sked_to_text( $sked ) {
 		}
 	}
 
-		$t = rsvpmaker_mktime( $sked['hour'], $sked['minutes'], 0, date( 'n' ), date( 'j' ), date( 'Y' ) );
+		$t = rsvpmaker_mktime( $sked['hour'], $sked['minutes'], 0, date( 'n' ), date( 'j' ), date( 'Y' ), $sked['timezone'] );
 
-		$dateblock = $s . ' ' . rsvpmaker_timestamp_to_time( $t );
+		$dateblock = $s . ' ' . rsvpmaker_timestamp_to_time( $t, true, $sked['timezone'] );
 
 	return $dateblock;
 
@@ -3975,7 +3975,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 			rsvpmaker_recaptcha_output();
 			if ( isset( $rsvp_options['privacy_confirmation'] ) && ( $rsvp_options['privacy_confirmation'] == '1' ) ) {
 
-				echo '<p><input type="checkbox" name="profile[privacy_consent]" id="privacy_consent" value="1" /> ' . wp_kses_post( $rsvp_options['privacy_confirmation_message'] ) . '</p>';
+				echo '<p><input type="checkbox" name="profile[privacy_consent]" id="privacy_consent" value="1" required /> ' . wp_kses_post( $rsvp_options['privacy_confirmation_message'] ) . '</p>';
 
 				if ( ! in_array( 'privacy_consent', $rsvp_required_field ) ) {
 

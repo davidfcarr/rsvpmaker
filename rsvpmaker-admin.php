@@ -1228,6 +1228,7 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 }
 
 function rsvpmaker_get_projected($template) {
+	error_log(print_r($template, true));
     if (!isset($template["week"])) {
         return array();
     }
@@ -1247,7 +1248,7 @@ function rsvpmaker_get_projected($template) {
 
     // Calculate Stop Date Bounds
     if (!empty($template["stop"])) {
-        $stopdate = rsvpmaker_strtotime($template["stop"] . ' 23:59:59');
+        $stopdate = rsvpmaker_strtotime($template["stop"] . ' 23:59:59',$template['timezone']);
     } else {
         // Broaden fallback projection to 12 months for odd/even intervals
         $is_frequent = in_array('every', $weeks) || in_array('even', $weeks) || in_array('odd', $weeks) || in_array(6, $weeks);
@@ -1255,11 +1256,11 @@ function rsvpmaker_get_projected($template) {
 		if(isset($_GET["extramonths"]) && is_numeric($_GET["extramonths"]) && $_GET["extramonths"] > 0) {
 			$fallback_period = '+' . intval($_GET["extramonths"]) . ' months';
 		}
-        $stopdate = rsvpmaker_strtotime($fallback_period);
+        $stopdate = rsvpmaker_strtotime($fallback_period,$template['timezone']);
     }
 
     // Set Initial Start Time Context
-    $current_time = isset($_GET["start"]) ? rsvpmaker_strtotime($_GET["start"]) : time();
+    $current_time = isset($_GET["start"]) ? rsvpmaker_strtotime($_GET["start"],$template['timezone']) : time();
 
     // Map word-based indexes to numbers, including our new Odd and Even targets
     $week_map = array(
@@ -1279,8 +1280,8 @@ function rsvpmaker_get_projected($template) {
 
             // --- CASE: EVERY, ODD, OR EVEN WEEK ---
             if ($week_key === 6 || $week_key === 7 || $week_key === 8) { 
-                $startdaytxt = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime') . ' ' . rsvpmaker_date('Y-m-d', $current_time) . ' ' . $target_time;
-                $ts = rsvpmaker_strtotime($startdaytxt);
+                $startdaytxt = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime') . ' ' . rsvpmaker_date('Y-m-d', $current_time, $template['timezone']) . ' ' . $target_time;
+                $ts = rsvpmaker_strtotime($startdaytxt,$template['timezone']);
                 
                 if (!$ts) continue;
 
@@ -1290,13 +1291,13 @@ function rsvpmaker_get_projected($template) {
                         
                         // Conditionals for filtering Odd / Even sequences over the year
                         if ($week_key === 7 || $week_key === 8) {
-                            $year = date('Y', $ts);
+                            $year = rsvpmaker_date('Y', $ts,$template['timezone']);
                             // Get the 1st day of the current calculation year
-                            $first_of_year = strtotime("January 1st, $year 00:00:00");
+                            $first_of_year = rsvpmaker_strtotime("January 1st, $year 00:00:00",$template['timezone']);
                             $target_day_name = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime');
                             
                             // Find the very first occurrence of that day in the year
-                            $first_occurrence = strtotime("first $target_day_name of January $year 00:00:00");
+                            $first_occurrence = rsvpmaker_strtotime("first $target_day_name of January $year 00:00:00",$template['timezone']);
                             
                             // Calculate how many weeks have passed since the first instance
                             $weeks_passed = floor(($ts - $first_occurrence) / WEEK_IN_SECONDS);
@@ -1328,13 +1329,13 @@ function rsvpmaker_get_projected($template) {
                 $tcount = $current_time;
 
                 while ($tcount <= $stopdate && $loop_count < 12) {
-                    $firstdaytxt = rsvpmaker_date('Y-m', $tcount) . '-01 ' . $target_time;
-                    $ts = rsvpmaker_strtotime($firstdaytxt);
+                    $firstdaytxt = rsvpmaker_date('Y-m', $tcount,$template['timezone']) . '-01 ' . $target_time;
+                    $ts = rsvpmaker_strtotime($firstdaytxt,$template['timezone']);
                     
                     if ($ts && $ts >= $current_time && $ts <= $stopdate) {
                         $projected[$ts] = $ts;
                     }
-                    $tcount = strtotime("+1 month", $tcount);
+                    $tcount = rsvpmaker_strtotime("+1 month", $template['timezone'], $tcount);
                     $loop_count++;
                 }
             } 
@@ -1343,12 +1344,12 @@ function rsvpmaker_get_projected($template) {
                 $start_month_ts = $current_time;
                 
                 for ($i = 0; $i < 12; $i++) {
-                    $eval_time = strtotime("+$i month", $start_month_ts);
+                    $eval_time = rsvpmaker_strtotime("+$i month", $template['timezone'], $start_month_ts);
                     $weektext = rsvpmaker_week($week_key, 'rsvpmaker_strtotime'); 
                     $day_name = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime');
 
-                    $datetext = sprintf('%s %s of %s %s', $weektext, $day_name, rsvpmaker_date('F Y', $eval_time), $target_time);
-                    $ts = rsvpmaker_strtotime($datetext);
+                    $datetext = sprintf('%s %s of %s %s', $weektext, $day_name, rsvpmaker_date('F Y', $eval_time,$template['timezone']), $target_time);
+                    $ts = rsvpmaker_strtotime($datetext,$template['timezone']);
 
                     if (!$ts) continue;
                     if ($ts > $stopdate) break; 
@@ -2108,8 +2109,29 @@ function future_rsvpmakers_by_template($template_id) {
 	return $ids;
 }
 
-
-
+function rsvpmaker_correct_date($template, $template_id) {
+if(!empty($_POST["correct_date"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+	{
+	$messages = '';
+	global $wpdb;
+	$wpdb->show_errors();
+	global $current_user;
+	$timezone = get_post_meta($t,'_timezone',true);
+	if(!$timezone)
+		$timezone = wp_timezone_string();
+	foreach($_POST["correct_date"] as $post_id => $newdate)
+		{
+			$time = rsvpmaker_strtotime($newdate);
+			$end_date = rsvpmaker_date('Y-m-d',$time).' '.$template['end'];
+			$ts_end = rsvpmaker_strtotime($end_date);
+			$nv = array('date' => $newdate, 'ts_start' => $time, 'enddate' => $end_date, 'ts_end' => $ts_end);
+			$messages .= sprintf('<div class="notice notice-success"><p>Correcting date of %s to %s</p></div>',esc_html(get_the_title($post_id)),esc_html($newdate));
+			$wpdb->update($wpdb->prefix.'rsvpmaker_event',$nv,array('event' => $post_id));
+			
+		}
+	return $messages;
+	}
+}
 function rsvpmaker_add_one () {
 if(!empty($_POST["rsvpmaker_add_one"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
 {
@@ -2333,7 +2355,7 @@ if($holiday_check) {
 	$hthis = $holiday_check['hwarn'];
 }
 $post = get_post($template_id);
-$date = rsvpmaker_date('Y-m-d',$ts).' '.$sked['start_time'];
+$date = rsvpmaker_date('Y-m-d',$ts, $sked['timezone']).' '.$sked['start_time'];
 $added .= add_rsvpmaker_from_template($post, $sked, $date, $ts,$hthis);
 } // end for loop
 
@@ -2387,11 +2409,11 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') 
 
 			if( is_numeric($dpart[0]) )
 				{
-				$dtext = $cddate.' +'.$dpart[0].' hours';
+				$dtext = $date.' +'.$dpart[0].' hours';
 				if(!empty($dpart[1]))
 					$dtext .= ' +'.$dpart[1].' minutes';
-				$dt = rsvpmaker_strtotime($dtext);
-				$duration = rsvpmaker_date('Y-m-d H:i:s',$dt);
+				$dt = rsvpmaker_strtotime($dtext, $timezone);
+				$duration = rsvpmaker_date('Y-m-d H:i:s',$dt, $timezone);
 				}
 			else
 				$duration = (isset($template["duration"])) ? $template["duration"] : '';
@@ -2628,6 +2650,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 				}
 		}		
 }
+	$update_messages .= rsvpmaker_correct_date($template, $t);
 	update_post_meta($t,'update_messages',$update_messages);
 	header('Location: ' . admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&update_messages=1&t='.$t));
 	die();
@@ -4805,7 +4828,7 @@ function rsvpmaker_roles() {
 		$wp_roles->remove_cap( 'subscriber', 'edit_rsvpmakers' );
 
 		// if roles persist from previous session, return
-		if ( ! empty( $wp_roles->roles['administrator']['capabilities']['edit_rsvpmakers'] ) ) {
+		if ( ! empty( $wp_roles->roles['administrator']['capabilities']['edit_rsvpmaker_templates'] ) ) {
 			return;
 		}
 
@@ -4817,6 +4840,8 @@ function rsvpmaker_roles() {
 
 					if ( strpos( $cap, 'post' ) ) {
 						$fbcap = str_replace( 'post', 'rsvpmaker', $cap );
+						$wp_roles->add_cap( $role, $fbcap );
+						$fbcap = str_replace( 'rsvpmaker', 'rsvpmaker_template', $fbcap );
 						$wp_roles->add_cap( $role, $fbcap );
 					}
 				}
