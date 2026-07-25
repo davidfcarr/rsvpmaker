@@ -3314,23 +3314,24 @@ function rsvpmaker_get_template_sked( $post_id ) {
 	$sked['timezone'] = $timezone;
 	$week_array = rsvpmaker_get_week_array();
 	$day_array = rsvpmaker_get_day_array();
-	$newsked = $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d AND meta_key LIKE %s ",$wpdb->postmeta,$post_id,'_sked_%') );
-	if ( $newsked ) {
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d",$wpdb->postmeta,$post_id);
+	$sql .= " AND meta_key  LIKE '_sked_%'";
+	$skednew = $wpdb->get_results( $sql );
+	if ( $skednew ) {
 		$dayofweek = array();
 		$week = array();
-		foreach ( $newsked as $row ) {
+		foreach ( $skednew as $row ) {
 			$key = str_replace( '_sked_', '', $row->meta_key );
 			if ( in_array( $key, $day_array ) && $row->meta_value ) {
 				$dayofweek[] = array_search( $key, $day_array );
 			} elseif ( in_array( $key, $week_array ) && $row->meta_value ) {
 				$week[] = array_search( $key, $week_array );
 			} elseif ( ( $row->meta_key == '_sked_minutes' ) && ( $row->meta_value == '' ) ) {   // fix for corrupted record
-
 					update_post_meta( $post_id, '_sked_minutes', $rsvp_options['defaultmin'] );
-
 			}
 			$sked[ $key ] = $row->meta_value;
 		}
+		error_log('template sked kv '.$post_id.' '.get_the_title($post_id).' '.var_export($sked,true));
 
 		// If there is no specific week pattern, default schedule behavior to Varies.
 		$specific_week = array_values( array_filter( $week, function( $index ) {
@@ -3355,47 +3356,34 @@ function rsvpmaker_get_template_sked( $post_id ) {
 				foreach ( $week_array as $index => $value ) {
 					if ( $index != 6 ) {
 						update_post_meta( $post_id, '_sked_' . $value, false );
-
 					}
-
 				}
-
 			}
 			if ( in_array( 0, $week ) ) { // if any other value is set, Varies doesn't make sense
 				$sked['week'] = array_values( array_filter( $sked['week'], function( $index ) {
 					return ( 0 !== intval( $index ) );
 				} ) );
 				update_post_meta( $post_id, '_sked_Varies', false );
-
 			}
-
 		}
+
 		if(empty($sked['start_time']))
-
 		{
-
+			error_log('adding start time to template '.$post_id.' '.get_the_title($post_id).var_export($sked,true));
 			if(empty($sked['hour'])) {
-
 				$sked['start_time'] = $rsvp_options['defaulthour'].':'.$rsvp_options['defaultmin'];
-
 				$t = rsvpmaker_strtotime('today '.$sked['start_time'],$timezone);
-
 				$sked['start_time'] = rsvpmaker_date('H:i:s',$t,$timezone);
-
 				$sked['end'] = rsvpmaker_date('H:i:s',$t + HOUR_IN_SECONDS,$timezone);
-
 			}
-
 			else {
-
 				$sked['start_time'] = $sked['hour'].':'.$sked['minutes'];
-
 				$t = rsvpmaker_strtotime('today '.$sked['start_time'],$timezone);
-
 				$sked['start_time'] = rsvpmaker_date('H:i:s',$t,$timezone);
-
 			}
-
+			error_log('saving start time to template '.$post_id.' '.get_the_title($post_id).var_export($sked,true));
+			// SAVE FIX TO DATABASE so it isn't lost on future reads
+			update_post_meta($post_id, '_sked_start_time', $sked['start_time']);
 		}
 
 		//sanity check
