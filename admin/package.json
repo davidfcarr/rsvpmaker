@@ -21,13 +21,13 @@
 		}
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^31.5.0",
+		"@wordpress/scripts": "^33.0.0",
 		"dotenv-cli": "^7.4.1",
 		"serialize-javascript": ">=7.0.5",
 		"ws": ">=8.21.0"
 	},
 	"dependencies": {
-		"@wordpress/dataviews": "^12.0.0",
+		"@wordpress/dataviews": "^17.2.0",
 		"@wordpress/icons": "^9.29.0",
 		"dompurify": "^3.4.12",
 		"dotenv": "^16.4.5",
