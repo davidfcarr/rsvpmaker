@@ -132,7 +132,7 @@ function rsvpmaker_react_admin_script() {
 		wp_localize_script('rsvpmaker_details', 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}	
 
-	elseif( ((isset($_GET['action']) && ('edit' == $_GET['action'] && 'rsvpmaker_template' == $post->post_type )) || (strpos($_SERVER['REQUEST_URI'],'post-new.php') && isset($_GET['post_type']) && 'rsvpmaker_template' == $_GET['post_type'] ) ) )
+	elseif( ((isset($_GET['action'], $post->post_type) && ('edit' == $_GET['action'] && 'rsvpmaker_template' == $post->post_type )) || (strpos($_SERVER['REQUEST_URI'],'post-new.php') && isset($_GET['post_type']) && 'rsvpmaker_template' == $_GET['post_type'] ) ) )
 	{
 		wp_enqueue_style(
 			'rsvpmaker_meta', // Handle.
