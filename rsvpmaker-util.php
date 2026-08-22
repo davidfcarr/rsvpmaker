@@ -3301,17 +3301,25 @@ function rsvpmaker_get_day_array() {
 	return array( 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' );
 }
 function rsvpmaker_get_week_array() {
-	return array( 'Varies', 'First', 'Second', 'Third', 'Fourth', 'Last', 'Every','Even','Odd' );
+	return array( 'Varies', 'First', 'Second', 'Third', 'Fourth', 'Last', 'Every','Even','Odd', 'Fifth' );
 }
-function rsvpmaker_get_template_sked( $post_id ) {
+function rsvpmaker_get_template_sked( $post_id, $check_cache = false ) {
 	if(!rsvpmaker_is_template($post_id)) {
 		return false;
+	}
+	if($check_cache &&empty($_GET['nocache'])) {
+		$expire = time() - DAY_IN_SECONDS;
+		$full_sked = get_post_meta( $post_id, '_full_sked', true );
+		if ( ! empty( $full_sked ) && is_array($full_sked) && isset($full_sked['timestamp']) && $full_sked['timestamp'] > $expire ) {
+			return $full_sked;
+		}
 	}
 	global $wpdb, $rsvp_options;
 	$timezone = get_post_meta($post_id,'_timezone',true);
 	if(empty($timezone))
 		$timezone = get_option('timezone_string');
 	$sked['timezone'] = $timezone;
+	$sked['timestamp'] = time();
 	$week_array = rsvpmaker_get_week_array();
 	$day_array = rsvpmaker_get_day_array();
 	$sql = $wpdb->prepare("SELECT * FROM %i WHERE post_id=%d",$wpdb->postmeta,$post_id);
@@ -3410,6 +3418,7 @@ function rsvpmaker_get_template_sked( $post_id ) {
 		$sked['hour'] = $parts[0];
 
 		$sked['minutes'] = $parts[1];
+		update_post_meta( $post_id, '_full_sked', $sked );
 		return $sked;
 	}
 
@@ -5577,23 +5586,15 @@ function rsvpmaker_wp_import_existing_post($post_exists, $post) {
 
 }
 function rsvpmaker_data_from_document($content) {
-
     $results = [];
-
-    preg_match_all('/wp\:([a-z0-9\-\/]+)[^>]+(\{[^\}]+\})/',$content,$matches);
-
-    if($matches[2])
-
+	preg_match_all('/<!--\s+wp\:([a-z0-9\-\/]+)[^>]*?(\{[\s\S]*?\})(?=\s*\/?-->)/i',$content,$matches);
+	if(!empty($matches[2]))
     foreach($matches[0] as $index => $m)
 
         {
-
             $data = json_decode($matches[2][$index]);
-
             $data->block_signature = $matches[1][$index];
-
             $results[] = $data;
-
         }
 
     return $results;

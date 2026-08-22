@@ -43,6 +43,9 @@ export default function General (props) {
     if(isLoading)
         return <p>Loading ...</p>
     const rsvp_options = data.data.rsvp_options;
+    const isMultisite = !! Number( rsvpmaker_rest?.is_multisite || 0 );
+    const isMainSite = !! Number( rsvpmaker_rest?.is_main_site || 0 );
+    const recaptchaSharedFromMain = isMultisite && !isMainSite && !! Number( rsvpmaker_rest?.recaptcha_network_shared || 0 );
     const current_user_id = data.data.current_user_id;
     const current_user_email = data.data.current_user_email;
     const edit_url = data.data.edit_url;
@@ -81,8 +84,13 @@ export default function General (props) {
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Login Required to Register" slug="login_required" />
     <p>Default Email for RSVP Notifications <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="rsvp_to" value={rsvp_options.rsvp_to} /></p>
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Email RSVPs To Event Author Instead" slug="rsvp_to_current" />
-    <p><strong>Form spam protection: Google ReCaptcha (v2) </strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a> for API key and secret
+	{isMultisite && isMainSite && <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Share reCAPTCHA settings across network sites" slug="rsvp_recaptcha_network_share" />}
+	{recaptchaSharedFromMain && <p><em>reCAPTCHA has been configured on the main site and shared across this network. Local reCAPTCHA options are hidden.</em></p>}
+	{!recaptchaSharedFromMain && <>
+    <p><strong>Form spam protection: Google reCAPTCHA</strong> <a href="https://www.google.com/recaptcha/admin" target="_blank">register</a> for API key and secret
+    <br /><OptRadio addChange={addChange} rsvp_options={rsvp_options} slug="rsvp_recaptcha_version" options={[{'label':'Recaptcha not enabled','value':'disabled'},{'label':'Recaptcha 2 (if not otherwise set)','value':''},{'label':'Recaptcha 3 (recommended for new setups)','value':'v3'}]} />
     <br />Key <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="rsvp_recaptcha_site_key" /> Secret <OptText addChange={addChange} rsvp_options={rsvp_options}  slug="rsvp_recaptcha_secret" /></p>    
+	</>}
     <OptionsToggle addChange={addChange} rsvp_options={rsvp_options}  label="Simple Captcha on RSVP Form (legacy version, not recommended)" slug="rsvp_captcha" />
     <h3>Instructions for RSVP Form</h3>
     <p>

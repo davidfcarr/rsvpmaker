@@ -189,12 +189,60 @@ function rsvpmaker_frontend_admin () {
 		wp_localize_script('rsvpmaker_single_form', 'rsvpmaker_rest',rsvpmaker_rest_array());
 	}
 }
+
+function rsvpmaker_editor_iframe_localize() {
+	global $post;
+
+	if ( ! is_admin() ) {
+		return;
+	}
+
+	$post_type = isset( $post->post_type ) ? $post->post_type : '';
+	if ( isset( $_GET['post_type'] ) ) {
+		$post_type = $_GET['post_type'];
+	}
+
+	if ( 'rsvpemail' !== $post_type ) {
+		return;
+	}
+
+	$wp_post_id = empty( $post->ID ) ? 0 : (int) $post->ID;
+	$template = (int) get_option( 'rsvpmailer_default_block_template' );
+	if ( $template && ( 'rsvpemail' !== get_post_type( $template ) ) ) {
+		$template = 0;
+	}
+	if ( ! $template ) {
+		// Ensure a default template exists; this function will create one if needed.
+		get_rsvpmailer_default_block_template();
+		$template = (int) get_option( 'rsvpmailer_default_block_template' );
+		if ( $template && ( 'rsvpemail' !== get_post_type( $template ) ) ) {
+			$template = 0;
+		}
+	}
+	$edit_url = $template
+		? admin_url( 'post.php?action=edit&post=' . $template )
+		: admin_url( 'post-new.php?post_type=rsvpemail' );
+	$template_data = array(
+		'default'  => $template,
+		'edit_url' => $edit_url,
+		'more'     => admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_email_template' ),
+	);
+
+	wp_register_script( 'rsvpmaker-editor-iframe-localize', false, array(), get_rsvpversion(), true );
+	wp_enqueue_script( 'rsvpmaker-editor-iframe-localize' );
+	wp_localize_script( 'rsvpmaker-editor-iframe-localize', 'related_documents', rsvpmaker_get_related_documents( $wp_post_id, 'rsvpemail' ) );
+	wp_localize_script( 'rsvpmaker-editor-iframe-localize', 'rsvp_email_templates', $template_data );
+	wp_localize_script( 'rsvpmaker-editor-iframe-localize', 'rsvp_email_template', $template_data );
+}
+add_action( 'enqueue_block_assets', 'rsvpmaker_editor_iframe_localize' );
+
 function get_rsvpmaker_admin_script_handle ($type) {
 	return generate_block_asset_handle( 'rsvpmaker/admin', $type);
 }
 
 function rsvpmaker_react_admin() {
 	global $rsvp_options;
+	do_action('rsvpmaker_react_admin_top');
 	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'"></div>';
 }
 
@@ -365,11 +413,6 @@ function rsvpmaker_localize () {
 	if(isset($_GET['post_type']))
 	$post_type = $_GET['post_type'];
 wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvpmaker', array('post_type' => $post_type,'json_url' => rest_url('rsvpmaker/v1/')) );
-if($post_type == 'rsvpemail') {
-	wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'related_documents', rsvpmaker_get_related_documents ($post->ID,'rsvpemail'));
-	$template = get_option('rsvpmailer_default_block_template');
-	wp_localize_script( 'rsvpmaker-admin-editor-script-2', 'rsvp_email_template', array('default' => $template,'edit_url' => admin_url('post.php?action=edit&post='.$template),'more'=>admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template')));
-}
 
 wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker', array('post_type' => $post_type,'json_url' => rest_url('rsvpmaker/v1/')) );
 wp_localize_script( 'rsvpmaker_sidebar-js', 'rsvpmaker_rest', rsvpmaker_rest_array() );

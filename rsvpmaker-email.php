@@ -16,8 +16,10 @@ function rsvpmailer($mail, $description = '') {
 	if(defined('RSVPMAILOFF'))
 	{
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
+		error_log('RSVPMaker Email Disabled '.var_export($mail,true));
 		return;
 	}
+	error_log('22 rsvpmailer sending to '.$mail["to"].' subject: '.$mail["subject"]);
 	global $post, $rsvp_options, $rsvpmaker_message_type;
 	if(empty($mail['Tag']))
 		$mail['Tag'] = rsvpemail_tag();
@@ -96,9 +98,10 @@ function rsvpmailer($mail, $description = '') {
 
 	$postmark = get_rsvpmaker_postmark_options();
 	if(rsvpmaker_postmark_is_active()) {
+		error_log('101 rsvpmailer sending via postmark '.var_export($mail,true));
 		return rsvpmaker_postmark_send($mail);
 	}
-
+	error_log('rsvpmailer sending via wp_mail '.var_export($mail,true));
 	if(function_exists('rsvpmailer_override'))
 		return rsvpmailer_override($mail);
 	if(empty($mail['from'])) {
@@ -2192,13 +2195,17 @@ printf('<form id="alt_template" name="alt_template" method="get" action="%s"><in
 
 echo '<h3 id="emailtemplates">Email Templates</h3>';
 
-$content = get_rsvpmailer_default_block_template(true);
-if(!empty($content))
-	printf('<p>Current default email template</p><div class="currentdefault" id="currentdefault">%s</div>',rsvpmail_filter_style($content));
+$default_template_id = get_option( 'rsvpmailer_default_block_template');
+$tx_template_id = get_option( 'rsvpmailer_tx_block_template');
 
-$content = get_rsvpmailer_tx_block_template(true);
+$content = rsvpmailer_default_block_template_wrapper('<p>Newsletter content goes here</p>', false);
+if(!empty($content)) {
+	printf('<p>Current default email template - <a href="%s">Edit</a></p><div class="currentdefault" id="currentdefault">%s</div><p></p>', admin_url("post.php?post=$default_template_id&action=edit"), rsvpmail_filter_style($content));
+}
+
+$content = rsvpmailer_default_block_template_wrapper('<p>Notifications content goes here</p>', true);
 if(!empty($content))
-	printf('<p>Current transactional template</p><div id="currenttx"  class="currentdefault" >%s</div>',rsvpmail_filter_style($content));
+	printf('<p>Current transactional template - <a href="%s">Edit</a></p><div id="currenttx"  class="currentdefault" >%s</div><p></p>', admin_url("post.php?post=$tx_template_id&action=edit"), rsvpmail_filter_style($content));
 
 $welcome = get_option('rsvpmaker_guest_email_welcome');
 if($welcome)
@@ -2246,6 +2253,7 @@ if(!empty($custom_style_array)) {
 }
 
 if(empty($rsvpmaker_custom_email_tag_styles)) {
+$rsvpmaker_custom_email_tag_styles = array();
 $rsvpmaker_custom_email_tag_styles['p']='';
 $rsvpmaker_custom_email_tag_styles['h1']='';
 $rsvpmaker_custom_email_tag_styles['h2']='';
@@ -2984,10 +2992,11 @@ $mail['text'] = rsvpmaker_text_version($mail["html"], $rsvpfooter_text);
 $problem = rsvpmail_is_problem($mail["to"]);
 	if($problem)
 		{
-			rsvpemail_error_log('rsvpmailer blocked sending to email: '.$problem,$mail);
+			error_log('rsvpmailer blocked sending to email: '.$problem.' '.var_export($mail,true));
 			return;
 		}
-	rsvpmailer($mail,__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>' );
+	$result = rsvpmailer($mail,__('<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>' );
+	error_log('2993 rsvpmailer sending to '.$mail["to"].' subject: '.$mail["subject"].' '.var_export($mail,true).' '.$result);
 }
 
 function rsvpmaker_email_content ($atts, $content) {
@@ -3629,18 +3638,21 @@ foreach($rsvpdata as $field => $value)
 $notification_body = $templates['notification']['body']; 
 foreach($rsvpdata as $field => $value)
 	$notification_body = str_replace('['.$field.']',$value,$notification_body);
+
 	$notification_body = rsvpmaker_email_html($notification_body);
 	$notification_body .= "\n<p>".'<a href="'.esc_attr(admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$post->ID)).'">RSVP Report</a></p>';
 	$rsvp_to_array = explode(",", $rsvp_to);
 	$rsvp_to_array = apply_filters('rsvp_to_array',$rsvp_to_array);
+	error_log('rsvp_notifications_via_template rsvp_to_array: '.var_export($rsvp_to_array,true));
 	foreach($rsvp_to_array as $to)
 	{
-	$mail["to"] = $to;
+	$mail["to"] = trim($to);
 	$mail['toname'] = get_bloginfo('name');
 	$mail["from"] = $rsvp["email"];
 	$mail["fromname"] = $rsvp["first"].' '.$rsvp["last"];
 	$mail["subject"] = $notification_subject;
 	$mail["html"] = wpautop($notification_body);
+	error_log('3650 rsvp_notifications_via_template sending to rsvpmaker_tx_email '.$mail["to"].' subject: '.$mail["subject"].' '.var_export($mail,true));
 	rsvpmaker_tx_email($post, $mail);
 	}
 
@@ -5110,9 +5122,9 @@ function get_rsvpmailer_tx_block_template( $edit = false ) {
 <div style="height:1px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->
 
-<!-- wp:rsvpmaker/emailcontent {"padding":"0px","border":"none"} -->
-<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#efefef;color:#000;padding:0px;margin-left:auto;margin-right:auto;max-width:600px;border:none;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Add email content here","backgroundColor":"base"} -->
-<p class="has-base-background-color has-background"></p>
+<!-- wp:rsvpmaker/emailcontent {"backgroundColor":"#FFFFFF","padding":"3px","border":"none"} -->
+<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#FFFFFF;color:#000;padding:0px;margin-left:auto;margin-right:auto;max-width:600px;border:none;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Add email content here"} -->
+<p></p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:rsvpmaker/emailcontent -->
 
@@ -5164,9 +5176,9 @@ function get_rsvpmailer_default_block_template($edit = false) {
 <div style="height:1px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->
 
-<!-- wp:rsvpmaker/emailcontent {"padding":"0px","border":"none"} -->
-<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#efefef;color:#000;padding:0px;margin-left:auto;margin-right:auto;max-width:600px;border:none;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Add email content here","backgroundColor":"base"} -->
-<p class="has-base-background-color has-background"></p>
+<!-- wp:rsvpmaker/emailcontent {"backgroundColor":"#FFFFFF","padding":"3px","border":"none"} -->
+<div class="wp-block-rsvpmaker-emailcontent" style="background-color:#FFFFFF;color:#000;padding:0px;margin-left:auto;margin-right:auto;max-width:600px;border:none;min-height:20px;margin-bottom:5px"><!-- wp:paragraph {"placeholder":"Add email content here"} -->
+<p></p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:rsvpmaker/emailcontent -->
 

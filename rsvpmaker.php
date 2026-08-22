@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.1.1
+* Version: 12.1.4
 */
 
 function get_rsvpversion() {
-	return '12.1.1';
+	return '12.1.4';
 }
 
 global $wp_version;
@@ -110,6 +110,8 @@ function rsvp_options_defaults() {
 		'update_rsvp'                       => __( 'Update RSVP', 'rsvpmaker' ),
 		'rsvp_recaptcha_site_key' => '',
 		'rsvp_recaptcha_secret' => '',
+		'rsvp_recaptcha_version' => '',
+		'rsvp_recaptcha_network_share' => false,
 		'debug' => false,
 		'payment_gateway' => 'Cash or Custom',
 		'report_security' => 'publish_rsvpmakers',
@@ -136,6 +138,15 @@ function rsvp_options_defaults() {
 		if ( ! isset( $rsvp_options[ $index ] ) ) {
 			$rsvp_options[ $index ] = $rsvp_defaults[ $index ];
 			$update = true;
+		}
+	}
+
+	if ( is_multisite() && ! is_main_site() ) {
+		$main_options = get_blog_option( 1, 'RSVPMAKER_Options', array() );
+		if ( ! empty( $main_options['rsvp_recaptcha_network_share'] ) ) {
+			$rsvp_options['rsvp_recaptcha_site_key'] = isset( $main_options['rsvp_recaptcha_site_key'] ) ? sanitize_text_field( $main_options['rsvp_recaptcha_site_key'] ) : '';
+			$rsvp_options['rsvp_recaptcha_secret'] = isset( $main_options['rsvp_recaptcha_secret'] ) ? sanitize_text_field( $main_options['rsvp_recaptcha_secret'] ) : '';
+			$rsvp_options['rsvp_recaptcha_version'] = isset( $main_options['rsvp_recaptcha_version'] ) ? sanitize_text_field( $main_options['rsvp_recaptcha_version'] ) : '';
 		}
 	}
 	$rsvp_options['rsvplink'] = get_rsvp_link();
@@ -319,7 +330,7 @@ function rsvpmaker_normalize_postmark_options( $value ) {
 		$value = array();
 	}
 
-	$integer_fields = array( 'restricted' );
+	$integer_fields = array( 'restricted', 'postmark_network_share', 'postmark_override_local' );
 	foreach ( $integer_fields as $field ) {
 		$value[ $field ] = isset( $value[ $field ] ) ? (int) $value[ $field ] : 0;
 	}
@@ -518,6 +529,10 @@ $postmark_properties['handle_incoming'] = array( 'type' => 'string' );
 $postmark_defaults['handle_incoming'] = '';
 $postmark_properties['restricted'] = array( 'type' => 'integer' );
 $postmark_defaults['restricted'] = 0;
+	$postmark_properties['postmark_network_share'] = array( 'type' => 'integer' );
+	$postmark_defaults['postmark_network_share'] = 0;
+	$postmark_properties['postmark_override_local'] = array( 'type' => 'integer' );
+	$postmark_defaults['postmark_override_local'] = 0;
 	$postmark_properties['enabled'] = array(
 		'type'  => 'array',
 		'items' => array( 'type' => 'string' ),

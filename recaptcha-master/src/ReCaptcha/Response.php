@@ -53,6 +53,34 @@ class Response {
 	private $hostname;
 
 	/**
+	 * Timestamp of the challenge load.
+	 *
+	 * @var string
+	 */
+	private $challengeTs = '';
+
+	/**
+	 * APK package name.
+	 *
+	 * @var string
+	 */
+	private $apkPackageName = '';
+
+	/**
+	 * Score assigned to the request (v3).
+	 *
+	 * @var float|null
+	 */
+	private $score = null;
+
+	/**
+	 * Action as specified by the page (v3).
+	 *
+	 * @var string
+	 */
+	private $action = '';
+
+	/**
 	 * Build the response from the expected JSON returned by the service.
 	 *
 	 * @param string $json
@@ -66,29 +94,41 @@ class Response {
 		}
 
 		$hostname = isset( $responseData['hostname'] ) ? $responseData['hostname'] : null;
+		$challengeTs = isset( $responseData['challenge_ts'] ) ? $responseData['challenge_ts'] : '';
+		$apkPackageName = isset( $responseData['apk_package_name'] ) ? $responseData['apk_package_name'] : '';
+		$score = ( isset( $responseData['score'] ) && is_numeric( $responseData['score'] ) ) ? (float) $responseData['score'] : null;
+		$action = isset( $responseData['action'] ) ? $responseData['action'] : '';
 
 		if ( isset( $responseData['success'] ) && $responseData['success'] == true ) {
-			return new Response( true, array(), $hostname );
+			return new Response( true, array(), $hostname, $challengeTs, $apkPackageName, $score, $action );
 		}
 
 		if ( isset( $responseData['error-codes'] ) && is_array( $responseData['error-codes'] ) ) {
-			return new Response( false, $responseData['error-codes'], $hostname );
+			return new Response( false, $responseData['error-codes'], $hostname, $challengeTs, $apkPackageName, $score, $action );
 		}
 
-		return new Response( false, array(), $hostname );
+		return new Response( false, array(), $hostname, $challengeTs, $apkPackageName, $score, $action );
 	}
 
 	/**
 	 * Constructor.
 	 *
-	 * @param boolean $success
-	 * @param array   $errorCodes
-	 * @param string  $hostname
+	 * @param boolean    $success
+	 * @param array      $errorCodes
+	 * @param string     $hostname
+	 * @param string     $challengeTs
+	 * @param string     $apkPackageName
+	 * @param float|null $score
+	 * @param string     $action
 	 */
-	public function __construct( $success, array $errorCodes = array(), $hostname = null ) {
+	public function __construct( $success, array $errorCodes = array(), $hostname = null, $challengeTs = '', $apkPackageName = '', $score = null, $action = '' ) {
 		$this->success    = $success;
 		$this->errorCodes = $errorCodes;
 		$this->hostname   = $hostname;
+		$this->challengeTs = $challengeTs;
+		$this->apkPackageName = $apkPackageName;
+		$this->score = $score;
+		$this->action = $action;
 	}
 
 	/**
@@ -116,5 +156,58 @@ class Response {
 	 */
 	public function getHostname() {
 		return $this->hostname;
+	}
+
+	/**
+	 * Get challenge timestamp.
+	 *
+	 * @return string
+	 */
+	public function getChallengeTs() {
+		return $this->challengeTs;
+	}
+
+	/**
+	 * Get APK package name.
+	 *
+	 * @return string
+	 */
+	public function getApkPackageName() {
+		return $this->apkPackageName;
+	}
+
+	/**
+	 * Get score.
+	 *
+	 * @return float|null
+	 */
+	public function getScore() {
+		return $this->score;
+	}
+
+	/**
+	 * Get action.
+	 *
+	 * @return string
+	 */
+	public function getAction() {
+		return $this->action;
+	}
+
+	/**
+	 * Array representation.
+	 *
+	 * @return array
+	 */
+	public function toArray() {
+		return array(
+			'success' => $this->isSuccess(),
+			'hostname' => $this->getHostname(),
+			'challenge_ts' => $this->getChallengeTs(),
+			'apk_package_name' => $this->getApkPackageName(),
+			'score' => $this->getScore(),
+			'action' => $this->getAction(),
+			'error-codes' => $this->getErrorCodes(),
+		);
 	}
 }

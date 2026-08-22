@@ -747,6 +747,25 @@ const RsvpmakerSettings = () => {
 			Edit: 'text',
 		},		
 		{
+			id: 'rsvp_recaptcha_network_share',
+			label: __( 'Share reCAPTCHA Across Network Sites', 'rsvpmaker' ),
+			description: __( 'When enabled on the main site, sub-sites use the main site reCAPTCHA mode and credentials.', 'rsvpmaker' ),
+			type: 'boolean',
+			Edit: 'toggle',
+		},
+		{
+			id: 'rsvp_recaptcha_version',
+			label: __( 'reCAPTCHA Mode **', 'rsvpmaker' ),
+			description: __( 'Choose disabled, legacy reCAPTCHA v2, or reCAPTCHA v3 for new setups.', 'rsvpmaker' ),
+			type: 'string',
+			Edit: 'select',
+			elements: [
+				{ label: __( 'Recaptcha not enabled', 'rsvpmaker' ), value: 'disabled' },
+				{ label: __( 'Recaptcha 2 (if not otherwise set)', 'rsvpmaker' ), value: '' },
+				{ label: __( 'Recaptcha 3 (recommended for new setups)', 'rsvpmaker' ), value: 'v3' },
+			],
+		},
+		{
 			id: 'rsvp_recaptcha_site_key',
 			label: __( 'reCAPTCHA Site Key **', 'rsvpmaker' ),
 			description: __( 'Site key for Google reCAPTCHA integration.', 'rsvpmaker' ),
@@ -853,6 +872,16 @@ const RsvpmakerSettings = () => {
 		},
 	]
 
+	const isMultisite = !! Number( rsvpmaker_rest.is_multisite || 0 );
+	const isMainSite = !! Number( rsvpmaker_rest.is_main_site || 0 );
+	const recaptchaSharedFromMain = isMultisite && ! isMainSite && !! Number( rsvpmaker_rest.recaptcha_network_shared || 0 );
+	const recaptchaChildren = recaptchaSharedFromMain
+		? [ 'rsvp_captcha' ]
+		: [ 'rsvp_recaptcha_version', 'rsvp_recaptcha_site_key', 'rsvp_recaptcha_secret', 'rsvp_captcha' ];
+	if ( isMultisite && isMainSite ) {
+		recaptchaChildren.unshift( 'rsvp_recaptcha_network_share' );
+	}
+
 	const form = {
 		fields: [
 			{
@@ -865,7 +894,7 @@ const RsvpmakerSettings = () => {
 			{
 				id: 'options',
 				label: __( 'Options', 'rsvpmaker' ),
-				children: [ 'long_date','short_date','defaulthour','defaultmin','time_format','rsvp_form_title','update_rsvp','rsvp_instructions','rsvp_to', 'rsvp_max','report_security','rsvp_recaptcha_site_key','rsvp_recaptcha_secret','rsvp_captcha' ],
+				children: [ 'long_date','short_date','defaulthour','defaultmin','time_format','rsvp_form_title','update_rsvp','rsvp_instructions','rsvp_to', 'rsvp_max','report_security', ...recaptchaChildren ],
 				layout: { type: 'card', isOpened: true, withHeader: true },
 			},
 		],
@@ -966,7 +995,7 @@ const RsvpmakerSettings = () => {
 		],
 	};
 
-	const exclude = ['social_title_date','time_format', 'rsvp_form_title', 'update_rsvp','debug', 'long_date', 'short_date','rsvp_recaptcha_site_key', 'rsvp_recaptcha_secret', 'paypal_currency', 'currency_decimal', 'currency_thousands', 'payment_minimum'];
+	const exclude = ['social_title_date','time_format', 'rsvp_form_title', 'update_rsvp','debug', 'long_date', 'short_date','rsvp_recaptcha_network_share', 'rsvp_recaptcha_version', 'rsvp_recaptcha_site_key', 'rsvp_recaptcha_secret', 'paypal_currency', 'currency_decimal', 'currency_thousands', 'payment_minimum'];
 	const filterFields = [];
 	const filterChildren = [];
 	fields.forEach((field) => {
@@ -993,6 +1022,7 @@ const RsvpmakerSettings = () => {
 	return (
 		<VStack spacing={ 4 }>
 			<SettingsTitle />
+			{ recaptchaSharedFromMain && <p>{ __( 'reCAPTCHA is configured to be shared from the main site for this network. Local reCAPTCHA mode and key fields are hidden on this site.', 'rsvpmaker' ) }</p> }
 			<div id="floating-save" style={{  width: '60%', textAlign: 'left', padding: '5px', position: 'fixed', bottom: '50px', left: '200px', zIndex: 100, pointerEvents: 'none' }}>
 			<Notices />
 			<div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px', borderRadius: '5px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', pointerEvents: 'auto' }}>

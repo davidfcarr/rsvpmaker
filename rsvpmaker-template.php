@@ -1481,11 +1481,11 @@ function rsvpmaker_week( $index = 0, $context = '' ) {
 
 	if ( $context == 'rsvpmaker_strtotime' ) {
 
-		$weekarray = array( 'Varies', 'First', 'Second', 'Third', 'Fourth', 'Last', 'Every', 'Even', 'Odd' );
+		$weekarray = array( 'Varies', 'First', 'Second', 'Third', 'Fourth', 'Last', 'Every', 'Even', 'Odd', 'Fifth' );
 
 	} else {
 
-		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ), __( 'Even', 'rsvpmaker' ), __( 'Odd', 'rsvpmaker' ) );
+		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ), __( 'Even', 'rsvpmaker' ), __( 'Odd', 'rsvpmaker' ), __( 'Fifth', 'rsvpmaker' ) );
 
 	}
 
@@ -1574,7 +1574,6 @@ function rsvp_template_checkboxes( $t ) {
 		$check_schedule = [];
 
 		if ( empty($weeks) || $weeks[0] == 0 ) {
-
 			$schedule = __( 'Schedule Varies', 'rsvpmaker' );
 			$check_schedule['weeks'][] = 'Varies';
 		} else {
@@ -1829,7 +1828,6 @@ function rsvp_template_checkboxes( $t ) {
 
 		}
 
-		print_r($template);
 		$projected = rsvpmaker_get_projected( $template );
 
 		if ( $projected && is_array( $projected ) ) {

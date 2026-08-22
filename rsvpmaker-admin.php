@@ -1265,7 +1265,7 @@ function rsvpmaker_get_projected($template) {
     // Map word-based indexes to numbers, including our new Odd and Even targets
     $week_map = array(
         'varies' => 0, 'first' => 1, 'second' => 2, 'third' => 3, 
-        'fourth' => 4, 'last' => 5, 'every' => 6, 'odd' => 7, 'even' => 8
+        'fourth' => 4, 'last' => 5, 'every' => 6, 'odd' => 7, 'even' => 8, 'fifth' => 9
     );
 
     foreach ($weeks as $week) {
@@ -1339,28 +1339,39 @@ function rsvpmaker_get_projected($template) {
                     $loop_count++;
                 }
             } 
-            // --- CASE: MONTHLY ORDINAL WEEK (1st, 2nd, 3rd, 4th, Last) ---
+            // --- CASE: MONTHLY ORDINAL WEEK (1st, 2nd, 3rd, 4th, Last, Fifth) ---
             else {
                 $start_month_ts = $current_time;
                 
-                for ($i = 0; $i < 12; $i++) {
-                    $eval_time = rsvpmaker_strtotime("+$i month", $template['timezone'], $start_month_ts);
-                    $weektext = rsvpmaker_week($week_key, 'rsvpmaker_strtotime'); 
-                    $day_name = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime');
+	for ($i = 0; $i < 12; $i++) {
+			$eval_time = rsvpmaker_strtotime("+$i month", $template['timezone'], $start_month_ts);
+			$weektext = rsvpmaker_week($week_key); 
+			$day_name = rsvpmaker_day($dow_numeric, 'rsvpmaker_strtotime');
 
-                    $datetext = sprintf('%s %s of %s %s', $weektext, $day_name, rsvpmaker_date('F Y', $eval_time,$template['timezone']), $target_time);
-                    $ts = rsvpmaker_strtotime($datetext,$template['timezone']);
+			$target_month = rsvpmaker_date('F', $eval_time, $template['timezone']);
+			$target_year  = rsvpmaker_date('Y', $eval_time, $template['timezone']);
 
-                    if (!$ts) continue;
-                    if ($ts > $stopdate) break; 
+			$datetext = sprintf('%s %s of %s %s %s', $weektext, $day_name, $target_month, $target_year, $target_time);
+			$ts = rsvpmaker_strtotime($datetext, $template['timezone']);
 
-                    if ($ts >= $current_time) {
-                        $projected[$ts] = $ts;
-                    }
-                }
-            }
-        }
-    }
+			if (!$ts) continue;
+
+			// CRITICAL CHECK: Verify that the generated date stays in the expected month.
+			// If there is no 5th occurrence, strtotime may wrap over into the 1st week of the following month.
+			$calculated_month = rsvpmaker_date('F', $ts, $template['timezone']);
+			if ($calculated_month !== $target_month) {
+				continue; // Skip months that don't have a 5th occurrence of this weekday
+			}
+
+			if ($ts > $stopdate) break; 
+
+			if ($ts >= $current_time) {
+				$projected[$ts] = $ts;
+			}
+		}
+	} // --- END CASE: MONTHLY ORDINAL WEEK (1st, 2nd, 3rd, 4th, Last, Fifth) ---
+    } // end foreach $dows
+    } // end foreach $weeks
 
     if (empty($projected)) {
         return array();

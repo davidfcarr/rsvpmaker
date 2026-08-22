@@ -284,10 +284,7 @@ const RSVPEmailSidebarPlugin = function() {
 <div><h3>{__('Email Editor','rsvpmaker')}</h3><p>{__('Use the WordPress editor to compose the body of your message, with the post title as your subject line. View post will display your content in an email template, with a user interface for addressing options.','rsvpmaker')}</p>
 <p><a href="https://rsvpmaker.com/knowledge-base/using-rsvp-mailer/" target="_blank">Documentation</a></p>
 <p><strong>Design Options</strong></p>
-{rsvpmaker_rest.post_id == rsvpmaker_rest.default_email_template && <p>You are editing the default email template</p>}
-{rsvpmaker_rest.post_id != rsvpmaker_rest.default_email_template && <p>To change the styling of messages or add branding, <a href={rsvpmaker_rest.default_email_template}>edit the default template</a>.</p>}
-<p>Visit the <a href={rsvpmaker_rest.email_design_screen}>Email Design Templates screen</a> to create alternate templates or customize the email CSS.</p>
-
+<p>Visit the <a href={rsvpmaker_rest.email_design_screen}>Email Design Templates screen</a> to edit the default template for newsletters, the transactional template for notifications and confirmation messages, and customize the email CSS.</p>
 </div>
 );
 }

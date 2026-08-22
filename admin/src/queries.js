@@ -5,6 +5,19 @@ import apiClient from './http-common.js';
 import {useQuery, useMutation, useQueryClient} from 'react-query';
 import { useRsvpmakerRest } from "./useRsvpmakerRest.js";
 
+function syncEditedPostMeta(metaKey, metaValue) {
+    if(!metaKey)
+        return;
+    try {
+        const editorDispatch = wp?.data?.dispatch?.('core/editor');
+        if(editorDispatch?.editPost)
+            editorDispatch.editPost({ meta: { [metaKey]: metaValue } });
+    }
+    catch(err) {
+        console.log('Unable to sync editor meta',metaKey,err);
+    }
+}
+
 export function useOptions(tab = '') {
     const rsvpmaker_rest = useRsvpmakerRest();
     function fetchOptions(queryobj) {
@@ -102,6 +115,8 @@ export function useRSVPDateMutation(eventID) {
     return useMutation(updateDate, {
         onMutate: async (update) => {
             console.log('optimistic update event',update);
+            if(update?.metaKey)
+                syncEditedPostMeta(update.metaKey, update.metaValue);
             await queryClient.cancelQueries(['rsvp_event_date']);
             const previousValue = queryClient.getQueryData(['rsvp_event_date']);
             console.log('previousValue',previousValue);

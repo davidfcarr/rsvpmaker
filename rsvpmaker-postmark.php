@@ -8,13 +8,29 @@ use Postmark\Models\Suppressions\SuppressionChangeRequest;
 
 function get_rsvpmaker_postmark_options() {
     global $postmark_settings;
-    $postmark_settings = get_option('rsvpmaker_postmark',array('postmark_mode' => '','root' => false));
-    if($postmark_settings['postmark_mode'] == '' && is_multisite()) {
-        $postmark_settings = get_blog_option(1,'rsvpmaker_postmark');
-        if(empty($postmark_settings))
-            $postmark_settings = array('postmark_mode' => '','root' => false);
-        else
-            $postmark_settings['root'] = true;
+    $postmark_settings = get_option('rsvpmaker_postmark',array('postmark_mode' => '','root' => false, 'postmark_override_local' => 0));
+    $postmark_settings['root'] = false;
+    $postmark_settings['network_shared'] = false;
+    $postmark_settings['central_share_enabled'] = false;
+
+    if(is_multisite() && is_main_site()) {
+        $postmark_settings['central_share_enabled'] = !empty($postmark_settings['postmark_network_share']);
+    }
+
+    if(is_multisite() && !is_main_site()) {
+        $root_postmark_settings = get_blog_option(1,'rsvpmaker_postmark',array());
+        $postmark_settings['central_share_enabled'] = !empty($root_postmark_settings['postmark_network_share']);
+        $postmark_settings['postmark_override_local'] = !empty($postmark_settings['postmark_override_local']) ? 1 : 0;
+
+        if($postmark_settings['central_share_enabled'] && empty($postmark_settings['postmark_override_local'])) {
+            if(!empty($root_postmark_settings)) {
+                $postmark_settings = array_merge($postmark_settings, $root_postmark_settings);
+                $postmark_settings['root'] = true;
+                $postmark_settings['network_shared'] = true;
+                $postmark_settings['central_share_enabled'] = true;
+                $postmark_settings['postmark_override_local'] = 0;
+            }
+        }
     }
     if((!empty($postmark_settings['restricted']) && !empty($postmark_settings['enabled'])) && !in_array(get_current_blog_id(),$postmark_settings['enabled']))
         $postmark_settings['postmark_mode'] = '';//disable
@@ -271,6 +287,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(count($send_error)) {
         printf('Errors %d (see log)',count($send_error));
         foreach($send_error as $error) {
+            error_log('postmark send error '.var_export($error,true).' '.var_export($recipients,true).' '.var_export($mail,true));
             add_post_meta($post_id,'rsvpmail_postmark_error',$error);
         }
     }
@@ -343,6 +360,7 @@ function rsvpmaker_postmark_send($mail) {
     $mail['MessageStream'] = $postmark_settings['postmark_tx_slug'];
     $batch = rsvpmaker_postmark_batch($mail, $mail['to']);
     $result = rsvpmaker_postmark_batch_send($batch);
+    error_log('rsvpmaker_postmark_send result '.var_export($result,true));
     return $result;
 }
 
@@ -362,63 +380,6 @@ function rsvpmaker_postmark_incoming_list_signup($emailobj, $forwarders) {
     $result = rsvpmaker_guest_list_add($email, $first, $last, 'incoming_email_signup', false);
 }
 
-add_shortcode('rsvpmaker_valid_mailing_lists','rsvpmaker_valid_mailing_lists_shortcode');
-
-function rsvpmaker_valid_mailing_lists_shortcode($atts) {
-    global $current_user;
-    $emailObj = (object) array('Subject' => 'here is a prospective member','HtmlBody' => '<p>Test</p><p><a href="david@carrcommunications.com">david@carrcommunications.com</p>','TextBody' => '','From' => $current_user->user_email,'To' => '','Cc' => '','Bcc' => '','ReplyTo' => '');
-    $list_targets = rsvpmaker_valid_mailing_lists();
-    $output = '<h3>List targets</h3><ul>';
-    foreach($list_targets as $type => $emails) {
-        $output .= sprintf('<li>%s<ul>',$type);
-        foreach($emails as $index => $email) {
-            $output .= sprintf('<li>%s: %s</li>',$index,$email);
-        }
-        $output .= '</ul></li>';
-    }
-    $output .= '</ul>';
-    $test_emails = (!empty($atts['emails'])) ? explode(',',$atts['emails']) : ['dd@d207tm.org','pdq@d207tm.org','officers@d207tm.org','members@d207tm.org','d7backup@d207tm.org','d7backup-officers@d207tm.org','d7backup-zoom@d207tm.org','nonesuch@d207tm.org','david@carrcommunications.com','forwardto-1@d207tm.org','forwardto-chris@d207tm.org','op-info@toastmost.org'];
-    $from = $emailObj->From;
-
-    $flattened = rsvpmaker_all_flattened_forwarders();
-    $output .= '<h3>Test Emails</h3>';
-    foreach($test_emails as $email) {
-        $result = rsvpmaker_postmark_incoming_forwarder_parse($email, $list_targets);
-        $output .= sprintf('<p>%s = %s</p>',$email,var_export($result,true));
-        if('info' == $result['type']) {
-            $from = is_multisite() ? get_blog_option($result['blog_id'],'admin_email') : get_option('admin_email');
-            do_action('rsvpmaker_postmark_autoreply',$emailObj,$result['blog_id'],$from);
-            $output .= sprintf('<p>Autoreply action called for %s from %s %s</p>',$email,$from,htmlentities(var_export($emailObj,true)));
-        }
-        if('forwarder' == $result['type']) {
-            if(!empty($flattened[$email])) {
-                $output .= sprintf('<p>Flattened forwarder for %s = %s</p>',$email,var_export($flattened[$email],true));
-            }
-            else {
-                $output .= sprintf('<p>No flattened forwarder for %s</p>',$email);
-            }
-        }
-        elseif('forwardto' == $result['type']) {
-            $list = rsvpmaker_forward_to_user($result['forwarder_slug']);
-            $output .= sprintf('<p>Forwardto list for %s %s</p>',$email,var_export($list,true));
-        }
-        elseif('members' == $result['type']) {
-            $list = rsvpmaker_get_mailing_list_forwarders($result['blog_id'],$result['type'],$from);
-            $output .= sprintf('<p>Members list for %s = %d %s %s</p>',$email,$result['blog_id'],var_export($list,true),$from);
-        }
-        elseif('officers' == $result['type']) {
-            $list = rsvpmaker_get_mailing_list_forwarders($result['blog_id'],$result['type'],$from);
-            $output .= sprintf('<p>Officers list for %s = %d %s %s</p>',$email,$result['blog_id'],var_export($list,true),$from);
-        }
-        else {
-            $output .= sprintf('<p>No match for %s</p>',$email);
-        }
-    }
-
-    $output .= sprintf('<p>Flattened forwarders: %s</p>',var_export($flattened,true));
-
-    return $output;
-}
 
 function rsvpmaker_parse_domain($full_domain) {
     $parts = explode('.', $full_domain);
@@ -640,6 +601,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
             $from = is_multisite() ? get_blog_option($result['blog_id'],'admin_email') : get_option('admin_email');
             do_action('rsvpmaker_postmark_autoreply',$emailobj,$result['blog_id'],$from);
             error_log(sprintf('Autoreply action called for %s from %s %s',$email,$from,htmlentities(var_export($emailobj,true))));
+            $result['type'] = 'forwarder'; //continue processing as forwarder
         }
         if('forwarder' == $result['type']) {
             if(!empty($flattened[$email])) {
@@ -884,7 +846,7 @@ function rsvpmaker_postmark_batch_send($batch) {
             $sent[] = $response->to;
     }
     if(count($sent)) {
-        rsvpmaker_postmark_sent_log($sent,$batch[0]['Subject'],$hash,$batch[0]['Tag']);
+        rsvpmaker_postmark_sent_log($sent,$batch[0]['Subject'],$hash,isset($batch[0]['Tag']) ? $batch[0]['Tag'] : '');
         $output .= sprintf('Successful sends %d',count($sent));
         foreach($sent as $e) {
             if($post_id)

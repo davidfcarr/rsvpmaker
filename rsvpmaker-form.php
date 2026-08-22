@@ -1003,6 +1003,9 @@ const form = document.querySelector("#rsvpmaker_contact_form");
 console.log(form);
 
 async function sendData() {
+	if (window.rsvpmakerRecaptchaV3Refresh) {
+		await window.rsvpmakerRecaptchaV3Refresh();
+	}
   // Associate the FormData object with the form element
   const formData = new FormData(form);
   const contactUrl = "<?php echo esc_url( rest_url( 'rsvpmaker/v1/contact_form' ) ); ?>";

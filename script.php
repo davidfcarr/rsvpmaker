@@ -26,6 +26,10 @@ function rsvpmaker_rest_array() {
 	$postmark = get_rsvpmaker_postmark_options();
 	$default_incoming_nonce = wp_create_nonce('handle_incoming');
 	$domains = [];
+	$is_multisite = is_multisite();
+	$is_main_site = $is_multisite && is_main_site();
+	$network_options = $is_multisite ? get_blog_option( 1, 'RSVPMAKER_Options', array() ) : array();
+	$recaptcha_network_shared = ! empty( $network_options['rsvp_recaptcha_network_share'] );
     if(is_multisite()) {
        $multisite = get_current_blog_id();
     }
@@ -171,7 +175,13 @@ function rsvpmaker_rest_array() {
 		'default_incoming_nonce' => $default_incoming_nonce,
 		'postmark_mode' => $postmark['postmark_mode'],
 		'postmark_root' => isset($postmark['root']) ? $postmark['root'] : false,
+		'postmark_network_shared' => !empty($postmark['network_shared']) ? 1 : 0,
+		'postmark_central_share_enabled' => !empty($postmark['central_share_enabled']) ? 1 : 0,
+		'postmark_override_local' => !empty($postmark['postmark_override_local']) ? 1 : 0,
 		'multisite' => $multisite,
+		'is_multisite' => $is_multisite ? 1 : 0,
+		'is_main_site' => $is_main_site ? 1 : 0,
+		'recaptcha_network_shared' => $recaptcha_network_shared ? 1 : 0,
 		'domains' => $domains,
 		'projected_label' => $projected_label,
 		'projected_url' => $projected_url,

@@ -32,6 +32,9 @@ export default function TemplateControl (props) {
 			label="Fourth" 
 			metaKey="_sked_Fourth" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="weeknumber"><RSVPMetaToggle
+			label="Fifth" 
+			metaKey="_sked_Fifth" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
+			<p class="weeknumber"><RSVPMetaToggle
 			label="Last" 
 			metaKey="_sked_Last" unsetVariesOnSelect={true} eventdata={eventdata} /></p>
 			<p class="every"><RSVPMetaToggle

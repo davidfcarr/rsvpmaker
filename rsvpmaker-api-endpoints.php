@@ -2302,7 +2302,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 		$rsvpmeta = array("_rsvp_to", "_rsvp_instructions", "simple_price", "simple_price_label", "venue", "_sked_minutes", "_sked_stop", "_sked_duration", "_payment_gateway", "_rsvp_currency", "_rsvp_end_display", "_sked_start_time", "_sked_end");
 		$rsvpnumber = array("_rsvp_max", "_template_start_hour", "_template_start_minutes", "_sked_hour", "rsvp_tx_template", "_rsvp_deadline_daysbefore", "_rsvp_deadline_hours", "_rsvp_reg_daysbefore", "_rsvp_reg_hours","_rsvp_start", "_rsvp_deadline");
 		$rsvpbool = array("_rsvp_on","_rsvp_show_attendees", "_rsvp_count_party", "_add_timezone", "_convert_timezone", "_calendar_icons", "_rsvp_rsvpmaker_send_confirmation_email", "_rsvp_confirmation_after_payment", "_rsvp_confirmation_include_event", "_rsvp_count", "_rsvp_yesno", "_rsvp_captcha", "_rsvp_login_required", "_rsvp_form_show_date","rsvpautorenew");
-		$templatemeta = array("_sked_Varies", "_sked_First", "_sked_Second", "_sked_Third", "_sked_Fourth", "_sked_Last", "_sked_Every", "_sked_Even", "_sked_Odd", "_sked_Sunday", "_sked_Monday", "_sked_Tuesday", "_sked_Wednesday", "_sked_Thursday", "_sked_Friday", "_sked_Saturday", "rsvpautorenew");
+		$templatemeta = array("_sked_Varies", "_sked_First", "_sked_Second", "_sked_Third", "_sked_Fourth", "_sked_Last", "_sked_Every", "_sked_Even", "_sked_Odd", "_sked_Fifth", "_sked_Sunday", "_sked_Monday", "_sked_Tuesday", "_sked_Wednesday", "_sked_Thursday", "_sked_Friday", "_sked_Saturday", "rsvpautorenew");
 
 		$json = file_get_contents('php://input');
 		if(!empty($_POST) || !empty($json))
@@ -2442,7 +2442,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 				$meta[$key] = false;
 		}
 		if ('rsvpmaker_template' == $type) {
-			$specific_week_meta = array('_sked_First', '_sked_Second', '_sked_Third', '_sked_Fourth', '_sked_Last', '_sked_Every', '_sked_Even', '_sked_Odd');
+			$specific_week_meta = array('_sked_First', '_sked_Second', '_sked_Third', '_sked_Fourth', '_sked_Last', '_sked_Every', '_sked_Even', '_sked_Odd', '_sked_Fifth');
 			foreach($templatemeta as $key) {
 				if(empty($meta[$key]))
 					$meta[$key] = false;

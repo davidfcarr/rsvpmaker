@@ -182,12 +182,33 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 		},
 	*/
 	const restrictedValue = Number(postmarkOptions?.restricted) === 1 ? 1 : 0;
-	const formchildren = (rsvpmaker_rest.multisite == "1") ? ['postmark_mode', 'postmark_production_key', 'postmark_sandbox_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails','handle_incoming','restricted']
-	 : ['postmark_mode', 'postmark_production_key', 'postmark_sandbox_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails','handle_incoming'];
-	if(restrictedValue === 1 && rsvpmaker_rest.multisite == "1" && rsvpmaker_rest.domains && rsvpmaker_rest.domains.length > 0) {
-		formchildren.push('enabled');
-		formchildren.push('sandbox_only');
+	const isMultisite = !! Number( rsvpmaker_rest?.is_multisite || 0 );
+	const isMainSite = !! Number( rsvpmaker_rest?.is_main_site || 0 );
+	const centralShareEnabled = !! Number( rsvpmaker_rest?.postmark_central_share_enabled || 0 );
+	const postmarkNetworkShared = !! Number( rsvpmaker_rest?.postmark_network_shared || 0 );
+	const overrideLocal = Number( postmarkOptions?.postmark_override_local ) === 1;
+
+	const localPostmarkFields = ['postmark_mode', 'postmark_production_key', 'postmark_sandbox_key', 'postmark_tx_from', 'postmark_broadcast_from', 'postmark_tx_slug', 'postmark_broadcast_slug', 'postmark_load_alert_emails','handle_incoming'];
+	const formchildren = [];
+	if ( isMultisite && isMainSite ) {
+		formchildren.push('postmark_network_share');
+		formchildren.push(...localPostmarkFields);
+		formchildren.push('restricted');
+		if(restrictedValue === 1 && rsvpmaker_rest.domains && rsvpmaker_rest.domains.length > 0) {
+			formchildren.push('enabled');
+			formchildren.push('sandbox_only');
+		}
+	} else if ( isMultisite && !isMainSite ) {
+		if ( centralShareEnabled ) {
+			formchildren.push('postmark_override_local');
+		}
+		if ( !postmarkNetworkShared || overrideLocal ) {
+			formchildren.push(...localPostmarkFields);
+		}
+	} else {
+		formchildren.push(...localPostmarkFields);
 	}
+
 	const form = {
 		fields: [
 			{
@@ -199,6 +220,32 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 		],
 	};
 
+	if ( isMultisite && isMainSite ) {
+		fields.splice(1, 0, {
+			id: 'postmark_network_share',
+			label: __( 'Share Postmark Settings Across Network Sites', 'rsvpmaker' ),
+			type: 'number',
+			Edit: 'radio',
+			elements: [
+				{ label: __( 'No', 'rsvpmaker' ), value: 0 },
+				{ label: __( 'Yes', 'rsvpmaker' ), value: 1 },
+			],
+		});
+	}
+
+	if ( isMultisite && !isMainSite ) {
+		fields.splice(1, 0, {
+			id: 'postmark_override_local',
+			label: __( 'Override Centrally Shared Postmark Settings on This Site', 'rsvpmaker' ),
+			type: 'number',
+			Edit: 'radio',
+			elements: [
+				{ label: __( 'No', 'rsvpmaker' ), value: 0 },
+				{ label: __( 'Yes', 'rsvpmaker' ), value: 1 },
+			],
+		});
+	}
+
 	console.log('rsvpmaker_rest', rsvpmaker_rest);
 /*
 			<p>Multisite: {rsvpmaker_rest.multisite}</p>
@@ -209,7 +256,7 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 	return (
 		<VStack spacing={ 4 }>
 			<SettingsTitle />
-			{rsvpmaker_rest.multisite && rsvpmaker_rest.multisite > 1 && rsvpmaker_rest.postmark_root ? <p>{__( 'Note: By default, Postmark settings are shared across sites in a WordPress network. The root domain appears to already be set to: ', 'rsvpmaker' ) + rsvpmaker_rest.postmark_mode+'. '+__( 'Only set your credentials here if you want to override the root domain settings.', 'rsvpmaker' )}</p> : null}
+			{isMultisite && !isMainSite && postmarkNetworkShared ? <p>{__( 'Postmark has been configured centrally on the main site. There is no need to do anything here unless you choose to override these settings for this site.', 'rsvpmaker' )}</p> : null}
 			<Notices />
 			<DataForm
 				data={ postmarkOptions }
@@ -222,6 +269,12 @@ const MultiCheck = ( { value, onChange, field, data } ) => {
 					const normalizedEdits = { ...edits };
 					if ( Object.prototype.hasOwnProperty.call( normalizedEdits, 'restricted' ) ) {
 						normalizedEdits.restricted = Number( normalizedEdits.restricted ) === 1 ? 1 : 0;
+					}
+					if ( Object.prototype.hasOwnProperty.call( normalizedEdits, 'postmark_network_share' ) ) {
+						normalizedEdits.postmark_network_share = Number( normalizedEdits.postmark_network_share ) === 1 ? 1 : 0;
+					}
+					if ( Object.prototype.hasOwnProperty.call( normalizedEdits, 'postmark_override_local' ) ) {
+						normalizedEdits.postmark_override_local = Number( normalizedEdits.postmark_override_local ) === 1 ? 1 : 0;
 					}
 					setPostmarkOptions( ( current ) => ( {
 						...current,
