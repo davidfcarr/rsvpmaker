@@ -3954,7 +3954,7 @@ function rsvpmaker_get_related_documents( $post_id = 0, $query = '' ) {
 		$args[] = array(
 			'id'    => 'rsvpmaker_settings',
 			'title' => __( 'RSVPMaker Settings', 'rsvpmaker' ),
-			'href'  => admin_url( 'options-general.php?page=rsvpmaker-admin.php' ),
+			'href'  => admin_url( 'options-general.php?page=rsvpmaker_settings' ),
 			'meta'  => array( 'class' => 'edit-rsvpmaker-options' ),
 
 		);

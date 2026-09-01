@@ -14,59 +14,59 @@ msgstr ""
 "X-Poedit-Language: English\n"
 "X-Poedit-SearchPath-0: ..\n"
 
-#: ../rsvpmaker-admin.php:66
+#: ../rsvpmaker_settings:66
 msgid "You can check &quot;delete&quot; to remove dates or edit date parameters. Time must be specified in military format (13:00 for 1 p.m.). Leave duration blank, or enter it as a number of hours (&quot;allday&quot; in duration field means time of day will not be displayed)"
 msgstr "Możesz zaznaczyć &quot;delete&quot; by usunąć terminy lub je edytować. Godzina musi być zapisana w pełnym formacie (np. 13:00). Czas trwania pozostaw niewypełniony lub wstaw czas trwania w godzinach (&quot;cały dzień&quot; jako czas trwania oznacza, że wydarzenie jest całodniowe i nie będzie wyświetlany czas trwania)"
 
-#: ../rsvpmaker-admin.php:70
+#: ../rsvpmaker_settings:70
 msgid "Enter one or more dates. For an event starting at 1:30 p.m., you would select 1 p.m. (or 13: for 24-hour format) and then 30 minutes. Specifying the duration is optional."
 msgstr "Wstaw jeden lub więcej terminów. Jeżeli wydarzenie zaczyna się o 13:30 wstaw 13 (format 24 godzinny) oraz 30 w polu minuty. Określenie czasu trwania jest opcjonalne."
 
-#: ../rsvpmaker-admin.php:99
+#: ../rsvpmaker_settings:99
 msgid "Month:"
 msgstr "Miesiąc:"
 
-#: ../rsvpmaker-admin.php:115
+#: ../rsvpmaker_settings:115
 msgid "Day:"
 msgstr "Dzień:"
 
-#: ../rsvpmaker-admin.php:150
+#: ../rsvpmaker_settings:150
 #: ../rsvpmaker-plugabble.php:77
 #: ../rsvpmaker-plugabble.php:80
 #: ../rsvpmaker-plugabble.php:83
 msgid "Year"
 msgstr "Rok:"
 
-#: ../rsvpmaker-admin.php:159
-#: ../rsvpmaker-admin.php:1085
+#: ../rsvpmaker_settings:159
+#: ../rsvpmaker_settings:1085
 msgid "Hour:"
 msgstr "Godzina:"
 
-#: ../rsvpmaker-admin.php:163
-#: ../rsvpmaker-admin.php:1089
+#: ../rsvpmaker_settings:163
+#: ../rsvpmaker_settings:1089
 msgid "Minutes:"
 msgstr "Minuta"
 
-#: ../rsvpmaker-admin.php:167
-#: ../rsvpmaker-admin.php:1093
+#: ../rsvpmaker_settings:167
+#: ../rsvpmaker_settings:1093
 msgid "Duration"
 msgstr "Czas trwania"
 
-#: ../rsvpmaker-admin.php:168
-#: ../rsvpmaker-admin.php:1094
+#: ../rsvpmaker_settings:168
+#: ../rsvpmaker_settings:1094
 msgid "Not set (optional)"
 msgstr "Nie ustawionie (opcja)"
 
-#: ../rsvpmaker-admin.php:169
-#: ../rsvpmaker-admin.php:1095
+#: ../rsvpmaker_settings:169
+#: ../rsvpmaker_settings:1095
 msgid "All day/don't show time in headline"
 msgstr "Cały dzień/nie pokazuj w nagłówku"
 
-#: ../rsvpmaker-admin.php:191
+#: ../rsvpmaker_settings:191
 msgid "Event Dates, RSVP Options"
 msgstr "Daty wydarzeń, opcje zgłoszeń"
 
-#: ../rsvpmaker-admin.php:1236
+#: ../rsvpmaker_settings:1236
 msgid "Event Dates"
 msgstr "Data wydarzenia"
 

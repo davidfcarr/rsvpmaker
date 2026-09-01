@@ -267,23 +267,17 @@ function rsvpmaker_distinct( $distinct, $query = null ) {
 
 }
 
-
-
 function rsvpmaker_where( $where, $query = null ) {
+	global $rsvpmaker_atts, $startday, $datelimit;
 	if(strpos($where,'ID') || strpos($where,'post_name'))//request for single event
 		return $where;
 	if(!is_rsvpmaker_query($query))
 		return $where;
 
-	global $rsvpmaker_atts;
-
 	if ( (isset($_GET["rsvpsort"]) && 'past' == $_GET["rsvpsort"]) || (isset( $rsvpmaker_atts['past'] ) && $rsvpmaker_atts['past']) || (!empty($query->query_vars['eventOrder']) && $query->query_vars['eventOrder'] == 'past') )
 		return rsvpmaker_where_past($where);
 	if ( isset( $rsvpmaker_atts['afternow'] ) && $rsvpmaker_atts['afternow'] )
 		return rsvpmaker_where_afternow($where);		
-
-	global $startday;
-	global $datelimit;
 
 	if ( isset( $_REQUEST['cm'] ) ) {
 
@@ -338,7 +332,8 @@ function rsvpmaker_where( $where, $query = null ) {
 
 		return $where;
 
-	} else {
+	} 
+	else {
 		$curdate = rsvpmaker_date('Y-m-d');
 		$expire_after_end = ! empty( $query->query_vars['expireAfterEnd'] ) || ( isset( $rsvpmaker_atts['expireAfterEnd'] ) && $rsvpmaker_atts['expireAfterEnd'] );
 
@@ -468,7 +463,7 @@ function rsvpmaker_upcoming_query( $atts = array() ) {
 		$startday = $atts['startday'];
 	}
 
-	$limit = isset( $atts['limit'] ) ? $atts['limit'] : 10;
+	$limit = isset( $atts['limit'] ) ? $atts['limit'] : 20;
 
 	if ( isset( $atts['posts_per_page'] ) ) {
 
@@ -828,6 +823,10 @@ if(!empty($atts['featured_image']) && has_post_thumbnail()) {
 // get all of the dates for the month
 
 function rsvpmaker_calendar_where( $where ) {
+	global $post;
+
+	$parts = explode( 'AND ( ( rsvpdates.date', $where );
+	$where = $parts[0];
 
 	global $startday;
 
@@ -835,25 +834,14 @@ function rsvpmaker_calendar_where( $where ) {
 
 		$d = "'" . rsvp_url_date_query() . "'";
 
-	} elseif ( isset( $startday ) && $startday ) {
-
-		$t = rsvpmaker_strtotime( $startday );
-
-		$d = "'" . rsvpmaker_date( 'Y-m-d', $t ) . "'";
-
-	} elseif ( isset( $_GET['startday'] ) ) {
-
-		$t = rsvpmaker_strtotime( sanitize_text_field($_GET['startday']) );
-
-		$d = "'" . rsvpmaker_date( 'Y-m-d', $t ) . "'";
-
-	} else {
+	} 
+	else {
 		$d = "'" . rsvpmaker_date( 'Y-m' ) . "-01'";
 	}
 
-	// $d = ' CURDATE() ';
-
-	return $where . ' AND enddate > ' . $d . ' AND enddate < DATE_ADD(' . $d . ', INTERVAL 5 WEEK) ';
+	// $d = ' CURDATE() '; AND post_status=\'publish\' AND post_type=\'rsvpmaker\' 
+	$where .= ' AND enddate > ' . $d . ' AND enddate < DATE_ADD(' . $d . ', INTERVAL 5 WEEK) ';
+	return $where;
 
 }
 function rsvpmaker_calendar_clear( $g ) {
@@ -952,8 +940,8 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$backup     = $wp_query;
 
 	// removing groupby, which interferes with display of multi-day events
-
-	add_filter( 'posts_where', 'rsvpmaker_calendar_where', 101, 2 );
+	
+	add_filter( 'posts_where', 'rsvpmaker_calendar_where', 102, 2 );
 	add_filter( 'posts_groupby', 'rsvpmaker_calendar_clear' );
 	add_filter( 'posts_distinct', 'rsvpmaker_calendar_clear' );
 
@@ -978,8 +966,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	$testquery = $wp_query;
 	// clean up so this doesn't interfere with other operations
-
-	remove_filter( 'posts_where', 'rsvpmaker_calendar_where', 101, 2 );
+	remove_filter( 'posts_where', 'rsvpmaker_calendar_where', 102);
 
 	$eventarray = array();
 
@@ -1108,7 +1095,6 @@ function rsvpmaker_calendar( $atts = array() ) {
 	$next_link = '&gt; <a href="' . esc_attr( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a>';
 
 	$linktime     = $bom;
-	$current_link = '<a href="' . esc_attr( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a>';
 	$page_id      = ( isset( $_GET['page_id'] ) ) ? '<input type="hidden" name="page_id" value="' . (int) $_GET['page_id'] . '" />' : '';
 
 	// $Id: cal.php,v 1.47 2003/12/31 13:04:27 goba Exp $
@@ -1118,7 +1104,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	if ( ( $nav == 'top' ) || ( $nav == 'both' ) ) { // either it's top or both
 
-		$content .= '<div class="rsvpmaker_nav"><span class="navprev">' . $prev_link . '</span> ' . $current_link . ' <span class="navnext">' .
+		$content .= '<div class="rsvpmaker_nav"><span class="navprev">' . $prev_link . '</span> ' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . ' <span class="navnext">' .
 		$next_link . '</span></div>';
 	}
 
@@ -1271,7 +1257,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	if ( $nav != 'top' ) { // either it's bottom or both
 
-		$content .= '<div class="rsvpmaker_nav"><span class="navprev">' . $prev_link . '</span> ' . $current_link . ' <span class="navnext">' .
+		$content .= '<div class="rsvpmaker_nav"><span class="navprev">' . $prev_link . '</span> ' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . ' <span class="navnext">' .
 
 		'' . $next_link . '</span></div>';
 	}
@@ -3128,11 +3114,13 @@ function get_rsvpmaker_multiple_event_page() {
 add_shortcode('rsvpmaker_multi_event','rsvpmaker_multi_event');
 function rsvpmaker_multi_event($atts = array()) {
 	global $rsvp_options;
+	$eventcount = empty($atts['eventcount']) ? 4 : intval($atts['eventcount']);
 	if(empty($atts['discount_amount']) || empty($atts['coupon_code']) || empty($atts['full_price']))
 		return '<p>Error: you must specify a discount (percent or amount), the full price, and a coupon code</p>';
 	if(empty($atts['discount_method']))
 		$atts['discount_method'] = 'percent';
-	$price = ('percent' == $atts['discount_method']) ? ($atts['full_price'] - ($atts['full_price'] * ($atts['discount_amount'] / 100))) : ($atts['full_price'] - $atts['discount_amount']);
+	$starting_price = $price = $atts['full_price'] * $eventcount;
+	$price = ('percent' == $atts['discount_method']) ? ($price - ($price * ($atts['discount_amount'] / 100))) : ($price - $atts['discount_amount']);
 	$currency = ( empty( $rsvp_options['paypal_currency'] ) ) ? 'usd' : strtolower( $rsvp_options['paypal_currency'] );
 	if ( $currency == 'usd' ) {
 		$currency = '$';
@@ -3147,7 +3135,6 @@ function rsvpmaker_multi_event($atts = array()) {
 	$blanks_allowed = 10000000;
 	$page_id = get_rsvpmaker_multiple_event_page();
 	$future_events = rsvpmaker_get_future_events(20);//$atts);
-	$eventcount = empty($atts['eventcount']) ? 4 : intval($atts['eventcount']);
 	$futurecount = count($future_events);
 	if($futurecount < $eventcount)
 		return '<p>Offer expired</p>';
@@ -3162,7 +3149,7 @@ function rsvpmaker_multi_event($atts = array()) {
 		$options .= $option;
 		$default_option[] = $option;
 	}
-	printf('<p>Multi-event discount: %s%s per person, per event  (%s%s for %d). Full price: %s%s per person, per event</p>',$currency,number_format($price,2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']),$currency,number_format($price * $eventcount,2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']),$eventcount,$currency,number_format($atts['full_price'],2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']));
+	printf('<p>Multi-event discount: %s%s per person for %d events). Full price: %s%s per person.</p>',$currency,number_format($price,2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']),$eventcount, $currency,number_format($starting_price,2,$rsvp_options['currency_decimal'],$rsvp_options['currency_thousands']));
 	printf('<form id="rsvpform" method="post" action="%s">',get_permalink($page_id));
 	for($i = 0; $i < $futurecount; $i++) {
 		if($i < $eventcount) {
@@ -3177,7 +3164,7 @@ function rsvpmaker_multi_event($atts = array()) {
 	printf('<div id="more_rsvp_events"></div><p><a href="#rsvpform" id="rsvp_more_events_click">%s</a></p>',__('Show more choices','rsvpmaker'));
 	rsvpmaker_basic_form( $rsvp_options['rsvp_form'] );
 	printf('<input type="hidden" name="eventcount" value="%s" />',$eventcount);
-	printf('<input type="hidden" name="discount_price" value="%s" />',$price);
+	printf('<input type="hidden" name="discount_price" value="%s" />',$price / $eventcount);
 	printf('<input type="hidden" name="coupon_code" value="%s" /><input type="hidden" name="multievent_discount_amount" value="%s" /><input type="hidden" name="full_price" value="%s" />', $atts['coupon_code'],floatval($atts['discount_amount']),floatval($atts['full_price']));
 	printf('<input type="hidden" name="multievent_discount_method" value="%s" />',$atts['discount_method']);
 ?>

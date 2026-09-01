@@ -34,7 +34,7 @@ msgid ""
 "tracked according to a schedule such as \"First Monday\" or \"Every Friday\" "
 "at a specified time, and the software will calculate future dates according "
 "to that schedule and let you track them together. <a href=\"options-general."
-"php?page=rsvpmaker-admin.php\">Options</a>"
+"php?page=rsvpmaker_settings\">Options</a>"
 msgstr ""
 "Etkinlikleri planlayın, posta listenize davetiye gönderin ve RSVP'leri "
 "izleyin. Tarihleri ve RSVP seçeneklerini ayarlamak için ekstra seçeneklerle "
@@ -44,7 +44,7 @@ msgstr ""
 "gönderilebilir. Yinelenen etkinlikler belirli bir zamanda \"İlk Pazartesi\" "
 "veya \"Her Cuma\" gibi bir programa göre izlenebilir ve yazılım gelecekteki "
 "tarihleri bu programa göre hesaplar ve birlikte izlemenizi sağlar. <a href="
-"\"options-general.php?page=rsvpmaker-admin.php\">Seçenekler</a>"
+"\"options-general.php?page=rsvpmaker_settings\">Seçenekler</a>"
 
 #. Author of the plugin
 msgid "David F. Carr"
@@ -59,7 +59,7 @@ msgstr "http://www.carrcommunications.com"
 msgid "Create/update events from template"
 msgstr "Şablondan etkinlikler oluşturun/güncelleyin"
 
-#: gutenberg/src/init.php:189 rsvpmaker-admin.php:5068
+#: gutenberg/src/init.php:189 rsvpmaker_settings:5068
 #: rsvpmaker-plugabble.php:4184 rsvpmaker-plugabble.php:4780
 msgid "Edit Template"
 msgstr "Şablonu Düzenle"
@@ -80,191 +80,191 @@ msgstr "Form ayarlardan varsayılan"
 msgid "Form inherited from template"
 msgstr "Form şablondan devralınan"
 
-#: rsvpmaker-admin.php:245
+#: rsvpmaker_settings:245
 msgid "Month:"
 msgstr "Ay:"
 
-#: rsvpmaker-admin.php:257
+#: rsvpmaker_settings:257
 msgid "Day:"
 msgstr "Gün:"
 
-#: rsvpmaker-admin.php:261 rsvpmaker-plugabble.php:4415
+#: rsvpmaker_settings:261 rsvpmaker-plugabble.php:4415
 msgid "Not Set"
 msgstr "Ayarlanmamış"
 
-#: rsvpmaker-admin.php:271 rsvpmaker-admin.php:1508 rsvpmaker-admin.php:1814
+#: rsvpmaker_settings:271 rsvpmaker_settings:1508 rsvpmaker_settings:1814
 #: rsvpmaker-plugabble.php:563 rsvpmaker-plugabble.php:566
 #: rsvpmaker-plugabble.php:574 rsvpmaker-plugabble.php:4334
 #: rsvpmaker-plugabble.php:4448
 msgid "Year"
 msgstr "Yıl"
 
-#: rsvpmaker-admin.php:288 rsvpmaker-admin.php:1826
+#: rsvpmaker_settings:288 rsvpmaker_settings:1826
 msgid "Hour:"
 msgstr "Saat:"
 
-#: rsvpmaker-admin.php:308 rsvpmaker-admin.php:1830
+#: rsvpmaker_settings:308 rsvpmaker_settings:1830
 msgid "Minutes:"
 msgstr "Dakika:"
 
-#: rsvpmaker-admin.php:440
+#: rsvpmaker_settings:440
 msgid "Administrator"
 msgstr "Yönetici"
 
-#: rsvpmaker-admin.php:441
+#: rsvpmaker_settings:441
 msgid "Editor"
 msgstr "Editör"
 
-#: rsvpmaker-admin.php:442
+#: rsvpmaker_settings:442
 msgid "Author"
 msgstr "Yazar"
 
-#: rsvpmaker-admin.php:443
+#: rsvpmaker_settings:443
 msgid "Contributor"
 msgstr "Katkıda bulunan"
 
-#: rsvpmaker-admin.php:547
+#: rsvpmaker_settings:547
 msgid "Plugin settings saved - payments."
 msgstr "Eklenti ayarları kaydedildi - ödemeler."
 
-#: rsvpmaker-admin.php:555
+#: rsvpmaker_settings:555
 msgid "Plugin settings saved - email server."
 msgstr "Eklenti ayarları kaydedildi - e-posta sunucusu."
 
-#: rsvpmaker-admin.php:564
+#: rsvpmaker_settings:564
 msgid "Plugin settings saved - security."
 msgstr "Eklenti ayarları kaydedildi - güvenlik."
 
-#: rsvpmaker-admin.php:645
+#: rsvpmaker_settings:645
 msgid "Timezone set to"
 msgstr "Saat dilimi şuna ayarlandı"
 
-#: rsvpmaker-admin.php:653
+#: rsvpmaker_settings:653
 msgid "Calendar Settings"
 msgstr "Takvim Ayarları"
 
-#: rsvpmaker-admin.php:654
+#: rsvpmaker_settings:654
 msgid "Security"
 msgstr "Güvenlik"
 
-#: rsvpmaker-admin.php:655
+#: rsvpmaker_settings:655
 msgid "Payments"
 msgstr "Ödemeler"
 
-#: rsvpmaker-admin.php:656
+#: rsvpmaker_settings:656
 msgid "Email Server"
 msgstr "E-posta Sunucusu"
 
-#: rsvpmaker-admin.php:657
+#: rsvpmaker_settings:657
 msgid "Mailing List"
 msgstr "E-posta Listesi"
 
-#: rsvpmaker-admin.php:658 rsvpmaker-admin.php:1197
+#: rsvpmaker_settings:658 rsvpmaker_settings:1197
 #: rsvpmaker-group-email.php:23 rsvpmaker-group-email.php:24
 msgid "Group Email"
 msgstr "Grup E-posta"
 
-#: rsvpmaker-admin.php:673
+#: rsvpmaker_settings:673
 msgid "Calendar Options"
 msgstr "Takvim Seçenerkleri"
 
-#: rsvpmaker-admin.php:677
+#: rsvpmaker_settings:677
 msgid "Note: This site also implements custom code in"
 msgstr "Not: Bu site aynı zamanda özel kod uygulamaktadır"
 
-#: rsvpmaker-admin.php:690
+#: rsvpmaker_settings:690
 msgid "Default Content for Events (such as standard meeting location)"
 msgstr "Etkinlikler için Varsayılan İçerik (toplantı yeri gibi)"
 
-#: rsvpmaker-admin.php:693 rsvpmaker-admin.php:1514 rsvpmaker-admin.php:1693
+#: rsvpmaker_settings:693 rsvpmaker_settings:1514 rsvpmaker_settings:1693
 #: rsvpmaker-plugabble.php:287
 msgid "Hour"
 msgstr "Saat"
 
-#: rsvpmaker-admin.php:697 rsvpmaker-admin.php:1541 rsvpmaker-admin.php:1697
+#: rsvpmaker_settings:697 rsvpmaker_settings:1541 rsvpmaker_settings:1697
 #: rsvpmaker-plugabble.php:310
 msgid "Minutes"
 msgstr "Dakika"
 
-#: rsvpmaker-admin.php:701
+#: rsvpmaker_settings:701
 msgid "See also"
 msgstr "Ayrıca bakınız"
 
-#: rsvpmaker-admin.php:701 rsvpmaker-admin.php:925 rsvpmaker-admin.php:2010
-#: rsvpmaker-admin.php:4462 rsvpmaker-plugabble.php:3856
+#: rsvpmaker_settings:701 rsvpmaker_settings:925 rsvpmaker_settings:2010
+#: rsvpmaker_settings:4462 rsvpmaker-plugabble.php:3856
 msgid "Event Templates"
 msgstr "Etkinlik Şablonları"
 
-#: rsvpmaker-admin.php:701
+#: rsvpmaker_settings:701
 msgid "for events held an a recurring schedule."
 msgstr "yinelenen bir programa sahip etkinlikler için."
 
-#: rsvpmaker-admin.php:702
+#: rsvpmaker_settings:702
 msgid "RSVP TO"
 msgstr "LCV İÇİN"
 
-#: rsvpmaker-admin.php:703
+#: rsvpmaker_settings:703
 msgid "Use this address"
 msgstr "Bu adresi kullan"
 
-#: rsvpmaker-admin.php:705
+#: rsvpmaker_settings:705
 msgid "Use email of current user (event author)"
 msgstr "Mevcut kullanıcının e-postasını kullan (etkinlik yazarı)"
 
-#: rsvpmaker-admin.php:708
+#: rsvpmaker_settings:708
 msgid "RSVP On"
 msgstr "LCV Açık"
 
-#: rsvpmaker-admin.php:709 rsvpmaker-admin.php:711 rsvpmaker-admin.php:722
-#: rsvpmaker-admin.php:725 rsvpmaker-admin.php:728 rsvpmaker-admin.php:731
+#: rsvpmaker_settings:709 rsvpmaker_settings:711 rsvpmaker_settings:722
+#: rsvpmaker_settings:725 rsvpmaker_settings:728 rsvpmaker_settings:731
 msgid "check to turn on by default"
 msgstr "varsayılan olarak açmak için işaretleyin"
 
-#: rsvpmaker-admin.php:711
+#: rsvpmaker_settings:711
 msgid "RSVP CAPTCHA On"
 msgstr "LCV CAPTCHA Açık"
 
-#: rsvpmaker-admin.php:722
+#: rsvpmaker_settings:722
 msgid "Login Required to RSVP"
 msgstr "LCV için Giriş Gerekiyor"
 
-#: rsvpmaker-admin.php:725
+#: rsvpmaker_settings:725
 msgid "RSVPs Attendees List Public"
 msgstr "LCV Katılımcılar Listesi Herkese Açık"
 
-#: rsvpmaker-admin.php:728 rsvpmaker-plugabble.php:582
+#: rsvpmaker_settings:728 rsvpmaker-plugabble.php:582
 #: gutenberg/src/block/rsvpmaker-sidebar-extra.js:216
 msgid "Show RSVP Count"
 msgstr "LCV Sayısını Göster"
 
-#: rsvpmaker-admin.php:731
+#: rsvpmaker_settings:731
 msgid "Show RSVP Yes/No Radio Buttons"
 msgstr "LCV Evet / Hayır Düğmelerini Göster"
 
-#: rsvpmaker-admin.php:734 rsvpmaker-admin.php:3871
+#: rsvpmaker_settings:734 rsvpmaker_settings:3871
 msgid "Show Add to Google / Download to Outlook (iCal) icons"
 msgstr "Google’a Ekle / Outlook (iCal) İndir ikonlarını göster"
 
-#: rsvpmaker-admin.php:737 rsvpmaker-admin.php:3882
+#: rsvpmaker_settings:737 rsvpmaker_settings:3882
 msgid "Show timezone conversion button next to calendar icons"
 msgstr "Takvim simgelerinin yanında saat dilimi dönüştürme düğmesini göster"
 
-#: rsvpmaker-admin.php:740 rsvpmaker-admin.php:3878
+#: rsvpmaker_settings:740 rsvpmaker_settings:3878
 msgid "Display timezone code as part of date/time"
 msgstr "Saat dilimi kodunu tarih / saatin bir parçası olarak göster"
 
-#: rsvpmaker-admin.php:743
+#: rsvpmaker_settings:743
 msgid ""
 "Include date with title shown on Facebook/Twitter previews (og:title and "
 "twitter:title metatags)"
 msgstr ""
 "Facebook / Twitter önizlemelerinde gösterilen başlık ve tarihi dahil et"
 
-#: rsvpmaker-admin.php:746
+#: rsvpmaker_settings:746
 msgid "RSVP Form Shows Members Not Responding"
 msgstr "LCV Formu Yanıt Vermeyen Üyeleri Gösteriyor"
 
-#: rsvpmaker-admin.php:746
+#: rsvpmaker_settings:746
 msgid ""
 "if members log in to RSVP, this shows user accounts NOT associated with an "
 "RSVP (tracking WordPress user IDs)"
@@ -272,30 +272,30 @@ msgstr ""
 "üyeler RSVP’ye giriş yaparsa, bu bir RSVP ile ilişkili OLMAYAN kullanıcı "
 "hesaplarını gösterir (WordPress kullanıcı kimliklerini izleme)"
 
-#: rsvpmaker-admin.php:749
+#: rsvpmaker_settings:749
 msgid "Instructions for Form"
 msgstr "Form Talimatları"
 
-#: rsvpmaker-admin.php:752 rsvpmaker-plugabble.php:394
+#: rsvpmaker_settings:752 rsvpmaker-plugabble.php:394
 msgid "Confirmation Message"
 msgstr "Onay Mesajı"
 
-#: rsvpmaker-admin.php:757 rsvpmaker-admin.php:780 rsvpmaker-admin.php:2771
-#: rsvpmaker-admin.php:2923 rsvpmaker-email.php:668 rsvpmaker-email.php:1732
+#: rsvpmaker_settings:757 rsvpmaker_settings:780 rsvpmaker_settings:2771
+#: rsvpmaker_settings:2923 rsvpmaker-email.php:668 rsvpmaker-email.php:1732
 #: rsvpmaker-email.php:2657 rsvpmaker-plugabble.php:2941
 #: rsvpmaker-plugabble.php:4240 rsvpmaker-plugabble.php:4806
 msgid "Edit"
 msgstr "Düzenle"
 
-#: rsvpmaker-admin.php:760 rsvpmaker-plugabble.php:519
+#: rsvpmaker_settings:760 rsvpmaker-plugabble.php:519
 msgid "Send confirmation emails"
 msgstr "Onay e-postalarını gönder"
 
-#: rsvpmaker-admin.php:760 rsvpmaker-plugabble.php:520
+#: rsvpmaker_settings:760 rsvpmaker-plugabble.php:520
 msgid "Include event listing with confirmation and reminders"
 msgstr "Onay ve hatırlatıcılarla etkinlik listesini dahil et"
 
-#: rsvpmaker-admin.php:772 rsvpmaker-admin.php:773 rsvpmaker-admin.php:2269
+#: rsvpmaker_settings:772 rsvpmaker_settings:773 rsvpmaker_settings:2269
 #: rsvpmaker-plugabble.php:2079 rsvpmaker-plugabble.php:2099
 #: rsvpmaker-plugabble.php:2193 rsvpmaker-plugabble.php:2307
 #: rsvpmaker-plugabble.php:2616 rsvpmaker-plugabble.php:2756
@@ -306,7 +306,7 @@ msgstr "Onay ve hatırlatıcılarla etkinlik listesini dahil et"
 msgid "Yes"
 msgstr "Evet"
 
-#: rsvpmaker-admin.php:772 rsvpmaker-admin.php:773 rsvpmaker-admin.php:2269
+#: rsvpmaker_settings:772 rsvpmaker_settings:773 rsvpmaker_settings:2269
 #: rsvpmaker-plugabble.php:2099 rsvpmaker-plugabble.php:2193
 #: rsvpmaker-plugabble.php:2307 rsvpmaker-plugabble.php:2616
 #: rsvpmaker-plugabble.php:2979 gutenberg/src/block/block.js:625
@@ -316,38 +316,38 @@ msgstr "Evet"
 msgid "No"
 msgstr "Hayır"
 
-#: rsvpmaker-admin.php:778
+#: rsvpmaker_settings:778
 msgid "Fields"
 msgstr "Alanlar"
 
-#: rsvpmaker-admin.php:778 rsvpmaker-plugabble.php:1520
+#: rsvpmaker_settings:778 rsvpmaker-plugabble.php:1520
 #: rsvpmaker-plugabble.php:2174
 msgid "Guests"
 msgstr "Misafirler"
 
-#: rsvpmaker-admin.php:778
+#: rsvpmaker_settings:778
 msgid "Note field"
 msgstr "Not alanı"
 
-#: rsvpmaker-admin.php:781
+#: rsvpmaker_settings:781
 msgid "Reset Form to Default"
 msgstr "Formu Varsayılana Sıfırla"
 
-#: rsvpmaker-admin.php:786 rsvpmaker-plugabble.php:611
+#: rsvpmaker_settings:786 rsvpmaker-plugabble.php:611
 #: rsvpmaker-plugabble.php:643
 #: gutenberg/src/block/rsvpmaker-sidebar-extra.js:260
 msgid "RSVP Form"
 msgstr "LCV Formu"
 
-#: rsvpmaker-admin.php:786
+#: rsvpmaker_settings:786
 msgid "Enlarge"
 msgstr "Büyüt"
 
-#: rsvpmaker-admin.php:788
+#: rsvpmaker_settings:788
 msgid "Reset to default"
 msgstr "Varsayılana sıfırla"
 
-#: rsvpmaker-admin.php:789
+#: rsvpmaker_settings:789
 msgid ""
 "This is a customizable template for the RSVP form, introduced as part of the "
 "Aug. 2012 update. With the exception of the yes/no radio buttons and the "
@@ -375,59 +375,59 @@ msgstr ""
 "görünmesini istemiyorsanız, bunu kaldırabilirsiniz. Sağladığınız form kodu, "
 "CSS kimliği ile bir form etiketi içine sarılacaktır"
 
-#: rsvpmaker-admin.php:801
+#: rsvpmaker_settings:801
 msgid "RSVP Link"
 msgstr "LCV Link"
 
-#: rsvpmaker-admin.php:806
+#: rsvpmaker_settings:806
 msgid "RSVP Form Title"
 msgstr "LCV Form Başlığı"
 
-#: rsvpmaker-admin.php:809
+#: rsvpmaker_settings:809
 msgid "Privacy Consent"
 msgstr "Gizlilik Onayı"
 
-#: rsvpmaker-admin.php:818
+#: rsvpmaker_settings:818
 msgid "No - Add checkbox?"
 msgstr "Hayır - Onay kutusu eklensin mi?"
 
-#: rsvpmaker-admin.php:823 rsvpmaker-admin.php:2272
+#: rsvpmaker_settings:823 rsvpmaker_settings:2272
 msgid "First, you must register a privacy page with WordPress"
 msgstr "Öncelikle, WordPress ile bir gizlilik sayfası kaydetmelisiniz"
 
-#: rsvpmaker-admin.php:827
+#: rsvpmaker_settings:827
 msgid "Date Format (long)"
 msgstr "Tarih Formatı (uzun)"
 
-#: rsvpmaker-admin.php:830
+#: rsvpmaker_settings:830
 msgid "Date Format (short)"
 msgstr "Tarih Formatı (kısa)"
 
-#: rsvpmaker-admin.php:841
+#: rsvpmaker_settings:841
 msgid "Time Format"
 msgstr "Zaman Formatı"
 
-#: rsvpmaker-admin.php:850
+#: rsvpmaker_settings:850
 msgid "Event Page"
 msgstr "Etkinlik Sayfası"
 
-#: rsvpmaker-admin.php:853
+#: rsvpmaker_settings:853
 msgid "Custom CSS"
 msgstr "Özel CSS"
 
-#: rsvpmaker-admin.php:861
+#: rsvpmaker_settings:861
 msgid "Error: CSS not found"
 msgstr "Hata: CSS bulunamadı"
 
-#: rsvpmaker-admin.php:864 rsvpmaker-admin.php:1089
+#: rsvpmaker_settings:864 rsvpmaker_settings:1089
 msgid "OK"
 msgstr "Tamam"
 
-#: rsvpmaker-admin.php:871
+#: rsvpmaker_settings:871
 msgid "Allows you to override the standard styles from"
 msgstr "Standart stilleri geçersiz kılmanıza izin verir"
 
-#: rsvpmaker-admin.php:872
+#: rsvpmaker_settings:872
 msgid ""
 "Probably a better option: use the Customize utility built into WordPress to "
 "override the defaults"
@@ -436,42 +436,42 @@ msgstr ""
 "WordPress’te yerleşik olarak bulunan Özelleştirme yardımcı programını "
 "kullanın"
 
-#: rsvpmaker-admin.php:884
+#: rsvpmaker_settings:884
 msgid ""
 "Template from your theme to be used in the absence of a single-rsvpmaker.php "
 "file."
 msgstr ""
 "Bir single-rsvpmaker.php dosyası yokluğunda kullanılacak temanızdaki şablon."
 
-#: rsvpmaker-admin.php:887 rsvpmaker-email.php:1732
+#: rsvpmaker_settings:887 rsvpmaker-email.php:1732
 msgid "Dashboard"
 msgstr "Kontrol Paneli"
 
-#: rsvpmaker-admin.php:889
+#: rsvpmaker_settings:889
 msgid "No Widget"
 msgstr "Widget Yok"
 
-#: rsvpmaker-admin.php:890
+#: rsvpmaker_settings:890
 msgid "Show Widget"
 msgstr "Widget Göster"
 
-#: rsvpmaker-admin.php:891
+#: rsvpmaker_settings:891
 msgid "Show Widget on Top"
 msgstr "Widget Yukarıda Göster"
 
-#: rsvpmaker-admin.php:893 rsvpmaker.php:126
+#: rsvpmaker_settings:893 rsvpmaker.php:126
 msgid "Note"
 msgstr "Not"
 
-#: rsvpmaker-admin.php:897
+#: rsvpmaker_settings:897
 msgid "Troubleshooting and Logging"
 msgstr "Sorun Giderme ve Günlük Kaydı"
 
-#: rsvpmaker-admin.php:898
+#: rsvpmaker_settings:898
 msgid "Tweak Permalinks"
 msgstr "Kalıcı Bağlantıları Ayarla"
 
-#: rsvpmaker-admin.php:898
+#: rsvpmaker_settings:898
 msgid ""
 "Check here if you are getting &quot;page not found&quot; errors for event "
 "content (should not be necessary for most users)."
@@ -479,7 +479,7 @@ msgstr ""
 "Etkinlik içeriği için &quot; Sayfa bulunamadı &quot; hatalar (çoğu kullanıcı "
 "için gerekli değildir) alıyorsanız burayı işaretleyin."
 
-#: rsvpmaker-admin.php:900
+#: rsvpmaker_settings:900
 msgid ""
 "Debug and log. Log messages will be saved in the uploads directory with file "
 "names in the pattern rsvpmaker_log_2018-01-01.txt"
@@ -487,94 +487,94 @@ msgstr ""
 "Hata ayıklayıcı ve günlük. Günlük mesajları, rsvpmaker_log_2018-01-01.txt "
 "dosya adı kalıbıyla uploads/yüklenenler dizinine kaydedilecektir"
 
-#: rsvpmaker-admin.php:902
+#: rsvpmaker_settings:902
 msgid "Log email"
 msgstr "Günlük e-posta"
 
-#: rsvpmaker-admin.php:904 rsvpmaker-admin.php:945 rsvpmaker-admin.php:1117
-#: rsvpmaker-admin.php:1184 rsvpmaker-email.php:672 rsvpmaker-plugabble.php:883
+#: rsvpmaker_settings:904 rsvpmaker_settings:945 rsvpmaker_settings:1117
+#: rsvpmaker_settings:1184 rsvpmaker-email.php:672 rsvpmaker-plugabble.php:883
 #: rsvpmaker-plugabble.php:4248
 msgid "Update"
 msgstr "Güncelle"
 
-#: rsvpmaker-admin.php:907
+#: rsvpmaker_settings:907
 msgid "RSVP Reminders scheduled for"
 msgstr "LCV Hatırlatıcısı şu zamana programlandı"
 
-#: rsvpmaker-admin.php:908
+#: rsvpmaker_settings:908
 msgid "Set new time"
 msgstr "Yeni zamanı ayarla"
 
-#: rsvpmaker-admin.php:910
+#: rsvpmaker_settings:910
 msgid "Set"
 msgstr "Ayarla"
 
-#: rsvpmaker-admin.php:922
+#: rsvpmaker_settings:922
 msgid "Menu Security"
 msgstr "Menü Güvenliği"
 
-#: rsvpmaker-admin.php:924 rsvpmaker-admin.php:2018
+#: rsvpmaker_settings:924 rsvpmaker_settings:2018
 #: rsvpmaker-plugabble.php:2523
 msgid "RSVP Report"
 msgstr "LCV Raporu"
 
-#: rsvpmaker-admin.php:926 rsvpmaker-admin.php:1623 rsvpmaker-admin.php:2014
+#: rsvpmaker_settings:926 rsvpmaker_settings:1623 rsvpmaker_settings:2014
 msgid "Recurring Event"
 msgstr "Tekrarlayan Etkinlik"
 
-#: rsvpmaker-admin.php:927 rsvpmaker-admin.php:1436 rsvpmaker-admin.php:2016
+#: rsvpmaker_settings:927 rsvpmaker_settings:1436 rsvpmaker_settings:2016
 msgid "Multiple Events"
 msgstr "Çoklu Etkinlikler"
 
-#: rsvpmaker-admin.php:928 gutenberg/src/block/rsvpmaker-sidebar.js:52
+#: rsvpmaker_settings:928 gutenberg/src/block/rsvpmaker-sidebar.js:52
 msgid "Documentation"
 msgstr "Dokümantasyon"
 
-#: rsvpmaker-admin.php:930
+#: rsvpmaker_settings:930
 msgid ""
 "Security level required to access custom menus (RSVP Report, Documentation)"
 msgstr ""
 "Özel menülere erişmek için gereken güvenlik seviyesi (LCV Raporu, "
 "Dokümantasyon)"
 
-#: rsvpmaker-admin.php:931
+#: rsvpmaker_settings:931
 msgid "Additional Editors / Co-Authors"
 msgstr "Ek Editörler / Ortak Yazarlar"
 
-#: rsvpmaker-admin.php:932 rsvpmaker-plugabble.php:12
+#: rsvpmaker_settings:932 rsvpmaker-plugabble.php:12
 msgid "Additional Editors"
 msgstr "Ek Editörler"
 
-#: rsvpmaker-admin.php:932
+#: rsvpmaker_settings:932
 msgid ""
 "Allow users to share editing rights for event templates and related events."
 msgstr ""
 "Kullanıcıların, etkinlik şablonları ve ilgili etkinlikler için düzenleme "
 "haklarını paylaşmasına izin ver."
 
-#: rsvpmaker-admin.php:964
+#: rsvpmaker_settings:964
 msgid "Preferred Payment Gateway"
 msgstr "Tercih Edilen Ödeme Ağ Geçidi"
 
-#: rsvpmaker-admin.php:966
+#: rsvpmaker_settings:966
 msgid ""
 "If you have set up more than one, specify the one to be used by default."
 msgstr ""
 "Birden fazla kurduysanız, varsayılan olarak kullanılacak olanı belirtin."
 
-#: rsvpmaker-admin.php:967
+#: rsvpmaker_settings:967
 msgid "Track RSVP as &quot;invoice&quot; number"
 msgstr "LCV’yi &quot; fatura &quot; numara olarak takip et"
 
-#: rsvpmaker-admin.php:971
+#: rsvpmaker_settings:971
 msgid "Must be enabled for RSVPMaker to track payments"
 msgstr "RSVPMaker’ın ödemeleri takip etmesi için etkinleştirilmelidir"
 
-#: rsvpmaker-admin.php:972
+#: rsvpmaker_settings:972
 msgid "Send Payment Reminder"
 msgstr "Ödeme Hatırlatıcısı Gönder"
 
-#: rsvpmaker-admin.php:976
+#: rsvpmaker_settings:976
 msgid ""
 "If someone RSVPs but does not pay, send an email reminder that their "
 "registration is not complete without payment."
@@ -582,44 +582,44 @@ msgstr ""
 "Birisi LCV verir ancak ödeme yapmazsa, kayıtlarının ödeme yapılmadan "
 "tamamlanmadığını hatırlatan bir e-posta gönderin."
 
-#: rsvpmaker-admin.php:978
+#: rsvpmaker_settings:978
 msgid "Payment Currency"
 msgstr "Ödeme Para Birimi"
 
-#: rsvpmaker-admin.php:990
+#: rsvpmaker_settings:990
 msgid "Keys may be obtained from"
 msgstr "Anahtarlar şuradan edinilebilir"
 
-#: rsvpmaker-admin.php:999 rsvpmaker-admin.php:1038
+#: rsvpmaker_settings:999 rsvpmaker_settings:1038
 msgid "Production keys set"
 msgstr "Üretim anahtarları seti"
 
-#: rsvpmaker-admin.php:999 rsvpmaker-admin.php:1014 rsvpmaker-admin.php:1038
-#: rsvpmaker-admin.php:1053
+#: rsvpmaker_settings:999 rsvpmaker_settings:1014 rsvpmaker_settings:1038
+#: rsvpmaker_settings:1053
 msgid "Reset"
 msgstr "Sıfırla"
 
-#: rsvpmaker-admin.php:1014 rsvpmaker-admin.php:1053
+#: rsvpmaker_settings:1014 rsvpmaker_settings:1053
 msgid "Sandbox keys set"
 msgstr "Test anahtarları seti"
 
-#: rsvpmaker-admin.php:1072
+#: rsvpmaker_settings:1072
 msgid "WP Simple Pay Lite for Stripe plugin detected"
 msgstr "WP Simple Pay Lite for Stripe eklentisi algılandı"
 
-#: rsvpmaker-admin.php:1080
+#: rsvpmaker_settings:1080
 msgid "PayPal Configuration File"
 msgstr "PayPal Yapılandırma Dosyası"
 
-#: rsvpmaker-admin.php:1082
+#: rsvpmaker_settings:1082
 msgid "PayPal Setup"
 msgstr "PayPal Kurulumu"
 
-#: rsvpmaker-admin.php:1092
+#: rsvpmaker_settings:1092
 msgid "error: file not found"
 msgstr "hata: dosya bulunamadı"
 
-#: rsvpmaker-admin.php:1095
+#: rsvpmaker_settings:1095
 msgid ""
 "The PayPal setup button will help you create a configuration file containing "
 "your API credentials. See documentation."
@@ -628,19 +628,19 @@ msgstr ""
 "dosyası oluşturmanıza yardımcı olacaktır. Daha fazlası için dokümantasyona "
 "bakın."
 
-#: rsvpmaker-admin.php:1098
+#: rsvpmaker_settings:1098
 msgid "User"
 msgstr "Kullanıcı"
 
-#: rsvpmaker-admin.php:1099 rsvpmaker-admin.php:1329
+#: rsvpmaker_settings:1099 rsvpmaker_settings:1329
 msgid "Password"
 msgstr "Şifre"
 
-#: rsvpmaker-admin.php:1100
+#: rsvpmaker_settings:1100
 msgid "Signature"
 msgstr "İmza"
 
-#: rsvpmaker-admin.php:1105
+#: rsvpmaker_settings:1105
 msgid ""
 "Developers also have the option of hooking into the "
 "\"rsvpmaker_cash_or_custom\" action hook (<a href=\"https://rsvpmaker.com/"
@@ -651,7 +651,7 @@ msgstr ""
 "href=“https://rsvpmaker.com/blog/2017/10/18/custom-payment-gateway/“ "
 "target=“_blank”>dokümantasyon</a>) bağlanma seçeneğine de sahiptir"
 
-#: rsvpmaker-admin.php:1124
+#: rsvpmaker_settings:1124
 msgid ""
 "These settings are related to transactional emails, such as registration "
 "confirmation messages. If you are using another plugin that improves the "
@@ -663,15 +663,15 @@ msgstr ""
 "dağıtımını iyileştiren başka bir eklenti kullanıyorsanız, bu ayarları "
 "varsayılan değerlerinde bırakabilirsiniz."
 
-#: rsvpmaker-admin.php:1127
+#: rsvpmaker_settings:1127
 msgid "From Email Address for All Notifications"
 msgstr "Tüm Bildirimler için Kimden E-posta Adresi"
 
-#: rsvpmaker-admin.php:1130
+#: rsvpmaker_settings:1130
 msgid "SMTP for Notifications"
 msgstr "Bildirimler için SMTP"
 
-#: rsvpmaker-admin.php:1131
+#: rsvpmaker_settings:1131
 msgid ""
 "For more reliable delivery of email notifications, enable delivery through "
 "the SMTP email protocol. Standard server parameters will be used for Gmail "
@@ -683,7 +683,7 @@ msgstr ""
 "ve SendGrid hizmeti için kullanılacak veya sunucu bağlantı noktası "
 "numarasını ve güvenlik protokolünü belirleyin"
 
-#: rsvpmaker-admin.php:1132
+#: rsvpmaker_settings:1132
 msgid ""
 "If you are using another plugin that improves the delivery of email "
 "notifications, such one of the <a href=\"https://wordpress.org/plugins/"
@@ -695,45 +695,45 @@ msgstr ""
 "email-delivery-simplified/“> SendGrid eklentisi</a> ( SMTP yerine SendGrid "
 "API kullanan), bu ayarı “None - use wp_mail ().” Olarak bırakın."
 
-#: rsvpmaker-admin.php:1134
+#: rsvpmaker_settings:1134
 msgid "None - use wp_mail()"
 msgstr "None - use wp_mail()"
 
-#: rsvpmaker-admin.php:1137
+#: rsvpmaker_settings:1137
 msgid "Other SMTP (specified below)"
 msgstr "Diğer SMTP (aşağıda belirtilen)"
 
-#: rsvpmaker-admin.php:1140
+#: rsvpmaker_settings:1140
 msgid "Email Account for Notifications"
 msgstr "Bildirimler için E-posta Hesabı"
 
-#: rsvpmaker-admin.php:1144
+#: rsvpmaker_settings:1144
 msgid "Email Username"
 msgstr "E-posta Kullanıcı Adı"
 
-#: rsvpmaker-admin.php:1148
+#: rsvpmaker_settings:1148
 msgid "Email Password"
 msgstr "E-posta Şifresi"
 
-#: rsvpmaker-admin.php:1152
+#: rsvpmaker_settings:1152
 msgid ""
 "Server (parameters below not necessary if you specified Gmail or SendGrid)"
 msgstr ""
 "Sunucu (Gmail veya SendGrid’i belirttiyseniz aşağıdaki parametreler gerekli "
 "değildir)"
 
-#: rsvpmaker-admin.php:1155
+#: rsvpmaker_settings:1155
 msgid ""
 "SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)"
 msgstr ""
 "SMTP Güvenlik Öneki (ssl veya tls, şifrelenmemiş bağlantılar için boş "
 "bırakın)"
 
-#: rsvpmaker-admin.php:1159
+#: rsvpmaker_settings:1159
 msgid "SMTP Port"
 msgstr "SMTP Port"
 
-#: rsvpmaker-admin.php:1164
+#: rsvpmaker_settings:1164
 msgid ""
 "See <a href=\"http://www.wpsitecare.com/gmail-smtp-settings/\">this article</"
 "a> for additional guidance on using Gmail (requires a tweak to security "
@@ -749,11 +749,11 @@ msgstr ""
 "e-posta hesabına şifrelenmemiş 25 numaralı bağlantı noktası bağlantısı, ağ "
 "üzerinden hiçbir veri aktarılmayacağı için makul ölçüde güvenli olmalıdır."
 
-#: rsvpmaker-admin.php:1170
+#: rsvpmaker_settings:1170
 msgid "Send SMTP Test to RSVP To address"
 msgstr "SMTP Test LCV’yi adrese Gönder"
 
-#: rsvpmaker-admin.php:1199
+#: rsvpmaker_settings:1199
 msgid ""
 "Membership oriented websites can use this feature to relay messages from any "
 "member with a user account to all other members. Designed to work with POP3 "
@@ -764,19 +764,19 @@ msgstr ""
 "posta hesaplarıyla çalışmak üzere tasarlanmıştır. Üyeler abonelikten "
 "çıkabilir."
 
-#: rsvpmaker-admin.php:1237
+#: rsvpmaker_settings:1237
 msgid "Importing Member List settings from WP Mailster"
 msgstr "Üye Listesi ayarlarını WP Mailster’dan içe aktarma"
 
-#: rsvpmaker-admin.php:1244
+#: rsvpmaker_settings:1244
 msgid "Importing Officer List settings from WP Mailster"
 msgstr "Görevli Listesi ayarlarını WP Mailster’dan içe aktarma"
 
-#: rsvpmaker-admin.php:1246
+#: rsvpmaker_settings:1246
 msgid "If you activate this feature, WP Mailster will be deactivated"
 msgstr "Bu özelliği etkinleştirirseniz, WP Mailster devre dışı bırakılacaktır"
 
-#: rsvpmaker-admin.php:1272
+#: rsvpmaker_settings:1272
 msgid ""
 "Use for small custom distribution lists. Or use to forward an email you want "
 "to share to WordPress, then edit further with RSVP Mailer before sending."
@@ -785,65 +785,65 @@ msgstr ""
 "postayı WordPress’e iletmek için kullanın, ardından göndermeden önce RSVP "
 "Mailer ile daha fazla düzenleme yapın."
 
-#: rsvpmaker-admin.php:1328
+#: rsvpmaker_settings:1328
 msgid "Email/User"
 msgstr "E-posta/Kullanıcı"
 
-#: rsvpmaker-admin.php:1330
+#: rsvpmaker_settings:1330
 msgid "Subject Prefix"
 msgstr "Konu Öneki"
 
-#: rsvpmaker-admin.php:1331
+#: rsvpmaker_settings:1331
 msgid "Whitelist - additional allowed sender emails"
 msgstr "Beyaz liste - izin verilen ek gönderen e-postaları"
 
-#: rsvpmaker-admin.php:1332
+#: rsvpmaker_settings:1332
 msgid "Blocked - not allowed to send to list"
 msgstr "Engellenenler - listeye gönderilmesine izin verilmiyor"
 
-#: rsvpmaker-admin.php:1333
+#: rsvpmaker_settings:1333
 msgid "Additional Recipients"
 msgstr "Ek Alıcılar"
 
-#: rsvpmaker-admin.php:1365
+#: rsvpmaker_settings:1365
 msgid "Events (click to edit)"
 msgstr "Etkinlikler (düzenlemek için tıklayın)"
 
-#: rsvpmaker-admin.php:1365
+#: rsvpmaker_settings:1365
 msgid "Show All"
 msgstr "Hepsini Göster"
 
-#: rsvpmaker-admin.php:1438
+#: rsvpmaker_settings:1438
 msgid "Use this form to enter multiple events quickly with basic formatting"
 msgstr ""
 "Temel biçimlendirmeyle birden çok etkinliği hızlı bir şekilde girmek için bu "
 "formu kullanın"
 
-#: rsvpmaker-admin.php:1452 rsvpmaker-email.php:829
+#: rsvpmaker_settings:1452 rsvpmaker-email.php:829
 #: rsvpmaker-plugabble.php:3976
 msgid "Title"
 msgstr "Başlık"
 
-#: rsvpmaker-admin.php:1457 rsvpmaker-admin.php:1760
+#: rsvpmaker_settings:1457 rsvpmaker_settings:1760
 #: rsvpmaker-plugabble.php:563 rsvpmaker-plugabble.php:566
 #: rsvpmaker-plugabble.php:574 rsvpmaker-plugabble.php:4280
 #: rsvpmaker-plugabble.php:4394
 msgid "Month"
 msgstr "Ay"
 
-#: rsvpmaker-admin.php:1473 rsvpmaker-admin.php:1776
+#: rsvpmaker_settings:1473 rsvpmaker_settings:1776
 #: rsvpmaker-plugabble.php:563 rsvpmaker-plugabble.php:566
 #: rsvpmaker-plugabble.php:574 rsvpmaker-plugabble.php:4296
 #: rsvpmaker-plugabble.php:4410
 msgid "Day"
 msgstr "Gün"
 
-#: rsvpmaker-admin.php:1553 rsvpmaker-display.php:1610
+#: rsvpmaker_settings:1553 rsvpmaker-display.php:1610
 #: rsvpmaker-plugabble.php:2446 rsvpmaker-plugabble.php:4503
 msgid "Submit"
 msgstr "Gönder"
 
-#: rsvpmaker-admin.php:1661
+#: rsvpmaker_settings:1661
 msgid ""
 "Use this form to create multiple events with the same headline, description, "
 "and RSVP paramaters. You can have the program automatically calculate dates "
@@ -853,15 +853,15 @@ msgstr ""
 "oluşturmak için bu formu kullanın. Programın, aylık düzenli bir takvim için "
 "tarihleri otomatik olarak hesaplamasını sağlayabilirsiniz."
 
-#: rsvpmaker-admin.php:1663
+#: rsvpmaker_settings:1663
 msgid "Optional: Calculate dates for a recurring schedule"
 msgstr "İsteğe bağlı: Yinelenen bir program için tarihleri hesaplayın"
 
-#: rsvpmaker-admin.php:1667
+#: rsvpmaker_settings:1667
 msgid "Regular schedule"
 msgstr "Düzeni takvim"
 
-#: rsvpmaker-admin.php:1671 rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:1671 rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3764 rsvpmaker-plugabble.php:3962
 #: rsvpmaker-plugabble.php:3999 rsvpmaker-plugabble.php:4119
@@ -869,28 +869,28 @@ msgstr "Düzeni takvim"
 msgid "First"
 msgstr "İlk"
 
-#: rsvpmaker-admin.php:1672 rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:1672 rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3962 rsvpmaker-plugabble.php:3999
 #: rsvpmaker-plugabble.php:4119 rsvpmaker-util.php:949
 msgid "Second"
 msgstr "İkinci"
 
-#: rsvpmaker-admin.php:1673 rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:1673 rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3962 rsvpmaker-plugabble.php:3999
 #: rsvpmaker-plugabble.php:4119 rsvpmaker-util.php:949
 msgid "Third"
 msgstr "Üçüncü"
 
-#: rsvpmaker-admin.php:1674 rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:1674 rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3962 rsvpmaker-plugabble.php:3999
 #: rsvpmaker-plugabble.php:4119 rsvpmaker-util.php:949
 msgid "Fourth"
 msgstr "Dördüncü"
 
-#: rsvpmaker-admin.php:1675 rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:1675 rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3765 rsvpmaker-plugabble.php:3962
 #: rsvpmaker-plugabble.php:3999 rsvpmaker-plugabble.php:4119
@@ -898,7 +898,7 @@ msgstr "Dördüncü"
 msgid "Last"
 msgstr "Sonuncu"
 
-#: rsvpmaker-admin.php:1680 rsvpmaker-admin.php:2074 rsvpmaker-display.php:762
+#: rsvpmaker_settings:1680 rsvpmaker_settings:2074 rsvpmaker-display.php:762
 #: rsvpmaker-display.php:772 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -907,7 +907,7 @@ msgstr "Sonuncu"
 msgid "Sunday"
 msgstr "Pazar"
 
-#: rsvpmaker-admin.php:1681 rsvpmaker-admin.php:2074 rsvpmaker-display.php:756
+#: rsvpmaker_settings:1681 rsvpmaker_settings:2074 rsvpmaker-display.php:756
 #: rsvpmaker-display.php:773 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -916,7 +916,7 @@ msgstr "Pazar"
 msgid "Monday"
 msgstr "Pazartesi"
 
-#: rsvpmaker-admin.php:1682 rsvpmaker-admin.php:2074 rsvpmaker-display.php:757
+#: rsvpmaker_settings:1682 rsvpmaker_settings:2074 rsvpmaker-display.php:757
 #: rsvpmaker-display.php:774 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -925,7 +925,7 @@ msgstr "Pazartesi"
 msgid "Tuesday"
 msgstr "Salı"
 
-#: rsvpmaker-admin.php:1683 rsvpmaker-admin.php:2074 rsvpmaker-display.php:758
+#: rsvpmaker_settings:1683 rsvpmaker_settings:2074 rsvpmaker-display.php:758
 #: rsvpmaker-display.php:775 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -934,7 +934,7 @@ msgstr "Salı"
 msgid "Wednesday"
 msgstr "Çarşamba"
 
-#: rsvpmaker-admin.php:1684 rsvpmaker-admin.php:2074 rsvpmaker-display.php:759
+#: rsvpmaker_settings:1684 rsvpmaker_settings:2074 rsvpmaker-display.php:759
 #: rsvpmaker-display.php:776 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -943,7 +943,7 @@ msgstr "Çarşamba"
 msgid "Thursday"
 msgstr "Perşembe"
 
-#: rsvpmaker-admin.php:1685 rsvpmaker-admin.php:2074 rsvpmaker-display.php:760
+#: rsvpmaker_settings:1685 rsvpmaker_settings:2074 rsvpmaker-display.php:760
 #: rsvpmaker-display.php:777 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -952,7 +952,7 @@ msgstr "Perşembe"
 msgid "Friday"
 msgstr "Cuma"
 
-#: rsvpmaker-admin.php:1686 rsvpmaker-admin.php:2074 rsvpmaker-display.php:761
+#: rsvpmaker_settings:1686 rsvpmaker_settings:2074 rsvpmaker-display.php:761
 #: rsvpmaker-display.php:778 rsvpmaker-display.php:1720
 #: rsvpmaker-display.php:2017 rsvpmaker-email.php:889
 #: rsvpmaker-plugabble.php:195 rsvpmaker-plugabble.php:3961
@@ -961,54 +961,54 @@ msgstr "Cuma"
 msgid "Saturday"
 msgstr "Cumartesi"
 
-#: rsvpmaker-admin.php:1692 rsvpmaker-plugabble.php:286
+#: rsvpmaker_settings:1692 rsvpmaker-plugabble.php:286
 #: rsvpmaker-plugabble.php:1829 rsvpmaker.php:802
 msgid "Time"
 msgstr "Zaman"
 
-#: rsvpmaker-admin.php:1701
+#: rsvpmaker_settings:1701
 msgid ""
 "For an event starting at 12:30 p.m., you would select 12 p.m. and 30 minutes."
 msgstr ""
 "12: 30’da başlayan bir etkinlik için, öğleden sonra (p.m.) 12 ve 30 dakikayı "
 "seçmelisiniz."
 
-#: rsvpmaker-admin.php:1713
+#: rsvpmaker_settings:1713
 msgid "or enter dates individually."
 msgstr "veya tarihleri ayrı ayrı girin."
 
-#: rsvpmaker-admin.php:1733
+#: rsvpmaker_settings:1733
 msgid "Loading recurring series of dates for"
 msgstr "İçin yinelenen tarih dizileri yükleniyor"
 
-#: rsvpmaker-admin.php:1733
+#: rsvpmaker_settings:1733
 msgid ""
 "To omit a date in the series, change the day field to &quot;Not Set&quot;"
 msgstr ""
 "Serideki bir tarihi atlamak için şu şekilde değiştirin, gün alanını &quot; "
 "Ayarlanmamış &quot;"
 
-#: rsvpmaker-admin.php:1738
+#: rsvpmaker_settings:1738
 msgid "Enter Recurring Events"
 msgstr "Yinelenen Etkinlikleri Girin"
 
-#: rsvpmaker-admin.php:1834
+#: rsvpmaker_settings:1834
 msgid "Duration"
 msgstr "Süre"
 
-#: rsvpmaker-admin.php:1835 rsvpmaker-util.php:116
+#: rsvpmaker_settings:1835 rsvpmaker-util.php:116
 msgid "Not set (optional)"
 msgstr "Ayarlanmamış (isteğe bağlı)"
 
-#: rsvpmaker-admin.php:1836 rsvpmaker-util.php:118
+#: rsvpmaker_settings:1836 rsvpmaker-util.php:118
 msgid "All day/don't show time in headline"
 msgstr "Tüm gün/başlıkta zamanı gösterme"
 
-#: rsvpmaker-admin.php:1879
+#: rsvpmaker_settings:1879
 msgid "Contents for an events page."
 msgstr "Bir etkinlik sayfasının içeriği."
 
-#: rsvpmaker-admin.php:1892
+#: rsvpmaker_settings:1892
 msgid ""
 "<h3>RSVP Form</h3><p>The RSVP from is also now formatted using shortcodes, "
 "which you can edit in the RSVP Form section of the Settings screen. You can "
@@ -1021,7 +1021,7 @@ msgstr ""
 "fazladan bir alan yakalamak için kullanışlı olabilir. Bu, mevcut varsayılan "
 "formunuzdur: </p>"
 
-#: rsvpmaker-admin.php:1896
+#: rsvpmaker_settings:1896
 msgid ""
 "<p>Explanation:</p><p>[rsvpfield textfield=&quot;myfield&quot;] outputs a "
 "text field coded to capture data for &quot;myfield&quot;</p><p>[rsvpfield "
@@ -1069,21 +1069,21 @@ msgstr ""
 "profile data based on an email address, you may want some data to be hidden "
 "for privacy reasons.</p><p>[rsvpguests] Outputs the guest blanks.</p>"
 
-#: rsvpmaker-admin.php:1898
+#: rsvpmaker_settings:1898
 msgid ""
 "If you're having trouble with the form fields not being formatted correctly"
 msgstr ""
 "Form alanlarının doğru biçimlendirilmemesiyle ilgili sorun yaşıyorsanız"
 
-#: rsvpmaker-admin.php:1898
+#: rsvpmaker_settings:1898
 msgid "Reset default RSVP Form"
 msgstr "Varsayılan LCV Formunu Sıfırlayın"
 
-#: rsvpmaker-admin.php:1974
+#: rsvpmaker_settings:1974
 msgid "Debug"
 msgstr "Hata Ayıklama"
 
-#: rsvpmaker-admin.php:1975
+#: rsvpmaker_settings:1975
 msgid ""
 "Use this screen to verify that RSVPMaker is recording data correctly or to "
 "share debugging information with the plugin author. If you send debugging "
@@ -1096,99 +1096,99 @@ msgstr ""
 "com”> david@carrcommunications.com </a> adresine bir not gönderin ve neyle "
 "ilgili yardıma ihtiyacınız olduğunu açıklayın."
 
-#: rsvpmaker-admin.php:1981
+#: rsvpmaker_settings:1981
 msgid "RSVP Records"
 msgstr "LCV Kayıtları"
 
-#: rsvpmaker-admin.php:1984 rsvpmaker-plugabble.php:2393
+#: rsvpmaker_settings:1984 rsvpmaker-plugabble.php:2393
 #: rsvpmaker-plugabble.php:3081
 msgid "Options"
 msgstr "Seçenekler"
 
-#: rsvpmaker-admin.php:1987
+#: rsvpmaker_settings:1987
 msgid "Rewrite Rules"
 msgstr "Yeniden Yazma Kuralları"
 
-#: rsvpmaker-admin.php:1991
+#: rsvpmaker_settings:1991
 msgid "Globals"
 msgstr "Küresel"
 
-#: rsvpmaker-admin.php:1994
+#: rsvpmaker_settings:1994
 msgid "Send to Plugin Author"
 msgstr "Eklenti Yazarına Gönder"
 
-#: rsvpmaker-admin.php:2008 rsvpmaker-admin.php:4971
+#: rsvpmaker_settings:2008 rsvpmaker_settings:4971
 msgid "Event Setup"
 msgstr "Etkinlik Kurulumu"
 
-#: rsvpmaker-admin.php:2009 rsvpmaker-email.php:2649 rsvpmaker-plugabble.php:10
+#: rsvpmaker_settings:2009 rsvpmaker-email.php:2649 rsvpmaker-plugabble.php:10
 msgid "Event Options"
 msgstr "Etkinlik Seçenekleri"
 
-#: rsvpmaker-admin.php:2012
+#: rsvpmaker_settings:2012
 msgid "Share Templates"
 msgstr "Şablonları Paylaş"
 
-#: rsvpmaker-admin.php:2017
+#: rsvpmaker_settings:2017
 msgid "Confirmation / Reminders"
 msgstr "Onay / Hatırlatmalar"
 
-#: rsvpmaker-admin.php:2029
+#: rsvpmaker_settings:2029
 msgid "Event Dates"
 msgstr "Etkinlik Günleri"
 
-#: rsvpmaker-admin.php:2031 rsvpmaker-email.php:828
+#: rsvpmaker_settings:2031 rsvpmaker-email.php:828
 msgid "Scheduled"
 msgstr "Takvimlendi"
 
-#: rsvpmaker-admin.php:2060 rsvpmaker-plugabble.php:4184
+#: rsvpmaker_settings:2060 rsvpmaker-plugabble.php:4184
 #: rsvpmaker-plugabble.php:4570 rsvpmaker-plugabble.php:4762
 msgid "Template"
 msgstr "Şablon"
 
-#: rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3962 rsvpmaker-plugabble.php:3999
 #: rsvpmaker-plugabble.php:4119 rsvpmaker-util.php:949
 msgid "Varies"
 msgstr "Değişken"
 
-#: rsvpmaker-admin.php:2073 rsvpmaker-display.php:1721
+#: rsvpmaker_settings:2073 rsvpmaker-display.php:1721
 #: rsvpmaker-display.php:2018 rsvpmaker-plugabble.php:196
 #: rsvpmaker-plugabble.php:3962 rsvpmaker-plugabble.php:3999
 #: rsvpmaker-plugabble.php:4119 rsvpmaker-util.php:949
 msgid "Every"
 msgstr "Her"
 
-#: rsvpmaker-admin.php:2077
+#: rsvpmaker_settings:2077
 msgid "Schedule varies"
 msgstr "Takvim değişir"
 
-#: rsvpmaker-admin.php:2095
+#: rsvpmaker_settings:2095
 msgid "Special Page"
 msgstr "Özel Sayfa"
 
-#: rsvpmaker-admin.php:2123
+#: rsvpmaker_settings:2123
 msgid "Follow up"
 msgstr "Takip et"
 
-#: rsvpmaker-admin.php:2123
+#: rsvpmaker_settings:2123
 msgid "hours after"
 msgstr "saat sonra"
 
-#: rsvpmaker-admin.php:2125
+#: rsvpmaker_settings:2125
 msgid "Reminder"
 msgstr "Hatırlat"
 
-#: rsvpmaker-admin.php:2125 rsvpmaker-admin.php:2715
+#: rsvpmaker_settings:2125 rsvpmaker_settings:2715
 msgid "hours before"
 msgstr "saat önce"
 
-#: rsvpmaker-admin.php:2172
+#: rsvpmaker_settings:2172
 msgid "Calendar page created: "
 msgstr "Takvim sayfası oluşturuldu: "
 
-#: rsvpmaker-admin.php:2195
+#: rsvpmaker_settings:2195
 msgid ""
 "You can set additional options, including default settings for RSVPMaker "
 "events, on the"
@@ -1196,11 +1196,11 @@ msgstr ""
 "RSVPMaker olayları için varsayılan ayarlar da dahil olmak üzere ek "
 "seçenekler ayarlayabilirsiniz"
 
-#: rsvpmaker-admin.php:2195
+#: rsvpmaker_settings:2195
 msgid "RSVPMaker settings page"
 msgstr "RSVPMaker ayarlar sayfası"
 
-#: rsvpmaker-admin.php:2228
+#: rsvpmaker_settings:2228
 msgid ""
 "RSVPMaker can add a calendar or events listing page to your site "
 "automatically, which you can then add to your website menu."
@@ -1209,30 +1209,30 @@ msgstr ""
 "sayfası ekleyebilir ve bunları daha sonra web sitenizin menüsüne "
 "ekleyebilirsiniz."
 
-#: rsvpmaker-admin.php:2229
+#: rsvpmaker_settings:2229
 msgid "Create page"
 msgstr "Sayfa oluştur"
 
-#: rsvpmaker-admin.php:2230
+#: rsvpmaker_settings:2230
 msgid "Turn off this warning"
 msgstr "Bu uyarıyı kapatın"
 
-#: rsvpmaker-admin.php:2248
+#: rsvpmaker_settings:2248
 msgid "RSVPMaker needs you to"
 msgstr "RSVPMaker’ın şuna ihtiyacı var"
 
-#: rsvpmaker-admin.php:2248
+#: rsvpmaker_settings:2248
 msgid "set the timezone for your website"
 msgstr "web siteniz için zaman dilimini ayarlayın"
 
-#: rsvpmaker-admin.php:2248
+#: rsvpmaker_settings:2248
 msgid ""
 "Confirm if the choice below is correct or make another choice by region/city."
 msgstr ""
 "Aşağıdaki seçimin doğru olup olmadığını onaylayın veya bölgeye / şehre göre "
 "başka bir seçim yapın."
 
-#: rsvpmaker-admin.php:2268
+#: rsvpmaker_settings:2268
 msgid ""
 "Please decide whether your RSVPMaker forms should include a privacy policy "
 "confirmation checkbox. This may be important if some of your website "
@@ -1242,15 +1242,15 @@ msgstr ""
 "gerekip gerekmediğine karar verin. Web sitenizin ziyaretçilerinden bazıları "
 "Avrupa Birliği’nin GDPR gizlilik yönetmeliği kapsamındaysa bu önemli olabilir"
 
-#: rsvpmaker-admin.php:2268
+#: rsvpmaker_settings:2268
 msgid "more details"
 msgstr "daha fazla detay"
 
-#: rsvpmaker-admin.php:2269
+#: rsvpmaker_settings:2269
 msgid "Add checkbox?"
 msgstr "Onay kutusu eklensin mi?"
 
-#: rsvpmaker-admin.php:2272
+#: rsvpmaker_settings:2272
 msgid ""
 "You may want for your RSVPMaker forms to include a privacy policy "
 "confirmation checkbox, particularly if any site visitors are covered by the "
@@ -1260,52 +1260,52 @@ msgstr ""
 "GDPR veya benzer gizlilik düzenlemeleri kapsamındaysa, bir gizlilik "
 "politikası onay kutusu içermesini isteyebilirsiniz."
 
-#: rsvpmaker-admin.php:2280
+#: rsvpmaker_settings:2280
 msgid "RSVPMaker Essential Settings"
 msgstr "RSVPMaker Temel Ayarları"
 
-#: rsvpmaker-admin.php:2280
+#: rsvpmaker_settings:2280
 msgid "Save Changes"
 msgstr "Değişiklikleri Kaydedin"
 
-#: rsvpmaker-admin.php:2294
+#: rsvpmaker_settings:2294
 msgid ""
 "Your templates for email broadcasts and confirmations have been updated."
 msgstr "E-posta yayınları için şablonlarınız ve onaylar güncellendi."
 
-#: rsvpmaker-admin.php:2294
+#: rsvpmaker_settings:2294
 msgid "Verify/approve changes"
 msgstr "Değişiklikleri doğrula/onayla"
 
-#: rsvpmaker-admin.php:2307
+#: rsvpmaker_settings:2307
 msgid "A new RSVP / registration form is available that is easier to customize"
 msgstr "Özelleştirmesi daha kolay olan yeni bir LCV / kayıt formu mevcut"
 
-#: rsvpmaker-admin.php:2307
+#: rsvpmaker_settings:2307
 msgid "Upgrade?"
 msgstr "Yükselt?"
 
-#: rsvpmaker-admin.php:2319 rsvpmaker-admin.php:2328
+#: rsvpmaker_settings:2319 rsvpmaker_settings:2328
 msgid "Edit the"
 msgstr "Düzenle"
 
-#: rsvpmaker-admin.php:2319
+#: rsvpmaker_settings:2319
 msgid "webinar landing page"
 msgstr "webinar açılış sayfası"
 
-#: rsvpmaker-admin.php:2321 rsvpmaker-admin.php:2330
+#: rsvpmaker_settings:2321 rsvpmaker_settings:2330
 msgid "Related messages:"
 msgstr "İlgili mesajlar:"
 
-#: rsvpmaker-admin.php:2322 rsvpmaker-admin.php:2331
+#: rsvpmaker_settings:2322 rsvpmaker_settings:2331
 msgid "Confirmation"
 msgstr "Onaylama"
 
-#: rsvpmaker-admin.php:2328
+#: rsvpmaker_settings:2328
 msgid "webinar event post"
 msgstr "webinar etkinlik gönderisi"
 
-#: rsvpmaker-admin.php:2338
+#: rsvpmaker_settings:2338
 msgid ""
 "ChimpBlast has been replaced by the RSVP Mailer function of RSVPMaker and "
 "should be uninstalled"
@@ -1313,31 +1313,31 @@ msgstr ""
 "ChimpBlast, RSVPMaker’ın RSVP Mailer işleviyle değiştirildi ve kaldırılması "
 "gerekiyor"
 
-#: rsvpmaker-admin.php:2350
+#: rsvpmaker_settings:2350
 msgid "Testing SMTP email notification"
 msgstr "SMTP e-posta bildirimi test ediliyor"
 
-#: rsvpmaker-admin.php:2351
+#: rsvpmaker_settings:2351
 msgid "Test from RSVPMaker."
 msgstr "RSVPMaker’dan test."
 
-#: rsvpmaker-admin.php:2353
+#: rsvpmaker_settings:2353
 msgid "Sending test email"
 msgstr "Test e-postası gönderiliyor"
 
-#: rsvpmaker-admin.php:2360
+#: rsvpmaker_settings:2360
 msgid "RSVP Form Updated (default and future events)"
 msgstr "LCV Formu Güncellendi (varsayılan ve gelecekteki etkinlikler)"
 
-#: rsvpmaker-admin.php:2458 rsvpmaker-admin.php:2463
+#: rsvpmaker_settings:2458 rsvpmaker_settings:2463
 msgid "Showing"
 msgstr "Gösteriliyor"
 
-#: rsvpmaker-admin.php:2458
+#: rsvpmaker_settings:2458
 msgid "Search Results"
 msgstr "Arama Sonuçları"
 
-#: rsvpmaker-admin.php:2656 rsvpmaker-plugabble.php:3413
+#: rsvpmaker_settings:2656 rsvpmaker-plugabble.php:3413
 msgid ""
 "This is an automated reminder that we have you on the RSVP list for the "
 "event shown below. If your plans have changed, you can update your response "
@@ -1347,59 +1347,59 @@ msgstr ""
 "otomatik bir hatırlatmadır. Planlarınız değiştiyse, LCV düğmesine tekrar "
 "tıklayarak yanıtınızı güncelleyebilirsiniz."
 
-#: rsvpmaker-admin.php:2674 rsvpmaker-plugabble.php:2787
+#: rsvpmaker_settings:2674 rsvpmaker-plugabble.php:2787
 #: rsvpmaker-plugabble.php:3416
 msgid "guest of"
 msgstr "konuğu"
 
-#: rsvpmaker-admin.php:2717
+#: rsvpmaker_settings:2717
 msgid "hours after event starts"
 msgstr "etkinlik başladıktan sonra saat"
 
-#: rsvpmaker-admin.php:2730
+#: rsvpmaker_settings:2730
 msgid "Live"
 msgstr "Canlı"
 
-#: rsvpmaker-admin.php:2731
+#: rsvpmaker_settings:2731
 msgid "The event starts"
 msgstr "Etkinlik başlangıcı"
 
-#: rsvpmaker-admin.php:2756
+#: rsvpmaker_settings:2756
 msgid "Thanks for registering for"
 msgstr "Bu etkinliğe kaydolduğunuz için teşekkürler"
 
-#: rsvpmaker-admin.php:2756
+#: rsvpmaker_settings:2756
 msgid "The event will start at"
 msgstr "Etkinlik şu zamanda başlayacak"
 
-#: rsvpmaker-admin.php:2756
+#: rsvpmaker_settings:2756
 msgid "Tune in here"
 msgstr "Burayı ayarlayın"
 
-#: rsvpmaker-admin.php:2765
+#: rsvpmaker_settings:2765
 msgid "Thanks for your interest in "
 msgstr "Bu etkinliğe ilginiz için teşekkür ederiz "
 
-#: rsvpmaker-admin.php:2765
+#: rsvpmaker_settings:2765
 msgid ""
 "If you missed all or part of the program, a replay is waiting for you here"
 msgstr ""
 "Programın tamamını veya bir kısmını kaçırdıysanız, tekrarı burada sizi "
 "bekliyor"
 
-#: rsvpmaker-admin.php:2898
+#: rsvpmaker_settings:2898
 msgid "Confirmation / Reminder Messages"
 msgstr "Onay / Hatırlatma Mesajları"
 
-#: rsvpmaker-admin.php:2923
+#: rsvpmaker_settings:2923
 msgid "Added reminder "
 msgstr "Hatırlatıcı Eklendi "
 
-#: rsvpmaker-admin.php:2923
+#: rsvpmaker_settings:2923
 msgid "hours"
 msgstr "saat"
 
-#: rsvpmaker-admin.php:2943
+#: rsvpmaker_settings:2943
 msgid ""
 "This is an event template: The confirmation and reminder messages you set "
 "here will become the defaults for future events based on this template. The "
@@ -1411,23 +1411,23 @@ msgstr ""
 "olacaktır. Konu satırlarındaki [datetime] yer tutucusu, belirli olay "
 "tarihiyle değiştirilecektir."
 
-#: rsvpmaker-admin.php:2962
+#: rsvpmaker_settings:2962
 msgid "This is the standard reminder from the event template"
 msgstr "Bu, etkinlik şablonundaki standart hatırlatıcıdır"
 
-#: rsvpmaker-admin.php:2962
+#: rsvpmaker_settings:2962
 msgid "Customize for this event"
 msgstr "Bu etkinlik için özelleştirin"
 
-#: rsvpmaker-admin.php:2967
+#: rsvpmaker_settings:2967
 msgid "Add Reminder"
 msgstr "Hatırlatıcı Ekle"
 
-#: rsvpmaker-admin.php:2970 rsvpmaker-plugabble.php:523
+#: rsvpmaker_settings:2970 rsvpmaker-plugabble.php:523
 msgid "Webinar Setup"
 msgstr "Webinar Kurulumu"
 
-#: rsvpmaker-admin.php:2972
+#: rsvpmaker_settings:2972
 msgid ""
 "This utility sets up a landing page and suggested confirmation and reminder "
 "messages, linked to that page. RSVPMaker explicitly supports webinars based "
@@ -1439,19 +1439,19 @@ msgstr ""
 "seminerlerini açıkça destekler, ancak seçtiğiniz başka bir web semineri için "
 "gereken kodlamayı da yerleştirebilirsiniz."
 
-#: rsvpmaker-admin.php:2977 rsvpmaker-plugabble.php:523
+#: rsvpmaker_settings:2977 rsvpmaker-plugabble.php:523
 msgid "Require passcode to view"
 msgstr "Görüntülemek için şifre gerektir"
 
-#: rsvpmaker-admin.php:2978
+#: rsvpmaker_settings:2978
 msgid "Create"
 msgstr "Oluştur"
 
-#: rsvpmaker-admin.php:3003
+#: rsvpmaker_settings:3003
 msgid "A Note on More Reliable Scheduling"
 msgstr "Daha Güvenilir Takvimleme Üzerine Bir Not"
 
-#: rsvpmaker-admin.php:3004
+#: rsvpmaker_settings:3004
 msgid ""
 "RSVPMaker takes advantage of WP Cron, a standard WordPress scheduling "
 "mechanism. Because it only checks for scheduled tasks to be run when someone "
@@ -1475,13 +1475,13 @@ msgstr ""
 "tutsplus.com/articles/insights-into-wp-cron-an-introduction-to-scheduling-"
 "tasks-in-wordpress--wp-23119”>bu talimatları izleyin</a>."
 
-#: rsvpmaker-admin.php:3006
+#: rsvpmaker_settings:3006
 msgid "Using Unix cron, the command you would set to execute would be"
 msgstr ""
 "Unix cron kullanarak, yürütmek için ayarlayacağınız komut şu şekilde "
 "olacaktır"
 
-#: rsvpmaker-admin.php:3010
+#: rsvpmaker_settings:3010
 msgid ""
 "If curl does not work, you can also try this variation (seems to work better "
 "on some systems)"
@@ -1489,263 +1489,263 @@ msgstr ""
 "Curl işe yaramazsa, bu varyasyonu da deneyebilirsiniz (bazı sistemlerde daha "
 "iyi çalışıyor gibi görünüyor)"
 
-#: rsvpmaker-admin.php:3032 rsvpmaker-admin.php:3367 rsvpmaker-admin.php:3711
+#: rsvpmaker_settings:3032 rsvpmaker_settings:3367 rsvpmaker_settings:3711
 #: rsvpmaker-plugabble.php:3976 rsvpmaker-plugabble.php:4531
 msgid "Event"
 msgstr "Etkinlik"
 
-#: rsvpmaker-admin.php:3032 rsvpmaker-plugabble.php:2760
+#: rsvpmaker_settings:3032 rsvpmaker-plugabble.php:2760
 #: rsvpmaker-plugabble.php:4847 rsvpmaker-widgets.php:18
 #: rsvpmaker-widgets.php:71 rsvpmaker-widgets.php:182
 msgid "Events"
 msgstr "Etkinlikler"
 
-#: rsvpmaker-admin.php:3033
+#: rsvpmaker_settings:3033
 msgid "double-click for popup editor"
 msgstr "popup düzenleyici için çift tıklayın"
 
-#: rsvpmaker-admin.php:3286
+#: rsvpmaker_settings:3286
 msgid "12 am"
 msgstr "12 am"
 
-#: rsvpmaker-admin.php:3287
+#: rsvpmaker_settings:3287
 msgid "1 am"
 msgstr "1 am"
 
-#: rsvpmaker-admin.php:3288
+#: rsvpmaker_settings:3288
 msgid "2 am"
 msgstr "2 am"
 
-#: rsvpmaker-admin.php:3289
+#: rsvpmaker_settings:3289
 msgid "3 am"
 msgstr "3 am"
 
-#: rsvpmaker-admin.php:3290
+#: rsvpmaker_settings:3290
 msgid "4 am"
 msgstr "4 am"
 
-#: rsvpmaker-admin.php:3291
+#: rsvpmaker_settings:3291
 msgid "5 am"
 msgstr "5 am"
 
-#: rsvpmaker-admin.php:3292
+#: rsvpmaker_settings:3292
 msgid "6 am"
 msgstr "6 am"
 
-#: rsvpmaker-admin.php:3293
+#: rsvpmaker_settings:3293
 msgid "7 am"
 msgstr "7 am"
 
-#: rsvpmaker-admin.php:3294
+#: rsvpmaker_settings:3294
 msgid "8 am"
 msgstr "8 am"
 
-#: rsvpmaker-admin.php:3295
+#: rsvpmaker_settings:3295
 msgid "9 am"
 msgstr "9 am"
 
-#: rsvpmaker-admin.php:3296
+#: rsvpmaker_settings:3296
 msgid "10 am"
 msgstr "10 am"
 
-#: rsvpmaker-admin.php:3297
+#: rsvpmaker_settings:3297
 msgid "11 am"
 msgstr "11 am"
 
-#: rsvpmaker-admin.php:3298
+#: rsvpmaker_settings:3298
 msgid "12 pm"
 msgstr "12 pm"
 
-#: rsvpmaker-admin.php:3299
+#: rsvpmaker_settings:3299
 msgid "1 pm"
 msgstr "1 pm"
 
-#: rsvpmaker-admin.php:3300
+#: rsvpmaker_settings:3300
 msgid "2 pm"
 msgstr "2 pm"
 
-#: rsvpmaker-admin.php:3301
+#: rsvpmaker_settings:3301
 msgid "3 pm"
 msgstr "3 pm"
 
-#: rsvpmaker-admin.php:3302
+#: rsvpmaker_settings:3302
 msgid "4 pm"
 msgstr "4 pm"
 
-#: rsvpmaker-admin.php:3303
+#: rsvpmaker_settings:3303
 msgid "5 pm"
 msgstr "5 pm"
 
-#: rsvpmaker-admin.php:3304
+#: rsvpmaker_settings:3304
 msgid "6 pm"
 msgstr "6 pm"
 
-#: rsvpmaker-admin.php:3305
+#: rsvpmaker_settings:3305
 msgid "7 pm"
 msgstr "7 pm"
 
-#: rsvpmaker-admin.php:3306
+#: rsvpmaker_settings:3306
 msgid "8 pm"
 msgstr "8 pm"
 
-#: rsvpmaker-admin.php:3307
+#: rsvpmaker_settings:3307
 msgid "9 pm"
 msgstr "9 pm"
 
-#: rsvpmaker-admin.php:3308
+#: rsvpmaker_settings:3308
 msgid "10 pm"
 msgstr "10 pm"
 
-#: rsvpmaker-admin.php:3309
+#: rsvpmaker_settings:3309
 msgid "11 pm"
 msgstr "11 pm"
 
-#: rsvpmaker-admin.php:3310
+#: rsvpmaker_settings:3310
 msgid "midnight"
 msgstr "gece yarısı"
 
-#: rsvpmaker-admin.php:3630
+#: rsvpmaker_settings:3630
 msgid "event posts moved to trash"
 msgstr "etkinlik gönderileri çöpe taşındı"
 
-#: rsvpmaker-admin.php:3735 rsvpmaker-plugabble.php:4503
+#: rsvpmaker_settings:3735 rsvpmaker-plugabble.php:4503
 msgid "No Meeting"
 msgstr "Toplantı Yok"
 
-#: rsvpmaker-admin.php:3885
+#: rsvpmaker_settings:3885
 msgid "Default"
 msgstr "Varsayılan"
 
-#: rsvpmaker-admin.php:4388
+#: rsvpmaker_settings:4388
 msgid "More Event Options"
 msgstr "Daha Fazla Etkinlik Seçeneği"
 
-#: rsvpmaker-admin.php:4409
+#: rsvpmaker_settings:4409
 msgid "RSVP / Event Options"
 msgstr "LCV / Etkinlik Seçenekleri"
 
-#: rsvpmaker-admin.php:4432
+#: rsvpmaker_settings:4432
 msgid "Create/update events"
 msgstr "Etkinlik oluştur/güncelle"
 
-#: rsvpmaker-admin.php:4432
+#: rsvpmaker_settings:4432
 msgid "based on this template"
 msgstr "bu şablona göre"
 
-#: rsvpmaker-admin.php:4433
+#: rsvpmaker_settings:4433
 msgid "Saving RSVP Options"
 msgstr "LCV Seçenekleri Kaydediliyor"
 
-#: rsvpmaker-admin.php:4453 rsvpmaker-util.php:392
+#: rsvpmaker_settings:4453 rsvpmaker-util.php:392
 msgid "Future Events"
 msgstr "Gelecek Etkinlikler"
 
-#: rsvpmaker-admin.php:4485
+#: rsvpmaker_settings:4485
 msgid "Use this form for additional RSVPMaker settings."
 msgstr "Ek RSVPMaker ayarları için bu formu kullanın."
 
-#: rsvpmaker-admin.php:4485
+#: rsvpmaker_settings:4485
 msgid "Return to editor"
 msgstr "Düzenleyici geri dön"
 
-#: rsvpmaker-admin.php:4505
+#: rsvpmaker_settings:4505
 msgid "Publish"
 msgstr "Yayınla"
 
-#: rsvpmaker-admin.php:4644
+#: rsvpmaker_settings:4644
 msgid "RSVPMaker Settings"
 msgstr "RSVPMaker Ayarları"
 
-#: rsvpmaker-admin.php:4656
+#: rsvpmaker_settings:4656
 msgid "Return to Event Editor"
 msgstr "Etkinlik Düzenleyiciye Dön"
 
-#: rsvpmaker-admin.php:4679
+#: rsvpmaker_settings:4679
 msgid "Edit Event"
 msgstr "Etkinliği Düzenle"
 
-#: rsvpmaker-admin.php:4694 rsvpmaker-admin.php:4719
+#: rsvpmaker_settings:4694 rsvpmaker_settings:4719
 msgid "Edit Parent Event"
 msgstr "Üst Etkinliği Düzenle"
 
-#: rsvpmaker-admin.php:4703 rsvpmaker-admin.php:4728
+#: rsvpmaker_settings:4703 rsvpmaker_settings:4728
 msgid "View Parent Event"
 msgstr "Üst Etkinliği Görüntüle"
 
-#: rsvpmaker-admin.php:4992
+#: rsvpmaker_settings:4992
 msgid "Previously Scheduled"
 msgstr "Önceki Takvimlenen"
 
-#: rsvpmaker-admin.php:4994
+#: rsvpmaker_settings:4994
 msgid "To create a new event based on this template, use the form below."
 msgstr ""
 "Bu şablonu temel alan yeni bir etkinlik oluşturmak için aşağıdaki formu "
 "kullanın."
 
-#: rsvpmaker-admin.php:4998
+#: rsvpmaker_settings:4998
 msgid "Set Event Title and Schedule"
 msgstr "Etkinlik Başlığını ve Takvimini Ayarlayın"
 
-#: rsvpmaker-admin.php:5005
+#: rsvpmaker_settings:5005
 msgid ""
 "Event will inherit defaults from template for RSVPs, date format options."
 msgstr ""
 "Etkinlik, LCV’ler için varsayılanları şablondan, tarih biçimi seçeneklerini "
 "devralacak."
 
-#: rsvpmaker-admin.php:5011 rsvpmaker-plugabble.php:492
+#: rsvpmaker_settings:5011 rsvpmaker-plugabble.php:492
 #: gutenberg/src/block/rsvpmaker-sidebar.js:217
 msgid "Collect RSVPs"
 msgstr "LCV’leri Topla"
 
-#: rsvpmaker-admin.php:5013 rsvpmaker-email.php:2856
+#: rsvpmaker_settings:5013 rsvpmaker-email.php:2856
 #: rsvpmaker-plugabble.php:494 rsvpmaker-plugabble.php:877
 #: rsvpmaker-plugabble.php:1172
 msgid "YES"
 msgstr "EVET"
 
-#: rsvpmaker-admin.php:5014 rsvpmaker-plugabble.php:495
+#: rsvpmaker_settings:5014 rsvpmaker-plugabble.php:495
 #: rsvpmaker-plugabble.php:877 rsvpmaker-plugabble.php:1172
 msgid "NO"
 msgstr "HAYIR"
 
-#: rsvpmaker-admin.php:5025
+#: rsvpmaker_settings:5025
 msgid "For recurring events"
 msgstr "Yinelenen etkinlikler için"
 
-#: rsvpmaker-admin.php:5025
+#: rsvpmaker_settings:5025
 msgid "create a"
 msgstr "oluştur"
 
-#: rsvpmaker-admin.php:5025 rsvpmaker-plugabble.php:3857
+#: rsvpmaker_settings:5025 rsvpmaker-plugabble.php:3857
 msgid "New Template"
 msgstr "Yeni Şablon"
 
-#: rsvpmaker-admin.php:5026
+#: rsvpmaker_settings:5026
 msgid "Or add"
 msgstr "Veya ekle"
 
-#: rsvpmaker-admin.php:5026 rsvpmaker-plugabble.php:3951
+#: rsvpmaker_settings:5026 rsvpmaker-plugabble.php:3951
 msgid "One event"
 msgstr "Bir etkinlik"
 
-#: rsvpmaker-admin.php:5026 rsvpmaker-plugabble.php:3951
+#: rsvpmaker_settings:5026 rsvpmaker-plugabble.php:3951
 msgid "Multiple events"
 msgstr "Çoklu etkinlikler"
 
-#: rsvpmaker-admin.php:5026 rsvpmaker-plugabble.php:3951
+#: rsvpmaker_settings:5026 rsvpmaker-plugabble.php:3951
 msgid "based on"
 msgstr "dayalı"
 
-#: rsvpmaker-admin.php:5034
+#: rsvpmaker_settings:5034
 msgid "Your Event Posts"
 msgstr "Etkinlik Gönderileriniz"
 
-#: rsvpmaker-admin.php:5065
+#: rsvpmaker_settings:5065
 msgid "Your Templates"
 msgstr "Şablonlarınız"
 
-#: rsvpmaker-admin.php:5065
+#: rsvpmaker_settings:5065
 msgid ""
 "Your templates and any others you have editing rights to are listed here. "
 "Templates allow you to generate multiple events based on a recurring "
@@ -1755,19 +1755,19 @@ msgstr ""
 "listelenir. Şablonlar, yinelenen takvimli çoklu etkinlikler ve seri halinde "
 "etkinlikler için ortak ayrıntılar oluşturmanıza olanak tanır."
 
-#: rsvpmaker-admin.php:5073
+#: rsvpmaker_settings:5073
 msgid "Create/Update"
 msgstr "Oluştur/Güncelle"
 
-#: rsvpmaker-admin.php:5270 rsvpmaker-email.php:2015
+#: rsvpmaker_settings:5270 rsvpmaker-email.php:2015
 msgid "Save"
 msgstr "Kaydet"
 
-#: rsvpmaker-admin.php:5293
+#: rsvpmaker_settings:5293
 msgid "Choose Template"
 msgstr "Şablon Seç"
 
-#: rsvpmaker-admin.php:5299
+#: rsvpmaker_settings:5299
 msgid "Remove Editors"
 msgstr "Editörleri Kaldır"
 

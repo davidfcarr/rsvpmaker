@@ -11,7 +11,7 @@ Grouped By Origin File
 [admin/rsvpmaker-fake-editor.php]
 low	rsvpmaker_fake_editor	external_refs=0
 
-[rsvpmaker-admin.php]
+[rsvpmaker_settings]
 low	rsvp_confirm_url	external_refs=0
 low	rsvp_customize_form_url	external_refs=0
 low	rsvp_form_url	external_refs=0

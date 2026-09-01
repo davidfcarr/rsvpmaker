@@ -13,7 +13,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.8.12\n"
 
-#: rsvpmaker-admin.php:660
+#: rsvpmaker_settings:660
 msgid ""
 "This is a customizable template for the RSVP form, introduced as part of the "
 "Aug. 2012 update. With the exception of the yes/no radio buttons and the "
@@ -41,11 +41,11 @@ msgstr ""
 "don't want the guest blanks to show up, you can remove this. The form code "
 "you supply will be wrapped in a form tag with the CSS ID of"
 
-#: rsvpmaker-admin.php:708
+#: rsvpmaker_settings:708
 msgid "Theme Template for Events"
 msgstr "Thema Sjabloon voor Activiteiten"
 
-#: rsvpmaker-admin.php:1453
+#: rsvpmaker_settings:1453
 msgid ""
 "<p>Explanation:</p><p>[rsvpfield textfield=&quot;myfield&quot;] outputs a "
 "text field coded to capture data for &quot;myfield&quot;</p><p>[rsvpfield "
@@ -93,15 +93,15 @@ msgstr ""
 "profile data based on an email address, you may want some data to be hidden "
 "for privacy reasons.</p><p>[rsvpguests] Outputs the guest blanks.</p>"
 
-#: rsvpmaker-admin.php:1665
+#: rsvpmaker_settings:1665
 msgid "associated with this event"
 msgstr "gerelateerd aan deze activiteit"
 
-#: rsvpmaker-admin.php:1677
+#: rsvpmaker_settings:1677
 msgid "associated with this landing page"
 msgstr "gerelateerd aan deze 'Landing Page'"
 
-#: rsvpmaker-admin.php:2184
+#: rsvpmaker_settings:2184
 msgid ""
 "You will be able to post questions or comments to the live chat on the event "
 "page"
@@ -109,11 +109,11 @@ msgstr ""
 "U kunt vragen of opmerkingen plaatsen in de live chat op de "
 "activiteitenpagina."
 
-#: rsvpmaker-admin.php:2199
+#: rsvpmaker_settings:2199
 msgid "YouTube Live landing page created at"
 msgstr ""
 
-#: rsvpmaker-admin.php:2467
+#: rsvpmaker_settings:2467
 msgid ""
 "RSVPMaker takes advantage of WP Cron, a standard WordPress scheduling "
 "mechanism. Because it only checks for scheduled tasks to be run when someone "
@@ -256,7 +256,7 @@ msgid ""
 "href=\"http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-"
 "with-a-landing-page-on-your-wordpress-website/\">YouTube Live</a> video "
 "broadcast service (formerly Hangouts on Air). <a href=\"options-general.php?"
-"page=rsvpmaker-admin.php\">Options</a> / <a href=\"edit.php?"
+"page=rsvpmaker_settings\">Options</a> / <a href=\"edit.php?"
 "post_type=rsvpmaker&page=rsvpmaker_doc\">Shortcode documentation</a>."
 msgstr ""
 "Schedule events, send invitations to your mailing list and track RSVPs. You "
@@ -271,14 +271,14 @@ msgstr ""
 "href=\"http://rsvpmaker.com/blog/2016/11/23/creating-a-youtube-live-event-"
 "with-a-landing-page-on-your-wordpress-website/\">YouTube Live</a> video "
 "broadcast service (formerly Hangouts on Air). <a href=\"options-general.php?"
-"page=rsvpmaker-admin.php\">Options</a> / <a href=\"edit.php?"
+"page=rsvpmaker_settings\">Options</a> / <a href=\"edit.php?"
 "post_type=rsvpmaker&page=rsvpmaker_doc\">Shortcode documentation</a>."
 
-#: rsvpmaker-admin.php:768
+#: rsvpmaker_settings:768
 msgid "Menu Security"
 msgstr "menu Beveiliging"
 
-#: rsvpmaker-admin.php:1529
+#: rsvpmaker_settings:1529
 #, fuzzy
 msgid "Rewrite Rules"
 msgstr "Herschrijf Regels"
@@ -425,146 +425,146 @@ msgstr "David F. Carr"
 msgid "http://www.carrcommunications.com"
 msgstr "http://www.carrcommunications.com"
 
-#: rsvpmaker-admin.php:225
+#: rsvpmaker_settings:225
 msgid "Month:"
 msgstr "Maand: %s"
 
-#: rsvpmaker-admin.php:237 rsvpmaker-email.php:609
+#: rsvpmaker_settings:237 rsvpmaker-email.php:609
 msgid "Day:"
 msgstr "%d dag"
 
-#: rsvpmaker-admin.php:251 rsvpmaker-admin.php:1063 rsvpmaker-admin.php:1370
+#: rsvpmaker_settings:251 rsvpmaker_settings:1063 rsvpmaker_settings:1370
 #: rsvpmaker-plugabble.php:487 rsvpmaker-plugabble.php:490
 #: rsvpmaker-plugabble.php:497 rsvpmaker-plugabble.php:3783
 #: rsvpmaker-plugabble.php:4139
 msgid "Year"
 msgstr "Jaar"
 
-#: rsvpmaker-admin.php:270 rsvpmaker-admin.php:1382 rsvpmaker-email.php:623
+#: rsvpmaker_settings:270 rsvpmaker_settings:1382 rsvpmaker-email.php:623
 msgid "Hour:"
 msgstr "Uur"
 
-#: rsvpmaker-admin.php:290 rsvpmaker-admin.php:1386
+#: rsvpmaker_settings:290 rsvpmaker_settings:1386
 msgid "Minutes:"
 msgstr "Minuten"
 
-#: rsvpmaker-admin.php:301 rsvpmaker-admin.php:1390 rsvpmaker-plugabble.php:290
+#: rsvpmaker_settings:301 rsvpmaker_settings:1390 rsvpmaker-plugabble.php:290
 msgid "Duration"
 msgstr "Duur"
 
-#: rsvpmaker-admin.php:302 rsvpmaker-admin.php:1391 rsvpmaker-plugabble.php:291
+#: rsvpmaker_settings:302 rsvpmaker_settings:1391 rsvpmaker-plugabble.php:291
 msgid "Not set (optional)"
 msgstr "Niet ingesteld (optioneel)"
 
-#: rsvpmaker-admin.php:303 rsvpmaker-admin.php:1392 rsvpmaker-plugabble.php:292
+#: rsvpmaker_settings:303 rsvpmaker_settings:1392 rsvpmaker-plugabble.php:292
 msgid "All day/don't show time in headline"
 msgstr "Hele dag / tijd niet weergeven in de kop"
 
-#: rsvpmaker-admin.php:321
+#: rsvpmaker_settings:321
 msgid "hours"
 msgstr "uren"
 
-#: rsvpmaker-admin.php:440
+#: rsvpmaker_settings:440
 msgid "Administrator"
 msgstr "Beheerder"
 
-#: rsvpmaker-admin.php:441
+#: rsvpmaker_settings:441
 msgid "Editor"
 msgstr "Editor"
 
-#: rsvpmaker-admin.php:442
+#: rsvpmaker_settings:442
 msgid "Author"
 msgstr "Auteur"
 
-#: rsvpmaker-admin.php:443
+#: rsvpmaker_settings:443
 msgid "Contributor"
 msgstr "Medewerker"
 
-#: rsvpmaker-admin.php:583
+#: rsvpmaker_settings:583
 msgid "Calendar Options"
 msgstr "Agenda Opties"
 
-#: rsvpmaker-admin.php:587
+#: rsvpmaker_settings:587
 msgid "Note: This site also implements custom code in"
 msgstr "Opmerking: Deze site voert ook aangepaste code in"
 
-#: rsvpmaker-admin.php:600
+#: rsvpmaker_settings:600
 msgid "Default Content for Events (such as standard meeting location)"
 msgstr "Standaardinhoud voor activiteiten (zoals standaard vergaderlocatie)"
 
-#: rsvpmaker-admin.php:603 rsvpmaker-admin.php:1069 rsvpmaker-admin.php:1249
+#: rsvpmaker_settings:603 rsvpmaker_settings:1069 rsvpmaker_settings:1249
 #: rsvpmaker-plugabble.php:256
 msgid "Hour"
 msgstr "Uur"
 
-#: rsvpmaker-admin.php:607 rsvpmaker-admin.php:1096 rsvpmaker-admin.php:1253
+#: rsvpmaker_settings:607 rsvpmaker_settings:1096 rsvpmaker_settings:1253
 #: rsvpmaker-plugabble.php:279
 msgid "Minutes"
 msgstr "Minuten"
 
-#: rsvpmaker-admin.php:611
+#: rsvpmaker_settings:611
 msgid "See also"
 msgstr "Zie ook"
 
-#: rsvpmaker-admin.php:611 rsvpmaker-admin.php:771 rsvpmaker-admin.php:833
+#: rsvpmaker_settings:611 rsvpmaker_settings:771 rsvpmaker_settings:833
 #: rsvpmaker-plugabble.php:3416 rsvpmaker-plugabble.php:3456
 msgid "Event Templates"
 msgstr "Activiteitssjablonen"
 
-#: rsvpmaker-admin.php:611
+#: rsvpmaker_settings:611
 msgid "for events held an a recurring schedule."
 msgstr "voor activiteiten die plaatsvinden volgens een terugkerend schema."
 
-#: rsvpmaker-admin.php:612
+#: rsvpmaker_settings:612
 msgid "RSVP TO"
 msgstr "Reageer naar"
 
-#: rsvpmaker-admin.php:613
+#: rsvpmaker_settings:613
 msgid "Use this address"
 msgstr "Gebruik dit adres"
 
-#: rsvpmaker-admin.php:615
+#: rsvpmaker_settings:615
 msgid "Use email of current user (event author)"
 msgstr "Gebruik e-mail van de huidige gebruiker (activiteit auteur)"
 
-#: rsvpmaker-admin.php:618
+#: rsvpmaker_settings:618
 msgid "RSVP On"
 msgstr "Reactiemogelijkheid Aan"
 
-#: rsvpmaker-admin.php:619 rsvpmaker-admin.php:621 rsvpmaker-admin.php:623
-#: rsvpmaker-admin.php:626 rsvpmaker-admin.php:629 rsvpmaker-admin.php:632
+#: rsvpmaker_settings:619 rsvpmaker_settings:621 rsvpmaker_settings:623
+#: rsvpmaker_settings:626 rsvpmaker_settings:629 rsvpmaker_settings:632
 msgid "check to turn on by default"
 msgstr "check to turn on by default"
 
-#: rsvpmaker-admin.php:621
+#: rsvpmaker_settings:621
 msgid "RSVP CAPTCHA On"
 msgstr "Spambeveiliging (captcha) voor Reageren aan"
 
-#: rsvpmaker-admin.php:623
+#: rsvpmaker_settings:623
 msgid "Login Required to RSVP"
 msgstr "Login vereist om te reageren"
 
-#: rsvpmaker-admin.php:626
+#: rsvpmaker_settings:626
 msgid "RSVPs Attendees List Public"
 msgstr "Deelnemerslijst tonen op website"
 
-#: rsvpmaker-admin.php:629 rsvpmaker-plugabble.php:505
+#: rsvpmaker_settings:629 rsvpmaker-plugabble.php:505
 msgid "Show RSVP Count"
 msgstr "Toon aantal Reacties"
 
-#: rsvpmaker-admin.php:632
+#: rsvpmaker_settings:632
 msgid "Show RSVP Yes/No Radio Buttons"
 msgstr "Toon Reacties Ja / Nee Radio Buttons"
 
-#: rsvpmaker-admin.php:635 rsvpmaker-plugabble.php:427
+#: rsvpmaker_settings:635 rsvpmaker-plugabble.php:427
 msgid "Show Add to Google / Download to Outlook (iCal) icons"
 msgstr "Toon Toevoegen aan Google / Download Outlook (iCal) pictogrammen"
 
-#: rsvpmaker-admin.php:638 rsvpmaker-plugabble.php:439
+#: rsvpmaker_settings:638 rsvpmaker-plugabble.php:439
 msgid "Show timezone conversion button next to calendar icons"
 msgstr "Toon tijdzone conversie knop naast kalender pictogrammen"
 
-#: rsvpmaker-admin.php:641
+#: rsvpmaker_settings:641
 msgid ""
 "Include date with title shown on Facebook/Twitter previews (og:title and "
 "twitter:title metatags)"
@@ -572,11 +572,11 @@ msgstr ""
 "Include date with title shown on Facebook/Twitter previews (og:title and "
 "twitter:title metatags)"
 
-#: rsvpmaker-admin.php:644
+#: rsvpmaker_settings:644
 msgid "RSVP Form Shows Members Not Responding"
 msgstr "Reactieformulier geeft leden weer die niet reageren"
 
-#: rsvpmaker-admin.php:644
+#: rsvpmaker_settings:644
 msgid ""
 "if members log in to RSVP, this shows user accounts NOT associated with an "
 "RSVP (tracking WordPress user IDs)"
@@ -584,67 +584,67 @@ msgstr ""
 "als leden inloggen om te reageren, toont dit de gebruikersaccounts die NIET "
 "gerelateerd zijn aan een Reactie (tracking WordPress user-ID)"
 
-#: rsvpmaker-admin.php:647
+#: rsvpmaker_settings:647
 msgid "Instructions for Form"
 msgstr "Instructies voor Formulier"
 
-#: rsvpmaker-admin.php:650 rsvpmaker-plugabble.php:466
+#: rsvpmaker_settings:650 rsvpmaker-plugabble.php:466
 msgid "Confirmation Message"
 msgstr "Bevestigingsbericht"
 
-#: rsvpmaker-admin.php:652 rsvpmaker-plugabble.php:469
+#: rsvpmaker_settings:652 rsvpmaker-plugabble.php:469
 msgid "Include event listing with confirmation and reminders"
 msgstr "Include event listing with confirmation and reminders"
 
-#: rsvpmaker-admin.php:654 rsvpmaker-plugabble.php:524
+#: rsvpmaker_settings:654 rsvpmaker-plugabble.php:524
 msgid "RSVP Form"
 msgstr "Reactieformulier"
 
-#: rsvpmaker-admin.php:654
+#: rsvpmaker_settings:654
 msgid "Enlarge"
 msgstr "Vergroot"
 
-#: rsvpmaker-admin.php:659
+#: rsvpmaker_settings:659
 msgid "Reset to default"
 msgstr "Reset naar standaardwaarden"
 
-#: rsvpmaker-admin.php:668
+#: rsvpmaker_settings:668
 msgid "RSVP Link"
 msgstr "Reactie Link"
 
-#: rsvpmaker-admin.php:671
+#: rsvpmaker_settings:671
 msgid "Date Format (long)"
 msgstr "Date Format (lang)"
 
-#: rsvpmaker-admin.php:674
+#: rsvpmaker_settings:674
 msgid "Date Format (short)"
 msgstr "Date Format (kort)"
 
-#: rsvpmaker-admin.php:677
+#: rsvpmaker_settings:677
 msgid "Time Format"
 msgstr "Tijdsformaat"
 
-#: rsvpmaker-admin.php:686
+#: rsvpmaker_settings:686
 msgid "Event Page"
 msgstr "Pagina van Activiteit"
 
-#: rsvpmaker-admin.php:689
+#: rsvpmaker_settings:689
 msgid "Custom CSS"
 msgstr "Aangepaste CSS"
 
-#: rsvpmaker-admin.php:697
+#: rsvpmaker_settings:697
 msgid "Error: CSS not found"
 msgstr "Fout: CSS niet gevonden"
 
-#: rsvpmaker-admin.php:700 rsvpmaker-admin.php:729
+#: rsvpmaker_settings:700 rsvpmaker_settings:729
 msgid "OK"
 msgstr "OK"
 
-#: rsvpmaker-admin.php:707
+#: rsvpmaker_settings:707
 msgid "Allows you to override the standard styles from"
 msgstr "Hiermee kunt u de standaard opmaak overschrijven van"
 
-#: rsvpmaker-admin.php:719
+#: rsvpmaker_settings:719
 msgid ""
 "Template from your theme to be used in the absence of a single-rsvpmaker.php "
 "file."
@@ -652,19 +652,19 @@ msgstr ""
 "Sjabloon uit uw WordPress thema om te gebruiken bij ontbreken van een enkel "
 "rsvpmaker.php bestand."
 
-#: rsvpmaker-admin.php:721
+#: rsvpmaker_settings:721
 msgid "PayPal Configuration File"
 msgstr "PayPal configuratiebestand"
 
-#: rsvpmaker-admin.php:722
+#: rsvpmaker_settings:722
 msgid "PayPal Setup"
 msgstr "PayPal Instellen"
 
-#: rsvpmaker-admin.php:731
+#: rsvpmaker_settings:731
 msgid "error: file not found"
 msgstr "Fout: Bestand niet gevonden"
 
-#: rsvpmaker-admin.php:734
+#: rsvpmaker_settings:734
 msgid ""
 "The PayPal setup button will help you create a configuration file containing "
 "your API credentials. See documentation."
@@ -672,39 +672,39 @@ msgstr ""
 "De PayPal-setup knop zal u helpen een configuratiebestand met uw API-"
 "referenties te maken. Zie de documentatie."
 
-#: rsvpmaker-admin.php:737
+#: rsvpmaker_settings:737
 msgid "User"
 msgstr "Gebruiker"
 
-#: rsvpmaker-admin.php:738
+#: rsvpmaker_settings:738
 msgid "Password"
 msgstr "Wachtwoord"
 
-#: rsvpmaker-admin.php:739
+#: rsvpmaker_settings:739
 msgid "Signature"
 msgstr "Handtekening"
 
-#: rsvpmaker-admin.php:742
+#: rsvpmaker_settings:742
 msgid "Track RSVP as &quot;invoice&quot; number"
 msgstr "Track Reactie  als \"factuur\" nummer"
 
-#: rsvpmaker-admin.php:747
+#: rsvpmaker_settings:747
 msgid "Payment Currency"
 msgstr "Valuta voor betalingen"
 
-#: rsvpmaker-admin.php:762 rsvpmaker-plugabble.php:536
+#: rsvpmaker_settings:762 rsvpmaker-plugabble.php:536
 msgid "WP Simple Pay Lite for Stripe plugin detected"
 msgstr "WP Simple Pay Lite voor Stripe plugin gedetecteerd"
 
-#: rsvpmaker-admin.php:762 rsvpmaker-plugabble.php:536
+#: rsvpmaker_settings:762 rsvpmaker-plugabble.php:536
 msgid "Use Stripe instead of PayPal"
 msgstr "Gebruik Stripe in plaats van PayPal"
 
-#: rsvpmaker-admin.php:765
+#: rsvpmaker_settings:765
 msgid "WP Simple Pay Lite for Stripe"
 msgstr "WP Simple Pay Lite voor Stripe"
 
-#: rsvpmaker-admin.php:765
+#: rsvpmaker_settings:765
 msgid ""
 "To use Stripe instead of PayPal, enable the <a href=\"https://wordpress.org/"
 "plugins/stripe/\" target=\"_blank\">WP Simple Pay Lite for Stripe plugin</a>"
@@ -713,55 +713,55 @@ msgstr ""
 "wordpress.org/plugins/stripe/\" target=\"_blank\">WP Simple Pay Lite voor "
 "Stripe plugin</a>"
 
-#: rsvpmaker-admin.php:770 rsvpmaker-plugabble.php:2209
+#: rsvpmaker_settings:770 rsvpmaker-plugabble.php:2209
 #: rsvpmaker-plugabble.php:3415
 msgid "RSVP Report"
 msgstr "Overzicht van deelname"
 
-#: rsvpmaker-admin.php:772 rsvpmaker-plugabble.php:3418
+#: rsvpmaker_settings:772 rsvpmaker-plugabble.php:3418
 msgid "Recurring Event"
 msgstr "Terugkerende Activiteit"
 
-#: rsvpmaker-admin.php:773 rsvpmaker-admin.php:991 rsvpmaker-plugabble.php:3420
+#: rsvpmaker_settings:773 rsvpmaker_settings:991 rsvpmaker-plugabble.php:3420
 msgid "Multiple Events"
 msgstr "Meerdere Activiteiten"
 
-#: rsvpmaker-admin.php:774 rsvpmaker-plugabble.php:3421
+#: rsvpmaker_settings:774 rsvpmaker-plugabble.php:3421
 msgid "Documentation"
 msgstr "Documentatie"
 
-#: rsvpmaker-admin.php:776
+#: rsvpmaker_settings:776
 msgid ""
 "Security level required to access custom menus (RSVP Report, Documentation)"
 msgstr ""
 "Beveiligingsniveau vereist voor toegang tot aangepaste menu's (RSVP Report, "
 "documentatie)"
 
-#: rsvpmaker-admin.php:778
+#: rsvpmaker_settings:778
 msgid "Dashboard"
 msgstr "Overzicht"
 
-#: rsvpmaker-admin.php:780
+#: rsvpmaker_settings:780
 msgid "No Widget"
 msgstr "Geen Widget"
 
-#: rsvpmaker-admin.php:781
+#: rsvpmaker_settings:781
 msgid "Show Widget"
 msgstr "Toon met widget"
 
-#: rsvpmaker-admin.php:782
+#: rsvpmaker_settings:782
 msgid "Show Widget on Top"
 msgstr "Toon Widget Bovenaan"
 
-#: rsvpmaker-admin.php:784 rsvpmaker.php:80
+#: rsvpmaker_settings:784 rsvpmaker.php:80
 msgid "Note"
 msgstr "Let op"
 
-#: rsvpmaker-admin.php:788
+#: rsvpmaker_settings:788
 msgid "SMTP for Notifications"
 msgstr "SMTP voor Meldingen"
 
-#: rsvpmaker-admin.php:789
+#: rsvpmaker_settings:789
 msgid ""
 "For more reliable delivery of email notifications, enable delivery through "
 "the SMTP email protocol. Standard server parameters will be used for Gmail "
@@ -773,7 +773,7 @@ msgstr ""
 "and the SendGrid service, or specify the server port number and security "
 "protocol"
 
-#: rsvpmaker-admin.php:790
+#: rsvpmaker_settings:790
 msgid ""
 "If you are using another plugin that improves the delivery of email "
 "notifications, such one of the <a href=\"https://wordpress.org/plugins/"
@@ -785,45 +785,45 @@ msgstr ""
 "sendgrid-email-delivery-simplified/\">SendGrid plugin</a> (which uses the "
 "SendGrid API rather than SMTP), leave this set to \"None - use wp_mail().\""
 
-#: rsvpmaker-admin.php:792
+#: rsvpmaker_settings:792
 msgid "None - use wp_mail()"
 msgstr "Geen - gebruik wp_mail ()"
 
-#: rsvpmaker-admin.php:795
+#: rsvpmaker_settings:795
 msgid "Other SMTP (specified below)"
 msgstr "Andere SMTP (hieronder gespecificeerd)"
 
-#: rsvpmaker-admin.php:798
+#: rsvpmaker_settings:798
 msgid "Email Account for Notifications"
 msgstr "E-mail-account voor Meldingen"
 
-#: rsvpmaker-admin.php:802
+#: rsvpmaker_settings:802
 msgid "Email Username"
 msgstr "E-mailadres/Gebruikersnaam"
 
-#: rsvpmaker-admin.php:806
+#: rsvpmaker_settings:806
 msgid "Email Password"
 msgstr "E-mail en wachtwoord"
 
-#: rsvpmaker-admin.php:810
+#: rsvpmaker_settings:810
 msgid ""
 "Server (parameters below not necessary if you specified Gmail or SendGrid)"
 msgstr ""
 "Server (parameters hieronder niet nodig als u Gmail of SendGrid heeft "
 "opgegeven)"
 
-#: rsvpmaker-admin.php:813
+#: rsvpmaker_settings:813
 msgid ""
 "SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)"
 msgstr ""
 "SMTP Beveiliging Prefix (ssl en tls, leeg laten voor niet-gecodeerde "
 "verbindingen)"
 
-#: rsvpmaker-admin.php:817
+#: rsvpmaker_settings:817
 msgid "SMTP Port"
 msgstr "SMTP poort"
 
-#: rsvpmaker-admin.php:822
+#: rsvpmaker_settings:822
 msgid ""
 "See <a href=\"http://www.wpsitecare.com/gmail-smtp-settings/\">this article</"
 "a> for additional guidance on using Gmail (requires a tweak to security "
@@ -840,30 +840,30 @@ msgstr ""
 "server die uw website host redelijk veilig zijn, omdat er geen gegevens over "
 "het netwerk worden doorgegeven."
 
-#: rsvpmaker-admin.php:828
+#: rsvpmaker_settings:828
 msgid "Send SMTP Test to RSVP To address"
 msgstr "Stuur SMTP Test naar het 'Reageer naar' e-mail adres"
 
-#: rsvpmaker-admin.php:834 rsvpmaker-plugabble.php:10
+#: rsvpmaker_settings:834 rsvpmaker-plugabble.php:10
 msgid "Additional Editors"
 msgstr "Extra Editors"
 
-#: rsvpmaker-admin.php:834
+#: rsvpmaker_settings:834
 msgid ""
 "Allow users to share editing rights for event templates and related events."
 msgstr ""
 "Sta gebruikers toe om bewerkrechten te delen voor activiteit-sjablonen en "
 "gerelateerde activiteiten."
 
-#: rsvpmaker-admin.php:837
+#: rsvpmaker_settings:837
 msgid "Troubleshooting"
 msgstr "Probleemoplossing"
 
-#: rsvpmaker-admin.php:838
+#: rsvpmaker_settings:838
 msgid "Tweak Permalinks"
 msgstr "Tweak Permalinks"
 
-#: rsvpmaker-admin.php:838
+#: rsvpmaker_settings:838
 msgid ""
 "Check here if you are getting &quot;page not found&quot; errors for event "
 "content (should not be necessary for most users)."
@@ -871,66 +871,66 @@ msgstr ""
 "Klik hier als je \"pagina niet gevonden\" fouten krijgt voor de inhoud van "
 "de activiteit (is niet nodig voor de meeste gebruikers)."
 
-#: rsvpmaker-admin.php:840 rsvpmaker-admin.php:1516
+#: rsvpmaker_settings:840 rsvpmaker_settings:1516
 msgid "Debug"
 msgstr "Toont of WordPress in Debug Modus staat of niet."
 
-#: rsvpmaker-admin.php:843 rsvpmaker-admin.php:2098 rsvpmaker-email.php:443
+#: rsvpmaker_settings:843 rsvpmaker_settings:2098 rsvpmaker-email.php:443
 #: rsvpmaker-plugabble.php:3696
 msgid "Update"
 msgstr "Updaten"
 
-#: rsvpmaker-admin.php:846
+#: rsvpmaker_settings:846
 msgid "RSVP Reminders scheduled for"
 msgstr "Herinneringen om te Reageren gepland voor"
 
-#: rsvpmaker-admin.php:847
+#: rsvpmaker_settings:847
 msgid "Set new time"
 msgstr "Stel nieuwe tijd in"
 
-#: rsvpmaker-admin.php:849
+#: rsvpmaker_settings:849
 msgid "Set"
 msgstr "Instellen"
 
-#: rsvpmaker-admin.php:920
+#: rsvpmaker_settings:920
 msgid "Events (click to edit)"
 msgstr "Activiteiten (klik om te wijzigen)"
 
-#: rsvpmaker-admin.php:920
+#: rsvpmaker_settings:920
 msgid "Show All"
 msgstr "Toon alles"
 
-#: rsvpmaker-admin.php:993
+#: rsvpmaker_settings:993
 msgid "Use this form to enter multiple events quickly with basic formatting"
 msgstr ""
 "Gebruik dit formulier om meerdere activiteiten snel in te voeren met "
 "eenvoudige opmaak"
 
-#: rsvpmaker-admin.php:1007 rsvpmaker-email.php:568
+#: rsvpmaker_settings:1007 rsvpmaker-email.php:568
 #: rsvpmaker-plugabble.php:3501 rsvpmaker-plugabble.php:4173
 msgid "Title"
 msgstr "Titel"
 
-#: rsvpmaker-admin.php:1012 rsvpmaker-admin.php:1316
+#: rsvpmaker_settings:1012 rsvpmaker_settings:1316
 #: rsvpmaker-plugabble.php:487 rsvpmaker-plugabble.php:490
 #: rsvpmaker-plugabble.php:497 rsvpmaker-plugabble.php:3729
 #: rsvpmaker-plugabble.php:4085
 msgid "Month"
 msgstr "Maand"
 
-#: rsvpmaker-admin.php:1028 rsvpmaker-admin.php:1332
+#: rsvpmaker_settings:1028 rsvpmaker_settings:1332
 #: rsvpmaker-plugabble.php:487 rsvpmaker-plugabble.php:490
 #: rsvpmaker-plugabble.php:497 rsvpmaker-plugabble.php:3745
 #: rsvpmaker-plugabble.php:4101
 msgid "Day"
 msgstr "Dag"
 
-#: rsvpmaker-admin.php:1109 rsvpmaker-display.php:1585
+#: rsvpmaker_settings:1109 rsvpmaker-display.php:1585
 #: rsvpmaker-plugabble.php:2143 rsvpmaker-plugabble.php:4216
 msgid "Submit"
 msgstr "Verstuur"
 
-#: rsvpmaker-admin.php:1217
+#: rsvpmaker_settings:1217
 msgid ""
 "Use this form to create multiple events with the same headline, description, "
 "and RSVP paramaters. You can have the program automatically calculate dates "
@@ -940,50 +940,50 @@ msgstr ""
 "kop, beschrijving en RSVP creëren. U kunt het programma automatisch datums "
 "laten berekenen voor een vaste maandelijkse planning."
 
-#: rsvpmaker-admin.php:1219
+#: rsvpmaker_settings:1219
 msgid "Optional: Calculate dates for a recurring schedule"
 msgstr "Optioneel: Bereken datums voor een terugkerende planning"
 
-#: rsvpmaker-admin.php:1223
+#: rsvpmaker_settings:1223
 msgid "Regular schedule"
 msgstr "Gewone planning"
 
-#: rsvpmaker-admin.php:1227 rsvpmaker-admin.php:1596
+#: rsvpmaker_settings:1227 rsvpmaker_settings:1596
 #: rsvpmaker-plugabble.php:166 rsvpmaker-plugabble.php:1713
 #: rsvpmaker-plugabble.php:3468 rsvpmaker-plugabble.php:3521
 #: rsvpmaker-plugabble.php:3637
 msgid "First"
 msgstr "Eerste"
 
-#: rsvpmaker-admin.php:1228 rsvpmaker-admin.php:1596
+#: rsvpmaker_settings:1228 rsvpmaker_settings:1596
 #: rsvpmaker-plugabble.php:166 rsvpmaker-plugabble.php:1713
 #: rsvpmaker-plugabble.php:3468 rsvpmaker-plugabble.php:3521
 #: rsvpmaker-plugabble.php:3637
 msgid "Second"
 msgstr "Seconde"
 
-#: rsvpmaker-admin.php:1229 rsvpmaker-admin.php:1596
+#: rsvpmaker_settings:1229 rsvpmaker_settings:1596
 #: rsvpmaker-plugabble.php:166 rsvpmaker-plugabble.php:1713
 #: rsvpmaker-plugabble.php:3468 rsvpmaker-plugabble.php:3521
 #: rsvpmaker-plugabble.php:3637
 msgid "Third"
 msgstr "Derde"
 
-#: rsvpmaker-admin.php:1230 rsvpmaker-admin.php:1596
+#: rsvpmaker_settings:1230 rsvpmaker_settings:1596
 #: rsvpmaker-plugabble.php:166 rsvpmaker-plugabble.php:1713
 #: rsvpmaker-plugabble.php:3468 rsvpmaker-plugabble.php:3521
 #: rsvpmaker-plugabble.php:3637
 msgid "Fourth"
 msgstr "Vierde"
 
-#: rsvpmaker-admin.php:1231 rsvpmaker-admin.php:1596
+#: rsvpmaker_settings:1231 rsvpmaker_settings:1596
 #: rsvpmaker-plugabble.php:166 rsvpmaker-plugabble.php:1713
 #: rsvpmaker-plugabble.php:3468 rsvpmaker-plugabble.php:3521
 #: rsvpmaker-plugabble.php:3637
 msgid "Last"
 msgstr "Vorige"
 
-#: rsvpmaker-admin.php:1236 rsvpmaker-admin.php:1597 rsvpmaker-display.php:858
+#: rsvpmaker_settings:1236 rsvpmaker_settings:1597 rsvpmaker-display.php:858
 #: rsvpmaker-display.php:868 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -991,7 +991,7 @@ msgstr "Vorige"
 msgid "Sunday"
 msgstr "Zondag"
 
-#: rsvpmaker-admin.php:1237 rsvpmaker-admin.php:1597 rsvpmaker-display.php:852
+#: rsvpmaker_settings:1237 rsvpmaker_settings:1597 rsvpmaker-display.php:852
 #: rsvpmaker-display.php:869 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -999,7 +999,7 @@ msgstr "Zondag"
 msgid "Monday"
 msgstr "Maandag"
 
-#: rsvpmaker-admin.php:1238 rsvpmaker-admin.php:1597 rsvpmaker-display.php:853
+#: rsvpmaker_settings:1238 rsvpmaker_settings:1597 rsvpmaker-display.php:853
 #: rsvpmaker-display.php:870 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -1007,7 +1007,7 @@ msgstr "Maandag"
 msgid "Tuesday"
 msgstr "Dinsdag"
 
-#: rsvpmaker-admin.php:1239 rsvpmaker-admin.php:1597 rsvpmaker-display.php:854
+#: rsvpmaker_settings:1239 rsvpmaker_settings:1597 rsvpmaker-display.php:854
 #: rsvpmaker-display.php:871 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -1015,7 +1015,7 @@ msgstr "Dinsdag"
 msgid "Wednesday"
 msgstr "Woensdag"
 
-#: rsvpmaker-admin.php:1240 rsvpmaker-admin.php:1597 rsvpmaker-display.php:855
+#: rsvpmaker_settings:1240 rsvpmaker_settings:1597 rsvpmaker-display.php:855
 #: rsvpmaker-display.php:872 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -1023,7 +1023,7 @@ msgstr "Woensdag"
 msgid "Thursday"
 msgstr "Donderdag"
 
-#: rsvpmaker-admin.php:1241 rsvpmaker-admin.php:1597 rsvpmaker-display.php:856
+#: rsvpmaker_settings:1241 rsvpmaker_settings:1597 rsvpmaker-display.php:856
 #: rsvpmaker-display.php:873 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -1031,7 +1031,7 @@ msgstr "Donderdag"
 msgid "Friday"
 msgstr "Vrijdag"
 
-#: rsvpmaker-admin.php:1242 rsvpmaker-admin.php:1597 rsvpmaker-display.php:857
+#: rsvpmaker_settings:1242 rsvpmaker_settings:1597 rsvpmaker-display.php:857
 #: rsvpmaker-display.php:874 rsvpmaker-email.php:615
 #: rsvpmaker-plugabble.php:165 rsvpmaker-plugabble.php:1712
 #: rsvpmaker-plugabble.php:3467 rsvpmaker-plugabble.php:3520
@@ -1039,41 +1039,41 @@ msgstr "Vrijdag"
 msgid "Saturday"
 msgstr "Zaterdag"
 
-#: rsvpmaker-admin.php:1248 rsvpmaker-plugabble.php:255
+#: rsvpmaker_settings:1248 rsvpmaker-plugabble.php:255
 #: rsvpmaker-plugabble.php:1520 rsvpmaker.php:741
 msgid "Time"
 msgstr "Tijd"
 
-#: rsvpmaker-admin.php:1257
+#: rsvpmaker_settings:1257
 msgid ""
 "For an event starting at 12:30 p.m., you would select 12 p.m. and 30 minutes."
 msgstr ""
 "Voor een activiteit die begint om 12.30 uur, zou je 12:00 en 30 minuten "
 "moeten selecteren."
 
-#: rsvpmaker-admin.php:1269
+#: rsvpmaker_settings:1269
 msgid "or enter dates individually."
 msgstr "of voer datums een voor een in."
 
-#: rsvpmaker-admin.php:1289
+#: rsvpmaker_settings:1289
 msgid "Loading recurring series of dates for"
 msgstr "Loading recurring series of dates for"
 
-#: rsvpmaker-admin.php:1289
+#: rsvpmaker_settings:1289
 msgid ""
 "To omit a date in the series, change the day field to &quot;Not Set&quot;"
 msgstr ""
 "Om een ​​datum in de serie weg te laten, wijzigt u het veld dag \"Onbekend\""
 
-#: rsvpmaker-admin.php:1294
+#: rsvpmaker_settings:1294
 msgid "Enter Recurring Events"
 msgstr "Voer terugkerende activiteiten in"
 
-#: rsvpmaker-admin.php:1436
+#: rsvpmaker_settings:1436
 msgid "Contents for an events page."
 msgstr "Inhoud van een activiteiten-pagina."
 
-#: rsvpmaker-admin.php:1449
+#: rsvpmaker_settings:1449
 msgid ""
 "<h3>RSVP Form</h3><p>The RSVP from is also now formatted using shortcodes, "
 "which you can edit in the RSVP Form section of the Settings screen. You can "
@@ -1085,17 +1085,17 @@ msgstr ""
 "Instellingen. U kunt het formulier aanpassen per activiteit. Dit is uw "
 "huidige standaard formulier: </p>"
 
-#: rsvpmaker-admin.php:1455
+#: rsvpmaker_settings:1455
 msgid ""
 "If you're having trouble with the form fields not being formatted correctly"
 msgstr ""
 "If you're having trouble with the form fields not being formatted correctly"
 
-#: rsvpmaker-admin.php:1455
+#: rsvpmaker_settings:1455
 msgid "Reset default RSVP Form"
 msgstr "Reset standaard Reactie Formulier"
 
-#: rsvpmaker-admin.php:1517
+#: rsvpmaker_settings:1517
 msgid ""
 "Use this screen to verify that RSVPMaker is recording data correctly or to "
 "share debugging information with the plugin author. If you send debugging "
@@ -1108,94 +1108,94 @@ msgstr ""
 "david@carrcommunications.com\">david@carrcommunications.com</a> en uitleggen "
 "wat je hulp nodig."
 
-#: rsvpmaker-admin.php:1523
+#: rsvpmaker_settings:1523
 msgid "RSVP Records"
 msgstr "RSVP Records / Reactie bestanden"
 
-#: rsvpmaker-admin.php:1526 rsvpmaker-plugabble.php:2104
+#: rsvpmaker_settings:1526 rsvpmaker-plugabble.php:2104
 #: rsvpmaker-plugabble.php:2708
 msgid "Options"
 msgstr "Opties"
 
-#: rsvpmaker-admin.php:1533
+#: rsvpmaker_settings:1533
 msgid "Globals"
 msgstr "Globals"
 
-#: rsvpmaker-admin.php:1536
+#: rsvpmaker_settings:1536
 msgid "Send to Plugin Author"
 msgstr "Stuur naar de maker van deze plugin"
 
-#: rsvpmaker-admin.php:1551
+#: rsvpmaker_settings:1551
 msgid "Event Dates"
 msgstr "Datums Activiteiten"
 
-#: rsvpmaker-admin.php:1553
+#: rsvpmaker_settings:1553
 msgid "Scheduled"
 msgstr "Gepland"
 
-#: rsvpmaker-admin.php:1583 rsvpmaker-email.php:768
+#: rsvpmaker_settings:1583 rsvpmaker-email.php:768
 #: rsvpmaker-plugabble.php:3881 rsvpmaker-plugabble.php:4270
 #: rsvpmaker-plugabble.php:4503
 msgid "Template"
 msgstr "Sjabloon"
 
-#: rsvpmaker-admin.php:1596 rsvpmaker-plugabble.php:166
+#: rsvpmaker_settings:1596 rsvpmaker-plugabble.php:166
 #: rsvpmaker-plugabble.php:1713 rsvpmaker-plugabble.php:3468
 #: rsvpmaker-plugabble.php:3521 rsvpmaker-plugabble.php:3637
 msgid "Varies"
 msgstr "Varieert"
 
-#: rsvpmaker-admin.php:1596 rsvpmaker-plugabble.php:166
+#: rsvpmaker_settings:1596 rsvpmaker-plugabble.php:166
 #: rsvpmaker-plugabble.php:1713 rsvpmaker-plugabble.php:3468
 #: rsvpmaker-plugabble.php:3521 rsvpmaker-plugabble.php:3637
 msgid "Every"
 msgstr "Elke"
 
-#: rsvpmaker-admin.php:1600
+#: rsvpmaker_settings:1600
 msgid "Schedule varies"
 msgstr "Planning varieert"
 
-#: rsvpmaker-admin.php:1618
+#: rsvpmaker_settings:1618
 msgid "Special Page"
 msgstr "Speciale pagina"
 
-#: rsvpmaker-admin.php:1646 rsvpmaker-admin.php:2383
+#: rsvpmaker_settings:1646 rsvpmaker_settings:2383
 msgid "Follow up"
 msgstr "Opvolgen"
 
-#: rsvpmaker-admin.php:1646 rsvpmaker-admin.php:2383
+#: rsvpmaker_settings:1646 rsvpmaker_settings:2383
 msgid "hours after"
 msgstr "uur na"
 
-#: rsvpmaker-admin.php:1648 rsvpmaker-admin.php:2385
+#: rsvpmaker_settings:1648 rsvpmaker_settings:2385
 msgid "Reminder"
 msgstr "Herinnering"
 
-#: rsvpmaker-admin.php:1648 rsvpmaker-admin.php:2143 rsvpmaker-admin.php:2385
+#: rsvpmaker_settings:1648 rsvpmaker_settings:2143 rsvpmaker_settings:2385
 msgid "hours before"
 msgstr "uur vooraf"
 
-#: rsvpmaker-admin.php:1665 rsvpmaker-admin.php:1677
+#: rsvpmaker_settings:1665 rsvpmaker_settings:1677
 msgid "Edit the"
 msgstr "Wijzig de"
 
-#: rsvpmaker-admin.php:1665
+#: rsvpmaker_settings:1665
 msgid "webinar landing page"
 msgstr "webinar landing page"
 
-#: rsvpmaker-admin.php:1667 rsvpmaker-admin.php:1679
+#: rsvpmaker_settings:1667 rsvpmaker_settings:1679
 msgid "Related messages:"
 msgstr "Gerelateerde berichten:"
 
-#: rsvpmaker-admin.php:1668 rsvpmaker-admin.php:1680
+#: rsvpmaker_settings:1668 rsvpmaker_settings:1680
 msgid "Confirmation"
 msgstr "Bevestiging"
 
-#: rsvpmaker-admin.php:1677
+#: rsvpmaker_settings:1677
 msgid "webinar event post"
 msgstr "webinar activiteit bericht"
 
-#: rsvpmaker-admin.php:1691
+#: rsvpmaker_settings:1691
 msgid ""
 "ChimpBlast has been replaced by the RSVP Mailer function of RSVPMaker and "
 "should be uninstalled"
@@ -1203,19 +1203,19 @@ msgstr ""
 "ChimpBlast is vervangen door de RSVP Mailer functie van RSVPMaker en moet "
 "worden verwijderd"
 
-#: rsvpmaker-admin.php:1696
+#: rsvpmaker_settings:1696
 msgid "RSVPMaker needs you to"
 msgstr "Je moet in RSVPMaker "
 
-#: rsvpmaker-admin.php:1696
+#: rsvpmaker_settings:1696
 msgid "set the timezone for your website"
 msgstr "Stel de tijdzone voor uw website in"
 
-#: rsvpmaker-admin.php:1696
+#: rsvpmaker_settings:1696
 msgid "using a region/city string like America/New York"
 msgstr "met behulp van een regio / stad string als Amerika / New York"
 
-#: rsvpmaker-admin.php:1731
+#: rsvpmaker_settings:1731
 msgid ""
 "RSVPMaker needs you to create a page with the [rsvpmaker_upcoming] shortcode "
 "to display event listings"
@@ -1223,39 +1223,39 @@ msgstr ""
 "Je moet in RSVPMaker een ​​pagina aanmaken met de [rsvpmaker_upcoming] "
 "shortcode daarop om de activiteiten lijsten te tonen"
 
-#: rsvpmaker-admin.php:1731
+#: rsvpmaker_settings:1731
 msgid "Create page"
 msgstr "Pagina aanmaken"
 
-#: rsvpmaker-admin.php:1731
+#: rsvpmaker_settings:1731
 msgid "Calendar"
 msgstr "Agenda"
 
-#: rsvpmaker-admin.php:1731
+#: rsvpmaker_settings:1731
 msgid "Turn off this warning"
 msgstr "Schakel deze waarschuwing uit"
 
-#: rsvpmaker-admin.php:1739
+#: rsvpmaker_settings:1739
 msgid "Testing SMTP email notification"
 msgstr "Testen van SMTP e-mail notificatie"
 
-#: rsvpmaker-admin.php:1740
+#: rsvpmaker_settings:1740
 msgid "Test from RSVPMaker."
 msgstr "Test van RSVPMaker"
 
-#: rsvpmaker-admin.php:1742
+#: rsvpmaker_settings:1742
 msgid "Sending test email"
 msgstr "Test e-mail aan het verzenden..."
 
-#: rsvpmaker-admin.php:1883
+#: rsvpmaker_settings:1883
 msgid "Sort By Newest"
 msgstr "Sorteer op nieuwste"
 
-#: rsvpmaker-admin.php:1885
+#: rsvpmaker_settings:1885
 msgid "Sort By Event Date"
 msgstr "Sorteren op Activiteit-datum?"
 
-#: rsvpmaker-admin.php:2062 rsvpmaker-plugabble.php:3012
+#: rsvpmaker_settings:2062 rsvpmaker-plugabble.php:3012
 msgid ""
 "This is an automated reminder that we have you on the RSVP list for the "
 "event shown below. If your plans have changed, you can update your response "
@@ -1266,102 +1266,102 @@ msgstr ""
 "uw deelname annuleren door nogmaal te klikken nogmaals op Reageer knop te "
 "klikken."
 
-#: rsvpmaker-admin.php:2082 rsvpmaker-plugabble.php:2437
+#: rsvpmaker_settings:2082 rsvpmaker-plugabble.php:2437
 #: rsvpmaker-plugabble.php:3015
 msgid "guest of"
 msgstr "gast van"
 
-#: rsvpmaker-admin.php:2133
+#: rsvpmaker_settings:2133
 msgid "Scheduled Reminders"
 msgstr "Geplande Herinneringsberichten"
 
-#: rsvpmaker-admin.php:2133 rsvpmaker-admin.php:2212
+#: rsvpmaker_settings:2133 rsvpmaker_settings:2212
 msgid "RSVP Reminders"
 msgstr "Herinneringen om te Reageren"
 
-#: rsvpmaker-admin.php:2145
+#: rsvpmaker_settings:2145
 msgid "hours after event starts"
 msgstr "uur nadat de activiteit begint"
 
-#: rsvpmaker-admin.php:2158
+#: rsvpmaker_settings:2158
 msgid "Live"
 msgstr "Live"
 
-#: rsvpmaker-admin.php:2159
+#: rsvpmaker_settings:2159
 msgid "The event starts"
 msgstr "De activiteit begint op"
 
-#: rsvpmaker-admin.php:2184
+#: rsvpmaker_settings:2184
 msgid "Thanks for registering for"
 msgstr "Bedankt voor uw inschrijving voor"
 
-#: rsvpmaker-admin.php:2184
+#: rsvpmaker_settings:2184
 msgid "The event will start at"
 msgstr "De activiteit begint om"
 
-#: rsvpmaker-admin.php:2184
+#: rsvpmaker_settings:2184
 msgid "Tune in here"
 msgstr "Hier afstemmen"
 
-#: rsvpmaker-admin.php:2193
+#: rsvpmaker_settings:2193
 msgid "Thanks for your interest in "
 msgstr "Bedankt voor uw interesse in "
 
-#: rsvpmaker-admin.php:2193
+#: rsvpmaker_settings:2193
 msgid ""
 "If you missed all or part of the program, a replay is waiting for you here"
 msgstr ""
 "Als u alle of een deel van het programma heeft gemist, dan staat hier een "
 "herhaling voor u klaar"
 
-#: rsvpmaker-admin.php:2199 rsvpmaker-email.php:439 rsvpmaker-email.php:1281
+#: rsvpmaker_settings:2199 rsvpmaker-email.php:439 rsvpmaker-email.php:1281
 #: rsvpmaker-plugabble.php:2569 rsvpmaker-plugabble.php:3688
 #: rsvpmaker-plugabble.php:4060 rsvpmaker-plugabble.php:4173
 #: rsvpmaker-plugabble.php:4546 single-rsvpmaker.php:33
 msgid "Edit"
 msgstr "Wijzig"
 
-#: rsvpmaker-admin.php:2291
+#: rsvpmaker_settings:2291
 msgid "Edit Reminder Message"
 msgstr "Wijzig HERINNERINGSBERICHT"
 
-#: rsvpmaker-admin.php:2301
+#: rsvpmaker_settings:2301
 msgid "Edit and save this text to create an email reminder."
 msgstr "Edit and save this text to create an email reminder."
 
-#: rsvpmaker-admin.php:2305 rsvpmaker-admin.php:2436
+#: rsvpmaker_settings:2305 rsvpmaker_settings:2436
 msgid "Edit Confirmation Message"
 msgstr "Bewerk Bevestigingsbericht"
 
-#: rsvpmaker-admin.php:2356
+#: rsvpmaker_settings:2356
 msgid "Set for %s hours before the start of the event"
 msgstr "Ingesteld voor%s uur voor aanvang van de activiteit"
 
-#: rsvpmaker-admin.php:2358
+#: rsvpmaker_settings:2358
 msgid "Set for %s hours after the start of the event"
 msgstr "Ingesteld voor%s uur na het begin van de activiteit"
 
-#: rsvpmaker-admin.php:2417 rsvpmaker.php:536
+#: rsvpmaker_settings:2417 rsvpmaker.php:536
 msgid "Recent Events"
 msgstr "Recente activiteiten"
 
-#: rsvpmaker-admin.php:2442 rsvpmaker-admin.php:2452
+#: rsvpmaker_settings:2442 rsvpmaker_settings:2452
 msgid "Load"
 msgstr "Uploaden"
 
-#: rsvpmaker-admin.php:2445
+#: rsvpmaker_settings:2445
 msgid "Create Reminder Message"
 msgstr "Maak Herinneringsbericht"
 
-#: rsvpmaker-admin.php:2447
+#: rsvpmaker_settings:2447
 msgid "Timing"
 msgstr "Timing"
 
-#: rsvpmaker-admin.php:2455
+#: rsvpmaker_settings:2455
 msgid "Webinar Setup"
 msgstr "webinar Setup"
 
-#: rsvpmaker-admin.php:2457
+#: rsvpmaker_settings:2457
 msgid ""
 "This utility sets up a landing page and suggested confirmation and reminder "
 "messages, linked to that page. RSVPMaker explicitly supports webinars based "
@@ -1373,135 +1373,135 @@ msgstr ""
 "on YouTube Live, but you can also embed the coding required for another "
 "webinar of your choice."
 
-#: rsvpmaker-admin.php:2462 rsvpmaker-plugabble.php:472
+#: rsvpmaker_settings:2462 rsvpmaker-plugabble.php:472
 msgid "Require passcode to view"
 msgstr "Vereis toegangscode om te bekijken"
 
-#: rsvpmaker-admin.php:2463
+#: rsvpmaker_settings:2463
 msgid "Create"
 msgstr "Aanmaken"
 
-#: rsvpmaker-admin.php:2466
+#: rsvpmaker_settings:2466
 msgid "A Note on More Reliable Scheduling"
 msgstr "A Note on More Reliable Scheduling"
 
-#: rsvpmaker-admin.php:2469
+#: rsvpmaker_settings:2469
 msgid "Using Unix cron, the command you would set to execute would be"
 msgstr ""
 "Met behulp van Unix cron, de opdrachtprompt die u zou instellen om uit te "
 "voeren zou zijn: "
 
-#: rsvpmaker-admin.php:2495 rsvpmaker-display.php:209 rsvpmaker-display.php:261
+#: rsvpmaker_settings:2495 rsvpmaker-display.php:209 rsvpmaker-display.php:261
 #: rsvpmaker-email.php:1596 rsvpmaker-plugabble.php:2416
 #: rsvpmaker-plugabble.php:4587 rsvpmaker.php:175
 msgid "Events"
 msgstr "Activiteiten"
 
-#: rsvpmaker-admin.php:2496
+#: rsvpmaker_settings:2496
 msgid "double-click for popup editor"
 msgstr "dubbelklik voor popup-editor"
 
-#: rsvpmaker-admin.php:2761
+#: rsvpmaker_settings:2761
 msgid "12 am"
 msgstr "00.00 uur"
 
-#: rsvpmaker-admin.php:2762
+#: rsvpmaker_settings:2762
 msgid "1 am"
 msgstr "01.00 uur"
 
-#: rsvpmaker-admin.php:2763
+#: rsvpmaker_settings:2763
 msgid "2 am"
 msgstr "02.00 uur"
 
-#: rsvpmaker-admin.php:2764
+#: rsvpmaker_settings:2764
 msgid "3 am"
 msgstr "03.00 uur"
 
-#: rsvpmaker-admin.php:2765
+#: rsvpmaker_settings:2765
 msgid "4 am"
 msgstr "04.00 uur"
 
-#: rsvpmaker-admin.php:2766
+#: rsvpmaker_settings:2766
 msgid "5 am"
 msgstr "05.00 uur"
 
-#: rsvpmaker-admin.php:2767
+#: rsvpmaker_settings:2767
 msgid "6 am"
 msgstr "06.00 uur"
 
-#: rsvpmaker-admin.php:2768
+#: rsvpmaker_settings:2768
 msgid "7 am"
 msgstr "07.00 uur"
 
-#: rsvpmaker-admin.php:2769
+#: rsvpmaker_settings:2769
 msgid "8 am"
 msgstr "08.00 uur"
 
-#: rsvpmaker-admin.php:2770
+#: rsvpmaker_settings:2770
 msgid "9 am"
 msgstr "09.00 uur"
 
-#: rsvpmaker-admin.php:2771
+#: rsvpmaker_settings:2771
 msgid "10 am"
 msgstr "10.00 uur"
 
-#: rsvpmaker-admin.php:2772
+#: rsvpmaker_settings:2772
 msgid "11 am"
 msgstr "11.00 uur"
 
-#: rsvpmaker-admin.php:2773
+#: rsvpmaker_settings:2773
 msgid "12 pm"
 msgstr "24.00 uur"
 
-#: rsvpmaker-admin.php:2774
+#: rsvpmaker_settings:2774
 msgid "1 pm"
 msgstr "13.00 uur"
 
-#: rsvpmaker-admin.php:2775
+#: rsvpmaker_settings:2775
 msgid "2 pm"
 msgstr "14.00 uur"
 
-#: rsvpmaker-admin.php:2776
+#: rsvpmaker_settings:2776
 msgid "3 pm"
 msgstr "15.00 uur"
 
-#: rsvpmaker-admin.php:2777
+#: rsvpmaker_settings:2777
 msgid "4 pm"
 msgstr "16.00 uur"
 
-#: rsvpmaker-admin.php:2778
+#: rsvpmaker_settings:2778
 msgid "5 pm"
 msgstr "17.00 uur"
 
-#: rsvpmaker-admin.php:2779
+#: rsvpmaker_settings:2779
 msgid "6 pm"
 msgstr "18.00 uur"
 
-#: rsvpmaker-admin.php:2780
+#: rsvpmaker_settings:2780
 msgid "7 pm"
 msgstr "19.00 uur"
 
-#: rsvpmaker-admin.php:2781
+#: rsvpmaker_settings:2781
 msgid "8 pm"
 msgstr "20.00 uur"
 
-#: rsvpmaker-admin.php:2782
+#: rsvpmaker_settings:2782
 msgid "9 pm"
 msgstr "21.00 uur"
 
-#: rsvpmaker-admin.php:2783
+#: rsvpmaker_settings:2783
 msgid "10 pm"
 msgstr "22.00 uur"
 
-#: rsvpmaker-admin.php:2784
+#: rsvpmaker_settings:2784
 msgid "11 pm"
 msgstr "23.00 uur"
 
-#: rsvpmaker-admin.php:2785
+#: rsvpmaker_settings:2785
 msgid "midnight"
 msgstr "middernacht"
 
-#: rsvpmaker-admin.php:2832 rsvpmaker-plugabble.php:3501
+#: rsvpmaker_settings:2832 rsvpmaker-plugabble.php:3501
 #: rsvpmaker-plugabble.php:3976 rsvpmaker-plugabble.php:4231 rsvpmaker.php:176
 msgid "Event"
 msgstr "Activiteit"

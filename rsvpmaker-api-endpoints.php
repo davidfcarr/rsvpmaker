@@ -2109,8 +2109,8 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		else
 			$response['chimp_lists'] = [];
 		$response['test'] = 'x';
-		$response['smtp_test'] = admin_url('options-general.php?page=rsvpmaker-admin.php&smtptest=1');
-		$response['mailing_list_settings'] = admin_url('options-general.php?page=rsvpmaker-admin.php');
+		$response['smtp_test'] = admin_url('options-general.php?page=rsvpmaker_settings&smtptest=1');
+		$response['mailing_list_settings'] = admin_url('options-general.php?page=rsvpmaker_settings');
 		$response['current_user_id'] = $current_user->ID;
 		$response['current_user_email'] = $current_user->user_email;
 		$response['edit_url'] = admin_url('post.php?action=edit&post=');
@@ -2301,7 +2301,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 		$type = get_post_type($post_id);
 		$rsvpmeta = array("_rsvp_to", "_rsvp_instructions", "simple_price", "simple_price_label", "venue", "_sked_minutes", "_sked_stop", "_sked_duration", "_payment_gateway", "_rsvp_currency", "_rsvp_end_display", "_sked_start_time", "_sked_end");
 		$rsvpnumber = array("_rsvp_max", "_template_start_hour", "_template_start_minutes", "_sked_hour", "rsvp_tx_template", "_rsvp_deadline_daysbefore", "_rsvp_deadline_hours", "_rsvp_reg_daysbefore", "_rsvp_reg_hours","_rsvp_start", "_rsvp_deadline");
-		$rsvpbool = array("_rsvp_on","_rsvp_show_attendees", "_rsvp_count_party", "_add_timezone", "_convert_timezone", "_calendar_icons", "_rsvp_rsvpmaker_send_confirmation_email", "_rsvp_confirmation_after_payment", "_rsvp_confirmation_include_event", "_rsvp_count", "_rsvp_yesno", "_rsvp_captcha", "_rsvp_login_required", "_rsvp_form_show_date","rsvpautorenew");
+		$rsvpbool = array("_rsvp_on","_rsvp_show_attendees", "_rsvp_count_party", "_add_timezone", "_convert_timezone", "_calendar_icons", "_rsvp_rsvpmaker_send_confirmation_email", "_rsvp_confirmation_after_payment", "_rsvp_confirmation_include_event", "_rsvp_count", "_rsvp_yesno", "_rsvp_captcha", "_rsvp_login_required", "_rsvp_form_show_date","rsvpautorenew",'_rsvp_draft_initialized');
 		$templatemeta = array("_sked_Varies", "_sked_First", "_sked_Second", "_sked_Third", "_sked_Fourth", "_sked_Last", "_sked_Every", "_sked_Even", "_sked_Odd", "_sked_Fifth", "_sked_Sunday", "_sked_Monday", "_sked_Tuesday", "_sked_Wednesday", "_sked_Thursday", "_sked_Friday", "_sked_Saturday", "rsvpautorenew");
 
 		$json = file_get_contents('php://input');
@@ -2316,6 +2316,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 		if(!empty($json)) {
 			delete_transient('rsvpmakers');
 			$data = json_decode(trim($json));
+			update_post_meta($event_id,'_rsvp_draft_initialized',true);
 			if(isset($data->timezone))
 			{
 				$timezone = sanitize_text_field($data->timezone);

@@ -15,98 +15,98 @@ msgstr ""
 "X-Generator: Poedit 1.6.3\n"
 "X-Poedit-SearchPath-0: ..\n"
 
-#: ../rsvpmaker-admin.php:182
+#: ../rsvpmaker_settings:182
 msgid "Month:"
 msgstr "Måned:"
 
-#: ../rsvpmaker-admin.php:194
+#: ../rsvpmaker_settings:194
 msgid "Day:"
 msgstr "Dag:"
 
-#: ../rsvpmaker-admin.php:208 ../rsvpmaker-admin.php:889
-#: ../rsvpmaker-admin.php:1199 ../rsvpmaker-plugabble.php:331
+#: ../rsvpmaker_settings:208 ../rsvpmaker_settings:889
+#: ../rsvpmaker_settings:1199 ../rsvpmaker-plugabble.php:331
 #: ../rsvpmaker-plugabble.php:334 ../rsvpmaker-plugabble.php:337
 #: ../rsvpmaker-plugabble.php:2261
 msgid "Year"
 msgstr "År"
 
-#: ../rsvpmaker-admin.php:226 ../rsvpmaker-admin.php:1211
+#: ../rsvpmaker_settings:226 ../rsvpmaker_settings:1211
 msgid "Hour:"
 msgstr "Time:"
 
-#: ../rsvpmaker-admin.php:246 ../rsvpmaker-admin.php:1215
+#: ../rsvpmaker_settings:246 ../rsvpmaker_settings:1215
 msgid "Minutes:"
 msgstr "Minutt:"
 
-#: ../rsvpmaker-admin.php:257 ../rsvpmaker-admin.php:1219
+#: ../rsvpmaker_settings:257 ../rsvpmaker_settings:1219
 msgid "Duration"
 msgstr "Varighet"
 
-#: ../rsvpmaker-admin.php:258 ../rsvpmaker-admin.php:1220
+#: ../rsvpmaker_settings:258 ../rsvpmaker_settings:1220
 msgid "Not set (optional)"
 msgstr "Ikke valgt (valgfri)"
 
-#: ../rsvpmaker-admin.php:259 ../rsvpmaker-admin.php:1221
+#: ../rsvpmaker_settings:259 ../rsvpmaker_settings:1221
 msgid "All day/don't show time in headline"
 msgstr "Hele dagen/ikke vis klokkeslett i overskriften"
 
-#: ../rsvpmaker-admin.php:485
+#: ../rsvpmaker_settings:485
 msgid "Note: This site also implements custom code in"
 msgstr "OBS: Denne siden inneholder også tilpasset kode"
 
-#: ../rsvpmaker-admin.php:498
+#: ../rsvpmaker_settings:498
 msgid "Default Content for Events (such as standard meeting location)"
 msgstr "Standardinnhold for hendelser (f.eks møteplasser)"
 
-#: ../rsvpmaker-admin.php:501 ../rsvpmaker-admin.php:895
+#: ../rsvpmaker_settings:501 ../rsvpmaker_settings:895
 #: ../rsvpmaker-plugabble.php:145
 msgid "Hour"
 msgstr "Time"
 
-#: ../rsvpmaker-admin.php:505 ../rsvpmaker-admin.php:922
+#: ../rsvpmaker_settings:505 ../rsvpmaker_settings:922
 #: ../rsvpmaker-plugabble.php:168
 msgid "Minutes"
 msgstr "Minutter"
 
-#: ../rsvpmaker-admin.php:509
+#: ../rsvpmaker_settings:509
 msgid "RSVP TO"
 msgstr "Påmelding til"
 
-#: ../rsvpmaker-admin.php:512
+#: ../rsvpmaker_settings:512
 msgid "RSVP On"
 msgstr "Påmelding aktivert"
 
-#: ../rsvpmaker-admin.php:513 ../rsvpmaker-admin.php:515
-#: ../rsvpmaker-admin.php:517 ../rsvpmaker-admin.php:520
-#: ../rsvpmaker-admin.php:523 ../rsvpmaker-admin.php:526
+#: ../rsvpmaker_settings:513 ../rsvpmaker_settings:515
+#: ../rsvpmaker_settings:517 ../rsvpmaker_settings:520
+#: ../rsvpmaker_settings:523 ../rsvpmaker_settings:526
 msgid "check to turn on by default"
 msgstr "huk av for å bruke som standard"
 
-#: ../rsvpmaker-admin.php:515
+#: ../rsvpmaker_settings:515
 msgid "RSVP CAPTCHA On"
 msgstr "Påmelding CAPTCHA aktivert"
 
-#: ../rsvpmaker-admin.php:517
+#: ../rsvpmaker_settings:517
 msgid "Login Required to RSVP"
 msgstr "Innlogging kreves for å melde seg på"
 
-#: ../rsvpmaker-admin.php:520
+#: ../rsvpmaker_settings:520
 msgid "RSVPs Attendees List Public"
 msgstr "Vis påmeldingslisten offentlig"
 
-#: ../rsvpmaker-admin.php:523 ../rsvpmaker-plugabble.php:342
+#: ../rsvpmaker_settings:523 ../rsvpmaker-plugabble.php:342
 msgid "Show RSVP Count"
 msgstr "Vis antall påmeldte"
 
-#: ../rsvpmaker-admin.php:526
+#: ../rsvpmaker_settings:526
 msgid "Show RSVP Yes/No Radio Buttons"
 msgstr "Vis Ja/Nei radioknapper"
 
-#: ../rsvpmaker-admin.php:529
+#: ../rsvpmaker_settings:529
 msgid "RSVP Form Shows Members Not Responding"
 msgstr "Påmeldingskjema viser medlemer som ikke har svart"
 
-#: ../rsvpmaker-admin.php:529
+#: ../rsvpmaker_settings:529
 msgid ""
 "if members log in to RSVP, this shows user accounts NOT associated with an "
 "RSVP (tracking WordPress user IDs)"
@@ -114,23 +114,23 @@ msgstr ""
 "hvis medlemer logger in for å melde seg på, vil dette vise brukerkontoer som "
 "ikke er assosiert med en hendelse (sporing via wordpress-brukerID)"
 
-#: ../rsvpmaker-admin.php:532
+#: ../rsvpmaker_settings:532
 msgid "Instructions for Form"
 msgstr "Instruksjoner for skjema"
 
-#: ../rsvpmaker-admin.php:535 ../rsvpmaker-plugabble.php:326
+#: ../rsvpmaker_settings:535 ../rsvpmaker-plugabble.php:326
 msgid "Confirmation Message"
 msgstr "Bekreftelsesbeskjed"
 
-#: ../rsvpmaker-admin.php:538 ../rsvpmaker-plugabble.php:361
+#: ../rsvpmaker_settings:538 ../rsvpmaker-plugabble.php:361
 msgid "RSVP Form"
 msgstr "Påmeldingskjema"
 
-#: ../rsvpmaker-admin.php:538
+#: ../rsvpmaker_settings:538
 msgid "Enlarge"
 msgstr "Forstørr"
 
-#: ../rsvpmaker-admin.php:540
+#: ../rsvpmaker_settings:540
 msgid ""
 "This is a customizable template for the RSVP form, introduced as part of the "
 "Aug. 2012 update. With the exception of the yes/no radio buttons and the "
@@ -154,51 +154,51 @@ msgstr ""
 "vist hvis nødvendige detaljer (f.eks telefonnummer) allerede er lagret fra "
 "en tidligre hendelse. "
 
-#: ../rsvpmaker-admin.php:548
+#: ../rsvpmaker_settings:548
 msgid "RSVP Link"
 msgstr "RSVP Lenke"
 
-#: ../rsvpmaker-admin.php:551
+#: ../rsvpmaker_settings:551
 msgid "Date Format (long)"
 msgstr "Datoformat (kort):"
 
-#: ../rsvpmaker-admin.php:554
+#: ../rsvpmaker_settings:554
 msgid "Date Format (short)"
 msgstr "Datoformat (lang):"
 
-#: ../rsvpmaker-admin.php:557
+#: ../rsvpmaker_settings:557
 msgid "Time Format"
 msgstr "Tidsformat:"
 
-#: ../rsvpmaker-admin.php:563
+#: ../rsvpmaker_settings:563
 msgid "Event Page"
 msgstr "Hendelseside"
 
-#: ../rsvpmaker-admin.php:566
+#: ../rsvpmaker_settings:566
 msgid "Custom CSS"
 msgstr "Tilpasset CSS"
 
-#: ../rsvpmaker-admin.php:574
+#: ../rsvpmaker_settings:574
 msgid "Error: CSS not found"
 msgstr "Feil: CSS ikke funnet"
 
-#: ../rsvpmaker-admin.php:577 ../rsvpmaker-admin.php:592
+#: ../rsvpmaker_settings:577 ../rsvpmaker_settings:592
 msgid "OK"
 msgstr "OK"
 
-#: ../rsvpmaker-admin.php:584
+#: ../rsvpmaker_settings:584
 msgid "Allows you to override the standard styles from"
 msgstr "Lar deg overstyre skjema med standardsstiler"
 
-#: ../rsvpmaker-admin.php:587
+#: ../rsvpmaker_settings:587
 msgid "PayPal Configuration File"
 msgstr "PayPal konfigurasjonsfil"
 
-#: ../rsvpmaker-admin.php:594
+#: ../rsvpmaker_settings:594
 msgid "error: file not found"
 msgstr "feil: fil ikke funnet"
 
-#: ../rsvpmaker-admin.php:597
+#: ../rsvpmaker_settings:597
 msgid ""
 "To enable PayPal payments, you must manually create a configuration file. "
 "Sample config file included with distribution. Must be manually configured. "
@@ -212,30 +212,30 @@ msgstr ""
 "nettsiden. F. eks. /home/konto/paypal_config.php hvis webinnhold er lagret "
 "i /home/konto/public_html/"
 
-#: ../rsvpmaker-admin.php:599
+#: ../rsvpmaker_settings:599
 msgid "On your system, the base web directory is"
 msgstr "På ditt system er web-rotmappen"
 
-#: ../rsvpmaker-admin.php:603
+#: ../rsvpmaker_settings:603
 msgid "PayPal Currency"
 msgstr "PayPal valuta"
 
-#: ../rsvpmaker-admin.php:616
+#: ../rsvpmaker_settings:616
 msgid "Menu Security"
 msgstr "Meny Sikkerhet"
 
-#: ../rsvpmaker-admin.php:621
+#: ../rsvpmaker_settings:621
 msgid ""
 "Security level required to access custom menus (RSVP Report, Documentation)"
 msgstr ""
 "Sikkerhetsnivå som kreves for tilgang til tilpassede menyer (RSVP Varsling, "
 "Dokumentasjon)"
 
-#: ../rsvpmaker-admin.php:623
+#: ../rsvpmaker_settings:623
 msgid "SMTP for Notifications"
 msgstr "SMTP for notifikasjoner"
 
-#: ../rsvpmaker-admin.php:624
+#: ../rsvpmaker_settings:624
 msgid ""
 "For more reliable delivery of email notifications, enable delivery through "
 "the SMTP email protocol. Standard server parameters will be used for Gmail "
@@ -247,71 +247,71 @@ msgstr ""
 "og SendGrid-tjenester eller du kan spesifisere serverport og "
 "sikkerhetsprotokoll"
 
-#: ../rsvpmaker-admin.php:626
+#: ../rsvpmaker_settings:626
 msgid "None - use PHP mail()"
 msgstr "Ingen - bruk PHP mail()"
 
-#: ../rsvpmaker-admin.php:629
+#: ../rsvpmaker_settings:629
 msgid "Other SMTP (specified below)"
 msgstr "Annet SMTP (spesifisert nedenfor)"
 
-#: ../rsvpmaker-admin.php:632
+#: ../rsvpmaker_settings:632
 msgid "Email Account for Notifications"
 msgstr "E-postkonto for notifikasjoner"
 
-#: ../rsvpmaker-admin.php:636
+#: ../rsvpmaker_settings:636
 msgid "Email Username"
 msgstr "E-post brukernavn"
 
-#: ../rsvpmaker-admin.php:640
+#: ../rsvpmaker_settings:640
 msgid "Email Password"
 msgstr "E-post passord"
 
-#: ../rsvpmaker-admin.php:644
+#: ../rsvpmaker_settings:644
 msgid ""
 "Server (parameters below not necessary if you specified Gmail or SendGrid)"
 msgstr ""
 "Server (parameter nedenfor behøves ikke hvis du spesifiserer Gmail eller "
 "SendGrid)"
 
-#: ../rsvpmaker-admin.php:647
+#: ../rsvpmaker_settings:647
 msgid ""
 "SMTP Security Prefix (ssl or tls, leave blank for non-encrypted connections)"
 msgstr "SMTP sikkerhetsprotokoll (SSL eller TLS. La stå blank for ukryptert)"
 
-#: ../rsvpmaker-admin.php:651
+#: ../rsvpmaker_settings:651
 msgid "SMTP Port"
 msgstr "SMTP port"
 
-#: ../rsvpmaker-admin.php:659
+#: ../rsvpmaker_settings:659
 msgid "Send SMTP Test to RSVP To address"
 msgstr "Send SMTP test til Hendelse til Adresse"
 
-#: ../rsvpmaker-admin.php:664 ../rsvpmaker-plugabble.php:1880
+#: ../rsvpmaker_settings:664 ../rsvpmaker-plugabble.php:1880
 #: ../rsvpmaker-plugabble.php:1918
 msgid "Event Templates"
 msgstr "Hendelsemaler"
 
-#: ../rsvpmaker-admin.php:665 ../rsvpmaker-plugabble.php:10
+#: ../rsvpmaker_settings:665 ../rsvpmaker-plugabble.php:10
 msgid "Additional Editors"
 msgstr "Flere redaktører"
 
-#: ../rsvpmaker-admin.php:665
+#: ../rsvpmaker_settings:665
 msgid ""
 "Allow users to share editing rights for event templates and related events."
 msgstr ""
 "Tillat brukere å dele endringsrettigheter for hendelsesmaler og relaterte "
 "hendelser."
 
-#: ../rsvpmaker-admin.php:668
+#: ../rsvpmaker_settings:668
 msgid "Troubleshooting"
 msgstr "Feilsøking"
 
-#: ../rsvpmaker-admin.php:669
+#: ../rsvpmaker_settings:669
 msgid "Tweak Permalinks"
 msgstr "Finpusse permalenker"
 
-#: ../rsvpmaker-admin.php:669
+#: ../rsvpmaker_settings:669
 msgid ""
 "Check here if you are getting &quot;page not found&quot; errors for event "
 "content (should not be necessary for most users)."
@@ -319,178 +319,178 @@ msgstr ""
 "Huk av her hvis du får &quot;side ikke funnet&quot; feilmeldinger for "
 "hendelsesinnhold (skal ikke være nødvendig for de fleste brukere)."
 
-#: ../rsvpmaker-admin.php:671
+#: ../rsvpmaker_settings:671
 msgid "Debug"
 msgstr "Debug"
 
-#: ../rsvpmaker-admin.php:674
+#: ../rsvpmaker_settings:674
 msgid "Update"
 msgstr "Oppdater"
 
-#: ../rsvpmaker-admin.php:677
+#: ../rsvpmaker_settings:677
 msgid "RSVP Reminders scheduled for"
 msgstr "RSVP-påminnelser planlagt for"
 
-#: ../rsvpmaker-admin.php:678
+#: ../rsvpmaker_settings:678
 msgid "Set new time"
 msgstr "Sett ny tid"
 
-#: ../rsvpmaker-admin.php:680
+#: ../rsvpmaker_settings:680
 msgid "Set"
 msgstr "Sett"
 
-#: ../rsvpmaker-admin.php:739
+#: ../rsvpmaker_settings:739
 msgid "Events (click to edit)"
 msgstr "Hendelser (klikk for å endre)"
 
-#: ../rsvpmaker-admin.php:739
+#: ../rsvpmaker_settings:739
 msgid "Show All"
 msgstr "Vis alle"
 
-#: ../rsvpmaker-admin.php:817 ../rsvpmaker-plugabble.php:1882
+#: ../rsvpmaker_settings:817 ../rsvpmaker-plugabble.php:1882
 msgid "Multiple Events"
 msgstr "Flere hendelser"
 
-#: ../rsvpmaker-admin.php:819
+#: ../rsvpmaker_settings:819
 msgid "Use this form to enter multiple events quickly with basic formatting"
 msgstr ""
 "Bruk dette skjemaet for å raskt legge til flere hendelser med enkel "
 "formatering"
 
-#: ../rsvpmaker-admin.php:833 ../rsvpmaker-plugabble.php:1958
+#: ../rsvpmaker_settings:833 ../rsvpmaker-plugabble.php:1958
 #: ../rsvpmaker-plugabble.php:2290
 msgid "Title"
 msgstr "Tittel"
 
-#: ../rsvpmaker-admin.php:838 ../rsvpmaker-admin.php:1145
+#: ../rsvpmaker_settings:838 ../rsvpmaker_settings:1145
 #: ../rsvpmaker-plugabble.php:331 ../rsvpmaker-plugabble.php:334
 #: ../rsvpmaker-plugabble.php:337 ../rsvpmaker-plugabble.php:2207
 msgid "Month"
 msgstr "Måned"
 
-#: ../rsvpmaker-admin.php:854 ../rsvpmaker-admin.php:1161
+#: ../rsvpmaker_settings:854 ../rsvpmaker_settings:1161
 #: ../rsvpmaker-plugabble.php:331 ../rsvpmaker-plugabble.php:334
 #: ../rsvpmaker-plugabble.php:337 ../rsvpmaker-plugabble.php:2223
 msgid "Day"
 msgstr "Dag"
 
-#: ../rsvpmaker-admin.php:935 ../rsvpmaker-plugabble.php:1258
+#: ../rsvpmaker_settings:935 ../rsvpmaker-plugabble.php:1258
 #: ../rsvpmaker-plugabble.php:2328
 msgid "Submit"
 msgstr "Send inn"
 
-#: ../rsvpmaker-admin.php:1123
+#: ../rsvpmaker_settings:1123
 msgid "Enter Recurring Events"
 msgstr "Fyll inn repeterende hendelser"
 
-#: ../rsvpmaker-admin.php:1368
+#: ../rsvpmaker_settings:1368
 msgid "Event Dates"
 msgstr "Hendelsesdatoer"
 
-#: ../rsvpmaker-admin.php:1403 ../rsvpmaker-plugabble.php:2378
+#: ../rsvpmaker_settings:1403 ../rsvpmaker-plugabble.php:2378
 msgid "Template"
 msgstr "Mal"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:111 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "Varies"
 msgstr "Varierer"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:112 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "First"
 msgstr "Første"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:113 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "Second"
 msgstr "Andre"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:114 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "Third"
 msgstr "Tredje"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:115 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "Fourth"
 msgstr "Fjerde"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:116 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "Last"
 msgstr "Siste"
 
-#: ../rsvpmaker-admin.php:1406 ../rsvpmaker-plugabble.php:110
+#: ../rsvpmaker_settings:1406 ../rsvpmaker-plugabble.php:110
 #: ../rsvpmaker-plugabble.php:117 ../rsvpmaker-plugabble.php:1119
 #: ../rsvpmaker-plugabble.php:1930 ../rsvpmaker-plugabble.php:1993
 msgid "Every"
 msgstr "Hver"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:181
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:181
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:119
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Sunday"
 msgstr "Søndag"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:182
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:182
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:120
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Monday"
 msgstr "Mandag"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:183
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:183
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:121
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Tuesday"
 msgstr "Tirsdag"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:184
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:184
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:122
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Wednesday"
 msgstr "Onsdag"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:185
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:185
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:123
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Thursday"
 msgstr "Torsdag"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:186
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:186
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:124
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Friday"
 msgstr "Fredag"
 
-#: ../rsvpmaker-admin.php:1407 ../rsvpmaker-display.php:187
+#: ../rsvpmaker_settings:1407 ../rsvpmaker-display.php:187
 #: ../rsvpmaker-plugabble.php:109 ../rsvpmaker-plugabble.php:125
 #: ../rsvpmaker-plugabble.php:1118 ../rsvpmaker-plugabble.php:1929
 #: ../rsvpmaker-plugabble.php:2003
 msgid "Saturday"
 msgstr "Lørdag"
 
-#: ../rsvpmaker-admin.php:1408
+#: ../rsvpmaker_settings:1408
 msgid "Schedule varies"
 msgstr "Plan varierer"
 
-#: ../rsvpmaker-admin.php:1555
+#: ../rsvpmaker_settings:1555
 msgid "Sort By Newest"
 msgstr "Sorter etter nyeste"
 
-#: ../rsvpmaker-admin.php:1557
+#: ../rsvpmaker_settings:1557
 msgid "Sort By Chronological"
 msgstr "Sorter kronologisk"
 

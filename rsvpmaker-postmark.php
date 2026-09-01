@@ -131,7 +131,7 @@ return printf('<p>Postmark Email Settings can now be found on a the <a href="%s"
         if(empty($postmark_settings['postmark_load_alert_emails']))
             $postmark_settings['postmark_load_alert_emails'] = rsvpmaker_postmark_admin_email();
     echo '<p>To fill in these variables, first <a href="https://account.postmarkapp.com/sign_up" target="_blank">create a Postmark account</a>. Postmark provides reliable email deliver for both broadcast / mailing list messages and transactional messages such as RSVP confirmations. Premium add-ons and customization services for managing email forwarding and metered access for multisite site owners are available from <a href="mailto:david@rsvpmaker.com" target="_blank">david@rsvpmaker.com</a>.</p>';        
-    printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker-admin.php&tab=email'));
+    printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker_settings&tab=email'));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
     printf('<p><input type="radio" name="postmark_mode" value="" %s> Off - Postmark not managing email</p>',$checked);
     $checked = ($postmark_settings['postmark_mode'] == 'sandbox') ? ' checked="checked" ' : '';

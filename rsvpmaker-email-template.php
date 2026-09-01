@@ -241,27 +241,173 @@ $html = preg_replace('/<\/{0,1}noscript>/','',$html);
 $preview = str_replace( '*|MC:SUBJECT|*', 'Email: ' . $post->post_title, $html );
 $preview = str_replace('</head>',"<link rel='stylesheet' href=".'"'.admin_url('load-styles.php?c=1&amp;dir=ltr&amp;load%5Bchunk_0%5D=dashicons,admin-bar').'" type="text/css" media=\'all\' />
 <style>
+/* Base Setup */
 #email-content {
 	max-width: 800px;
-	margin-left:auto;
-	margin-right: auto;
+	margin: 0 auto;
 	background-color: #fff;
 	color: #000;
 	padding: 10px;
 }
-#control-wrapper, #control-wrapper p, #control-wrapper div {
-	font-size: 16px;
-	font-family: Arial;
-	font-style: normal;
-	font-weigth: normal;
+
+#rsvpm-admin {
+	font-size: 14px;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	background-color: #1e1e1e;
+	max-width: 800px;
+	margin: 0 auto 15px auto;
+	text-align: center;
+	padding: 8px 12px;
+	border-radius: 8px;
+	display: flex;
+	justify-content: center;
+	gap: 15px;
 }
-button {
-	background-color: darkblue;
-	color: white;
-	border-radius: 5px;
+
+#rsvpm-admin a {
+	color: #fff;
+	text-decoration: none;
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: background-color 0.2s ease;
+}
+
+#rsvpm-admin a:hover {
+	background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Form Container */
+#control-wrapper {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #333;
+	background-color: #f8f9fa;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 24px;
+	max-width: 800px;
+	margin: 0 auto 20px auto;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+	box-sizing: border-box;
+}
+
+#control-wrapper h5 {
+	margin: 0 0 16px 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: #1a202c;
+	display: inline-block;
+}
+
+/* Control Buttons */
+button, 
+#control-wrapper button {
+	background-color: #2563eb;
+	color: #ffffff;
+	border: none;
+	border-radius: 6px;
+	padding: 8px 16px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+button:hover, 
+#control-wrapper button:hover {
+	background-color: #1d4ed8;
+}
+
+/* Top Table Alignment */
+#emailui table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 8px;
+	margin-bottom: 16px;
+}
+
+#emailui table td {
+	padding: 4px 0;
+	vertical-align: middle;
+}
+
+#emailui table td:first-child {
+	width: 120px;
+	font-weight: 600;
+	color: #4a5568;
+}
+
+/* Form Inputs & Options */
+#control-wrapper input[type="text"],
+#control-wrapper input[type="date"],
+#control-wrapper input[type="time"],
+#control-wrapper select,
+#control-wrapper textarea {
+	width: 100%;
+	max-width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	font-size: 14px;
+	box-sizing: border-box;
+	background-color: #fff;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#control-wrapper input[type="text"]:focus,
+#control-wrapper input[type="date"]:focus,
+#control-wrapper input[type="time"]:focus,
+#control-wrapper select:focus,
+#control-wrapper textarea:focus {
+	border-color: #2563eb;
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+#control-wrapper select {
+	width: auto;
+	max-width: 250px;
+	display: inline-block;
+}
+
+/* Checkbox & Radio Sections */
+#nonchimp > div {
+	margin-bottom: 10px;
+	line-height: 1.5;
+}
+
+#control-wrapper input[type="checkbox"],
+#control-wrapper input[type="radio"] {
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+#moreoptions {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px dashed #cbd5e1;
+}
+
+#moreoptions div {
+	margin-bottom: 12px;
+}
+
+/* Exclude Section Box */
+#moreoptions div[style*="border"] {
+	border: 1px solid #e2e8f0 !important;
+	border-radius: 8px;
+	background-color: #edf2f7;
+	padding: 16px !important;
+}
+
+/* Scheduling Row Fixes */
+#control-wrapper input[type="date"],
+#control-wrapper input[type="time"] {
+	width: auto;
+	display: inline-block;
 }
 </style>', $preview);
-$preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding-top: 50px; color: #fff; background-color: #000;"><div id="email-preview-wrapper" style="max-width: 900px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff; padding-top: 5px;border-radius: 25px; padding:25px; margin-bottom: 25px;">', $preview, 1 );
+$preview = preg_replace( '/<body[^>]*>/', '$0' . '<div id="email-preview-background" style="width: 100%; margin: 0; padding-top: 5px; color: #fff; background-color: #000;"><div id="email-preview-wrapper" style="max-width: 900px; margin-left: auto; margin-right: auto; color: #000; background-color: #fff; padding-top: 5px;border-radius: 25px; padding:25px; margin-bottom: 25px;">', $preview, 1 );
 $preview = str_replace('</body>','</div></div></body>',$preview);
 
 if(isset($_GET['cancel_promo']) && rsvpmaker_verify_nonce())

@@ -1,5 +1,44 @@
 <?php
 
+// Moved from rsvpmaker-util.php during cleanup
+function rsvpmaker_roles() {
+
+		// by default, capabilities for events are the same as for blog posts
+
+		global $wp_roles;
+
+		if ( ! isset( $wp_roles ) ) {
+
+			$wp_roles = new WP_Roles();
+		}
+
+		// subscribers should not be able to edit
+		$wp_roles->remove_cap( 'subscriber', 'edit_rsvpmakers' );
+
+		// if roles persist from previous session, return
+		if ( ! empty( $wp_roles->roles['administrator']['capabilities']['edit_rsvpmaker_templates'] ) ) {
+			return;
+		}
+
+		if ( is_array( $wp_roles->roles ) ) {
+
+			foreach ( $wp_roles->roles as $role => $rolearray ) {
+
+				foreach ( $rolearray['capabilities'] as $cap => $flag ) {
+
+					if ( strpos( $cap, 'post' ) ) {
+						$fbcap = str_replace( 'post', 'rsvpmaker', $cap );
+						$wp_roles->add_cap( $role, $fbcap );
+						$fbcap = str_replace( 'rsvpmaker', 'rsvpmaker_template', $fbcap );
+						$wp_roles->add_cap( $role, $fbcap );
+					}
+				}
+			}
+		}
+
+}
+
+
 function rsvpmaker_create_post_type() {
 	global $rsvp_options;
 
@@ -222,8 +261,7 @@ function rsvpmaker_create_post_type() {
 
 		)
 	);
-	error_log('rsvpmaker_create_post_type after type and tax definitions');
-
+	
 	global $rsvp_options;
 	if ( isset( $rsvp_options['flush'] ) && $rsvp_options['flush'] ) {
 		flush_rewrite_rules();
@@ -256,6 +294,8 @@ function rsvpmaker_create_post_type() {
 	);
 	register_post_meta( 'rsvpmaker', '_show_rsvpmaker_options', $show_opts_args );
 	register_post_meta( 'rsvpmaker_template', '_show_rsvpmaker_options', $show_opts_args );
+	register_post_meta( 'rsvpmaker', '_rsvp_draft_initialized', $show_opts_args );
+	register_post_meta( 'rsvpmaker_template', '_rsvp_draft_initialized', $show_opts_args );
 
 }
 

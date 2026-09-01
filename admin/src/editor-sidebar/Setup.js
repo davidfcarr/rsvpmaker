@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Modal, TabPanel, Button, Panel, PanelBody, PanelRow } from "@wordpress/components";
+import { Modal, TabPanel, Button, Panel, PanelBody, PanelRow, TextControl } from "@wordpress/components";
 import { PluginPostStatusInfo } from "@wordpress/edit-post";
-import { useSelect } from "@wordpress/data";
+import { useSelect, useDispatch } from "@wordpress/data";
 import { __ } from "@wordpress/i18n";
 
 import {
@@ -22,15 +22,19 @@ export default function Setup(props) {
   const { tab, eventdata, rsvpmaker_rest, allowMissingDate } = props;
   const start = tab || "basics";
 
-  const isAutoOpen = useSelect((select) => {
-    return select("core/editor").getEditedPostAttribute("meta")?._show_rsvpmaker_options;
+  const isDraftInitialized = useSelect((select) => {
+    return select("core/editor").getEditedPostAttribute("meta")?._rsvp_draft_initialized;
+  }, []);
+  const isNotPublished = useSelect((select) => {
+    return select("core/editor").getEditedPostAttribute("status") !== "publish";
   }, []);
 
   useEffect(() => {
-    if (isAutoOpen || props.open) {
+    if ((isNotPublished && !isDraftInitialized) || props.open) {
+      console.log('Opening setup modal because isNotPublished:', isNotPublished, 'isDraftInitialized:', isDraftInitialized, 'props.open:', props.open);
       setOpen(true);
     }
-  }, [isAutoOpen, props.open]);
+  }, [isNotPublished, isDraftInitialized, props.open]);
 
   function close() {
     setOpen(false);
@@ -158,8 +162,22 @@ function Form(props) {
 
 function Basics(props) {
   const { eventdata, rsvpmaker_rest, allowMissingDate } = props;
+  const title = useSelect(
+    (select) => select("core/editor").getEditedPostAttribute("title"),
+    []
+  );
+  const { editPost } = useDispatch("core/editor");
 
   return (
+    <div className="rsvpguide-basics-container">
+    <div style={{ marginBottom: "16px" }}>
+        <TextControl
+          label={__("Event Title", "rsvpmaker")}
+          value={title || ""}
+          onChange={(newTitle) => editPost({ title: newTitle })}
+          placeholder={__("Enter event title...", "rsvpmaker")}
+        />
+      </div>
     <div className="guide-page-1-columns">
       <div className="rsvpguide-datetime">
         {rsvpmaker_rest.post_type === "rsvpmaker" && <DateTimeMaker event_id={rsvpmaker_rest.post_id} eventdata={props.eventdata} allowMissingDate={allowMissingDate} />}
@@ -207,6 +225,7 @@ function Basics(props) {
           </PanelBody>
         </Panel>
       </div>
+    </div>
     </div>
   );
 }

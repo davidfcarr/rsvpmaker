@@ -35,6 +35,8 @@ add_action( 'admin_menu', 'rsvpmaker_admin_menu' );
 add_action( 'admin_menu', 'rsvpmaker_register_settings_page' );
 
 add_action( 'admin_notices', 'rsvpmaker_admin_notice' );
+add_action('admin_notices', 'rsvpmaker_admin_notice_rsvpmaker_events');
+add_action('wp_ajax_rsvpmaker_dismiss_notice', 'rsvpmaker_dismiss_admin_event_notice');
 
 add_action( 'current_screen', 'rsvp_print', 999 );
 add_action( 'export_wp', 'export_rsvpmaker' );

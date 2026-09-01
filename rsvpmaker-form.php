@@ -333,8 +333,10 @@ function rsvp_add_guest_field( $content, $slug ) {
 
 function rsvp_form_guests( $atts, $content = '' ) {
 	global $wpdb, $blanks_allowed,$master_rsvp,$is_rsvp_report, $post;
+	error_log('Entering rsvp_form_guests for post ID: ' . $post->ID);
 
 	if ( is_admin() && empty($_GET['page']) ) {
+		error_log('Exiting rsvp_form_guests early for post ID: ' . $post->ID.' is_admin:'.is_admin().' empty($_GET[\'page\']):'.empty($_GET['page']));
 		return $content;
 	}
 
@@ -437,7 +439,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 			return $output . '<p><em>' . esc_html( __( 'No room for additional guests (max per party)', 'rsvpmaker' ) ) . '</em><p>'; // limit by # of guests per person
 		}	
 	}
-	if ( isset($post->post_type) && strpos($post->post_type,'svpmaker') && $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
+	if ( $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
 		$output = '<h3>'.esc_html__('Add Guests','rsvpmaker').'</h3><p><input type="hidden" id="starting_count" value="'.esc_attr($count).'" /> <input type="number" id="people_in_party" name="people_in_party" min="1" value="'.esc_attr($count).'" style="width: 50px;" > '.__('People in party').'</p><p><strong id="rsvphost"># 1 (You)</strong></p>'."\n".$output;
 	}
 
@@ -2014,26 +2016,22 @@ function rsvpmaker_basic_form( $form = '' ) {
 
 		if ( is_numeric( $form ) ) {
 			$fpost = get_post( $form );
-			if(empty($fpost) || empty($fpost->post_content) || !strpos($fpost->post_content,'rsvpmaker/'))
-			{
-				$form = upgrade_rsvpform(false,$form);
-				$fpost = get_post($form);
-			}
 			echo do_blocks( $fpost->post_content );
-
+			error_log('Displaying RSVP form for post ID: ' . $fpost->ID .' '.$fpost->post_content);
 		} else {
 			echo do_shortcode( $form );
 		}
 		printf('<input type="hidden" name="rsvp_form_id" value="%s" />',esc_attr($form));
 
-	}
+}
 
 
 // Moved from rsvpmaker-util.php during cleanup
 function rsvpguests( $atts ) {
-
+	global $post;
+	error_log('Entering rsvpguests for post ID: ' . $post->ID);
 		if ( is_admin() || wp_is_json_request() ) {
-
+			error_log('Exiting rsvpguests early for post ID: ' . $post->ID.' is_admin:'.is_admin().' wp_is_json_request:'.wp_is_json_request());
 			return;
 		}
 		return rsvp_form_guests($atts);

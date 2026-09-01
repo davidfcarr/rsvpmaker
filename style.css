@@ -165,6 +165,9 @@ max-width: 70%
 	padding-right: 0;
 	padding-left: 2px;
 }
+#cpcalendar td.past {
+    background-color: #f5f5f5;
+}
 #jumpform input {
 	width: 100px;
 }

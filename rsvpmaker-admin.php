@@ -821,7 +821,7 @@ function rsvpmaker_essentials () {
 			$message .= sprintf('<p><a href="%s">%s</a></p>',admin_url('options-privacy.php'),__('Set up your privacy page','rsvpmaker'));
 		update_option('RSVPMAKER_Options',$rsvp_options);
 	}
-	$message .= '<p>'.__('You can set additional options, including default settings for RSVPMaker events, on the','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php').'">'.__('RSVPMaker settings page','rsvpmaker').'</a>.</p>';
+	$message .= '<p>'.__('You can set additional options, including default settings for RSVPMaker events, on the','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker_settings').'">'.__('RSVPMaker settings page','rsvpmaker').'</a>.</p>';
 	echo '<div class="notice notice-success is-dismissible">'.$message.'</div>';
 }
 
@@ -841,7 +841,7 @@ function rsvpmaker_docs_notice() {
 	);
 	$message = apply_filters('rsvpmaker_docs_notice_message', $message);
 	$message = '<p>' . $message . '</p>';
-	echo rsvpmaker_admin_notice_format($message, 'rsvpmaker-docs', $cleared, 'info');
+	echo rsvpmaker_admin_notice_format($message, 'RSVPMaker Documentation', $cleared, 'info');
 }
 add_action('admin_notices', 'rsvpmaker_docs_notice');
 
@@ -975,7 +975,7 @@ function rsvpmaker_admin_notice_privacy_section($rsvp_options, &$essential_label
 
 	$privacy_page = rsvpmaker_check_privacy_page();
 	if($privacy_page) {
-		$message = __('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox. This may be important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker-admin.php#privacy_consent').'">('.__('more details','rsvpmaker').')</a>';
+		$message = __('Please decide whether your RSVPMaker forms should include a privacy policy confirmation checkbox. This may be important if some of your website visitors may be covered by the European Union\'s GDPR privacy regulation','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker_settings#privacy_consent').'">('.__('more details','rsvpmaker').')</a>';
 		return sprintf('<p>%s</p><input type="radio" name="privacy_confirmation" value="1" checked="checked" /> %s <input type="radio" name="privacy_confirmation" value="no" /> %s - %s</p>',$message,__('Yes','rsvpmaker'),__('No','rsvpmaker'),__('Add checkbox?','rsvpmaker'));
 	}
 
@@ -1004,6 +1004,92 @@ function rsvpmaker_admin_notice_permalinks_section(&$essential_labels) {
 	);
 }
 
+function rsvpmaker_admin_notice_rsvpmaker_events() {
+    // 1. Check screen context (Main Dashboard 'dashboard' or screen ID containing 'rsvp')
+    $screen = get_current_screen();
+    if (!$screen || ($screen->id !== 'dashboard' && strpos($screen->id, 'rsvp') === false)) {
+        return;
+    }
+
+    // 2. Check if the user has permanently dismissed this notice
+    $user_id = get_current_user_id();
+    if (get_user_meta($user_id, 'rsvpmaker_notice_dismissed', true)) {
+        return;
+    }
+	$content = get_transient('rsvpmaker_com_events');
+	if(empty($content)) {
+    global $rsvp_options;
+    $response = wp_remote_get('https://rsvpmaker.com/wp-json/rsvpmaker/v1/future');
+    
+    if (is_wp_error($response)) {
+        return;
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (empty($data) || !is_array($data)) {
+        return;
+    }
+
+    $content = '<p><strong>' . __('Upcoming RSVPMaker.com Events', 'rsvpmaker') . '</strong></p>';
+    foreach ($data as $event) {
+        $content .= sprintf(
+            '<p><a href="%s">%s<br />%s</a></p>',
+            esc_url($event['permalink']),
+            esc_html($event['post_title']),
+            rsvpmaker_date($rsvp_options['long_date'] . ' ' . $rsvp_options['time_format'], intval($event['ts_start']))
+        );
+    }
+    set_transient('rsvpmaker_com_events', $content, 12 * HOUR_IN_SECONDS);
+	}
+	
+	if(empty($content)) {
+	//still empty
+    set_transient('rsvpmaker_com_events', 'none', 12 * HOUR_IN_SECONDS);
+	return;
+	}
+	elseif($content === 'none')
+		return;
+    // Render notice with unique ID class for JS targeting
+    printf('<div class="notice notice-info rsvpmaker-events-notice is-dismissible">%s</div>', $content);
+}
+
+function rsvpmaker_enqueue_admin_notice_script($hook) {
+    // Only enqueue on relevant screens
+    $screen = get_current_screen();
+    if (!$screen || ($screen->id !== 'dashboard' && strpos($screen->id, 'rsvp') === false)) {
+        return;
+    }
+
+    // Inline JavaScript to handle click on the core WordPress .notice-dismiss button
+    $script = "
+        jQuery(document).ready(function($) {
+            $(document).on('click', '.rsvpmaker-events-notice .notice-dismiss', function() {
+                $.post(ajaxurl, {
+                    action: 'rsvpmaker_dismiss_notice',
+                    nonce: '" . wp_create_nonce('rsvpmaker_dismiss_nonce') . "'
+                });
+            });
+        });
+    ";
+    wp_add_inline_script('jquery', $script);
+}
+add_action('admin_enqueue_scripts', 'rsvpmaker_enqueue_admin_notice_script');
+
+// Handle AJAX request to permanently save dismissal in user meta
+function rsvpmaker_dismiss_admin_event_notice() {
+    check_ajax_referer('rsvpmaker_dismiss_nonce', 'nonce');
+    
+    $user_id = get_current_user_id();
+    if ($user_id) {
+        update_user_meta($user_id, 'rsvpmaker_notice_dismissed', 1);
+        wp_send_json_success();
+    }
+    
+    wp_send_json_error();
+}
+
 function rsvpmaker_admin_notice() {
 
 if(rsvpmaker_admin_notice_should_skip())
@@ -1017,6 +1103,7 @@ global $wpdb;
 global $rsvp_options;
 global $current_user;
 global $post;
+$notice = array();
 $timezone_string = get_option('timezone_string');
 $cleared = get_option('cleared_rsvpmaker_notices');
 $cleared = is_array($cleared) ? $cleared : array();
@@ -1032,8 +1119,8 @@ if(!empty($basic_options)) {
 	%s
 	<p><input type="submit" name="submit" id="submit" class="button button-primary" value="%s"></p>
 	<input type="hidden" name="rsvpmaker_essentials" value="1">
-	%s</form>',__('RSVPMaker Essential Settings','rsvpmaker'),site_url(sanitize_text_field($_SERVER['REQUEST_URI'])),$basic_options,__('Save Changes','rsvpmaker'),rsvpmaker_nonce('return'));
-	$notice[] = rsvpmaker_admin_notice_format($message, 'rsvp_timezone', $cleared, $type='warning');
+	%s</form><p><a href="%s">%s</a></p>',__('RSVPMaker Essential Settings','rsvpmaker'),site_url(sanitize_text_field($_SERVER['REQUEST_URI'])),$basic_options,__('Save Changes','rsvpmaker'),rsvpmaker_nonce('return'),admin_url('options-general.php?page=rsvpmaker_settings'),__('All RSVPMaker Settings','rsvpmaker'));
+	$notice[] = rsvpmaker_admin_notice_format($message, 'RSVPMaker Essential Settings', $cleared, $type='warning');
 }
 
 $ver = phpversion();
@@ -1069,23 +1156,7 @@ if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 
 	if(!empty($notice))
 	{
-		if(isset($_GET['show_rsvpmaker_notices']))
-			echo implode("\n",$notice);
-		else {
-			$size = sizeof($notice);
-			$link = esc_url(add_query_arg('show_rsvpmaker_notices', '1'));
-			$message = '<p>'.__('RSVPMaker notices for administrator','rsvpmaker').': '.$size;
-			if(!empty($essential_labels)) {
-				$essential_labels = array_values(array_unique($essential_labels));
-				$shown = array_slice($essential_labels, 0, 2);
-				$message .= ' - '.esc_html(implode(', ', $shown));
-				if(sizeof($essential_labels) > sizeof($shown))
-					$message .= ' +'.(sizeof($essential_labels) - sizeof($shown));
-			}
-			$message .= sprintf(' - <a href="%s">%s</a>', $link, __('Display','rsvpmaker'));
-			$message .= '</p>';
-			echo rsvpmaker_admin_notice_format($message, 'RSVPMaker', $cleared, $type='info');	
-		}
+		echo implode("\n",$notice);
 	}
 ?>
 <script>
@@ -2242,10 +2313,12 @@ function rsvpmaker_admin_notice_format($message, $slug, $cleared, $type='info')
 if(in_array($slug,$cleared))
 	return;
 return sprintf('<div class="notice notice-%s rsvpmaker-notice is-dismissible" data-notice="%s">
+<details>
+<summary>%s</summary>
 %s
-</div>',esc_attr($type),esc_attr($slug),$message);
+</details>
+</div>',esc_attr($type),sanitize_title($slug),esc_html($slug),$message);
 }
-
 /**
  * AJAX handler to store the state of dismissible notices.
  */
@@ -4821,46 +4894,6 @@ function rsvpmaker_check_openings( $post_id, $party_size ) {
 	}
 	return true;
 }
-
-
-// Moved from rsvpmaker-util.php during cleanup
-function rsvpmaker_roles() {
-
-		// by default, capabilities for events are the same as for blog posts
-
-		global $wp_roles;
-
-		if ( ! isset( $wp_roles ) ) {
-
-			$wp_roles = new WP_Roles();
-		}
-
-		// subscribers should not be able to edit
-		$wp_roles->remove_cap( 'subscriber', 'edit_rsvpmakers' );
-
-		// if roles persist from previous session, return
-		if ( ! empty( $wp_roles->roles['administrator']['capabilities']['edit_rsvpmaker_templates'] ) ) {
-			return;
-		}
-
-		if ( is_array( $wp_roles->roles ) ) {
-
-			foreach ( $wp_roles->roles as $role => $rolearray ) {
-
-				foreach ( $rolearray['capabilities'] as $cap => $flag ) {
-
-					if ( strpos( $cap, 'post' ) ) {
-						$fbcap = str_replace( 'post', 'rsvpmaker', $cap );
-						$wp_roles->add_cap( $role, $fbcap );
-						$fbcap = str_replace( 'rsvpmaker', 'rsvpmaker_template', $fbcap );
-						$wp_roles->add_cap( $role, $fbcap );
-					}
-				}
-			}
-		}
-
-	}
-
 
 // Moved from rsvpmaker-util.php during cleanup
 function get_rsvpmaker_multievent_discount_code() {
