@@ -277,9 +277,7 @@ function rsvpmaker_add_event_row ($post_id, $date, $end, $type, $timezone = '', 
 
 		$timezone = wp_timezone_string();
 
-	if($timezone != '+00:00')
-
-		date_default_timezone_set( $timezone );
+	rsvpmaker_set_timezone( $timezone );
 
 	$ts_start = strtotime($date);
 
@@ -641,7 +639,7 @@ function rsvpmaker_add_timestamps() {
 
 			if ( $timezone != $last_tz ) {
 
-				date_default_timezone_set( $timezone );
+				rsvpmaker_set_timezone( $timezone );
 
 				$last_tz = $timezone;
 
@@ -662,7 +660,7 @@ function rsvpmaker_add_timestamps() {
 
 	if ( $last_tz != $default_tz ) {
 
-		date_default_timezone_set( $default_tz );
+		rsvpmaker_set_timezone( $default_tz );
 
 	}
 
@@ -678,14 +676,30 @@ function rsvpmaker_fix_timezone( $timezone = '' ) {
 			$timezone = $post_tz;
 		}
 	}
-	if ( ! empty( $timezone ) && ($timezone != '+00:00') ) {
-		date_default_timezone_set( $timezone );
+	if ( ! empty( $timezone ) ) {
+		rsvpmaker_set_timezone( $timezone );
 	}
 
 }
 function rsvpmaker_restore_timezone() {
 	global $default_tz;
-	date_default_timezone_set( $default_tz );
+	rsvpmaker_set_timezone( $default_tz );
+}
+
+// Validate and set timezone safely after normalizing variants such as UTC+3.
+function rsvpmaker_set_timezone( $timezone = '' ) {
+	$timezone = rsvpmaker_normalize_timezone( $timezone );
+	if ( empty( $timezone ) ) {
+		return false;
+	}
+
+	try {
+		new DateTimeZone( $timezone );
+		date_default_timezone_set( $timezone );
+		return true;
+	} catch ( Exception $e ) {
+		return false;
+	}
 }
 function rsvpmaker_strtotime( $string, $timezone = '', $baseTimestamp = null ) {
     if ( empty( $string ) ) {
@@ -735,18 +749,36 @@ function rsvpmaker_normalize_timezone( $timezone = '' ) {
 
     if ( empty( $timezone ) ) {
         // WordPress fallback if timezone_string option is empty
-        $gmt_offset = get_option( 'gmt_offset', 0 );
-        $timezone = sprintf( '%+03d:00', $gmt_offset );
+		$gmt_offset = (float) get_option( 'gmt_offset', 0 );
+		$offset_abs = abs( $gmt_offset );
+		$hours = (int) floor( $offset_abs );
+		$minutes = (int) round( ( $offset_abs - $hours ) * 60 );
+		if ( 60 === $minutes ) {
+			$hours += 1;
+			$minutes = 0;
+		}
+		$timezone = sprintf( '%s%02d:%02d', ( $gmt_offset < 0 ? '-' : '+' ), $hours, $minutes );
     }
 
-    // Convert 'UTC+8', 'UTC-05:00', 'GMT+2', etc. to valid ISO offsets ('+08:00')
-    $timezone = preg_replace( '/^(UTC|GMT)\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$/i', '$2', $timezone );
-    
-    if ( preg_match( '/^([+-])(\d{1,2})(?::?(\d{2}))?$/', $timezone, $matches ) ) {
-        $sign = $matches[1];
-        $hours = str_pad( $matches[2], 2, '0', STR_PAD_LEFT );
-        $minutes = isset( $matches[4] ) ? $matches[4] : '00';
-        $timezone = "{$sign}{$hours}:{$minutes}";
+	$timezone = trim( (string) $timezone );
+
+	if ( preg_match( '/^(UTC|GMT)$/i', $timezone ) ) {
+		return 'UTC';
+	}
+
+	// Convert 'UTC+8', 'UTC-05:00', 'GMT+2', etc. to valid offsets ('+08:00').
+	if ( preg_match( '/^(UTC|GMT)\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$/i', $timezone, $matches ) ) {
+		$sign = $matches[2];
+		$hours = str_pad( $matches[3], 2, '0', STR_PAD_LEFT );
+		$minutes = isset( $matches[4] ) && $matches[4] !== '' ? str_pad( $matches[4], 2, '0', STR_PAD_LEFT ) : '00';
+		return "{$sign}{$hours}:{$minutes}";
+	}
+
+	if ( preg_match( '/^([+-])(\d{1,2})(?::?(\d{2}))?$/', $timezone, $matches ) ) {
+		$sign = $matches[1];
+		$hours = str_pad( $matches[2], 2, '0', STR_PAD_LEFT );
+		$minutes = isset( $matches[3] ) && $matches[3] !== '' ? str_pad( $matches[3], 2, '0', STR_PAD_LEFT ) : '00';
+		return "{$sign}{$hours}:{$minutes}";
     }
 
     return $timezone;
@@ -1424,7 +1456,7 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 
 				//rsvpmaker_debug_log($event->event.':'.$timezone.':'.$last_tz,'ID timezone:last tz');
 
-				date_default_timezone_set( $timezone );
+				rsvpmaker_set_timezone( $timezone );
 
 			}
 
@@ -1478,7 +1510,7 @@ function rsvpmaker_consistency_check( $post_id = 0 ) {
 
 	if ( $last_tz != $default_tz ) {
 
-		date_default_timezone_set( $default_tz );
+		rsvpmaker_set_timezone( $default_tz );
 
 	}
 

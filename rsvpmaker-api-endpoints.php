@@ -1147,7 +1147,7 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 			$times['content'] = '';
 		else {
 			$rsvp_options['long_date'] = str_replace( ', %Y', '', $rsvp_options['long_date'] );
-			$times['content']          = 'Or: ';
+			$times['content']          = '<span class="rsvpmaker-alternative-time"><em>';
 			if ( $format == 'time' ) {
 				$times['content'] .= date( $rsvp_option['time_format'], $time );
 				if ( $end ) {
@@ -1164,7 +1164,8 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 					}
 					$times['content'] .= date( 'g:i A T', $end );
 				}
-			}	
+			}
+			$times['content']          .= '</em></span>';
 		}
 		$times['tzoptions'] = wp_timezone_choice( $tz );
 		return new WP_REST_Response( $times, 200 );
@@ -2320,6 +2321,7 @@ class RSVP_Event_Date extends WP_REST_Controller {
 			if(isset($data->timezone))
 			{
 				$timezone = sanitize_text_field($data->timezone);
+				$event->timezone = $timezone;
 				if ('rsvpmaker_template' == $type) {
 					update_post_meta($event_id,'timezone',$timezone);
 				}
@@ -2928,7 +2930,7 @@ class RSVP_Date_Block extends WP_REST_Controller {
 	$atts = $_GET;
 	$response['dateblock'] = rsvpdateblock($atts);
 	if(strpos($response['dateblock'],'tz_converter'))
-		$response['dateblock'] = preg_replace('/<div class="tz_converter"[^<]+/','<div class="tz_converter"><a href="#">Show in my timezone</a>',$response['dateblock']);
+		$response['dateblock'] = preg_replace('/<div class="tz_converter"[^<]+/','<div class="tz_converter"><a href="#">Show in My Time Zone</a>',$response['dateblock']);
 	return new WP_REST_Response( $response, 200 );
 	}//end handle
 }//end class

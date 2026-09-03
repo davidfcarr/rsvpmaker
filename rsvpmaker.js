@@ -14,6 +14,7 @@ if($('#formvars')) {
 	const events_to_add = $('#formvars').attr('events_to_add');
 	const options = $('#formvars').attr('options');
 	const is_admin = $('#formvars').attr('is_admin');
+	const is_front_end = (String(is_admin) !== '1');
 	const email_lookup = $('#formvars').attr('email_lookup');
 	let guestcount = parseInt($('#guestcount').val());
 	$('.multieventhide').hide();
@@ -42,7 +43,7 @@ if($('#formvars')) {
 	});
 
 	});
-	var max_guests = $('#max_guests').val();
+	var max_guests = parseInt($('#max_guests').val(),10);
 	console.log('max guests ',max_guests);
 	let first;
 	let last;
@@ -59,7 +60,7 @@ if($('#formvars')) {
 		newcount = parseInt($('#people_in_party').val());
 		if(newcount < 1)
 			return;
-		if(!is_admin && (newcount > max_guests))
+		if(is_front_end && !Number.isNaN(max_guests) && (newcount > max_guests))
 		{
 		$('#guest_section').append('<p><em>Guest limit reached</em></p>');
 		return;
@@ -94,6 +95,19 @@ if($('#formvars')) {
 	}
 
 		jQuery("#rsvpform").submit(function() {
+		if(is_front_end && !Number.isNaN(max_guests) && (max_guests > 0))
+			{
+			var partycount = 1;
+			jQuery('input[name^="guest[first]"]').each(function() {
+				if(jQuery(this).val().trim() !== '')
+					partycount++;
+			});
+			if(partycount > max_guests)
+				{
+				jQuery("#jqerror").html('<' +'div class="rsvp_validation_error">Guest limit reached. Maximum party size is ' + max_guests + '.<' +'/div>');
+				return false;
+				}
+			}
 		var leftblank = '';
 		var required = jQuery("#required").val();
 		var required_fields = required.split(',');
@@ -358,7 +372,7 @@ if($('#formvars')) {
 
 			}
 		);
-		function flux_capacitor(tzstring = '', check = true) {
+		function flux_capacitor(tzstring = '', reveal = false) {
 			$( '.tz_converter' ).each(
 				function () {
 					var id              = $( this ).attr( 'id' );
@@ -374,27 +388,25 @@ if($('#formvars')) {
 					console.log(timezone_abbrev);
 					var select          = {};
 					var fluxbutton      = {};
-					if (check && (tzstring == server_timezone)) {
-								if(nofluxbutton)
-									return;
-								 $( this ).css( 'display','inline-block' );
-								 fluxbutton[id]                = document.createElement( "A" );
-								 fluxbutton[id].innerHTML      = 'Show in My Timezone';
-								 fluxbutton[id].href      = tz_url;
-								 fluxbutton[id].className      = 'tzbutton';
-								 fluxbutton[id].style.fontSize = 'small';
-								 document.getElementById( id ).appendChild( fluxbutton[id] );
-								fluxbutton[id].addEventListener(
-									'click',
-									(event) => {
-										event.preventDefault();
-										fluxbutton[id].style.display = 'none';
-										var tz                       = jstz.determine();
-										var tzstring                 = tz.name();
-										flux_capacitor( tzstring,false );
-									}
-								);
-								 return;
+					if ( ! reveal ) {
+						if ( nofluxbutton ) {
+							return;
+						}
+						$( this ).css( 'display','inline-block' );
+						fluxbutton[id]                = document.createElement( "A" );
+						fluxbutton[id].innerHTML      = 'Show in My Time Zone';
+						fluxbutton[id].href           = '#';
+						fluxbutton[id].className      = 'tzbutton';
+						fluxbutton[id].style.fontSize = 'small';
+						document.getElementById( id ).appendChild( fluxbutton[id] );
+						fluxbutton[id].addEventListener(
+							'click',
+							(event) => {
+								event.preventDefault();
+								flux_capacitor( tzstring, true );
+							}
+						);
+						return;
 					}
 					var data = {
 						'time' : time,
@@ -420,7 +432,7 @@ if($('#formvars')) {
 								'change',
 								(event) => {
 									var tzstring = event.target.value;
-									flux_capacitor( tzstring, false );
+									flux_capacitor( tzstring, true );
 								}
 							);
 							fluxbutton[id]                = document.createElement( "A" );
@@ -431,7 +443,9 @@ if($('#formvars')) {
 							fluxbutton[id].addEventListener(
 								'click',
 								(event) => {
-									select[id].style.display     = 'block';
+									event.preventDefault();
+									select[id].style.display     = 'inline-block';
+									select[id].style.marginLeft = '10px';
 									fluxbutton[id].style.display = 'none';
 								}
 							);
@@ -442,7 +456,7 @@ if($('#formvars')) {
 		}
 		var tz       = jstz.determine();
 		var tzstring = tz.name();
-		flux_capacitor( tzstring );
+		flux_capacitor( tzstring, false );
 
 		var guestlist = '';
 		function format_guestlist(guest) {

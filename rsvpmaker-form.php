@@ -78,6 +78,49 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 
 }
 
+function rsvpmaker_guest_party_limit_for_form( $rsvp_form_id ) {
+	$rsvp_form_id = (int) $rsvp_form_id;
+
+	if ( ! $rsvp_form_id ) {
+		return 0;
+	}
+
+	$form_post = get_post( $rsvp_form_id );
+
+	if ( empty( $form_post ) || empty( $form_post->post_content ) ) {
+		return 0;
+	}
+
+	$limits  = array();
+	$content = $form_post->post_content;
+
+	if ( preg_match_all( '/<!--\s+wp:rsvpmaker\/guests\s+({[^>]*})\s+-->/', $content, $guest_block_matches ) ) {
+		foreach ( $guest_block_matches[1] as $json_atts ) {
+			$atts = json_decode( $json_atts, true );
+			if ( ! empty( $atts['limit'] ) ) {
+				$limit = (int) $atts['limit'];
+				if ( $limit > 0 ) {
+					$limits[] = $limit;
+				}
+			}
+		}
+	}
+
+	if ( preg_match_all( '/\[rsvpguests\b([^\]]*)\]/i', $content, $shortcode_matches ) ) {
+		foreach ( $shortcode_matches[1] as $rawatts ) {
+			$atts = shortcode_parse_atts( $rawatts );
+			if ( ! empty( $atts['max_party'] ) ) {
+				$limit = (int) $atts['max_party'];
+				if ( $limit > 0 ) {
+					$limits[] = $limit;
+				}
+			}
+		}
+	}
+
+	return empty( $limits ) ? 0 : min( $limits );
+}
+
 function rsvp_form_textarea( $atts, $content = '' ) {
 
 	global $post;
@@ -205,7 +248,7 @@ function rsvp_form_text( $atts, $content ) {
 	$required = '';
 	$required_marker = '';
 	$required_key = '';
-	if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
+	if ( (!is_admin() || ( in_array( $slug, array( 'first', 'last', 'email' ) ) && ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) ) ) ) {
 		$rsvp_required_field[ $slug ] = $slug;
 		$required                     = 'required';
 		$required_marker = ' <span class="rsvprequiredfield">*</span>';
@@ -349,7 +392,12 @@ function rsvp_form_guests( $atts, $content = '' ) {
 	$shared = '';
 
 	$label = ( isset( $atts['label'] ) ) ? $atts['label'] : '#';
-	$max_party = ( isset( $atts['max_party'] ) ) ? (int) $atts['max_party'] : 0;
+	$max_party = 0;
+	if ( isset( $atts['max_party'] ) ) {
+		$max_party = (int) $atts['max_party'];
+	} elseif ( isset( $atts['limit'] ) ) {
+		$max_party = (int) $atts['limit'];
+	}
 	$count = ($master_rsvp) ? $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM %i WHERE master_rsvp=%d",$wpdb->prefix . 'rsvpmaker', $master_rsvp)) : 0;
 	$max_guests = $blanks_allowed + $count;
 
@@ -363,7 +411,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 			$shared .= $field;
 		}
 	}
-	$output = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n";
+	$output = '';
 
 	//$template_content = preg_replace('/\[[^\]^a-zA-Z]*\]/', '[###]', $shared . $content);
 	//echo "\n".htmlentities($template_content)."\n";
@@ -371,7 +419,12 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 	$count = 1; // reserve 0 for host
 
-	$max_party = ( isset( $atts['max_party'] ) ) ? (int) $atts['max_party'] : 0;
+	$max_party = 0;
+	if ( isset( $atts['max_party'] ) ) {
+		$max_party = (int) $atts['max_party'];
+	} elseif ( isset( $atts['limit'] ) ) {
+		$max_party = (int) $atts['limit'];
+	}
 
 	if ( isset( $master_rsvp ) && $master_rsvp ) {
 
@@ -424,6 +477,25 @@ function rsvp_form_guests( $atts, $content = '' ) {
 		$max_guests = ( $max_party > $max_guests ) ? $max_guests : $max_party; // use the lower limit
 	}
 
+	$output = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n" . $output;
+
+	$max_attr = '';
+	if ( ! $is_rsvp_report && $max_guests ) {
+		$max_attr = ' max="' . esc_attr( $max_guests ) . '"';
+	}
+
+	$openings_note = '';
+	if ( ! $is_rsvp_report && function_exists( 'rsvpmaker_check_availability' ) ) {
+		$openings_remaining = rsvpmaker_check_availability( $post->ID );
+		if ( is_numeric( $openings_remaining ) && $openings_remaining < 20 ) {
+			$openings_remaining = max( 0, (int) $openings_remaining );
+			$openings_note      = sprintf(
+				'<span class="rsvp-openings-note"> %s</span>',
+				esc_html( sprintf( __( '(%d openings remain)', 'rsvpmaker' ), $openings_remaining ) )
+			);
+		}
+	}
+
 	// now the blank field
 	if(isset($post->post_type) && strpos($post->post_type,'svpmaker') && !$is_rsvp_report) {
 		if ( $max_guests && $blanks_allowed < 1 ) {
@@ -440,7 +512,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 		}	
 	}
 	if ( $max_guests > ( $count + 1 ) || $is_rsvp_report ) {
-		$output = '<h3>'.esc_html__('Add Guests','rsvpmaker').'</h3><p><input type="hidden" id="starting_count" value="'.esc_attr($count).'" /> <input type="number" id="people_in_party" name="people_in_party" min="1" value="'.esc_attr($count).'" style="width: 50px;" > '.__('People in party').'</p><p><strong id="rsvphost"># 1 (You)</strong></p>'."\n".$output;
+		$output = '<h3>'.esc_html__('Add Guests','rsvpmaker').'</h3><p><input type="hidden" id="starting_count" value="'.esc_attr($count).'" /> <input type="number" id="people_in_party" name="people_in_party" min="1"'.$max_attr.' value="'.esc_attr($count).'" style="width: 50px;" > '.__('People in party').$openings_note.'</p><p><strong id="rsvphost"># 1 (You)</strong></p>'."\n".$output;
 	}
 
 	$output = '<div id="guest_section" tabindex="-1">' . "\n" . $output . '</div>' . '<!-- end of guest section-->';
@@ -1457,6 +1529,9 @@ function save_rsvp($postdata, $live = true) {
 
 				$missing = '';
 
+				if(is_admin())
+					$required = ['first','last','email'];
+
 				if(!empty($required))
 				foreach ( $required as $r ) {
 					$r = sanitize_text_field($r);
@@ -1762,6 +1837,7 @@ function save_rsvp($postdata, $live = true) {
 			}
 
 			$rsvp_form_id = intval($postdata['rsvp_form_id']);
+			$max_party_limit = ( ! is_admin() ) ? rsvpmaker_guest_party_limit_for_form( $rsvp_form_id ) : 0;
 			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'owed'=>$owed,'fee_total'=>$rsvp['fee_total'], 'form_id'=>$rsvp_form_id);
 			if(!empty($postdata['multi_event_price'])) {
 				$nv['amountpaid'] = floatval($postdata['multi_event_price']);
@@ -1895,10 +1971,28 @@ function save_rsvp($postdata, $live = true) {
 			}
 
 			$keep_guests = '';
+			$party_count = 1;
 
 			if ( sizeof( $guestnv ) ) {
 
 				foreach ( $guestnv as $index => $nv ) {
+					$party_count++;
+
+					if ( $max_party_limit && ( $party_count > $max_party_limit ) ) {
+						$limit_message = sprintf(
+							'<div style="color:red;">%s</div>',
+							sprintf(
+								__( 'Max party size is %d. Additional guest not added:', 'rsvpmaker' ),
+								$max_party_limit
+							)
+						);
+						if ( empty( $guest_text[ $index ] ) ) {
+							$guest_text[ $index ] = '';
+						}
+						$guest_text[ $index ] = $limit_message . "\n" . $guest_text[ $index ];
+						$guest_list[ $index ] = $limit_message;
+						continue;
+					}
 
 					$id = ( isset( $postdata['guest']) && isset( $postdata['guest']['id']) && isset( $postdata['guest']['id'][ $index ] ) ) ? (int) $postdata['guest']['id'][ $index ] : 0;
 
@@ -2356,7 +2450,7 @@ function rsvpfield( $atts ) {
 
 		}
 
-		if ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) {
+		if (!is_admin() && ( !empty( $atts['required'] ) || !empty( $atts['require'] ) ) ) {
 
 			$output = '<span class="required">' . $output . '</span>';
 

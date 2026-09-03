@@ -2056,6 +2056,9 @@ add_filter( 'pre_get_posts', 'rsvpmaker_author_page' );
 //works with rsvpmaker/button block
 function get_rsvp_link_custom( $post_id = 0, $rsvp_link_template ='' ) {
 	global $rsvp_options, $wpdb;
+	if(strpos($rsvp_link_template,'://'))
+		return $rsvp_link_template;
+
 	$login_required = get_post_meta($post_id,'_rsvp_login_required',true);
 	$rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
 	$rsvp_start = (int) get_post_meta($post_id,'_rsvp_start',true);
@@ -2274,7 +2277,7 @@ function rsvpmaker_format_event_dates( $post_id, $template = false, $atts = arra
 		if ( isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) {
 			if ( rsvpmaker_is_email_context() ) {
 				$tz_url = esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ));
-				$tzbutton = sprintf( ' | <a href="%s">%s</a>', $tz_url, __( 'Show in my timezone', 'rsvpmaker' ) );
+				$tzbutton = sprintf( ' | <a href="%s">%s</a>', $tz_url, __( 'Show in My Time Zone', 'rsvpmaker' ) );
 
 			} else {
 
@@ -2367,11 +2370,11 @@ function rsvpmaker_date_element( $atts = array() ) {
 	elseif('tz_convert' == $atts['show']) {
 		$output = '';
 		if ( rsvpmaker_is_email_context() ) {
-			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) );
 
 		} 
 		elseif(isset($atts['editor']))
-			$tzbutton = '<a href="#">Show in My timezone</a>';
+			$tzbutton = '<a href="#">Show in My Time Zone</a>';
 		else {
 
 			$atts['time'] = $post->date;
@@ -2600,7 +2603,7 @@ function rsvp_date_block_email( $post_id ) {
 				$dateblock .= rsvpmaker_date( ' ' . $time_format, $t );
 			}
 			$dateblock .= '</strong></p>'."\n<!-- /wp:paragraph -->\n\n";
-			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) );
 			$dateblock .= "<!-- wp:paragraph -->\n<p>";
 			$end_time = $event->enddate;
 			$j = ( strpos( $permalink, '?' ) ) ? '&amp;' : '?';
@@ -2746,7 +2749,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			if ( $top && isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) {
 
 				if ( rsvpmaker_is_email_context() ) {
-					$tzbutton = sprintf( '| <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in my timezone', 'rsvpmaker' ) );
+					$tzbutton = sprintf( '| <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) );
 				} else {
 					$atts['time'] = $event->date;
 

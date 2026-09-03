@@ -2488,7 +2488,9 @@ function rsvpmaker_email_block_test_samples() {
 		'Image' => '<!-- wp:image {"sizeSlug":"large"} -->\n<figure class="wp-block-image size-large"><img src="'.$placeholder.'" alt="Sample"/></figure>\n<!-- /wp:image -->',
 		'Table' => '<!-- wp:table -->\n<figure class="wp-block-table"><table><thead><tr><th>Column A</th><th>Column B</th></tr></thead><tbody><tr><td>Value 1</td><td>Value 2</td></tr></tbody></table></figure>\n<!-- /wp:table -->',
 		'Columns' => '<!-- wp:columns -->\n<div class="wp-block-columns"><!-- wp:column --><div class="wp-block-column"><!-- wp:paragraph --><p>Left column content.</p><!-- /wp:paragraph --></div><!-- /wp:column --><!-- wp:column --><div class="wp-block-column"><!-- wp:paragraph --><p>Right column content.</p><!-- /wp:paragraph --></div><!-- /wp:column --></div>\n<!-- /wp:columns -->',
+		'Row (Group Flex)' => '<!-- wp:group {"layout":{"type":"flex","justifyContent":"center","flexWrap":"nowrap"}} -->\n<div class="wp-block-group is-layout-flex is-nowrap is-content-justification-center"><!-- wp:paragraph --><p>Row item one.</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>Row item two.</p><!-- /wp:paragraph --><!-- wp:buttons --><div class="wp-block-buttons is-layout-flex"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://example.com">Call to action</a></div><!-- /wp:button --></div><!-- /wp:buttons --></div>\n<!-- /wp:group -->',
 		'Media + Text' => '<!-- wp:media-text {"mediaPosition":"left","mediaType":"image"} -->\n<div class="wp-block-media-text is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="'.$placeholder.'" alt="Media sample"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph --><p>Media/text block for email conversion testing.</p><!-- /wp:paragraph --></div></div>\n<!-- /wp:media-text -->',
+		'Cover' => '<!-- wp:cover {"dimRatio":30,"isUserOverlayColor":true,"minHeight":260} -->\n<div class="wp-block-cover" style="min-height:260px"><span aria-hidden="true" class="wp-block-cover__background has-background-dim" style="background-color:#000;opacity:0.3"></span><img class="wp-block-cover__image-background" alt="" src="'.$placeholder.'" data-object-fit="cover"/><div class="wp-block-cover__inner-container"><!-- wp:heading {"textAlign":"center"} --><h2 class="has-text-align-center">Cover headline</h2><!-- /wp:heading --><!-- wp:paragraph {"align":"center"} --><p class="has-text-align-center">Cover paragraph content for fallback testing.</p><!-- /wp:paragraph --></div></div>\n<!-- /wp:cover -->',
 		'Separator + Spacer' => '<!-- wp:separator -->\n<hr class="wp-block-separator has-alpha-channel-opacity"/>\n<!-- /wp:separator --><!-- wp:spacer {"height":"30px"} -->\n<div style="height:30px" aria-hidden="true" class="wp-block-spacer"></div>\n<!-- /wp:spacer -->',
 		'Group + Background' => '<!-- wp:group {"backgroundColor":"light-gray","textColor":"black","layout":{"type":"constrained"}} -->\n<div class="wp-block-group has-black-color has-light-gray-background-color has-text-color has-background"><!-- wp:paragraph --><p>Grouped content with background and text color classes.</p><!-- /wp:paragraph --></div>\n<!-- /wp:group -->',
 		'Pullquote' => '<!-- wp:pullquote -->\n<figure class="wp-block-pullquote"><blockquote><p>Pullquote block sample.</p></blockquote></figure>\n<!-- /wp:pullquote -->',
@@ -2513,6 +2515,8 @@ function rsvpmaker_email_inline_block_test() {
 	.rsvpmail-test-preview .wp-block-button__link { display:inline-block; text-decoration:none; padding:10px 14px; border-radius:4px; background:#2271b1; color:#fff; }
 	.rsvpmail-test-preview .wp-block-columns { display:flex; gap:12px; }
 	.rsvpmail-test-preview .wp-block-column { flex:1; min-width:0; }
+	.rsvpmail-test-preview .wp-block-group.is-layout-flex { display:flex; gap:12px; align-items:flex-start; }
+	.rsvpmail-test-preview .wp-block-group.is-layout-flex > * { flex:0 1 auto; min-width:0; }
 	.rsvpmail-test-preview .wp-block-media-text { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items:center; }
 	.rsvpmail-test-preview .wp-block-media-text img,
 	.rsvpmail-test-preview .wp-block-image img,
@@ -4620,6 +4624,9 @@ function rsvpmaker_get_style_substitutions() {
 				'is-content-justification-center' => 'text-align:center;',
 				'is-content-justification-right' => 'text-align:right;',
 				'is-content-justification-left' => 'text-align:left;',
+				'is-content-justification-space-between' => 'text-align:left;',
+				'is-content-justification-space-around' => 'text-align:center;',
+				'is-content-justification-space-evenly' => 'text-align:center;',
 				'has-large-font-size' => 'font-size: large;',
 				'has-huge-font-size' => 'font-size: xx-large;',
 				'has-small-font-size' => 'font-size: small;',
@@ -4630,7 +4637,10 @@ function rsvpmaker_get_style_substitutions() {
 				'wp-block-separator' => 'border:0;border-top:1px solid #d0d7de;margin:1.25em 0;',
 				'wp-block-spacer' => 'line-height:1px;font-size:1px;',
 				'wp-block-columns' => 'display:block !important;margin:0;padding:0;width:100%;font-size:0;line-height:0;text-align:left;',
-				'wp-block-column' => 'vertical-align:top;display:inline-block;padding:5px 0;box-sizing:border-box;font-size:initial;line-height:normal;text-align:left;',
+				'wp-block-column' => 'vertical-align:top;display:inline-block;padding:5px 6px;box-sizing:border-box;font-size:initial;line-height:normal;text-align:left;width:100%;',
+				'is-vertically-aligned-top' => 'vertical-align:top;',
+				'is-vertically-aligned-center' => 'vertical-align:middle;',
+				'is-vertically-aligned-bottom' => 'vertical-align:bottom;',
 				'wp-block-group' => 'width:100%;box-sizing:border-box;',
 				'wp-block-cover' => 'width:100%;box-sizing:border-box;padding:20px 15px;background-position:center center;background-size:cover;',
 				'wp-block-cover__inner-container' => 'width:100%;',
@@ -4907,19 +4917,94 @@ function rsvpmaker_email_extract_column_basis($style) {
 	}
 
 	if(!empty($props['flex-basis'])) {
-		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)px$/i',$props['flex-basis'],$m))
+		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)px(?:\s*!important)?$/i',$props['flex-basis'],$m))
 			return array('unit' => 'px', 'value' => (float) $m[1]);
-		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)%$/i',$props['flex-basis'],$m))
+		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)%(?:\s*!important)?$/i',$props['flex-basis'],$m))
 			return array('unit' => '%', 'value' => (float) $m[1]);
 	}
 
 	if(!empty($props['width'])) {
-		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)px$/i',$props['width'],$m))
+		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)px(?:\s*!important)?$/i',$props['width'],$m))
 			return array('unit' => 'px', 'value' => (float) $m[1]);
-		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)%$/i',$props['width'],$m))
+		if(preg_match('/^([0-9]+(?:\.[0-9]+)?)%(?:\s*!important)?$/i',$props['width'],$m))
 			return array('unit' => '%', 'value' => (float) $m[1]);
 	}
 	return null;
+}
+
+function rsvpmaker_email_media_text_column_px($container_style, $media_style, $content_style, $container = 566) {
+	$media_px = null;
+	$content_px = null;
+	$media_basis = rsvpmaker_email_extract_column_basis($media_style);
+	$content_basis = rsvpmaker_email_extract_column_basis($content_style);
+
+	if(is_array($media_basis) && isset($media_basis['unit']) && isset($media_basis['value'])) {
+		if('%' === $media_basis['unit'])
+			$media_px = (float) (($container * $media_basis['value']) / 100);
+		elseif('px' === $media_basis['unit'])
+			$media_px = (float) $media_basis['value'];
+	}
+
+	if(is_array($content_basis) && isset($content_basis['unit']) && isset($content_basis['value'])) {
+		if('%' === $content_basis['unit'])
+			$content_px = (float) (($container * $content_basis['value']) / 100);
+		elseif('px' === $content_basis['unit'])
+			$content_px = (float) $content_basis['value'];
+	}
+
+	if(null !== $media_px && null === $content_px)
+		$content_px = (float) $container - $media_px;
+	elseif(null !== $content_px && null === $media_px)
+		$media_px = (float) $container - $content_px;
+
+	if(null === $media_px || null === $content_px) {
+		if(preg_match('/grid-template-columns\s*:\s*([^;]+)/i', (string) $container_style, $grid_match)) {
+			$grid_value = strtolower(trim($grid_match[1]));
+			preg_match_all('/([0-9]+(?:\.[0-9]+)?)\s*(fr|%|px)/i', $grid_value, $track_matches, PREG_SET_ORDER);
+			if(is_array($track_matches) && count($track_matches) >= 2) {
+				$first = $track_matches[0];
+				$second = $track_matches[1];
+				$unit = strtolower($first[2]);
+				if($unit === strtolower($second[2])) {
+					$a = (float) $first[1];
+					$b = (float) $second[1];
+					$sum = $a + $b;
+					if($sum > 0) {
+						if('%' === $unit || 'fr' === $unit) {
+							$media_px = ($container * $a) / $sum;
+							$content_px = ($container * $b) / $sum;
+						}
+						elseif('px' === $unit) {
+							$media_px = $a;
+							$content_px = $b;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if(null === $media_px)
+		$media_px = (float) ($container / 2);
+
+	$min = ($container < 180) ? (int) floor($container / 2) : 90;
+	$media = (int) round($media_px);
+	if($media < $min)
+		$media = $min;
+	if($media > ($container - $min))
+		$media = (int) ($container - $min);
+	$content = (int) ($container - $media);
+
+	return array($media, $content);
+}
+
+function rsvpmaker_email_clamp_column_width($px, $container = 566) {
+	$px = (int) round($px);
+	if($px < 90)
+		$px = 90;
+	if($px > $container)
+		$px = $container;
+	return $px;
 }
 
 function rsvpmaker_email_column_width_style($tag) {
@@ -4934,12 +5019,9 @@ function rsvpmaker_email_column_width_style($tag) {
 			$px = (int) round($basis['value']);
 	}
 	if(null === $px)
-		return 'display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 0;font-size:initial;line-height:normal;text-align:left;';
-	if($px < 120)
-		$px = 120;
-	if($px > 600)
-		$px = 600;
-	return sprintf('display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 0;width:%dpx !important;max-width:%dpx;font-size:initial;line-height:normal;text-align:left;',$px,$px);
+		return 'display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 6px;width:100%;font-size:initial;line-height:normal;text-align:left;';
+	$px = rsvpmaker_email_clamp_column_width($px, $container);
+	return sprintf('display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 6px;width:100%%;max-width:%dpx;font-size:initial;line-height:normal;text-align:left;',$px);
 }
 
 function rsvpmaker_email_merge_style_string($existing, $append) {
@@ -4980,9 +5062,13 @@ function rsvpmaker_email_strip_style_properties($style, $properties = array()) {
 }
 
 function rsvpmaker_email_apply_column_layout($content, $container = 566) {
-	if(strpos($content,'wp-block-columns') === false)
-		if(strpos($content,'is-layout-flex') === false)
-			return $content;
+	if(
+		strpos($content,'wp-block-columns') === false
+		&& strpos($content,'is-layout-flex') === false
+		&& strpos($content,'wp-block-media-text') === false
+		&& strpos($content,'wp-block-cover') === false
+	)
+		return $content;
 
 	$previous_errors = libxml_use_internal_errors(true);
 	$dom = new DOMDocument();
@@ -5009,10 +5095,7 @@ function rsvpmaker_email_apply_column_layout($content, $container = 566) {
 			$columns_node->setAttribute('style', rsvpmaker_email_merge_style_string($columns_style, $container_style));
 
 			$default_px = (int) floor($container / $count);
-			if($default_px < 120)
-				$default_px = 120;
-			if($default_px > 600)
-				$default_px = 600;
+			$default_px = rsvpmaker_email_clamp_column_width($default_px, $container);
 
 			foreach($col_nodes as $col_node) {
 				if(!($col_node instanceof DOMElement))
@@ -5026,15 +5109,59 @@ function rsvpmaker_email_apply_column_layout($content, $container = 566) {
 					elseif('px' === $basis['unit'])
 						$px = (int) round($basis['value']);
 				}
-				if($px < 120)
-					$px = 120;
-				if($px > 600)
-					$px = 600;
+				$px = rsvpmaker_email_clamp_column_width($px, $container);
 
-				$col_style = sprintf('display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 0;width:%dpx !important;max-width:%dpx;font-size:initial;line-height:normal;text-align:left;',$px,$px);
+				$vertical_align = 'top';
+				$class_attr = ' '.trim($col_node->getAttribute('class')).' ';
+				if(strpos($class_attr,' is-vertically-aligned-center ') !== false)
+					$vertical_align = 'middle';
+				elseif(strpos($class_attr,' is-vertically-aligned-bottom ') !== false)
+					$vertical_align = 'bottom';
+
+				$col_style = sprintf('display:inline-block;vertical-align:%s;box-sizing:border-box;padding:5px 6px;width:100%%;max-width:%dpx;font-size:initial;line-height:normal;text-align:left;',$vertical_align,$px);
 				$current_style = rsvpmaker_email_strip_style_properties($current_style, array('display','width','max-width','min-width','font-size','line-height','text-align','padding','margin','box-sizing','flex','flex-basis','flex-grow','flex-shrink','vertical-align'));
 				$col_node->setAttribute('style', rsvpmaker_email_merge_style_string($current_style, $col_style));
 			}
+		}
+	}
+
+	$media_text_nodes = $xpath->query('//*[@class and contains(concat(" ", normalize-space(@class), " "), " wp-block-media-text ")]');
+	if($media_text_nodes instanceof DOMNodeList) {
+		foreach($media_text_nodes as $media_text_node) {
+			if(!($media_text_node instanceof DOMElement))
+				continue;
+
+			$mt_class = ' '.trim($media_text_node->getAttribute('class')).' ';
+			$media_text_style_raw = (string) $media_text_node->getAttribute('style');
+			$media_text_style = rsvpmaker_email_strip_style_properties($media_text_node->getAttribute('style'), array('display','width','max-width','min-width','box-sizing','padding','margin','font-size','line-height','text-align','white-space','grid-template-columns','grid-template-rows','align-items','column-gap','row-gap','gap'));
+			$media_text_style = rsvpmaker_email_merge_style_string($media_text_style, 'display:block !important;width:100%;max-width:100%;box-sizing:border-box;font-size:0;line-height:0;text-align:left;white-space:normal;');
+			$media_text_node->setAttribute('style', $media_text_style);
+
+			$media_nodes = $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wp-block-media-text__media ")]', $media_text_node);
+			$content_nodes = $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wp-block-media-text__content ")]', $media_text_node);
+			if(!($media_nodes instanceof DOMNodeList) || !($content_nodes instanceof DOMNodeList) || $media_nodes->length < 1 || $content_nodes->length < 1)
+				continue;
+
+			$media_node = $media_nodes->item(0);
+			$content_node = $content_nodes->item(0);
+			if(!($media_node instanceof DOMElement) || !($content_node instanceof DOMElement))
+				continue;
+
+			if(strpos($mt_class,' has-media-on-the-right ') !== false) {
+				$media_text_node->appendChild($media_node);
+			}
+
+			$current_media_style = (string) $media_node->getAttribute('style');
+			$current_content_style = (string) $content_node->getAttribute('style');
+			list($media_px, $content_px) = rsvpmaker_email_media_text_column_px($media_text_style_raw, $current_media_style, $current_content_style, $container);
+
+			$media_style = rsvpmaker_email_strip_style_properties($media_node->getAttribute('style'), array('display','width','max-width','min-width','box-sizing','padding','margin','font-size','line-height','vertical-align','grid-column','grid-row','align-self'));
+			$media_style = rsvpmaker_email_merge_style_string($media_style, sprintf('display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 6px;width:100%%;max-width:%dpx;font-size:initial;line-height:normal;text-align:left;',$media_px));
+			$media_node->setAttribute('style', $media_style);
+
+			$content_style = rsvpmaker_email_strip_style_properties($content_node->getAttribute('style'), array('display','width','max-width','min-width','box-sizing','padding','margin','font-size','line-height','vertical-align','grid-column','grid-row','align-self'));
+			$content_style = rsvpmaker_email_merge_style_string($content_style, sprintf('display:inline-block;vertical-align:top;box-sizing:border-box;padding:5px 6px;width:100%%;max-width:%dpx;font-size:initial;line-height:normal;text-align:left;',$content_px));
+			$content_node->setAttribute('style', $content_style);
 		}
 	}
 
@@ -5043,21 +5170,105 @@ function rsvpmaker_email_apply_column_layout($content, $container = 566) {
 		foreach($flex_group_nodes as $flex_group_node) {
 			if(!($flex_group_node instanceof DOMElement))
 				continue;
+			$class_attr = ' '.trim($flex_group_node->getAttribute('class')).' ';
+			$text_align = 'left';
+			if(strpos($class_attr,' is-content-justification-center ') !== false)
+				$text_align = 'center';
+			elseif(strpos($class_attr,' is-content-justification-right ') !== false)
+				$text_align = 'right';
+			$white_space = (strpos($class_attr,' is-nowrap ') !== false) ? 'nowrap' : 'normal';
 
-			$group_style = rsvpmaker_email_strip_style_properties($flex_group_node->getAttribute('style'), array('display','font-size','line-height','text-align','white-space'));
-			$group_style = rsvpmaker_email_merge_style_string($group_style, 'display:block !important;width:100%;box-sizing:border-box;font-size:0;line-height:0;text-align:left;white-space:nowrap;');
+			$group_style = rsvpmaker_email_strip_style_properties($flex_group_node->getAttribute('style'), array('display','font-size','line-height','text-align','white-space','box-sizing'));
+			$group_style = rsvpmaker_email_merge_style_string($group_style, 'display:block !important;width:100%;box-sizing:border-box;font-size:0;line-height:0;text-align:'.$text_align.';white-space:'.$white_space.';');
 			$flex_group_node->setAttribute('style', $group_style);
 
 			$child_nodes = $xpath->query('./*', $flex_group_node);
 			if(!($child_nodes instanceof DOMNodeList) || $child_nodes->length < 1)
 				continue;
+			$child_count = $child_nodes->length;
+			$child_index = 0;
 
 			foreach($child_nodes as $child_node) {
 				if(!($child_node instanceof DOMElement))
 					continue;
-				$child_style = rsvpmaker_email_strip_style_properties($child_node->getAttribute('style'), array('display','vertical-align','box-sizing','white-space'));
-				$child_style = rsvpmaker_email_merge_style_string($child_style, 'display:inline-block;vertical-align:top;box-sizing:border-box;white-space:normal;');
+				$child_style = rsvpmaker_email_strip_style_properties($child_node->getAttribute('style'), array('display','vertical-align','box-sizing','white-space','margin-right','font-size','line-height'));
+				$margin_right = ($child_index < ($child_count - 1)) ? '12px' : '0';
+				$child_style = rsvpmaker_email_merge_style_string($child_style, 'display:inline-block;vertical-align:top;box-sizing:border-box;white-space:normal;font-size:initial;line-height:normal;margin-right:'.$margin_right.';');
 				$child_node->setAttribute('style', $child_style);
+				$child_index++;
+			}
+		}
+	}
+
+	$cover_nodes = $xpath->query('//*[@class and contains(concat(" ", normalize-space(@class), " "), " wp-block-cover ")]');
+	if($cover_nodes instanceof DOMNodeList) {
+		foreach($cover_nodes as $cover_node) {
+			if(!($cover_node instanceof DOMElement))
+				continue;
+
+			$cover_style = (string) $cover_node->getAttribute('style');
+			$bg_url = '';
+			if(preg_match('/background-image\s*:\s*url\((?:"|\')?([^"\')]+)(?:"|\')?\)/i', $cover_style, $bgmatch))
+				$bg_url = trim($bgmatch[1]);
+
+			$cover_style = rsvpmaker_email_strip_style_properties($cover_style, array('display','width','max-width','min-width','box-sizing','background','background-image','background-size','background-position','background-repeat','padding'));
+			$cover_style = rsvpmaker_email_merge_style_string($cover_style, 'display:block;width:100%;max-width:100%;box-sizing:border-box;padding:0;text-align:left;');
+			$cover_node->setAttribute('style', $cover_style);
+
+			$overlay_nodes = $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " wp-block-cover__background ")]', $cover_node);
+			if($overlay_nodes instanceof DOMNodeList) {
+				foreach($overlay_nodes as $overlay_node) {
+					if(!($overlay_node instanceof DOMElement))
+						continue;
+					$overlay_style = rsvpmaker_email_strip_style_properties($overlay_node->getAttribute('style'), array('display','position','inset','opacity'));
+					$overlay_style = rsvpmaker_email_merge_style_string($overlay_style, 'display:none;');
+					$overlay_node->setAttribute('style', $overlay_style);
+				}
+			}
+
+			$cover_image_nodes = $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " wp-block-cover__image-background ")]', $cover_node);
+			$has_cover_image = false;
+			if($cover_image_nodes instanceof DOMNodeList) {
+				foreach($cover_image_nodes as $cover_image_node) {
+					if(!($cover_image_node instanceof DOMElement))
+						continue;
+					$has_cover_image = true;
+					$image_style = rsvpmaker_email_strip_style_properties($cover_image_node->getAttribute('style'), array('position','inset','width','height','object-fit','display','margin','max-width'));
+					$image_style = rsvpmaker_email_merge_style_string($image_style, 'display:block;width:100%;max-width:100%;height:auto;object-fit:contain;border:0;margin:0 0 10px 0;');
+					$cover_image_node->setAttribute('style', $image_style);
+				}
+			}
+
+			if(!$has_cover_image && !empty($bg_url)) {
+				$img = $dom->createElement('img');
+				$img->setAttribute('src', esc_url_raw($bg_url));
+				$img->setAttribute('alt', '');
+				$img->setAttribute('style', 'display:block;width:100%;max-width:100%;height:auto;border:0;margin:0 0 10px 0;');
+				if($cover_node->firstChild)
+					$cover_node->insertBefore($img, $cover_node->firstChild);
+				else
+					$cover_node->appendChild($img);
+			}
+
+			$inner_nodes = $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wp-block-cover__inner-container ")]', $cover_node);
+			if($inner_nodes instanceof DOMNodeList) {
+				foreach($inner_nodes as $inner_node) {
+					if(!($inner_node instanceof DOMElement))
+						continue;
+					$inner_style = rsvpmaker_email_strip_style_properties($inner_node->getAttribute('style'), array('width','max-width','box-sizing','padding','position','z-index','color','background','background-color','background-image','background-size','background-position','background-repeat'));
+					$inner_style = rsvpmaker_email_merge_style_string($inner_style, 'display:block;width:100%;max-width:100%;box-sizing:border-box;padding:20px 15px;');
+					$inner_node->setAttribute('style', $inner_style);
+
+					$inner_styled_nodes = $xpath->query('.//*[@style]', $inner_node);
+					if($inner_styled_nodes instanceof DOMNodeList) {
+						foreach($inner_styled_nodes as $inner_styled_node) {
+							if(!($inner_styled_node instanceof DOMElement))
+								continue;
+							$stripped = rsvpmaker_email_strip_style_properties($inner_styled_node->getAttribute('style'), array('color','background','background-color','background-image','background-size','background-position','background-repeat'));
+							$inner_styled_node->setAttribute('style', $stripped);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -6908,6 +7119,236 @@ function rsvpmail_post_excerpt($post, $pcount = 5) {
 	return $excerpt;
 }
 
+function rsvpmaker_email_cover_image_url_from_block($block, $post_id = 0) {
+	if(!is_array($block))
+		return '';
+	$attrs = (isset($block['attrs']) && is_array($block['attrs'])) ? $block['attrs'] : array();
+
+	if(!empty($attrs['useFeaturedImage']) && !empty($post_id)) {
+		$featured = get_the_post_thumbnail_url((int) $post_id, 'full');
+		if(!empty($featured))
+			return $featured;
+	}
+
+	if(!empty($attrs['id'])) {
+		$attachment_url = wp_get_attachment_image_url((int) $attrs['id'], 'full');
+		if(!empty($attachment_url))
+			return $attachment_url;
+	}
+
+	if(!empty($attrs['url']))
+		return $attrs['url'];
+
+	$inner_html = empty($block['innerHTML']) ? '' : (string) $block['innerHTML'];
+	if($inner_html && preg_match('/<img[^>]*class="[^"]*wp-block-cover__image-background[^"]*"[^>]*src="([^"]+)"/i', $inner_html, $m))
+		return trim($m[1]);
+
+	return '';
+}
+
+function rsvpmaker_email_cover_inner_content_from_html($inner_html) {
+	$inner_html = (string) $inner_html;
+	if(empty(trim($inner_html)))
+		return '';
+
+	$inner_html = preg_replace('/<span[^>]*class="[^"]*wp-block-cover__background[^"]*"[^>]*><\/span>/i', '', $inner_html);
+	$inner_html = preg_replace('/<img[^>]*class="[^"]*wp-block-cover__image-background[^"]*"[^>]*>/i', '', $inner_html);
+	if(preg_match('/<div[^>]*class="[^"]*wp-block-cover__inner-container[^"]*"[^>]*>(.*?)<\/div>/is', $inner_html, $m))
+		$inner_html = $m[1];
+
+	return trim((string) $inner_html);
+}
+
+function rsvpmaker_email_strip_cover_color_classes($class_name) {
+	$class_name = trim((string) $class_name);
+	if('' === $class_name)
+		return '';
+	$classes = preg_split('/\s+/', $class_name, -1, PREG_SPLIT_NO_EMPTY);
+	if(!is_array($classes) || empty($classes))
+		return '';
+	$kept = array();
+	foreach($classes as $class) {
+		$class = trim($class);
+		if('' === $class)
+			continue;
+		if('has-text-color' === $class || 'has-background' === $class)
+			continue;
+		if(preg_match('/^has\-[a-z0-9\-]+\-(color|background-color|gradient-background)$/i', $class))
+			continue;
+		$kept[] = $class;
+	}
+	return implode(' ', $kept);
+}
+
+function rsvpmaker_email_scrub_cover_style_array($style_array) {
+	if(!is_array($style_array))
+		return $style_array;
+	$remove_keys = array(
+		'color',
+		'background',
+		'backgroundcolor',
+		'background-image',
+		'background-size',
+		'background-position',
+		'background-repeat',
+	);
+	foreach($style_array as $key => $value) {
+		$key_lc = strtolower((string) $key);
+		if(in_array($key_lc, $remove_keys, true)) {
+			unset($style_array[$key]);
+			continue;
+		}
+		if(is_array($value))
+			$style_array[$key] = rsvpmaker_email_scrub_cover_style_array($value);
+	}
+	return $style_array;
+}
+
+function rsvpmaker_email_scrub_cover_inner_html($html) {
+	$html = (string) $html;
+	if('' === trim($html))
+		return $html;
+	$html = preg_replace_callback('/class\s*=\s*"([^"]*)"/i', function($m) {
+		$stripped = rsvpmaker_email_strip_cover_color_classes($m[1]);
+		if('' === $stripped)
+			return '';
+		return 'class="'.esc_attr($stripped).'"';
+	}, $html);
+	$html = preg_replace_callback('/class\s*=\s*\'([^\']*)\'/i', function($m) {
+		$stripped = rsvpmaker_email_strip_cover_color_classes($m[1]);
+		if('' === $stripped)
+			return '';
+		return 'class="'.esc_attr($stripped).'"';
+	}, $html);
+	$html = preg_replace_callback('/style\s*=\s*"([^"]*)"/i', function($m) {
+		$stripped = rsvpmaker_email_strip_style_properties($m[1], array('color','background','background-color','background-image','background-size','background-position','background-repeat'));
+		if('' === trim($stripped))
+			return '';
+		return 'style="'.esc_attr($stripped).'"';
+	}, $html);
+	$html = preg_replace_callback('/style\s*=\s*\'([^\']*)\'/i', function($m) {
+		$stripped = rsvpmaker_email_strip_style_properties($m[1], array('color','background','background-color','background-image','background-size','background-position','background-repeat'));
+		if('' === trim($stripped))
+			return '';
+		return 'style="'.esc_attr($stripped).'"';
+	}, $html);
+	return preg_replace('/\s{2,}/', ' ', trim($html));
+}
+
+function rsvpmaker_email_scrub_cover_inner_block($block) {
+	if(!is_array($block))
+		return $block;
+	if(!isset($block['attrs']) || !is_array($block['attrs']))
+		$block['attrs'] = array();
+
+	if(isset($block['attrs']['className'])) {
+		$class_name = rsvpmaker_email_strip_cover_color_classes($block['attrs']['className']);
+		if('' === $class_name)
+			unset($block['attrs']['className']);
+		else
+			$block['attrs']['className'] = $class_name;
+	}
+
+	if(isset($block['attrs']['textColor']))
+		unset($block['attrs']['textColor']);
+	if(isset($block['attrs']['backgroundColor']))
+		unset($block['attrs']['backgroundColor']);
+	if(isset($block['attrs']['gradient']))
+		unset($block['attrs']['gradient']);
+
+	if(isset($block['attrs']['style'])) {
+		if(is_string($block['attrs']['style'])) {
+			$block['attrs']['style'] = rsvpmaker_email_strip_style_properties($block['attrs']['style'], array('color','background','background-color','background-image','background-size','background-position','background-repeat'));
+		}
+		elseif(is_array($block['attrs']['style'])) {
+			$block['attrs']['style'] = rsvpmaker_email_scrub_cover_style_array($block['attrs']['style']);
+		}
+	}
+
+	if(isset($block['innerHTML']) && is_string($block['innerHTML']))
+		$block['innerHTML'] = rsvpmaker_email_scrub_cover_inner_html($block['innerHTML']);
+
+	if(isset($block['innerContent']) && is_array($block['innerContent'])) {
+		foreach($block['innerContent'] as $index => $chunk) {
+			if(is_string($chunk))
+				$block['innerContent'][$index] = rsvpmaker_email_scrub_cover_inner_html($chunk);
+		}
+	}
+
+	if(!empty($block['innerBlocks']) && is_array($block['innerBlocks'])) {
+		foreach($block['innerBlocks'] as $index => $child_block)
+			$block['innerBlocks'][$index] = rsvpmaker_email_scrub_cover_inner_block($child_block);
+	}
+
+	return $block;
+}
+
+function rsvpmaker_email_cover_to_blocks($block, $post_id = 0) {
+	$replacement = array();
+	$image_url = rsvpmaker_email_cover_image_url_from_block($block, $post_id);
+	if(!empty($image_url)) {
+		$image_url_escaped = esc_url($image_url);
+		$image_html = '<figure class="wp-block-image size-full"><img src="'.$image_url_escaped.'" alt="" /></figure>';
+		$replacement[] = array(
+			'blockName' => 'core/image',
+			'attrs' => array(
+				'url' => $image_url,
+				'sizeSlug' => 'full',
+				'linkDestination' => 'none',
+			),
+			'innerBlocks' => array(),
+			'innerHTML' => $image_html,
+			'innerContent' => array($image_html),
+		);
+	}
+
+	$inner_blocks = array();
+	if(!empty($block['innerBlocks']) && is_array($block['innerBlocks']))
+		$inner_blocks = rsvpmaker_email_rewrite_cover_blocks($block['innerBlocks'], $post_id);
+
+	if(!empty($inner_blocks)) {
+		foreach($inner_blocks as $inner_block)
+			$replacement[] = rsvpmaker_email_scrub_cover_inner_block($inner_block);
+	}
+	else {
+		$inner_html = empty($block['innerHTML']) ? '' : rsvpmaker_email_cover_inner_content_from_html($block['innerHTML']);
+		$inner_html = rsvpmaker_email_scrub_cover_inner_html($inner_html);
+		if(!empty($inner_html)) {
+			$replacement[] = array(
+				'blockName' => 'core/html',
+				'attrs' => array(),
+				'innerBlocks' => array(),
+				'innerHTML' => $inner_html,
+				'innerContent' => array($inner_html),
+			);
+		}
+	}
+
+	return $replacement;
+}
+
+function rsvpmaker_email_rewrite_cover_blocks($blocks, $post_id = 0) {
+	if(empty($blocks) || !is_array($blocks))
+		return array();
+	$rebuilt = array();
+	foreach($blocks as $block) {
+		if(!is_array($block))
+			continue;
+		$block_name = empty($block['blockName']) ? '' : $block['blockName'];
+		if('core/cover' === $block_name) {
+			$cover_blocks = rsvpmaker_email_cover_to_blocks($block, $post_id);
+			foreach($cover_blocks as $cover_block)
+				$rebuilt[] = $cover_block;
+			continue;
+		}
+
+		if(!empty($block['innerBlocks']) && is_array($block['innerBlocks']))
+			$block['innerBlocks'] = rsvpmaker_email_rewrite_cover_blocks($block['innerBlocks'], $post_id);
+		$rebuilt[] = $block;
+	}
+	return $rebuilt;
+}
+
 function rsvpmail_post_format($epost) {
     global $post, $rsvp_options, $email_context;
     $backup = $post;
@@ -6931,6 +7372,12 @@ function rsvpmail_post_format($epost) {
             $content .= get_rsvp_link($epost->ID);
         }
     }
+
+	if(strpos($content, '<!-- wp:cover') !== false || strpos($content, 'wp-block-cover') !== false) {
+		$content_blocks = parse_blocks($content);
+		$content_blocks = rsvpmaker_email_rewrite_cover_blocks($content_blocks, $epost->ID);
+		$content = serialize_blocks($content_blocks);
+	}
 
     // Properly wrap heading and content inside a valid Block Group structure
     $title_link = esc_url(get_permalink($post->ID));
