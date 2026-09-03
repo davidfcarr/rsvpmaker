@@ -1167,10 +1167,17 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 			}
 			$times['content']          .= '</em></span>';
 		}
-		$times['tzoptions'] = wp_timezone_choice( $tz );
+		$choices = wp_timezone_choice( $tz );
+		$label = __( 'Manual Offsets' );
+		$parts   = explode( '<optgroup label="'.$label, $choices );
+		$times['tzoptions'] = $parts[0];
 		return new WP_REST_Response( $times, 200 );
 	}
 }
+
+add_shortcode('tz_string_test', function() {
+	return '<pre>'.htmlentities(wp_timezone_choice( wp_timezone_string() )).'</pre>';
+});
 
 class RSVPMaker_Daily extends WP_REST_Controller {
 
