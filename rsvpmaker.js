@@ -128,9 +128,10 @@ if($('#formvars')) {
 			return true;
 	});
 
-	// Secure lookup flow: explicit lookup panel + quiet auto-check on main email field.
+	// Inline lookup flow: auto-check for matching RSVP, then ask before sending lookup email.
 	var searchRequest = null;
-	var autoLookupEmail = '';
+	var lookupTimer = null;
+	var lastLookupEmail = '';
 	var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
 	function renderLookupResponse(targetSelector, response, showNotFound) {
@@ -143,16 +144,10 @@ if($('#formvars')) {
 			}
 			return;
 		}
-		var inboxMessage = /check your inbox/i.test(response);
-		if (showNotFound || inboxMessage) {
-			$(targetSelector).html('<div style="border: medium solid gray; padding: 5px; background-color:#fff; color: gray;">'+response+'</div>');
-		}
-		else {
-			$(targetSelector).html('');
-		}
+		$(targetSelector).html('<div style="border: medium solid gray; padding: 5px; background-color:#fff; color: gray;">'+response+'</div>');
 	}
 
-	function runEmailLookup(value, targetSelector, showNotFound) {
+	function runEmailLookup(value, targetSelector, showNotFound, sendLookupMail) {
 		if (!value || !value.match(mailformat)) {
 			if(showNotFound) {
 				$(targetSelector).html('<div style="border: medium solid red; padding: 5px; background-color:#fff; color: red;">Please enter a valid email address.</div>');
@@ -164,39 +159,40 @@ if($('#formvars')) {
 		}
 		var data = {
 			'email_search': value,
+			'send_lookup_mail': sendLookupMail ? 1 : 0,
 		};
 		searchRequest = jQuery.get(email_lookup, data, function(response) {
 			renderLookupResponse(targetSelector, response, showNotFound);
 		});
 	}
 
-	$('#rsvp_lookup_toggle').on('click', function(event) {
+	$(document).on('click', '.rsvp_lookup_send_yes', function(event) {
 		event.preventDefault();
-		$('#rsvp_lookup_panel').toggle();
-		if($('#rsvp_lookup_panel').is(':visible')) {
-			$('#rsvp_lookup_email').trigger('focus');
-		}
+		runEmailLookup($('#email').val(), '#rsvp_email_lookup', true, true);
 	});
 
-	$('#rsvp_lookup_submit').on('click', function(event) {
+	$(document).on('click', '.rsvp_lookup_send_no', function(event) {
 		event.preventDefault();
-		runEmailLookup($('#rsvp_lookup_email').val(), '#rsvp_email_lookup_manual', true);
+		$('#rsvp_email_lookup').html('<div style="border: medium solid gray; padding: 5px; background-color:#fff; color: gray;">Okay. We will not send a lookup email.</div>');
 	});
 
-	$('#rsvp_lookup_email').on('keydown', function(event) {
-		if (event.key === 'Enter') {
-			event.preventDefault();
-			$('#rsvp_lookup_submit').trigger('click');
-		}
-	});
-
-	$('#email').on('change blur', function () {
+	$('#email').on('input blur change', function () {
 		var value = $(this).val();
-		if (value === autoLookupEmail) {
+		if (!value || !value.match(mailformat)) {
+			lastLookupEmail = '';
+			$('#rsvp_email_lookup').html('');
 			return;
 		}
-		autoLookupEmail = value;
-		runEmailLookup(value, '#rsvp_email_lookup', false);
+		if (value === lastLookupEmail) {
+			return;
+		}
+		if (lookupTimer) {
+			clearTimeout(lookupTimer);
+		}
+		lookupTimer = setTimeout(function() {
+			lastLookupEmail = value;
+			runEmailLookup(value, '#rsvp_email_lookup', false, false);
+		}, 350);
 	});
 }
 /** end form js */

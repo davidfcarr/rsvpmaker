@@ -3,3 +3,4 @@ export { default as usePaypalOptions } from './use-paypal-options';
 export { default as useStripeOptions } from './use-stripe-options';
 export { default as useChimpOptions } from './use-chimp-options';
 export { default as usePostmarkOptions } from './use-postmark-options';
+export { default as useFromOptions } from './use-from-options';

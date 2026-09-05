@@ -23,6 +23,12 @@ const PaymentSettings = lazy(() =>
 const PostmarkSettings = lazy(() =>
     import('./components/postmark-settings').then((module) => ({ default: module.PostmarkSettings }))
 );
+const MailchimpSettings = lazy(() =>
+	import('./components/mailchimp-settings').then((module) => ({ default: module.MailchimpSettings }))
+);
+const SmtpSettings = lazy(() =>
+	import('./components/smtp-settings').then((module) => ({ default: module.SmtpSettings }))
+);
 const ConfirmationSettings = lazy(() =>
     import('./components/confirmation-settings').then((module) => ({ default: module.ConfirmationSettings }))
 );
@@ -72,7 +78,7 @@ export default function RSVPAdmin (props) {
                 },
                 {
                     name: 'mailing_list',
-                    title: 'Email Essential Settings',
+                    title: 'Email Basic Settings',
                     className: 'nav-tab',
                 },
                 {
@@ -80,6 +86,16 @@ export default function RSVPAdmin (props) {
                     title: 'Postmark Setup (optional, recommended)',
                     className: 'nav-tab',
                 },
+				{
+					name: 'mailchimp',
+					title: 'Mailchimp (optional)',
+					className: 'nav-tab',
+				},
+				{
+					name: 'smtp',
+					title: 'SMTP (optional)',
+					className: 'nav-tab',
+				},
                 {
                     name: 'groupemail',
                     title: 'Group Email (optional)',
@@ -116,6 +132,10 @@ export default function RSVPAdmin (props) {
                     return <Suspense fallback={<p>Loading tab ...</p>}><Forms form_id={props.form_id} /></Suspense>
                 if('postmark' == tab.name)
                     return <Suspense fallback={<p>Loading tab ...</p>}><PostmarkSettings /></Suspense>
+				if('mailchimp' == tab.name)
+					return <Suspense fallback={<p>Loading tab ...</p>}><MailchimpSettings /></Suspense>
+				if('smtp' == tab.name)
+					return <Suspense fallback={<p>Loading tab ...</p>}><SmtpSettings /></Suspense>
                 return <section><p>{ tab.title }</p></section>
         } }
         </TabPanel>

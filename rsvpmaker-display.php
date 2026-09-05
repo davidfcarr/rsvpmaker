@@ -2603,7 +2603,7 @@ function rsvp_date_block_email( $post_id ) {
 				$dateblock .= rsvpmaker_date( ' ' . $time_format, $t );
 			}
 			$dateblock .= '</strong></p>'."\n<!-- /wp:paragraph -->\n\n";
-			$tzbutton = sprintf( ' | <a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) );
+			$tzbutton = ( isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) ? sprintf( ' | <a href="%s">%s</a>', esc_url( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) ) : '';
 			$dateblock .= "<!-- wp:paragraph -->\n<p>";
 			$end_time = $event->enddate;
 			$j = ( strpos( $permalink, '?' ) ) ? '&amp;' : '?';
@@ -3718,9 +3718,6 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 
 			ob_start();
 			echo '<div id="rsvpsection">';
-			if ( ! isset( $_GET['update'] ) && ! isset( $_GET['copy'] ) ) {
-				echo '<div class="rsvp-lookup-top"><p>'.esc_html__( 'Returning visitor?','rsvpmaker').' <a href="#" id="rsvp_lookup_toggle">' . esc_html__( 'Look up registrations by email.', 'rsvpmaker' ) . '</a></p><div id="rsvp_lookup_panel" style="display:none;"><p>' . esc_html__( 'Please provide your email address and we will send a secure link to continue.', 'rsvpmaker' ) . '</p><p><label for="rsvp_lookup_email">' . esc_html__( 'Email', 'rsvpmaker' ) . ':</label> <input type="email" id="rsvp_lookup_email" value="" /> <button type="button" id="rsvp_lookup_submit">' . esc_html__( 'Look Up', 'rsvpmaker' ) . '</button></p><div id="rsvp_email_lookup_manual"></div></div></div>';
-			}
 			?>
 
 <form id="rsvpform" action="<?php echo esc_url_raw( $permalink ); ?>" method="post">

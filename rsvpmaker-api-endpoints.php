@@ -704,8 +704,9 @@ class RSVPMaker_Email_Lookup extends WP_REST_Controller {
 		$event = $request['event'];
 
 		$email = sanitize_email( $_GET['email_search'] );
+		$send_requested = ! empty( $_GET['send_lookup_mail'] );
 
-		$output = ajax_rsvp_email_lookup( $email, $event );
+		$output = ajax_rsvp_email_lookup( $email, $event, $send_requested );
 
 		return new WP_REST_Response( $output, 200 );
 
@@ -2098,17 +2099,11 @@ class RSVP_Options_Json extends WP_REST_Controller {
 
 		$response['rsvp_options'] = $rsvp_options;
 		$email = get_option('admin_email');
-		$blogname = get_bloginfo('name');
 		// default values
 		$options = array(
-		'email-from' => $email
-		,'email-name' => $blogname
-		,'reply-to' => $email
-		,'chimp-key' => ''
+		'chimp-key' => ''
 		,'chimp-list' => ''
-		,'mailing_address' => ''
-		,'chimp_add_new_users' => ''
-		,'company' => $blogname
+		,'chimp_add_new_users' => false
 		,"add_notify" => $email
 		);
 		$response['chimp'] = get_option('chimp',$options);

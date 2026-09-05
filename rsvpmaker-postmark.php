@@ -38,6 +38,12 @@ function get_rsvpmaker_postmark_options() {
         $postmark_settings['postmark_mode'] = 'sandbox';
     if(empty($postmark_settings['sender_domains']))
         $postmark_settings['sender_domains'] = array();
+    if((!empty($postmark_settings['postmark_production_key']) && 'production' == $postmark_settings['postmark_mode']) && (!is_multisite() || 1 == get_current_blog_id() )) {
+        if(!wp_get_schedule('rsvpmaker_postmark_suppressions')) {
+            //if we're sending bulk email, be sure to schedule a daily check for Postmark suppressions
+            wp_schedule_event( rsvpmaker_strtotime('23:00:00'), 'daily', 'rsvpmaker_postmark_suppressions' );
+        }
+    }
     return $postmark_settings;
 }
 
@@ -56,8 +62,9 @@ function rsvpmaker_postmark_is_active() {
 }
 
 function show_rsvpmaker_postmark_status() {
-    if(rsvpmaker_postmark_is_live())
+    if(rsvpmaker_postmark_is_live()) {
         echo '<p>RSVPMaker\'s integration with the Postmark service is live, ensuring reliable message delivery</p>';
+    }
     elseif(rsvpmaker_postmark_is_active())
         echo '<p>Postmark integration is in sandbox mode, meaning RSVPMaker messages will only be sent to a test instance of the Postmark cloud.</p>';
     else

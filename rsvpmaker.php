@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.1.9
+* Version: 12.2.0
 */
 
 function get_rsvpversion() {
-	return '12.1.9';
+	return '12.2.0';
 }
 
 global $wp_version;
@@ -491,10 +491,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 	);
 	$chimp_properties = array(
 		'chimp-key' => array( 'type' => 'string' ),
-		'email-name' => array( 'type' => 'string' ),
-		'email-from' => array( 'type' => 'string' ),
-		'company' => array( 'type' => 'string' ),
-		'mailing_address' => array( 'type' => 'string' ),
+		'chimp-list' => array( 'type' => 'string' ),
 		'chimplist' => array( 'type' => 'string' ),
 		'add_notify' => array( 'type' => 'string' ),
 		'chimp_add_new_users' => array( 'type' => 'boolean' ),
@@ -509,10 +506,39 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 		'chimp',
 		array(
 			'type'              => 'object',
-			'default'           => array('chimp-key'=>'','email-name'=>'','email-from'=>'','company'=>'','mailing_address'=>'','chimplist'=>'','add_notify'=>get_option('admin_email'),'chimp_add_new_users'=>false),
+			'default'           => array('chimp-key'=>'','chimp-list'=>'','chimplist'=>'','add_notify'=>get_option('admin_email'),'chimp_add_new_users'=>false),
 			'sanitize_callback' => 'rsvpmaker_sanitize_options',
 			'show_in_rest'      => array(
 				'schema' => $chimp_schema,
+			),
+		)
+	);
+
+	$email_from_properties = array(
+		'email-from' => array( 'type' => 'string' ),
+		'email-name' => array( 'type' => 'string' ),
+		'company' => array( 'type' => 'string' ),
+		'mailing_address' => array( 'type' => 'string' ),
+	);
+	$email_from_schema = array(
+		'type'                 => 'object',
+		'properties'           => $email_from_properties,
+		'additionalProperties' => true,
+	);
+	register_setting(
+		'options',
+		'rsvpemail_from_settings',
+		array(
+			'type'              => 'object',
+			'default'           => array(
+				'email-from' => get_option( 'admin_email' ),
+				'email-name' => get_option( 'blogname' ),
+				'company' => get_option( 'blogname' ),
+				'mailing_address' => get_option( 'mailing_address', '' ),
+			),
+			'sanitize_callback' => 'rsvpmaker_sanitize_options',
+			'show_in_rest'      => array(
+				'schema' => $email_from_schema,
 			),
 		)
 	);

@@ -7,7 +7,7 @@ import {
 	Button,
 } from '@wordpress/components';
 import { DataForm } from '@wordpress/dataviews/wp';
-import { useRsvpOptions, useChimpOptions} from '../hooks';
+import { useRsvpOptions } from '../hooks';
 import { Notices } from './notices';
 import {useState, useEffect} from 'react';
 import { store as noticesStore } from '@wordpress/notices';
@@ -49,7 +49,6 @@ const SaveButton = ( { label, onClick } ) => {
 
 const RsvpmakerSettings = () => {
 	const [ rsvp_options, setRsvpOptions, saveRsvpOptions ] = useRsvpOptions() || [{}, () => {}, () => {}];
-	const [ chimpOptions, setChimpOptions, saveChimpOptions ] = useChimpOptions() || [{}, () => {}, () => {}];
 	const [filter, setFilter] = useState({});
 	const { createErrorNotice, createSuccessNotice, removeAllNotices, removeNotice } = useDispatch( noticesStore );
 	async function myCopyDefaults(filter = {}) {
@@ -101,7 +100,6 @@ const RsvpmakerSettings = () => {
 	if ( !rsvp_options ) {
 		return <div>{ __( 'Loading...', 'rsvpmaker' ) }</div>;
 	}
-    const smtp_options = [{'label':'None - use wp_mail()','value':''},{'label':'Local Server or Custom','value':'other'},{'label':'Gmail','value':'gmail'},{'label':'Sendgrid','value':'sendgrid'}];
 
 	const fields = [
 		{
@@ -808,56 +806,6 @@ const RsvpmakerSettings = () => {
 			Edit: 'text',
 		},		
 		{
-			id: 'smtp',
-			label: __( 'SMTP (optional, not needed if Postmark is active)', 'rsvpmaker' ),
-			description: __( 'Select the SMTP service for sending emails.', 'rsvpmaker' ),
-			type: 'string',
-			elements: smtp_options,
-			Edit: 'select',
-		},
-		{
-			id: 'smtp_useremail',
-			label: __( 'SMTP User Email', 'rsvpmaker' ),
-			description: __( 'Email address used for SMTP authentication.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'smtp_username',
-			label: __( 'SMTP Username', 'rsvpmaker' ),
-			description: __( 'Username used for SMTP authentication.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'smtp_password',
-			label: __( 'SMTP Password', 'rsvpmaker' ),
-			description: __( 'Password used for SMTP authentication.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'smtp_server',
-			label: __( 'SMTP Server', 'rsvpmaker' ),
-			description: __( 'SMTP server used for sending emails.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'smtp_port',
-			label: __( 'SMTP Port', 'rsvpmaker' ),
-			description: __( 'Port used for SMTP server.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'smtp_prefix',
-			label: __( 'SMTP Prefix', 'rsvpmaker' ),
-			description: __( 'Prefix (ssl, tls)', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
 			id: 'report_security',
 			label: __( 'Access to RSVP Report', 'rsvpmaker' ),
 			type: 'string',
@@ -905,91 +853,13 @@ const RsvpmakerSettings = () => {
 			{
 				id: 'options2',
 				label: __( 'Options', 'rsvpmaker' ),
-				children: [ 'payment_gateway','payment_minimum', 'paypal_currency', 'currency_decimal', 'currency_thousands', 'dashboard', 'dashboard_message','smtp' ],
+				children: [ 'payment_gateway','payment_minimum', 'paypal_currency', 'currency_decimal', 'currency_thousands', 'dashboard', 'dashboard_message' ],
 				layout: { type: 'card', isOpened: true, withHeader: true },
 			},
 			{
 				id: 'docs',
 				label: __( 'Related Documents - RSVP Button, RSVP Form, and Confirmation', 'rsvpmaker' ),
 				children: [ 'rsvp_confirm', 'rsvp_button','rsvp_form' ],
-				layout: { type: 'card', isOpened: false, withHeader: true },
-			},
-			{
-				id: 'smtp_settings',
-				label: __( 'SMTP Settings (optional, not needed if Postmark is active)', 'rsvpmaker' ),
-				children: [ 'smtp_useremail', 'smtp_username', 'smtp_password', 'smtp_server', 'smtp_port', 'smtp_prefix' ],
-				layout: { type: 'card', isOpened: false, withHeader: true },
-			},
-		],
-	};
-
-	console.log('chimpOptions',chimpOptions);
-	const chimpfields = [
-		{
-			id: 'company',
-			label: __( 'Company/Organization', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'mailing_address',
-			label: __( 'Mailing Address', 'rsvpmaker' ),
-			description: __( 'Providing a Company/Organization name and mailing address is recommended for anti-spam compliance.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'chimp-key',
-			label: __( 'Mailchimp API Key', 'rsvpmaker' ),
-			description: __( 'API key for Mailchimp integration.', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'email-from',
-			label: __( 'Email From', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'email-name',
-			label: __( 'Email Name', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'chimplist',
-			label: __( 'Default Mailchimp List', 'rsvpmaker' ),
-			type: 'string',
-			elements: chimpOptions.chimp_lists || [{label: 'No lists detected', value: ''}],
-			Edit: 'select',
-		},
-		{
-			id: 'add_notify',
-			label: __( 'Notification Email', 'rsvpmaker' ),
-			type: 'string',
-			Edit: 'text',
-		},
-		{
-			id: 'chimp_add_new_users',
-			label: __( 'Add New WordPress User Emails to Mailchimp', 'rsvpmaker' ),
-			type: 'boolean',
-			Edit: 'toggle',
-		},
-	]
- 
-	const chimpform = {
-		fields: [
-			{
-				id: 'email_essentials',
-				label: __( 'Email Essentials', 'rsvpmaker' ),
-				children: [ 'company','mailing_address' ],
-				layout: { type: 'card', withHeader: true },
-			},
-			{
-				id: 'chimpoptions',
-				label: __( 'Mailchimp Setup (optional)', 'rsvpmaker' ),
-				children: [ 'chimp-key','email-from','email-name','chimplist','add_notify','chimp_add_new_users' ],
 				layout: { type: 'card', isOpened: false, withHeader: true },
 			},
 		],
@@ -1026,7 +896,7 @@ const RsvpmakerSettings = () => {
 			<div id="floating-save" style={{  width: '60%', textAlign: 'left', padding: '5px', position: 'fixed', bottom: '50px', left: '200px', zIndex: 100, pointerEvents: 'none' }}>
 			<Notices />
 			<div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px', borderRadius: '5px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', pointerEvents: 'auto' }}>
-			<SaveButton onClick={ () => {saveRsvpOptions(); saveChimpOptions();} } />
+			<SaveButton onClick={ () => {saveRsvpOptions();} } />
 			</div>
 			</div>
 			<DataForm
@@ -1046,17 +916,6 @@ const RsvpmakerSettings = () => {
 				form={ form2 }
 				onChange={ ( edits ) =>
 					setRsvpOptions( ( current ) => ( {
-						...current,
-						...edits,
-					} ) )
-				}
-			/>
-			<DataForm
-				data={ chimpOptions }
-				fields={ chimpfields }
-				form={ chimpform }
-				onChange={ ( edits ) =>
-					setChimpOptions( ( current ) => ( {
 						...current,
 						...edits,
 					} ) )

@@ -313,14 +313,9 @@ function rsvpemail_error_log($errors,$mail = array()) {
               $email = get_option('admin_email');
 			  // default values
               $options = array(
-			  'email-from' => $email
-			  ,'email-name' => get_bloginfo('name')
-			  ,'reply-to' => $email
-			  ,'chimp-key' => ''
+			  'chimp-key' => ''
 			  ,'chimp-list' => ''
-			  ,'mailing_address' => ''
-			  ,'chimp_add_new_users' => ''
-			  ,'company' => ''
+			  ,'chimp_add_new_users' => false
 			  ,"add_notify" => $email
 			  );
 
@@ -1278,26 +1273,12 @@ function rsvpmaker_blogs_by_email($email, $path = '/wp-admin/edit.php?post_type=
 }
 
 function rsvpmaker_personalize_email($content,$to,$description = '', $post_id = 0) {
-$chimp_options = get_option('chimp', array());
-if(empty($chimp_options['mailing_address'])) $chimp_options['mailing_address'] = apply_filters('rsvpmaker_mailing_address','[not set in RSVPMaker Mailing List settings]');
 global $post;
 if($post_id) {
 	$post = get_post($post_id);
 	$content = str_replace('/\*.{1,4}ARCHIVE.{1,4}\*/',get_permalink($post->ID),$content);
 }
 $content = rsvpmail_replace_email_placeholder($content, $to);
-/*
-$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe='.$to),$content);
-$content = str_replace('*|REWARDS|*','',$content);
-$content = str_replace('*|LIST:DESCRIPTION|*',$description,$content);
-$address = isset($chimp_options['mailing_address']) ? $chimp_options['mailing_address'] : '';
-$content = str_replace('*|LIST:ADDRESS|*',$address,$content);
-$content = str_replace('*|HTML:LIST_ADDRESS_HTML|*',$address,$content);
-$company = isset($chimp_options['company']) ? esc_attr($chimp_options['company']) : get_bloginfo('name'); 
-$content = str_replace('*|LIST:COMPANY|*',$company,$content);
-$content = str_replace('*|CURRENT_YEAR|*',date('Y'),$content);
-$content = preg_replace('/<a .+FORWARD.+/','',$content);
-*/
 $pattern = '/\*\|SITELINKS:([^|]+)\|\*/';
 $content = preg_replace_callback($pattern, function($matches) use ($to) {
     // $matches[0] contains the full matched string: "*|SITELINKS:/wp-admin/users.php|*"
@@ -2160,8 +2141,8 @@ if(!empty($alts)) {
 echo "</p>\n";
 rsvpmaker_nonce();
 global $rsvp_options;
-$chimp_options = get_option('chimp',array());
-if(empty($chimp_options['mailing_address']))
+$from_options = get_rsvpemail_from_settings();
+if(empty($from_options['mailing_address']))
 	printf('<p><strong>%s</strong></p>',__('A physical mailing address should be entered in in RSVPMaker Mailing List settings.','rsvpmaker'));
 ?>
 <p>
@@ -2626,7 +2607,7 @@ if(is_array($ignore))
 printf('<h2>Add Email Addresses as Unsubscribed Or Blocked</h2><form method="post" action="%s">
 <p>
 <textarea rows="5" cols="60" name="problems"></textarea>
-<br><em>Separated by spaces of on separate lines</em>
+<br><em>Separated by spaces or on separate lines</em>
 </p>%s
 <p>
 <input type="radio" name="code" value="unsubscribed" checked="checked"> Unsubscribed
@@ -2950,7 +2931,7 @@ $templates[0]['html'] = '<html>
 <br>
 <a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
 <br>
-<strong>Our mailing address is:</strong><br>
+*|LIST:COMPANY|*<br>
 *|LIST:ADDRESS|*<br>
 <em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>    
 *|REWARDS|*</div>
@@ -2974,7 +2955,7 @@ $templates[1]['html'] = '<html>
 <br>
 <a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list | <a href="*|FORWARD|*">Forward to a friend</a> | <a href="*|UPDATE_PROFILE|*">Update your profile</a>
 <br>
-<strong>Our mailing address is:</strong><br>
+*|LIST:COMPANY|*<br>
 *|LIST:ADDRESS|*<br>
 <em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>    
 *|REWARDS|*</div>
@@ -3471,7 +3452,7 @@ function rsvpmail_confirm_subscribe () {
 	<html>
 	<head>
 	<meta charset="utf-8">
-	<title><?php bloginfo( 'name' ); echo ' - '.__('Email Unsubscribe'); ?></title>
+	<title><?php bloginfo( 'name' ); echo ' - '.__('Email Confirm Subscription','rsvpmaker'); ?></title>
 	<style>
 	body {background-color: #000;}
 	#main {background-color: #FFF; max-width: 600px; margin-left: auto; margin-right: auto; margin-top: 25px; padding: 25px;}
@@ -3480,7 +3461,7 @@ function rsvpmail_confirm_subscribe () {
 	</head>
 	<body>
 	<div id="main">
-	<h1><?php bloginfo( 'name' ); echo ' - '.__('Confirm Email List Subscription'); ?></h1>
+	<h1><?php bloginfo( 'name' ); echo ' - '.__('Confirm Email List Subscription','rsvpmaker'); ?></h1>
 	<?php
 	$e = sanitize_text_field(strtolower(trim($_REQUEST['rsvpmail_subscribe'])));
 	if(!rsvpmail_contains_email($e))
@@ -3488,6 +3469,7 @@ function rsvpmail_confirm_subscribe () {
 	else
 		{
 		rsvpmail_confirm_email($e);
+		rsvpmail_remove_problem($e);
 		echo rsvpmail_replace_email_placeholder(get_option('rsvpmailer_list_confirmation_message'), $e);
 		rsvpmaker_guest_email_welcome($e);
 		echo '<p>'.__('Confirmed subscription to website email list for ','rsvpmaker').$e.'</p>';
@@ -4242,7 +4224,7 @@ echo preg_replace_callback($head_pattern, function($matches) {
 	<a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span style="display: none">*|UNSUB|*</span>
 	<br>
 	<!-- mailchimp -->
-	<strong>Our mailing address is:</strong><br>
+	*|LIST:COMPANY|*<br>
 	*|LIST:ADDRESS|*<br>
 	<em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>    
 *|REWARDS|*</div>
@@ -5372,7 +5354,7 @@ function get_rsvpmailer_tx_block_template( $edit = false ) {
 
 <!-- wp:paragraph -->
 <p><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span>*|UNSUB|*</span>
-				<br><strong>Our mailing address is:</strong><br>*|LIST:ADDRESS|*<br><em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>*|REWARDS|*</p>
+				<br><strong>*|LIST:COMPANY|*</strong><br>*|LIST:ADDRESS|*<br><em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>*|REWARDS|*</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:rsvpmaker/emailcontent --></div>
 <!-- /wp:rsvpmaker/emailbody -->';
@@ -5418,7 +5400,7 @@ function get_rsvpmailer_default_block_template($edit = false) {
 
 <!-- wp:paragraph -->
 <p><a href="*|UNSUB|*">Unsubscribe</a> *|EMAIL|* from this list <span>*|UNSUB|*</span>
-				<br><strong>Our mailing address is:</strong><br>*|LIST:ADDRESS|*<br><em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>*|REWARDS|*</p>
+				<br>*|LIST:COMPANY|*<br>*|LIST:ADDRESS|*<br><em>Copyright (C) *|CURRENT_YEAR|* *|LIST:COMPANY|* All rights reserved.</em><br>*|REWARDS|*</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:rsvpmaker/emailcontent --></div>
 <!-- /wp:rsvpmaker/emailbody -->';
@@ -5626,10 +5608,10 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 	$table = rsvpmaker_guest_list_table();
 	$sql = $wpdb->prepare("SELECT * FROM %i where email LIKE %s",$table,$email);
 	$row = $wpdb->get_row($sql);
+	$is_problem = rsvpmail_is_problem($email);
 	if(!empty($row)) {
 		$exists = $id = $row->id;
 		$active = $confirmed = $row->active;
-		rsvpmail_remove_problem($email); // if they're trying to sign up again, remove from problem list
 	}
 
 	$values = array('email'=>$email,'first_name'=>$first_name,'last_name'=>$last_name,'active'=>$active);
@@ -5652,7 +5634,9 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 	}
 
 	$list_active = get_option('rsvpmaker_guest_list_active');
-	if($exists && $confirmed)
+	if($is_problem && strpos($is_problem,'Spam') !== false) 
+		$output .= 'There is a problem with your email address ('.$is_problem.') that can only be resolved by the website administrator. Contact '.get_bloginfo('admin_email').'.';
+	elseif($exists && $confirmed && !$is_problem)
 		$output .= '<p>You are already a confirmed member of the email list.</p>';
 	elseif(!$active && $list_active) {
 		//confirmation required
@@ -5666,7 +5650,9 @@ function rsvpmaker_guest_list_add($email, $first_name = '', $last_name='', $segm
 		$mail['html'] = sprintf('<p>Please <a href="%s">confirm your subscription</a> to the email list.</p><p>Follow this link to confirm<br><a href="%s">%s</a></p><p>If you did not initiate a subscription request, please ignore this note and accept our apologies.</p><p style="margin-top:50px;">%s</p>',$confirm,$confirm,$confirm,$trace);
 		rsvpmailer($mail);
 		$output .= 'Please check your email for a message asking you to confirm your subscription.';
-		if($exists)
+		if($is_problem)
+			$output .= 'There is a problem with your email address ('.$is_problem.') but you can resolve it when you confirm your subscription.';
+		elseif($exists)
 			$output .=  ' Looks like you may have signed up previously but not confirmed your subscription.';
 	}
 	return $output;
@@ -6218,11 +6204,11 @@ function rsvpmail_latest_post_promo($args = array()) {
 	$schedule = '';
 	if(!empty($args['promo_type']) && 'auto' == $args['promo_type'])
 		{
-			$chimp_options = get_option('chimp');
-			if(!$chimp_options) {
-				$chimp_options['email-name'] = get_option('blogname');
-				$postvars['from_email'] = get_option('admin_email');
-			}
+			$from_options = get_rsvpemail_from_settings();
+			if(empty($from_options['email-name']))
+				$from_options['email-name'] = get_option('blogname');
+			if(empty($from_options['email-from']))
+				$from_options['email-from'] = get_option('admin_email');
 			$t = rsvpmaker_strtotime($args['time']);
 			if($t < time())
 				$t += DAY_IN_SECONDS;
@@ -6233,8 +6219,8 @@ function rsvpmail_latest_post_promo($args = array()) {
 			if(strlen($preview) > 200)
 				$preview = substr($preview,0,200).' ...';
 			$postvars['preview_text'] = $preview;
-			$postvars['from_name'] = $chimp_options['email-name'];
-			$postvars['from_email'] = $chimp_options['email-from'];
+			$postvars['from_name'] = $from_options['email-name'];
+			$postvars['from_email'] = $from_options['email-from'];
 			$postvars['subject'] = $featured->post_title;
 			$postvars['rsvp_guest_list'] = 1;
 			$postvars['post_id'] = $promo_id;
@@ -6381,10 +6367,7 @@ function rsvpmail_latest_posts_notification($new_status, $old_status, $post ) {
 
 function rsvpmail_replace_placeholders($content,$description='') {
 	$from_options = get_rsvpemail_from_settings();
-	$chimp_options = get_option('chimp');
 	$address = !empty($from_options['mailing_address']) ? $from_options['mailing_address'] : '';
-	if(empty($address) && !empty($chimp_options['mailing_address']))
-		$address = $chimp_options['mailing_address'];
 	$company = !empty($from_options['company']) ? $from_options['company'] : get_bloginfo('name');
 	$content = str_replace('*|UNSUB|*',site_url('?rsvpmail_unsubscribe=*|EMAIL|*&rmail=1'),$content);
 	$content = str_replace('*|REWARDS|*','',$content);
@@ -6891,59 +6874,61 @@ return $output;
 }
 
 function get_rsvpemail_from_settings() {
-	$from = get_option('rsvpemail_from_settings');
-	$chimp = get_option('chimp');
+	$from = get_option('rsvpemail_from_settings', array());
+	$chimp = get_option('chimp', array());
+	if(!is_array($from))
+		$from = array();
+	if(!is_array($chimp))
+		$chimp = array();
+	$migrate_keys = array('email-from', 'email-name', 'company', 'mailing_address');
+	$defaults = array(
+		'email-from' => get_option('admin_email'),
+		'email-name' => get_option('blogname'),
+		'mailing_address' => get_option('mailing_address', ''),
+		'company' => get_bloginfo('name'),
+	);
 	$needs_update = false;
-	if(!empty($chimp))
-	{
-		foreach($chimp as $key => $value) {
-			if(empty($from[$key])) {
-				$needs_update = true;
-				$from[$key] = $value;
-			}
+
+	foreach($migrate_keys as $key) {
+		if(empty($from[$key]) && !empty($chimp[$key])) {
+			$from[$key] = sanitize_text_field($chimp[$key]);
+			$needs_update = true;
 		}
-		if($needs_update) {
-			error_log('Updating rsvpemail_from_settings with values from chimp: '.print_r($from,true));
-			update_option('rsvpemail_from_settings',$from);
-		}
-		return $from;
 	}
 
-	$from['email-from'] = get_option('admin_email');
-	$from['email-name'] = get_option('blogname');
-	$from['mailing_address'] = get_option('mailing_address');
-	$from['company'] = $from['email-from'];
-	update_option('rsvpemail_from_settings',$from);
+	foreach($defaults as $key => $value) {
+		if(empty($from[$key])) {
+			$from[$key] = sanitize_text_field($value);
+			$needs_update = true;
+		}
+	}
+
+	if($needs_update)
+		update_option('rsvpemail_from_settings',$from);
+
 	return $from;
 }
 
 function update_rsvpemail_from_settings($from) {
-	foreach($from as $name => $value) 
-		$from[$name] = sanitize_text_field($value);
-	update_option('rsvpemail_from_settings',$from);
-	$chimp = get_option('chimp');
-	if(empty($chimp)) {
-		update_option('chimp',$from);
+	$current = get_rsvpemail_from_settings();
+	$allowed = array('email-from', 'email-name', 'company', 'mailing_address');
+	foreach($allowed as $name) {
+		if(isset($from[$name]))
+			$current[$name] = sanitize_text_field($from[$name]);
 	}
+	update_option('rsvpemail_from_settings',$current);
 }
 
 function rsvpemail_from_settings() {
 if(isset($_POST['rsvpemail_from_settings']) && rsvpmaker_verify_nonce()) {
 	update_rsvpemail_from_settings($_POST['rsvpemail_from_settings']);
 }
-$options = get_rsvpemail_from_settings();
 ?>
 </div>
 <h3 id="newsletter-from">Newsletter Addressing</h3>
 <p>
 <?php
-if(isset($_POST['rsvpemail_from_settings']))
-{
-	$from_options = stripslashes_deep($_POST['rsvpemail_from_settings']);
-	update_option('rsvpemail_from_settings',$from_options); 
-}
-else
-	$from_options = get_rsvpemail_from_settings();
+$from_options = get_rsvpemail_from_settings();
 esc_html_e("These apply to any of the supported email distriution methods.",'rsvpmaker');?></p>			
 <p><?php esc_html_e('Email or ReplyTo Address for Sender','rsvpmaker');?>:<br> 
 	<input type="text" name="rsvpemail_from_settings[email-from]" id="email-from" value="<?php if(isset($from_options["email-from"])) echo esc_attr($from_options["email-from"]); ?>" />
@@ -7550,7 +7535,7 @@ function rsvpmaker_lookup_update_email_send( $event, $row ) {
 	return true;
 }
 
-function ajax_rsvp_email_lookup( $email, $event ) {
+function ajax_rsvp_email_lookup( $email, $event, $send_requested = false ) {
 
 	if ( ! rsvpmail_contains_email( $email ) ) {
 		return '<div class="previous_rsvp_prompt_note">' . __( 'Please enter a valid email address.', 'rsvpmaker' ) . '</div>';
@@ -7574,6 +7559,14 @@ function ajax_rsvp_email_lookup( $email, $event ) {
 	);
 
 	$any_row = $wpdb->get_row( $sql_any );
+
+	if ( ! $send_requested ) {
+		if ( ! empty( $row ) || ! empty( $any_row ) ) {
+			return '<div class="previous_rsvp_prompt_note previous_rsvp_lookup_offer">' . __( 'We found a previous RSVP for this email. Should we send you a secure link to retrieve your details?', 'rsvpmaker' ) . ' <button type="button" class="rsvp_lookup_send_yes">' . __( 'Yes', 'rsvpmaker' ) . '</button> <button type="button" class="rsvp_lookup_send_no">' . __( 'No', 'rsvpmaker' ) . '</button></div>';
+		}
+
+		return '';
+	}
 
 	if ( ! empty( $row ) ) {
 		$throttle_key = 'rsvpmaker_lookup_mail_update_' . md5( strtolower( trim( $email ) ) . '|' . (int) $event );

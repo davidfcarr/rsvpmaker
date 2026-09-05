@@ -27,16 +27,11 @@ export default function Email (props) {
     return <div className="rsvptab">
     <p>See <a href={data.data.mailing_list_settings} target="_blank">Mailing List Settings</a> for activation of the Postmark integration recommended for sending newsletters, promotional emails, and event invitations. Alternatively, you can use RSVPMaker's integration with Mailchimp. You can improve delivery of email messages using RSVPMaker's own SMTP servers support or an external SMTP plugin (not needed if Postmark is active).</p>
 
-    <h3>Email Footer</h3>
-    <TextControl label="Company/Organization" value={chimp['company']} onChange={(value) => {let prev = {...chimp}; prev['company']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
-    <TextControl label="Mailing Address" value={chimp['mailing_address']} onChange={(value) => {let prev = {...chimp}; prev['mailing_address']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
-    <p><em>Including a physical mailing address helps distinguish your email from spam.</em></p>
+    <p><em>Sender name, sender email, company, and mailing address are configured under Newsletter Addressing in Mailing List Settings.</em></p>
     {showChimp && (
     <>
     <h3>Mailchimp Configuration</h3>
     <TextControl label="Mailchimp API Key" value={chimp['chimp-key']} onChange={(value) => {let prev = {...chimp}; prev['chimp-key']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
-    <TextControl label="Email From Text" value={chimp['email-name']} onChange={(value) => {let prev = {...chimp}; prev['email-name']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
-    <TextControl label="Email From Address" value={chimp['email-from']} onChange={(value) => {let prev = {...chimp}; prev['email-from']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
     <SelectControl className="chimplist" label="Default Maling List" value={chimpList} options={chimp_lists} onChange={(value) => {setChimpList(value); let prev = {...chimp}; prev['chimp-list']=value; setChimp(prev); addChange('chimp',prev,'mergearray'); } } />    
     <ToggleControl label="Add new WordPress user emails to mailing list" checked={chimpAdd} onChange={() => {setChimpAdd(!showChimp); let prev = {...chimp}; prev['chimp_add_new_users']=value; setChimp(prev); addChange('chimp',prev,'mergearray');} } />
     </>

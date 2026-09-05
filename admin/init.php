@@ -69,6 +69,12 @@ function rsvpmaker_limit_form_blocks_to_forms( $allowed_block_types, $editor_con
 		$post_type = $editor_context->post_type;
 	}
 
+	// Avoid narrowing to server-registered blocks in email editing; third-party JS-only
+	// blocks can otherwise appear as unsupported even when their plugin is active.
+	if ( 'rsvpemail' === $post_type ) {
+		return $allowed_block_types;
+	}
+
 	$blocks_to_hide = array();
 	if ( 'rsvpmaker_form' !== $post_type ) {
 		$blocks_to_hide = array_merge( $blocks_to_hide, $form_only_blocks );
