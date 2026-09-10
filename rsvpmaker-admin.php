@@ -3535,17 +3535,14 @@ if(!empty($post->post_type) && ($post->post_type != 'rsvpemail'))
 		'meta'  => array( 'class' => 'rsvpmaker')
 	);
 	$wp_admin_bar->add_node( $args );
-	if($post->post_type != 'rsvpmaker')
-	{
-		$args = array(
-			'parent'    => 'new-rsvpemail',
-			'id' => 'excerpt_to_email',
-			'title' => __('Excerpt to Email','rsvpmaker'),
-			'href'  => admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email='.intval($post->ID)),
-			'meta'  => array( 'class' => 'rsvpmaker')
-		);
-		$wp_admin_bar->add_node( $args );	
-	}
+	$args = array(
+		'parent'    => 'new-rsvpemail',
+		'id' => 'excerpt_to_email',
+		'title' => __('Excerpt '.$typelabel.' to Email','rsvpmaker'),
+		'href'  => admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email='.intval($post->ID)),
+		'meta'  => array( 'class' => 'rsvpmaker')
+	);
+	$wp_admin_bar->add_node( $args );	
 }
 
 $args = array(

@@ -58,6 +58,7 @@ class RSVPMaker_Listing_Controller extends WP_REST_Controller {
 		foreach($events as $index => $post) {
 			$events[$index]->permalink = get_permalink($post->ID);
 			$events[$index]->neatdate = rsvpmaker_date( $rsvp_options['long_date'], $post->ts_start);
+			$events[$index]->types = wp_get_post_terms($post->ID,'rsvpmaker-type',array('fields'=>'names'));
 		}
 
 		return new WP_REST_Response( $events, 200 );

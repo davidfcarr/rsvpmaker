@@ -1652,7 +1652,6 @@ function rsvpmaker_next( $atts = array( 'post_id' => 'next' ) ) {
 	}
 
 	return rsvpmaker_one( $atts );
-
 }
 function rsvpmaker_one( $atts = array() ) {
 	rsvpmaker_email_content_minfilters();

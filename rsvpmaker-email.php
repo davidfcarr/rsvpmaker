@@ -1073,45 +1073,15 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 	{
 		$email_context = true;
 		if(!empty($_GET["post_to_email"]))
-			{
-				$id = (int) $_GET["post_to_email"];
-				$permalink = get_permalink($id);
-				$post = get_post($id);
-				$content = '';
-				if(!empty($_GET['excerpt'])) {
-					$content .= sprintf("<!-- wp:heading -->\n".'<h2 class="wp-block-heading"><a class="headline-link article" href="%s">%s</a></h2>'."\n<!-- /wp:heading -->\n",$permalink,$post->post_title);
-					$content .= rsvpmail_post_excerpt($post);
-				}
-				else {
-					$content = rsvpmail_post_format($post);
-				}
-				$title = $post->post_title;
-				if('rsvpmaker' == $post->post_type) {
-					$event = get_rsvpmaker_event($post->ID);
-					$title .= ' - '.rsvpmaker_date($rsvp_options['short_date'],$event->ts_start,$event->timezone);
-				}
-			}
-		else
-		{
-		$id = sanitize_text_field($_GET["rsvpevent_to_email"]);
-		if(is_numeric($id))
-			{
-				if(empty($content))
-					$content = '<!-- wp:rsvpmaker/event {"post_id":"'.$id.'","one_format":"button"} /-->';
-				$title = get_the_title($id);
-				$date = get_rsvp_date($id);		
-				if($date) {				
-				$t = rsvpmaker_strtotime($date);
-				global $rsvp_options;
-				$title .= ' - '.rsvpmaker_date($rsvp_options["short_date"],$t);				
-				}
-			}
-		elseif($id == 'upcoming') {
-			$content .= '<!-- wp:rsvpmaker/upcoming {"posts_per_page":"20","hideauthor":"true"} /-->';
-			$title = 'Upcoming Events';
-		}
-		else
+			$id = sanitize_text_field($_GET["post_to_email"]);
+		elseif(isset($_GET["rsvpevent_to_email"]))
+			$id = sanitize_text_field($_GET["rsvpevent_to_email"]);
+		if(empty($id))
 			return;
+		else {
+			$content_title = rsvpmaker_choice_to_email_content($id);
+			$content .= $content_title['content'];
+			$title = $content_title['title'];
 		}
 		$content = rsvpmailer_default_block_template_wrapper($content);
 		$my_post['post_title'] = $title;
@@ -2321,15 +2291,6 @@ $function = "rsvpmaker_email_get_content";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Email Inline Block Test",'rsvpmaker');
-$menu_title = $page_title;
-$capability = 'edit_others_rsvpemails';
-$menu_slug = "rsvpmaker_email_inline_block_test";
-$function = "rsvpmaker_email_inline_block_test";
-
-add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
-
-$parent_slug = "edit.php?post_type=rsvpemail";
 $page_title = __("RSVPMaker Email List",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
@@ -2380,6 +2341,15 @@ $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_extract_email";
 $function = "rsvpmaker_extract_email";
+
+add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
+$parent_slug = "edit.php?post_type=rsvpemail";
+$page_title = __("Email Inline Block Test",'rsvpmaker');
+$menu_title = $page_title;
+$capability = 'edit_others_rsvpemails';
+$menu_slug = "rsvpmaker_email_inline_block_test";
+$function = "rsvpmaker_email_inline_block_test";
 
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
@@ -2675,21 +2645,10 @@ wp_reset_query();
 	return $content;
 }
 
-function rsvpmaker_email_get_content () {
-global $wpdb, $current_user, $rsvp_options;
-rsvpmaker_admin_heading('Content for Email',__FUNCTION__); 
-
-if(isset($_POST['newsletter_choice'])) {
-	$newsletter_title = $content = '';
-	$log = '';
-	if(!empty($_POST['newsletter_title']))
-		$newsletter_title = sanitize_text_field(stripslashes($_POST['newsletter_title']));
-	foreach($_POST['newsletter_choice'] as $choice) {
-		if(empty($choice))
-			continue;
-		$log .= sprintf('<p>%s</p>',$choice);
+function rsvpmaker_choice_to_email_content($choice) {
+	$content = '';
 		if('upcoming' == $choice) {
-			$number_of_events = isset($_POST['number_of_events']) ? intval($_POST['number_of_events']) : 20;
+			$number_of_events = isset($_REQUEST['number_of_events']) ? intval($_REQUEST['number_of_events']) : 20;
 			$content .= '<!-- wp:query {"queryId":0,"query":{"perPage":'.$number_of_events.',"pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0,"rsvp_only":false,"excludeCurrent":null},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
 <div class="wp-block-query"><!-- wp:post-template {"layout":{"type":"grid","columnCount":1}} -->
 <!-- wp:post-title {"isLink":true} /-->
@@ -2750,15 +2709,33 @@ if(isset($_POST['newsletter_choice'])) {
 				$content .= rsvpmail_post_format($post)."\n\n";
 				$log .= $content;
 				//wp_die($log);
-				if(empty($newsletter_title)) {
-					$newsletter_title = $post->post_title;
-					if('rsvpmaker' == $post->post_type) {
-						$event = get_rsvpmaker_event($post->ID);
-						$newsletter_title .= ' '.rsvpmaker_date(str_replace(', Y','',$rsvp_options['long_date']),$event->ts_start);
-					}
+				$newsletter_title = $post->post_title;
+				if('rsvpmaker' == $post->post_type) {
+					$event = get_rsvpmaker_event($post->ID);
+					$newsletter_title .= ' '.rsvpmaker_date(str_replace(', Y','',$rsvp_options['long_date']),$event->ts_start);
 				}
 		}
 	}
+	return array('content' => $content,'title' => $newsletter_title);
+}
+
+function rsvpmaker_email_get_content () {
+global $wpdb, $current_user, $rsvp_options;
+rsvpmaker_admin_heading('Content for Email',__FUNCTION__); 
+
+if(isset($_REQUEST['newsletter_choice'])) {
+	$newsletter_title = $content = '';
+	$log = '';
+	if(!empty($_REQUEST['newsletter_title']))
+		$newsletter_title = sanitize_text_field(stripslashes($_REQUEST['newsletter_title']));
+	foreach($_REQUEST['newsletter_choice'] as $choice) {
+		if(empty($choice))
+			continue;
+		$content_title = rsvpmaker_choice_to_email_content($choice);
+		$content .= $content_title['content'];
+		if(empty($newsletter_title))
+			$newsletter_title = $content_title['title'];
+		$log .= sprintf('<p>%s</p>',$choice);
 	}
 	if(!empty($content)) {
 		$content = '<!-- wp:paragraph {"placeholder":"Add email content here"} -->'."\n<p></p>\n<!-- /wp:paragraph -->\n\n".$content;
@@ -7340,10 +7317,18 @@ function rsvpmail_post_format($epost) {
     $post = $epost;
     $email_context = true;
 
-    if (isset($_REQUEST['excerpt']) && 'rsvpmaker' == $post->post_type) {
-        $content = rsvpmail_post_excerpt($epost);
+    if (isset($_REQUEST['excerpt'])) {
+		if('rsvpmaker' == $post->post_type)
+			$content = sprintf('<!-- wp:paragraph -->
+%s
+<!-- /wp:paragraph -->', rsvpmaker_excerpt_body($post));
+		else
+			$content = sprintf('<!-- wp:paragraph -->
+<p>%s</p>
+<!-- /wp:paragraph -->', get_the_excerpt($epost));
+	$content .= "\n".rsvpemail_readmore_button(get_permalink($epost->ID), $epost->ID);
     } else {
-        $content = (strpos($epost->post_content, 'wp4toastmasters/')) ? do_blocks($post->post_content) : $post->post_content;
+        $content = $post->post_content;
         $parts = preg_split('/<!--[wp:\s]*more/', $content);
         if (!empty($parts[1])) {
             $content = $parts[0] . rsvpemail_readmore_button(get_permalink($epost->ID), $epost->ID);
@@ -7352,7 +7337,8 @@ function rsvpmail_post_format($epost) {
 
     if ('rsvpmaker' == $epost->post_type) {
         $rsvp_on = (bool) get_post_meta($epost->ID, '_rsvp_on', true);
-        $content = rsvp_date_block_email($epost->ID) . $content;
+		$content = str_replace('<!-- wp:rsvpmaker/rsvpdateblock /-->', '',$content); //remove any embedded reference to dynamic date block
+        $content = rsvp_date_block_email($epost->ID) . $content; // add email specific version of static date block
         if ($rsvp_on) {
             $content .= get_rsvp_link($epost->ID);
         }
@@ -7382,9 +7368,6 @@ function rsvpmail_post_format($epost) {
 	$formatted_content = str_replace('<!-- /wp:rsvpmaker/button -->', '', $formatted_content);
 	$formatted_content = str_replace('"#rsvpnow', '"'.get_permalink($post->ID).'#rsvpnow"', $formatted_content);
 
-	// clean up gutenberg code
-	$parsed_blocks = parse_blocks($formatted_content);
-	$formatted_content = serialize_blocks($parsed_blocks);
 	$formatted_content = apply_filters('rsvpmail_post_format', $formatted_content, $post);
 	//$formatted_content = do_blocks($formatted_content);
 

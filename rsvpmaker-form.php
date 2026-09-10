@@ -709,8 +709,9 @@ add_action( 'set_current_user', 'rsvpmaker_remove_save_content_filters', 99 );
 
 // not necessary, static block
 function rsvpmaker_formchimp( $atts, $content ) {
+	$label = empty( $atts['label'] ) ? __( 'Add me to your email list', 'rsvpmaker' ) : $atts['label'];
 	$checked = empty( $atts['checked'] ) ? '' : ' checked="checked" ';
-	return '<p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1" ' . $checked . ' /> ' . __( 'Add me to your email list', 'rsvpmaker' ) . '</p>';
+	return '<p><input class="email_list_ok" type="checkbox" name="profile[email_list_ok]" id="email_list_ok" value="1" ' . $checked . ' /> ' . esc_html($label) . '</p>';
 }
 
 function rsvpmaker_add_to_list_on_rsvp_form() {

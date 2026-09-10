@@ -553,6 +553,9 @@ if($('#formvars')) {
 									if(Array.isArray(json))
 									json.forEach(
 										(event) => {
+										if(event.types.includes('hide')) {
+											return;
+										}
 											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.neatdate+'</span></a></li>';
 										}
 									);
@@ -579,6 +582,10 @@ if($('#formvars')) {
 								if(Array.isArray(json))
 								json.forEach(
 									(event, index) => {
+										console.log('future event '+index, event);
+										if(event.types.includes('hide')) {
+											return;
+										}
 										if(index < 12)
 											inners[inners.length - 1] += '<li class=" wp-block-navigation-item wp-block-navigation-link"><a class="wp-block-navigation-item__content" href="'+event.permalink+'"><span class="wp-block-navigation-item__label">'+event.post_title+' - '+event.neatdate+'</span></a></li>';
 										else
