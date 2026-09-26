@@ -12,13 +12,16 @@ function rsvpemail_tag($post_id = 0, $blog_id = 0) {
 	return 'rsvpemail-'.$blog_id.'-'.$post_id;
 }
 
-function rsvpmailer($mail, $description = '') {
+function rsvpmailer($mail, $bypass = []) {
 	if(defined('RSVPMAILOFF'))
 	{
 		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
 		error_log('RSVPMaker Email Disabled '.var_export($mail,true));
 		return;
 	}
+	$description = is_array($bypass) ? '' : $bypass; //legacy
+	if(empty($bypass) || !is_array($bypass))
+		$bypass = rsvpmail_bypass();
 	error_log('22 rsvpmailer sending to '.$mail["to"].' subject: '.$mail["subject"]);
 	global $post, $rsvp_options, $rsvpmaker_message_type;
 	if(empty($mail['Tag']))
@@ -97,7 +100,10 @@ function rsvpmailer($mail, $description = '') {
 		$mail['html'] = str_replace('</html>',"\n<p>".sprintf('Unsubscribe from email notifications<br /><a href="%s">%s</a></p>',site_url('?rsvpmail_unsubscribe='.$mail['to']),site_url('?rsvpmail_unsubscribe='.$unsubscribe_email)).'</html>',$mail['html']);
 
 	$postmark = get_rsvpmaker_postmark_options();
-	if(rsvpmaker_postmark_is_active()) {
+	if(in_array($mail['to'],$bypass)) {
+		error_log('bypass '.var_export($mail,true));
+	}
+	elseif(rsvpmaker_postmark_is_active()) {
 		error_log('101 rsvpmailer sending via postmark '.var_export($mail,true));
 		return rsvpmaker_postmark_send($mail);
 	}
@@ -1278,6 +1284,23 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 
 	$recipients = rsvpmaker_postvars_to_recipients($postvars);
 
+    $bypass = rsvpmail_bypass();
+    $bypass_recipients = array_intersect($recipients, $bypass);
+    // Extract addresses from $recipients that are NOT in $bypass
+    $recipients = array_diff($recipients, $bypass);
+
+    if(!empty($bypass_recipients)) {
+    error_log('rsvpmailer_submitted bypass recipients '.var_export($bypass_recipients,true));
+	$mail['subject'] = do_shortcode(get_the_title($post_id));
+    $mail['from'] = $from;
+    foreach($bypass_recipients as $to) {
+            $mail['to'] = $to;
+            $mail['html'] = rsvpmaker_personalize_email($html,$to);
+            error_log('rsvpmailer_submitted bypass email '.var_export($mail,true));
+            rsvpmailer($mail,$bypass);
+        }
+    }
+
 	if(!empty($recipients)) {
 		if(rsvpmaker_postmark_is_active()) {
 			$result = rsvpmaker_postmark_broadcast($recipients,$post_id);
@@ -1371,6 +1394,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 		wp_schedule_event( time(), 'doubleminute', 'rsvpmaker_relay_init_hook' );
 } //end rsvpmailer_submitted
 
+//todo bypass
 function rsvpmaker_postvars_to_recipients($postvars) {
 	global $wpdb, $rsvpmaker_cron_context;
 	$sending_to = [];
@@ -1411,6 +1435,7 @@ if(!empty($results))
 echo '<p>'.__('Looking up','rsvpmaker').' '. __('event attendees','rsvpmaker').'</p>';
 foreach($results as $row)
 	{
+	//todo bypass
 	if($problem = rsvpmail_is_problem($row->email))
 		{
 			add_post_meta($post_id,'rsvpmail_blocked',$problem);

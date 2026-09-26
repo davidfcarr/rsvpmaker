@@ -203,6 +203,12 @@ if(!empty($postmark_settings['postmark_production_key']))
 
 function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$recipient_names=array()) {
     global $wpdb;
+    error_log('rsvpmaker_postmark_broadcast($recipients'.var_export($recipients,true));
+    $bypass = rsvpmail_bypass();
+    $bypass_recipients = (is_array($recipients)) ? array_intersect($recipients, $bypass) : [];
+    // Extract addresses from $recipients that are NOT in $bypass
+    $recipients = array_diff($recipients, $bypass);
+
     error_log('rsvpmaker_postmark_broadcast start '.var_export($recipients,true));
     $recipients = rsvpmaker_recipients_no_problems($recipients);
     error_log('rsvpmaker_postmark_broadcast filtered '.var_export($recipients,true));
@@ -265,6 +271,18 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     ,$wpdb->postmeta,$to,$post_id));
     }
 
+    error_log('rsvpmaker_bypass_recipients '.var_export($bypass_recipients,true));
+    if(!empty($bypass_recipients)) {
+    $mail['subject'] = $mail['Subject'];
+    $mail['from'] = $mail['From'];
+    foreach($bypass_recipients as $to) {
+            $mail['to'] = $to;
+            $mail['html'] = rsvpmaker_personalize_email($html,$to);
+            error_log('broadcas bypass email '.var_export($mail,true));
+            rsvpmailer($mail,$bypass);
+        }
+    }
+    
     $hash = rsvpmaker_postmark_batch_hash($batch,$recipients);
     error_log('postmark broadcast hash '.$hash);
     if(rsvpmaker_postmark_duplicate($hash)) {
@@ -363,6 +381,11 @@ function rsvpmaker_postmark_pending_batch_count() {
 }
 
 function rsvpmaker_postmark_send($mail) {
+    $bypass = rsvpmail_bypass();
+    if(!empty($mail['bypass']) || (in_array($mail['to'],$bypass))) {
+        rsvpmailer($mail,$bypass);
+        return;
+    }
     $postmark_settings = get_rsvpmaker_postmark_options();
     $mail['MessageStream'] = $postmark_settings['postmark_tx_slug'];
     $batch = rsvpmaker_postmark_batch($mail, $mail['to']);
@@ -803,11 +826,29 @@ function rsvpmaker_postmark_forwardto_from_replyto($reply_to,$slug_and_id = NULL
 }
 
 function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
-
-    //error_log('rsvpmaker_postmark_batch slug and id '.var_export($slug_and_id,true));
-    //wp_suspend_cache_addition(true);
     if(!is_array($recipients))
-        $recipients = array($recipients);
+    {
+        if(is_email($recipients))
+            $recipients = array($recipients);
+        else
+            return;
+    }
+    error_log('rsvpmaker_postmark_batch recipients '.var_export($recipients,true));
+    $bypass = rsvpmail_bypass();
+    $bypass_recipients = array_intersect($recipients, $bypass);
+    // Extract addresses from $recipients that are NOT in $bypass
+    $recipients = array_diff($recipients, $bypass);
+    if(!empty($bypass_recipients)) {
+    error_log('postmark_batch bypass recipients '.var_export($bypass_recipients,true));
+    $mail['subject'] = $mail['Subject'];
+    $mail['from'] = $mail['From'];
+    foreach($bypass_recipients as $to) {
+            $mail['to'] = $to;
+            $mail['html'] = rsvpmaker_personalize_email($mail['HtmlBody'],$to);
+            error_log('postmark_batch bypass email '.var_export($mail,true));
+            rsvpmailer($mail,$bypass);
+        }
+    }
     $recipient_names = get_transient('recipient_names');
     if(empty($recipient_names))
         $recipient_names = array();

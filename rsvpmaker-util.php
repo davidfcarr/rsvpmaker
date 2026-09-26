@@ -4573,6 +4573,13 @@ function rsvpmail_add_problem($email,$code) {
 	$sql = $wpdb->prepare("SELECT code from {$table} where email=%s",$email);
 	$problem = $wpdb->get_var($sql);
 
+	if('bypass' == $problem) {
+		if(isset($_GET['debug']) ) {
+			printf('<p>%s: %s</p>',$email,$problem);
+		}
+		return;
+	}
+
 	if( $problem ) {
 		if(isset($_GET['debug']) ) {
 			printf('<p>%s is already marked as a problem: %s</p>',$email,$problem);
@@ -4646,12 +4653,29 @@ function rsvpmail_is_problem($email) {
 
 		$code = apply_filters('rsvpmail_is_problem',$code,$email);
 
-	if($code) {
+	if($code && $code != 'bypass') {
 
 		return $email.': '.$code;
 
 	}
 
+}
+
+function rsvpmail_bypass() {
+    static $rsvpmail_bypass = null;
+    
+    if ($rsvpmail_bypass !== null) {
+        return $rsvpmail_bypass;
+    }
+    
+    global $wpdb;
+    $table = $wpdb->base_prefix . "rsvpmailer_blocked";
+    
+    // Efficiently fetch a flat array of email addresses directly
+    $sql = "SELECT email FROM {$table} WHERE code = 'bypass'";
+    $rsvpmail_bypass = $wpdb->get_col($sql) ?: [];
+    
+    return $rsvpmail_bypass;
 }
 
 function rsvpmaker_make_end_date ($date,$type='',$end='') {
