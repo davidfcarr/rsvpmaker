@@ -269,9 +269,11 @@ function rsvpmaker_create_post_type() {
 	// if there is a logged in user, set editing roles
 	global $current_user;
 
+	/*
 	if ( isset( $current_user ) ) {
 		rsvpmaker_roles();
 	}
+	*/
 
 	$model_version = 1;
 	if(empty($rsvp_options['model_version']) || $rsvp_options['model_version'] < $model_version) {
@@ -430,3 +432,4 @@ function create_rsvpemail_post_type() {
         )
       );
 }
+

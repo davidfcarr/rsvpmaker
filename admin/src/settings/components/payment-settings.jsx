@@ -133,6 +133,12 @@ const PaymentSettings = () => {
 			Edit: 'text',
 		},
 		{
+			id: 'webhook_id',
+			label: __( 'Webhook ID (optional, from PayPal Developer Dashboard)', 'rsvpmaker' ),
+			type: 'string',
+			Edit: 'text',
+		},
+		{
 			id: 'sandbox',
 			label: __( 'Mode', 'rsvpmaker' ),
 			type: 'integer',
@@ -149,7 +155,7 @@ const PaymentSettings = () => {
 			{
 				id: 'paypal',
 				label: __( 'PayPal Setup', 'rsvpmaker' ),
-				children: [ 'client_id', 'client_secret', 'sandbox_client_id', 'sandbox_client_secret', 'funding_sources', 'excluded_funding_sources', 'sandbox' ],
+				children: [ 'client_id', 'client_secret', 'sandbox_client_id', 'sandbox_client_secret', 'funding_sources', 'excluded_funding_sources', 'webhook_id', 'sandbox' ],
 				layout: { type: 'card', withHeader: true },
 			},
 		],

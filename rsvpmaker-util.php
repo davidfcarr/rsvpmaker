@@ -4581,9 +4581,7 @@ function rsvpmail_add_problem($email,$code) {
 	}
 
 	if( $problem ) {
-		if(isset($_GET['debug']) ) {
-			printf('<p>%s is already marked as a problem: %s</p>',$email,$problem);
-		}
+		$wpdb->update($table,array('code'=>$code),array('email'=>$email));
 	}
 	else
 	{
@@ -4802,6 +4800,9 @@ function rsvpmaker_number_events_post() {
 			if($event->ID == $starting_with)
 
 				$on = true;
+
+			if(!current_user_can('edit_post', $event->ID))
+				continue;
 
 			if($on) {
 

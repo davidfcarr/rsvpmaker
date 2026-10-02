@@ -108,7 +108,7 @@ export default function RSVPAdmin (props) {
                 },
                 {
                     name: 'editing_rights',
-                    title: 'Editing/Sending Rights',
+                    title: 'Email Editing/Sending Rights',
                     className: 'nav-tab',
                 },
             ] }

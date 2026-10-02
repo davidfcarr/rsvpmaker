@@ -1129,12 +1129,15 @@ function add_rsvpemail_caps() {
     $admins->add_cap( 'publish_rsvpemails' ); 
     $admins->add_cap( 'read_rsvpemail' ); 
     $admins->add_cap( 'read_private_rsvpemails' ); 
-    $admins->add_cap( 'delete_rsvpemail' ); 
+    $admins->add_cap( 'delete_rsvpemail' );
+	add_rsvpemail_caps_role('editor', true);
+	add_rsvpemail_caps_role('manager', true);
 }
 
 function add_rsvpemail_caps_role($role, $publish = false) {
     // gets the administrator role
     $emailers= get_role( $role );
+	if(!$emailers) return;
     $emailers->add_cap( 'edit_rsvpemail' ); 
     $emailers->add_cap( 'edit_rsvpemails' );
     $emailers->add_cap( 'edit_others_rsvpemails' ); 
@@ -2560,32 +2563,50 @@ Useful formatting codes for email ("excerpt" works well in most cases):
 echo '</textarea>';
 }
 
+function rsvpmaker_local_emails($blog_id) {
+global $wpdb;
+$table = $wpdb->prefix . "rsvpmaker";
+$sql = "SELECT DISTINCT email FROM $table";
+$local_emails = $wpdb->get_col($sql) ?: [];
+$table = $wpdb->prefix . "rsvpmaker_guest_email";
+$sql = "SELECT DISTINCT email FROM $table";
+$list_emails = $wpdb->get_col($sql) ?: [];
+$subdomain_users = get_users(array(
+    'blog_id' => $blog_id,
+    'fields'  => array('user_email')
+));
+$local_emails = array_map('strtolower', array_merge($local_emails, $list_emails, wp_list_pluck($subdomain_users, 'user_email')));
+return $local_emails;
+}
+
 function rsvpmaker_unsubscribed_list () {
 global $wpdb;
-$table = $wpdb->prefix . "rsvpmailer_blocked";
+$table = $wpdb->base_prefix . "rsvpmailer_blocked";
 $action = admin_url('edit.php?post_type=rsvpemail&page=unsubscribed_list');
-$ignore = get_option('ignore_postmark_supressions');
+if(is_multisite() && !current_user_can('manage_network')) {
+	$blog_id = get_current_blog_id();
+	$local_emails = rsvpmaker_local_emails($blog_id);
+}
 
-if(isset($_POST['remove']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
-	if(!$ignore)
-		$ignore = array();
+if(!empty($_POST) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	if(!empty($_POST['remove'])) {	
 	foreach($_POST['remove'] as $email) {
 		rsvpmail_remove_problem($email);
 		if(rsvpmaker_postmark_is_live())
 			rsvpmaker_postmark_delete_supression($email);
 	}
-}
-
-if(isset($_POST['problems']))
-{
+	}
+	if(isset($_POST['problems']))
+	{
 	$code = sanitize_text_field($_POST['code']);
 	preg_match_all ("/\b[A-z0-9][\w.-]*@[A-z0-9][\w\-\.]+\.[A-z0-9]{2,6}\b/", $_POST['problems'], $emails);
 	$emails = $emails[0];
 	foreach($emails as $email)
 		{
-			rsvpmail_add_problem($email,$code);
 			$email = strtolower($email);
+			rsvpmail_add_problem($email,$code);
 		}
+	}
 }
 
 rsvpmaker_admin_heading(__('Unsubscribed and Blocked','rsvpmaker'),__FUNCTION__);
@@ -2594,11 +2615,6 @@ printf('<p>%s</p>',__('If recipients have clicked unsubscribe on a confirmation 
 
 $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i ORDER BY code, ID DESC",$table));
 printf('<form method="post" action="%s">',$action);
-//patchstack fix
-
-if(is_array($ignore))
-	printf('<p>Ignoring postmark supressions for %s</p>',implode(', ',$ignore));
-
 printf('<h2>Add Email Addresses as Unsubscribed Or Blocked</h2><form method="post" action="%s">
 <p>
 <textarea rows="5" cols="60" name="problems"></textarea>
@@ -2606,23 +2622,31 @@ printf('<h2>Add Email Addresses as Unsubscribed Or Blocked</h2><form method="pos
 </p>%s
 <p>
 <input type="radio" name="code" value="unsubscribed" checked="checked"> Unsubscribed
-<input type="radio" name="code" value="blocked"> Blocked
+<input type="radio" name="code" value="blocked"> Blocked 
+<input type="radio" name="code" value="bypass"> Bypass *
 <button>Add</button>',$action,rsvpmaker_nonce('return'));
+echo '<p>'.esc_html__('* Bypass protects an email from being unsubscribed or blocked. If the Postmark integration is active, it will not be used for messages to these addresses. Use it sparingly, in cases where users say they were erroneously added to the unsubscribed list.','rsvpmaker').'</p>';
 
 if(!empty($results))
 {
 echo '<table><tr><th>Unblock</th><th>Email</th><th>Issue</th></tr>';
 foreach($results as $row)
 {
+	if(!empty($local_emails) && !in_array($row->email, $local_emails))
+		continue; //on multisite, skip emails not in local blog
 	if(strpos($row->code,'Suppression'))
 		$row->code .= ' (Postmark unsubscribe)';
 	$date = (strpos($row->timestamp,'00-')) ? '' : date('F j, Y',strtotime($row->timestamp));
+	if($row->code == 'bypass')
+	printf('<tr><td></td><td>%s</td><td>%s %s</td></tr>',esc_attr($row->email),'bypass - protected',$date);	
+	else
 	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s %s</td></tr>',esc_attr($row->email),esc_html($row->email),$row->code,$date);	
 }
 echo '</table><p><button>Update</button></p>';
 }
 echo '</form>';
 }
+
 function RSVPMaker_chimpshort($atts, $content = NULL ) {
 
 $atts = shortcode_atts( array(
@@ -3371,7 +3395,7 @@ if(!rsvpmail_contains_email($e))
 else
 	{
 	rsvpmail_add_problem($e,'unsubscribed');
-	echo '<p>'.__('Unsubscribed','rsvpmaker').'<strong>'.$e.'</strong> '.__('from website email lists','rsvpmaker').'</p>';
+	echo '<p>'.__('Unsubscribed','rsvpmaker').'<strong> '.$e.'</strong> '.__('from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
 	$chimp_options = get_option('chimp', array());
 	if(!empty($chimp_options) && !empty($chimp_options["chimp-key"]))

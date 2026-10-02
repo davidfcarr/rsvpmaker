@@ -21,13 +21,12 @@ add_action('admin_init', 'rsvpmaker_template_checkbox_post' );
 
 add_action('admin_init', 'rsvpmaker_add_one' );
 add_action('admin_init', 'rsvpmaker_editors' );
-add_action('admin_init', 'add_rsvpemail_caps' );
+//add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvp_csv' );
 add_action('admin_init', 'rsvpmaker_additional_editors_setup' );
 add_action('admin_init', 'rsvpmaker_cpevent_activate' );
 
-//add_action('admin_init', 'rsvpmaker_setup_post' );
-add_action('admin_init', 'add_rsvpemail_caps' );
+//add_action('admin_init', 'add_rsvpemail_caps' );
 add_action('admin_init', 'rsvpmaker_customize_document' );
 
 add_action( 'admin_menu', 'my_rsvpemail_menu' );

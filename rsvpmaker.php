@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.2.1
+* Version: 12.2.4
 */
 
 function get_rsvpversion() {
-	return '12.2.1';
+	return '12.2.4';
 }
 
 global $wp_version;
@@ -41,6 +41,11 @@ function rsvp_options_defaults() {
 		$rsvp_options = array();
 	}
 
+	if(empty($rsvp_options['rsvpmaker_roles_set'])) 
+	{
+		add_rsvpemail_caps();
+		rsvpmaker_roles();
+	}
 	// defaults
 
 	$rsvp_defaults = array(
@@ -115,6 +120,7 @@ function rsvp_options_defaults() {
 		'debug' => false,
 		'payment_gateway' => 'Cash or Custom',
 		'report_security' => 'publish_rsvpmakers',
+		'rsvpmaker_roles_set' => true,
 	);
 
 	$update = false;
@@ -1139,8 +1145,6 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 	add_post_meta( $event, '_paypal_log', $message );
 
 }
-
-
 
 function add_rsvpmaker_roles() {
 

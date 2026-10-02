@@ -68,7 +68,7 @@ const EditingRightsSettings = () => {
 
 	return (
 		<div>
-			<p>{ __( 'Control which roles can edit drafts or publish/send RSVP Email broadcasts.', 'rsvpmaker' ) }</p>
+			<p>{ __( 'Control which roles can edit/publish/send RSVP Email broadcasts.', 'rsvpmaker' ) }</p>
 			<Notices />
 			{ roles.map( ( role ) => (
 				<SelectControl

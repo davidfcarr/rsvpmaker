@@ -243,7 +243,7 @@ function get_rsvpmaker_admin_script_handle ($type) {
 function rsvpmaker_react_admin() {
 	global $rsvp_options;
 	do_action('rsvpmaker_react_admin_top');
-	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'"></div>';
+	echo '<h1>RSVPMaker Settings</h1><div id="rsvpmaker-admin" form_id="'.intval($rsvp_options['rsvp_form']).'">Loading ...</div>';
 }
 
 function get_rsvpmaker_rest() {
@@ -255,9 +255,6 @@ function get_rsvpmaker_rest() {
 	if(isset($_GET['post_type']))
 		$post_type = $_GET['post_type'];
 	$template_id = 0;
-	//if(is_admin() && !empty($post) && (($post_type == 'rsvpmaker') || ($post_type == 'rsvpmaker_template')) ) //&& ( (isset($_GET['action']) && $_GET['action'] == 'edit') || strpos($_SERVER['REQUEST_URI'],'post-new.php') ) )
-		//{
-
 		$projected_label = '';
 		$projected_url = '';
 		$template_label = '';
@@ -301,8 +298,7 @@ function get_rsvpmaker_rest() {
 	$duration = '';
 	if(empty($date))
 	{
-	//$date = rsvpmaker_date("Y-m-d H:i:s",rsvpmaker_strtotime('7 pm'));
-	$sked = rsvpmaker_get_template_sked($post_id);//get_post_meta($post_id,'_sked',true);
+	$sked = rsvpmaker_get_template_sked($post_id);
 	if(empty($sked))
 		$sked = array();
 	}

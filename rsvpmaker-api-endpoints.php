@@ -368,9 +368,19 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 	}
 
 	public function get_items_permissions_check( $request ) {
-
-		return true;
-
+		$token = isset($_GET['nonce']) ? sanitize_text_field($_GET['nonce']) : '';
+		$idempotency_key = $request->get_param( 'txkey' ); // Adjust 'id' to match your REST route parameter name
+		$stored_token = get_transient( 'rsvpmaker_stripe_token_' . $idempotency_key );
+		if ( empty( $token ) || empty( $stored_token ) ) {
+			return false;
+		}
+		// Secure timing-safe string comparison
+		$is_valid = hash_equals( $stored_token, $token );
+		// Optional: Delete transient once validated to make it strictly single-use
+		if ( $is_valid ) {
+			delete_transient( 'rsvpmaker_stripe_token_' . $idempotency_key );
+		}
+    return $is_valid;
 	}
 
 	public function get_items( $request ) {
@@ -1264,6 +1274,14 @@ class RSVPMaker_Preview extends WP_REST_Controller {
 	}
 
 	public function get_items_permissions_check( $request ) {
+		// Check if the current user has permission to edit posts
+    if ( ! current_user_can( 'edit_posts' ) ) {
+        return new WP_Error(
+            'rest_forbidden',
+            __( 'You do not have permission to preview this block.', 'rsvpmaker' ),
+            array( 'status' => rest_authorization_required_code() )
+        );
+    }
 		return true;
 	}
 
@@ -2176,10 +2194,11 @@ class RSVP_Options_Json extends WP_REST_Controller {
 		}
 		$allroles = function_exists('get_editable_roles') ? get_editable_roles() : array();
 		foreach($allroles as $slug => $properties) {
+			$level = 'none';
 			if('administrator' == $slug) {
 				continue;
 			}
-			$level = 'none';
+			$response[$slug.'_email_role_caps'] = $properties['capabilities'];
 			if(isset($properties['capabilities']['publish_rsvpemails'])) {
 				$level = 'publish';
 			}
@@ -2192,7 +2211,6 @@ class RSVP_Options_Json extends WP_REST_Controller {
 				'level' => $level,
 			);
 		}
-
 		return new WP_REST_Response( $response, 200 );
 	}
 }
@@ -3302,9 +3320,39 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 		);
 	}
 
-	public function get_items_permissions_check( $request ) {
-		return true; //($_GET['code'] == get_option('rsvp_report_api_code'));// check for code
+public function get_items_permissions_check( $request ) {
+    // 1. Get required PayPal signature headers
+    $headers = array_change_key_case( $request->get_headers(), CASE_LOWER );
+
+    $transmission_id   = isset( $headers['paypal_transmission_id'][0] ) ? $headers['paypal_transmission_id'][0] : '';
+    $transmission_time = isset( $headers['paypal_transmission_time'][0] ) ? $headers['paypal_transmission_time'][0] : '';
+    $transmission_sig  = isset( $headers['paypal_transmission_sig'][0] ) ? $headers['paypal_transmission_sig'][0] : '';
+    $cert_url          = isset( $headers['paypal_cert_url'][0] ) ? $headers['paypal_cert_url'][0] : '';
+    $auth_algo         = isset( $headers['paypal_auth_algo'][0] ) ? $headers['paypal_auth_algo'][0] : '';
+
+    // Reject if essential headers are missing
+    if ( empty( $transmission_id ) || empty( $transmission_time ) || empty( $transmission_sig ) || empty( $cert_url ) ) {
+        return new WP_Error( 'paypal_missing_headers', 'Missing required PayPal headers', array( 'status' => 400 ) );
+    }
+
+    // 2. Retrieve your stored Webhook ID (from PayPal Developer Dashboard)
+	$keys = rsvpmaker_get_rspmaker_paypal_rest_keys();
+    $webhook_id = $keys['webhook_id'] ? $keys['webhook_id'] : '';
+
+	error_log('Called PayPal Webhook ID: ' . $webhook_id);
+
+    // 3. Verify signature via PayPal API
+    return $this->verify_paypal_signature( array(
+        'transmission_id'   => $transmission_id,
+        'transmission_time' => $transmission_time,
+        'transmission_sig'  => $transmission_sig,
+        'cert_url'          => $cert_url,
+        'auth_algo'         => $auth_algo,
+        'webhook_id'        => $webhook_id,
+        'webhook_event'     => $request->get_json_params(),
+    ) );
 	}
+
 
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
@@ -3312,6 +3360,7 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 		$params = $request->get_json_params();
 		if(!empty($params)) {
 			$type = $params['event_type'];
+			error_log('PayPal Webhook Event Type: ' . $type);
 			if('PAYMENT.CAPTURE.COMPLETED' == $type) {
 				$order_id = (empty($params['resource']['supplementary_data']['related_ids']['order_id'])) ? '' : sanitize_text_field($params['resource']['supplementary_data']['related_ids']['order_id']);
 				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['paypal_fee']['value']);
@@ -3327,6 +3376,7 @@ class RSVP_PayPalWebHook extends WP_REST_Controller {
 				else
 				$sql = $wpdb->prepare("INSERT INTO %i SET amount=%s, fee=%s, name='added from webhook', transaction_id=%s ",$rsvpmaker_money, $gross,$fee,$order_id);
 				$wpdb->query($sql);
+				error_log('PayPal Webhook Processed: ' . $sql);
 			}
 		} 
 	return new WP_REST_Response( [], 200 );

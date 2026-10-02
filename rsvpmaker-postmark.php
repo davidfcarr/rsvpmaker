@@ -1564,7 +1564,7 @@ function rsvpmaker_postmark_show_sent_log() {
         else
             $recipients = (strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'... (<a href="'.admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&showall='.$row->id).'#row'.$row->id.'">Show All</a>)' : $row->recipients;
         $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a><br>%s',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag),$row->tag);
-        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,$row->subject,rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)).' '.$row->time,$row->count,$row->blog_id,$recipients,$prompt);
+        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,esc_html($row->subject),rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)).' '.$row->time,$row->count,$row->blog_id,$recipients,$prompt);
     }
     echo '</tbody></table>';
 

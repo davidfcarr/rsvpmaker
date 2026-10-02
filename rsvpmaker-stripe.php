@@ -380,6 +380,12 @@ function rsvpmaker_stripe_checkout() {
 		array( 'idempotency_key' => $idempotency_key )
 	);
 
+	// Generate a cryptographically secure token tied to this specific checkout session
+	$nonce = wp_generate_password( 32, false );
+
+	// Save it in transients for 1 hour keyed to the idempotency key/txid
+	set_transient( 'rsvpmaker_stripe_token_' . $idempotency_key, $nonce, HOUR_IN_SECONDS );
+
 	update_post_meta( $post->ID, $varkey, $vars );
 
 	$price = $vars['amount'] * 100;
@@ -503,7 +509,7 @@ submitButton.addEventListener('click', function(ev) {
 ev.preventDefault();
 var name = document.getElementById('stripe-checkout-name').value;
 var email = document.getElementById('stripe-checkout-email').value;
-var successurl = '<?php echo esc_url( rest_url( 'rsvpmaker/v1/stripesuccess/' . $idempotency_key ) ); ?>';
+var successurl = '<?php echo esc_url( rest_url( 'rsvpmaker/v1/stripesuccess/' . $idempotency_key.'?nonce=' . $nonce ) ); ?>';
 if((name == '') || (email == '')){
 	cardResult.innerHTML = 'Name and email are both required';
 	return;
