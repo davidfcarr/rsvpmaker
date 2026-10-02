@@ -1015,14 +1015,16 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 			$keys = array();
 			$t = $post->ts_start;
+			$event_start_ts = $post->ts_start;
+			$event_end_ts = $post->ts_end;
 			do {
 				$keys[] = rsvpmaker_date( 'Y-m-d', $t );
 				$t += DAY_IN_SECONDS;
 			} while ($t < $post->ts_end);
 			if(1 == sizeof($keys)) {
-				$time = ( $post->display_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $t, false, $post->timezone );
-				if ( ( $post->display_type == 'set' ) && ! empty( $end )  ) {
-					$time .= '-' . rsvpmaker_timestamp_to_time( rsvpmaker_strtotime( $end, $post->timezone ) );	
+				$time = ( $post->display_type == 'allday' ) ? '' : '<br />&nbsp;' . rsvpmaker_timestamp_to_time( $event_start_ts, false, $post->timezone );
+				if ( ( $post->display_type == 'set' ) && ! empty( $event_end_ts ) ) {
+					$time .= '-' . rsvpmaker_timestamp_to_time( $event_end_ts, false, $post->timezone );
 				}	
 			}
 			else 
