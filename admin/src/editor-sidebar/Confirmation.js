@@ -69,11 +69,11 @@ export default function Confirmation(props) {
         const hour = parseInt(rem.hour);
         const beforeafter = (hour < 0) ? 'before' : 'after';
         return (
-            <div>
+            <div key={rem.ID+'-'+rem.hour}>
             <h2>{Math.abs(hour)} hours {beforeafter}</h2>
             <p><strong><SanitizedHTML innerHTML={rem.post_title} /></strong></p>
             <SanitizedHTML innerHTML={rem.html} />
-            <p><a target="_blank" href={edit_url+rem.ID}>Edit</a></p>
+            <p><a target="_blank" href={edit_url+rem.ID}>Edit</a> <button onClick={() => {messageMutate({'action':'delete_reminder','event_id':rsvpmaker_rest.event_id,'hours':hour});setStatus('working ...');} }>Delete</button> {status}</p>
             </div>
         );
     } )}

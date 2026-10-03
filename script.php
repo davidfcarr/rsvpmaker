@@ -11,9 +11,11 @@ function rsvpmaker_rest_array() {
 	$sked = [];
 	if(isset($post->post_type) && 'rsvpmaker' == $post->post_type) {
 		$event = get_rsvpmaker_event( $post_id );
-		$parts = explode( ' ', $event->date );
-		if ( count( $parts ) > 1 ) {
-			$time = $parts[1];
+		if ( is_object( $event ) && ! empty( $event->date ) ) {
+			$parts = explode( ' ', $event->date );
+			if ( count( $parts ) > 1 ) {
+				$time = $parts[1];
+			}
 		}
 	}
 	elseif(isset($post->post_type) && 'rsvpmaker_template' == $post->post_type) {

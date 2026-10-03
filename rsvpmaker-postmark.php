@@ -617,7 +617,15 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     $sent = [];
     foreach($forwarders as $email) {
         $email = trim(strtolower($email));
+        if(!is_email($email)) {
+            error_log('postmark incoming skipping invalid recipient '.var_export($email,true));
+            continue;
+        }
         $result = rsvpmaker_postmark_incoming_forwarder_parse($email, $list_targets);
+        if(empty($result) || !is_array($result) || empty($result['type']) || !isset($result['blog_id'])) {
+            error_log('postmark incoming parse miss for '.$email.' with '.var_export($result,true));
+            continue;
+        }
         $blog_id = $result['blog_id'];
         $blacklist = (!is_multisite() || 1 == $blog_id) ? get_option('rsvpmail_blacklist') : get_blog_option($blog_id, 'rsvpmail_blacklist');
         if(is_array($blacklist) && in_array($from,$blacklist))
@@ -672,7 +680,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
     }
     if(!empty($recipients)) {
         $recipients = array_unique($recipients);
-        $batch = rsvpmaker_postmark_batch($emailobj, $recipients, $breakdown);
+        $batch = rsvpmaker_postmark_batch($emailobj, $recipients);
         $result = rsvpmaker_postmark_batch_send($batch);
         error_log('postmark forwarding for address '.var_export($forwarders,true)."\n".var_export($recipients,true));
         $testoutput .= "\nSEND\n".$result;
@@ -840,13 +848,19 @@ function rsvpmaker_postmark_batch($mail, $recipients, $slug_and_id = NULL) {
     $recipients = array_diff($recipients, $bypass);
     if(!empty($bypass_recipients)) {
     error_log('postmark_batch bypass recipients '.var_export($bypass_recipients,true));
-    $mail['subject'] = $mail['Subject'];
-    $mail['from'] = $mail['From'];
+    $mail_source = is_array($mail) ? $mail : (array) $mail;
+    $bypass_mail = array();
+    $bypass_mail['subject'] = !empty($mail_source['subject']) ? $mail_source['subject'] : (!empty($mail_source['Subject']) ? $mail_source['Subject'] : '(no subject)');
+    $bypass_mail['from'] = !empty($mail_source['from']) ? $mail_source['from'] : (!empty($mail_source['From']) ? $mail_source['From'] : get_option('admin_email'));
+    $bypass_template_html = !empty($mail_source['html']) ? $mail_source['html'] : (!empty($mail_source['HtmlBody']) ? $mail_source['HtmlBody'] : '');
+    if(empty($bypass_template_html) && !empty($mail_source['TextBody'])) {
+        $bypass_template_html = wpautop($mail_source['TextBody']);
+    }
     foreach($bypass_recipients as $to) {
-            $mail['to'] = $to;
-            $mail['html'] = rsvpmaker_personalize_email($mail['HtmlBody'],$to);
-            error_log('postmark_batch bypass email '.var_export($mail,true));
-            rsvpmailer($mail,$bypass);
+            $bypass_mail['to'] = $to;
+            $bypass_mail['html'] = rsvpmaker_personalize_email($bypass_template_html,$to);
+            error_log('postmark_batch bypass email '.var_export($bypass_mail,true));
+            rsvpmailer($bypass_mail,$bypass);
         }
     }
     $recipient_names = get_transient('recipient_names');

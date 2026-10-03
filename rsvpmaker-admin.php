@@ -1500,7 +1500,10 @@ $post_id = (int) $post_id;
 if(is_int($start_time))
 	$start_time_gmt = $start_time;
 else
-	$start_time_gmt = rsvpmaker_strtotime( get_gmt_from_date( $start_time ) . ' GMT' );
+	$start_time_gmt = strtotime( get_gmt_from_date( $start_time ) . ' UTC' );
+
+if(empty($start_time_gmt))
+	return;
 
 $time_difference = $hours * 60 * 60; 
 $reminder_time = $start_time_gmt + $time_difference;
@@ -2529,29 +2532,34 @@ global $rsvp_options;
 	{
 		rsvpmaker_auto_renew_project ($row->ID);
 	}
-	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpmaker_template_reminder' ";
+	// template reminder settings should only be read from template posts
+	$sql = "SELECT * FROM $wpdb->posts JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE meta_key='rsvpmaker_template_reminder' AND $wpdb->posts.post_type='rsvpmaker_template' ";
 	$results = $wpdb->get_results($sql);
 	if(is_array($results))
 	foreach($results as $row)
 	{		
-		$thours = unserialize($row->meta_value);
+		$thours = maybe_unserialize($row->meta_value);
+		if(empty($thours) || !is_array($thours))
+			continue;
 		$next = rsvpmaker_next_by_template($row->ID);
 		if(empty($next))
-			return;
-		$message = get_post_meta($next->ID, '_rsvp_reminder_msg_'.$thours[0], true);
-		if(!empty($message))
-			continue; // already set
+			continue;
 		$start_time = rsvpmaker_strtotime($next->datetime);
 		$prettydate = rsvpmaker_date('l F jS g:i A T',rsvpmaker_strtotime($next->datetime));
 		$include_event = get_post_meta($row->ID, '_rsvp_confirmation_include_event', true);
 		update_post_meta($next->ID, '_rsvp_confirmation_include_event',$include_event);
 		foreach($thours as $hours) {
-			$message = get_post_meta($row->ID, '_rsvp_reminder_msg_'.$hours, true);
-			$subject = get_post_meta($row->ID, '_rsvp_reminder_subject_'.$hours, true);
-			$subject = str_replace('[datetime]',$prettydate,$subject);
-			update_post_meta($next->ID, '_rsvp_reminder_msg_'.$hours,$message);
-			update_post_meta($next->ID, '_rsvp_reminder_subject_'.$hours,$subject);
-			rsvpmaker_reminder_cron($hours, $start_time, $next->ID);
+			$hours = (int) $hours;
+			$next_message = get_post_meta($next->ID, '_rsvp_reminder_msg_'.$hours, true);
+			if(empty($next_message)) {
+				$message = get_post_meta($row->ID, '_rsvp_reminder_msg_'.$hours, true);
+				$subject = get_post_meta($row->ID, '_rsvp_reminder_subject_'.$hours, true);
+				$subject = str_replace('[datetime]',$prettydate,$subject);
+				update_post_meta($next->ID, '_rsvp_reminder_msg_'.$hours,$message);
+				update_post_meta($next->ID, '_rsvp_reminder_subject_'.$hours,$subject);
+			}
+			if(!wp_next_scheduled('rsvpmaker_send_reminder_email', array((int) $next->ID, $hours)))
+				rsvpmaker_reminder_cron($hours, $start_time, $next->ID);
 		}
 	}
 }
@@ -2787,7 +2795,7 @@ $meta_keys = array();
 $post_meta_infos = $wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_value FROM %i WHERE post_id=%d",$wpdb->postmeta,$source_id));
 $post_meta_infos = apply_filters('rsvpmaker_meta_update_from_template',$post_meta_infos);
 $deadlinedays = $deadlinehours = $regdays = $reghours = 0;
-$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur');
+$meta_protect = array('_rsvp_reminder', '_sked', '_edit_lock','_additional_editors','rsvpautorenew','_meet_recur','rsvpmaker_template_reminder');
 
 		if (count($post_meta_infos)!=0) {
 			foreach ($post_meta_infos as $meta_info) {

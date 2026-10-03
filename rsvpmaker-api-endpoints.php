@@ -1403,7 +1403,7 @@ class PostmarkIncoming extends WP_REST_Controller {
 
 	  register_rest_route( $namespace, '/' . $path, [
 		array(
-		  'methods'             => 'GET, POST, PUT, PATCH, DELETE',
+		  'methods'             => array('GET','POST','PUT','PATCH','DELETE'),
 		  'callback'            => array( $this, 'get_items' ),
 		  'permission_callback' => array( $this, 'get_items_permissions_check' )
 			  ),
@@ -1415,68 +1415,121 @@ class PostmarkIncoming extends WP_REST_Controller {
 		return (!empty($postmark['handle_incoming']) && $request['code'] == $postmark['handle_incoming']);
 	}
 
-  public function get_items($request) {
+	public function get_items($request) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
-$opbusiness = false;
-$json = file_get_contents('php://input');
-$data = json_decode(trim($json));
+	$opbusiness = false;
+	$json = file_get_contents('php://input');
+	$data = json_decode(trim($json));
 
-$toFull = $data->ToFull;
-$ccFull = $data->CcFull;
-$tolist = $cclist = $audience = array();
-foreach($toFull as $tf) {
-	$audience[] = $tf->Email;
-	$tolist[] = $tf->Email;
-	if(strpos($tf->Email,'p@') || strpos($tf->Email,'p-'))
-		$opbusiness = true;
-}
-foreach($ccFull as $cf) {
-	$audience[] = $cf->Email;
-	$cclist[] = $tf->Email;
-}
+	if(empty($data) || !is_object($data)) {
+		return new WP_REST_Response(array('ok' => false, 'error' => 'invalid_json'), 400);
+	}
 
-//todo more flexible blacklist system
-$blacklist = ['tmtpres@gmail.com'];
-if(in_array($data->From,$blacklist)) {
-	return;
-}
+	if(empty($data->ToFull) || !is_array($data->ToFull))
+		$data->ToFull = array();
+	if(empty($data->CcFull) || !is_array($data->CcFull))
+		$data->CcFull = array();
 
-$origin = sprintf("<p>Forwarded message, originally <br />From <a href=\"mailto:%s\">%s</a><br />To: %s<br />Cc: %s<br /><a href=\"mailto:%s?cc=%s&subject=Re: %s\">Reply All</a></p>",$data->From,$data->From,htmlentities($data->To),htmlentities($data->Cc),$data->From,implode(',',$audience),$data->Subject);
-$origin .= '<div class="postmark-origin" style="padding:10px; background-color:#efefef">'.$origin.'</div>';
-$check = implode('|',$audience).$data->Subject;
-$last = get_transient('postmark_last_incoming');
-if($check == $last) {
-	//rsvpmaker_debug_log($check,'incoming duplicate');
-	return;
-}
-set_transient('postmark_last_incoming',$check,30);
-if(empty($data->HtmlBody))
-	$data->HtmlBody = '<html><body>'.nl2br($data->TextBody).$origin.'</body></html>';
-else
-	$data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
-$mail['subject'] = $qpost['post_title'] = $data->Subject;
-$mail['html'] = $qpost['post_content'] = $data->HtmlBody;
-if(strpos($qpost['post_content'],'</head>'))
-{
-	$parts = explode('</head>',$qpost['post_content']);
-	$qpost['post_content'] = "<html>".$parts[1];
-	$head = $parts[0].'</head>';
-}
+	// Fallback for payloads that include only To/Cc strings.
+	if(empty($data->ToFull) && !empty($data->To)) {
+		$to_emails = wp_parse_list($data->To);
+		foreach($to_emails as $to_email) {
+			$to_email = sanitize_email($to_email);
+			if(!empty($to_email))
+				$data->ToFull[] = (object) array('Email' => $to_email);
+		}
+	}
+	if(empty($data->CcFull) && !empty($data->Cc)) {
+		$cc_emails = wp_parse_list($data->Cc);
+		foreach($cc_emails as $cc_email) {
+			$cc_email = sanitize_email($cc_email);
+			if(!empty($cc_email))
+				$data->CcFull[] = (object) array('Email' => $cc_email);
+		}
+	}
 
-$qpost['post_status'] = 'rsvpmessage';
-$qpost['post_type'] = 'rsvpemail';
-$post_id = wp_insert_post($qpost);
-$data->post_id = $post_id;
-if(!empty($head))
-	add_post_meta($post_id,'_rsvpmail_head',$head);
-add_post_meta($post_id,'rsvprelay_from',$data->From);
-add_post_meta($post_id,'rsvprelay_fromname',$data->FromName);
-add_post_meta($post_id,'rsvprelay_postmark_to',$data->ToFull);
-add_post_meta($post_id,'rsvprelay_postmark_cc',$data->CcFull);
-add_post_meta($post_id,'rsvprelay_postmark_audience',$audience);
-add_post_meta($post_id,'rsvprelay_postmark_data',$data);
-rsvpmaker_postmark_incoming($audience,$data,$post_id);
-do_action('postmark_incoming_email_object',$data,$json);
+	$tolist = $cclist = $audience = array();
+	foreach($data->ToFull as $tf) {
+		if(empty($tf->Email))
+			continue;
+		$email = strtolower(trim($tf->Email));
+		$audience[] = $email;
+		$tolist[] = $email;
+		if((strpos($email,'p@') !== false) || (strpos($email,'p-') !== false))
+			$opbusiness = true;
+	}
+	foreach($data->CcFull as $cf) {
+		if(empty($cf->Email))
+			continue;
+		$email = strtolower(trim($cf->Email));
+		$audience[] = $email;
+		$cclist[] = $email;
+	}
+
+	$audience = array_values(array_unique(array_filter($audience)));
+	if(empty($audience)) {
+		return new WP_REST_Response(array('ok' => false, 'error' => 'no_recipients'), 422);
+	}
+
+	//todo more flexible blacklist system
+	$blacklist = ['tmtpres@gmail.com'];
+	$from_email = !empty($data->From) ? strtolower(trim($data->From)) : '';
+	if(in_array($from_email,$blacklist,true)) {
+		return new WP_REST_Response(array('ok' => true, 'blocked' => true), 200);
+	}
+
+	if(empty($data->Subject))
+		$data->Subject = '(no subject)';
+	if(empty($data->TextBody))
+		$data->TextBody = '';
+
+	$origin = sprintf("<p>Forwarded message, originally <br />From <a href=\"mailto:%s\">%s</a><br />To: %s<br />Cc: %s<br /><a href=\"mailto:%s?cc=%s&subject=Re: %s\">Reply All</a></p>",esc_attr($from_email),esc_html($from_email),htmlentities((string) $data->To),htmlentities((string) $data->Cc),esc_attr($from_email),implode(',',$audience),rawurlencode((string) $data->Subject));
+	$origin .= '<div class="postmark-origin" style="padding:10px; background-color:#efefef">'.$origin.'</div>';
+	$check = implode('|',$audience).$data->Subject;
+	$last = get_transient('postmark_last_incoming');
+	if($check == $last) {
+		//rsvpmaker_debug_log($check,'incoming duplicate');
+		return new WP_REST_Response(array('ok' => true, 'duplicate' => true), 200);
+	}
+	set_transient('postmark_last_incoming',$check,30);
+	if(empty($data->HtmlBody))
+		$data->HtmlBody = '<html><body>'.nl2br($data->TextBody).$origin.'</body></html>';
+	else
+		$data->HtmlBody = (strpos($data->HtmlBody,'</body>')) ? str_replace('</body>',$origin.'</body>',$data->HtmlBody) : $data->HtmlBody.$origin;
+
+	$qpost = array();
+	$head = '';
+	$mail['subject'] = $qpost['post_title'] = $data->Subject;
+	$mail['html'] = $qpost['post_content'] = $data->HtmlBody;
+	if(strpos($qpost['post_content'],'</head>'))
+	{
+		$parts = explode('</head>',$qpost['post_content']);
+		$qpost['post_content'] = "<html>".$parts[1];
+		$head = $parts[0].'</head>';
+	}
+
+	$qpost['post_status'] = 'rsvpmessage';
+	$qpost['post_type'] = 'rsvpemail';
+	$post_id = wp_insert_post($qpost);
+	$data->post_id = $post_id;
+	if(!empty($head))
+		add_post_meta($post_id,'_rsvpmail_head',$head);
+	add_post_meta($post_id,'rsvprelay_from',$data->From);
+	add_post_meta($post_id,'rsvprelay_fromname',$data->FromName);
+	add_post_meta($post_id,'rsvprelay_postmark_to',$data->ToFull);
+	add_post_meta($post_id,'rsvprelay_postmark_cc',$data->CcFull);
+	add_post_meta($post_id,'rsvprelay_postmark_audience',$audience);
+	add_post_meta($post_id,'rsvprelay_postmark_data',$data);
+
+	try {
+		rsvpmaker_postmark_incoming($audience,$data,$post_id);
+		do_action('postmark_incoming_email_object',$data,$json);
+	}
+	catch(Throwable $e) {
+		error_log('postmark incoming relay error '.$e->getMessage());
+		return new WP_REST_Response(array('ok' => false, 'error' => 'relay_failure', 'message' => $e->getMessage()), 500);
+	}
+
 	return new WP_REST_Response($data, 200);
 	}
 }
@@ -2625,6 +2678,20 @@ class RSVP_Confirm_Remind extends WP_REST_Controller {
 				$status .= ' added reminder ' .$id.' hours: '.$hours;
 				update_post_meta($post_id,'_rsvp_reminder_msg_'.$hours,$id);
 				rsvpmaker_reminder_cron($hours, get_rsvp_date($post_id), $post_id);
+			}
+			elseif('delete_reminder' == $data->action) {
+				$hours = (int) $data->hours;
+				$key = '_rsvp_reminder_msg_'.$hours;
+				$reminder_id = (int) get_post_meta($post_id,$key,true);
+				delete_post_meta($post_id,$key);
+				delete_post_meta($post_id,'_rsvp_reminder_subject_'.$hours);
+				wp_clear_scheduled_hook( 'rsvpmaker_send_reminder_email', array( $post_id, $hours ) );
+				if($reminder_id) {
+					$rpost = get_post($reminder_id);
+					if($rpost && ($rpost->post_type == 'rsvpemail') && ((int) $rpost->post_parent === (int) $post_id))
+						wp_trash_post($reminder_id);
+				}
+				$status .= ' deleted reminder hours: '.$hours;
 			}
 		}
 		$confirm_post = rsvp_get_confirm( $post_id, true );
