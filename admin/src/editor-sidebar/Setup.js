@@ -18,30 +18,19 @@ import Confirmation from "./Confirmation.js";
 import Pricing from "./Pricing.js";
 
 export default function Setup(props) {
-  const [isOpen, setOpen] = useState(props.open);
+  const [isOpen, setOpen] = useState(true);
   const { tab, eventdata, rsvpmaker_rest, allowMissingDate } = props;
   const start = tab || "basics";
 
-  const isDraftInitialized = useSelect((select) => {
-    return select("core/editor").getEditedPostAttribute("meta")?._rsvp_draft_initialized;
-  }, []);
-  const isNotPublished = useSelect((select) => {
-    return select("core/editor").getEditedPostAttribute("status") !== "publish";
-  }, []);
-
   useEffect(() => {
-    if ((isNotPublished && !isDraftInitialized) || props.open) {
-      console.log('Opening setup modal because isNotPublished:', isNotPublished, 'isDraftInitialized:', isDraftInitialized, 'props.open:', props.open);
+    if (props.open) {
       setOpen(true);
     }
-  }, [isNotPublished, isDraftInitialized, props.open]);
+  }, [props.open]);
 
   function close() {
     setOpen(false);
     if (props.setOpenModal) props.setOpenModal(false);
-    wp.data.dispatch("core/editor").editPost({
-      meta: { _show_rsvpmaker_options: false }
-    });
   }
 
   function open() {

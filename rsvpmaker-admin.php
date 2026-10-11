@@ -616,9 +616,7 @@ function rsvpmaker_form_usage_summary( $form_id ) {
 
 function rsvpmaker_template_custom_column($column_name, $post_id) {
 	if('template_schedule' == $column_name) {
-		error_log('custom column for template schedule '.$post_id);
 		$sked = rsvpmaker_get_template_sked($post_id);
-		error_log('sked for custom colum '.var_export($sked,true));
 		$output = '';
 		if(is_array($sked))
 		foreach($sked as $key => $value) {
@@ -1299,7 +1297,6 @@ function rsvpmaker_projected_datestring($dow,$week,$template,$t = 0) {
 }
 
 function rsvpmaker_get_projected($template) {
-	error_log(print_r($template, true));
     if (!isset($template["week"])) {
         return array();
     }
@@ -2340,15 +2337,17 @@ if(isset($_REQUEST['type']) && $_REQUEST['type']) {
 wp_send_json_success();
 }
 
-function rsvpmaker_debug_log($msg, $context = '') {
-	if(!defined('RSVPMAKER_DEBUG'))
-		return;
-	if(!is_string($msg))
-		$msg = var_export($msg,true);
-	if($context)
-		error_log($context.' '.$msg);
-	else
-		error_log($msg);
+if ( ! function_exists( 'rsvpmaker_debug_log' ) ) {
+	function rsvpmaker_debug_log($msg, $context = '') {
+		if(!defined('RSVPMAKER_DEBUG') || !RSVPMAKER_DEBUG)
+			return;
+		if(!is_string($msg))
+			$msg = var_export($msg,true);
+		if($context)
+			error_log('RSVPMaker '.$context.' '.$msg);
+		else
+			error_log('RSVPMaker '.$msg);
+	}
 }
 
 function rsvpmaker_show_debug_log() {
@@ -2780,7 +2779,6 @@ if(!empty($sked)) {
 		$parts = explode(' ',$event->date);
 		$cddate = $parts[0].' '.$sked['start_time'];
 		$end = $parts[0].' '.$sked['end'];
-		error_log('update_rsvpmaker_date '.$target_id.' '.$cddate.' '.$end.' '.$sked['duration']);
 		update_rsvpmaker_date($target_id,$cddate,$end,$sked['duration']);
 	}
 	$sked_keys = array('hour','minutes','duration','end');
@@ -3430,7 +3428,7 @@ if(!strpos($rsvp_options["time_format"],'T') )
 <option value="UTC+14">UTC+14</option>
 </optgroup></select>
 <?php
-	printf('<a href="%s" >%s</a>',admin_url('?rsvp_options='.$post_id),__('More Event Options','rsvpmaker')); 
+	printf('<a href="%s" >%s</a>',admin_url('post.php?action=edit&post='.$post_id),__('More Event Options','rsvpmaker'));
 }//end content not displayed on initial setup page	
 ?>
 
@@ -4299,7 +4297,7 @@ if(!$event)
 	switch( $column_name ) :
 		case 'event_dates': {
 		echo '<fieldset class="inline-edit-col-right"><div class="inline-edit-col"><div class="inline-edit-group wp-clearfix">';
-		printf('<label><em>%s</em><br /><span><strong>%s</strong>: <a href="%s">%s %s</a></span></label>',esc_html__('The date shown above is the *publication* date. Here is the event date. Click to change the date and RSVP options in the editor.'),__('Event Date'),esc_attr(admin_url('?rsvp_options='.$post->ID)),rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start,$event->timezone),$event->timezone);
+		printf('<label><em>%s</em><br /><span><strong>%s</strong>: <a href="%s">%s %s</a></span></label>',esc_html__('The date shown above is the *publication* date. Here is the event date. Click to change the date and RSVP options in the editor.'),__('Event Date'),esc_attr(admin_url('post.php?action=edit&post='.$post->ID)),rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start,$event->timezone),$event->timezone);
 		echo '</div></div></fieldset>';
 		break;
 		}

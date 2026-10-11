@@ -93,7 +93,6 @@ function rsvpmaker_rewrite_flush() {
 	$ok = rsvpmaker_rewrite_check();
 	if(!$ok) {
 		flush_rewrite_rules();
-		error_log('rsvpmaker flush_rewrite_rules()');
 	}
 }
 
@@ -171,9 +170,6 @@ function rsvpmaker_init_router() {
 				setcookie( $index, 0, time() + 60 * 60 * 24 * 90, '/', sanitize_text_field($_SERVER['SERVER_NAME']) );
 			}
 		}
-	}
-	if(isset($_GET['rsvp_options'])) {
-		rsvpmaker_options(intval($_GET['rsvp_options']));
 	}
 }
 

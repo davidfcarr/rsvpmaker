@@ -202,7 +202,7 @@ function rsvpmaker_paypal_choice($atts = []) {
       if ( $currency == 'USD' ) {
         $currency_symbol = '$';
       } elseif ( $currency == 'EUR' ) {
-        $currency_symbol = '€';
+        $currency_symbol = 'â‚¬';
       }
       $output .= sprintf( '<p>%s %s<br />%s</p>', esc_html( $currency_symbol.$vars['amount'] ), esc_html( $currency ), esc_html( $vars['description'] ) );
     }
@@ -214,7 +214,7 @@ function rsvpmaker_paypal_choice($atts = []) {
       if ( $currency == 'USD' ) {
         $currency_symbol = '$';
       } elseif ( $currency == 'EUR' ) {
-        $currency_symbol = '€';
+        $currency_symbol = 'â‚¬';
       }
       $output .= sprintf('<p><a href="%s">%s - %s%s %s</a></p>',add_query_arg('paypal_choice',$index,$permalink),$choice['description'],$currency_symbol,$choice['amount'],$currency);
     }
@@ -244,12 +244,10 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $vars['description'] = $description;
   $vars['post_id'] = $post->ID;
   $details = [];
-  error_log('paypal button vars '.var_export($vars,true));
   mail('david@carrcommunications','paypal button vars',var_export($vars,true));
   if(!empty($vars['details'])) {
     $details = unserialize($vars['details']);
     mail('david@carrcommunications','paypal button details',var_export($details,true));
-    error_log('paypal button details '.var_export($details,true));
   }
   $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
@@ -384,7 +382,7 @@ if ( $currency == 'USD' ) {
 
 } elseif ( $currency == 'EUR' ) {
 
-  $currency_symbol = '€';
+  $currency_symbol = 'â‚¬';
 }
 
 $charge = $atts['amount'];

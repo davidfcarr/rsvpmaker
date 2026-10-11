@@ -25,13 +25,13 @@ function qckply_qckply_clone_rsvpmakers($clone, $settings) {
     global $rsvp_options;
     //todo: import rsvpmaker_template and rsvpmaker_form posts as well
     $rsvp_posts = [];
-    error_log('qckply_qckply_clone_rsvpmakers copy events '.intval($settings['copy_events']));
+    // error_log('qckply_qckply_clone_rsvpmakers copy events '.intval($settings['copy_events']));
     $was = sizeof($clone['posts']);
     if(!empty($settings['copy_events']) && function_exists('rsvpmaker_get_future_events')) {
         $clone['next_event'] = 0;
         $clone['rsvpmakers'] = [];
         $rsvpmakers = rsvpmaker_get_future_events(['limit'=>intval($settings['copy_events'])]);
-        error_log('retrived rsvpmakers '.sizeof($rsvpmakers));
+        // error_log('retrived rsvpmakers '.sizeof($rsvpmakers));
         if(!empty($rsvpmakers) ) {
             $clone['next_event'] = $rsvpmakers[0]->ID;
             foreach($rsvpmakers as $r) {
@@ -109,7 +109,7 @@ function qckply_qckply_clone_rsvpmakers($clone, $settings) {
         }
     }
     $diff = sizeof($clone['posts']) - $was;
-    error_log('added '.$diff.' rsvpmaker posts ');
+    // error_log('added '.$diff.' rsvpmaker posts ');
     return $clone;
 }
 
@@ -210,7 +210,7 @@ function qckply_clone_save_rsvpmaker_posts($clone) {
 add_filter('qckply_new_settings','qckply_new_settings_rsvpmaker',10,2);
 function qckply_new_settings_rsvpmaker($settings, $postvars) {
     if(isset($postvars['demo_rsvpmakers']) && is_array($postvars['demo_rsvpmakers'])) {
-    error_log('demo_rsvpmakers for settings: '.print_r($postvars['demo_rsvpmakers'], true));
+    // error_log('demo_rsvpmakers for settings: '.print_r($postvars['demo_rsvpmakers'], true));
         foreach($postvars['demo_rsvpmakers'] as $i => $id) {
         if(!empty($id)) {
             $settings['demo_rsvpmakers'][] = intval($id);

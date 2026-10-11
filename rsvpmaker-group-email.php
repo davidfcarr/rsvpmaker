@@ -175,7 +175,7 @@ function rsvpmaker_relay_queue() {
 		if(empty($recipients))
 			echo 'done';
 		rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
-		error_log('rsvpmaker_relay_queue wants to delete rsvprelay_to_batch');
+		// error_log('rsvpmaker_relay_queue wants to delete rsvprelay_to_batch');
 		//$wpdb->query("delete from $wpdb->postmeta where meta_id=$batchrow->meta_id");
 		$log .= sizeof($recipients)." added from batch\n";
 	}
@@ -315,7 +315,7 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 		mail( 'relay@toastmost.org', 'Subject', "This is a test\n\nmultiple lines of text" );
 	}
 
-	//  Connect to the mail server and grab headers from the mailbox
+	// Â ConnectÂ toÂ theÂ mailÂ serverÂ andÂ grabÂ headersÂ fromÂ theÂ mailbox
 
 	$html .= sprintf( '<p>%s, %s, %s</p>', $server, $user, $password );
 
@@ -1015,15 +1015,12 @@ function rsvpmail_slug_and_id($email, $hosts_and_subdomains) {
 		return $slug_and_id;
 	$eparts = explode('@',$email);
 	if(is_multisite()) {
-		//error_log('$eparts[1] '.$eparts[1]);
 		$message_blog_id = (is_numeric($eparts[1])) ? $eparts[1] : array_search($eparts[1],$hosts_and_subdomains['hosts']);
-		//error_log('message_blog id '.$message_blog_id);
 		if($message_blog_id) {
 			return array('slug' => $eparts[0],'blog_id' => $message_blog_id, 'forwarder' => $email);
 		}
 		$nameparts = explode('-',$eparts[0]);
 		$message_blog_id = (is_numeric($nameparts[0])) ? intval($nameparts[0]) : array_search($nameparts[0],$hosts_and_subdomains['subdomains']);
-		//error_log('message_blog id '.$message_blog_id);
 		if($message_blog_id && ($eparts[1] == $hosts_and_subdomains['basedomain'])) {
 			$slug = (empty($nameparts[1])) ? 'members' : $nameparts[1];
 			return array('slug' => $slug,'blog_id' => $message_blog_id, 'forwarder' => $email);
@@ -1050,7 +1047,6 @@ function rsvpmaker_expand_recipients($email) {
         $slug_and_id = rsvpmail_slug_and_id($email, $hosts_and_subdomains);
         $recipients = rsvpmail_recipients_by_slug_and_id($slug_and_id,null,[$email]);
     }
-	//error_log('rsvpmaker-group-email.php 1138 $emailparts '.var_export($emailparts));
     if(!empty($recipients) && is_array($recipients) && !empty(trim($recipients[0])))
         return $recipients;
     else
@@ -1067,7 +1063,7 @@ function rsvpmaker_recipients_no_problems($recipients) {
 		$checked[] = $email;
 		$original = $email;
 		$email = rsvpmaker_expand_recipients($email);
-		error_log('recipients no problems expand: '.$original.' to '.var_export($email,true));
+		// error_log('recipients no problems expand: '.$original.' to '.var_export($email,true));
 		if(is_array($email)) {
 			if(!empty($email))
 				$additional_recipients = array_merge($email,$additional_recipients);
@@ -1075,8 +1071,8 @@ function rsvpmaker_recipients_no_problems($recipients) {
 			$cleanrecipients[] = $email;
 		}
 	}
-	error_log('recipients no problems clean: '.var_export($cleanrecipients,true));
-	error_log('recipients no problems additional: '.var_export($additional_recipients,true));
+	// error_log('recipients no problems clean: '.var_export($cleanrecipients,true));
+	// error_log('recipients no problems additional: '.var_export($additional_recipients,true));
 	$cleanrecipients = array_merge($cleanrecipients,$additional_recipients);
 	$final = [];
 	foreach($cleanrecipients as $email) {
@@ -1308,20 +1304,20 @@ function rsvpmail_get_consolidated_forwarders($blog_id, $subdomain, $domain) {
 		$key = preg_replace('/^'.$subdomain.'@/',$blog_id.'@',$key);
 		$recipients[$key] = $values;
 	}
-	//error_log('consolidated forwarders '.var_export($recipients,true));
+	rsvpmaker_log('consolidated forwarders '.var_export($recipients,true));
 	return $recipients;
 }
 
 function rsvpmaker_all_flattened_forwarders() {
+	$list_targets = rsvpmaker_valid_mailing_lists();
     if(is_multisite()) {
         switch_to_blog(1);
         $forwarders = isset($_GET['reset']) ? null : get_transient('all_flattened_forwarders');
-		$list_targets = rsvpmaker_valid_mailing_lists();
   		$indexedSites = array_values($list_targets['id_by']);
         if(!is_array($forwarders))
              $forwarders = array();
         if(empty($forwarders)) {
-			$forwarders = wpt_flattened_forwarders(1, true);//whether or not it's public
+			$forwarders = rsvpmaker_flattened_forwarders(1, true);//whether or not it's public
             foreach($list_targets['domains'] as $index => $domain) {
 				$blog_id = $indexedSites[$index];
                 if($blog_id == 1)
@@ -1346,7 +1342,7 @@ function rsvpmaker_all_flattened_forwarders() {
         }
     }
     else 
-        $forwarders = wpt_flattened_forwarders(0, true, $list_targets['subdomains'][0], $list_targets['domains'][0]);
+		$forwarders = rsvpmaker_flattened_forwarders(0, true, $list_targets['subdomains'][0], $list_targets['domains'][0]);
     if(isset($_GET['debug']))
         printf('<p>Total flattened forwarders %s</p><pre>%s</pre>',sizeof($forwarders),var_export($forwarders,true));
     return $forwarders;
@@ -1355,7 +1351,7 @@ function rsvpmaker_all_flattened_forwarders() {
 function rsvpmaker_flattened_forwarders($site_id = 0, $inloop = false, $subdomain = '', $domain = '') {
 	$join = ($subdomain) ? '-' : '';
 	$forwarders = array();
-    $dp = wpt_domain_prefix($site_id);
+	$dp = rsvpmaker_domain_prefix($site_id);
 	$officer_emails = (function_exists('toastmasters_officer_email_array')) ? toastmasters_officer_email_array($site_id) : array();
     if(isset($_GET['debug']))
         printf('<p>officer emails for site %s</p><pre>%s</pre>',$site_id,var_export($officer_emails,true));
@@ -1384,10 +1380,10 @@ function rsvpmaker_flattened_forwarders($site_id = 0, $inloop = false, $subdomai
             $forwarders[$forwarder][] = $target;
         }
     }
-    $forward_by_id = (is_multisite()) ? get_blog_option($blog_id,'wpt_forward_general') : get_option('wpt_forward_general');
-    $basecamp = (is_multisite()) ? get_blog_option($blog_id,'wpt_forward_basecamp') : get_option('wpt_forward_basecamp');
+	$forward_by_id = (is_multisite()) ? get_blog_option($site_id,'wpt_forward_general') : get_option('wpt_forward_general');
+	$basecamp = (is_multisite()) ? get_blog_option($site_id,'wpt_forward_basecamp') : get_option('wpt_forward_basecamp');
     if($forward_by_id) {
-        $ffemail = (is_multisite()) ? get_blog_option($blog_id,'findafriend_email') : get_option('findafriend_email');
+		$ffemail = (is_multisite()) ? get_blog_option($site_id,'findafriend_email') : get_option('findafriend_email');
         $forwarders[$ffemail] = [];
         foreach($forward_by_id as $forwarder => $email) {
             if(empty($forwarders[$email]))
@@ -1412,6 +1408,476 @@ function rsvpmaker_flattened_forwarders($site_id = 0, $inloop = false, $subdomai
     else
 	    update_option('flattened_forwarders',$forwarders);
 	return $forwarders;
+}
+
+function rsvpmaker_get_site_domain($blog_id = 0) {
+	if(is_multisite()) {
+		if(!$blog_id)
+			$blog_id = get_current_blog_id();
+		$url = get_site_url($blog_id);
+		$url = str_replace('www.','',$url);
+		$parts = explode('/',$url);
+		return $parts[2];
+	}
+	$basedomain = parse_url( get_site_url(), PHP_URL_HOST );
+	return str_replace('www.','',$basedomain);
+}
+
+function rsvpmaker_format_email_forwarder($lookup = '', $blog_id = 0, $format = '') {
+	if(!$blog_id)
+		$blog_id = get_current_blog_id();
+	$lookup = strtolower($lookup);
+	$root_domain = rsvpmaker_get_site_domain(1);
+	$domain = rsvpmaker_get_site_domain($blog_id);
+	$username = '';
+	if(strpos($domain,$root_domain) || ('root' == $format)) {
+		$username = str_replace('.'.$root_domain,'',$domain);
+		if(strpos($username,'.'))
+			$username = preg_replace('/\..+/','',$username);
+		$domain = $root_domain;
+	}
+	if(($lookup == 'members') && !empty($username))
+		$lookup = '';
+	elseif(!empty($username)  && !empty($lookup))
+		$username .= '-';
+	elseif((empty($lookup)) && empty($username))
+		$username = 'members';
+	$username .= $lookup;
+	return $username .'@' .$domain;
+}
+
+function rsvpmaker_domain_prefix( $site_id = 0 ) {
+	$url = ($site_id && is_multisite()) ? get_blog_option( $site_id,'siteurl' ) : get_option( 'siteurl' );
+	$domain = parse_url(strtolower($url), PHP_URL_HOST);
+	$dp = explode('.',$domain);
+	$prefix = '';
+	if(sizeof($dp) > 2)
+		$prefix = array_shift($dp).'-';
+	if('www-' == $prefix)
+		$prefix = '';
+	$base_domain = implode('.',$dp);
+	return array('prefix' => $prefix, 'domain' => $base_domain);
+}
+
+function rsvpmaker_forwarder_recipients_test($email, $flattened, $depth = 0, &$seen = []) {
+	if($depth > 10)
+		return [];
+	$email = strtolower(trim($email));
+	if(empty($email))
+		return [];
+	if(isset($seen[$email]))
+		return [];
+	$seen[$email] = true;
+	$dp = rsvpmaker_domain_prefix(0);
+	$check = empty($dp['prefix']) ? $dp['domain'] : $dp['prefix'];
+	$recipients = [];
+	if(!empty($flattened[$email]) && is_array($flattened[$email])) {
+		foreach($flattened[$email] as $to) {
+			$to = strtolower(trim($to));
+			if(empty($to))
+				continue;
+			if(!empty($flattened[$to])) {
+				$more = rsvpmaker_forwarder_recipients_test($to, $flattened, $depth + 1, $seen);
+				if(!empty($more)) {
+					foreach($more as $m) {
+						if(!in_array($m,$recipients))
+							$recipients[] = $m;
+					}
+				}
+			}
+			elseif(strpos($to,$check) === false && !in_array($to,$recipients))
+				$recipients[] = $to;
+		}
+	}
+	unset($seen[$email]);
+	return $recipients;
+}
+
+function rsvpmaker_email_list_to_array($text) {
+	$emails = [];
+	$mess = preg_split('/[,\n\s]/',strtolower((string) $text));
+	foreach($mess as $item) {
+		$item = trim($item);
+		if(rsvpmail_contains_email($item) && !in_array($item,$emails))
+			$emails[] = $item;
+	}
+	return $emails;
+}
+
+function rsvpmaker_forwarder_sync_manifest_enabled() {
+	if ( is_multisite() ) {
+		return (bool) get_site_option( 'rsvpmaker_forwarder_sync_manifest_enabled' );
+	}
+	return (bool) get_option( 'rsvpmaker_forwarder_sync_manifest_enabled' );
+}
+
+function rsvpmaker_set_forwarder_sync_manifest_enabled( $enabled ) {
+	$enabled = $enabled ? 1 : 0;
+	if ( is_multisite() ) {
+		update_site_option( 'rsvpmaker_forwarder_sync_manifest_enabled', $enabled );
+	} else {
+		update_option( 'rsvpmaker_forwarder_sync_manifest_enabled', $enabled );
+	}
+}
+
+add_action( 'admin_init', 'rsvpmaker_forwarder_sync_manifest_schedule' );
+function rsvpmaker_forwarder_sync_manifest_schedule() {
+	$hook = 'rsvpmaker_export_forwarder_sync_manifest_event';
+	$enabled = rsvpmaker_forwarder_sync_manifest_enabled();
+	$next = wp_next_scheduled( $hook );
+
+	if ( $enabled && ! $next ) {
+		wp_schedule_event( time() + 300, 'hourly', $hook );
+	}
+
+	if ( ! $enabled && $next ) {
+		wp_unschedule_event( $next, $hook );
+	}
+}
+
+add_action( 'rsvpmaker_export_forwarder_sync_manifest_event', 'rsvpmaker_export_forwarder_sync_manifest' );
+function rsvpmaker_export_forwarder_sync_manifest() {
+	$manifest = array(
+		'schema_version'              => 1,
+		'generated_at_gmt'            => gmdate( 'c' ),
+		'managed_by'                  => 'rsvpmaker',
+		'protected_catch_all_domains' => array(),
+		'aliases'                     => array(),
+		'managed_aliases'             => array(),
+	);
+
+	$site_ids = array( get_current_blog_id() );
+	if ( is_multisite() ) {
+		$site_ids = array();
+		$sites = get_sites( array( 'limit' => 1000, 'number' => 1000 ) );
+		foreach ( $sites as $site ) {
+			$site_ids[] = (int) $site->blog_id;
+		}
+	}
+
+	foreach ( $site_ids as $site_id ) {
+		if ( is_multisite() ) {
+			switch_to_blog( $site_id );
+		}
+
+		$domain = rsvpmaker_get_site_domain( $site_id );
+		if ( ! empty( $domain ) && ! in_array( $domain, $manifest['protected_catch_all_domains'] ) ) {
+			$manifest['protected_catch_all_domains'][] = $domain;
+		}
+
+		$custom_forwarders = get_option( 'custom_forwarders' );
+		if ( is_array( $custom_forwarders ) && ! empty( $custom_forwarders ) ) {
+			$flattened = rsvpmaker_flattened_forwarders( $site_id, true );
+			foreach ( $custom_forwarders as $forwarder => $targets ) {
+				$forwarder = strtolower( trim( $forwarder ) );
+				if ( empty( $forwarder ) || ! rsvpmail_contains_email( $forwarder ) ) {
+					continue;
+				}
+
+				$resolved = rsvpmaker_forwarder_recipients_test( $forwarder, $flattened );
+				if ( empty( $resolved ) || ! is_array( $resolved ) ) {
+					$resolved = ( is_array( $targets ) ) ? $targets : array( $targets );
+				}
+
+				$clean_targets = array();
+				foreach ( $resolved as $target ) {
+					$target = strtolower( trim( $target ) );
+					if ( empty( $target ) || $target === $forwarder || strpos( $target, '@' ) === false ) {
+						continue;
+					}
+					if ( ! in_array( $target, $clean_targets ) ) {
+						$clean_targets[] = $target;
+					}
+				}
+
+				if ( empty( $clean_targets ) ) {
+					continue;
+				}
+
+				sort( $clean_targets );
+				$manifest['aliases'][ $forwarder ] = $clean_targets;
+			}
+		}
+
+		if ( is_multisite() ) {
+			restore_current_blog();
+		}
+	}
+
+	sort( $manifest['protected_catch_all_domains'] );
+	ksort( $manifest['aliases'] );
+	$manifest['managed_aliases'] = array_keys( $manifest['aliases'] );
+
+	$main_switched = false;
+	if ( is_multisite() && function_exists( 'get_main_site_id' ) && get_current_blog_id() !== (int) get_main_site_id() ) {
+		switch_to_blog( (int) get_main_site_id() );
+		$main_switched = true;
+	}
+
+	$upload = wp_upload_dir();
+	$dir = trailingslashit( $upload['basedir'] ) . 'forwarder-sync';
+	if ( ! file_exists( $dir ) ) {
+		wp_mkdir_p( $dir );
+	}
+	$path = trailingslashit( $dir ) . 'aliases-manifest.json';
+	$json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+	if ( ! empty( $json ) ) {
+		file_put_contents( $path, $json );
+	}
+
+	if ( is_multisite() ) {
+		update_site_option( 'rsvpmaker_forwarder_sync_manifest_last_run', time() );
+		update_site_option( 'rsvpmaker_forwarder_sync_manifest_path', $path );
+	} else {
+		update_option( 'rsvpmaker_forwarder_sync_manifest_last_run', time() );
+		update_option( 'rsvpmaker_forwarder_sync_manifest_path', $path );
+	}
+
+	if ( $main_switched ) {
+		restore_current_blog();
+	}
+
+	return $path;
+}
+
+function rsvpmaker_email_handler_mailing_lists() {
+	$member_on = (int) get_option('member_distribution_list');
+	if(isset($_POST['clubchecked'])) {
+		$member_on = (int) $_POST['clubchecked'];
+		update_option('member_distribution_list',$member_on);
+		$vars = array();
+		foreach($_POST['rsvpmaker_member_list_vars'] as $index => $text) {
+			$vars[$index] = rsvpmaker_email_list_to_array($text);
+		}
+		update_option('member_distribution_list_vars',$vars);
+	}
+	$clubemail = rsvpmaker_format_email_forwarder('members');
+	$member_list_vars = get_option('member_distribution_list_vars');
+	if(empty($member_list_vars))
+		$member_list_vars = array('whitelist' => [], 'blocked' =>  [], 'additional' =>  []);
+
+	rsvpmaker_admin_heading(__('Email List Setup','rsvpmaker'),__FUNCTION__);
+?>
+<form action="<?php echo admin_url('admin.php?page=rsvpmaker_email_handler_mailing_lists'); ?>" method="post">
+<p>These are private distribution lists. By default, only messages from members are accepted for member-list distribution. You can whitelist additional senders, block senders, or add additional recipients.</p>
+<h3>List for Members</h3>
+<p>Member List: <input type="hidden" name="clubemail" value="<?php echo esc_attr($clubemail); ?>" /> <?php echo esc_html($clubemail); ?><br />
+<input type="radio" name="clubchecked" value="1" <?php if($member_on) echo 'checked="checked"'; ?> > On
+<input type="radio" name="clubchecked" value="0" <?php if(!$member_on) echo 'checked="checked"'; ?> > Off
+</p>
+<p>Members whitelist (additional allowed senders)<br />
+<textarea rows="2" cols="100" name="rsvpmaker_member_list_vars[whitelist]"><?php echo esc_textarea(implode(', ',$member_list_vars['whitelist'])); ?></textarea></p>
+<p>Members emails blocked<br />
+<textarea rows="2" cols="100" name="rsvpmaker_member_list_vars[blocked]"><?php echo esc_textarea(implode(', ',$member_list_vars['blocked'])); ?></textarea></p>
+<p>Additional recipients (also allowed to send)<br />
+<textarea rows="2" cols="100" name="rsvpmaker_member_list_vars[additional]"><?php echo esc_textarea(implode(', ',$member_list_vars['additional'])); ?></textarea></p>
+<?php submit_button(); ?>
+</form>
+<?php
+	rsvpmail_clear_allforwarders(get_current_blog_id());
+	rsvpmaker_reset_forwarder_cache();
+}
+
+function rsvpmaker_email_handler_forwarders() {
+	rsvpmaker_admin_heading(__('Email Forwarders','rsvpmaker'),__FUNCTION__);
+	$blog_id = get_current_blog_id();
+	rsvpmail_clear_allforwarders($blog_id);
+	rsvpmaker_reset_forwarder_cache();
+
+	$parts = explode('.',$_SERVER['SERVER_NAME']);
+	$prefix = '';
+	if(sizeof($parts) > 2) {
+		$prefix = array_shift($parts).'-';
+		$domain = implode('.',$parts);
+		if('www-' == $prefix)
+			$prefix = '';
+	}
+	else {
+		$prefix = '';
+		$domain = $_SERVER['SERVER_NAME'];
+	}
+
+	$base_domain = rsvpmaker_get_site_domain(1);
+	$site_domain = rsvpmaker_get_site_domain($blog_id);
+	$forwarder_sync_enabled = rsvpmaker_forwarder_sync_manifest_enabled();
+
+	if(!empty($_POST['slug']) && !wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+		die('security error');
+
+	$custom_forwarders = get_option('custom_forwarders');
+	if(empty($custom_forwarders))
+		$custom_forwarders = array();
+
+	$custom_forwarders = rsvpmaker_process_forwarders_update(array(
+		'domain' => $domain,
+		'prefix' => $prefix,
+		'custom_forwarders' => $custom_forwarders,
+		'disallowed_slugs' => array('info','member','members'),
+		'allow_legacy_fix' => false,
+	));
+
+	if(!empty($_POST)) {
+		$forwarder_sync_enabled = ! empty( $_POST['rsvpmaker_forwarder_sync_manifest_enabled'] );
+		rsvpmaker_set_forwarder_sync_manifest_enabled( $forwarder_sync_enabled );
+		update_option('custom_forwarders',$custom_forwarders);
+		echo '<div class="notice notice-success"><p>Forwarders updated.</p></div>';
+		if ( $forwarder_sync_enabled ) {
+			$manifest_path = rsvpmaker_export_forwarder_sync_manifest();
+			printf('<div class="notice notice-info"><p>Forwarder sync manifest exported to %s</p></div>', esc_html($manifest_path));
+		}
+	}
+
+	if(isset($_POST['rsvpmail_blacklist'])) {
+		if(empty($_POST['rsvpmail_blacklist']))
+			delete_option('rsvpmail_blacklist');
+		else
+			update_option('rsvpmail_blacklist', rsvpmaker_email_list_to_array($_POST['rsvpmail_blacklist']));
+	}
+	$blacklist = get_option('rsvpmail_blacklist');
+
+	$members_address = rsvpmaker_format_email_forwarder('members');
+	$prefix = (strpos($members_address,'-')) ? preg_replace('/-.+/','-',$members_address) : '';
+	$local_forwarders = rsvpmaker_flattened_forwarders();
+	$flattened_forwarders = rsvpmaker_all_flattened_forwarders();
+?>
+<p>Use the form below to specify custom email forwarding addresses, or aliases.</p>
+<p>By default, <strong><?php echo esc_html(rsvpmaker_format_email_forwarder('members')); ?></strong> is used for a members email list.</p>
+<?php
+	if($site_domain != $base_domain) {
+		printf('<div style="margin: 20px;background-color:#000;color:#fff; padding: 10px;"><p>For a site with a custom domain (other than %s), email addresses in the format %s / %s will work the same.</p><p>However, the @%s version requires proper email formatting setup for the domain.</p></div>',esc_html($base_domain),esc_html(rsvpmaker_format_email_forwarder('members')),esc_html(rsvpmaker_format_email_forwarder('members',0,'root')),esc_html($site_domain));
+	}
+	printf('<p><strong>%s</strong> forwards to the current website administrator email registered in WordPress.<p>',esc_html(rsvpmaker_format_email_forwarder('admin')));
+?>
+<p>Custom forwarding addresses can be added in the format <?php echo esc_html(rsvpmaker_format_email_forwarder('mycustomlabel')); ?> (example: <?php echo esc_html(rsvpmaker_format_email_forwarder('mentors')); ?>).</p><p>For a default address that should be used if no other is a match, use <strong><?php echo esc_html(rsvpmaker_format_email_forwarder('default')); ?></strong>.</p> <p>Recipient email addresses may be entered on separate lines or separated by commas.</p>
+<form action="<?php echo admin_url('admin.php?page=rsvpmaker_email_handler_forwarders'); ?>" method="post">
+<?php
+printf('<p><label><input type="checkbox" name="rsvpmaker_forwarder_sync_manifest_enabled" value="1" %s /> Export custom forwarders to a server sync manifest every hour for optional shell-based alias reconciliation. Catch-all forwarding rules should remain managed separately.</label></p>', checked($forwarder_sync_enabled, true, false));
+
+if(!empty($custom_forwarders)) {
+	foreach($custom_forwarders as $forward_from => $forward_to) {
+		$forward_from = trim($forward_from);
+		if(empty($forward_from))
+			continue;
+		printf('<p><strong>Forwarder</strong>: %s <input type="checkbox" name="delete_forwarder[]" value="%s" /> Delete</p>',esc_html($forward_from),esc_attr($forward_from));
+		printf('<p><strong>Forwards to</strong>: <br /><textarea name="forward_update[%s]" cols="120">%s</textarea></p>',esc_attr($forward_from), esc_textarea(implode(', ',$forward_to)));
+		$test = rsvpmaker_forwarder_recipients_test($forward_from, $flattened_forwarders);
+		if(!empty($test)) {
+			printf('<p><em>Final recipients for %s: %s</em></p>',esc_html($forward_from), esc_html(implode(', ',$test)));
+		}
+	}
+}
+for($i = 0; $i < 3; $i++) {
+	printf('<p><strong>Forwarder</strong>: %s<input type="text" name="slug[%d]" />@%s</p>',esc_html($prefix),$i,esc_html($domain));
+	printf('<p><strong>Forwards to</strong>: <br /><textarea name="forwardto[%d]" cols="120"></textarea></p>',$i);
+}
+if(rsvpmaker_postmark_is_active()) {
+	$blacklist_text = (is_array($blacklist)) ? implode(',',$blacklist) : '';
+	printf('<h3>Blacklist (blocked senders)</h3><p>You can prevent messages from being delivered from spammers or other unwanted senders by adding them to this list.<br><textarea name="rsvpmail_blacklist" cols="120">%s</textarea></p>',esc_textarea($blacklist_text));
+}
+rsvpmaker_nonce();
+submit_button();
+echo '</form>';
+
+echo '<h2>Current Forwarders</h2>';
+foreach($local_forwarders as $forwarder => $targets) {
+	printf('<p>%s forwards to %s</p>',esc_html($forwarder), esc_html(implode(', ',$targets)));
+}
+}
+
+function rsvpmaker_process_forwarders_update($args = array()) {
+	$defaults = array(
+		'domain' => '',
+		'prefix' => '',
+		'custom_forwarders' => array(),
+		'disallowed_slugs' => array('info','member','members'),
+		'slug_post_key' => 'slug',
+		'forwardto_post_key' => 'forwardto',
+		'forward_update_post_key' => 'forward_update',
+		'delete_post_key' => 'delete_forwarder',
+		'allow_legacy_fix' => false,
+	);
+	$args = wp_parse_args($args, $defaults);
+
+	$custom_forwarders = $args['custom_forwarders'];
+	if(!is_array($custom_forwarders))
+		$custom_forwarders = array();
+
+	if(!empty($args['allow_legacy_fix'])) {
+		$fix = false;
+		foreach($custom_forwarders as $forwarder => $target) {
+			if(strpos($forwarder,'@toastmost.org@')) {
+				unset($custom_forwarders[$forwarder]);
+				$forwarder = str_replace('@toastmost.org@','@',$forwarder);
+				$fix = true;
+				$custom_forwarders[$forwarder] = $target;
+			}
+		}
+		if($fix)
+			update_option('custom_forwarders',$custom_forwarders);
+	}
+
+	$update_key = $args['forward_update_post_key'];
+	if(isset($_POST[$update_key])) {
+		foreach($_POST[$update_key] as $forward_from => $forward_to_text) {
+			$femail = strtolower(sanitize_text_field($forward_from));
+			if(empty($femail))
+				continue;
+			if(!strpos($femail,$args['domain'])) {
+				unset($custom_forwarders[$femail]);
+				$femail = $args['prefix'].$femail.'@'.$args['domain'];
+				$custom_forwarders[$femail] = rsvpmaker_email_list_to_array($forward_to_text);
+			}
+			if(empty($forward_to_text))
+				unset($custom_forwarders[$femail]);
+			else
+				$custom_forwarders[$femail] = rsvpmaker_email_list_to_array($forward_to_text);
+		}
+	}
+
+	$slug_key = $args['slug_post_key'];
+	$forwardto_key = $args['forwardto_post_key'];
+	if(isset($_POST[$slug_key])) {
+		foreach($_POST[$slug_key] as $index => $slug) {
+			if(empty($slug))
+				continue;
+			$slug = strtolower(preg_replace('/[^a-z0-9]/','',sanitize_text_field($slug)));
+			if(in_array($slug,$args['disallowed_slugs']))
+				continue;
+			$ffemail = $args['prefix'].$slug.'@'.$args['domain'];
+			$text = (isset($_POST[$forwardto_key][$index])) ? $_POST[$forwardto_key][$index] : '';
+			$custom_forwarders[$ffemail] = rsvpmaker_email_list_to_array($text);
+		}
+	}
+
+	if(!empty($custom_forwarders)) {
+		$clean = [];
+		$delete_key = $args['delete_post_key'];
+		$delete = (empty($_POST[$delete_key])) ? [] : $_POST[$delete_key];
+		foreach($custom_forwarders as $ffemail => $targets) {
+			$ffemail = strtolower($ffemail);
+			if(!in_array($ffemail,$delete))
+				$clean[$ffemail] = $targets;
+		}
+		$custom_forwarders = $clean;
+	}
+
+	return $custom_forwarders;
+}
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	class RSVPMaker_Forwarder_CLI {
+		public function export_manifest( $args = array(), $assoc_args = array() ) {
+			if ( ! function_exists( 'rsvpmaker_export_forwarder_sync_manifest' ) ) {
+				WP_CLI::error( 'Forwarder manifest export function is not available.' );
+			}
+			$path = rsvpmaker_export_forwarder_sync_manifest();
+			if ( empty( $path ) ) {
+				WP_CLI::error( 'Manifest export did not return a path.' );
+			}
+			WP_CLI::success( sprintf( 'Forwarder manifest exported to %s', $path ) );
+		}
+	}
+	WP_CLI::add_command( 'rsvpmaker-forwarders', 'RSVPMaker_Forwarder_CLI' );
 }
 
 
@@ -1441,7 +1907,7 @@ function rsvpmail_get_member_emails( $blog_id = 0 ) {
 // Restored for cross-plugin compatibility.
 function rsvpmaker_qemail ($mail, $recipients) {
 	$recipients = rsvpmaker_recipients_no_problems($recipients);
-	error_log('rsvpmaker_qemail '.implode(', ',$recipients));
+	// error_log('rsvpmaker_qemail '.implode(', ',$recipients));
 	global $current_user;
 	if(is_multisite()) // send through root blog
 	{
@@ -1477,7 +1943,7 @@ function rsvpmaker_qemail ($mail, $recipients) {
 			add_post_meta($post_id,'_rsvpmail_html',$_html);
 		add_post_meta($post_id,'rsvprelay_fromname',$fromname);
 		if(rsvpmaker_postmark_is_active()) {
-			error_log('rsvpmaker_postmark_broadcast id '.$post_id);
+			// error_log('rsvpmaker_postmark_broadcast id '.$post_id);
 			rsvpmaker_postmark_broadcast($recipients,$post_id);
 		}
 		else {

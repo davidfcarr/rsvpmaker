@@ -61,7 +61,7 @@ function upgrade_rsvpform( $future = true, $rsvp_form_post = 0 ) {
 			)
 		);
 	}
-	error_log('upgrade form '.$rsvp_options['rsvp_form']);
+	// error_log('upgrade form '.$rsvp_options['rsvp_form']);
 	update_option( 'RSVPMAKER_Options', $rsvp_options );
 	update_post_meta( $rsvp_options['rsvp_form'], '_rsvpmaker_special', 'RSVP Form' );
 
@@ -204,7 +204,7 @@ function rsvp_form_radio( $atts, $content = '' ) {
 	if ( $currency == 'usd' ) {
 		$currency = '$';
 	} elseif ( $currency == 'eur' ) {
-		$currency = '€';
+		$currency = 'â‚¬';
 	}
 	else {
 		$currency = strtoupper($currency).' ';
@@ -376,10 +376,10 @@ function rsvp_add_guest_field( $content, $slug ) {
 
 function rsvp_form_guests( $atts, $content = '' ) {
 	global $wpdb, $blanks_allowed,$master_rsvp,$is_rsvp_report, $post;
-	error_log('Entering rsvp_form_guests for post ID: ' . $post->ID);
+	// error_log('Entering rsvp_form_guests for post ID: ' . $post->ID);
 
 	if ( is_admin() && empty($_GET['page']) ) {
-		error_log('Exiting rsvp_form_guests early for post ID: ' . $post->ID.' is_admin:'.is_admin().' empty($_GET[\'page\']):'.empty($_GET['page']));
+		// error_log('Exiting rsvp_form_guests early for post ID: ' . $post->ID.' is_admin:'.is_admin().' empty($_GET[\'page\']):'.empty($_GET['page']));
 		return $content;
 	}
 
@@ -986,7 +986,7 @@ function rsvpmaker_contact_form_order($lookup) {
       if ( $currency == 'USD' ) {
         $currency_symbol = '$';
       } elseif ( $currency == 'EUR' ) {
-        $currency_symbol = '€';
+        $currency_symbol = 'â‚¬';
       }
 	$description=$purchase['item_name'].' '.$purchase['item_count'].' @ '.$currency_symbol.$purchase['item_amount'].' = '.$currency_symbol.$purchase['total'].' '.$currency;
 	$rsvprow['amount']=number_format($purchase['total'],2);
@@ -1410,7 +1410,7 @@ function save_rsvp($postdata, $live = true) {
 		if ( $currency == 'usd' ) {
 			$currency = '$';
 		} elseif ( $currency == 'eur' ) {
-			$currency = '€';
+			$currency = 'â‚¬';
 		}
 		else {
 			$currency = strtoupper($currency).' ';
@@ -2112,7 +2112,7 @@ function rsvpmaker_basic_form( $form = '' ) {
 		if ( is_numeric( $form ) ) {
 			$fpost = get_post( $form );
 			echo do_blocks( $fpost->post_content );
-			error_log('Displaying RSVP form for post ID: ' . $fpost->ID .' '.$fpost->post_content);
+			// error_log('Displaying RSVP form for post ID: ' . $fpost->ID .' '.$fpost->post_content);
 		} else {
 			echo do_shortcode( $form );
 		}
@@ -2124,9 +2124,9 @@ function rsvpmaker_basic_form( $form = '' ) {
 // Moved from rsvpmaker-util.php during cleanup
 function rsvpguests( $atts ) {
 	global $post;
-	error_log('Entering rsvpguests for post ID: ' . $post->ID);
+	// error_log('Entering rsvpguests for post ID: ' . $post->ID);
 		if ( is_admin() || wp_is_json_request() ) {
-			error_log('Exiting rsvpguests early for post ID: ' . $post->ID.' is_admin:'.is_admin().' wp_is_json_request:'.wp_is_json_request());
+			// error_log('Exiting rsvpguests early for post ID: ' . $post->ID.' is_admin:'.is_admin().' wp_is_json_request:'.wp_is_json_request());
 			return;
 		}
 		return rsvp_form_guests($atts);

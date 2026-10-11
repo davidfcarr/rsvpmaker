@@ -459,7 +459,6 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
             $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
             $vars['gift_certificate'] = $details['gift_certficate'] = $gift_certificate;
             $sql = $wpdb->prepare("UPDATE %i set details=%s WHERE id=%d",$rsvptable,serialize($details),$rsvp_id);
-			error_log($sql);
             $wpdb->query($sql);
             add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
           }
@@ -3406,7 +3405,7 @@ public function get_items_permissions_check( $request ) {
 	$keys = rsvpmaker_get_rspmaker_paypal_rest_keys();
     $webhook_id = $keys['webhook_id'] ? $keys['webhook_id'] : '';
 
-	error_log('Called PayPal Webhook ID: ' . $webhook_id);
+	rsvpmaker_log('Called PayPal Webhook ID: ' . $webhook_id);
 
     // 3. Verify signature via PayPal API
     return $this->verify_paypal_signature( array(
@@ -3427,7 +3426,7 @@ public function get_items_permissions_check( $request ) {
 		$params = $request->get_json_params();
 		if(!empty($params)) {
 			$type = $params['event_type'];
-			error_log('PayPal Webhook Event Type: ' . $type);
+			rsvpmaker_log('PayPal Webhook Event Type: ' . $type);
 			if('PAYMENT.CAPTURE.COMPLETED' == $type) {
 				$order_id = (empty($params['resource']['supplementary_data']['related_ids']['order_id'])) ? '' : sanitize_text_field($params['resource']['supplementary_data']['related_ids']['order_id']);
 				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['paypal_fee']['value']);
@@ -3443,7 +3442,7 @@ public function get_items_permissions_check( $request ) {
 				else
 				$sql = $wpdb->prepare("INSERT INTO %i SET amount=%s, fee=%s, name='added from webhook', transaction_id=%s ",$rsvpmaker_money, $gross,$fee,$order_id);
 				$wpdb->query($sql);
-				error_log('PayPal Webhook Processed: ' . $sql);
+				rsvpmaker_log('PayPal Webhook Processed: ' . $sql);
 			}
 		} 
 	return new WP_REST_Response( [], 200 );

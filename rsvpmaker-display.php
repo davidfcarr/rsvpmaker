@@ -268,7 +268,7 @@ function rsvpmaker_distinct( $distinct, $query = null ) {
 }
 
 function rsvpmaker_where( $where, $query = null ) {
-	global $rsvpmaker_atts, $startday, $datelimit;
+	global $rsvpmaker_atts, $startday, $datelimit, $wpdb;
 	if(strpos($where,'ID') || strpos($where,'post_name'))//request for single event
 		return $where;
 	if(!is_rsvpmaker_query($query))
@@ -288,12 +288,12 @@ function rsvpmaker_where( $where, $query = null ) {
 			$now_ts = current_time('timestamp');
 			$where .= " AND rsvpdates.ts_end > $now_ts ";
 		} else {
-			$where .= " AND ( ( rsvpdates.date >= '" . $date . "' ) OR ( rsvpdates.enddate >= '" . $date . "' ))";
+			$where .= $wpdb->prepare(" AND ( ( rsvpdates.date >= %s ) OR ( rsvpdates.enddate >= %s ))", $date, $date);
 		}
 
 		if ( ! empty( $datelimit ) ) {
 
-			$where .= " AND rsvpdates.date < DATE_ADD('" . $date . "',INTERVAL $datelimit) ";
+			$where .= $wpdb->prepare(" AND rsvpdates.date < DATE_ADD(%s,INTERVAL $datelimit) ", $date);
 		}
 
 		return $where;
@@ -304,11 +304,11 @@ function rsvpmaker_where( $where, $query = null ) {
 
 		$d = rsvpmaker_date( 'Y-m-d', $t );
 
-		 $where .= " AND rsvpdates.enddate > '$d' ";
+		 $where .= $wpdb->prepare(" AND rsvpdates.enddate > %s ", $d);
 
 		if ( ! empty( $datelimit ) ) {
 
-			$where .= " AND ( (rsvpdates.date < DATE_ADD('$d',INTERVAL $datelimit) OR (rsvpdates.enddate < DATE_ADD('$d',INTERVAL $datelimit) ) ";
+			$where .= $wpdb->prepare(" AND ( (rsvpdates.date < DATE_ADD(%s,INTERVAL $datelimit) OR (rsvpdates.enddate < DATE_ADD(%s,INTERVAL $datelimit) ) ", $d, $d);
 		}
 
 		 return $where;
@@ -322,12 +322,12 @@ function rsvpmaker_where( $where, $query = null ) {
 			$now_ts = current_time('timestamp');
 			$where .= " AND rsvpdates.ts_end > $now_ts ";
 		} else {
-			$where .= " AND ( (rsvpdates.date > '$d') OR (rsvpdates.enddate > '$d') ) ";
+			$where .= $wpdb->prepare(" AND ( (rsvpdates.date > %s) OR (rsvpdates.enddate > %s) ) ", $d, $d);
 		}
 
 		if ( ! empty( $datelimit ) ) {
 
-			$where .= " AND ( ( rsvpdates.date < DATE_ADD('$d',INTERVAL $datelimit) OR ( rsvpdates.enddate < DATE_ADD('$d',INTERVAL $datelimit)) ) ";
+			$where .= $wpdb->prepare(" AND ( ( rsvpdates.date < DATE_ADD(%s,INTERVAL $datelimit) OR ( rsvpdates.enddate < DATE_ADD(%s,INTERVAL $datelimit)) ) ", $d, $d);
 		}
 
 		return $where;
@@ -340,16 +340,15 @@ function rsvpmaker_where( $where, $query = null ) {
 		if ( $expire_after_end ) {
 			// Only show events where the end time (as a Unix timestamp) is in the future
 			$now_ts = current_time('timestamp');
-			error_log('DEBUG rsvpmaker expireAfterEnd: now_ts=' . $now_ts . ' query_vars=' . var_export($query->query_vars['expireAfterEnd'], true) . ' atts=' . var_export($rsvpmaker_atts['expireAfterEnd'] ?? 'not set', true));
 			$where .= " AND rsvpdates.ts_end > $now_ts ";
 		} else {
 			// Show events where either start or end date is in the future (default behavior)
-			$where .= " AND ( ( rsvpdates.date > '$curdate' OR rsvpdates.enddate > '$curdate' ) )";
+			$where .= $wpdb->prepare(" AND ( ( rsvpdates.date > %s OR rsvpdates.enddate > %s ) )", $curdate, $curdate);
 		}
 
 		if ( ! empty( $datelimit ) ) {
 
-			$where .= " AND ( ( rsvpdates.date < DATE_ADD('$curdate',INTERVAL $datelimit)) OR ( rsvpdates.enddate < DATE_ADD('$curdate',INTERVAL $datelimit)) ) ";
+			$where .= $wpdb->prepare(" AND ( ( rsvpdates.date < DATE_ADD(%s,INTERVAL $datelimit)) OR ( rsvpdates.enddate < DATE_ADD(%s,INTERVAL $datelimit)) ) ", $curdate, $curdate);
 		}
 		return $where;
 
@@ -1857,7 +1856,8 @@ function rsvpmaker_replay_form( $event_id ) {
 
 	<?php
 	if ( $rsvp_instructions ) {
-		echo '<p>' . nl2br( $rsvp_instructions ) . '</p>';}
+		echo '<p>' . nl2br( $rsvp_instructions ) . '</p>';
+	}
 	?>
 	<?php
 	rsvpmaker_basic_form( $form );
@@ -2337,7 +2337,7 @@ function rsvpmaker_date_element( $atts = array() ) {
 		$post->enddate = $event->enddate;
 	}
 	$style = (isset($atts['align'])) ? 'style="text-align: '.$atts['align'].'" ' : '';
-	if(('start' == $atts['show']) || ('end' == $atts['show']) || ('start_and_end' == $atts['show'])) {
+	if(('start' == $atts['show']) || ('end' == $atts['show']) || ('start_and_end' == $atts['show']) ) {
 		$start_format = (empty($atts['start_format'])) ? $rsvp_options['long_date'].' '.$rsvp_options['time_format'] : $atts['start_format'];
 		$end_format = (empty($atts['end_format'])) ? $rsvp_options['time_format'] : $atts['end_format'];
 		$post_id = $post->ID;
@@ -2667,7 +2667,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 		$dayarray = array( __( 'Sunday', 'rsvpmaker' ), __( 'Monday', 'rsvpmaker' ), __( 'Tuesday', 'rsvpmaker' ), __( 'Wednesday', 'rsvpmaker' ), __( 'Thursday', 'rsvpmaker' ), __( 'Friday', 'rsvpmaker' ), __( 'Saturday', 'rsvpmaker' ) );
 
-		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ) );
+		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ), __( 'Fifth', 'rsvpmaker' ) );
 
 		if ( ! isset( $weeks[0] ) || (int) $weeks[0] == 0 ) {
 
@@ -2710,7 +2710,6 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 		$event_display_type = isset( $event->display_type ) ? $event->display_type : '';
 		$event_enddate      = isset( $event->enddate ) ? $event->enddate : '';
 		if(!isset($event->display_type)){
-			error_log('missing display type for event '.$post_id. ' '.var_export($event, true) );
 		}
 		$dateblock = '<span class="rsvp_date_block"></span>';
 
@@ -2718,7 +2717,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 			$last_time = $t = $event->ts_start;
 
-			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '">';
+			$dateblock .= '<div id="startdate' . esc_attr( $post_id ) . '" itemprop="startDate" datetime="' . date( 'c', $t ) . '"></div>';
 
 			$dateblock .= mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 			if ( !empty($event_display_type) && $event_display_type == 'none' ) {
@@ -2733,7 +2732,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 
 				$dateblock .= '<span class="time">' . rsvpmaker_date( $time_format, $event->ts_start, $event->timezone );
 
-				$dateblock .= ' <span class="end_time">' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end, $event->timezone ) . '</span>';
+				$dateblock .= ' ' . __( 'to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $time_format, $event->ts_end, $event->timezone ) . '</span>';
 
 				if ( $tzcode ) {
 					$dateblock .= ' ' . rsvpmaker_date( 'T', $t, $event->timezone );
@@ -2750,7 +2749,7 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			if ( $top && isset( $custom_fields['_convert_timezone'][0] ) && $custom_fields['_convert_timezone'][0] ) {
 
 				if ( rsvpmaker_is_email_context() ) {
-					$tzbutton = sprintf( '| <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post_id ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) );
+					$tzbutton = sprintf( '| <a href="%s">%s</a>', esc_url_raw( add_query_arg( 'tz', $post_id, get_permalink( $post->ID ) ) ), __( 'Show in My Time Zone', 'rsvpmaker' ) );
 				} else {
 					$atts['time'] = $event->date;
 
@@ -2827,7 +2826,7 @@ function future_rsvp_links( $atts = array() ) {
 
 	if ( $rsvp_only ) {
 		$atts['meta_key']   = '_rsvp_on';
-		$atts['meta_value'] = 1;
+		$atts['meta_value'] = '1';
 	}
 
 	$events = rsvpmaker_upcoming_data( $atts );
@@ -3947,7 +3946,6 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 <br />
 
 				<?php esc_html_e( 'Type the hidden security message', 'rsvpmaker' ); ?>:<br />                    
-
 <input maxlength="10" size="10" name="captcha" type="text" autocomplete="off" />
 
 </p>
@@ -4019,9 +4017,8 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 
 			// use api
 
-			$content .= '<p><button class="rsvpmaker_show_attendees" post_id="' . esc_attr( $post->ID ) . '" >' . __( 'Show Attendees', 'rsvpmaker' ) . '</button></p>
-
-<div id="attendees-' . esc_attr( $post->ID ) . '"></div>';
+			$content .= '<p><button class="rsvpmaker_show_attendees" post_id="' . esc_attr( $post->ID ) . '" >' . __( 'Show Attendees', 'rsvpmaker' ) . '</button></p>';
+			$content .= '<div id="attendees-' . esc_attr( $post->ID ) . '"></div>';
 
 		}
 	} // end if($rsvp_on)

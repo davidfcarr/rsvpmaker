@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.2.5
+* Version: 12.2.8
 */
 
 function get_rsvpversion() {
-	return '12.2.5';
+	return '12.2.8';
 }
 
 global $wp_version;
@@ -856,7 +856,7 @@ if(!empty($rsvp_options['dbversion']) && ($dbversion == $rsvp_options['dbversion
 $rsvp_options['dbversion'] = $dbversion;
 
 $result = dbDelta($sql);
-error_log('rsvpmaker dbDelata '.var_export($result,true));
+// error_log('rsvpmaker dbDelata '.var_export($result,true));
 rsvpmail_problem_init();
 
 	
