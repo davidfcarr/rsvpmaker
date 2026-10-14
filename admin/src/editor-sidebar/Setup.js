@@ -17,9 +17,22 @@ import FormSetup from "./FormSetup.js";
 import Confirmation from "./Confirmation.js";
 import Pricing from "./Pricing.js";
 
+function shouldAutoOpenOnce(postId) {
+  const key = postId ? String(postId) : "unknown";
+  if (!window.__rsvpmakerSetupAutoOpened) {
+    window.__rsvpmakerSetupAutoOpened = {};
+  }
+  if (window.__rsvpmakerSetupAutoOpened[key]) {
+    return false;
+  }
+  window.__rsvpmakerSetupAutoOpened[key] = true;
+  return true;
+}
+
 export default function Setup(props) {
-  const [isOpen, setOpen] = useState(true);
   const { tab, eventdata, rsvpmaker_rest, allowMissingDate } = props;
+  const postId = rsvpmaker_rest?.post_id || 0;
+  const [isOpen, setOpen] = useState(() => shouldAutoOpenOnce(postId));
   const start = tab || "basics";
 
   useEffect(() => {

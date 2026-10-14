@@ -3266,8 +3266,12 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
 			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
 		}
 		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));
-		if($post->post_type != 'rsvpmaker')
+		if($post->post_type != 'rsvpmaker') {
 			$actions['excerpt_to_email'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email=').$post->ID,__('Excerpt to RSVP Email','rsvpmaker'));
+		}
+		if($post->post_type == 'rsvpmaker') {
+			$actions['switch_template'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target=').$post->ID.'#applytemplate',__('Switch Template','rsvpmaker'));
+		}
 		if(($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template'))
 			$actions['copy_to_template'] = sprintf('<a href="%s">%s</a>',admin_url('?copy_to_rsvp_template=').$post->ID,__('Copy to New Template','rsvpmaker'));
 	}

@@ -85,6 +85,33 @@ function save_rsvp_template_meta( $post_id ) {
 	}
 }
 
+function rsvpmaker_add_switch_template_bulk_action( $actions ) {
+	$actions['rsvpmaker_switch_template'] = __( 'Switch Template', 'rsvpmaker' );
+	return $actions;
+}
+
+function rsvpmaker_handle_switch_template_bulk_action( $redirect_to, $doaction, $post_ids ) {
+	if ( 'rsvpmaker_switch_template' !== $doaction ) {
+		return $redirect_to;
+	}
+
+	$post_ids = array_values( array_unique( array_filter( array_map( 'intval', (array) $post_ids ) ) ) );
+
+	if ( empty( $post_ids ) ) {
+		return $redirect_to;
+	}
+
+	$target_url = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' );
+	$target_url = add_query_arg(
+		array(
+			'apply_targets' => implode( ',', $post_ids ),
+		),
+		$target_url
+	);
+
+	return $target_url . '#applytemplate';
+}
+
 function rsvpmaker_template_list() {
 
 		global $rsvp_options, $wpdb, $current_user, $post;
@@ -172,7 +199,7 @@ function rsvpmaker_template_list() {
 
 
 
-			$overridden = (int) $_POST['overridden'];
+			$overridden = ! empty( $_POST['overridden'] ) ? (int) $_POST['overridden'] : 0;
 
 
 
@@ -180,7 +207,55 @@ function rsvpmaker_template_list() {
 
 
 
+			$extra_overridden = array();
+
+
+
+			if ( ! empty( $_POST['overridden_multi'] ) && is_array( $_POST['overridden_multi'] ) ) {
+
+
+
+				$extra_overridden = array_map( 'intval', $_POST['overridden_multi'] );
+
+
+
+			}
+
+
+
+			$overridden_list = array_values( array_unique( array_filter( array_merge( array( $overridden ), $extra_overridden ) ) ) );
+
+
+
+			if ( empty( $overridden_list ) ) {
+
+
+
+				$overridden_list = array( $overridden );
+
+
+
+			}
+
+
+
+			foreach ( $overridden_list as $overridden ) {
+
+
+
 			$target = get_post( $overridden );
+
+
+
+			if ( $overridden === $override || empty( $target ) ) {
+
+
+
+				continue;
+
+
+
+			}
 
 
 
@@ -229,20 +304,19 @@ function rsvpmaker_template_list() {
 			$wpdb->query( $sql );
 
 			update_post_meta( $overridden, '_meet_recur', $override );
+			// $event = get_rsvpmaker_event( $overridden );
+			// $date = rsvpmaker_date( $rsvp_options['long_date'], $event->ts_start );
+			$date = get_rsvp_date($overridden,'long_date');
 
-
-
-			printf( '<div class="updated notice notice-success">Applied "%s" template: <a href="%s">View</a> | <a href="%s">Edit</a></div>', $opost->post_title, get_permalink( $overridden ), admin_url( 'post.php?action=edit&post=' . $overridden ) );
-
-
+			printf( '<div class="updated notice notice-success">Applied "%s" template %s: <a href="%s">View</a> | <a href="%s">Edit</a></div>', $opost->post_title, $date, get_permalink( $overridden ), admin_url( 'post.php?action=edit&post=' . $overridden ) );
 
 			$params = [$wpdb->postmeta,$override];
-
-
 
 			if(isset($_POST['copymeta']))
 
 			{
+
+				$keysql = '';
 
 				$sql = "select * from %i WHERE post_id=%d ";
 
@@ -296,7 +370,15 @@ function rsvpmaker_template_list() {
 
 			}
 
+
+
+			}
+
 			if ( ! empty( $copied ) ) {
+
+
+
+				$copied = array_unique( $copied );
 
 
 
@@ -1087,25 +1169,20 @@ function rsvpmaker_template_list() {
 
 				$target_id = isset( $_GET['apply_target'] ) ? (int) $_GET['apply_target'] : 0;
 
-
+				$target_ids = array();
 
 				if ( $target_id ) {
-
-
-
-					$event = get_rsvpmaker_event( $target_id );
-
-
-
-					if ( ! empty( $event ) ) {
-
-
-
-						$event_options .= sprintf( '<option value="%d" selected="selected">%s %s</option>', $event->event, esc_html( $event->post_title ), esc_html( rsvpmaker_date($rsvp_options['long_date'],$event->ts_start) ) );
-
-					}
-
+					$target_ids[] = $target_id;
 				}
+
+				if ( ! empty( $_GET['apply_targets'] ) ) {
+					$target_ids = array_merge( $target_ids, array_map( 'intval', explode( ',', sanitize_text_field( $_GET['apply_targets'] ) ) ) );
+				}
+
+				$target_ids = array_values( array_unique( array_filter( $target_ids ) ) );
+
+
+
 
 
 
@@ -1125,7 +1202,11 @@ function rsvpmaker_template_list() {
 
 
 
-						$event_options .= sprintf( '<option value="%d">%s %s</option>', $r->postID, esc_html( $r->post_title ), esc_html( rsvpmaker_date($rsvp_options['long_date'],$r->ts_start) ) );
+						$selected = in_array( (int) $r->postID, $target_ids, true ) ? ' selected="selected"' : '';
+
+
+
+						$event_options .= sprintf( '<option value="%d"%s>%s %s</option>', $r->postID, $selected, esc_html( $r->post_title ), esc_html( rsvpmaker_date($rsvp_options['long_date'],$r->ts_start) ) );
 
 
 
@@ -1139,7 +1220,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to <select name="overridden">%s</select></p><p>Copy settings:</p>', $action, $current_template . $template_options, $event_options . $template_override );
+				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to:</p><p><label>%s<br /><select name="overridden_multi[]" multiple="multiple" size="10" style="min-width:360px;">%s</select></label><br /><small>%s</small></p><p>Copy settings:</p>', $action, $current_template . $template_options, __( 'Choose one or more upcoming events to switch', 'rsvpmaker' ), $event_options . $template_override, __( 'Use Ctrl/Cmd-click or Shift-click to select more than one event.', 'rsvpmaker' ) );
 
 				printf('<div><input type="checkbox" value="_add_timezone" name="copymeta[]">  %s</div>',__('Show Timezone','rsvpmaker'));
 

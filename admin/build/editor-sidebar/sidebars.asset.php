@@ -10,5 +10,5 @@
 		'wp-edit-post',
 		'wp-i18n'
 	),
-	'version' => '42bd60681adcc50b67f8'
+	'version' => 'a3762e6ce5bd0dc1af2b'
 );

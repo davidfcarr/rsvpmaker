@@ -2,8 +2,6 @@ import {useState, lazy, Suspense} from 'react';
 const { subscribe } = wp.data;
 const { DateTimePicker } = wp.components;
 const { Panel, PanelBody, PanelRow } = wp.components;
-import { QueryClient, QueryClientProvider } from "react-query";
-const queryClient = new QueryClient();
 import { useSelect } from '@wordpress/data';
 
 const DateOrTemplate = lazy(() => import('./DateOrTemplate.js'));
@@ -37,18 +35,17 @@ const rsvpdates = Array();
 var post_id = wp.data.select( 'core/editor' ).getEditedPostAttribute( 'id' );
 const rsvpmaker_rest = getRsvpmakerRestSettings();
 	return (
-		el(
-			wp.editor.PluginDocumentSettingPanel,
-			{ title: __('RSVPMaker', 'rsvpmaker'), className: 'rsvpmaker-document-panel', initialOpen: true },
+		<Suspense fallback={<p><em>Loading RSVPMaker tools ...</em></p>}>
+			<DateOrTemplate rsvpmaker_rest={rsvpmaker_rest} onlySetup={true} />
+			{el(
+				wp.editor.PluginDocumentSettingPanel,
+				{ title: __('RSVPMaker', 'rsvpmaker'), className: 'rsvpmaker-document-panel', initialOpen: true },
 <div>
-<QueryClientProvider client={queryClient}>
-<Suspense fallback={<p><em>Loading RSVPMaker tools ...</em></p>}>
-<DateOrTemplate rsvpmaker_rest={rsvpmaker_rest} />
-</Suspense>
+<DateOrTemplate rsvpmaker_rest={rsvpmaker_rest} skipSetup={true} />
 {rsvpmaker_rest.bottom_message}
-</QueryClientProvider>
 </div>
-		)
+			)}
+		</Suspense>
 	);
 }
 
