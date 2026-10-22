@@ -2313,6 +2313,46 @@ function rsvpmaker_cleanup() {
 
 	<?php 
 
+		$sql = "DELETE pm
+FROM {$wpdb->postmeta} pm
+INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+WHERE p.post_type = 'rsvpemail' AND (meta_key LIKE '%preview%' OR meta_key LIKE '%relay%' OR meta_key = 'rsvpmail_sent_postmark' OR meta_key LIKE '%schedule%' OR meta_key LIKE '%blocked%')";
+/*
+AND p.ID < (
+    SELECT MIN(latest_20.ID)
+    FROM (
+      SELECT ID 
+      FROM wp_posts 
+      WHERE post_type = 'rsvpemail' 
+      ORDER BY post_date DESC 
+      LIMIT 20
+    ) AS latest_20
+*/
+		$wpdb->query($sql);
+		$result = $wpdb->query("OPTIMIZE TABLE {$wpdb->postmeta}");
+
+
+
+if ( $result === false ) {
+    echo "Query failed: " . $wpdb->last_error;
+} else {
+    echo "Optimization query executed successfully.";
+}
+/*
+		//$sql = "SELECT {$wpdb->postmeta}.*, post_title FROM {$wpdb->postmeta} JOIN {$wpdb->posts} ON {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID WHERE post_type='rsvpemail' AND (meta_key LIKE '%preview%' OR meta_key LIKE '%relay%' OR meta_key = 'rsvpmail_sent_postmark') LIMIT 0, 5000";
+		$sql = "SELECT meta_key, count(*) as count FROM {$wpdb->postmeta} JOIN {$wpdb->posts} ON {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID WHERE post_type='rsvpemail' GROUP BY meta_key";
+		$mailmeta = $wpdb->get_results($sql);
+		$wpdb->show_errors();
+		if($mailmeta) {
+			foreach($mailmeta as $index => $mail) {
+				//if($index % 500 == 0) {
+					printf('<p>%s %d</p>',$mail->meta_key, $mail->count);
+				//
+				//$wpdb->delete($wpdb->postmeta, array('meta_id' => $mail->meta_id));
+			}
+		}
+*/
+
 		$sites = (is_multisite() && current_user_can('manage_network')) ? get_sites() : [];
 
 
@@ -4025,10 +4065,7 @@ function rsvpmaker_get_related_documents( $post_id = 0, $query = '' ) {
 
 	}
 	$t = rsvpmaker_has_template( $post->ID );
-	$parent_tag = 'edit'; // front end
-	if ( isset( $_GET['page'] ) || isset( $_GET['action'] ) ) {
-		$parent_tag = 'rsvpmaker_options';
-	}
+	$parent_tag = is_admin() ? 'rsvpmaker_menu' : 'edit'; // front end
 	$rsvp_id = rsvpmaker_parent( $post_id );
 	if ( ( $query == 'rsvpemail' ) && ! $rsvp_id && ! ( strpos( $post->post_title, 'Default' ) ) ) {
 
@@ -4071,7 +4108,6 @@ function rsvpmaker_get_related_documents( $post_id = 0, $query = '' ) {
 	$rsvp_parent = $post->post_parent;
 	if ( ! empty( $_GET['back'] ) ) {
 		$rsvp_parent = (int) $_GET['back'];
-
 	}
 	if ( $rsvp_parent ) {
 		$args[] = array(
@@ -4129,7 +4165,6 @@ function rsvpmaker_get_related_documents( $post_id = 0, $query = '' ) {
 	$more = rsvpmaker_get_more_related( $post, $post_id, $t, $parent_tag );
 	foreach ( $more as $add ) {
 		$args[] = $add;
-
 	}
 	return $args;
 }
@@ -4345,10 +4380,10 @@ function rsvpmaker_mailpoet_email_list_okay( $rsvp ) {
 	}
 
 }
-function rsvpmaker_sametime( $datetime, $post_id = 0 ) {
-	global $wpdb;
+function rsvpmaker_sametime( $date, $post_id = 0 ) {
+	global $wpdb, $rsvp_options;
 
-	$sql             = $wpdb->prepare( "SELECT * FROM %i posts JOIN %i events ON posts.ID=events.event WHERE post_status='publish' AND ID != %d AND date=%s ", $wpdb->posts, $wpdb->prefix . 'rsvpmaker_event', $post_id, $datetime );
+	$sql             = $wpdb->prepare( "SELECT * FROM %i posts JOIN %i events ON posts.ID=events.event WHERE post_status='publish' AND ID != %d AND date >= %s AND date < %s + INTERVAL 1 DAY", $wpdb->posts, $wpdb->prefix . 'rsvpmaker_event', $post_id, $date, $date );
 
 	$sametime_events = $wpdb->get_results( $sql );
 
@@ -4358,23 +4393,21 @@ function rsvpmaker_sametime( $datetime, $post_id = 0 ) {
 
 		$label = ( sizeof( $sametime_events ) > 1 ) ? __( 'Events', 'rsvpmaker' ) : __( 'Event', 'rsvpmaker' );
 
-		$mod  .= ' <span style="color:red;">* ' . $label . ' ' . __( ' at same time', 'rsvpmaker' ) . '</span>: ';
+		$mod  .= ' <span style="color:red;">* Overwrite ' . $label . ' ' . __( ' on same date?', 'rsvpmaker' ) . '</span>: ';
 
 		$same  = array();
 
 		foreach ( $sametime_events as $sametime ) {
 
 			$title  = ( empty( $sametime->post_title ) ) ? '?' : $sametime->post_title;
+			$title .= ' ' . rsvpmaker_date( $rsvp_options['time_format'], $sametime->ts_start );
 
-			$same[] = sprintf( '<a href="%s">%s</a> ', admin_url( 'post.php?action=edit&post=' . $sametime->ID ), $title );
+			$same[] = sprintf( '<input type="checkbox" name="update_from_template[]" value="%s" id="sametime_%s" class="sametime_checkbox" title="Overwrite"> <a href="%s">%s</a> ', $sametime->ID, $date, admin_url( 'post.php?action=edit&post=' . $sametime->ID ), $title );
 
 		}
 
 		$mod .= implode( ', ', $same );
-
-		$d    = get_post_meta( $sametime->ID, '_detached_from_template', true );
-
-		$mod .= ( $d ) ? ' - detached from template ' . $d : '';
+		$mod = '<p>' . $mod . '</p>';
 
 	}
 	return $mod;

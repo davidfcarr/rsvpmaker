@@ -305,9 +305,11 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(count($sent)) {
         rsvpmaker_postmark_sent_log($sent,$mail['Subject'],$hash,$mail['Tag'],get_current_blog_id());
         printf('Successful sends %d ending with %s',count($sent),$sent[sizeof($sent)-1]);
+        /*
         foreach($sent as $e) {
             add_post_meta($post_id,'rsvpmail_sent_postmark',$e);
         }
+        */
     }
     if(count($send_error)) {
         printf('Errors %d (see log)',count($send_error));
@@ -325,7 +327,7 @@ function rsvpmaker_postmark_chunked_batches() {
     global $wpdb;
     $log = '';
 	$sql = $wpdb->prepare("SELECT * FROM %i WHERE meta_key='rsvprelay_to_batch'",$wpdb->postmeta);
-    // error_log($sql);
+    error_log($sql);
 	$results = $wpdb->get_results($sql);
     // error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
 	if($results) {
@@ -361,17 +363,19 @@ function rsvpmaker_postmark_chunked_batches() {
                 rsvpmailer($mail);
             }
         }
+        error_log('clear hook postmark chunked batches');
         wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
     }
 	else {
-		// error_log('keeping postmark chunked batches schedule active: '.rsvpmaker_postmark_pending_batch_count().' batches remain');
+		error_log('keeping postmark chunked batches schedule active: '.rsvpmaker_postmark_pending_batch_count().' batches remain');
 	}
 	}
     else {
-        // error_log('ending postmark chunked batches');
+        error_log('clear hook postmark chunked batches');
         wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
     }
     //wp_suspend_cache_addition(false);
+    error_log('end of postmark chunked batches');
 }
 
 function rsvpmaker_postmark_pending_batch_count() {

@@ -211,6 +211,25 @@ if(rsvpmaker_rest.template_url != '') {
 	);
 }
 
+if(rsvpmaker_rest.projected_url && rsvpmaker_rest.projected_url != '') {
+	console.log('rsvpmaker_rest.projected_url:', rsvpmaker_rest.projected_url);
+	wp.data.dispatch('core/notices').createNotice(
+		'info', // Can be one of: success, info, warning, error.
+		__('You are editing a template used to create or update rsvpmaker events.'), // Text string to display.
+		{
+			id: 'projectedprompt', //assigning an ID prevents the notice from being added repeatedly
+			isDismissible: true, // Whether the user can dismiss the notice.
+			// Any actions the user can perform.
+			actions: [
+				{
+					url: rsvpmaker_rest.projected_url,
+					label: rsvpmaker_rest.projected_label,
+				},
+			]
+		}
+	);	
+}
+
 const isEditorSidebarOpened = wp.data.select( 'core/edit-post' ).isEditorSidebarOpened();
 if ( ! isEditorSidebarOpened ) {
 	wp.data.dispatch( 'core/edit-post' ).openGeneralSidebar('edit-post/document');
@@ -251,6 +270,7 @@ if(rsvpmaker_rest.post_type == 'rsvpmaker_template') {
 		]
 	}
 );
+wp.data.dispatch('core/notices').removeNotice('projectedprompt');
 wp.data.dispatch('core/notices').createNotice(
 	'success', // Can be one of: success, info, warning, error.
 	__('Create/Update events based on template'), // Text string to display.

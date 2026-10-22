@@ -3419,6 +3419,80 @@ public function get_items_permissions_check( $request ) {
     ) );
 	}
 
+/**
+     * Verify PayPal Webhook Signature using PayPal's REST API.
+     *
+     * @param array $args Array containing headers, webhook ID, and event payload.
+     * @return true|WP_Error Returns true if valid, or WP_Error on failure/invalid signature.
+     */
+    private function verify_paypal_signature( $args ) {
+        // Retrieve OAuth credentials (client_id, secret, and sandbox setting)
+        $keys        = rsvpmaker_get_rspmaker_paypal_rest_keys();
+        $client_id   = ! empty( $keys['client_id'] ) ? $keys['client_id'] : '';
+        $secret      = ! empty( $keys['secret'] ) ? $keys['secret'] : '';
+        $is_sandbox  = ! empty( $keys['sandbox'] );
+        $base_url    = $is_sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+
+        if ( empty( $client_id ) || empty( $secret ) ) {
+            return new WP_Error( 'paypal_missing_credentials', 'PayPal API credentials missing', array( 'status' => 500 ) );
+        }
+
+        // 1. Get OAuth Access Token from PayPal
+        $token_response = wp_remote_post( $base_url . '/v1/oauth2/token', array(
+            'headers' => array(
+                'Authorization' => 'Basic ' . base64_encode( $client_id . ':' . $secret ),
+                'Content-Type'  => 'application/x-www-form-urlencoded',
+            ),
+            'body'    => 'grant_type=client_credentials',
+            'timeout' => 15,
+        ) );
+
+        if ( is_wp_error( $token_response ) ) {
+            return $token_response;
+        }
+
+        $token_data = json_decode( wp_remote_retrieve_body( $token_response ), true );
+        if ( empty( $token_data['access_token'] ) ) {
+            return new WP_Error( 'paypal_auth_failed', 'Failed to retrieve access token from PayPal', array( 'status' => 500 ) );
+        }
+
+        $access_token = $token_data['access_token'];
+
+        // 2. Prepare payload for signature verification endpoint
+        $verify_payload = array(
+            'transmission_id'   => $args['transmission_id'],
+            'transmission_time' => $args['transmission_time'],
+            'cert_url'          => $args['cert_url'],
+            'auth_algo'         => $args['auth_algo'],
+            'transmission_sig'  => $args['transmission_sig'],
+            'webhook_id'        => $args['webhook_id'],
+            'webhook_event'     => $args['webhook_event'],
+        );
+
+        // 3. Post to PayPal Verification API
+        $verify_response = wp_remote_post( $base_url . '/v1/notifications/verify-webhook-signature', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $access_token,
+                'Content-Type'  => 'application/json',
+            ),
+            'body'    => wp_json_encode( $verify_payload ),
+            'timeout' => 15,
+        ) );
+
+        if ( is_wp_error( $verify_response ) ) {
+            return $verify_response;
+        }
+
+        $verify_data = json_decode( wp_remote_retrieve_body( $verify_response ), true );
+
+        // 4. Validate verification status
+        if ( isset( $verify_data['verification_status'] ) && 'SUCCESS' === $verify_data['verification_status'] ) {
+            return true;
+        }
+
+        rsvpmaker_log( 'PayPal Signature Verification Failed: ' . wp_json_encode( $verify_data ) );
+        return new WP_Error( 'paypal_invalid_signature', 'Invalid PayPal webhook signature', array( 'status' => 401 ) );
+    }
 
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
@@ -3437,10 +3511,23 @@ public function get_items_permissions_check( $request ) {
 				$gross = esc_sql($gross);
 				$sql_check = $wpdb->prepare("SELECT * FROM %i WHERE transaction_id=%s",$rsvpmaker_money,$order_id);
 				$existing = $wpdb->get_row($sql_check);
-				if($existing)
-				$sql = $wpdb->prepare("UPDATE %i SET fee=%s WHERE transaction_id=%s");
-				else
-				$sql = $wpdb->prepare("INSERT INTO %i SET amount=%s, fee=%s, name='added from webhook', transaction_id=%s ",$rsvpmaker_money, $gross,$fee,$order_id);
+				if ( $existing ) {
+					$sql = $wpdb->prepare(
+						"UPDATE %i SET fee = %s WHERE transaction_id = %s",
+						$rsvpmaker_money,
+						$fee,
+						$order_id
+					);
+				} else {
+					$sql = $wpdb->prepare(
+						"INSERT INTO %i (amount, fee, name, transaction_id) VALUES (%s, %s, %s, %s)",
+						$rsvpmaker_money,
+						$gross,
+						$fee,
+						'added from webhook',
+						$order_id
+					);
+				}
 				$wpdb->query($sql);
 				rsvpmaker_log('PayPal Webhook Processed: ' . $sql);
 			}

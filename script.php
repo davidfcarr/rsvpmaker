@@ -66,7 +66,7 @@ function rsvpmaker_rest_array() {
 
 		if($sked)
 		{
-			$projected_label = __('Create/update events from template','rsvpmaker');
+			$projected_label = __('Create/Update events from template','rsvpmaker');
 			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id);
 			$template_msg = rsvpmaker_sked_to_text($sked);
 		}

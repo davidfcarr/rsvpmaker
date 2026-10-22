@@ -1190,7 +1190,7 @@ function rsvpmaker_template_list() {
 
 
 
-				$results = rsvpmaker_get_future_events();
+				$results = rsvpmaker_get_future_events(100);
 
 
 
@@ -1815,7 +1815,7 @@ function rsvp_template_checkboxes( $t ) {
 				else {
 					$c = false;
 				}
-				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="%s" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $class, $timechange, $edit, $sched->postID, $d, $schedule_note, get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft  );
+				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="%s" title="Overwrite" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $class, $timechange, $edit, $sched->postID, $d, $schedule_note, get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft  );
 				$template_update = get_post_meta( $sched->postID, '_updated_from_template', true );
 
 				if ( ! empty( $template_update ) && ( $template_update != $sched->post_modified ) ) {
@@ -1827,7 +1827,7 @@ function rsvp_template_checkboxes( $t ) {
 				// $sametime_events
 				$mod        .= rsvpmaker_sametime( $sched->datetime, $sched->ID );
 				$hwarn = ($holiday_check) ? $holiday_check['hwarn'] : '';
-				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" name="update_from_template[]" value="%s"  class="%s" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s %s <a href="%s">%s</a></p>', $a, $sched->postID, $class, __( 'Update', 'rsvpmaker' ), $sched->post_title . $ifdraft, $fulldate, $hwarn, $mod, $timechange, get_edit_post_link( $sched->postID ), __( 'Edit', 'rsvpmaker' ) );
+				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" title="Overwrite" name="update_from_template[]" value="%s"  class="%s" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s %s <a href="%s">%s</a></p>', $a, $sched->postID, $class, __( 'Update', 'rsvpmaker' ), $sched->post_title . $ifdraft, $fulldate, $hwarn, $mod, $timechange, get_edit_post_link( $sched->postID ), __( 'Edit', 'rsvpmaker' ) );
 				if ( $c ) {
 					$updatelist .= sprintf( '<p class="correction" style="margin-left: 10px"><input type="checkbox" name="correct_date[%d]" value="%s" /> Correct Date to %s ? <span style="color:red">Does not match template schedule</span>.</p>', $sched->postID, rsvpmaker_date('Y-m-d H:i:s',$c, $template_timezone), rsvpmaker_date('F d, Y',$c, $template_timezone) );
 				}
@@ -1873,7 +1873,7 @@ function rsvp_template_checkboxes( $t ) {
 					if($title) {
 						$different = __('Template','rsvpmaker-for-toastmasters').': '.$title;
 					}
-					$updatelist .= sprintf('<p><input type="checkbox" name="update_from_template[]" value="%d" /> %s %s %s</p>',$f->ID,$f->post_title,$f->date,$different);
+					$updatelist .= sprintf('<p><input type="checkbox" title="Overwrite" name="update_from_template[]" value="%d" /> %s %s %s</p>',$f->ID,$f->post_title,$f->date,$different);
 				}
 			}
 		}
@@ -1955,7 +1955,7 @@ function rsvp_template_checkboxes( $t ) {
 
 				?>
 
-<div style="font-family:Courier, monospace"><input name="recur_check[<?php echo esc_attr($i); ?>]" type="checkbox" value="1">
+<div style="font-family:Courier, monospace"><input title="Add" name="recur_check[<?php echo esc_attr($i); ?>]" type="checkbox" value="1">
 
 				<?php esc_html_e( 'Month', 'rsvpmaker' ); ?>: 
 
@@ -2201,26 +2201,59 @@ function rsvp_template_checkboxes( $t ) {
 
 		}
 
-		echo "<script>
+		echo "
+		<script>
+		document.addEventListener('change', function (event) {
+  const target = event.target;
 
-jQuery(function () {
+  // 1. Check All functionality within the same fieldset
+  if (target.matches('.checkall')) {
+    const fieldset = target.closest('fieldset');
+    if (fieldset) {
+      fieldset.querySelectorAll('.update_from_template[type=\"checkbox\"]').forEach(cb => {
+        cb.checked = target.checked;
+      });
+    }
+    // Uncheck all sametime_checkbox elements when checkall is checked
+    if (target.checked) {
+      document.querySelectorAll('.sametime_checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+    }
+  }
 
-    jQuery('.checkall').on('click', function () {
+  // 2. Trash All functionality within the same fieldset
+  if (target.matches('.trashall')) {
+    const fieldset = target.closest('fieldset');
+    if (fieldset) {
+      fieldset.querySelectorAll('.trash_template[type=\"checkbox\"]').forEach(cb => {
+        cb.checked = target.checked;
+      });
+    }
+  }
 
-	jQuery(this).closest('fieldset').find('.update_from_template:checkbox').prop('checked', this.checked);
+  // 3. When recur_check_[id] is checked, uncheck sametime_[id]
+  console.log('target.id',target.id);
+  if (target.id && target.id.startsWith('recur_check_')) {
+    if (target.checked) {
+      const sibling = target.id.replace('recur_check_', 'sametime_');
+  	console.log('sibling',sibling);
+      const sametimeCb = document.getElementById(sibling);
+	  console.log('sametimeCb',sametimeCb);
+      if (sametimeCb) sametimeCb.checked = false;
+    }
+  }
 
-    });
-
-    jQuery('.trashall').on('click', function () {
-
-	jQuery(this).closest('fieldset').find('.trash_template:checkbox').prop('checked', this.checked);
-
-    });
-
+  // 4. Vice versa: When sametime_[id] is checked, uncheck recur_check_[id]
+  if (target.id && target.id.startsWith('sametime_')) {
+    if (target.checked) {
+      const sibling = target.id.replace('sametime_', 'recur_check_');
+      const recurCb = document.getElementById(sibling);
+      if (recurCb) recurCb.checked = false;
+    }
+  }
 });
-
 </script>
-
 ";
 	rsvpmaker_number_events_ui($t);
 
@@ -2343,7 +2376,7 @@ $post = get_post(intval($_GET['t']));
 
 				?>
 
-<div style="font-family:Courier, monospace"><input name="recur_check[<?php echo esc_attr($i); ?>]" type="checkbox" class="update_from_template" value="1">
+<div style="font-family:Courier, monospace"><input title="Add" name="recur_check[<?php echo esc_attr($i); ?>]" id="recur_check_<?php echo esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $timezone )); ?>"type="checkbox" class="update_from_template" value="1">
 
 				<?php esc_html_e( 'Month', 'rsvpmaker' ); ?>: 
 
@@ -2466,7 +2499,7 @@ $post = get_post(intval($_GET['t']));
 			</select>
 
 			<input type="text" name="recur_title[<?php echo esc_attr($i); ?>]" value="<?php echo esc_html( $post->post_title ); ?>" >
-				<?php echo rsvpmaker_sametime( rsvpmaker_date( 'Y-m-d H:i:s', $ts ) );
+				<?php echo rsvpmaker_sametime( rsvpmaker_date( 'Y-m-d', $ts ) );
 				echo $hwarn;
 
 				?>

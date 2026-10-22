@@ -2758,7 +2758,7 @@ function rsvpmaker_nomeeting_list($atts) {
 	if(is_array($results)) {
 		foreach($results as $row) {
 			if(!empty($atts['checkboxes'])) {
-				$output .= sprintf('<p><input type="checkbox" name="update_from_template[]" value="%d"> Restore: %s</p>',$row->ID,esc_html($row->post_title.' '.rsvpmaker_date('F jS, Y',$row->ts_start)));
+				$output .= sprintf('<p><input type="checkbox" name="update_from_template[]" value="%d" title="Overwrite"> Restore: %s</p>',$row->ID,esc_html($row->post_title.' '.rsvpmaker_date('F jS, Y',$row->ts_start)));
 			}
 			else
 			$output .= sprintf('<p>%s</p>',esc_html($row->post_title.' '.rsvpmaker_date('F jS, Y',$row->ts_start)));
@@ -3470,6 +3470,15 @@ return sprintf('<select name="%s">%s</select>',$select,$o);
 
 function toolbar_rsvpmaker( $wp_admin_bar ) {
 global $post;
+if(is_admin() && isset($post->post_type) && isset($_GET['post']) && ('rsvpmaker' == $post->post_type || 'rsvpmaker_template' == $post->post_type)) {
+	$wp_admin_bar->add_menu( array(
+		'id'     => 'rsvpmaker_menu',
+		'title'  => __('RSVPMaker','rsvpmaker'),
+		'href'   => '#',
+		'meta'   => array( 'class' => 'rsvpmaker_menu' ),
+	) );
+}
+
 if(isset($post->post_type) && 'rsvpemail' == $post->post_type) {
 	$args = array(
 		'parent'    => 'new-post',
