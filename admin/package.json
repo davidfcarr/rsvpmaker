@@ -30,7 +30,7 @@
 		"@wordpress/dataviews": "^17.2.0",
 		"@wordpress/icons": "^9.29.0",
 		"axios": "^1.20.0",
-		"dompurify": "^3.4.13",
+		"dompurify": "^3.4.17",
 		"dotenv": "^16.4.5",
 		"node-forge": "^1.4.0",
 		"react-clock": "^4.2.0",
