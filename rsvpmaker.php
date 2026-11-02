@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.3.3
+* Version: 12.3.4
 */
 
 function get_rsvpversion() {
-	return '12.3.3';
+	return '12.3.4';
 }
 
 global $wp_version;
@@ -775,6 +775,7 @@ function rsvpmaker_includes() {
 	include $rsvpmaker_dir . 'admin/admin.php';
 	include $rsvpmaker_dir . 'rsvpmaker-qr.php';
 	include $rsvpmaker_dir . 'rsvpmaker-agenda-item.php';
+	include $rsvpmaker_dir . 'shared.php';
 }
 
 $gateways = get_rsvpmaker_payment_options();

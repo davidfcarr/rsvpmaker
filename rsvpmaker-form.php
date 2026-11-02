@@ -328,22 +328,25 @@ function rsvp_form_field( $atts, $content = '' ) {
 
 function rsvp_field_apply_default( $content, $slug, $default ) {
 
+	$escaped_default = esc_attr( $default );
+	$escaped_textarea = esc_textarea( $default );
+
 	if ( strpos( $content, 'value=""' ) !== false ) {
 
-		$content = str_replace( 'value=""', 'value="' . $default . '"', $content );
+		$content = str_replace( 'value=""', 'value="' . $escaped_default . '"', $content );
 
-	} elseif ( strpos( $content, '</textarea>' ) ) {
+	} elseif ( strpos( $content, '</textarea>' ) !== false ) {
 
-		$content = str_replace( '</textarea>', $default . '</textarea>', $content );
+		$content = str_replace( '</textarea>', $escaped_textarea . '</textarea>', $content );
 	}
 
-	$find = 'value="' . $default . '"';
+	$find = 'value="' . $escaped_default . '"';
 
-	if ( strpos( $content, '</select>' ) ) {
+	if ( strpos( $content, '</select>' ) !== false ) {
 
 		$content = str_replace( $find, $find . ' selected="selected"', $content );
 
-	} elseif ( strpos( $content, 'type="radio"' ) ) {
+	} elseif ( strpos( $content, 'type="radio"' ) !== false ) {
 
 		$content = str_replace( $find, $find . ' checked="checked"', $content );
 	}
@@ -354,12 +357,21 @@ function rsvp_field_apply_default( $content, $slug, $default ) {
 
 function rsvp_form_note( $atts = array() ) {
 
+	global $profile;
+
 	$label = ( empty( $atts['label'] ) ) ? __( 'Note', 'rsvpmaker' ) : esc_html( $atts['label'] );
 	$fieldnote_html = empty( $atts['fieldnote'] ) ? '' : sprintf( '<div><em>%s</em></div>', esc_html( $atts['fieldnote'] ) );
 
-	return sprintf( '<div class="wp-block-rsvpmaker-formnote rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-textarea-line"><textarea name="note" style="width: %s"></textarea></div></div>', $label, $fieldnote_html,'80%' );
+	$content = sprintf( '<div class="wp-block-rsvpmaker-formnote rsvpblock"><p><label>%s:</label></p>%s<div class="rsvp-textarea-line"><textarea name="note" style="width: %s"></textarea></div></div>', $label, $fieldnote_html,'80%' );
+
+	if ( isset( $profile['note'] ) ) {
+		$content = rsvp_field_apply_default( $content, 'note', (string) $profile['note'] );
+	}
+
+	return $content;
 
 }
+
 
 function rsvp_guest_content( $content ) {
 	$content = str_replace( ']"', '][]"', $content );
@@ -1014,7 +1026,7 @@ function rsvpmaker_contact_form_shortcode($attributes) {
 
 function rsvpmaker_contact_form_output($attributes) {
 	if(isset($_GET['purchase_code'])) {
-			echo rsvpmaker_contact_form_order($_GET);
+			echo wp_kses_post( rsvpmaker_contact_form_order($_GET) );
 		return;
 	}
 
@@ -1046,7 +1058,7 @@ else {
 }
 if(!$is_preview) {
 	rsvphoney_ui();
-	echo rsvp_form_jquery();
+	echo wp_kses_post( rsvp_form_jquery() );
 }
 if(!empty($attributes['sale'])) {
 	$amount = floatval($attributes['sale']);
@@ -1054,7 +1066,7 @@ if(!empty($attributes['sale'])) {
 	printf( '<p>%s<input type="hidden" name="sale_item_name" value="%s"> @ %s <input type="number" name="sale_item_count" value="1" />',esc_html($item_label),esc_attr($item_label),esc_html($amount) );
 	echo '<input type="hidden" name="sale_item_amount" value="'.esc_attr($amount).'" />';
 }
-echo rsvpmaker_basic_form( $attributes['form_id'] );
+echo wp_kses( rsvpmaker_basic_form( $attributes['form_id'] ), dcarr_kses_form() );
 if(!$is_preview)
 	wp_nonce_field('rsvpmaker_contact','contact_confidential');
 printf('<input type="hidden" name="user_id" value="%d" >',esc_attr($user_id));
@@ -1070,7 +1082,7 @@ if (!$is_preview && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! emp
 	rsvpmaker_recaptcha_output();
 }
 ?>
-<p><button id="rsvpmaker_contact_send"><?php echo $button_label; ?></button></p>
+<p><button id="rsvpmaker_contact_send"><?php echo esc_html( $button_label ); ?></button></p>
 </form>
 <?php if(!$is_preview) { ?>
 <script>
@@ -2012,8 +2024,7 @@ function save_rsvp($postdata, $live = true) {
 				}
 			}
 			if($rsvp_id) {
-				$missing_guests = "delete from ".$wpdb->prefix."rsvpmaker WHERE master_rsvp= ".intval($rsvp_id).$keep_guests;
-				$wpdb->query($missing_guests);
+				$wpdb->query( $wpdb->prepare( "DELETE FROM " . $wpdb->prefix . "rsvpmaker WHERE master_rsvp=%d" . $keep_guests, $rsvp_id ) );
 			}
 
 			if(!empty($guests_to_add)) {
@@ -2111,10 +2122,10 @@ function rsvpmaker_basic_form( $form = '' ) {
 
 		if ( is_numeric( $form ) ) {
 			$fpost = get_post( $form );
-			echo do_blocks( $fpost->post_content );
+			echo wp_kses( do_blocks( $fpost->post_content ), dcarr_kses_form() );
 			// error_log('Displaying RSVP form for post ID: ' . $fpost->ID .' '.$fpost->post_content);
 		} else {
-			echo do_shortcode( $form );
+			echo wp_kses_post( do_shortcode( $form ) );
 		}
 		printf('<input type="hidden" name="rsvp_form_id" value="%s" />',esc_attr($form));
 

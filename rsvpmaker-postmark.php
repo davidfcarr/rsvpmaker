@@ -305,11 +305,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     if(count($sent)) {
         rsvpmaker_postmark_sent_log($sent,$mail['Subject'],$hash,$mail['Tag'],get_current_blog_id());
         printf('Successful sends %d ending with %s',count($sent),$sent[sizeof($sent)-1]);
-        /*
-        foreach($sent as $e) {
-            add_post_meta($post_id,'rsvpmail_sent_postmark',$e);
-        }
-        */
+        update_post_meta($post_id,'rsvpmail_sent_postmark',count($sent).' ending with '.array_pop($sent));
     }
     if(count($send_error)) {
         printf('Errors %d (see log)',count($send_error));
@@ -323,59 +319,38 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
 
 add_action('rsvpmaker_postmark_chunked_batches','rsvpmaker_postmark_chunked_batches');
 function rsvpmaker_postmark_chunked_batches() {
-    //wp_suspend_cache_addition(true);
     global $wpdb;
-    $log = '';
-	$sql = $wpdb->prepare("SELECT * FROM %i WHERE meta_key='rsvprelay_to_batch'",$wpdb->postmeta);
-    error_log($sql);
-	$results = $wpdb->get_results($sql);
-    // error_log('rsvpmaker_postmark_chunked_batches '.sizeof($results));
-	if($results) {
-    $last_batchrow = null;
-	foreach($results as $index => $batchrow) {
-    if(10 == $index)
-        break;
-	$recipients = unserialize($batchrow->meta_value);
-        $last_batchrow = $batchrow;
-        //returns number sent, 'duplicate message' or null
-	$batch_result = rsvpmaker_postmark_broadcast($recipients,$batchrow->post_id);
-	if($batch_result)
-	{
-        $sql = $wpdb->prepare("update %i set meta_key='rsvprelay_to_batch_done' where meta_id=%d",$wpdb->postmeta,$batchrow->meta_id);
-        // error_log($sql);
-	$wpdb->query($sql);
-	}
-        $postmark_options = get_rsvpmaker_postmark_options();
-        if(!empty($postmark_options['notify_batch_send']))
-            wp_mail(rsvpmaker_postmark_admin_email(),'Batched sending of email in progress',sizeof($recipients).' recipients ending with '.array_pop($recipients));
+    
+    // Fetch only the IDs of batches to process
+    $batch_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT meta_id FROM %i WHERE meta_key = 'rsvprelay_to_batch' LIMIT 5",
+        $wpdb->postmeta
+    ) );
+
+    if ( empty( $batch_ids ) ) {
+        wp_clear_scheduled_hook( 'rsvpmaker_postmark_chunked_batches' );
+        return;
     }
-	if(!rsvpmaker_postmark_pending_batch_count()) {
-		if($last_batchrow) {
-			$title = get_the_title($last_batchrow->post_id);
-            $mail['subject'] = 'Sent: '.$title;
-            $mail['html'] = sprintf('<p>The RSVPMaker Mailer for Postmark email broadcast is complete.</p> </p>See the results on the <a href="%s">Postmark Email Log</a> page. </p>',admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag=rsvpemail-'.get_current_blog_id().'-'.$last_batchrow->post_id));
-            $mail['from'] = $mail['to'] = get_option('admin_email');
-            $mail['fromname'] = get_option('blogname');
-            rsvpmailer($mail);
-            $postmark_admin = rsvpmaker_postmark_admin_email();
-            if($postmark_admin != $mail['to']) {
-                $mail['to'] = $postmark_admin;
-                rsvpmailer($mail);
-            }
+
+    foreach ( $batch_ids as $meta_id ) {
+        $batchrow = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM %i WHERE meta_id = %d",
+            $wpdb->postmeta,
+            $meta_id
+        ) );
+
+        if ( ! $batchrow ) continue;
+
+        $recipients = maybe_unserialize( $batchrow->meta_value );
+        $batch_result = rsvpmaker_postmark_broadcast( $recipients, $batchrow->post_id );
+
+        if ( $batch_result ) {
+            delete_metadata_by_mid( 'post', $meta_id );
         }
-        error_log('clear hook postmark chunked batches');
-        wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
+        
+        // Clean up variables to free memory on large lists
+        unset( $recipients, $batchrow );
     }
-	else {
-		error_log('keeping postmark chunked batches schedule active: '.rsvpmaker_postmark_pending_batch_count().' batches remain');
-	}
-	}
-    else {
-        error_log('clear hook postmark chunked batches');
-        wp_clear_scheduled_hook('rsvpmaker_postmark_chunked_batches');
-    }
-    //wp_suspend_cache_addition(false);
-    error_log('end of postmark chunked batches');
 }
 
 function rsvpmaker_postmark_pending_batch_count() {

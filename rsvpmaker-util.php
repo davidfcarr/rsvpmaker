@@ -2312,12 +2312,11 @@ function rsvpmaker_cleanup() {
 <h1>RSVPMaker Cleanup</h1>
 
 	<?php 
-
-		$sql = "DELETE pm
+		if(isset($_GET['email_postmeta'])) {
+					$sql = "DELETE pm
 FROM {$wpdb->postmeta} pm
 INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-WHERE p.post_type = 'rsvpemail' AND (meta_key LIKE '%preview%' OR meta_key LIKE '%relay%' OR meta_key = 'rsvpmail_sent_postmark' OR meta_key LIKE '%schedule%' OR meta_key LIKE '%blocked%')";
-/*
+WHERE p.post_type = 'rsvpemail' AND (meta_key LIKE '%preview%' OR meta_key LIKE '%relay%' OR meta_key = 'rsvpmail_sent_postmark' OR meta_key LIKE '%schedule%' OR meta_key LIKE '%blocked%')
 AND p.ID < (
     SELECT MIN(latest_20.ID)
     FROM (
@@ -2326,18 +2325,24 @@ AND p.ID < (
       WHERE post_type = 'rsvpemail' 
       ORDER BY post_date DESC 
       LIMIT 20
-    ) AS latest_20
-*/
-		$wpdb->query($sql);
-		$result = $wpdb->query("OPTIMIZE TABLE {$wpdb->postmeta}");
+    ) AS latest_20";
 
+	$wpdb->query($sql);
+	echo "<p>Email metadata cleaned.</p>";
 
+	if(isset($_GET['optimize'])) {
+			$result = $wpdb->query("OPTIMIZE TABLE {$wpdb->postmeta}");
+		if ( $result === false ) {
+			echo "<p>Query failed: " . $wpdb->last_error . "</p>";
+		} else {
+			echo "<p>Optimization query executed successfully.</p>";
+		}
+	}
 
-if ( $result === false ) {
-    echo "Query failed: " . $wpdb->last_error;
-} else {
-    echo "Optimization query executed successfully.";
 }
+else
+	printf('<p><a href="/wp-admin/tools.php?page=rsvpmaker_cleanup&email_postmeta=1">Clean email metadata</a> | <a href="/wp-admin/tools.php?page=rsvpmaker_cleanup&email_postmeta=1&optimize=1">Clean and Optimize email metadata</a></p>');
+
 /*
 		//$sql = "SELECT {$wpdb->postmeta}.*, post_title FROM {$wpdb->postmeta} JOIN {$wpdb->posts} ON {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID WHERE post_type='rsvpemail' AND (meta_key LIKE '%preview%' OR meta_key LIKE '%relay%' OR meta_key = 'rsvpmail_sent_postmark') LIMIT 0, 5000";
 		$sql = "SELECT meta_key, count(*) as count FROM {$wpdb->postmeta} JOIN {$wpdb->posts} ON {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID WHERE post_type='rsvpemail' GROUP BY meta_key";
