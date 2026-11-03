@@ -1467,7 +1467,12 @@ function rsvpmaker_postmark_show_sent_log() {
 
     echo '<div id="postmark_sent_log_details" style="display:'.(isset($_GET['details']) || isset($_GET['clicks']) ? 'block' : 'none').'">';
     
-    $results = $wpdb->get_results($wpdb->prepare("SELECT sum(count) total, blog_id FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) ".($blog_id > 1) ? ' AND blog_id='.$blog_id : ''." group by blog_id",$table,$days));
+    $sql = $wpdb->prepare("SELECT sum(count) total, blog_id FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY)", $table, $days);
+    if ($blog_id > 1) {
+        $sql .= $wpdb->prepare(" AND blog_id=%d", $blog_id);
+    }
+    $sql .= " group by blog_id";
+    $results = $wpdb->get_results($sql);
     foreach($results as $row) {
         $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
         $text = sprintf('<strong>%s</strong>: %d (<a href="%s">monthly</a>)',$name,$row->total,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&blog_id='.$row->blog_id));

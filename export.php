@@ -365,13 +365,13 @@ function rsvpmaker_export_wp( $args = array() ) {
 
 		if ( ! empty( $post_ids ) ) {
 			$post_ids = array_map( 'absint', $post_ids );
-			$and      = 'AND ID IN ( ' . implode( ', ', $post_ids ) . ')';
+			$and = $wpdb->prepare('AND ID IN ( ' . implode( ', ', array_fill(0, count($post_ids), '%d') ) . ')', ...$post_ids);
 		} else {
 			$and = '';
 		}
 
 		$authors = array();
-		$results = $wpdb->get_results( "SELECT DISTINCT post_author FROM $wpdb->posts WHERE post_status != 'auto-draft' $and" );
+		$results = $wpdb->get_results( $wpdb->prepare("SELECT DISTINCT post_author FROM $wpdb->posts WHERE post_status != 'auto-draft' $and") );
 		if ( ! empty( $results ) && is_array( $results ) ) {
 			foreach ( $results as $result ) {
 				$authors[] = get_userdata( $result->post_author );

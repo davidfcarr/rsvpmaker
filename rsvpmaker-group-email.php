@@ -864,7 +864,7 @@ function rsvpmaker_relay_queue_monitor () {
 	do_action('rsvpmaker_relay_queue_monitor');
 	global $wpdb;
 	if(isset($_GET['cancel'])) {
-		$sql = "DELETE FROM $wpdb->postmeta where post_id=".intval($_GET['cancel'])." AND meta_key='rsvprelay_to' ";
+		$sql = $wpdb->prepare("DELETE FROM $wpdb->postmeta where post_id=%d AND meta_key='rsvprelay_to'", intval($_GET['cancel']));
 		$result = $wpdb->query($sql);
 	}
 	
@@ -912,7 +912,7 @@ function rsvpmaker_relay_queue_monitor () {
 		if($row->ID != $was) {
 			printf('<h2>%s status: %s</h2>',$row->post_title, $row->post_status);
 			if('draft' == $row->post_status) {
-				$sql = "update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=$row->ID ";
+				$sql = $wpdb->prepare("update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=%d", $row->ID);
 				print_r("<p>post status change result %s %s</p>",$sql,var_export($result,true));
 			}
 			$result = $wpdb->query($sql);

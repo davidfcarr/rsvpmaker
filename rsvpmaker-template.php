@@ -320,6 +320,8 @@ function rsvpmaker_template_list() {
 
 				$sql = "select * from %i WHERE post_id=%d ";
 
+				$params = [];
+
 				foreach($_POST['copymeta'] as $key)
 
 				{
@@ -346,7 +348,7 @@ function rsvpmaker_template_list() {
 
 
 
-				
+				$params = array_merge([$wpdb->postmeta, $post_id], $params);
 
 				$results = $wpdb->get_results( $wpdb->prepare($sql,$params) );
 

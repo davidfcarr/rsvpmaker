@@ -880,10 +880,10 @@ function rsvpmaker_admin_notice_calendar_section($wpdb, &$rsvp_options, &$essent
 		return '';
 	}
 
-	$sql = "SELECT ID from $wpdb->posts WHERE post_type='page' AND post_status='publish' AND (post_content LIKE '%rsvpmaker_upcoming%' OR post_content LIKE '%wp:rsvpmaker%') ";
+	$sql = $wpdb->prepare("SELECT ID from %i WHERE post_type='page' AND post_status='publish' AND (post_content LIKE %s OR post_content LIKE %s)", $wpdb->posts, '%rsvpmaker_upcoming%', '%wp:rsvpmaker%');
 	$front = get_option('page_on_front');
 	if($front)
-		$sql .= " AND ID != $front ";
+		$sql .= $wpdb->prepare(" AND ID != %d", $front);
 	if($id = $wpdb->get_var($sql)) {
 		$rsvp_options['eventpage'] = get_permalink($id);
 		update_option('RSVPMAKER_Options',$rsvp_options);

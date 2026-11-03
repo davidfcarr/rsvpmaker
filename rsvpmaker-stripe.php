@@ -953,7 +953,12 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 	
 	$stripetable  = rsvpmaker_money_table();
 	
-	return $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE user_id=%d ".( $start_date ) ? " AND date > '$start_date' " : ''." ORDER BY date DESC",$stripetable,$user_id) );
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE user_id=%d", $stripetable, $user_id);
+	if ( $start_date ) {
+		$sql .= $wpdb->prepare(" AND date > %s", $start_date);
+	}
+	$sql .= " ORDER BY date DESC";
+	return $wpdb->get_row( $sql );
 }
 
 
@@ -961,5 +966,10 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
 	global $wpdb;
 	$stripetable = rsvpmaker_money_table();
-	return $wpdb->get_results( $wpdb->prepare("SELECT * FROM %i WHERE user_id=0 ".( $recent ) ? ' AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH) ' : ''." ORDER BY date DESC",$stripetable) );
+	$sql = $wpdb->prepare("SELECT * FROM %i WHERE user_id=0", $stripetable);
+	if ( $recent ) {
+		$sql .= " AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+	}
+	$sql .= " ORDER BY date DESC";
+	return $wpdb->get_results( $sql );
 }

@@ -34,8 +34,9 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 		if(isset($_GET['rsvpsearch'])) {
 			$search = sanitize_text_field($_GET['rsvpsearch']);
 			$date_limit = (isset($_GET['datelimit'])) ? 'AND events.date > CURDATE()' : '';			
-			$results = $wpdb->get_results($wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE (email LIKE %s OR first LIKE %s OR last LIKE %s) AND master_rsvp='0' ".$date_limit." ORDER BY events.ts_start"
-		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%'));
+			$sql = $wpdb->prepare("select * from %i rsvpmaker JOIN %i events ON rsvpmaker.event=events.event WHERE (email LIKE %s OR first LIKE %s OR last LIKE %s) AND master_rsvp='0' ".$date_limit." ORDER BY events.ts_start"
+		,$wpdb->prefix.'rsvpmaker',$wpdb->prefix.'rsvpmaker_event','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%','%'.$wpdb->esc_like($search).'%');
+			$results = $wpdb->get_results($sql);
 		if(!empty($results))
 			printf('<h3>%s</h3>',esc_html__('Search Results'));
 			foreach($results as $row) {

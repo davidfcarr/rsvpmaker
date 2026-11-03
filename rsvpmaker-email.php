@@ -2585,10 +2585,10 @@ echo '</textarea>';
 function rsvpmaker_local_emails($blog_id) {
 global $wpdb;
 $table = $wpdb->prefix . "rsvpmaker";
-$sql = "SELECT DISTINCT email FROM $table";
+$sql = $wpdb->prepare("SELECT DISTINCT email FROM %i", $table);
 $local_emails = $wpdb->get_col($sql) ?: [];
 $table = $wpdb->prefix . "rsvpmaker_guest_email";
-$sql = "SELECT DISTINCT email FROM $table";
+$sql = $wpdb->prepare("SELECT DISTINCT email FROM %i", $table);
 $list_emails = $wpdb->get_col($sql) ?: [];
 $subdomain_users = get_users(array(
     'blog_id' => $blog_id,
