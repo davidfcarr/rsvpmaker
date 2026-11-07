@@ -17,7 +17,7 @@ function rsvpmaker_template_schedule( $template ) {
 				$schedule .= ' '.$index;
 			}
 		}
-		echo '<p><em>Template: '.$schedule.' (set in editor)</em></p>';
+		echo '<p><em>Template: ' . esc_html( $schedule ) . ' (set in editor)</em></p>';
 ?>
 <p><?php esc_html_e( 'Stop date (optional)', 'rsvpmaker' ); ?>: <input type="text" name="sked[stop]" value="<?php
 				if ( isset( $template['stop'] ) ) {
@@ -308,7 +308,7 @@ function rsvpmaker_template_list() {
 			// $date = rsvpmaker_date( $rsvp_options['long_date'], $event->ts_start );
 			$date = get_rsvp_date($overridden,'long_date');
 
-			printf( '<div class="updated notice notice-success">Applied "%s" template %s: <a href="%s">View</a> | <a href="%s">Edit</a></div>', $opost->post_title, $date, get_permalink( $overridden ), admin_url( 'post.php?action=edit&post=' . $overridden ) );
+			printf( '<div class="updated notice notice-success">Applied "%s" template %s: <a href="%s">View</a> | <a href="%s">Edit</a></div>', esc_html( $opost->post_title ), $date, get_permalink( $overridden ), admin_url( 'post.php?action=edit&post=' . $overridden ) );
 
 			$params = [$wpdb->postmeta,$override];
 
@@ -623,7 +623,7 @@ function rsvpmaker_template_list() {
 
 			$t = wp_insert_post( $newpost );
 
-				printf( '<div class="notice success notice-sodium_crypto_core_ristretto255_scalar_add( $x:string, $y:string )"><h1>Template created for %s</h1><p><a href="%s">Edit</a></p></div>', $event->post_title, get_edit_post_link( $t ) );
+				printf( '<div class="notice success notice-sodium_crypto_core_ristretto255_scalar_add( $x:string, $y:string )"><h1>Template created for %s</h1><p><a href="%s">Edit</a></p></div>', esc_html( $event->post_title ), get_edit_post_link( $t ) );
 
 				$results = $wpdb->get_results( $wpdb->prepare("select * from %i WHERE post_id=%d",$wpdb->postmeta,$e) );
 				$docopy = array( '_add_timezone', '_convert_timezone', '_calendar_icons', 'tm_sidebar', 'sidebar_officers' );
@@ -943,7 +943,7 @@ function rsvpmaker_template_list() {
 
 
 
-					$current_template = '<option value="' . $post->ID . '">Current Template: ' . $post->post_title . '</option>';
+					$current_template = '<option value="' . $post->ID . '">Current Template: ' . esc_html( $post->post_title ) . '</option>';
 
 				}
 
@@ -1333,7 +1333,7 @@ function rsvpmaker_template_list() {
 
 			foreach ( $results as $row ) {
 
-				printf( '<p>%s<br />%s</p>', $row->post_title, rest_url( 'rsvpmaker/v1/shared_template/' . intval( $row->ID ) ) );
+				printf( '<p>%s<br />%s</p>', esc_html( $row->post_title ), rest_url( 'rsvpmaker/v1/shared_template/' . intval( $row->ID ) ) );
 
 			}
 
@@ -1529,7 +1529,7 @@ function rsvpmaker_template_list() {
 
 				$url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&autorenew='.$template->ID);
 
-				printf('<p><a href="%s">Auto renew %s</a></p>',$url,$template->post_title);
+				printf('<p><a href="%s">Auto renew %s</a></p>',$url,esc_html($template->post_title));
 
 			}
 
@@ -1550,9 +1550,9 @@ $wpdb->prefix.'rsvpmaker_event',$wpdb->posts,$wpdb->postmeta);
 $notemplate = $wpdb->get_results($sql);
 if(!empty($totemplate)) {
 printf('<h2>No Template</h2><form action="" method="post">',admin_url('https://op.toastmost.org/wp-admin/edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list'));
-echo '<p><select name="template_target">'.$template_options.'</select></p>';
+echo '<p><select name="template_target">' . wp_kses_post( $template_options ) . '</select></p>';
 foreach($notemplate as $event) {
-	printf('<p><input type="checkbox" name="add_template_to[]" value="%d"> %s %s</p>',$event->event, $event->date,$event->post_title);
+	printf('<p><input type="checkbox" name="add_template_to[]" value="%d"> %s %s</p>',$event->event, esc_html($event->date),esc_html($event->post_title));
 }
 submit_button();
 wp_nonce_field('rsvpmaker','rsvpnonce');
@@ -1701,7 +1701,7 @@ function rsvp_template_checkboxes( $t ) {
 			$schedule .= ' - stop date set for '.$template['stop'];
 		}
 
-		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><p><a href="%s">%s</a></p><p><a href="#applytemplate">%s</a></p></blockquote>', __( 'Template', 'rsvpmaker' ), esc_html( $post->post_title ), $schedule, admin_url( 'post.php?action=edit&post=' . $t ), __( 'Edit Template', 'rsvpmaker' ), __( 'Apply to Existing Event', 'rsvpmaker' ) );
+		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><p><a href="%s">%s</a></p><p><a href="#applytemplate">%s</a></p></blockquote>', __( 'Template', 'rsvpmaker' ), esc_html( $post->post_title ), esc_html( $schedule ), admin_url( 'post.php?action=edit&post=' . $t ), __( 'Edit Template', 'rsvpmaker' ), __( 'Apply to Existing Event', 'rsvpmaker' ) );
 
 		$hour = (empty($template['hour'])) ? 12 : (int) $template['hour'];
 
@@ -1761,8 +1761,8 @@ function rsvp_template_checkboxes( $t ) {
 
 					$newtime = str_replace( $tparts[1], $his, $sched->datetime );
 
-					$timechange = sprintf( '<input type="hidden" name="timechange[%d]" value="%s" />', $sched->ID, $newtime );
-					$timechange = sprintf( '<input type="hidden" name="timechange[%d]" value="%s" />', $sched->ID, $newtime );
+					$timechange = sprintf( '<input type="hidden" name="timechange[%d]" value="%s" />', $sched->ID, esc_attr( $newtime ) );
+					$timechange = sprintf( '<input type="hidden" name="timechange[%d]" value="%s" />', $sched->ID, esc_attr( $newtime ) );
 					if ( empty( $timechangemessage ) ) {
 
 						$timechangemessage = '<p>' . __( 'Start time for updated events will be changed to', 'rsvpmaker' ) . ' ' . rsvpmaker_date( $rsvp_options['time_format'], rsvpmaker_strtotime( $newtime, $template_timezone ), $template_timezone );
@@ -1784,14 +1784,14 @@ function rsvp_template_checkboxes( $t ) {
 
 				if ( strpos( $sched->post_title, 'o Meeting:' ) ) {
 
-					$sched->post_title = '<span style="color:red;">' . $sched->post_title . '</span>';
+					$sched->post_title = '<span style="color:red;">' . esc_html( $sched->post_title ) . '</span>';
 				}
 
 				if ( current_user_can( 'delete_post', $sched->postID ) ) {
 
 					$delete_text = __( 'Move to Trash' );
 
-					$d = '<input type="checkbox" name="trash_template[]" value="' . $sched->postID . '" class="trash_template" /> <a class="submitdelete deletion" href="' . get_delete_post_link( $sched->postID ) . '">' . esc_html( $delete_text ) . '</a>';
+					$d = '<input type="checkbox" name="trash_template[]" value="' . esc_attr( $sched->postID ) . '" class="trash_template" /> <a class="submitdelete deletion" href="' . get_delete_post_link( $sched->postID ) . '">' . esc_html( $delete_text ) . '</a>';
 
 				} else {
 					$d = '-';
@@ -1817,7 +1817,7 @@ function rsvp_template_checkboxes( $t ) {
 				else {
 					$c = false;
 				}
-				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="%s" title="Overwrite" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', $a, $sched->postID, $class, $timechange, $edit, $sched->postID, $d, $schedule_note, get_post_permalink( $sched->postID ), $sched->post_title . $ifdraft  );
+				$editlist .= sprintf( '<tr class="%s"><td><input type="checkbox" name="update_from_template[]" value="%s" class="%s" title="Overwrite" /> %s </td><td>%s</td><td><input type="checkbox" name="detach_from_template[]" value="%d" /> </td><td>%s</td><td>%s</td><td><a href="%s">%s</a></td></tr>', esc_attr( $a ), esc_attr( $sched->postID ), esc_attr( $class ), wp_kses_post( $timechange ), wp_kses_post( $edit ), $sched->postID, wp_kses_post( $d ), wp_kses_post( $schedule_note ), esc_url( get_post_permalink( $sched->postID ) ), esc_html( $sched->post_title . $ifdraft )  );
 				$template_update = get_post_meta( $sched->postID, '_updated_from_template', true );
 
 				if ( ! empty( $template_update ) && ( $template_update != $sched->post_modified ) ) {
@@ -1829,9 +1829,9 @@ function rsvp_template_checkboxes( $t ) {
 				// $sametime_events
 				$mod        .= rsvpmaker_sametime( $sched->datetime, $sched->ID );
 				$hwarn = ($holiday_check) ? $holiday_check['hwarn'] : '';
-				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" title="Overwrite" name="update_from_template[]" value="%s"  class="%s" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s %s <a href="%s">%s</a></p>', $a, $sched->postID, $class, __( 'Update', 'rsvpmaker' ), $sched->post_title . $ifdraft, $fulldate, $hwarn, $mod, $timechange, get_edit_post_link( $sched->postID ), __( 'Edit', 'rsvpmaker' ) );
+				$updatelist .= sprintf( '<p class="%s"><input type="checkbox" title="Overwrite" name="update_from_template[]" value="%s"  class="%s" /><em>%s</em> %s <span class="updatedate">%s</span> %s %s %s <a href="%s">%s</a></p>', esc_attr( $a ), esc_attr( $sched->postID ), esc_attr( $class ), __( 'Update', 'rsvpmaker' ), esc_html( $sched->post_title . $ifdraft ), wp_kses_post( $fulldate ), wp_kses_post( $hwarn ), wp_kses_post( $mod ), wp_kses_post( $timechange ), esc_url( get_edit_post_link( $sched->postID ) ), __( 'Edit', 'rsvpmaker' ) );
 				if ( $c ) {
-					$updatelist .= sprintf( '<p class="correction" style="margin-left: 10px"><input type="checkbox" name="correct_date[%d]" value="%s" /> Correct Date to %s ? <span style="color:red">Does not match template schedule</span>.</p>', $sched->postID, rsvpmaker_date('Y-m-d H:i:s',$c, $template_timezone), rsvpmaker_date('F d, Y',$c, $template_timezone) );
+					$updatelist .= sprintf( '<p class="correction" style="margin-left: 10px"><input type="checkbox" name="correct_date[%d]" value="%s" /> Correct Date to %s ? <span style="color:red">Does not match template schedule</span>.</p>', $sched->postID, esc_attr( rsvpmaker_date('Y-m-d H:i:s',$c, $template_timezone) ), esc_html( rsvpmaker_date('F d, Y',$c, $template_timezone) ) );
 				}
 			}
 		}
@@ -1875,12 +1875,12 @@ function rsvp_template_checkboxes( $t ) {
 					if($title) {
 						$different = __('Template','rsvpmaker-for-toastmasters').': '.$title;
 					}
-					$updatelist .= sprintf('<p><input type="checkbox" title="Overwrite" name="update_from_template[]" value="%d" /> %s %s %s</p>',$f->ID,$f->post_title,$f->date,$different);
+					$updatelist .= sprintf('<p><input type="checkbox" title="Overwrite" name="update_from_template[]" value="%d" /> %s %s %s</p>',$f->ID,esc_html($f->post_title),esc_html($f->date),esc_html($different));
 				}
 			}
 		}
 		else {
-			$updatelist .= sprintf('<div><a href="%s&other=1">%s</a></div>',$action,__('Show other events (not based on this template)','rsvpmaker'));	
+			$updatelist .= sprintf('<div><a href="%s&other=1">%s</a></div>',esc_url($action),__('Show other events (not based on this template)','rsvpmaker'));	
 		}
 
 		if ( current_user_can( 'edit_rsvpmakers' ) ) {
@@ -2179,7 +2179,7 @@ function rsvp_template_checkboxes( $t ) {
 
 			do_action( 'update_from_template_prompt' );
 
-			echo '<strong>' . __( 'Already Scheduled', 'rsvpmaker' ) . ':</strong><br /><br /><form method="post" action="' . $action . '">
+			echo '<strong>' . __( 'Already Scheduled', 'rsvpmaker' ) . ':</strong><br /><br /><form method="post" action="' . esc_attr( $action ) . '">
 
 <fieldset>
 
@@ -2313,7 +2313,7 @@ function rsvpmaker_next_or_recent( $template_id ) {
 
 			$neatdate = mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
-			$event = sprintf( '<a href="%s">%s: %s</a>', get_post_permalink( $row->postID ), __( 'Next Event', 'rsvpmaker' ), $neatdate );
+			$event = sprintf( '<a href="%s">%s: %s</a>', esc_url( get_post_permalink( $row->postID ) ), __( 'Next Event', 'rsvpmaker' ), $neatdate );
 
 		} else {
 
@@ -2333,7 +2333,7 @@ function rsvpmaker_next_or_recent( $template_id ) {
 
 				$neatdate = mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
-				$event = sprintf( '<a style="color:#333;" href="%s">%s: %s</a>', get_post_permalink( $row->postID ), __( 'Most Recent', 'rsvpmaker' ), $neatdate );
+				$event = sprintf( '<a style="color:#333;" href="%s">%s: %s</a>', esc_url( get_post_permalink( $row->postID ) ), __( 'Most Recent', 'rsvpmaker' ), $neatdate );
 
 			}
 	}
@@ -2502,7 +2502,7 @@ $post = get_post(intval($_GET['t']));
 
 			<input type="text" name="recur_title[<?php echo esc_attr($i); ?>]" value="<?php echo esc_html( $post->post_title ); ?>" >
 				<?php echo rsvpmaker_sametime( rsvpmaker_date( 'Y-m-d', $ts ) );
-				echo $hwarn;
+				echo wp_kses_post( $hwarn );
 
 				?>
 </div>
