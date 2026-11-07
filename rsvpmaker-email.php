@@ -7973,6 +7973,8 @@ rsvpmaker_admin_heading(__('Extract Email Addresses','rsvpmaker'),__FUNCTION__);
 </form>
 <?php
 
+}
+
 /**
  * Resend receipt email for an RSVP entry from admin
  * Called from RSVP Report screen when admin clicks "Resend Receipt"
@@ -8070,7 +8072,7 @@ function rsvpmaker_admin_resend_receipt( $rsvp_id ) {
 	}
 	$mail['from'] = $rsvp_to_array[0];
 	$mail['fromname'] = get_bloginfo( 'name' );
-	$mail['subject'] = $notification_subject;
+	$mail['subject'] = str_replace( "[rsvpyesno]", '', $notification_subject );
 	$mail['html'] = wpautop( $notification_body );
 	
 	// Include iCal if available
@@ -8080,9 +8082,15 @@ function rsvpmaker_admin_resend_receipt( $rsvp_id ) {
 	
 	// Send the email
 	rsvpmaker_tx_email( $post, $mail );
+
+	$mail['subject'] .= ' (Copy)';
+	$mail['to'] = $rsvp_to_array[0];
+	$mail['from'] = $rsvp->email;
+	$mail['fromname'] = get_bloginfo( 'name' );
+	if(isset($mail['ical']))
+		unset( $mail['ical'] );
+	rsvpmaker_tx_email( $post, $mail );
 	
 	// Show success message
 	printf( '<div class="notice notice-success"><p>%s</p></div>', esc_html( sprintf( __( 'Receipt resent to %s %s (%s)', 'rsvpmaker' ), $rsvp->first, $rsvp->last, $rsvp->email ) ) );
-}
-
 }

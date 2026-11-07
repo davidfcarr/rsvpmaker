@@ -50,6 +50,17 @@ function rsvpmaker_paypal_verify_rest () {
     $rsvptable = $wpdb->prefix.'rsvpmaker';
         $request_body = file_get_contents('php://input');        
         $data = json_decode($request_body);
+        
+        // Add debug logging for all payment attempts
+        $log_entry = array(
+          'timestamp' => current_time('mysql'),
+          'transaction_id' => !empty($data->id) ? $data->id : 'unknown',
+          'rsvp_tx' => !empty($data->rsvp_tx) ? $data->rsvp_tx : 'unknown',
+          'status' => !empty($data->status) ? $data->status : 'no_status',
+          'amount' => !empty($data->purchase_units[0]->amount->value) ? $data->purchase_units[0]->amount->value : 0
+        );
+        error_log('PayPal Payment Attempt: ' . json_encode($log_entry));
+        
         if(empty($data) || empty($data->rsvp_tx) || empty($data->id) || empty($data->status))
           return array('status' => 'Invalid PayPal payload');
         $saved = get_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);
@@ -65,6 +76,15 @@ function rsvpmaker_paypal_verify_rest () {
           return array('status' => 'Payment currency mismatch');
         if('COMPLETED' !== strtoupper($data->status))
           return array('status' => 'Payment not completed');
+        
+        // Add secondary duplicate check via money transaction table
+        $money_table = rsvpmaker_money_table();
+        $existing_money_tx = $wpdb->get_row($wpdb->prepare(
+          "SELECT * FROM %i WHERE transaction_id=%s",
+          $money_table,
+          $data->id
+        ));
+        
         $rsvp_id = (empty($saved['rsvp'])) ? 0 : $saved['rsvp'];
         $rsvp_to = $rsvp_options['rsvp_to'];
         $paidnow = floatval($saved['amount']);
@@ -81,11 +101,22 @@ function rsvpmaker_paypal_verify_rest () {
           $paidbefore = (empty($row->amountpaid)) ? 0 : floatval($row->amountpaid);
           $fee_total = floatval($row->fee_total);
           $event_id = $row->event;
+          
+          // Check for duplicate via both RSVP details and money transaction table
           if(!empty($details['paypal_transaction_id']) && $details['paypal_transaction_id'] === $data->id) {
             $already_processed = true;
             $paid = $paidbefore;
             $owed = $fee_total - $paidbefore;
             $status = 'Payment already recorded: '.number_format( $paidbefore, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'];
+            error_log('PayPal: Duplicate transaction detected (RSVP details) - ID ' . $data->id . ' already processed for RSVP ' . $rsvp_id);
+          }
+          elseif(!empty($existing_money_tx)) {
+            // Transaction was already recorded in money table even if RSVP details don't show it
+            $already_processed = true;
+            $paid = $paidbefore;
+            $owed = $fee_total - $paidbefore;
+            $status = 'Payment already recorded: '.number_format( $paidbefore, 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands'] ) . ' ' . $rsvp_options['paypal_currency'];
+            error_log('PayPal: Duplicate transaction detected (money table) - ID ' . $data->id . ' already in transaction log');
           }
           else {
             $paid = ($paidbefore) ? $paidbefore + $paidnow : $paidnow;
@@ -102,7 +133,12 @@ function rsvpmaker_paypal_verify_rest () {
           }
           if(!$already_processed) {
             $updatesql = $wpdb->prepare("UPDATE %i SET amountpaid=%s, owed=%s, details=%s WHERE id=%d",$rsvptable,$paid,$owed,maybe_serialize($details),$rsvp_id);
-            $wpdb->query($updatesql);
+            $result = $wpdb->query($updatesql);
+            if($result === false) {
+              error_log('PayPal: Database update failed for RSVP ID ' . $rsvp_id . ', Error: ' . $wpdb->last_error);
+              return array('status' => 'Database update failed');
+            }
+            error_log('PayPal: RSVP record updated - ID ' . $rsvp_id . ', New Amount: ' . $paid . ', Owed: ' . $owed);
           }
         }
         $gift_certificate = '';
@@ -116,7 +152,15 @@ function rsvpmaker_paypal_verify_rest () {
         if(!empty($saved['is_gift_certificate'])) {
           $gift_certificate = rsvpmaker_gift_certificate_create($atts['amount'],$atts);
         }
+        // Always log payment to transaction table (for audit trail)
         $existing = $already_processed ? null : rsvpmaker_money_tx($atts);
+        if(!$already_processed && $existing) {
+          error_log('PayPal: Money transaction recorded - ID ' . $existing->id . ', Amount: ' . $atts['amount']);
+        }
+        elseif(!$already_processed && !$existing) {
+          error_log('PayPal: Failed to record money transaction for amount ' . $atts['amount']);
+        }
+        
         if(!$already_processed) {
           do_action('rsvpmaker_paypal_confirmation_tracking',$data,$saved);
           $postdata = null;
@@ -145,11 +189,25 @@ function rsvpmaker_paypal_verify_rest () {
               $mail['fromname'] = $postdata['profile']['first'].' '.$postdata['profile']['last'];
               rsvpmailer($mail);
             }
+            else {
+              error_log('PayPal: Multi-event data not found or invalid for transient key: ' . $saved['rsvpmulti']);
+              $status .= " ERROR processing multi-event registration";
+            }
           }
-          else
-            $status .= " ERROR processing multi-event registration";
+          // Single-event registrations skip the multi-event logic above - no error needed
+          
+          // Always send receipt email after successful payment
           if($rsvp_id) {
-            rsvpmaker_confirm_payment($rsvp_id,$rsvp_to);
+            $receipt_sent = rsvpmaker_confirm_payment($rsvp_id,$rsvp_to);
+            if($receipt_sent) {
+              error_log('PayPal: Receipt email sent successfully for RSVP ' . $rsvp_id);
+            } else {
+              error_log('PayPal: Receipt email send failed for RSVP ' . $rsvp_id);
+            }
+          } else if(!empty($atts['email'])) {
+            // For non-RSVP payments (gift certificates), also send receipt
+            do_action('rsvpmaker_send_payment_receipt', $atts);
+            error_log('PayPal: Payment receipt action triggered for email ' . $atts['email']);
           }
         }
         $rsvp_receipt_link = '';
@@ -157,15 +215,29 @@ function rsvpmaker_paypal_verify_rest () {
           $receipt_code = get_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,true);
           if(!$receipt_code) {
             $receipt_code = wp_generate_password(20,false,false);
-            if($event_id)
+            if($event_id) {
               update_post_meta($event_id,'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
-            elseif(!empty($saved['post_id']))
+            }
+            elseif(!empty($saved['post_id'])) {
               update_post_meta($saved['post_id'],'rsvpmaker_receipt_'.$rsvp_id,$receipt_code);
+            }
           }
-          if($event_id)
-            $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($event_id));
-          elseif(!empty($saved['post_id']))
-            $rsvp_receipt_link = add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($saved['post_id']));
+          
+          // Generate receipt link with fallback for non-event payments
+          $receipt_page = $event_id ?: (!empty($saved['post_id']) ? $saved['post_id'] : 0);
+          if($receipt_page) {
+            $rsvp_receipt_link = add_query_arg(
+              array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),
+              get_permalink($receipt_page)
+            );
+          } else {
+            // Fallback: use home page for payment-only (no event) receipts
+            $rsvp_receipt_link = add_query_arg(
+              array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),
+              home_url()
+            );
+          }
+          error_log('PayPal: Receipt link generated - ' . $rsvp_receipt_link);
         }
   return array('status'=>$status,'receipt_link'=>$rsvp_receipt_link,'saved'=>$saved,'totalpaid'=>$paid,'paidnow'=>$paidnow,'owed'=>$owed,'fee_total'=>$fee_total,'previously_paid'=>$paidbefore,'existing'=>$existing,'gift_certificate'=>$gift_certificate);
 }

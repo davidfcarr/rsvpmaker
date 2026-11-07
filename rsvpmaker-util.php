@@ -5210,6 +5210,11 @@ function rsvpmaker_confirm_payment($rsvp_id, $rsvp_to = '') {
 
 	$row = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE id=%d',$wpdb->prefix . 'rsvpmaker',$rsvp_id));
 
+	if(empty($row)) {
+		rsvpmaker_log('confirm_payment: RSVP record not found for ID ' . $rsvp_id);
+		return false;
+	}
+
 	$rsvpdata['rsvpmessage'] = rsvpmaker_guestparty($rsvp_id,true,true);
 
 	$event = null;
@@ -5263,6 +5268,9 @@ function rsvpmaker_confirm_payment($rsvp_id, $rsvp_to = '') {
 		rsvp_message_via_template ($rsvpdata,'receipt',$event);
 
 	}
+
+	rsvpmaker_log('confirm_payment: Receipt sent for RSVP ID ' . $rsvp_id . ', Email: ' . $row->email);
+	return true;
 
 }
 
