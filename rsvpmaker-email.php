@@ -7972,4 +7972,117 @@ rsvpmaker_admin_heading(__('Extract Email Addresses','rsvpmaker'),__FUNCTION__);
   </p>
 </form>
 <?php
+
+/**
+ * Resend receipt email for an RSVP entry from admin
+ * Called from RSVP Report screen when admin clicks "Resend Receipt"
+ * 
+ * @param int $rsvp_id The RSVP entry ID
+ * @return void
+ */
+function rsvpmaker_admin_resend_receipt( $rsvp_id ) {
+	global $wpdb, $post, $rsvp_options;
+	
+	$rsvp_id = intval( $rsvp_id );
+	
+	// Get the RSVP entry
+	$rsvp = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM %i WHERE id=%d", $wpdb->prefix . 'rsvpmaker', $rsvp_id ) );
+	
+	if ( ! $rsvp ) {
+		wp_die( 'RSVP entry not found' );
+	}
+	
+	// Get the event
+	$post = get_post( $rsvp->event );
+	
+	if ( ! $post ) {
+		wp_die( 'Event not found' );
+	}
+	
+	// Check if sending confirmation emails is enabled for this event
+	$send_confirmation = get_post_meta( $post->ID, '_rsvp_rsvpmaker_send_confirmation_email', true );
+	
+	if ( ! $send_confirmation ) {
+		wp_die( 'Confirmation emails are not enabled for this event' );
+	}
+	
+	// Load email templates
+	$templates = get_rsvpmaker_notification_templates();
+	$rsvp_to = get_post_meta( $post->ID, '_rsvp_to', true );
+	$rsvp_to_array = explode( ",", $rsvp_to );
+	
+	// Build the confirmation message
+	$rsvpdata = unserialize( $rsvp->details );
+	if ( empty( $rsvpdata['rsvptitle'] ) ) {
+		$rsvpdata['rsvptitle'] = get_the_title( $rsvp->event );
+	}
+	if ( empty( $rsvpdata['rsvpdate'] ) ) {
+		$rsvpdata['rsvpdate'] = get_rsvp_date( $rsvp->event, 'long_date' );
+	} elseif ( strpos( $rsvpdata['rsvpdate'], ':' ) ) {
+		$rsvpdata['rsvpdate'] = rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $rsvpdata['rsvpdate'] ) );
+	}
+	
+	$details = rsvpmaker_guestparty( $rsvp_id, true );
+	
+	// Build confirmation message
+	$rsvpdata['rsvpmessage'] = '';
+	$message_id = get_post_meta( $post->ID, '_rsvp_confirm', true );
+	if ( $message_id ) {
+		$message_post = get_post( $message_id );
+		$rsvpdata['rsvpmessage'] .= rsvpmaker_email_html( $message_post->post_content ) . "\n\n";
+	}
+	
+	// Use confirmation template
+	$notification_subject = $templates['confirmation']['subject'];
+	foreach ( $rsvpdata as $field => $value ) {
+		$notification_subject = str_replace( '[' . $field . ']', $value, $notification_subject );
+	}
+	
+	$notification_body = $templates['confirmation']['body'];
+	foreach ( $rsvpdata as $field => $value ) {
+		$notification_body = str_replace( '[' . $field . ']', $value, $notification_body );
+	}
+	$notification_body = str_replace( '[rsvpdetails]', $details, $notification_body );
+	
+	// Add receipt link
+	$receipt_code = get_post_meta( $post->ID, 'rsvpmaker_receipt_' . $rsvp_id, true );
+	if ( ! $receipt_code ) {
+		$receipt_code = wp_generate_password( 20, false, false );
+		update_post_meta( $post->ID, 'rsvpmaker_receipt_' . $rsvp_id, $receipt_code );
+	}
+	$receipt_link = sprintf( '<p><a href="%s">%s</a></p>', add_query_arg( array( 'rsvp_receipt' => $rsvp_id, 'receipt' => $receipt_code, 't' => time() ), get_permalink( $post->ID ) ), __( 'Print Receipt', 'rsvpmaker' ) );
+	$notification_body = $receipt_link . $notification_body;
+	
+	// Add RSVP update link
+	$rsvp_options['rsvplink'] = get_rsvp_link( $rsvp->event, false, $rsvp->email, $rsvp->id );
+	$rsvpupdate_link = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'], $rsvp_options['rsvplink'] );
+	if ( ! empty( $rsvp->fee_total ) ) {
+		$rsvpupdate_link .= '<p><em>' . __( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
+	}
+	$notification_body = str_replace( '[rsvpupdate]', $rsvpupdate_link, $notification_body );
+	$notification_body = rsvpmaker_email_html( $notification_body );
+	
+	// Prepare email
+	$mail = array();
+	$mail['to'] = $rsvp->email;
+	if ( ! empty( $rsvp->first ) ) {
+		$mail['toname'] = $rsvp->first . ' ' . $rsvp->last;
+	}
+	$mail['from'] = $rsvp_to_array[0];
+	$mail['fromname'] = get_bloginfo( 'name' );
+	$mail['subject'] = $notification_subject;
+	$mail['html'] = wpautop( $notification_body );
+	
+	// Include iCal if available
+	if ( function_exists( 'rsvpmaker_to_ical_email' ) ) {
+		$mail['ical'] = rsvpmaker_to_ical_email( $post->ID, $rsvp_to, $rsvp->email );
+	}
+	
+	// Send the email
+	rsvpmaker_tx_email( $post, $mail );
+	
+	// Show success message
+	printf( '<div class="notice notice-success"><p>%s</p></div>', esc_html( sprintf( __( 'Receipt resent to %s %s (%s)', 'rsvpmaker' ), $rsvp->first, $rsvp->last, $rsvp->email ) ) );
+}
+
 }

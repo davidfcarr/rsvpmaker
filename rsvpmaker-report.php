@@ -2,6 +2,12 @@
 
 function rsvp_report() {
 
+	// Handle resend receipt action
+	if ( isset( $_GET['resend_receipt'] ) && wp_verify_nonce( rsvpmaker_nonce_data('data'), rsvpmaker_nonce_data('key') ) ) {
+		$rsvp_id = intval( $_GET['resend_receipt'] );
+		rsvpmaker_admin_resend_receipt( $rsvp_id );
+	}
+
 if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
 	rsvpmaker_admin_heading('RSVP Report: Unpaid',__FUNCTION__);
 	printf('<p><a href="%s">%s</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report'),__('Back to Events List','rsvpmaker'));
@@ -802,8 +808,10 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 
 			if ( ! isset( $_GET['rsvp_print'] ) && current_user_can( 'edit_others_posts' ) && $editor_options ) {
 				$editlink = ($row['master_rsvp']) ? '' : sprintf( '<a href="%s&edit_rsvp=%d">Edit %s %s</a> | ', admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$post->ID, $row['id'], esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
+				
+				$resend_link = sprintf( '<a href="%s&resend_receipt=%d&%s" onclick="return confirm(\'%s\');">Resend Receipt</a> | ', admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$post->ID, intval($row['id']), rsvpmaker_nonce('query'), esc_attr(__('Send receipt email to '.$row['first'].' '.$row['last'].'?','rsvpmaker')) );
 
-				echo sprintf( '<p>%s <a href="%s&delete=%d">Delete %s %s</a></p>', $editlink, admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report', intval($row['id']), esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
+				echo sprintf( '<p>%s %s <a href="%s&delete=%d">Delete %s %s</a></p>', $editlink, $resend_link, admin_url() . 'edit.php?post_type=rsvpmaker&page=rsvp_report', intval($row['id']), esc_attr( $row['first'] ), esc_attr( $row['last'] ) );
 			}
 
 			$userrsvps[] = $row['user_id'];
