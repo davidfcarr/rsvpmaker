@@ -41,7 +41,7 @@ function rsvpmaker_stripecharge( $atts ) {
 
 	global $current_user, $rsvp_options;
 
-	$vars['description'] = ( ! empty( $atts['description'] ) ) ? $atts['description'] : __( 'charge from', 'rsvpmaker' ) . ' ' . get_bloginfo( 'name' );
+	$vars['description'] = ( ! empty( $atts['description'] ) ) ? $atts['description'] : esc_html__( 'charge from', 'rsvpmaker' ) . ' ' . get_bloginfo( 'name' );
 
 	$vars['paymentType'] = $paymentType = ( empty( $atts['paymentType'] ) ) ? 'once' : $atts['paymentType'];
 

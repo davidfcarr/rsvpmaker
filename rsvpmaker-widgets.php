@@ -52,7 +52,7 @@ class CPEventsWidget extends WP_Widget {
 
 					}
 					if ( ! empty( $rsvp_options['eventpage'] ) ) {
-						echo '<li><a href="' . esc_attr( $rsvp_options['eventpage'] ) . '">' . __( 'Go to Events Page', 'rsvpmaker' ) . '</a></li>';
+						echo '<li><a href="' . esc_attr( $rsvp_options['eventpage'] ) . '">' . esc_html__( 'Go to Events Page', 'rsvpmaker' ) . '</a></li>';
 
 					}
 					echo "\n</ul>\n";

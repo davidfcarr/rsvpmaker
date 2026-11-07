@@ -197,7 +197,7 @@ function rsvpmaker_event_listing( $atts = array() ) {
 
 	if ( ! empty( $atts['limit'] ) && ! empty( $rsvp_options['eventpage'] ) ) {
 
-		$listings .= '<li><a href="' . esc_url( $rsvp_options['eventpage'] ) . '">' . __( 'Go to Events Page', 'rsvpmaker' ) . '</a></li>';
+		$listings .= '<li><a href="' . esc_url( $rsvp_options['eventpage'] ) . '">' . esc_html__( 'Go to Events Page', 'rsvpmaker' ) . '</a></li>';
 	}
 
 	if ( ! empty( $atts['title'] ) ) {

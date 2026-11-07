@@ -902,7 +902,7 @@ function rsvpmaker_short_date( $post_id, $and_time = false, $end_time = false ) 
 
 		$time        = wp_date( $time_format, $timerow->ts_start );
 
-		$output     .= ' '.__('at','rsvpmaker').' ' . $time;
+		$output     .= ' '.esc_html__('at','rsvpmaker').' ' . $time;
 
 	}
 
@@ -912,7 +912,7 @@ function rsvpmaker_short_date( $post_id, $and_time = false, $end_time = false ) 
 
 		if ( ( $end_date != $start_date ) || $and_time ) {
 
-			$output .= ' ' . __( 'to', 'rsvpmaker' ) . ' ';
+			$output .= ' ' . esc_html__( 'to', 'rsvpmaker' ) . ' ';
 
 		}
 
@@ -926,7 +926,7 @@ function rsvpmaker_short_date( $post_id, $and_time = false, $end_time = false ) 
 
 			$time    = wp_date( $time_format, $timerow->ts_end );
 
-			$output     .= ' '.__('at','rsvpmaker').' ' . $time;
+			$output     .= ' '.esc_html__('at','rsvpmaker').' ' . $time;
 
 		}
 
@@ -1111,11 +1111,11 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 	} elseif ( ! empty( $datevar['end'] ) ) {
 		$end_time = ( is_array( $datevar['end'] ) ) ? $datevar['end'][ $index ] : $datevar['end'];
 	}
-	echo '<p><label>' . __( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
+	echo '<p><label>' . esc_html__( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
 ?>
 <option value=""><?php 
 
-  echo __( 'Not set (optional)', 'rsvpmaker' );  
+  echo esc_html__( 'Not set (optional)', 'rsvpmaker' );  
 
 ?>
 
@@ -1129,7 +1129,7 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 ?>
  ><?php 
 
-  echo __( 'Set end time', 'rsvpmaker' );  
+  echo esc_html__( 'Set end time', 'rsvpmaker' );  
 
 ?>
 
@@ -1143,7 +1143,7 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 ?>
 ><?php 
 
-  echo __( 'All day/time not shown', 'rsvpmaker' );  
+  echo esc_html__( 'All day/time not shown', 'rsvpmaker' );  
 
 ?>
 
@@ -1156,11 +1156,11 @@ function rsvpmaker_duration_select( $slug, $datevar = array(), $start_time = '',
 
 }
 function rsvpmaker_duration_select_2021( $duration_type ) {
-	echo '<p><label>' . __( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
+	echo '<p><label>' . esc_html__( 'End Time', 'rsvpmaker' ) . '</label> <select id="end_time_type" name="end_time_type" class="end_time_type" >';
 ?>
 <option value=""><?php 
 
-  echo __( 'Not set (optional)', 'rsvpmaker' );  
+  echo esc_html__( 'Not set (optional)', 'rsvpmaker' );  
 
 ?>
 
@@ -1174,7 +1174,7 @@ function rsvpmaker_duration_select_2021( $duration_type ) {
 ?>
  ><?php 
 
-  echo __( 'Set end time', 'rsvpmaker' );  
+  echo esc_html__( 'Set end time', 'rsvpmaker' );  
 
 ?>
 
@@ -1188,7 +1188,7 @@ function rsvpmaker_duration_select_2021( $duration_type ) {
 ?>
 ><?php 
 
-  echo __( 'All day/time not shown', 'rsvpmaker' );  
+  echo esc_html__( 'All day/time not shown', 'rsvpmaker' );  
 
 ?>
 
@@ -1200,7 +1200,7 @@ function rsvpmaker_duration_select_2021( $duration_type ) {
 
 		$s     = ( $duration_type == $multi ) ? ' selected="selected" ' : '';
 
-		printf( '<option value="%s" %s>%s</option>', esc_attr($multi), $s, esc_html($i . ' ' . __( 'days/time not shown', 'rsvpmaker' )) );
+		printf( '<option value="%s" %s>%s</option>', esc_attr($multi), $s, esc_html($i . ' ' . esc_html__( 'days/time not shown', 'rsvpmaker' )) );
 
 	}
 	echo '</select>';

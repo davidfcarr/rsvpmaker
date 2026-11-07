@@ -22,7 +22,7 @@ function rsvpmaker_relay_manual_test() {
 			echo wp_kses_post( $html );
 
 		} else {
-			echo '<p>' . __( 'No messages', 'rsvpmaker' ) . '</p>';
+			echo '<p>' . esc_html__( 'No messages', 'rsvpmaker' ) . '</p>';
 		}		
 	}
 }

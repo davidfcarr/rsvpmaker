@@ -36,7 +36,7 @@ if ( $chosen ) {
 
 	if ( ! empty( $postparts[1] ) ) {
 
-		$note .= sprintf( '<p><a href="%s">%s</a>', get_permalink( $chosen ), __( 'Read more', 'rsvpmaker' ) );
+		$note .= sprintf( '<p><a href="%s">%s</a>', get_permalink( $chosen ), esc_html__( 'Read more', 'rsvpmaker' ) );
 	}
 
 	$editorsnote['note'] = $note;
@@ -140,7 +140,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 		if ( ! $MailChimp->success() ) {
 
-			echo '<div>' . __( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
+			echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
 			return;
 
 		}
@@ -158,7 +158,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 			if ( ! $MailChimp->success() ) {
 
-				echo '<div>' . __( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
+				echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
 				return;
 
 			}
@@ -170,11 +170,11 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 			// print_r($send_result);
 
 			if ( $MailChimp->success() ) {
-				$chimpmsg = __( 'Sent MailChimp campaign', 'rsvpmaker' ) . ': ' . $campaign['id'];
+				$chimpmsg = esc_html__( 'Sent MailChimp campaign', 'rsvpmaker' ) . ': ' . $campaign['id'];
 				echo '<div>' . $chimpmsg . '</div>';
 				add_post_meta( $post->ID, 'rsvp_mailchimp_sent', $chimpmsg . ' ' . rsvpmaker_date( 'r' ) );
 			} else {
-				echo '<div>' . __( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
+				echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
 			}
 		}
 	}
