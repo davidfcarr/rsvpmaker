@@ -15,7 +15,7 @@ function rsvpemail_tag($post_id = 0, $blog_id = 0) {
 function rsvpmailer($mail, $bypass = []) {
 	if(defined('RSVPMAILOFF'))
 	{
-		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',var_export($mail,true));
+		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>', esc_html( var_export( $mail, true ) ) );
 		// error_log('RSVPMaker Email Disabled '.var_export($mail,true));
 		return;
 	}
@@ -223,7 +223,7 @@ if(isset($mail['attachments']) && is_array($mail['attachments']))
 	foreach($mail['attachments'] as $path) {
 		$rsvpmail->AddAttachment($path);
 		if(isset($_GET['debug']))
-			printf('<p>Trying to add %s</p>',$path);
+		printf('<p>Trying to add %s</p>', esc_html( $path ) );
 	}
 $site_url = get_site_url();
 $p = explode('//',$site_url);
@@ -454,20 +454,20 @@ $theme_colors = empty($theme_style['colors']) ? array() : $theme_style['colors']
 $theme_gradients = empty($theme_style['gradients']) ? array() : $theme_style['gradients'];
 printf('<p><input type="checkbox" name="rsvpmail_list_rsvpmodal_on" value="1" %s> Popup On <span="show_popup_options_checkbox"><input type="checkbox" onclick="showPopupOptions()"> Show Popup Options</span></p>',$checked);
 echo '<div id="show_popup_options" style="display:none;">';
-printf('<p>Title<br><input type="text" name="rsvpmail_list_rsvpmodal_content[title]" value="%s" ></p>',$title);
-printf('<p>Footer Text<br><input type="text" name="rsvpmail_list_rsvpmodal_content[footer_text]" value="%s" ></p>',$footer_text);
-printf('<p>Width <input type="text" name="rsvpmail_list_rsvpmodal_css[width]" value="%s" > Distance from Top <input type="text" name="rsvpmail_list_rsvpmodal_css[top]" value="%s" > </p>',array_shift($rsvpmail_list_rsvpmodal_css),array_shift($rsvpmail_list_rsvpmodal_css));
+printf('<p>Title<br><input type="text" name="rsvpmail_list_rsvpmodal_content[title]" value="%s" ></p>', esc_attr( $title ) );
+printf('<p>Footer Text<br><input type="text" name="rsvpmail_list_rsvpmodal_content[footer_text]" value="%s" ></p>', esc_attr( $footer_text ) );
+printf('<p>Width <input type="text" name="rsvpmail_list_rsvpmodal_css[width]" value="%s" > Distance from Top <input type="text" name="rsvpmail_list_rsvpmodal_css[top]" value="%s" > </p>', esc_attr( array_shift( $rsvpmail_list_rsvpmodal_css ) ), esc_attr( array_shift( $rsvpmail_list_rsvpmodal_css ) ) );
 foreach($rsvpmail_list_rsvpmodal_css as $label => $content) {
-	printf('<p>CSS for %s<br><textarea rows="4" cols="80" name="rsvpmail_list_rsvpmodal_css[%s]">%s</textarea></p>',$label,$label,$content);
+	printf('<p>CSS for %s<br><textarea rows="4" cols="80" name="rsvpmail_list_rsvpmodal_css[%s]">%s</textarea></p>', esc_html( $label ), esc_attr( $label ), esc_html( $content ) );
 }
 echo '<p>Examples of an additional CSS customization: .rsvpmodal-header h3 {font-size: 20px;} .rsvpmodal-body p {font-size: 18px;} .rsvpmodal-footer p {font-size: 12px;} </p>';
 echo '<h2 id="theme_colors">Colors used in your theme</h2>';
 foreach($theme_colors as $index => $color) {
-	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-color:%s"></div></div>',$index,$color,$color);
+	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-color:%s"></div></div>', esc_html( $index ), esc_html( $color ), esc_attr( $color ) );
 }
 echo '<h2 id="theme_gradients">Gradients used in your theme</h2>';
 foreach($theme_gradients as $index => $color) {
-	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-gradient:%s"></div></div>',$index,$color,$color);
+	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-gradient:%s"></div></div>', esc_html( $index ), esc_html( $color ), esc_attr( $color ) );
 }
 //echo '</div>';
 ?>
@@ -796,7 +796,7 @@ $days = array(__('Sunday','rsvpmaker'),__('Monday','rsvpmaker'),__('Tuesday','rs
 foreach($days as $index => $daytext)
 	{
 	$selected = ($index == $day) ? ' selected="selected" ' : '';
-	printf('<option  value="%s" %s>%s</option>',$index,$selected,$daytext);
+	printf('<option  value="%s" %s>%s</option>', esc_attr( $index ), $selected, esc_html( $daytext ) );
 	}
 ?>
 </select>
@@ -815,7 +815,7 @@ for($i=0; $i < 24; $i++)
 	else		
 		$twelvehour = $i." a.m.";
 
-	printf('<option  value="%s" %s>%s / %s</option>',$padded,$selected,$twelvehour,$padded);
+	printf('<option  value="%s" %s>%s / %s</option>', esc_attr( $padded ), $selected, esc_html( $twelvehour ), esc_html( $padded ) );
 	}
 ?>
 </select>
@@ -880,7 +880,7 @@ for($i = 0; $i < 25; $i++)
 	{
 	$s = ($i == $preview) ? ' selected="selected"' : '';
 	$label = ($i) ? $i.' hours before' : 'none';
-	$preview_options .= sprintf('<option value="%d" %s>%s</option>',$i,$s,$label);
+	$preview_options .= sprintf('<option value="%d" %s>%s</option>', esc_attr( $i ), $s, esc_html( $label ) );
 	}
 ?>
 <?php esc_html_e('Preview','rsvpmaker');?> <select name="cron_preview"><?php echo $preview_options; ?></select>
@@ -894,7 +894,7 @@ $conditions = array('none' => __('none','rsvpmaker'),'events' => __('Future even
 foreach($conditions as $slug => $text)
 	{
 	$s = ($slug == $condition) ? ' selected="selected"' : '';
-	$condition_options .= sprintf('<option value="%s" %s>%s</option>',$slug,$s,$text);
+	$condition_options .= sprintf('<option value="%s" %s>%s</option>', esc_attr( $slug ), $s, esc_html( $text ) );
 	}
 ?>
 <?php esc_html_e('Test for','rsvpmaker');?>: <select name="cron_condition"><?php echo $condition_options; ?></select>
@@ -1281,7 +1281,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	$mail['post_id'] = $post_id;
 	$mail['html'] = $html;
 	$from = $postvars["from_email"];
-	printf('<p>from %s</p>',$from);
+	printf('<p>from %s</p>', esc_html( $from ) );
 	update_post_meta($post_id,'rsvprelay_from',$from);
 	update_post_meta($post_id,'rsvprelay_fromname',$postvars["from_name"]);
 
@@ -1561,7 +1561,7 @@ foreach($guests as $guest)
 		$recipients[] = $email;
 	//		add_post_meta($post_id,'rsvprelay_to',$guest->email);
 	}
-	printf('<p>Looking up %s members of the guest email list %s</p>',$count, $segment_text);
+	printf('<p>Looking up %s members of the guest email list %s</p>', esc_html( $count ), esc_html( $segment_text ) );
 	$sending_to[] = 'guest list';
 }
 
@@ -1608,7 +1608,7 @@ foreach($emails as $email)
 	$recipients[] = $email;
 	//		add_post_meta($post_id,'rsvprelay_to',$user->user_email);
 	}
-	printf('<p>Filtering to %s by RSVP status (%s)</p>',$count,$rule);
+	printf('<p>Filtering to %s by RSVP status (%s)</p>', esc_html( $count ), esc_html( $rule ) );
 }
 return array_unique($recipients);
 }
