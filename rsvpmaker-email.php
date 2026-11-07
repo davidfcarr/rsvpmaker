@@ -1227,7 +1227,7 @@ function rsvpmaker_blogs_by_email($email, $path = '/wp-admin/edit.php?post_type=
 		return array('WEB-DOMAIN-GOES-HERE'.$path);
 	if (!is_multisite()) {
 		$url = site_url().$path;
-		$link = sprintf('<a href="%s">%s</a>',$url,$url);		
+		$link = sprintf('<a href="%s">%s</a>', esc_url( $url ), esc_html( $url ) );		
 		return array($link);
 	}
 	$blog_urls = array();
@@ -1241,7 +1241,7 @@ function rsvpmaker_blogs_by_email($email, $path = '/wp-admin/edit.php?post_type=
 			foreach($blogs as $blog)
 				{
 				$url = $blog->siteurl . $path;
-				$blog_urls[] = sprintf('<a href="%s">%s</a>',$url,$url);
+				$blog_urls[] = sprintf('<a href="%s">%s</a>', esc_url( $url ), esc_html( $url ) );
 				}
 			}
 	}
@@ -2132,7 +2132,7 @@ if(!empty($options)) {
 	<br>Example: a newsletter template containing a latest posts block that you use, but not all the time.";
 	$candidates = rsvpmail_candidate_templates(true);
 foreach($candidates as $candidate) {
-	$alts[] = sprintf('<a href="%s">%s</a>',admin_url('post.php?post='.$candidate->ID.'&action=edit'),$candidate->post_title.' '.$candidate->post_modified);
+	$alts[] = sprintf('<a href="%s">%s</a>', esc_url( admin_url( 'post.php?post=' . $candidate->ID . '&action=edit' ) ), esc_html( $candidate->post_title . ' ' . $candidate->post_modified ) );
 }
 if(!empty($alts)) {
 	echo '<br>Previously registered: '.implode(', ',$alts);
@@ -3218,7 +3218,7 @@ function rsvpmaker_upcoming_email($atts) {
 				{
 					$output .= $label."\n";
 					foreach($upcoming as $ahead)
-						$output .= sprintf('<p><a href="%s">%s - %s</a></p>',get_permalink($ahead->ID),$ahead->post_title,date('F j',rsvpmaker_strtotime($ahead->datetime)));
+						$output .= sprintf('<p><a href="%s">%s - %s</a></p>', esc_url( get_permalink( $ahead->ID ) ), esc_html( $ahead->post_title ), esc_html( date( 'F j', rsvpmaker_strtotime( $ahead->datetime ) ) ) );
 				}
 		}	
 	return $output;
