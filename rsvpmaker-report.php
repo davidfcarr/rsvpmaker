@@ -10,7 +10,7 @@ function rsvp_report() {
 
 if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key'))) {
 	rsvpmaker_admin_heading('RSVP Report: Unpaid',__FUNCTION__);
-	printf('<p><a href="%s">%s</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report'),__('Back to Events List','rsvpmaker'));
+	printf('<p><a href="%s">%s</a></p>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report') ), __('Back to Events List','rsvpmaker'));
 	rsvp_report_unpaid();
 	return;
 }
@@ -46,14 +46,14 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 		if(!empty($results))
 			printf('<h3>%s</h3>',esc_html__('Search Results'));
 			foreach($results as $row) {
-				printf('<p>%s %s %s<br /><a href="%s">%s: %s</a></p>',$row->first,$row->last,$row->email,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$row->event.'#rsvprow'.$row->id),$row->post_title,rsvpmaker_date($rsvp_options['long_date'],$row->ts_start));
+				printf('<p>%s %s %s<br /><a href="%s">%s: %s</a></p>', esc_html( $row->first ), esc_html( $row->last ), esc_html( $row->email ), esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$row->event.'#rsvprow'.$row->id) ), esc_html( $row->post_title ), esc_html( rsvpmaker_date($rsvp_options['long_date'],$row->ts_start) ) );
 			}
 		}
 
 		$param = ( empty( $_GET['limit'] ) ) ? '' : sanitize_text_field($_GET['limit']) . ' ' . sanitize_text_field($_GET['detail']);
 
 		if ( sizeof( $_GET ) > 2 ) {
-			$title = sprintf( '<a href="%s">%s</a> - %s %s', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report' ), __( 'RSVP Report', 'rsvpmaker' ), __( 'Details', 'rsvpmaker' ), $param );
+			$title = sprintf( '<a href="%s">%s</a> - %s %s', esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvp_report' ) ), __( 'RSVP Report', 'rsvpmaker' ), __( 'Details', 'rsvpmaker' ), esc_html( $param ) );
 		} else {
 			$title = __( 'RSVP Report', 'rsvpmaker' );
 		}
@@ -72,7 +72,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 				$moved_post = get_post($move_to);
 				$moved_event = get_rsvpmaker_event($move_to);
 				$count = $wpdb->query( $wpdb->prepare("UPDATE %i SET event=%d WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$move_to,$move_rsvp) );
-				printf('<div class="notice notice-info"><p>%d entries moved, see <a href="%s">%s %s</a></p></div>',$count,admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$move_to),$moved_post->post_title,rsvpmaker_date($rsvp_options['long_date'],$moved_event->ts_start));
+				printf('<div class="notice notice-info"><p>%d entries moved, see <a href="%s">%s %s</a></p></div>', esc_html( $count ), esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event='.$move_to) ), esc_html( $moved_post->post_title ), esc_html( rsvpmaker_date($rsvp_options['long_date'],$moved_event->ts_start) ) );
 			}
 		}
 
@@ -189,7 +189,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 					echo '<h2>Restoring unpaid record</h2>';
 					$unpaid_record = unserialize($unpaid->meta_value);
 					foreach($unpaid_record as $restore) {
-						printf('<p>%s %s</p>',$restore->first,$restore->last);
+						printf('<p>%s %s</p>', esc_html( $restore->first ), esc_html( $restore->last ) );
 						$restore = (array) $restore;
 						$wpdb->replace($wpdb->prefix.'rsvpmaker',$restore);
 					}
@@ -211,7 +211,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 			else {
 				echo '<h2>' . __( 'RSVPs for', 'rsvpmaker' ) . ' ' . $title . "</h2>\n";
 				if(!empty($rsvp_options['cancel_unpaid_hours']) && ! isset( $_GET['rsvp_print'] ))
-					printf('<p><a href="%s">%s</a></p>',admin_url("edit.php?post_type=rsvpmaker&page=rsvp_report&event=$eventid&show_unpaid=1"),__('Show Unpaid','rsvpmaker'));
+					printf('<p><a href="%s">Show Unpaid</a></p>', esc_url( admin_url("edit.php?post_type=rsvpmaker&page=rsvp_report&event=$eventid&show_unpaid=1") ) );
 			}
 
 			if ( ! isset( $_GET['rsvp_print'] ) ) {
