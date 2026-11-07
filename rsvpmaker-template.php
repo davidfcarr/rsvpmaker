@@ -25,7 +25,7 @@ function rsvpmaker_template_schedule( $template ) {
 				}
 				?>" placeholder="<?php
 		esc_html_e( 'example', 'rsvpmaker' );
-		echo ': ' . date( 'Y' ) . '-12-31';
+		echo ': ' . esc_html( date( 'Y' ) ) . '-12-31';
 		?>" /> <em>(<?php esc_html_e( 'format', 'rsvpmaker' ); ?>: "YYYY-mm-dd" or "+6 month" or "+1 year")</em></p>
 		<?php
 		$auto = ( ( isset( $_GET['new_template'] ) && ! empty( $rsvp_options['autorenew'] ) ) || get_post_meta( $post->ID, 'rsvpautorenew', true ) );
@@ -86,7 +86,7 @@ function save_rsvp_template_meta( $post_id ) {
 }
 
 function rsvpmaker_add_switch_template_bulk_action( $actions ) {
-	$actions['rsvpmaker_switch_template'] = __( 'Switch Template', 'rsvpmaker' );
+	$actions['rsvpmaker_switch_template'] = esc_html__( 'Switch Template', 'rsvpmaker' );
 	return $actions;
 }
 
@@ -135,7 +135,7 @@ function rsvpmaker_template_list() {
             $target = intval($_POST['template_target']);
             foreach($_POST['add_template_to'] as $to) {
                 $to = intval($to);
-                printf('add post meta %d to %d',$target,$to);
+                printf( esc_html( 'add post meta %d to %d' ), $target, $to );
                 add_post_meta($to,'_meet_recur',$target);
             }
         }
@@ -144,7 +144,7 @@ function rsvpmaker_template_list() {
 
 			$url = sanitize_text_field( $_POST['import_shared_template'] );
 
-			printf( '<p>Importing %s</p>', $url );
+			printf( esc_html( '<p>Importing %s</p>' ), esc_html( $url ) );
 
 			$duplicate = $wpdb->get_var( $wpdb->prepare("SELECT ID FROM %i posts JOIN %i meta ON posts.ID = meta.post_id  WHERE meta_key='template_imported_from' AND meta_value=%s ", $wpdb->posts, $wpdb->postmeta, $url) );
 
@@ -308,7 +308,7 @@ function rsvpmaker_template_list() {
 			// $date = rsvpmaker_date( $rsvp_options['long_date'], $event->ts_start );
 			$date = get_rsvp_date($overridden,'long_date');
 
-			printf( '<div class="updated notice notice-success">Applied "%s" template %s: <a href="%s">View</a> | <a href="%s">Edit</a></div>', esc_html( $opost->post_title ), $date, get_permalink( $overridden ), admin_url( 'post.php?action=edit&post=' . $overridden ) );
+			printf( '<div class="updated notice notice-success">Applied "%s" template %s: <a href="%s">View</a> | <a href="%s">Edit</a></div>', esc_html( $opost->post_title ), esc_html( $date ), esc_url( get_permalink( $overridden ) ), esc_url( admin_url( 'post.php?action=edit&post=' . $overridden ) ) );
 
 			$params = [$wpdb->postmeta,$override];
 
@@ -384,7 +384,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<p>Settings copied: %s</p>', implode( ', ', $copied ) );
+				printf( '<p>Settings copied: %s</p>', esc_html( implode( ', ', $copied ) ) );
 
 			}
 
@@ -431,7 +431,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<h1>Template updated based on contents of event for %s</h1>', rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) );
+				printf( '<h1>Template updated based on contents of event for %s</h1>', esc_html( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) ) );
 
 				$results = $wpdb->get_results( $wpdb->prepare("select * from %i WHERE post_id=%d",$wpdb->postmeta,$e) );
 
@@ -473,7 +473,7 @@ function rsvpmaker_template_list() {
 
 
 
-					printf( '<p>Settings copied: %s</p>', implode( ', ', $copied ) );
+					printf( '<p>Settings copied: %s</p>', esc_html( implode( ', ', $copied ) ) );
 
 				}
 
@@ -481,7 +481,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<h1 style="color: red;">Update Template?</h1><p>Click &quot;Confirm&quot; to override template with the contents of your %s event<p><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" /><input type="hidden" name="t" value="%d" /><input type="hidden" name="event" value="%d" /><input type="hidden" name="overconfirm" value="1" /><button>Confirm</button>%s</form> ', rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ), admin_url( 'edit.php' ), $t, $e, rsvpmaker_nonce('return') );
+				printf( '<h1 style="color: red;">Update Template?</h1><p>Click &quot;Confirm&quot; to override template with the contents of your %s event<p><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" /><input type="hidden" name="t" value="%d" /><input type="hidden" name="event" value="%d" /><input type="hidden" name="overconfirm" value="1" /><button>Confirm</button>%s</form> ', esc_html( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) ), esc_url( admin_url( 'edit.php' ) ), (int) $t, (int) $e, wp_kses_post( rsvpmaker_nonce('return') ) );
 
 
 
@@ -803,11 +803,11 @@ function rsvpmaker_template_list() {
 
 
 
-		$dayarray = array( __( 'Sunday', 'rsvpmaker' ), __( 'Monday', 'rsvpmaker' ), __( 'Tuesday', 'rsvpmaker' ), __( 'Wednesday', 'rsvpmaker' ), __( 'Thursday', 'rsvpmaker' ), __( 'Friday', 'rsvpmaker' ), __( 'Saturday', 'rsvpmaker' ) );
+		$dayarray = array( esc_html__( 'Sunday', 'rsvpmaker' ), esc_html__( 'Monday', 'rsvpmaker' ), esc_html__( 'Tuesday', 'rsvpmaker' ), esc_html__( 'Wednesday', 'rsvpmaker' ), esc_html__( 'Thursday', 'rsvpmaker' ), esc_html__( 'Friday', 'rsvpmaker' ), esc_html__( 'Saturday', 'rsvpmaker' ) );
 
 
 
-		$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ) );
+		$weekarray = array( esc_html__( 'Varies', 'rsvpmaker' ), esc_html__( 'First', 'rsvpmaker' ), esc_html__( 'Second', 'rsvpmaker' ), esc_html__( 'Third', 'rsvpmaker' ), esc_html__( 'Fourth', 'rsvpmaker' ), esc_html__( 'Last', 'rsvpmaker' ), esc_html__( 'Every', 'rsvpmaker' ) );
 
 
 
@@ -998,13 +998,13 @@ function rsvpmaker_template_list() {
 
 
 
-				$dayarray = array( __( 'Sunday', 'rsvpmaker' ), __( 'Monday', 'rsvpmaker' ), __( 'Tuesday', 'rsvpmaker' ), __( 'Wednesday', 'rsvpmaker' ), __( 'Thursday', 'rsvpmaker' ), __( 'Friday', 'rsvpmaker' ), __( 'Saturday', 'rsvpmaker' ) );
+				$dayarray = array( esc_html__( 'Sunday', 'rsvpmaker' ), esc_html__( 'Monday', 'rsvpmaker' ), esc_html__( 'Tuesday', 'rsvpmaker' ), esc_html__( 'Wednesday', 'rsvpmaker' ), esc_html__( 'Thursday', 'rsvpmaker' ), esc_html__( 'Friday', 'rsvpmaker' ), esc_html__( 'Saturday', 'rsvpmaker' ) );
 
-				$weekarray = array( __( 'Varies', 'rsvpmaker' ), __( 'First', 'rsvpmaker' ), __( 'Second', 'rsvpmaker' ), __( 'Third', 'rsvpmaker' ), __( 'Fourth', 'rsvpmaker' ), __( 'Last', 'rsvpmaker' ), __( 'Every', 'rsvpmaker' ), __( 'Even', 'rsvpmaker' ), __( 'Odd', 'rsvpmaker' ) );
+				$weekarray = array( esc_html__( 'Varies', 'rsvpmaker' ), esc_html__( 'First', 'rsvpmaker' ), esc_html__( 'Second', 'rsvpmaker' ), esc_html__( 'Third', 'rsvpmaker' ), esc_html__( 'Fourth', 'rsvpmaker' ), esc_html__( 'Last', 'rsvpmaker' ), esc_html__( 'Every', 'rsvpmaker' ), esc_html__( 'Even', 'rsvpmaker' ), esc_html__( 'Odd', 'rsvpmaker' ) );
 
 				if ( empty( $sked['week'] ) || ( (int) $sked['week'][0] == 0 ) ) {
 
-					$s = __( 'Schedule Varies', 'rsvpmaker' );
+					$s = esc_html__( 'Schedule Varies', 'rsvpmaker' );
 
 				} else {
 
