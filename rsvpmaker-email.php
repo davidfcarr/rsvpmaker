@@ -1726,7 +1726,7 @@ if(!empty($postvars)) {
 	if($size > 100 && empty($_POST['bigsend'])) {
 		//better get confirmation
 		$bigsend_prompt = '<div style="border: medium solid red; padding: 10px; margin-bottom: 20px;">';
-		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>Email broadcasts to more than 100 emails require confirmation. This list is %d, including %s. Do you wish to proceed?</p>',$size,$sample);
+		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>Email broadcasts to more than 100 emails require confirmation. This list is %d, including %s. Do you wish to proceed?</p>', esc_html( $size ), esc_html( $sample ) );
 		$bigsend_prompt .= sprintf('<form id="confirmation" method="post" action="%s"><input type="hidden" name="bigsend" value="1"><button onclick="this.style=\'display:none;\';document.getElementById(\'status\').innerHTML=\'Sending ...\';">Confirm</button><div id="status"></div>',get_permalink());
 		$bigsend_prompt .= rsvpmaker_nonce('field');
 		$bigsend_prompt .= '</form>';
@@ -1737,7 +1737,7 @@ if(!empty($postvars)) {
 	elseif(!empty($postvars["send_check"]) && empty($_POST['send_confirmed'])) {
 		//better get confirmation
 		$bigsend_prompt = '<div style="border: medium solid red; padding: 10px; margin-bottom: 20px;">';
-		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>If confirmed, this email will be sent to %d recipients including %s. Do you wish to proceed?</p>',$size,$sample);
+		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>If confirmed, this email will be sent to %d recipients including %s. Do you wish to proceed?</p>', esc_html( $size ), esc_html( $sample ) );
 		$bigsend_prompt .= sprintf('<form id="confirmation" method="post" action="%s"><input type="hidden" name="send_confirmed" value="1"><button onclick="this.style=\'display:none;\';document.getElementById(\'status\').innerHTML=\'Sending ...\';">Confirm</button><div id="status"></div>',get_permalink());
 		$bigsend_prompt .= rsvpmaker_nonce('field');
 		$bigsend_prompt .= '</form>';
@@ -2803,7 +2803,7 @@ if(isset($_REQUEST['newsletter_choice'])) {
 		$content .= $content_title['content'];
 		if(empty($newsletter_title))
 			$newsletter_title = $content_title['title'];
-		$log .= sprintf('<p>%s</p>',$choice);
+		$log .= sprintf('<p>%s</p>', esc_html( $choice ) );
 	}
 	if(!empty($content)) {
 		$content = '<!-- wp:paragraph {"placeholder":"Add email content here"} -->'."\n<p></p>\n<!-- /wp:paragraph -->\n\n".$content;
@@ -3257,20 +3257,20 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
         return $actions;
     }
 	if($post->post_type == 'rsvpmaker_template') {
-		$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=').$post->ID,__('Create / Update','rsvpmaker'));
+		$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='). $post->ID ), __('Create / Update','rsvpmaker'));
 	}
 
 	if(current_user_can('edit_post',$post->ID))
 	{
 		if($post->post_type == 'rsvpmaker') {
-			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email=').$post->ID,__('Embed in RSVP Email','rsvpmaker'));	
+			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email='). $post->ID ), __('Embed in RSVP Email','rsvpmaker'));	
 		}
-		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&post_to_email=').$post->ID,__('Copy to RSVP Email','rsvpmaker'));
+		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&post_to_email='). $post->ID ), __('Copy to RSVP Email','rsvpmaker'));
 		if($post->post_type != 'rsvpmaker') {
-			$actions['excerpt_to_email'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email=').$post->ID,__('Excerpt to RSVP Email','rsvpmaker'));
+			$actions['excerpt_to_email'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email='). $post->ID ), __('Excerpt to RSVP Email','rsvpmaker'));
 		}
 		if($post->post_type == 'rsvpmaker') {
-			$actions['switch_template'] = sprintf('<a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target=').$post->ID.'#applytemplate',__('Switch Template','rsvpmaker'));
+			$actions['switch_template'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target='). $post->ID . '#applytemplate' ), __('Switch Template','rsvpmaker'));
 		}
 		if(($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template'))
 			$actions['copy_to_template'] = sprintf('<a href="%s">%s</a>',admin_url('?copy_to_rsvp_template=').$post->ID,__('Copy to New Template','rsvpmaker'));
