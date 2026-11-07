@@ -430,7 +430,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 		$terms = wp_get_object_terms( $post->ID, $taxonomies );
 		if ( $terms ) {
 			foreach ( (array) $terms as $term ) {
-				echo "\t\t<category domain=\"{$term->taxonomy}\" nicename=\"{$term->slug}\">" . rsvpmaker_wxr_cdata( $term->name ) . "</category>\n";
+				echo "\t\t<category domain=\"" . esc_attr( $term->taxonomy ) . "\" nicename=\"" . esc_attr( $term->slug ) . "\">" . rsvpmaker_wxr_cdata( $term->name ) . "</category>\n";
 			}
 		}
 	}
@@ -471,7 +471,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 	$filecount = 1;
 	while ( ! empty( $post_ids ) ) {
 		ob_start();
-		echo '<?xml version="1.0" encoding="' . get_bloginfo( 'charset' ) . "\" ?>\n";
+		echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . "\" ?>\n";
 		the_generator( 'export' );
 		?>
 		<?php the_generator( 'export' ); ?>
@@ -733,7 +733,7 @@ function rsvpmaker_export_wp( $args = array() ) {
 		$fname         = $upload_dir['basedir'] . '/' . $numbered_file;
 		file_put_contents( $fname, $output );
 		$fileurl = $upload_dir['baseurl'] . '/' . $numbered_file;
-		printf( '<p>Click to download <a href="%s" download="%s">%s</a></p>', $fileurl, $numbered_file, $numbered_file );
+		printf( '<p>Click to download <a href="%s" download="%s">%s</a></p>', esc_url( $fileurl ), esc_attr( $numbered_file ), esc_html( $numbered_file ) );
 		$filecount++;
 	}
 	?>
