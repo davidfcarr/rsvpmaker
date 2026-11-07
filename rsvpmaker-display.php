@@ -1054,7 +1054,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 			$itemstyle = sprintf( 'color:%s;background-color:%s;font-size:%spx', $default_itemcolor, $itembg_for_post, $atts['itemfontsize'] );
 			$item_style_attr = esc_attr( $itemstyle );
 			foreach($keys as $key)
-				$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a style="'.$item_style_attr.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n" : '<div><a  style="'.$item_style_attr.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . htmlentities( $post->post_title ) . '">' . $post->post_title . $time . "</a></div>\n";
+				$eventarray[ $key ] = ( isset( $eventarray[ $key ] ) ) ? $eventarray[ $key ] . '<div><a style="'.$item_style_attr.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . esc_attr( $post->post_title ) . '">' . esc_html( $post->post_title ) . $time . "</a></div>\n" : '<div><a  style="'.$item_style_attr.'" class="rsvpmaker-item rsvpmaker-tooltip ' . rsvpmaker_item_class( $post->ID, $post->post_title ) . '" href="' . get_post_permalink( $post->ID ) . '" title="' . esc_attr( $post->post_title ) . '">' . esc_html( $post->post_title ) . $time . "</a></div>\n";
 
 	endwhile;
 
@@ -1089,11 +1089,11 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	// Link to previous month (but do not link to too early dates)
 	$linktime  = rsvpmaker_strtotime( $cy.'-'.$cmpad.'-01 -1 month' );
-	$prev_link = '<a href="' . esc_attr( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a> &lt;';
+	$prev_link = '<a href="' . esc_url( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a> &lt;';
 
 	// Link to next month (but do not link to too early dates)
 	$linktime  = rsvpmaker_strtotime( $cy.'-'.$cmpad.'-01 +1 month' );
-	$next_link = '&gt; <a href="' . esc_attr( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a>';
+	$next_link = '&gt; <a href="' . esc_url( $req_uri . 'cm=' . rsvpmaker_date( 'm', $linktime ) . '&cy=' . rsvpmaker_date( 'Y', $linktime ) ) . '">' . rsvpmaker_date( 'F', $linktime ) . ' ' . rsvpmaker_date( 'Y', $linktime ) . '</a>';
 
 	$linktime     = $bom;
 	$page_id      = ( isset( $_GET['page_id'] ) ) ? '<input type="hidden" name="page_id" value="' . (int) $_GET['page_id'] . '" />' : '';
@@ -1211,7 +1211,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 			$class .= ' future';
 		}
 
-		$content .= '<td valign="top" class="' . $class . '">';
+		$content .= '<td valign="top" class="' . esc_attr( $class ) . '">';
 
 		if ( ! empty( $eventarray[ $thisdate ] ) ) {
 
@@ -1235,7 +1235,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 			$rowcount++;
 
-			$content .= '<tr id="rsvprow' . $rowcount . '">';
+			$content .= '<tr id="rsvprow' . esc_attr( $rowcount ) . '">';
 
 		}
 	}
@@ -1265,7 +1265,7 @@ function rsvpmaker_calendar( $atts = array() ) {
 
 	// jump form
 
-	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', $self, __( 'Month/Year', 'rsvpmaker' ), rsvpmaker_date( 'm', $monthafter ), rsvpmaker_date( 'Y', $monthafter ), __( 'Go', 'rsvpmaker' ), $page_id );
+	$content .= sprintf( '<form class="rsvpmaker_jumpform" action="%s" method="get"> %s <input type="number" name="cm" value="%s" size="4" class="jumpmonth" />/<input type="number" name="cy" value="%s" size="4" class="jumpyear" /><button>%s</button>%s</form>', esc_url( $self ), __( 'Month/Year', 'rsvpmaker' ), esc_attr( rsvpmaker_date( 'm', $monthafter ) ), esc_attr( rsvpmaker_date( 'Y', $monthafter ) ), __( 'Go', 'rsvpmaker' ), $page_id );
 	$content .= '<div>';
 	$post = $post_backup;
 
@@ -1356,7 +1356,7 @@ function rsvpmaker_timed( $atts = array(), $content = '' ) {
 
 	// if we clear these two hurdles, return the content
 	if ( ! empty( $atts['style'] ) ) {
-		$content = '<div style="' . $atts['style'] . '">' . $content . '</div>';
+		$content = '<div style="' . esc_attr( $atts['style'] ) . '">' . $content . '</div>';
 	}
 
 	return $content;
@@ -1778,7 +1778,7 @@ function rsvpmaker_next_rsvps( $atts = array() ) {
 
 				$url = get_permalink( $post->ID );
 
-				$output .= '<h2 class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><a href="' . $url . '">' . get_the_title( $post ) . '</a></span></h2>';
+				$output .= '<h2 class="rsvpmaker-compact-title" itemprop="url"><span itemprop="name"><a href="' . esc_url( $url ) . '">' . esc_html( get_the_title( $post ) ) . '</a></span></h2>';
 
 				$d = rsvp_date_block( $post->ID );
 				$output .= $d['dateblock'];
@@ -2297,7 +2297,7 @@ function rsvpmaker_format_event_dates( $post_id, $template = false, $atts = arra
 
 			}
 
-			$dateblock .= '<div><span id="timezone_converted' . $post_id . '"></span><span id="extra_timezone_converted' . $post_id . '"></span></div>';
+			$dateblock .= '<div><span id="timezone_converted' . esc_attr( $post_id ) . '"></span><span id="extra_timezone_converted' . esc_attr( $post_id ) . '"></span></div>';
 
 		}
 
@@ -2307,10 +2307,10 @@ function rsvpmaker_format_event_dates( $post_id, $template = false, $atts = arra
 
 			if ( rsvpmaker_is_email_context() ) {
 
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ), $permalink . $j . 'ical=1', $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', esc_url( rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ) ), esc_url( $permalink . $j . 'ical=1' ), $tzbutton );
 
 			} else {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', esc_url( rsvpmaker_to_gcal( $post, $eventrow->date, $eventrow->enddate ) ), esc_attr( __( 'Add to Google Calendar', 'rsvpmaker' ) ), esc_url( plugins_url( 'rsvpmaker/button_gc.gif' ) ), esc_url( $permalink . $j . 'ical=1' ), esc_attr( __( 'Add to Outlook/iCal', 'rsvpmaker' ) ), esc_url( plugins_url( 'rsvpmaker/button_ical.gif' ) ), $tzbutton );
 			}
 		} elseif ( ! empty( $custom_fields['_convert_timezone'][0] ) ) { // convert button without calendar icons
 
@@ -2364,9 +2364,9 @@ function rsvpmaker_date_element( $atts = array() ) {
 		$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
 
 		if ( rsvpmaker_is_email_context() ) {
-			$output = sprintf( '<div '.$style.' class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a></div>', rsvpmaker_to_gcal( $post, $post->date, $post->enddate ), $permalink . $j . 'ical=1' );
+			$output = sprintf( '<div '.$style.' class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a></div>', esc_url( rsvpmaker_to_gcal( $post, $post->date, $post->enddate ) ), esc_url( $permalink . $j . 'ical=1' ) );
 		} else {
-			$output = sprintf( '<div '.$style.' class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a></div>', rsvpmaker_to_gcal( $post, $post->date, $post->enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ) );
+			$output = sprintf( '<div '.$style.' class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a></div>', esc_url( rsvpmaker_to_gcal( $post, $post->date, $post->enddate ) ), esc_attr( __( 'Add to Google Calendar', 'rsvpmaker' ) ), esc_url( plugins_url( 'rsvpmaker/button_gc.gif' ) ), esc_url( $permalink . $j . 'ical=1' ), esc_attr( __( 'Add to Outlook/iCal', 'rsvpmaker' ) ), esc_url( plugins_url( 'rsvpmaker/button_ical.gif' ) ) );
 		}
 		return $output;
 	}
@@ -2388,7 +2388,7 @@ function rsvpmaker_date_element( $atts = array() ) {
 			$atts['timezone'] = $post->timezone;
 			$tzbutton = rsvpmaker_timezone_converter( $atts );
 		}
-		$output .= '<div><span id="timezone_converted' . $post_id . '"></span><span id="extra_timezone_converted' . $post_id . '"></span></div>';
+		$output .= '<div><span id="timezone_converted' . esc_attr( $post_id ) . '"></span><span id="extra_timezone_converted' . esc_attr( $post_id ) . '"></span></div>';
 		$output .= '<div class="tz_button" '.$style.'>' . $tzbutton . '</div>';
 		return $output;
 	}
@@ -2523,7 +2523,7 @@ function rsvpmaker_daily_schedule( $atts ) {
 
 		$eventcontent = '<h3 class="rsvpmaker-schedule-headline"><span class="rsvpmaker_schedule_time tz-convert">' . rsvpmaker_date( $time_format, $t ) . '</span>' .  $end;
 
-		$eventcontent .= ' <span class="rsvpmaker-schedule-title"><a href="' . get_permalink( $event->ID ) . '">' . esc_html( $event->post_title ) . '</a></span></h3>';
+		$eventcontent .= ' <span class="rsvpmaker-schedule-title"><a href="' . esc_url( get_permalink( $event->ID ) ) . '">' . esc_html( $event->post_title ) . '</a></span></h3>';
 
 		if ( ! empty( $atts['convert_tz'] ) ) {
 
@@ -2769,9 +2769,9 @@ function rsvp_date_block( $post_id, $custom_fields = array(), $top = true ) {
 			$end_time = ! empty( $event_enddate ) ? $event_enddate : null;
 			$j = ( strpos( $permalink, '?' ) ) ? '&' : '?';
 			if ( rsvpmaker_is_email_context() ) {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event_enddate ), $permalink . $j . 'ical=1', $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"> <a href="%s" target="_blank">Google Calendar</a> | <a href="%s">Outlook/iCal</a> %s</div>', esc_url( rsvpmaker_to_gcal( $post, $event->date, $event_enddate ) ), esc_url( $permalink . $j . 'ical=1' ), $tzbutton );
 			} else {
-				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', rsvpmaker_to_gcal( $post, $event->date, $event_enddate ), __( 'Add to Google Calendar', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_gc.gif' ), $permalink . $j . 'ical=1', __( 'Add to Outlook/iCal', 'rsvpmaker' ), plugins_url( 'rsvpmaker/button_ical.gif' ), $tzbutton );
+				$dateblock .= sprintf( '<div class="rsvpcalendar_buttons"><a href="%s" target="_blank" title="%s"><img src="%s" border="0" width="25" height="25" /></a>&nbsp;<a href="%s" title="%s"><img src="%s"  border="0" width="28" height="25" /></a> %s</div>', esc_url( rsvpmaker_to_gcal( $post, $event->date, $event_enddate ) ), esc_attr( __( 'Add to Google Calendar', 'rsvpmaker' ) ), esc_url( plugins_url( 'rsvpmaker/button_gc.gif' ) ), esc_url( $permalink . $j . 'ical=1' ), esc_attr( __( 'Add to Outlook/iCal', 'rsvpmaker' ) ), esc_url( plugins_url( 'rsvpmaker/button_ical.gif' ) ), $tzbutton );
 			}
 		} elseif ( ! empty( $custom_fields['_convert_timezone'][0] ) ) { // convert button without calendar icons
 			$dateblock .= '<div class="rsvpcalendar_buttons">' . $tzbutton . '</div>';
@@ -3524,9 +3524,9 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 
 					foreach ( $results as $row ) {
 
-						$rsvpconfirm .= $row['first'] . ' ' . $row['last'] . '<br />';
+						$rsvpconfirm .= esc_html( $row['first'] . ' ' . $row['last'] ) . '<br />';
 
-						$rsvpwithdraw .= sprintf( '<div><input type="checkbox" checked="checked" name="withdraw[]" value="%d"> %s %s</div>', $row['id'], esc_html( $row['first'] ), esc_html( $row['last'] ) );
+						$rsvpwithdraw .= sprintf( '<div><input type="checkbox" checked="checked" name="withdraw[]" value="%d"> %s %s</div>', esc_attr( $row['id'] ), esc_html( $row['first'] ), esc_html( $row['last'] ) );
 
 					}
 				}
@@ -3703,7 +3703,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 			$content .= '<p class="rsvp_status">' . esc_html( __( 'RSVPs are closed', 'rsvpmaker' ) ) . '</p>';
 			if ( isset( $rsvpwithdraw ) ) {
 
-				$content .= sprintf( '<h3>%s</h3><form method="post" action="%s">%s<p><button>%s</button></p>%s</form>', esc_html( __( 'To cancel, check the attendee names to be removed', 'rsvpmaker' ) ), esc_url_raw( $rsvplink ), esc_url_raw( $rsvpwithdraw ), __( 'Cancel RSVP', 'rsvpmaker' ), rsvpmaker_nonce('return') );
+				$content .= sprintf( '<h3>%s</h3><form method="post" action="%s">%s<p><button>%s</button></p>%s</form>', esc_html( __( 'To cancel, check the attendee names to be removed', 'rsvpmaker' ) ), esc_url_raw( $rsvplink ), wp_kses_post( $rsvpwithdraw ), __( 'Cancel RSVP', 'rsvpmaker' ), rsvpmaker_nonce('return') );
 
 			}
 		}
@@ -3870,7 +3870,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 
 						} else {
 							if(!empty($price_row->niceDeadline))
-								$deadstring = ' (' . __( 'until', 'rsvpmaker' ) . ' ' . $price_row->niceDeadline . ')';
+								$deadstring = ' (' . __( 'until', 'rsvpmaker' ) . ' ' . esc_html( $price_row->niceDeadline ) . ')';
 						}
 					}
 
@@ -3917,7 +3917,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 							if(!empty($pricing[$index])) {
 								$price = (float) $pricing[ $index ]->price;
 								$unit = $pricing[ $index ]->unit;
-								$pf .= '<div class="paying_for_tickets"><select name="payingfor[' . $index . ']" class="tickets"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select><input type="hidden" name="unit[' . $index . ']" value="' . esc_attr( $unit ) . '" />' . esc_html( $value ) . '<input type="hidden" name="price[' . $index . ']" value="' . esc_attr( $price ) . '" /></div>' . "\n";	
+								$pf .= '<div class="paying_for_tickets"><select name="payingfor[' . esc_attr( $index ) . ']" class="tickets"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select><input type="hidden" name="unit[' . esc_attr( $index ) . ']" value="' . esc_attr( $unit ) . '" />' . esc_html( $value ) . '<input type="hidden" name="price[' . esc_attr( $index ) . ']" value="' . esc_attr( $price ) . '" /></div>' . "\n";
 							} 
 
 						}
