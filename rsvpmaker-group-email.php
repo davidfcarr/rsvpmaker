@@ -1114,7 +1114,7 @@ function rsvpmail_email_to_parts($email,$blog_id = 0) {
 				if($blog_id)	
 					return array('subdomain'=>'','fwdkey'=>$match[1],'domain'=>$match[3],'blog_id'=>$blog_id);	
 			}
-			}
+		}
 		return false;
 	}
 	//not multisite
