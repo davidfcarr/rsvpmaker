@@ -3637,15 +3637,16 @@ function rsvpmaker_quick_post() {
 function rsvpmaker_print_quick_date_entry($i,$date_text_default,$datedefault) {
 	echo '<div class="quickentry">';
 	echo wp_kses_post( '<div id="event_date' . esc_attr( $i ) . '">' );
+	echo wp_kses_post( '
 	<p><label>Date</label>
-	<input name="quick_rsvp_date[]" type="date" class="quick-rsvp-date" id="quick-rsvp-date-'.$i.'" count="'.$i.'"> <span id="date-weekday-'.$i.'"></span>
+	<input name="quick_rsvp_date[]" type="date" class="quick-rsvp-date" id="quick-rsvp-date-' . esc_attr( $i ) . '" count="' . esc_attr( $i ) . '"> <span id="date-weekday-' . esc_attr( $i ) . '"></span>
 	</p>
 	<p><label>Time</label> 
-	<input name="quick_rsvp_time[]" type="time" class="quick-rsvp-time" id="quick-rsvp-time-'.$i.'" count="'.$i.'" value="12:00:00"> <span id="date-weekday-'.$i.'"></span>
-	</p>
-	<p><label>End Time</label> <input type="hidden" id="end_time_type-'.$i.'" name="quick_end_time_type[]" class="end_time_type" value="set" >
-	<input name="quick_rsvp_time_end[]" type="time" class="quick-rsvp-time-end" id="quick-rsvp-time-end-'.$i.'" size="5" count="'.$i.'" value="13:00:00">
-	</p></div>';
+	<input name="quick_rsvp_time[]" type="time" class="quick-rsvp-time" id="quick-rsvp-time-' . esc_attr( $i ) . '" count="' . esc_attr( $i ) . '" value="12:00:00"> <span id="date-weekday-' . esc_attr( $i ) . '"></span>
+	</p>' );
+	echo wp_kses_post( '<p><label>End Time</label> <input type="hidden" id="end_time_type-' . esc_attr( $i ) . '" name="quick_end_time_type[]" class="end_time_type" value="set" >
+	<input name="quick_rsvp_time_end[]" type="time" class="quick-rsvp-time-end" id="quick-rsvp-time-end-' . esc_attr( $i ) . '" size="5" count="' . esc_attr( $i ) . '" value="13:00:00">
+	</p></div>' );
 	printf('<div class="quickfield"><label>%s</label><input type="text" id="quicktitle-'.$i.'" class="quicktitle" name="quicktitle[]"></div>',__('Title','rsvpmaker'));
 	printf('<div class="quickfield"><label>%s</label><br /><textarea name="quickcontent[]" rows="2" cols="100"></textarea></div>',__('Starter Text','rsvpmaker'));
 	echo wp_kses_post( '<div id="quickmessage-' . esc_attr( $i ) . '"></div>' );
