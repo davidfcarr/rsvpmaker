@@ -520,7 +520,7 @@ function rsvpmaker_future_event_titles_test () {
 
 	foreach($events as $event) {
 
-		$output .= sprintf('<p>%s %s</p>',$event->post_title, $event->date);
+		$output .= sprintf('<p>%s %s</p>', esc_html($event->post_title), esc_html($event->date));
 
 	}
 
@@ -1200,7 +1200,7 @@ function rsvpmaker_duration_select_2021( $duration_type ) {
 
 		$s     = ( $duration_type == $multi ) ? ' selected="selected" ' : '';
 
-		printf( '<option value="%s" %s>%s</option>', $multi, $s, $i . ' ' . __( 'days/time not shown', 'rsvpmaker' ) );
+		printf( '<option value="%s" %s>%s</option>', esc_attr($multi), $s, esc_html($i . ' ' . __( 'days/time not shown', 'rsvpmaker' )) );
 
 	}
 	echo '</select>';
@@ -1451,7 +1451,7 @@ function rsvpmaker_reminders_nudge() {
 			$parts = explode( '_', $post_with_reminder->slug );
 			$hours = $parts[4];
 			if ( isset( $_GET['debug'] ) ) {
-				printf( '<div>%s - %s - %s</div>', $hours, $post_with_reminder->datetime, $post_with_reminder->ID );
+				printf( '<div>%s - %s - %s</div>', esc_html($hours), esc_html($post_with_reminder->datetime), intval($post_with_reminder->ID) );
 
 			}
 			rsvpmaker_reminder_cron( $hours, $post_with_reminder->datetime, $post_with_reminder->ID, $hours, $post_with_reminder->datetime );
@@ -1666,7 +1666,7 @@ function rsvpmaker_excerpt( $post, $show_excerpt = true ) {
 
 	if ( $rsvp_on ) {
 
-		$excerpt .= sprintf( $rsvp_options['rsvplink'], $rsvplink );
+		$excerpt .= sprintf( wp_kses_post($rsvp_options['rsvplink']), esc_url($rsvplink) );
 
 	}
 
@@ -1856,7 +1856,7 @@ function rsvpmaker_get_events_dropdown($include_drafts = false, $require_rsvp_on
 		foreach ( $past as $event ) {
 			if ( $require_rsvp_on && !get_post_meta( $event->ID, '_rsvp_on', true ) )
 				continue;
-			$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", $event->ID, esc_html( $event->post_title ), rsvpmaker_date( 'F j, Y', intval($event->ts_start) ) );
+			$options .= sprintf( '<option value="%s">%s - %s</option>' . "\n", esc_attr($event->ID), esc_html( $event->post_title ), esc_html(rsvpmaker_date( 'F j, Y', intval($event->ts_start) )) );
 		}
 	}
 	else {
@@ -2375,7 +2375,7 @@ else
 		if($mailmeta) {
 			foreach($mailmeta as $index => $mail) {
 				//if($index % 500 == 0) {
-					printf('<p>%s %d</p>',$mail->meta_key, $mail->count);
+					printf('<p>%s %d</p>', esc_html($mail->meta_key), intval($mail->count));
 				//
 				//$wpdb->delete($wpdb->postmeta, array('meta_id' => $mail->meta_id));
 			}
@@ -2393,7 +2393,7 @@ else
 
 			$sortable[$count] = $site->blog_id.':'.$site->domain;
 
-			printf('<h3>%d %s %d files</h3>',$site->blog_id,$site->domain,$count);
+			printf('<h3>%d %s %d files</h3>', intval($site->blog_id), esc_html($site->domain), intval($count));
 
 		}
 
@@ -2411,7 +2411,7 @@ else
 
 
 
-			printf('<p>%d %s</p>',$count,$item);
+			printf('<p>%d %s</p>', intval($count), esc_html($item));
 
 
 
@@ -2489,7 +2489,7 @@ if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && cu
 
 
 
-		printf('<p>Rows removed: %d </p>',$rows_removed);
+		printf('<p>Rows removed: %d </p>', intval($rows_removed));
 
 
 
@@ -2561,7 +2561,7 @@ if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && cu
 
 
 
-			printf('<h3>%d %s</h3>',$site->blog_id,$site->domain);
+			printf('<h3>%d %s</h3>', intval($site->blog_id), esc_html($site->domain));
 
 
 
@@ -2589,7 +2589,7 @@ if((isset($_POST['multisite_clean']) || isset($_POST['multisite_remove'])) && cu
 
 
 
-					printf('<input type="hidden" name="multisite_remove[]" value="%d:%d" /> ',$site->blog_id,$event->event);
+					printf('<input type="hidden" name="multisite_remove[]" value="%d:%d" /> ', intval($site->blog_id), intval($event->event));
 
 
 
@@ -2644,12 +2644,12 @@ if ( isset( $_POST['rsvpmaker_trash_duplicates'] )  && wp_verify_nonce(rsvpmaker
 if(!empty($_POST['multisite_dups']) && current_user_can('manage_network')) {
 	$sites = wp_get_sites(['number'=>500]);
 	foreach($sites as $site) {
-		printf('<p>Site: %s</p>',var_export($site,true));
-		printf('<p>switch to %s</p>',$site['blog_id']);
+		printf('<p>Site: %s</p>', wp_kses_post(var_export($site,true)));
+		printf('<p>switch to %s</p>', intval($site['blog_id']));
 		switch_to_blog($site['blog_id']);
-		printf('<p>blog before %s</p>',$wpdb->prefix);
+		printf('<p>blog before %s</p>', esc_html($wpdb->prefix));
 		rsvpmaker_trash_duplicates(!empty($_POST['all']));
-		printf('<p>blog after %s</p>',$wpdb->prefix);
+		printf('<p>blog after %s</p>', esc_html($wpdb->prefix));
 	}
 }
 else
@@ -2883,7 +2883,7 @@ RSVPs older than <input type="hidden" name="rsvps_older_than" value="<?php
 
 
 
-			printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', $older );
+			printf( '<p style="color: red;">Deleting RSVPs older than %s </p>', esc_html($older) );
 
 
 
@@ -3247,9 +3247,7 @@ submit_button( 'Check Now' );
 
 			if(strpos($t,$wpdb->prefix.'rsvp') !== false)
 
-
-
-			echo $t . "<br>";
+			echo wp_kses_post($t . "<br>");
 
 
 
@@ -3306,13 +3304,13 @@ function rsvpmaker_trash_duplicates( $all = true ) {
 		if(sizeof($check) > 1) {
 			$keep = array_shift($check);
 			$post = get_post($keep);
-			printf("<p>keep %d %s by default for %s, %d other entries</p>",$keep,$post->post_name,$date,sizeof($check));
+			printf("<p>keep %d %s by default for %s, %d other entries</p>", intval($keep), esc_html($post->post_name), esc_html($date), intval(sizeof($check)));
 			foreach($check as $ch) {
 				if($ch != $keep) {
 				$found = true;
 				$wpdb->query($wpdb->prepare("update %i set post_id=%d where post_id=%d ",$wpdb->postmeta,$keep,$ch));
 				$wpdb->query($wpdb->prepare("update %i set event=%d where event=%d",$wpdb->prefix.'rsvpmaker',$keep,$ch));
-				printf("<p>delete %d</p>",$ch);
+				printf("<p>delete %d</p>", intval($ch));
 				wp_delete_post($ch,false);
 				}
 			}
@@ -3332,7 +3330,7 @@ function rsvpmaker_trash_duplicates( $all = true ) {
 	{
 		foreach($templates as $template) {
 
-			printf('<p>Checking %s</p>',$template->post_title);
+			printf('<p>Checking %s</p>', esc_html($template->post_title));
 
 			$sofar = rsvpmaker_get_events_by_template($template->ID);
 
@@ -3352,13 +3350,13 @@ function rsvpmaker_trash_duplicates( $all = true ) {
 				foreach($dupcheck as $date => $check) {
 					if(sizeof($check) > 1) {
 						$keep = array_shift($check);
-						printf("<p>keep %d by default for %s, %d other entries</p>",$keep,$date,sizeof($check));
+						printf("<p>keep %d by default for %s, %d other entries</p>", intval($keep), esc_html($date), intval(sizeof($check)));
 						foreach($check as $ch) {
 							if($ch != $keep) {
 							$found = true;
 							$wpdb->query($wpdb->prepare("update %i set post_id=%d where post_id=%d ",$wpdb->postmeta,$keep,$ch));
 							$wpdb->query($wpdb->prepare("update %i set event=%d where event=%d",$wpdb->prefix.'rsvpmaker',$keep,$ch));
-							printf("<p>delete %d</p>",$ch);
+							printf("<p>delete %d</p>", intval($ch));
 							wp_delete_post($ch,false);
 							}
 						}
@@ -3682,7 +3680,7 @@ function rsvpmaker_default_gateway_check( $chosen_gateway ) {
 
 	}
 	if ( ! empty( $gateway_set ) ) {
-		return sprintf( '<p style="color: red; font-weight: bold;">%s %s?</p>', __( 'Do you want to set the Preferred Payment Gateway to', 'rsvpmaker' ), $gateway_set );
+		return sprintf( '<p style="color: red; font-weight: bold;">%s %s?</p>', __( 'Do you want to set the Preferred Payment Gateway to', 'rsvpmaker' ), esc_html($gateway_set) );
 
 	}
 }
@@ -4276,7 +4274,7 @@ function mailpoet_rsvpmaker_shortcode( $shortcode, $newsletter, $subscriber, $qu
 
 		$link    = ( empty( $atts['link'] ) ) ? $match[0] : $atts['link'];		
 
-		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s</p><a href="%s" style="text-align: center; padding-top: 130px; height: 640px; width:360px; background-image: url(%s); background-size: contain; background-repeat: no-repeat; margin-left: auto; margin-right: auto; %s"><div><img src="%s" ></div></a>', $link, $link, 'display: block; width: 100%; height: 300px;', $image, $link, plugins_url('rsvpmaker/images/youtube-button-100px.png') );
+		$content = sprintf( '<p><a href="%s">Watch on YouTube: %s</p><a href="%s" style="text-align: center; padding-top: 130px; height: 640px; width:360px; background-image: url(%s); background-size: contain; background-repeat: no-repeat; margin-left: auto; margin-right: auto; %s"><div><img src="%s" ></div></a>', esc_url($link), esc_html($link), 'display: block; width: 100%; height: 300px;', esc_url($image), esc_url($link), esc_url(plugins_url('rsvpmaker/images/youtube-button-100px.png')) );
 
 	}
 
@@ -4430,7 +4428,7 @@ function rsvpmaker_sametime( $date, $post_id = 0 ) {
 			$title  = ( empty( $sametime->post_title ) ) ? '?' : $sametime->post_title;
 			$title .= ' ' . rsvpmaker_date( $rsvp_options['time_format'], $sametime->ts_start );
 
-			$same[] = sprintf( '<input type="checkbox" name="update_from_template[]" value="%s" id="sametime_%s" class="sametime_checkbox" title="Overwrite"> <a href="%s">%s</a> ', $sametime->ID, $date, admin_url( 'post.php?action=edit&post=' . $sametime->ID ), $title );
+			$same[] = sprintf( '<input type="checkbox" name="update_from_template[]" value="%s" id="sametime_%s" class="sametime_checkbox" title="Overwrite"> <a href="%s">%s</a> ', esc_attr($sametime->ID), esc_attr($date), esc_url(admin_url( 'post.php?action=edit&post=' . $sametime->ID )), esc_html($title) );
 
 		}
 
@@ -4652,7 +4650,7 @@ function rsvpmail_add_problem($email,$code) {
 
 	if('bypass' == $problem) {
 		if(isset($_GET['debug']) ) {
-			printf('<p>%s: %s</p>',$email,$problem);
+			printf('<p>%s: %s</p>', esc_html($email), esc_html($problem));
 		}
 		return;
 	}
@@ -4663,7 +4661,7 @@ function rsvpmail_add_problem($email,$code) {
 	else
 	{
 		if(isset($_GET['debug']) ) {
-			printf('<p>%s add problem problem: %s</p>',$email,$code);
+			printf('<p>%s add problem problem: %s</p>', esc_html($email), esc_html($code));
 		}
 		$wpdb->insert($table,array('email'=>$email,'code'=>$code));
 	}
@@ -4811,7 +4809,7 @@ global $rsvp_options;
 
 					$t = ( $event->ts_start ) ? (int) $event->ts_start : rsvpmaker_strtotime( $event->datetime );
 					$dateline = rsvpmaker_date( $date_format, $t ); // rsvpmaker_long_date($event->ID, isset($atts['time']), false);
-					$listings .= sprintf( '<li><a href="%s">%s - %s</a></li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( strip_tags($event->post_title) ), $dateline );
+					$listings .= sprintf( '<li><a href="%s">%s - %s</a></li>' . "\n", esc_url_raw( get_permalink( $event->ID ) ), esc_html( strip_tags($event->post_title) ), esc_html($dateline) );
 
 				}
 
@@ -4836,7 +4834,7 @@ function rsvphoney_ui($return = false) {
 
 		return $html;
 
-	echo $html;
+	echo wp_kses_post($html);
 
 }
 function rsvphoney_login() {
@@ -4922,7 +4920,7 @@ function rsvpmaker_number_events_ui($t) {
 
 			$current = ($top_number) ? '(currently #'.$top_number.')' : '';
 
-			$options .= sprintf('<option value="%d">%s %s %s</option>', $event->ID, $event->post_title, $event->datetime, $current);
+			$options .= sprintf('<option value="%d">%s %s %s</option>', intval($event->ID), esc_html($event->post_title), esc_html($event->datetime), esc_html($current));
 
 			/*
 
@@ -4947,7 +4945,7 @@ function rsvpmaker_number_events_ui($t) {
 	<p>Include the shortcode (placeholder) <code>[rsvpmaker_numbered]</code> with the square brackets included in the text of your event template document, as part of a paragraph or heading (but not the main post title). When you go through the Create / Update routine, that code will then be copied to the event posts for specific dates, each of which will have an event number set. When displayed on the website, that code will be replaced with the event number.</p>
 
 	<?php 
-	printf('<form method="post" action="%s"><p>Starting number <input type="number" name="start_number" value="%d"><p>Starting with <select name="starting_with">%s</select></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t), $isset, $defaultoption.$options);
+	printf('<form method="post" action="%s"><p>Starting number <input type="number" name="start_number" value="%d"><p>Starting with <select name="starting_with">%s</select></p>', esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$t)), intval($isset), wp_kses_post($defaultoption.$options));
 
 	submit_button('Add Numbering');
 
@@ -4992,7 +4990,7 @@ function rsvpmaker_theme_features_test() {
 
 	foreach($palette as $index => $item) {
 
-		$output .= sprintf('<p>%s %s</p>',$index, var_export($item,true));
+		$output .= sprintf('<p>%s %s</p>', esc_html($index), wp_kses_post(var_export($item,true)));
 
 		if(isset($item['slug'])) {
 
@@ -5006,7 +5004,7 @@ function rsvpmaker_theme_features_test() {
 
 	foreach($theme as $index => $item) {
 
-		$output .= sprintf('<p>%s %s</p>',$index, var_export($item,true));
+		$output .= sprintf('<p>%s %s</p>', esc_html($index), wp_kses_post(var_export($item,true)));
 
 		if(isset($item['slug']))
 
@@ -5032,7 +5030,7 @@ function rsvpmaker_theme_features_test() {
 
 				foreach($item as $subitem) {
 
-					$output .= sprintf('<p>theme item %s</p>',var_export($subitem));
+					$output .= sprintf('<p>theme item %s</p>', wp_kses_post(var_export($subitem)));
 
 					if(!empty($subitem['slug']))
 
@@ -5080,7 +5078,7 @@ $help .= $sidebar;
 ?>
 <div class="rsvpmaker-admin-heading-headline" ><h1><?php 
 
-  echo $headline;  
+  echo esc_html($headline);  
 
 ?>
 
@@ -5127,7 +5125,7 @@ function rsvpmaker_receipt() {
 
 	$sitename = get_option('blogname');
 
-	$rsvpconfirm = sprintf('<h1>%s</h1><h2>%s</h2>',$sitename,$post->post_title);
+	$rsvpconfirm = sprintf('<h1>%s</h1><h2>%s</h2>', esc_html($sitename), esc_html($post->post_title));
 
 	if('rsvpmaker' == $post->post_type) {
 
@@ -5253,7 +5251,7 @@ function rsvpmaker_confirm_payment($rsvp_id, $rsvp_to = '') {
 
 	$emails = explode(',',$rsvp_to);
 
-	$rsvpdata['rsvpmessage'] .= sprintf("\n".'<p><a href="%s">RSVP Report</a></p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report'));
+	$rsvpdata['rsvpmessage'] .= sprintf("\n".'<p><a href="%s">RSVP Report</a></p>', esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report')));
 
 	$rsvpdata['rsvpmessage'] .= '<p>'.rsvpmaker_signed_up_ajax( $row->event ).'</p>';
 
@@ -5484,11 +5482,11 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 
 				if('Cash or Custom' != get_rsvpmaker_payment_gateway())
 
-					$guestparty .= sprintf('<p><a href="%s" class="noprint wp-block-button__link" target="_blank">%s</a></p>'."\n",$payurl,__('Pay Online','rsvpmaker'));
+					$guestparty .= sprintf('<p><a href="%s" class="noprint wp-block-button__link" target="_blank">%s</a></p>'."\n", esc_url($payurl), __('Pay Online','rsvpmaker'));
 
 			}
 
-		$guestparty .= sprintf('<p class="noprint"><a href="%s">%s</a></p>',add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($row['event'])),__('Print Receipt','rsvpmaker'));
+		$guestparty .= sprintf('<p class="noprint"><a href="%s">%s</a></p>', esc_url(add_query_arg(array('rsvp_receipt'=>$rsvp_id,'receipt'=>$receipt_code,'t'=>time()),get_permalink($row['event']))), __('Print Receipt','rsvpmaker'));
 		}
 		$guestparty .= '<p>'.$row['first'].' '.$row['last'];
 		$guestparty .= $format_detail_lines( $row );
@@ -5497,11 +5495,11 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 
 		if($row['event'])
 
-			$guestparty .= sprintf('<p class="noprint"><a class="wp-block-button__link" style="background-color: green;" href="%s#rsvpnow">%s</a></p>',add_query_arg(array('update'=>$rsvp_id,'e'=>urlencode($row['email']),'t'=>time()),get_permalink($row['event'])),__('Update RSVP','rsvpmaker'));
+			$guestparty .= sprintf('<p class="noprint"><a class="wp-block-button__link" style="background-color: green;" href="%s#rsvpnow">%s</a></p>', esc_url(add_query_arg(array('update'=>$rsvp_id,'e'=>urlencode($row['email']),'t'=>time()),get_permalink($row['event']))), __('Update RSVP','rsvpmaker'));
 
 		if(isset($row['gift_certificate']))
 
-			$guestparty .= sprintf('<h1>Gift Certificate Code:<br />%s<h1>',$row['gift_certificate']);
+			$guestparty .= sprintf('<h1>Gift Certificate Code:<br />%s<h1>', esc_html($row['gift_certificate']));
 
 		//$guestparty .= var_export($row,true);
 
@@ -5748,7 +5746,7 @@ function rsvpmaker_gift_certificate_create($amount, $atts) {
 	$mail['to'] = $atts['email'];
 	$mail['from'] = $rsvp_options['rsvp_to'];
 	$mail['fromname'] = get_option('blogname');
-	$mail['html'] = sprintf('<p>%s: %s</p><p>%s</p><p>%s</p>',__('Here is the gift certificate code for your purchase.','rsvpmaker'),$code,$atts['description'],$atts['name']);
+	$mail['html'] = sprintf('<p>%s: %s</p><p>%s</p><p>%s</p>', __('Here is the gift certificate code for your purchase.','rsvpmaker'), esc_html($code), wp_kses_post($atts['description']), esc_html($atts['name']));
 	$mail['subject'] = 'Gift Certificate';
 	rsvpmailer($mail);
 	$mail['to'] = $rsvp_options['rsvp_to'];
