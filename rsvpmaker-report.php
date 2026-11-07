@@ -169,11 +169,11 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 						$matchguests = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE event=%d AND master_rsvp=%d".$wpdb->prefix."rsvpmaker",$eventid,$match->id));
 						foreach($matchguests as $matchg)
 							$names[] = $matchg->first.' '.$matchg->last;
-						$matched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>',$restore,$unpaid_record[0]->id,$unpaid_record[0]->timestamp,$unpaid_record[0]->first,$unpaid_record[0]->last,$unpaid_record[0]->email,$unpaid_record[0]->owed,sizeof($unpaid_record));
-						$matched .= sprintf('<p><a href="#rsvprow%d">Possible match</a>, party of %d, %s</p>',$match->id,sizeof($names),implode(', ',$names));
+						$matched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>', esc_url( $restore ), esc_html( $unpaid_record[0]->id ), esc_html( $unpaid_record[0]->timestamp ), esc_html( $unpaid_record[0]->first ), esc_html( $unpaid_record[0]->last ), esc_html( $unpaid_record[0]->email ), esc_html( $unpaid_record[0]->owed ), esc_html( sizeof($unpaid_record) ) );
+						$matched .= sprintf('<p><a href="#rsvprow%d">Possible match</a>, party of %d, %s</p>', esc_attr( $match->id ), esc_html( sizeof($names) ), esc_html( implode(', ',$names) ) );
 					}
 					else
-						$unmatched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>',$restore,$unpaid_record[0]->id,$unpaid_record[0]->timestamp,$unpaid_record[0]->first,$unpaid_record[0]->last,$unpaid_record[0]->email,$unpaid_record[0]->owed,sizeof($unpaid_record));
+						$unmatched .= sprintf('<p><a href="%s">Restore #%d</a> %s %s %s %s %s party of %d</p>', esc_url( $restore ), esc_html( $unpaid_record[0]->id ), esc_html( $unpaid_record[0]->timestamp ), esc_html( $unpaid_record[0]->first ), esc_html( $unpaid_record[0]->last ), esc_html( $unpaid_record[0]->email ), esc_html( $unpaid_record[0]->owed ), esc_html( sizeof($unpaid_record) ) );
 				}
 				if($unmatched)
 					echo '<h3>Unpaid</h3>'.$unmatched;
@@ -534,7 +534,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce(rsvpmaker_nonce_data('data
 			if ( $contacts && ! isset( $_GET['rsvp_print'] ) ) {
 				echo '<div><h2>' . esc_html( __( 'Contact Form Entries', 'rsvpmaker' ) ) . "</h2>\n".'<p><a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event=0&rsvp_order=timestamp').'">View ' . $contacts.'</a></div>';
 			}
-			printf('<div><h2><a href="%s">%s</a></h2></div>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&allcontacts=1'),__('List All Contacts'));//'<div><h2>' . esc_html( __( 'Contact Form Entries', 'rsvpmaker' ) ) . "</h2>\n".'<p><a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event=0&rsvp_order=timestamp').'">View ' . $contacts.'</a></div>';
+			printf('<div><h2><a href="%s">%s</a></h2></div>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&allcontacts=1') ), __('List All Contacts') );//'<div><h2>' . esc_html( __( 'Contact Form Entries', 'rsvpmaker' ) ) . "</h2>\n".'<p><a href="'.admin_url('edit.php?post_type=rsvpmaker&page=rsvp_report&event=0&rsvp_order=timestamp').'">View ' . $contacts.'</a></div>';
 			echo '</div>';
 
 			echo '<div style="display:flex; gap: 3rem;">';
@@ -1441,7 +1441,7 @@ function rsvp_report_unpaid() {
 
 			if(!empty($unpaids)) {
 				$titledate = rsvpmaker_date($rsvp_options['short_date'], $event->ts_start).' - '.$event->post_title;
-				printf('<h1>%s</h1>',$titledate);
+				printf('<h1>%s</h1>', esc_html( $titledate ) );
 
 				foreach($unpaids as $unpaid) {
 					ob_start();
