@@ -2107,7 +2107,7 @@ if(isset($_POST['welcome']))
 $candidates = rsvpmail_candidate_templates();
 $options = '';
 foreach($candidates as $candidate) {
-	$options .= sprintf('<option value="%d">%s %s</option>',$candidate->ID, $candidate->post_title, $candidate->post_modified);
+	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
 }
 ?>
 <p style="text-align: center;"><strong>Jump to: </strong> <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#emailtemplates') ?>">Email Templates</a> | <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#customcss') ?>">Custom CSS</a></p>
@@ -2302,7 +2302,7 @@ function rsvpmaker_post_option_by_setting($option_slug) {
 	if($id) {
 		$post = get_post($id);
 		if($post)
-			$option = sprintf('<option value="%d">%s</option>',$id,$post->post_title);
+			$option = sprintf('<option value="%d">%s</option>', esc_attr( $id ), esc_html( $post->post_title ) );
 	}
 	return $option;
 }	
@@ -2826,12 +2826,12 @@ if(isset($_REQUEST['newsletter_choice'])) {
 $candidates = rsvpmail_candidate_templates();
 $options = '';
 foreach($candidates as $candidate) {
-	$options .= sprintf('<option value="%d">%s %s</option>',$candidate->ID, $candidate->post_title, $candidate->post_modified);
+	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
 }
 $candidates = rsvpmail_candidate_templates(true);
 $alt = '';
 foreach($candidates as $candidate) {
-	$alt .= sprintf('<option value="%d">%s %s</option>',$candidate->ID, $candidate->post_title, $candidate->post_modified);
+	$alt .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
 }
 
 $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Previous Emails">'.$options.'</optgroup>';
@@ -2842,7 +2842,7 @@ $future = rsvpmaker_get_future_events();
 if(is_array($future))
 foreach($future as $event)
 	{
-	$event_options .= sprintf('<option value="%s">%s - %s</option>'."\n",$event->ID,$event->post_title,date('F j, Y',$event->ts_start));
+	$event_options .= sprintf('<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), esc_html( date( 'F j, Y', $event->ts_start ) ) );
 	}
 $event_options = '<optgroup label="Events">'.$event_options.'</optgroup>';
 
@@ -2853,7 +2853,7 @@ if($results)
 {
 foreach ($results as $row)
 	{
-	$posts .= sprintf("<option value=\"%d\">%s</option>\n",$row["ID"],substr($row["post_title"],0,80));
+	$posts .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $row["ID"] ), esc_html( substr( $row["post_title"], 0, 80 ) ) );
 	}
 $postlists = '<option value="headlines10">'.__('10 Latest Blog Headline Links','rsvpmaker').'</option><option value="posts10">'.__('10 Latest Blog Posts','rsvpmaker').'</option><option value="posts5">'.__('5 Latest Blog Posts','rsvpmaker').'</option><option value="posts3">'.__('3 Latest Blog Posts','rsvpmaker').'</option>';
 $posts = '<optgroup label="'.__('Recent Posts','rsvpmaker').'">'.$postlists.$posts."</optgroup>\n";
@@ -2862,13 +2862,13 @@ $posts = '<optgroup label="'.__('Recent Posts','rsvpmaker').'">'.$postlists.$pos
 $other = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE post_status='publish' AND post_type != 'post' AND post_type != 'rsvpmaker' AND post_type != 'rsvpmaker_template' AND post_type != 'rsvpmaker_form' AND post_type != 'rsvpemail'  AND post_type != 'attachment'  AND post_type != 'wp_navigation' AND post_type != 'wp_template' AND post_type != 'wp_template_part' ORDER BY post_modified DESC LIMIT 0,30");
 $oopt = '';
 foreach($other as $row)
-	$oopt .= sprintf("<option value=\"%d\">%s (%s)</option>\n",$row->ID,substr($row->post_title,0,80),$row->post_type);
+	$oopt .= sprintf( "<option value=\"%d\">%s (%s)</option>\n", esc_attr( $row->ID ), esc_html( substr( $row->post_title, 0, 80 ) ), esc_html( $row->post_type ) );
 $oopt = '<optgroup label="'.__('Other Content','rsvpmaker').'">'.$oopt."</optgroup>\n";
 
 $po = '';
 $pages = get_pages();
 foreach($pages as $page)
-	$po .= sprintf("<option value=\"%d\">%s</option>\n",$page->ID,substr($page->post_title,0,80));
+	$po .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $page->ID ), esc_html( substr( $page->post_title, 0, 80 ) ) );
 ?>
 
 <form action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>" method="post" style="padding: 5px; background-color:#fff;">
@@ -5728,7 +5728,7 @@ function rsvpmaker_email_segments_dropdown($field_name='segment', $echo = true, 
 	foreach($segments as $index => $segment) {
 		if(!empty($segment)) {
 			$s = ($index == $selected) ? ' selected="selected" ' : '';
-			$segment_options .= sprintf('<option value="%s" %s>%s</option>',$index,$s,$segment);
+			$segment_options .= sprintf('<option value="%s" %s>%s</option>', esc_attr( $index ), $s, esc_html( $segment ) );
 		}
 		}
 	$output = sprintf('<select name="'.$field_name.'">'.$segment_options.'</select>');
@@ -5866,7 +5866,7 @@ function rsvpmaker_guest_list() {
 		$segment_options = '<option value="">General List</option>';
 		foreach($segments as $index => $segment) {
 			if(!empty($segment))
-				$segment_options .= sprintf('<option value="%s">%s</option>',$index,$segment);
+				$segment_options .= sprintf('<option value="%s">%s</option>', esc_attr( $index ), esc_html( $segment ) );
 		}
 	}
 
