@@ -1920,7 +1920,7 @@ else {
 		<button>Update</button></p>
 		</form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id),esc_attr($post_id),esc_attr($reminder->ID),esc_html__( 'Send only after payment','rsvpmaker'),$radio,rsvpmaker_nonce('return'));
 	}
-printf('<h3>Delete Reminder</h3><form method="post" action="%s"><select name="delete_reminder[]">%s</select><br /><button>Delete</button>%s</form>',admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&post_id='.$post_id),$delete_reminder_options,rsvpmaker_nonce('return'));
+printf('<h3>Delete Reminder</h3><form method="post" action="%s"><select name="delete_reminder[]">%s</select><br /><button>Delete</button>%s</form>', esc_url(admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&post_id=' . $post_id)), $delete_reminder_options, rsvpmaker_nonce('return'));
 }
 
 $reminder_copy .= '<option value="">'.esc_html__( 'Blank message','rsvpmaker').'</option>';
@@ -1932,7 +1932,7 @@ printf('<h3>Add Reminders and Follow Up Messages</h3>
 %s
 <select name="copy_from">%s</select></p>
 <p><input type="checkbox" name="paid_only" value="1"> Send for PAID registrations only</p>
-<p><button>Submit</button></p>%s</form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id),esc_attr($post_id),$hour_options,esc_html__( 'Based on','rsvpmaker'),$reminder_copy,rsvpmaker_nonce('return'));
+<p><button>Submit</button></p>%s</form>', esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id=' . $post_id)), esc_attr($post_id), $hour_options, esc_html__( 'Based on','rsvpmaker'), $reminder_copy, rsvpmaker_nonce('return'));
 
 echo '</div>';//end reminders section
 
@@ -1941,7 +1941,7 @@ printf('<h3>Reset to Defaults</h3>
 <p><input type="checkbox" name="defaults[confirmation]" value="1" /> Confirmation</p>
 <p><input type="checkbox" name="defaults[payment_confirmation]" value="1"> Payment Confirmation</p>
 <p><input type="checkbox" name="defaults[reminders]" value="1"> Remove Reminders</p>
-<p><button>Submit</button></p>%s</form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id='.$post_id),rsvpmaker_nonce('return'));
+<p><button>Submit</button></p>%s</form>', esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=' . $post_id)), rsvpmaker_nonce('return'));
 
 ?>
 <h3><?php esc_html_e('Webinar Setup','rsvpmaker'); ?></h3>
