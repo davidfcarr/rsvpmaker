@@ -421,7 +421,7 @@ remove_script_host : false,
 </script>
 <div class="wrap" style="max-width:950px !important;">
 <?php rsvpmaker_admin_heading(esc_html__( 'RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
-<p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="<?php echo admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark'); ?>">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations.</p>
+<p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="<?php echo esc_url( admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark') ); ?>">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations.</p>
 <h3>Postmark Integration</h3>
 <?php
 if(!is_multisite() || current_user_can('manage_network') )
@@ -433,12 +433,12 @@ else {
 }
 ?>
 <!--  RSVPMaker also integrates with <a href="#mailchimp">Mailchimp</a>, provides limited support for <a href="#mailpoet">MailPoet</a>, and allows you to set <a href="#smtpetc">SMTP Mail Server options</a>. -->
-<form method="post" action="<?php echo admin_url('options-general.php?page=rsvpmaker_settings'); ?>">
+<form method="post" action="<?php echo esc_url( admin_url('options-general.php?page=rsvpmaker_settings') ); ?>">
 <?php
 rsvpemail_from_settings();
 ?>
 <h3>Built-in Mailing List</h3>
-<p>To manage the built-in list, see <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list'); ?>">RSVPMailer Mailing List</a></p>
+<p>To manage the built-in list, see <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list') ); ?>">RSVPMailer Mailing List</a></p>
 <p>An RSVPMaker Email List Signup block is available for embedding a signup block in a page of your site. It can also be included as a sidebar or footer widget.</p>
 <p><image src="<?php echo plugins_url('rsvpmaker/images/email-list-signup.png'); ?>" width="600" height="445">
 <p>You also have the option of displaying the a popup version of the signup form to website visitors not recognized as list subscribers. <a href="<?php echo site_url('?show_rsvp_popup=1'); ?>" target="_blank">See preview</a> (will display after 5 seconds).</p>
@@ -489,7 +489,7 @@ $form = rsvpmail_signup_form();
 printf('<p>This snippet of code can be embedded in any external site from which you accept email list signups.</p><pre>%s</pre>',htmlentities($form));
 ?>
 </form>
-<p>See also: <a target="_blank" href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>">Email Template</a></p>
+<p>See also: <a target="_blank" href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>">Email Template</a></p>
 
 <?php              
           }
@@ -2110,12 +2110,12 @@ foreach($candidates as $candidate) {
 	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
 }
 ?>
-<p style="text-align: center;"><strong>Jump to: </strong> <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#emailtemplates') ?>">Email Templates</a> | <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#customcss') ?>">Custom CSS</a></p>
-<p>Use this screen to change your default email template for newsletters and other broadcasts, your transactional template (for messages such as RSVP Confirmations), and any alternate designs you may use from time to time. You can see previews of your current <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#emailtemplates') ?>">Email Templates</a> and add any <a href="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#customcss') ?>">Custom CSS</a> you would like used with your messages. Codes like *|EMAIL|* are MailChimp template codes, also used by RSVPMaker independent of WordPress. Including an unsubscribe link and information about who is responsible for messages sent from your website is important for regulatory compliance.</p>
+<p style="text-align: center;"><strong>Jump to: </strong> <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#emailtemplates') ) ?>">Email Templates</a> | <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#customcss') ) ?>">Custom CSS</a></p>
+<p>Use this screen to change your default email template for newsletters and other broadcasts, your transactional template (for messages such as RSVP Confirmations), and any alternate designs you may use from time to time. You can see previews of your current <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#emailtemplates') ) ?>">Email Templates</a> and add any <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#customcss') ) ?>">Custom CSS</a> you would like used with your messages. Codes like *|EMAIL|* are MailChimp template codes, also used by RSVPMaker independent of WordPress. Including an unsubscribe link and information about who is responsible for messages sent from your website is important for regulatory compliance.</p>
 <?php
 if(!empty($options)) {
 ?>
-<form id="email_style" name="email_style" method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>">
+<form id="email_style" name="email_style" method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>">
 <?php
 	$options = '<option value="">'.esc_html__( 'Choose Message','rsvpmaker').'</option>'.$options;
 	$default = rsvpmaker_post_option_by_setting('rsvpmailer_default_block_template');
@@ -2149,12 +2149,12 @@ if(empty($from_options['mailing_address']))
 </p>
 </form>
 <div>
-<form method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>" style="display: inline-block; margin-right: 10px;">
+<form method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>" style="display: inline-block; margin-right: 10px;">
 	<input type="hidden" name="reset_default_template" value="1" />
 	<?php echo rsvpmaker_nonce('return'); ?>
 	<button type="submit"><?php esc_html_e('Reset default template','rsvpmaker');?></button>
 </form>
-<form method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template'); ?>" style="display: inline-block;">
+<form method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>" style="display: inline-block;">
 	<input type="hidden" name="reset_tx_template" value="1" />
 	<?php echo rsvpmaker_nonce('return'); ?>
 	<button type="submit"><?php esc_html_e('Reset transactional template','rsvpmaker');?></button>
@@ -2871,7 +2871,7 @@ foreach($pages as $page)
 	$po .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $page->ID ), esc_html( substr( $page->post_title, 0, 80 ) ) );
 ?>
 
-<form action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=email_get_content'); ?>" method="post" style="padding: 5px; background-color:#fff;">
+<form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=email_get_content') ); ?>" method="post" style="padding: 5px; background-color:#fff;">
 <?php rsvpmaker_nonce(); 
 ?>
 <h2><?php esc_html_e('Newsletter Builder','rsvpmaker');?></h2>
@@ -2905,14 +2905,14 @@ echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker')
 
 printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p></form>',admin_url('post-new.php'),$options,esc_html__( 'Load Content','rsvpmaker'));
 ?>
-<form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
+<form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail') ); ?>" method="get">
 <?php rsvpmaker_nonce(); ?>
 <h2><?php esc_html_e('Email Based on Event','rsvpmaker');?></h2><p><select name="rsvpevent_to_email"><?php echo $event_options; ?></select>
 </select>
 </p>
 <button><?php esc_html_e('Load Content','rsvpmaker');?></button>
 </form>	
-<form action="<?php echo admin_url('edit.php?post_type=rsvpemail'); ?>" method="get">
+<form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail') ); ?>" method="get">
 <?php rsvpmaker_nonce(); ?>
 <h2><?php esc_html_e('Email Based on Post','rsvpmaker');?></h2><p><select name="post_to_email"><?php echo $posts; ?></select>
 </select>
@@ -6367,7 +6367,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	?>
 	<p>RSVPMaker can generate a new posts promotion every time a new item is published to your blog.</p>
 	<h3>Preferences</h3>
-	<form method="post" action="<?php echo admin_url('edit.php?page=rsvpmail_latest_posts_notification_setup'); ?>">
+	<form method="post" action="<?php echo esc_url( admin_url('edit.php?page=rsvpmail_latest_posts_notification_setup') ); ?>">
 	<p>Automation: <input type="radio" name="rsvpmaker_new_post_promos[promo_type]" value="0" <?php if(empty($promo_type)) echo 'checked="checked"'; ?> > None <input type="radio" name="rsvpmaker_new_post_promos[promo_type]" value="notify" <?php if('notify' == $promo_type) echo 'checked="checked"'; ?> > Send notifications <input type="radio" name="rsvpmaker_new_post_promos[promo_type]" value="auto" <?php if('auto' == $promo_type) echo 'checked="checked"'; ?> > Send automatically </p>
 	<p>Include <input type="text" size="5" name="rsvpmaker_new_post_promos[paragraphs]" value="<?php echo $args['paragraphs']; ?>" > paragraphs from the latest post and links to <input type="text" size="5" name="rsvpmaker_new_post_promos[additional_posts]" value="<?php echo $args['additional_posts']; ?>" > additional recent posts.</p>
 	<p>Label for Read More button <input type="text" name="rsvpmail_button_label" value="<?php echo $button_label;?>"></p>
@@ -7954,7 +7954,7 @@ if(!empty($inguest))
 
 rsvpmaker_admin_heading(esc_html__( 'Extract Email Addresses','rsvpmaker'),__FUNCTION__); ?>
 <p><?php esc_html_e('You can enter an disorganized list of emails mixed in with other text, and this utility will extract just the email addresses.','rsvpmaker');?></p>
-<form id="form1" name="form1" method="post" action="<?php echo admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_extract_email'); ?>">
+<form id="form1" name="form1" method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_extract_email') ); ?>">
 <?php rsvpmaker_nonce(); ?>
   <p>
     <textarea name="emails" id="emails" cols="45" rows="5"></textarea>
@@ -8094,3 +8094,4 @@ function rsvpmaker_admin_resend_receipt( $rsvp_id ) {
 	// Show success message
 	printf( '<div class="notice notice-success"><p>%s</p></div>', esc_html( sprintf( esc_html__( 'Receipt resent to %s %s (%s)', 'rsvpmaker' ), $rsvp->first, $rsvp->last, $rsvp->email ) ) );
 }
+
