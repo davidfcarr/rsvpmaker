@@ -127,6 +127,7 @@ class RSVPMaker_iCal {
 
 		// events query
 		if ( ! empty( $events ) ) {
+			// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with escape_string for iCal format
 			foreach ( $events as $event ) {
 				// get the event date
 				$atts = get_rsvmaker_meta($event->event);
@@ -213,6 +214,7 @@ class RSVPMaker_iCal {
 
 			// all events data
 			echo $output;
+			// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 
 			echo "END:VCALENDAR\r\n";
 		}

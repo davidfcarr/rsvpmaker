@@ -73,7 +73,7 @@ $cron_active = apply_filters( 'rsvpmaker_cron_active', $cron_active, $cron );
 
 if ( ! empty( $_GET['debug'] ) ) {
 
-	echo "<p>active: $cron_active </p>";
+	echo '<p>active: ' . esc_html( $cron_active ) . '</p>';
 }
 
 if ( $rsvpmaker_cron_context && $cron_active ) {
@@ -140,7 +140,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 		if ( ! $MailChimp->success() ) {
 
-			echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
+			echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . esc_html( $MailChimp->getLastError() ) . '</div>';
 			return;
 
 		}
@@ -158,7 +158,7 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 
 			if ( ! $MailChimp->success() ) {
 
-				echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
+				echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . esc_html( $MailChimp->getLastError() ) . '</div>';
 				return;
 
 			}
@@ -170,11 +170,11 @@ if ( $rsvpmaker_cron_context && $cron_active ) {
 			// print_r($send_result);
 
 			if ( $MailChimp->success() ) {
-				$chimpmsg = esc_html__( 'Sent MailChimp campaign', 'rsvpmaker' ) . ': ' . $campaign['id'];
+				$chimpmsg = esc_html__( 'Sent MailChimp campaign', 'rsvpmaker' ) . ': ' . esc_html( $campaign['id'] );
 				echo '<div>' . $chimpmsg . '</div>';
 				add_post_meta( $post->ID, 'rsvp_mailchimp_sent', $chimpmsg . ' ' . rsvpmaker_date( 'r' ) );
 			} else {
-				echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . $MailChimp->getLastError() . '</div>';
+				echo '<div>' . esc_html__( 'MailChimp API error', 'rsvpmaker' ) . ': ' . esc_html( $MailChimp->getLastError() ) . '</div>';
 			}
 		}
 	}
@@ -422,4 +422,5 @@ if ( isset( $_GET['template_preview'] ) ) {
 $test_address = (isset($_GET['personalize'])) ? sanitize_text_field((wp_unslash($_GET['personalize']))) : 'rsvpmaker@example.com';
 $preview = rsvpmaker_personalize_email($preview,$test_address);
 /* cannot be escaped because of embedded form content. Escaping belongs in the functions that create this output variable */
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $preview contains pre-escaped form content
 echo $preview;
