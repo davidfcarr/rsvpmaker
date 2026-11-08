@@ -1117,7 +1117,7 @@ if(!empty($basic_options)) {
 	%s
 	<p><input type="submit" name="submit" id="submit" class="button button-primary" value="%s"></p>
 	<input type="hidden" name="rsvpmaker_essentials" value="1">
-	%s</form><p><a href="%s">%s</a></p>',esc_html__( 'RSVPMaker Essential Settings','rsvpmaker'),site_url(sanitize_text_field($_SERVER['REQUEST_URI'])),$basic_options,esc_html__( 'Save Changes','rsvpmaker'),rsvpmaker_nonce('return'),admin_url('options-general.php?page=rsvpmaker_settings'),esc_html__( 'All RSVPMaker Settings','rsvpmaker'));
+	%s</form><p><a href="%s">%s</a></p>',esc_html__( 'RSVPMaker Essential Settings','rsvpmaker'),esc_url( site_url(sanitize_text_field($_SERVER['REQUEST_URI'])) ),$basic_options,esc_html__( 'Save Changes','rsvpmaker'),rsvpmaker_nonce('return'),esc_url( admin_url('options-general.php?page=rsvpmaker_settings') ),esc_html__( 'All RSVPMaker Settings','rsvpmaker'));
 	$notice[] = rsvpmaker_admin_notice_format($message, 'RSVPMaker Essential Settings', $cleared, $type='warning');
 }
 
@@ -1601,9 +1601,9 @@ foreach($ho as $h)
 	{
 	$s = ($h == $hours) ? ' selected="selected" ' : '';
 	if($h < 0)
-		$o .= sprintf('<option value="%s" %s>%s ',$h,$s, abs($h) ).esc_html__( 'hours before','rsvpmaker').'</option>';
+	$o .= sprintf('<option value="%s" %s>%s ',esc_attr($h),$s, abs($h) ).esc_html__( 'hours before','rsvpmaker').'</option>';
 	else
-		$o .= sprintf('<option value="%s" %s>%s ',$h,$s, esc_html($h)).esc_html__( 'hours after event starts','rsvpmaker').'</option>';
+			$o .= sprintf('<option value="%s" %s>%s ',esc_attr($h),$s, esc_html($h)).esc_html__( 'hours after event starts','rsvpmaker').'</option>';
 	}
 	return $o;
 }
@@ -1918,7 +1918,7 @@ else {
 		<input type="hidden" name="reminder_post_id" value="%d" />
 		<p>%s %s %s
 		<button>Update</button></p>
-		</form>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id),esc_attr($post_id),esc_attr($reminder->ID),esc_html__( 'Send only after payment','rsvpmaker'),$radio,rsvpmaker_nonce('return'));
+		</form>',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id) ),esc_attr($post_id),esc_attr($reminder->ID),esc_html__( 'Send only after payment','rsvpmaker'),$radio,rsvpmaker_nonce('return'));
 	}
 printf('<h3>Delete Reminder</h3><form method="post" action="%s"><select name="delete_reminder[]">%s</select><br /><button>Delete</button>%s</form>', esc_url(admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&post_id=' . $post_id)), $delete_reminder_options, rsvpmaker_nonce('return'));
 }
@@ -1974,7 +1974,7 @@ else {
 		if(current_user_can('edit_post',$event->ID))
 		$o .= sprintf('<option value="%s">%s - %s</option>',esc_attr($event->ID),esc_html($event->post_title),esc_html($event->date));
 	}	
-	printf('<form method="get" action="%s"><input type="hidden" name="page" value="rsvp_reminders"><input type="hidden" name="post_type" value="rsvpmaker"><select name="post_id">%s</select><button>Get</button>%s</form>',admin_url('edit.php'),$o,rsvpmaker_nonce('return'));
+	printf('<form method="get" action="%s"><input type="hidden" name="page" value="rsvp_reminders"><input type="hidden" name="post_type" value="rsvpmaker"><select name="post_id">%s</select><button>Get</button>%s</form>',esc_url( admin_url('edit.php') ),$o,rsvpmaker_nonce('return'));
 }
 
 rsvpmaker_reminders_nudge ();
@@ -3465,7 +3465,7 @@ function rsvpmaker_templates_dropdown ($select = 'template') {
 	{
 		$o .= sprintf('<option value="%d">%s</option>', esc_attr( $template->ID ), esc_html( $template->post_title ) );
 	}
-return sprintf('<select name="%s">%s</select>',$select,$o);
+return sprintf('<select name="%s">%s</select>',esc_attr($select),$o);
 }
 
 function toolbar_rsvpmaker( $wp_admin_bar ) {
@@ -3999,7 +3999,7 @@ $lostpassword = site_url('wp-login.php?action=lostpassword');
 		}
 		foreach($eds as $ed) {
 			$user = get_userdata($ed);
-			$remove = (isset($_GET['remove'])) ? sprintf('<input type="checkbox" name="remove_editor[]" value="%s" /> Remove ',$ed) : '';
+			$remove = (isset($_GET['remove'])) ? sprintf('<input type="checkbox" name="remove_editor[]" value="%s" /> Remove ',esc_attr($ed)) : '';
 			$editors .= '<div>'.$remove.$user->user_email.' '.$user->display_name.'</div>';
 		}
 	}
@@ -4011,7 +4011,7 @@ $lostpassword = site_url('wp-login.php?action=lostpassword');
 		printf('<h2>Update Editors List: %s</h2><form action="%s" method="post">%s
 		<p><input type="hidden" name="t" value="%s" />
 		Add by Email: <input type="email" name="editor_email" />
-		%s</p>%s</form>', esc_html($post->post_title), esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share')), $editors, $t, get_submit_button(esc_html__( 'Save','rsvpmaker')), rsvpmaker_nonce('return'));
+		%s</p>%s</form>', esc_html($post->post_title), esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share')), $editors, esc_attr($t), get_submit_button(esc_html__( 'Save','rsvpmaker')), rsvpmaker_nonce('return'));
 	}
 
 	$templates = rsvpmaker_get_templates();
