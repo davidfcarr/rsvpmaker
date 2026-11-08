@@ -1100,7 +1100,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 			if(!empty($t))
 				add_post_meta($post_id,'event_timestamp',$t);
 			$loc = admin_url("post.php?action=edit&post=".$post_id);
-			wp_redirect($loc);
+			wp_safe_redirect($loc);
 			exit;
 			}
 	}
@@ -1115,7 +1115,7 @@ if(!empty($_GET["rsvpevent_to_email"]) || !empty($_GET["post_to_email"]))
 		if($post_id = wp_insert_post( $my_post ) )
 			{
 			$loc = admin_url("post.php?action=edit&post=".$post_id);
-			wp_redirect($loc);
+			wp_safe_redirect($loc);
 			exit;
 			}
 }

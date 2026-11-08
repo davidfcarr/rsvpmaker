@@ -2286,7 +2286,7 @@ $minutes = isset($template["minutes"]) ? $template["minutes"] : '00';
 					}
 				//copy rsvp options
 				$editurl = admin_url('post.php?action=edit&post='.$post_id);
-				wp_redirect($editurl);
+				wp_safe_redirect($editurl);
 				exit;
 				}		
 		break;
@@ -3878,7 +3878,7 @@ if(!empty($_POST["rsvpmaker_new_post"])  && wp_verify_nonce(rsvpmaker_nonce_data
 		$editurl = admin_url('post.php?action=edit&post='.$post_id);
 		if($ajax)
 			return $editurl;
-		wp_redirect($editurl);
+		wp_safe_redirect($editurl);
 		die();			
 		}
 	}
@@ -4192,7 +4192,7 @@ function rsvpmaker_submission_post() {
 		{
 		if(!rsvpmaker_recaptcha_check ($rsvp_options["rsvp_recaptcha_site_key"],$rsvp_options["rsvp_recaptcha_secret"]))	{
 			$r = add_query_arg('submission_error','Failed security check',$permalink).'#results';
-			wp_redirect($r);
+			wp_safe_redirect($r);
 			exit();
 			}	
 		}
@@ -4213,13 +4213,13 @@ function rsvpmaker_submission_post() {
 		if(!empty($missing))
 		{
 			$r = add_query_arg('submission_error',sprintf('missing data %s',implode("\n",$missing)),$permalink).'#results';
-			wp_redirect($r);
+			wp_safe_redirect($r);
 			exit();
 		}
 		if(!rsvpmail_contains_email($email))
 		{
 			$r = add_query_arg('submission_error','invalid email address',$permalink).'#results';
-			wp_redirect($r);
+			wp_safe_redirect($r);
 			exit();
 		}
 
@@ -4261,7 +4261,7 @@ function rsvpmaker_submission_post() {
 			rsvpmailer($mail);
 		}
 		$r = add_query_arg('success',$post_id,$permalink).'#results';
-		wp_redirect($r);
+		wp_safe_redirect($r);
 		exit();
 	}
 }

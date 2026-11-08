@@ -141,7 +141,7 @@ function rsvpmaker_init_router() {
 		$hash = isset($_GET['anchor']) ? '#rsvpnow' : '';
 		if($events) {
 			$event = $events[0];
-			wp_redirect(get_permalink($event->ID) . $hash);
+			wp_safe_redirect(get_permalink($event->ID) . $hash);
 			exit;
 		}
 	}

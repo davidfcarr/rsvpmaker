@@ -298,7 +298,7 @@ function copy_to_rsvp_template() {
 
 		$loc = admin_url("post.php?action=edit&post=".$post_id);
 
-		wp_redirect($loc);
+		wp_safe_redirect($loc);
 
 		exit;		
 
