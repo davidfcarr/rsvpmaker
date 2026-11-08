@@ -1232,7 +1232,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 																		}
 
-																			printf( '<div id="guest_count_pricing">' . esc_html__( 'Options', 'rsvpmaker' ) . ': <select name="guest_count_price">%s</select></div>', wp_kses_post( $options ) );
+																			printf( '<div id="guest_count_pricing">' . esc_html__( 'Options', 'rsvpmaker' ) . ': <select name="guest_count_price">%s</select></div>', wp_kses($options, dcarr_kses_form()) );
 
 																	}
 																}
@@ -1325,7 +1325,7 @@ function admin_edit_rsvp( $id, $event ) {
 
 																		}
 
-																		printf( '<div id="guest_count_pricing"><label>' . esc_html__( 'Options', 'rsvpmaker' ) . ':</label><select name="guest_count_price"  id="guest_count_price">%s</select></div>', wp_kses_post( $options ) );
+																		printf( '<div id="guest_count_pricing"><label>' . esc_html__( 'Options', 'rsvpmaker' ) . ':</label><select name="guest_count_price"  id="guest_count_price">%s</select></div>', wp_kses($options, dcarr_kses_form()) );
 
 																	}
 																}

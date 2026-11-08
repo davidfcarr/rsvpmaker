@@ -2119,16 +2119,16 @@ if(!empty($options)) {
 <?php
 	$options = '<option value="">'.esc_html__( 'Choose Message','rsvpmaker').'</option>'.$options;
 	$default = rsvpmaker_post_option_by_setting('rsvpmailer_default_block_template');
-	echo "<p>".esc_html__( 'Template for Editor','rsvpmaker')."<br><select name=\"newtemplate\">".wp_kses_post($default)." ".wp_kses_post($options)."</select></p>";
+	echo "<p>".esc_html__( 'Template for Editor','rsvpmaker')."<br><select name=\"newtemplate\">".wp_kses($default, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select></p>";
 	$default = rsvpmaker_post_option_by_setting('rsvpmailer_tx_block_template');
-	echo "<p>".esc_html__( 'Template for Transactional Messages','rsvpmaker')."<br><select name=\"txtemplate\">".wp_kses_post($default)." ".wp_kses_post($options)."</select>
+	echo "<p>".esc_html__( 'Template for Transactional Messages','rsvpmaker')."<br><select name=\"txtemplate\">".wp_kses($default, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select>
 	<br>Example: RSVP confirmation messages.
 	</p>";
 	$welcome = rsvpmaker_post_option_by_setting('rsvpmaker_guest_email_welcome');
-	echo "<p>".esc_html__( 'Welcome Message','rsvpmaker')."<br><select name=\"welcome\">".wp_kses_post($welcome)." ".wp_kses_post($options)."</select>
+	echo "<p>".esc_html__( 'Welcome Message','rsvpmaker')."<br><select name=\"welcome\">".wp_kses($welcome, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select>
 	<br>Optional: send to new members of list upon registration
 	</p>";
-	echo "<p>".esc_html__( 'Add Alternate Templates','rsvpmaker')."<br><select name=\"alt_template\">".wp_kses_post($options)."</select>
+	echo "<p>".esc_html__( 'Add Alternate Templates','rsvpmaker')."<br><select name=\"alt_template\">".wp_kses($options, dcarr_kses_form())."</select>
 	<br>Example: a newsletter template containing a latest posts block that you use, but not all the time.";
 	$candidates = rsvpmail_candidate_templates(true);
 foreach($candidates as $candidate) {
@@ -2173,7 +2173,7 @@ $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Prev
 
 echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
 
-printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select><button>Copy to New Message</button></form>',esc_url(admin_url('post-new.php')),wp_kses_post($options));
+printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select><button>Copy to New Message</button></form>',esc_url(admin_url('post-new.php')),wp_kses($options, dcarr_kses_form()));
 
 }
 
@@ -2184,7 +2184,7 @@ $default_template_id = get_option( 'rsvpmailer_default_block_template');
 $tx_template_id = get_option( 'rsvpmailer_tx_block_template');
 
 if(!empty($content)) {
-	printf('<p>Current default email template - <a href="%s">Edit</a></p><div class="currentdefault" id="currentdefault">%s</div><p></p>',esc_url(admin_url("post.php?post=$default_template_id&action=edit")),wp_kses_post(rsvpmail_filter_style($content)));
+	printf('<p>Current default email template - <a href="%s">Edit</a></p><div class="currentdefault" id="currentdefault">%s</div><p></p>',esc_url(admin_url("post.php?post=$default_template_id&action=edit")),wp_kses(rsvpmail_filter_style($content), dcarr_kses_form()));
 }
 
 $content = rsvpmailer_default_block_template_wrapper('<p>Notifications content goes here</p>', true);
@@ -2899,7 +2899,7 @@ el.addEventListener('click', addChoice);
 <?php
 echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
 
-printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p></form>',esc_url(admin_url('post-new.php')),wp_kses_post($options),esc_html__( 'Load Content','rsvpmaker'));
+printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p></form>',esc_url(admin_url('post-new.php')),wp_kses($options, dcarr_kses_form()),esc_html__( 'Load Content','rsvpmaker'));
 ?>
 <form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail') ); ?>" method="get">
 <?php rsvpmaker_nonce(); ?>
@@ -5729,7 +5729,7 @@ function rsvpmaker_email_segments_dropdown($field_name='segment', $echo = true, 
 		}
 	$output = sprintf('<select name="'.$field_name.'">'.$segment_options.'</select>');
 	if($echo)
-		echo wp_kses_post($output);
+		echo wp_kses($output, dcarr_kses_form());
 	return $output;
 }
 

@@ -3158,10 +3158,10 @@ function rsvpmaker_multi_event($atts = array()) {
 	printf('<form id="rsvpform" method="post" action="%s">', esc_url( get_permalink($page_id) ));
 	for($i = 0; $i < $futurecount; $i++) {
 		if($i < $eventcount) {
-		printf('<p>%d <select name="rsvpmultievent[]">%s</select></p>', esc_html( $i+1 ), (!empty($atts['show_default']) && !empty($default_option[$i]) ? wp_kses_post( $default_option[$i] ): '') . wp_kses_post( $options ) );
+		printf('<p>%d <select name="rsvpmultievent[]">%s</select></p>', esc_html( $i+1 ), (!empty($atts['show_default']) && !empty($default_option[$i]) ? wp_kses($default_option[$i], dcarr_kses_form()): '') . wp_kses($options, dcarr_kses_form()) );
 		}
 		else {
-		printf('<p class="multieventhide">%d <select name="rsvpmultievent[]">%s</select></p>', esc_html( $i+1 ), (!empty($atts['show_default']) && !empty($default_option[$i]) ? wp_kses_post( $default_option[$i] ): '') . wp_kses_post( $options ) );
+		printf('<p class="multieventhide">%d <select name="rsvpmultievent[]">%s</select></p>', esc_html( $i+1 ), (!empty($atts['show_default']) && !empty($default_option[$i]) ? wp_kses($default_option[$i], dcarr_kses_form()): '') . wp_kses($options, dcarr_kses_form()) );
 		}
 	}
 	$addmore = sizeof($future_events) - $eventcount;
@@ -3899,7 +3899,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 
 							}
 
-							printf( '<div id="guest_count_pricing"><label>' . esc_html( __( 'Pricing Options', 'rsvpmaker' ) ) . ':</label> <select name="guest_count_price"  id="guest_count_price">%s</select></div>', wp_kses_post( $options ) );
+							printf( '<div id="guest_count_pricing"><label>' . esc_html( __( 'Pricing Options', 'rsvpmaker' ) ) . ':</label> <select name="guest_count_price"  id="guest_count_price">%s</select></div>', wp_kses($options, dcarr_kses_form()) );
 
 						}
 					}
