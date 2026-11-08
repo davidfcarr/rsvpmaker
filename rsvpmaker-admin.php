@@ -1945,7 +1945,7 @@ printf('<h3>Reset to Defaults</h3>
 
 ?>
 <h3><?php esc_html_e('Webinar Setup','rsvpmaker'); ?></h3>
-<form method="get" action = "<?php echo admin_url('edit.php'); ?>">
+<form method="get" action = "<?php echo esc_url( admin_url('edit.php') ); ?>">
 <p><?php esc_html_e('This utility sets up a landing page and suggested confirmation and reminder messages, linked to that page. RSVPMaker explicitly supports webinars based on YouTube Live, but you can also embed the coding required for another webinar of your choice.','rsvpmaker'); ?></p>
 <input type="hidden" name="post_type" value="rsvpmaker" >
 <input type="hidden" name="page" value="rsvp_reminders" >
@@ -3917,7 +3917,7 @@ else {
 ?>
 <h3>Import Events</h3>
 <p>Copy the link from the site you are <em>exporting from</em> and enter it here on the site you are <em>importing events into</em>.</p>
-<form method="post" id="importform" action="<?php echo admin_url('tools.php?page=rsvpmaker_export_screen'); ?>">
+<form method="post" id="importform" action="<?php echo esc_url( admin_url('tools.php?page=rsvpmaker_export_screen') ); ?>">
 <div><input type="text" name="importrsvp" id="importrsvp" value="<?php if(isset($_POST['importurl'])) echo sanitize_text_field($_POST['importrsvp']); ?>" /></div>
 <input type="hidden" id="importnowurl" value="<?php echo rest_url('/rsvpmaker/v1/importnow'); ?>" />
 <div><button id="import-button">Import</button></div>
