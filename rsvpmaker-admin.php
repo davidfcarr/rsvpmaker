@@ -2300,7 +2300,7 @@ if(is_admin() && empty($hook))
 	$screen = get_current_screen();
 	$hook = $screen->id;
 	}
-printf("\n".'<hr /><p><small>%s</small></p></div>',$hook);
+printf("\n".'<hr /><p><small>%s</small></p></div>', esc_html($hook));
 }
 
 function rsvpmaker_editors() {
@@ -2370,7 +2370,7 @@ function rsvpmaker_show_debug_log() {
 	if ( ! empty( $upload_dir['basedir'] ) ) {
 		$fname = $upload_dir['basedir'].'/'.$filename_base.'_log_'.date('Y-m-d').'.txt';
 		$content = file_get_contents($fname);
-		printf('<form method="post" action="%s"><input type="hidden" name="clear" value="1"><button>Clear Log</button></form>',admin_url('tools.php?page=rsvpmaker_show_debug_log'));
+		printf('<form method="post" action="%s"><input type="hidden" name="clear" value="1"><button>Clear Log</button></form>', esc_url(admin_url('tools.php?page=rsvpmaker_show_debug_log')));
 		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($content).'</textarea>';		
 	}
 
@@ -2925,7 +2925,7 @@ if(!strpos($rsvp_options["time_format"],'T') )
 <input type="checkbox" name="convert_timezone" value="1" <?php if($convert_timezone) echo ' checked="checked" '; ?> /><?php esc_html_e('Show timezone conversion button next to calendar icons','rsvpmaker'); ?>
 </p>
 <p>Timezone <select id="timezone_string" name="setrsvp[timezone_string]">
-	<option value="<?php echo esc_attr($rsvp_timezone);?>"><?php echo (empty($rsvp_timezone)) ? esc_html__( 'Default','rsvpmaker') : $rsvp_timezone?></option>
+	<option value="<?php echo esc_attr($rsvp_timezone);?>"><?php echo (empty($rsvp_timezone)) ? esc_html__( 'Default','rsvpmaker') : esc_html($rsvp_timezone);?></option>
 <optgroup label="U.S. Mainland">
 <option value="America/New_York">New York</option>
 <option value="America/Chicago">Chicago</option>
@@ -3661,11 +3661,11 @@ function rsvpmaker_quick_ui() {
 	$limit = (int) $_GET['quick'];
 	if(!$limit)
 		$limit = 5;
-	printf('<h3>%s</h3>',esc_html__( 'Quickly Setup Multiple Event Posts','rsvpmaker'));
-	printf('<p>%s</p>',esc_html__( 'Enter start time and title for each event to be created. Optionally, you can include post body text. Can include multiple paragraphs, separated by a blank line. Events can be published immediately or saved as drafts for further editing.','rsvpmaker'));
-	printf('<p>%s</p>',esc_html__( 'You must enter at least a title for the event to be recorded.','rsvpmaker'));
-	printf('<p>%s</p>',esc_html__( 'Setting the date changes the default date for all the events that follow, which is useful for example for setting up a conference program or other series of events on the same day or subsequent days.','rsvpmaker'));
-	printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup'));
+	printf('<h3>%s</h3>', esc_html__( 'Quickly Setup Multiple Event Posts','rsvpmaker'));
+	printf('<p>%s</p>', esc_html__( 'Enter start time and title for each event to be created. Optionally, you can include post body text. Can include multiple paragraphs, separated by a blank line. Events can be published immediately or saved as drafts for further editing.','rsvpmaker'));
+	printf('<p>%s</p>', esc_html__( 'You must enter at least a title for the event to be recorded.','rsvpmaker'));
+	printf('<p>%s</p>', esc_html__( 'Setting the date changes the default date for all the events that follow, which is useful for example for setting up a conference program or other series of events on the same day or subsequent days.','rsvpmaker'));
+	printf('<form method="post" action="%s">', esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_setup')));
 	for($i = 0; $i < 50; $i++) {
 		if($i >= $limit)
 			echo wp_kses_post( '<div class="quick-extra-blank" id="quick-extra-blank-' . esc_attr( $i ) . '">' );
@@ -3829,12 +3829,12 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 		printf('<h3>%s</h3><p>%s</p>',esc_html__( 'Your Templates','rsvpmaker'),esc_html__( 'Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series.','rsvpmaker'));
 		echo wp_kses_post($list);
 
-		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>',admin_url('post.php'),$tedit,get_submit_button(esc_html__( 'Edit Template','rsvpmaker')));
+		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>', esc_url(admin_url('post.php')), $tedit, get_submit_button(esc_html__( 'Edit Template','rsvpmaker')));
 
 		printf('<form action="%s" method="get">
 		<input type="hidden" name="post_type" value="rsvpmaker">
 		<input type="hidden" name="page" value="rsvpmaker_template_list">
-		<p><select name="t">%s</select>%s</p></form>',admin_url('edit.php'),$tedit,get_submit_button(esc_html__( 'Create/Update','rsvpmaker')));
+		<p><select name="t">%s</select>%s</p></form>', esc_url(admin_url('edit.php')), $tedit, get_submit_button(esc_html__( 'Create/Update','rsvpmaker')));
 	}
 }
 
@@ -4011,7 +4011,7 @@ $lostpassword = site_url('wp-login.php?action=lostpassword');
 		printf('<h2>Update Editors List: %s</h2><form action="%s" method="post">%s
 		<p><input type="hidden" name="t" value="%s" />
 		Add by Email: <input type="email" name="editor_email" />
-		%s</p>%s</form>',esc_html($post->post_title), admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share'), $editors,$t,get_submit_button(esc_html__( 'Save','rsvpmaker')),rsvpmaker_nonce('return'));
+		%s</p>%s</form>', esc_html($post->post_title), esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_share')), $editors, $t, get_submit_button(esc_html__( 'Save','rsvpmaker')), rsvpmaker_nonce('return'));
 	}
 
 	$templates = rsvpmaker_get_templates();
@@ -4034,13 +4034,13 @@ else
 		printf('<form action="%s" method="get">
 		<input type="hidden" name="post_type" value="rsvpmaker">
 		<input type="hidden" name="page" value="rsvpmaker_share">
-		<p><select name="t">%s</select>%s</p>%s</form>',admin_url('edit.php'),$tedit,get_submit_button(esc_html__( 'Choose Template','rsvpmaker')),rsvpmaker_nonce('return'));
+		<p><select name="t">%s</select>%s</p>%s</form>', esc_url(admin_url('edit.php')), $tedit, get_submit_button(esc_html__( 'Choose Template','rsvpmaker')), rsvpmaker_nonce('return'));
 
 		printf('<form action="%s" method="get">
 		<input type="hidden" name="post_type" value="rsvpmaker">
 		<input type="hidden" name="page" value="rsvpmaker_share">
 		<input type="hidden" name="remove" value="1">
-		<p><select name="t">%s</select>%s</p>%s</form>',admin_url('edit.php'),$tedit,get_submit_button(esc_html__( 'Remove Editors','rsvpmaker')),rsvpmaker_nonce('return'));
+		<p><select name="t">%s</select>%s</p>%s</form>', esc_url(admin_url('edit.php')), $tedit, get_submit_button(esc_html__( 'Remove Editors','rsvpmaker')), rsvpmaker_nonce('return'));
 }
 
 }
