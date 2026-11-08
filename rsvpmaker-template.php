@@ -1100,8 +1100,7 @@ function rsvpmaker_template_list() {
 					$template_edit_url = admin_url( 'post.php?action=edit&post=' . intval( $post->ID ) );
 
 
-
-					$title = sprintf( '<a href="%s">%s</a>', esc_attr( $template_edit_url ), esc_html( $post->post_title ) );
+					$title = sprintf( '<a href="%s">%s</a>', esc_url( $template_edit_url ), esc_html( $post->post_title ) );
 
 
 
@@ -1124,7 +1123,7 @@ function rsvpmaker_template_list() {
 
 					$template_recur_url = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . intval( $post->ID ) );
 
-						printf( '<tr><td>%s</td><td>%s</td><td><a href="%s">' . __( 'Create/Update', 'rsvpmaker' ) . '</a></td><td>%s</td></tr>' . "\n", wp_kses_post( $title ), wp_kses_post( $s ), esc_attr( $template_recur_url ), wp_kses_post( rsvpmaker_next_or_recent( $post->ID ) ) );
+						printf( '<tr><td>%s</td><td>%s</td><td><a href="%s">' . __( 'Create/Update', 'rsvpmaker' ) . '</a></td><td>%s</td></tr>' . "\n", wp_kses_post( $title ), wp_kses_post( $s ), esc_url( $template_recur_url ), wp_kses_post( rsvpmaker_next_or_recent( $post->ID ) ) );
 
 
 
@@ -1221,7 +1220,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to:</p><p><label>%s<br /><select name="overridden_multi[]" multiple="multiple" size="10" style="min-width:360px;">%s</select></label><br /><small>%s</small></p><p>Copy settings:</p>', $action, $current_template . $template_options, __( 'Choose one or more upcoming events to switch', 'rsvpmaker' ), $event_options . $template_override, __( 'Use Ctrl/Cmd-click or Shift-click to select more than one event.', 'rsvpmaker' ) );
+				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to:</p><p><label>%s<br /><select name="overridden_multi[]" multiple="multiple" size="10" style="min-width:360px;">%s</select></label><br /><small>%s</small></p><p>Copy settings:</p>', $action, wp_kses_post( $current_template . $template_options ), __( 'Choose one or more upcoming events to switch', 'rsvpmaker' ), wp_kses_post( $event_options . $template_override ), __( 'Use Ctrl/Cmd-click or Shift-click to select more than one event.', 'rsvpmaker' ) );
 
 				printf('<div><input type="checkbox" value="_add_timezone" name="copymeta[]">  %s</div>',esc_html__('Show Timezone','rsvpmaker'));
 
@@ -1285,7 +1284,7 @@ function rsvpmaker_template_list() {
 
 		}
 
-		$action = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' );
+		$action = esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) );
 
 
 		echo '<h3 id="fromexisting">Create Template Based on Existing Event</h3>';
@@ -1356,7 +1355,7 @@ function rsvpmaker_template_list() {
 
 		if ( $template_options ) {
 
-			printf( '<h3>%s</h3><form action="%s" method="post"><select name="share_template">%s</select>', __( 'Share Template', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) ), $template_options );
+			printf( '<h3>%s</h3><form action="%s" method="post"><select name="share_template">%s</select>', __( 'Share Template', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) ), wp_kses_post( $template_options ) );
 
 			submit_button( __( 'Share Template', 'rsvpmaker' ) );
 
@@ -1492,7 +1491,7 @@ function rsvpmaker_template_list() {
 
 			<br><input type="checkbox" name="holiday_include[]" value="%d" checked="checked"> include <input type="checkbox" name="default[%d]" value="1" %s> block by default</p>',
 
-				$index,esc_attr($s['name']),$index,esc_attr($s['schedule']),$index,esc_attr($s['overflow']),($s['overflow']=='' ? ' selected="selected"' : ''),esc_html($s['overflow']),$index,$index,$isdefault);
+				$index,esc_attr($s['name']),$index,esc_attr($s['schedule']),$index,esc_attr($s['overflow']),selected($s['overflow'],'',false),esc_html($s['overflow']),$index,$index,$isdefault);
 
 		}
 
@@ -1526,7 +1525,7 @@ function rsvpmaker_template_list() {
 
 			foreach ( $templates as $template ) {
 
-				$url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&autorenew='.$template->ID);
+				$url = esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&autorenew='.$template->ID) );
 
 				printf('<p><a href="%s">Auto renew %s</a></p>',$url,esc_html($template->post_title));
 
@@ -1856,7 +1855,7 @@ function rsvp_template_checkboxes( $t ) {
 			} // end for loop
 		}
 
-		$action = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t );
+		$action = esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t ) );
 
 		if ( empty( $updatelist ) ) {
 			$updatelist = '';
@@ -1879,7 +1878,7 @@ function rsvp_template_checkboxes( $t ) {
 			}
 		}
 		else {
-			$updatelist .= sprintf('<div><a href="%s&other=1">%s</a></div>',esc_url($action),__('Show other events (not based on this template)','rsvpmaker'));	
+			$updatelist .= sprintf('<div><a href="%s&other=1">%s</a></div>',$action,__('Show other events (not based on this template)','rsvpmaker'));	
 		}
 
 		if ( current_user_can( 'edit_rsvpmakers' ) ) {
@@ -1910,8 +1909,8 @@ function rsvp_template_checkboxes( $t ) {
 
 </div><br />',
 				$action,
-				$updatelist,
-				$add_date_checkbox,
+				wp_kses_post( $updatelist ),
+				wp_kses_post( $add_date_checkbox ),
 				$t,
 				rsvpmaker_nonce('return')
 			);
@@ -2088,7 +2087,7 @@ function rsvp_template_checkboxes( $t ) {
 			} // end for loop
 		}
 
-		$action = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t );
+		$action = esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . $t ) );
 
 		if ( current_user_can( 'edit_rsvpmakers' )) {
 			if(empty($add_one))
@@ -2146,7 +2145,7 @@ function rsvp_template_checkboxes( $t ) {
 				__( 'No Meeting', 'rsvpmaker' ),
 				__( 'Record exceptions to your regular schedule.', 'rsvpmaker' ),
 				__( 'Regularly Scheduled Date', 'rsvpmaker' ),
-				$nomeeting,
+				wp_kses_post( $nomeeting ),
 				__( 'No Meeting', 'rsvpmaker' ),
 				__( 'Consider adding an explanation, "No Meeting: Holiday" or "No Meeting: meeting place closed"', 'rsvpmaker' ),
 				__( 'Note (optional, body content for event post)', 'rsvpmaker' ),
@@ -2170,7 +2169,7 @@ function rsvp_template_checkboxes( $t ) {
 
 </div>
 ',$action, __( 'Existing No Meeting Dates: select any you want to restore, resetting them to the meeting template', 'rsvpmaker' ),
-				$nomeets, __( 'Restore Selected', 'rsvpmaker' ), rsvpmaker_nonce('return')
+				wp_kses_post( $nomeets ), __( 'Restore Selected', 'rsvpmaker' ), rsvpmaker_nonce('return')
 );
 }
 
@@ -2178,7 +2177,7 @@ function rsvp_template_checkboxes( $t ) {
 
 			do_action( 'update_from_template_prompt' );
 
-			echo '<strong>' . __( 'Already Scheduled', 'rsvpmaker' ) . ':</strong><br /><br /><form method="post" action="' . esc_attr( $action ) . '">
+			echo '<strong>' . __( 'Already Scheduled', 'rsvpmaker' ) . ':</strong><br /><br /><form method="post" action="' . esc_url( $action ) . '">
 
 <fieldset>
 
@@ -2192,7 +2191,7 @@ function rsvp_template_checkboxes( $t ) {
 
 <tbody>
 
-' . $editlist . '
+' . wp_kses_post( $editlist ) . '
 
 </tbody></table>
 
