@@ -425,7 +425,7 @@ function rsvpmaker_stripe_checkout() {
 	<?php
 
 	if ( strpos( $public, 'test' ) && ! isset( $_GET['hidetest'] ) ) {
-		printf( '<p class="stripe-sandbox-mode">%s</p>', __( 'Stripe is in TEST mode. To simulate a transaction, use:<br />Credit card 4111 1111 1111 1111<br />Any future date<br />Any three digit CVC code<br />Any 5-digit postal code', 'rsvpmaker' ) );
+		printf( '<p class="stripe-sandbox-mode">%s</p>', wp_kses_post( __( 'Stripe is in TEST mode. To simulate a transaction, use:<br />Credit card 4111 1111 1111 1111<br />Any future date<br />Any three digit CVC code<br />Any 5-digit postal code', 'rsvpmaker' ) ) );
 	}
 
 	?>
@@ -725,7 +725,7 @@ function rsvpmaker_stripe_report() {
 		Up to <input name="history" type="number" value="100" /> transactions<br />starting <input type="text" name="date" placeholder="YYYY-mm-dd"> (optional) <br /><input type="checkbox" name="payouts" value="1"> Show payouts to bank<br />
 		%s
 		<button>Get</button></form></div>',
-			admin_url( 'edit.php' ),
+			esc_url( admin_url( 'edit.php' ) ),
 			rsvpmaker_nonce('return')
 		);
 	}
@@ -735,9 +735,9 @@ function rsvpmaker_stripe_report() {
 	echo '<h3>Export Format</h3>
 	<p>Formatted for copy-paste into Excel or other spreadsheet program
 	<br />
-	<textarea rows="20" style="width: 100%">' . $tx['export'] . '</textarea></p>';
+	<textarea rows="20" style="width: 100%">' . esc_textarea( $tx['export'] ) . '</textarea></p>';
 	if(!empty($detail))
-		echo '<h2>Detailed Output from Stripe API</h2>'.$detail;	
+		echo '<h2>Detailed Output from Stripe API</h2>' . wp_kses_post( $detail );
 }
 
 
@@ -953,11 +953,11 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 	
 	$stripetable  = rsvpmaker_money_table();
 	
-	$sql = $wpdb->prepare("SELECT * FROM %i WHERE user_id=%d", $stripetable, $user_id);
+	$where_clauses = array( $wpdb->prepare('user_id=%d', $user_id) );
 	if ( $start_date ) {
-		$sql .= $wpdb->prepare(" AND date > %s", $start_date);
+		$where_clauses[] = $wpdb->prepare('date > %s', $start_date);
 	}
-	$sql .= " ORDER BY date DESC";
+	$sql = "SELECT * FROM {$stripetable} WHERE " . implode(' AND ', $where_clauses) . " ORDER BY date DESC";
 	return $wpdb->get_row( $sql );
 }
 
@@ -966,10 +966,10 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
 	global $wpdb;
 	$stripetable = rsvpmaker_money_table();
-	$sql = $wpdb->prepare("SELECT * FROM %i WHERE user_id=0", $stripetable);
+	$where_clauses = array('user_id=0');
 	if ( $recent ) {
-		$sql .= " AND date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+		$where_clauses[] = 'date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH)';
 	}
-	$sql .= " ORDER BY date DESC";
+	$sql = "SELECT * FROM {$stripetable} WHERE " . implode(' AND ', $where_clauses) . " ORDER BY date DESC";
 	return $wpdb->get_results( $sql );
 }
