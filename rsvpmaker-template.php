@@ -32,10 +32,9 @@ function rsvpmaker_template_schedule( $template ) {
 		?>
 <p><input type="checkbox" name="rsvpautorenew" id="rsvpautorenew" 
 		<?php
-		if ( $auto ) {
-			echo 'checked="checked"';}
+		checked( $auto );
 		?>
- /> <?php esc_html_e( 'Automatically add dates according to schedule', 'rsvpmaker' ); ?></em></p>
+ /> <?php esc_html_e( 'Automatically add dates according to schedule', 'rsvpmaker' ); ?></p>
 <?php
 }
 
@@ -549,7 +548,7 @@ function rsvpmaker_template_list() {
 
 
 
-			printf( '<h1>Template updated based on contents of event for %s</h1>', rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) );
+				printf( '<h1>Template updated based on contents of event for %s</h1>', esc_html( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) ) );
 
 
 
@@ -595,7 +594,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<p>Settings copied: %s</p>', implode( ', ', $copied ) );
+					printf( '<p>Settings copied: %s</p>', esc_html( implode( ', ', $copied ) ) );
 
 			}
 
@@ -623,7 +622,7 @@ function rsvpmaker_template_list() {
 
 			$t = wp_insert_post( $newpost );
 
-				printf( '<div class="notice success notice-sodium_crypto_core_ristretto255_scalar_add( $x:string, $y:string )"><h1>Template created for %s</h1><p><a href="%s">Edit</a></p></div>', esc_html( $event->post_title ), get_edit_post_link( $t ) );
+					printf( '<div class="notice success notice-success"><h1>Template created for %s</h1><p><a href="%s">Edit</a></p></div>', esc_html( $event->post_title ), esc_url( get_edit_post_link( $t ) ) );
 
 				$results = $wpdb->get_results( $wpdb->prepare("select * from %i WHERE post_id=%d",$wpdb->postmeta,$e) );
 				$docopy = array( '_add_timezone', '_convert_timezone', '_calendar_icons', 'tm_sidebar', 'sidebar_officers' );
@@ -721,7 +720,7 @@ function rsvpmaker_template_list() {
 
 
 
-			printf( '<h1>Template updated based on contents of event for %s</h1>', rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) );
+				printf( '<h1>Template updated based on contents of event for %s</h1>', esc_html( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) ) );
 
 
 
@@ -767,7 +766,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<p>Settings copied: %s</p>', implode( ', ', $copied ) );
+				printf( '<p>Settings copied: %s</p>', esc_html( implode( ', ', $copied ) ) );
 
 			}
 
@@ -1110,12 +1109,12 @@ function rsvpmaker_template_list() {
 
 
 
-						$title .= sprintf( ' (<a href="%s">Toastmasters %s</a>)', agenda_setup_url( $post->ID ), __( 'Agenda Setup', 'rsvptoast' ) );
+							$title .= sprintf( ' (<a href="%s">Toastmasters %s</a>)', esc_url( agenda_setup_url( $post->ID ) ), esc_html( __( 'Agenda Setup', 'rsvptoast' ) ) );
 
 					}
 
 
-					$template_options .= sprintf( '<option value="%d" %s>%s</option>', $post->ID, (!empty($t) && $t == $post->ID) ? 'selected="selected"' : '', esc_html( $post->post_title ) );
+					$template_options .= sprintf( '<option value="%d"%s>%s</option>', $post->ID, selected( $post->ID, $t, false ), esc_html( $post->post_title ) );
 
 
 
@@ -1125,7 +1124,7 @@ function rsvpmaker_template_list() {
 
 					$template_recur_url = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t=' . intval( $post->ID ) );
 
-					printf( '<tr><td>%s</td><td>%s</td><td><a href="%s">' . __( 'Create/Update', 'rsvpmaker' ) . '</a></td><td>%s</td></tr>' . "\n", wp_kses_post( $title ), $s, esc_attr( $template_recur_url ), rsvpmaker_next_or_recent( $post->ID ) );
+						printf( '<tr><td>%s</td><td>%s</td><td><a href="%s">' . __( 'Create/Update', 'rsvpmaker' ) . '</a></td><td>%s</td></tr>' . "\n", wp_kses_post( $title ), wp_kses_post( $s ), esc_attr( $template_recur_url ), wp_kses_post( rsvpmaker_next_or_recent( $post->ID ) ) );
 
 
 
@@ -1137,7 +1136,7 @@ function rsvpmaker_template_list() {
 
 
 
-					printf( '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' . "\n", esc_html( $title ), $s, __( 'Not an editor', 'rsvpmaker' ), rsvpmaker_next_or_recent( $post->ID ) );
+						printf( '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' . "\n", esc_html( $title ), wp_kses_post( $s ), esc_html( __( 'Not an editor', 'rsvpmaker' ) ), wp_kses_post( rsvpmaker_next_or_recent( $post->ID ) ) );
 
 
 
@@ -1204,7 +1203,7 @@ function rsvpmaker_template_list() {
 
 
 
-						$selected = in_array( (int) $r->postID, $target_ids, true ) ? ' selected="selected"' : '';
+							$selected = in_array( (int) $r->postID, $target_ids, true ) ? selected( true, true, false ) : '';
 
 
 
@@ -1333,7 +1332,7 @@ function rsvpmaker_template_list() {
 
 			foreach ( $results as $row ) {
 
-				printf( '<p>%s<br />%s</p>', esc_html( $row->post_title ), rest_url( 'rsvpmaker/v1/shared_template/' . intval( $row->ID ) ) );
+					printf( '<p>%s<br />%s</p>', esc_html( $row->post_title ), esc_url( rest_url( 'rsvpmaker/v1/shared_template/' . intval( $row->ID ) ) ) );
 
 			}
 
@@ -1409,7 +1408,7 @@ function rsvpmaker_template_list() {
 
 
 
-					$restore .= sprintf( '<p><a href="%s">Restore</a> - This template appears to have been corrupted: <strong>%s</strong> (%d) last modified: %s, used for %d future events.</p>', admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&restore=' . intval( $corrupted->ID ) . '&specimen=' . intval( $specimen ) ), esc_html( $corrupted->post_title ), esc_attr( $corrupted->ID ), esc_attr( $corrupted->post_modified ), esc_attr( $futurecount ) );
+					$restore .= sprintf( '<p><a href="%s">Restore</a> - This template appears to have been corrupted: <strong>%s</strong> (%d) last modified: %s, used for %d future events.</p>', esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&restore=' . intval( $corrupted->ID ) . '&specimen=' . intval( $specimen ) ) ), esc_html( $corrupted->post_title ), esc_attr( $corrupted->ID ), esc_attr( $corrupted->post_modified ), esc_attr( $futurecount ) );
 
 
 
@@ -1425,7 +1424,7 @@ function rsvpmaker_template_list() {
 
 
 
-			echo '<h3>Restore Templates</h3>' . $restore;
+				echo '<h3>Restore Templates</h3>' . wp_kses_post( $restore );
 
 		}
 
@@ -1485,15 +1484,15 @@ function rsvpmaker_template_list() {
 
 		foreach($schedule as $index => $s) {
 
-			$isdefault = ($s['default']) ? ' checked="checked" ' : '';
+				$isdefault = ( $s['default'] ) ? checked( true, true, false ) : '';
 
 			printf('<p>Name<br><input type="text" name="name[%d]" value="%s"><br>Schedule<br><input type="text" name="schedule[%d]" value="%s"> 
 
-			<br>Adjacent day rule: <select name="overflow[%d]"><option value="%s">%s</option><option value="weekend">Monday/Friday if falls on weekend</option><option value="nextday">Next day</option></select>
+				<br>Adjacent day rule: <select name="overflow[%d]"><option value="%s"%s>%s</option><option value="weekend">Monday/Friday if falls on weekend</option><option value="nextday">Next day</option></select>
 
 			<br><input type="checkbox" name="holiday_include[]" value="%d" checked="checked"> include <input type="checkbox" name="default[%d]" value="1" %s> block by default</p>',
 
-			$index,esc_attr($s['name']),$index,esc_attr($s['schedule']),$index,esc_attr($s['overflow']),esc_html($s['overflow']),$index,$index,$isdefault);
+				$index,esc_attr($s['name']),$index,esc_attr($s['schedule']),$index,esc_attr($s['overflow']),($s['overflow']=='' ? ' selected="selected"' : ''),esc_html($s['overflow']),$index,$index,$isdefault);
 
 		}
 
@@ -1513,7 +1512,7 @@ function rsvpmaker_template_list() {
 
 		foreach($holidays as $t => $s)
 
-			printf('%s %s / ',$s['name'],rsvpmaker_date('l F jS, Y',$t));
+				printf('%s %s / ', esc_html( $s['name'] ), esc_html( rsvpmaker_date('l F jS, Y',$t) ));
 
 		echo '<p>';
 
@@ -1701,7 +1700,7 @@ function rsvp_template_checkboxes( $t ) {
 			$schedule .= ' - stop date set for '.$template['stop'];
 		}
 
-		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><p><a href="%s">%s</a></p><p><a href="#applytemplate">%s</a></p></blockquote>', __( 'Template', 'rsvpmaker' ), esc_html( $post->post_title ), esc_html( $schedule ), admin_url( 'post.php?action=edit&post=' . $t ), __( 'Edit Template', 'rsvpmaker' ), __( 'Apply to Existing Event', 'rsvpmaker' ) );
+		printf( '<p id="template_ck">%s:</p><h2>%s</h2><h3>%s</h3><blockquote><p><a href="%s">%s</a></p><p><a href="#applytemplate">%s</a></p></blockquote>', esc_html( __( 'Template', 'rsvpmaker' ) ), esc_html( $post->post_title ), esc_html( $schedule ), esc_url( admin_url( 'post.php?action=edit&post=' . $t ) ), esc_html( __( 'Edit Template', 'rsvpmaker' ) ), esc_html( __( 'Apply to Existing Event', 'rsvpmaker' ) ) );
 
 		$hour = (empty($template['hour'])) ? 12 : (int) $template['hour'];
 
@@ -1774,7 +1773,7 @@ function rsvp_template_checkboxes( $t ) {
 
 				$donotproject[] = rsvpmaker_date( 'Y-m-j', $thistime, $template_timezone );
 
-				$nomeeting .= sprintf( '<option value="%s">%s (%s)</option>', esc_attr($sched->postID), rsvpmaker_date( 'F j, Y', $thistime, $template_timezone ), __( 'Already Scheduled', 'rsvpmaker' ) );
+					$nomeeting .= sprintf( '<option value="%s">%s (%s)</option>', esc_attr($sched->postID), esc_html( rsvpmaker_date( 'F j, Y', $thistime, $template_timezone ) ), esc_html( __( 'Already Scheduled', 'rsvpmaker' ) ) );
 
 				$cy = rsvpmaker_date( 'Y', $thistime, $template_timezone ); // advance starting time
 
@@ -1791,7 +1790,7 @@ function rsvp_template_checkboxes( $t ) {
 
 					$delete_text = __( 'Move to Trash' );
 
-					$d = '<input type="checkbox" name="trash_template[]" value="' . esc_attr( $sched->postID ) . '" class="trash_template" /> <a class="submitdelete deletion" href="' . get_delete_post_link( $sched->postID ) . '">' . esc_html( $delete_text ) . '</a>';
+					$d = '<input type="checkbox" name="trash_template[]" value="' . esc_attr( $sched->postID ) . '" class="trash_template" /> <a class="submitdelete deletion" href="' . esc_url( get_delete_post_link( $sched->postID ) ) . '">' . esc_html( $delete_text ) . '</a>';
 
 				} else {
 					$d = '-';
@@ -1924,7 +1923,7 @@ function rsvp_template_checkboxes( $t ) {
 
 				$message = '<a href="' . esc_url( wp_nonce_url( "edit.php?post_type=rsvpmaker&doaction=undo&action=untrash&ids=$ids", 'bulk-posts' ) ) . '">' . __( 'Undo' ) . '</a>';
 
-				echo '<div id="message" class="updated"><p>' . __( 'Moved to trash', 'rsvpmaker' ) . ' ' . $message . '</p></div>';
+				echo '<div id="message" class="updated"><p>' . esc_html( __( 'Moved to trash', 'rsvpmaker' ) ) . ' ' . wp_kses_post( $message ) . '</p></div>';
 
 		}
 
@@ -1953,7 +1952,7 @@ function rsvp_template_checkboxes( $t ) {
 					continue;
 				}
 
-				$nomeeting .= sprintf( '<option value="%s">%s</option>', esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $template_timezone )), rsvpmaker_date( 'F j, Y', $ts, $template_timezone ) );
+				$nomeeting .= sprintf( '<option value="%s">%s</option>', esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $template_timezone )), esc_html( rsvpmaker_date( 'F j, Y', $ts, $template_timezone ) ) );
 
 				?>
 
@@ -2313,7 +2312,7 @@ function rsvpmaker_next_or_recent( $template_id ) {
 
 			$neatdate = mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
-			$event = sprintf( '<a href="%s">%s: %s</a>', esc_url( get_post_permalink( $row->postID ) ), __( 'Next Event', 'rsvpmaker' ), $neatdate );
+				$event = sprintf( '<a href="%s">%s: %s</a>', esc_url( get_post_permalink( $row->postID ) ), esc_html( __( 'Next Event', 'rsvpmaker' ) ), esc_html( $neatdate ) );
 
 		} else {
 
@@ -2333,7 +2332,7 @@ function rsvpmaker_next_or_recent( $template_id ) {
 
 				$neatdate = mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], $t ), 'UTF-8' );
 
-				$event = sprintf( '<a style="color:#333;" href="%s">%s: %s</a>', esc_url( get_post_permalink( $row->postID ) ), __( 'Most Recent', 'rsvpmaker' ), $neatdate );
+					$event = sprintf( '<a style="color:#333;" href="%s">%s: %s</a>', esc_url( get_post_permalink( $row->postID ) ), esc_html( __( 'Most Recent', 'rsvpmaker' ) ), esc_html( $neatdate ) );
 
 			}
 	}
@@ -2374,7 +2373,7 @@ $post = get_post(intval($_GET['t']));
 					$nomeeting = '';
 				}
 
-				$nomeeting .= sprintf( '<option value="%s">%s</option>', esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $timezone )), rsvpmaker_date( 'F j, Y', $ts, $timezone ) );
+				$nomeeting .= sprintf( '<option value="%s">%s</option>', esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $timezone )), esc_html( rsvpmaker_date( 'F j, Y', $ts, $timezone ) ) );
 
 				?>
 
