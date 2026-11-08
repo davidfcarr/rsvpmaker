@@ -440,7 +440,7 @@ rsvpemail_from_settings();
 <h3>Built-in Mailing List</h3>
 <p>To manage the built-in list, see <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list') ); ?>">RSVPMailer Mailing List</a></p>
 <p>An RSVPMaker Email List Signup block is available for embedding a signup block in a page of your site. It can also be included as a sidebar or footer widget.</p>
-<p><image src="<?php echo plugins_url('rsvpmaker/images/email-list-signup.png'); ?>" width="600" height="445">
+<p><image src="<?php echo esc_url( plugins_url('rsvpmaker/images/email-list-signup.png') ); ?>" width="600" height="445">
 <p>You also have the option of displaying the a popup version of the signup form to website visitors not recognized as list subscribers. <a href="<?php echo esc_url( site_url('?show_rsvp_popup=1') ); ?>" target="_blank">See preview</a> (will display after 5 seconds).</p>
 <?php
 $rsvpmail_list_rsvpmodal_on = get_option('rsvpmail_list_rsvpmodal_on');
@@ -448,11 +448,11 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
 $options = get_rsvpmail_list_rsvpmodal_content();
 $title = $options['title'];
 $footer_text = $options['footer_text'];
-$checked = $rsvpmail_list_rsvpmodal_on ? 'checked="checked"' : '';
+$rsvpmail_list_rsvpmodal_on_val = $rsvpmail_list_rsvpmodal_on ? 1 : 0;
 $theme_style = rsvpmail_filter_style_json();
 $theme_colors = empty($theme_style['colors']) ? array() : $theme_style['colors'];
 $theme_gradients = empty($theme_style['gradients']) ? array() : $theme_style['gradients'];
-printf('<p><input type="checkbox" name="rsvpmail_list_rsvpmodal_on" value="1" %s> Popup On <span="show_popup_options_checkbox"><input type="checkbox" onclick="showPopupOptions()"> Show Popup Options</span></p>',$checked);
+printf('<p><input type="checkbox" name="rsvpmail_list_rsvpmodal_on" value="1" %s> Popup On <span="show_popup_options_checkbox"><input type="checkbox" onclick="showPopupOptions()"> Show Popup Options</span></p>', checked( $rsvpmail_list_rsvpmodal_on_val, 1, false ) );
 echo '<div id="show_popup_options" style="display:none;">';
 printf('<p>Title<br><input type="text" name="rsvpmail_list_rsvpmodal_content[title]" value="%s" ></p>', esc_attr( $title ) );
 printf('<p>Footer Text<br><input type="text" name="rsvpmail_list_rsvpmodal_content[footer_text]" value="%s" ></p>', esc_attr( $footer_text ) );
@@ -473,20 +473,20 @@ foreach($theme_gradients as $index => $color) {
 ?>
 <h3>Add to Mailing List Checkbox for RSVP Forms</h3>
 <p>You can include an "Add me to your email list" checkbox on your RSVP forms to enlist people when they sign up for your events. This works with both MailChimp and MailPoet.</p>
-<p><image src="<?php echo plugins_url('rsvpmaker/images/mailing_list_checkbox.png'); ?>" width="600" height="198">
+<p><image src="<?php echo esc_url( plugins_url('rsvpmaker/images/mailing_list_checkbox.png') ); ?>" width="600" height="198">
 <br /><em>Adding the Mailing List Checkbox block (left) and Checkbox as it appears on the form (right)</em></p>
 </div>
 <?php rsvpmaker_add_to_list_on_rsvp_form(); ?>
 
 <h3>Subscription Confirmation Message</h3>
 <p>If you would like to set a message to be displayed whenever someone confirms their subscription to the RSVPMaker's own email list, you can set that here. The placeholder code *|EMAIL|* maybe used to display the subscriber's email address.</p>
-<p><textarea name="rsvpmailer_list_confirmation_message" class="mce"><?php echo get_option('rsvpmailer_list_confirmation_message');?></textarea></p>
+<p><textarea name="rsvpmailer_list_confirmation_message" class="mce"><?php echo wp_kses_post( get_option('rsvpmailer_list_confirmation_message') );?></textarea></p>
 <input type="hidden" name="tab" value="email">
 <?php 
 rsvpmaker_nonce();
 submit_button();
 $form = rsvpmail_signup_form();
-printf('<p>This snippet of code can be embedded in any external site from which you accept email list signups.</p><pre>%s</pre>',htmlentities($form));
+printf('<p>This snippet of code can be embedded in any external site from which you accept email list signups.</p><pre>%s</pre>', esc_html( $form ) );
 ?>
 </form>
 <p>See also: <a target="_blank" href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>">Email Template</a></p>
@@ -654,7 +654,7 @@ foreach($results as $row)
 					$post = get_post($post_id);
 					if(!empty($post))
 						{
-					printf('<tr><td>%s <br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>', esc_html( $post->post_title ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ), esc_htmlesc_html__( 'Edit Post', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id=' . $post_id ) ), esc_htmlesc_html__( 'Schedule Options', 'rsvpmaker' ) );
+					printf('<tr><td>%s <br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>', esc_html( $post->post_title ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ), esc_html__( 'Edit Post', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id=' . $post_id ) ), esc_html__( 'Schedule Options', 'rsvpmaker' ) );
 						$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
 
 						echo esc_html(mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp),'UTF-8')).' '.esc_html($schedule);
@@ -694,7 +694,7 @@ foreach($results as $row)
 						$post = get_post($post_id);
 						if(!empty($post))
 							{
-							printf( '<tr><td>%s (%s)<br /><a href="%s">%s</a></td><td>%s</td></tr>', esc_html( $post->post_title ), esc_htmlesc_html__( 'Delayed Send', 'rsvpmaker' ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ), esc_htmlesc_html__( 'Edit Post', 'rsvpmaker' ), wp_kses_post( $cancel_links ) );
+							printf( '<tr><td>%s (%s)<br /><a href="%s">%s</a></td><td>%s</td></tr>', esc_html( $post->post_title ), esc_html__( 'Delayed Send', 'rsvpmaker' ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ), esc_html__( 'Edit Post', 'rsvpmaker' ), wp_kses_post( $cancel_links ) );
 							}
 						}
 					}
@@ -1854,9 +1854,9 @@ if($queued) {
 	$queued = get_post_meta($post->ID,'rsvprelay_to');
 	if($queued) {
 		//if more in queue
-		printf('<p>%s emails queued to send (<a href="%s">Refresh</a>)</p>',sizeof($queued),$permalink);
+		printf('<p>%d emails queued to send (<a href="%s">Refresh</a>)</p>',sizeof($queued),esc_url($permalink));
 		if(isset($_GET['show_log']))
-			printf('</p>%s</p>',implode(', ',$queued));
+			printf('<p>%s</p>',esc_html(implode(', ',$queued)));
 	}
 }
 $sent = get_post_meta($post->ID,'rsvpmail_sent');
