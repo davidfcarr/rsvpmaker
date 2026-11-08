@@ -1862,7 +1862,7 @@ if($queued) {
 $sent = get_post_meta($post->ID,'rsvpmail_sent');
 $blocked = get_post_meta($post->ID,'rsvpmail_blocked');
 if($sent && !rsvpmaker_postmark_is_active()) {
-	printf('<p>%s emails sent, %s blocked (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($sent),sizeof($blocked),$permalink,add_query_arg('show_log',1,$permalink));
+	printf('<p>%s emails sent, %s blocked (<a href="%s">Refresh</a> | <a href="%s">Show Addresses</a>)</p>',sizeof($sent),sizeof($blocked),esc_url($permalink),esc_url(add_query_arg('show_log',1,$permalink)));
 	if(isset($_GET['show_log'])){
 		printf('</p>%s</p>',implode('<br>',$sent));
 		printf('</p>%s</p>',implode('<br>',$blocked));
@@ -2878,12 +2878,8 @@ foreach($pages as $page)
 <p><input type="text" name="newsletter_title" placeholder="<?php esc_attresc_html_e( 'Newsletter Title','rsvpmaker'); ?>">
 <em><?php esc_html_e('Leave blank to use the title of the first selected post or event.','rsvpmaker');?></em></p>
 <p>Choose multiple blog posts or events to include as starting points for your newsletter.</p>
-<p><select name="newsletter_choice[]"><?php echo $posts. $event_options. $oopt; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select>
-<div id="emptychoice"><p><select name="newsletter_choice[]"><option value=""></option><?php echo $posts. $event_options. $oopt; ?></select></p></div>
+<p><select name="newsletter_choice[]"><?php echo wp_kses_post($posts. $event_options. $oopt); ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo wp_kses_post($posts. $event_options. $oopt); ?></select>
 <div id="addhere"><a href="#" id="addchoice">+ More choices</a></div>
 <p><input type="checkbox" name="excerpt" value="1" checked="checked"> <strong>Use Excerpt</strong> Blog posts should include a Read More link* </p>
 <p><strong>Number of Events</strong> for upcoming events listing <input type="number" name="number_of_events" value="20" min="1"></p>
@@ -2921,7 +2917,7 @@ printf('<form id="alt_template" name="alt_template" method="get" action="%s"><in
 <button><?php esc_html_e('Load Content','rsvpmaker');?></button>
 </form>	
 <h2><?php esc_html_e('Email Based on Page','rsvpmaker');?></h2>
-<p><select name="post_to_email"><?php echo $po; ?></select>
+<p><select name="post_to_email"><?php echo wp_kses_post($po); ?></select>
 </select>
 <br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php esc_html_e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php esc_html_e('Excerpt','rsvpmaker');?>
 </p>
@@ -5733,7 +5729,7 @@ function rsvpmaker_email_segments_dropdown($field_name='segment', $echo = true, 
 		}
 	$output = sprintf('<select name="'.$field_name.'">'.$segment_options.'</select>');
 	if($echo)
-		echo $output;
+		echo wp_kses_post($output);
 	return $output;
 }
 
@@ -6122,13 +6118,13 @@ if(!$wp_query->have_posts()) {
 $permalink = get_permalink();
 ?>
 <div class="email-post">
-<h2><a href="<?php echo $permalink; ?>"><?php the_title(); ?></a></h2>
+<h2><a href="<?php echo esc_url($permalink); ?>"><?php the_title(); ?></a></h2>
 <?php
 $thumburl = get_the_post_thumbnail_url($post);
 if($thumburl)
 	printf('<figure><img src="%s" style="max-width: %s" ></figure>',$thumburl,'90%');
 ?>
-<p class="the_excerpt"><?php echo $excerpt = get_the_excerpt();?></p>
+<p class="the_excerpt"><?php echo wp_kses_post($excerpt = get_the_excerpt());?></p>
 <?php 
 if(!strpos($excerpt,$permalink))
 {
@@ -6548,7 +6544,7 @@ if($chosen)
 
 <p><input type="radio" name="status" value="" checked="checked" /> <strong>
 <?php esc_html_e('Pick a blog post to feature','rsvpmaker');?>:</strong> <select name="chosen"><option value=""><?php esc_html_e('None','rsvpmaker');?></option>
-<?php echo $blog_options; ?></select></p>
+<?php echo wp_kses_post($blog_options); ?></select></p>
 
 <p><input type="radio" name="status" value="draft" /> <strong>Create a draft</strong> based on the headline and message below (will not appear on the live website unless you subsequently choose to publish the draft)<br /><input type="radio" name="status" value="publish" /> <strong>Create and publish</strong> blog based on the headline and message below</strong><br /> <em>(<?php esc_html_e('This post will be used as the editors note at the top of your broadcast. Making it public on the blog is optional.','rsvpmaker');?>)</em></p>
 
@@ -6762,7 +6758,7 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */
   z-index: 9999999 !important; /* Sit on top */
-  padding-top: <?php echo $rsvpmail_list_rsvpmodal_css['top']; ?>; /* Location of the box */
+  padding-top: <?php echo esc_attr(intval($rsvpmail_list_rsvpmodal_css['top'])); ?>; /* Location of the box */
   left: 0;
   top: 0;
   width: 100%; /* Full width */
@@ -6777,7 +6773,7 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
   position: relative;
   margin: auto;
   padding: 0;
-  width: <?php echo $rsvpmail_list_rsvpmodal_css['width']; ?>;
+  width: <?php echo esc_attr($rsvpmail_list_rsvpmodal_css['width']); ?>;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
   -webkit-animation-name: animatetop;
   -webkit-animation-duration: 0.4s;
@@ -6812,17 +6808,17 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
 }
 
 .rsvpmodal-header {
-<?php echo $rsvpmail_list_rsvpmodal_css['header']; ?>
+<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['header']); ?>
 }
 
 .rsvpmodal-body {
-	<?php echo $rsvpmail_list_rsvpmodal_css['body']; ?>
+	<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['body']); ?>
 }
 
 .rsvpmodal-footer {
-<?php echo $rsvpmail_list_rsvpmodal_css['footer']; ?>
+<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['footer']); ?>
 }
-<?php echo $rsvpmail_list_rsvpmodal_css['additional']; ?>
+<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['additional']); ?>
 </style>
 <?php
 }
@@ -6847,13 +6843,13 @@ $footer_text = $options['footer_text'];
   <div class="rsvpmodal-content">
     <div class="rsvpmodal-header">
       <span class="close">&times;</span>
-      <h3><?php echo $title; ?></h3>
+      <h3><?php echo esc_html($title); ?></h3>
     </div>
     <div class="rsvpmodal-body">
 	<?php echo rsvpmail_signup_form(); ?>
     </div>
     <div class="rsvpmodal-footer">
-      <p><?php echo $footer_text; ?></p>
+      <p><?php echo wp_kses_post($footer_text); ?></p>
     </div>
   </div>
 
