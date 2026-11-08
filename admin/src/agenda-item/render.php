@@ -1,7 +1,7 @@
-<div <?php echo get_block_wrapper_attributes(); ?>>
+<div <?php echo wp_kses_post(get_block_wrapper_attributes()); ?>>
 <?php
 global $post;
-echo $content;
+echo wp_kses_post($content);
 rsvpmaker_agenda_item($attributes);
 ?>
 </div>
