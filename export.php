@@ -487,10 +487,10 @@ function rsvpmaker_export_wp( $args = array() ) {
 	<title><?php bloginfo_rss( 'name' ); ?></title>
 	<link><?php bloginfo_rss( 'url' ); ?></link>
 	<description><?php bloginfo_rss( 'description' ); ?></description>
-	<pubDate><?php echo date( 'D, d M Y H:i:s +0000' ); ?></pubDate>
+	<pubDate><?php echo esc_html( date( 'D, d M Y H:i:s +0000' ) ); ?></pubDate>
 	<language><?php bloginfo_rss( 'language' ); ?></language>
 	<wp:wxr_version><?php echo WXR_VERSION; ?></wp:wxr_version>
-	<wp:base_site_url><?php echo rsvpmaker_wxr_site_url(); ?></wp:base_site_url>
+	<wp:base_site_url><?php echo esc_url( rsvpmaker_wxr_site_url() ); ?></wp:base_site_url>
 	<wp:base_blog_url><?php bloginfo_rss( 'url' ); ?></wp:base_blog_url>
 		<?php
 		if ( $filecount == 1 ) {
@@ -587,15 +587,15 @@ function rsvpmaker_export_wp( $args = array() ) {
 		<title>
 					<?php
 					/** This filter is documented in wp-includes/feed.php */
-					echo apply_filters( 'the_title_rss', $post->post_title );
+					echo esc_html( apply_filters( 'the_title_rss', $post->post_title ) );
 					// prevent different events with same title from being treated as duplicates. RSVPMaker will clean this up after import
 					if ( $post->post_type == 'rsvpmaker' ) {
-						echo 'rsvpid' . $post->ID;
+						echo 'rsvpid' . esc_html( intval( $post->ID ) );
 					}
 					?>
 		</title>
 		<link><?php the_permalink_rss(); ?></link>
-		<pubDate><?php echo mysql2date( 'D, d M Y H:i:s +0000', get_post_time( 'Y-m-d H:i:s', true ), false ); ?></pubDate>
+		<pubDate><?php echo esc_html( mysql2date( 'D, d M Y H:i:s +0000', get_post_time( 'Y-m-d H:i:s', true ), false ) ); ?></pubDate>
 		<dc:creator><?php echo rsvpmaker_wxr_cdata( get_the_author_meta( 'login' ) ); ?></dc:creator>
 		<guid isPermaLink="false"><?php the_guid(); ?></guid>
 		<description></description>
