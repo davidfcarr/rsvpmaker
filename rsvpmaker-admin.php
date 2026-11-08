@@ -252,9 +252,9 @@ $endtime = (is_array($sked) && isset($sked['end'])) ? rsvpmaker_strtotime('2000-
 
 ?>
 <div id="<?php echo esc_attr($prefix); ?>date<?php echo esc_attr($index);?>" ><input type="hidden" id="defaulthour" value="<?php echo esc_attr($rsvp_options["defaulthour"]); ?>" /><input type="hidden" id="defaultmin" value="<?php echo esc_attr($rsvp_options["defaultmin"]); ?>" />
-<p><label>Date</label> <input type="date" name="newrsvpdate" id="newrsvpdate" value="<?php echo date('Y-m-d',$t); ?>"> 
+<p><label>Date</label> <input type="date" name="newrsvpdate" id="newrsvpdate" value="<?php echo esc_attr( date('Y-m-d',$t) ); ?>"> 
 </p>
-<p><label>Time</label> <input name="newrsvptime" type="time" class="newrsvptime" id="newrsvptime" value="<?php echo rsvpmaker_date('H:i:s',$t) ?>"><span id="endtimespan"> to <input name="rsvpendtime" type="time" class="rsvpendtime" id="rsvpendtime" value="<?php echo rsvpmaker_date('H:i:s',$endtime) ?>"> </span>
+<p><label>Time</label> <input name="newrsvptime" type="time" class="newrsvptime" id="newrsvptime" value="<?php echo esc_attr( rsvpmaker_date('H:i:s',$t) ); ?>"><span id="endtimespan"> to <input name="rsvpendtime" type="time" class="rsvpendtime" id="rsvpendtime" value="<?php echo esc_attr( rsvpmaker_date('H:i:s',$endtime) ); ?>"> </span>
 </p>
 
 <?php
@@ -277,9 +277,9 @@ function rsvpmaker_date_option_event($t, $endtime, $type) {
 	$index = 0;
 	?>
 	<div id="<?php echo esc_attr($prefix); ?>date<?php echo esc_attr($index);?>" ><input type="hidden" id="defaulthour" value="<?php echo esc_attr($rsvp_options["defaulthour"]); ?>" /><input type="hidden" id="defaultmin" value="<?php echo esc_attr($rsvp_options["defaultmin"]); ?>" />
-	<p><label>Date</label> <input type="date" name="newrsvpdate" id="newrsvpdate" value="<?php echo date('Y-m-d',$t); ?>"> 
+	<p><label>Date</label> <input type="date" name="newrsvpdate" id="newrsvpdate" value="<?php echo esc_attr( date('Y-m-d',$t) ); ?>"> 
 	</p>
-	<p><label>Time</label> <input name="newrsvptime" type="time" class="newrsvptime" id="newrsvptime" value="<?php echo rsvpmaker_date('H:i:s',$t) ?>"><span id="endtimespan"> to <input name="rsvpendtime" type="time" class="rsvpendtime" id="rsvpendtime" value="<?php echo rsvpmaker_date('H:i:s',$endtime) ?>"> </span>
+	<p><label>Time</label> <input name="newrsvptime" type="time" class="newrsvptime" id="newrsvptime" value="<?php echo esc_attr( rsvpmaker_date('H:i:s',$t) ); ?>"><span id="endtimespan"> to <input name="rsvpendtime" type="time" class="rsvpendtime" id="rsvpendtime" value="<?php echo esc_attr( rsvpmaker_date('H:i:s',$endtime) ); ?>"> </span>
 	</p>
 
 	<?php
