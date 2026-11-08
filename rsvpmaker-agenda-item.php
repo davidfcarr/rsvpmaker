@@ -21,11 +21,11 @@ if(is_array($ratings_array) && isset($ratings_array[$attributes['blockId']][get_
 else
     $your_rating = 0;
 
-    echo '<p><label for="agenda_item_rating">Your rating (1-5, 5 is best):</label><br />';
-    for($i = 1; $i <= 5; $i++) {
-        echo '<input type="radio" name="agenda_item_rating" value="' . $i . '" ' . checked($your_rating, $i, false) . ' /> ' . $i . ' ';
-    }
-    echo '</p>';
+	echo '<p><label for="agenda_item_rating">Your rating (1-5, 5 is best):</label><br />';
+	for($i = 1; $i <= 5; $i++) {
+		echo '<input type="radio" name="agenda_item_rating" value="' . (int) $i . '" ' . checked($your_rating, $i, false) . ' /> ' . (int) $i . ' ';
+	}
+	echo '</p>';
 ?>
     <p>Add a note<br /><textarea name="agenda_item_notes" rows="4" cols="50"></textarea></p>
     <input type="hidden" name="agenda_item_id" value="<?php echo esc_attr( $attributes['blockId'] ); ?>">
@@ -78,7 +78,7 @@ if(is_array($notes_array)) {
     }
 }
 $content = ob_get_clean();
-echo '<div class="rsvpmaker-agenda-item-notes">'.$content.'</div>';
+echo '<div class="rsvpmaker-agenda-item-notes">' . wp_kses_post( $content ) . '</div>';
 if(!isset($_GET['allNotes']))
     echo '</details>';
 }
@@ -372,7 +372,7 @@ function rsvpmaker_passwordless_login_shortcode() {
         </p>
     </form>
     <?php
-    printf('<p>Or <a href="%s">Login with password</a></p>', wp_login_url(get_permalink()));
+    printf('<p>Or <a href="%s">Login with password</a></p>', esc_url(wp_login_url(get_permalink())));
 
     return ob_get_clean();
 }
