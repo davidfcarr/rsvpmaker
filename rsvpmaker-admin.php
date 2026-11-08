@@ -1275,7 +1275,7 @@ function rsvpmaker_sort_message() {
 			else
 			{	
 				$opt .= sprintf('<option value="%s">%s</option>', esc_attr( $key ), esc_html( $option ) );
-				$o .= '<a class="add-new-h2" href="'.admin_url('edit.php?post_type=rsvpmaker&rsvpsort='.$key).'">'.$option.'</a> ';
+				$o .= '<a class="add-new-h2" href="'.esc_url(admin_url('edit.php?post_type=rsvpmaker&rsvpsort='.$key)).'">'.$option.'</a> ';
 			}
 		}
 		$opt = '<div class="alignleft actions rsvpsortwrap" style="margin-top: -10px;" ><select name="rsvpsort" class="rsvpsort">'.$opt.'</select> </div>';
@@ -1784,7 +1784,7 @@ $documents = rsvpmaker_get_related_documents();
 <style>
 <?php 
 $styles = rsvpmaker_included_styles();
-echo $styles; ?>
+echo wp_kses_post($styles); ?>
 </style>
 <div class="wrap"> 
 	<div id="icon-edit" class="icon32"><br /></div>
@@ -2460,7 +2460,7 @@ if(!empty($added)) {
 
 	$mail['fromname'] = get_bloginfo('name');
 
-	echo $mail['html'];
+	echo wp_kses_post($mail['html']);
 	if(is_multisite()) {
 		//network admin should know if thi is working properly
 		$mail['to'] = get_blog_option(1,'admin_email');
@@ -2599,7 +2599,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 					}
 				if(!empty($_POST['metadata_only'])) {
 					rsvpmaker_copy_metadata($t, $target_id, $sked);
-					$update_messages .= '<div class="updated">Updated: metadata for event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
+					$update_messages .= '<div class="updated">Updated: metadata for event #'.$target_id.' <a href="'.esc_url('post.php?action=edit&post='.$target_id).'">Edit</a> / <a href="'.esc_url(get_post_permalink($target_id)).'">View</a></div>';	
 					continue;
 				}
 				$update_post['ID'] = $target_id;
@@ -2626,7 +2626,7 @@ if(isset($_POST["update_from_template"]) && wp_verify_nonce(rsvpmaker_nonce_data
 				if(isset($rsvptypes))
 					wp_set_object_terms( $target_id, $rsvptypes, 'rsvpmaker-type', true );
 
-				$update_messages .= '<div class="updated">Updated: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
+				$update_messages .= '<div class="updated">Updated: event #'.$target_id.' <a href="'.esc_url('post.php?action=edit&post='.$target_id).'">Edit</a> / <a href="'.esc_url(get_post_permalink($target_id)).'">View</a></div>';	
 			}
 	}
 
@@ -2642,7 +2642,7 @@ if(isset($_POST["detach_from_template"])  && wp_verify_nonce(rsvpmaker_nonce_dat
 			$target_id = (int) $target_id;
 			$sql = $wpdb->prepare("UPDATE %i SET meta_key='_detached_from_template' WHERE meta_key='_meet_recur' AND post_id=%d", $wpdb->postmeta, $target_id);
 			$result = $wpdb->query($sql);
-			$update_messages .= '<div class="updated">Detached from Template: event #'.$target_id.' <a href="post.php?action=edit&post='.$target_id.'">Edit</a> / <a href="'.get_post_permalink($target_id).'">View</a></div>';	
+			$update_messages .= '<div class="updated">Detached from Template: event #'.$target_id.' <a href="'.esc_url('post.php?action=edit&post='.$target_id).'">Edit</a> / <a href="'.esc_url(get_post_permalink($target_id)).'">View</a></div>';	
 		}
 }
 if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
@@ -2694,9 +2694,9 @@ if(isset($_POST["recur_check"])  && wp_verify_nonce(rsvpmaker_nonce_data('data')
 				//$timezone = rsvpmaker_get_timezone_string($t);
 				rsvpmaker_add_event_row ($post_id, $cddate, $end_time, $duration,$timezone,$my_post['post_title']);
 				if($my_post["post_status"] == 'publish')
-					$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';
+					$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="'.esc_url('post.php?action=edit&post='.$post_id).'">Edit</a> / <a href="'.esc_url(get_post_permalink($post_id)).'">View</a></div>';
 				else
-					$update_messages .= '<div class="updated">Draft for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">Preview</a></div>';
+					$update_messages .= '<div class="updated">Draft for '.$cddate.' <a href="'.esc_url('post.php?action=edit&post='.$post_id).'">Edit</a> / <a href="'.esc_url(get_post_permalink($post_id)).'">Preview</a></div>';
 
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$ts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$post_id));
@@ -2735,7 +2735,7 @@ if(isset($_POST["nomeeting"])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
   			if($post_id = wp_insert_post( $my_post ) )
 				{
 				add_rsvpmaker_date($post_id,$cddate,'allday','',0,$timezone);
-				$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="post.php?action=edit&post='.$post_id.'">Edit</a> / <a href="'.get_post_permalink($post_id).'">View</a></div>';	
+				$update_messages .=  '<div class="updated">Posted: event for '.$cddate.' <a href="'.esc_url('post.php?action=edit&post='.$post_id).'">Edit</a> / <a href="'.esc_url(get_post_permalink($post_id)).'">View</a></div>';	
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				update_post_meta($post_id,'_nomeeting',true);
 				}
@@ -3827,7 +3827,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	if(!empty($tedit))
 	{
 		printf('<h3>%s</h3><p>%s</p>',esc_html__( 'Your Templates','rsvpmaker'),esc_html__( 'Your templates and any others you have editing rights to are listed here. Templates allow you to generate multiple events based on a recurring schedule and common details for events in the series.','rsvpmaker'));
-		echo $list;
+		echo wp_kses_post($list);
 
 		printf('<form action="%s" method="get"><p><input type="hidden" name="action" value="edit"><select name="post">%s</select>%s</p></form>',admin_url('post.php'),$tedit,get_submit_button(esc_html__( 'Edit Template','rsvpmaker')));
 
