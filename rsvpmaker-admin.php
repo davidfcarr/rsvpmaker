@@ -4074,7 +4074,7 @@ document_base_url : "'.site_url().'/",
 });	
 </script>
 <?php
-printf('<form method="post" action="%s" id="rsvpmaker_submission">',get_permalink());
+printf('<form method="post" action="%s" id="rsvpmaker_submission">', esc_url(get_permalink()));
 rsvpmaker_nonce();
 if(isset($_GET['submission_error']))
 {
@@ -4108,7 +4108,7 @@ else {
 	$endhour = 13;
 	$minutes = 0;
 	$months = array('January','February','March','April','May','June','July','August','September','October','November','December');
-printf('<input type="hidden" name="pagelink" value="%s">',get_permalink());
+printf('<input type="hidden" name="pagelink" value="%s">', esc_attr(get_permalink()));
 rsvphoney_ui();
 ?>	
 <h2>Event Title: <input name="event_title"></h2>
