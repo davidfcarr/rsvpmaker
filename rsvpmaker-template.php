@@ -777,7 +777,7 @@ function rsvpmaker_template_list() {
 
 
 
-			printf( '<h3>Add One or More Events Based on a Template</h3><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select><br /><br />%s %s<br >%s %s</form>', admin_url( 'edit.php' ), __( 'Add', 'rsvpmaker' ), __( 'One event', 'rsvpmaker' ), __( 'Multiple events', 'rsvpmaker' ), __( 'based on', 'rsvpmaker' ), rsvpmaker_templates_dropdown( 't' ), get_submit_button( 'Submit' ), rsvpmaker_nonce('return') );
+			printf( '<h3>Add One or More Events Based on a Template</h3><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select><br /><br />%s %s<br >%s %s</form>', esc_url( admin_url( 'edit.php' ) ), __( 'Add', 'rsvpmaker' ), __( 'One event', 'rsvpmaker' ), __( 'Multiple events', 'rsvpmaker' ), __( 'based on', 'rsvpmaker' ), rsvpmaker_templates_dropdown( 't' ), get_submit_button( 'Submit' ), rsvpmaker_nonce('return') );
 
 		}
 
@@ -1157,7 +1157,7 @@ function rsvpmaker_template_list() {
 
 
 
-			printf( '<p><a href="%s">See all templates (including drafts)</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&rsvpsort=templates' ) );
+			printf( '<p><a href="%s">See all templates (including drafts)</a></p>', esc_url( admin_url( 'edit.php?post_type=rsvpmaker&rsvpsort=templates' ) ) );
 
 
 
@@ -1218,47 +1218,47 @@ function rsvpmaker_template_list() {
 
 
 
-				$action = admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' );
+				$action = esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) );
 
 
 
 				printf( '<form method="post" action="%s"><p>Apply <select name="override">%s</select> to:</p><p><label>%s<br /><select name="overridden_multi[]" multiple="multiple" size="10" style="min-width:360px;">%s</select></label><br /><small>%s</small></p><p>Copy settings:</p>', $action, $current_template . $template_options, __( 'Choose one or more upcoming events to switch', 'rsvpmaker' ), $event_options . $template_override, __( 'Use Ctrl/Cmd-click or Shift-click to select more than one event.', 'rsvpmaker' ) );
 
-				printf('<div><input type="checkbox" value="_add_timezone" name="copymeta[]">  %s</div>',__('Show Timezone','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_add_timezone" name="copymeta[]">  %s</div>',esc_html__('Show Timezone','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_convert_timezone" name="copymeta[]">  %s</div>',__('Convert Timezone','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_convert_timezone" name="copymeta[]">  %s</div>',esc_html__('Convert Timezone','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_calendar_icons" name="copymeta[]">  %s</div>',__('Show Calendar Icons','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_calendar_icons" name="copymeta[]">  %s</div>',esc_html__('Show Calendar Icons','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_on" name="copymeta[]">  %s</div>',__('Collect RSVPs on/off','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_on" name="copymeta[]">  %s</div>',esc_html__('Collect RSVPs on/off','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_instructions" name="copymeta[]">  %s</div>',__('RSVP Instructions','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_instructions" name="copymeta[]">  %s</div>',esc_html__('RSVP Instructions','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_to" name="copymeta[]">  %s</div>',__('Email for RSVP Notifications','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_to" name="copymeta[]">  %s</div>',esc_html__('Email for RSVP Notifications','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_rsvpmaker_send_confirmation_email" name="copymeta[]">  %s</div>',__('Send Confirmation Email on/off','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_rsvpmaker_send_confirmation_email" name="copymeta[]">  %s</div>',esc_html__('Send Confirmation Email on/off','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_confirm" name="copymeta[]">  %s</div>',__('Confirmation Email Message','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_confirm" name="copymeta[]">  %s</div>',esc_html__('Confirmation Email Message','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_confirmation_include_event" name="copymeta[]">  %s</div>',__('Include Event Details in Confirmation','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_confirmation_include_event" name="copymeta[]">  %s</div>',esc_html__('Include Event Details in Confirmation','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_confirmation_after_payment" name="copymeta[]">  %s</div>',__('Send Confirmation After Payment on/off','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_confirmation_after_payment" name="copymeta[]">  %s</div>',esc_html__('Send Confirmation After Payment on/off','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_reminder_" name="copymeta[]">  %s</div>',__('Reminder Email Messages','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_reminder_" name="copymeta[]">  %s</div>',esc_html__('Reminder Email Messages','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_timezone_string" name="copymeta[]">  %s</div>',__('Timezone','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_timezone_string" name="copymeta[]">  %s</div>',esc_html__('Timezone','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_count" name="copymeta[]">  %s</div>',__('Show RSVP Count Publicly','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_count" name="copymeta[]">  %s</div>',esc_html__('Show RSVP Count Publicly','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_show_attendees" name="copymeta[]">  %s</div>',__('Show Attendees Publicly','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_show_attendees" name="copymeta[]">  %s</div>',esc_html__('Show Attendees Publicly','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_login_required" name="copymeta[]">  %s</div>',__('Login Required','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_login_required" name="copymeta[]">  %s</div>',esc_html__('Login Required','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_max" name="copymeta[]">  %s</div>',__('Maximum Number of Attendees','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_max" name="copymeta[]">  %s</div>',esc_html__('Maximum Number of Attendees','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_per" name="copymeta[]">  %s</div>',__('Pricing','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_per" name="copymeta[]">  %s</div>',esc_html__('Pricing','rsvpmaker'));
 
-				printf('<div><input type="checkbox" value="_rsvp_count_party" name="copymeta[]">  %s</div>',__('Count Members of Party for Event Pricing','rsvpmaker'));
+				printf('<div><input type="checkbox" value="_rsvp_count_party" name="copymeta[]">  %s</div>',esc_html__('Count Members of Party for Event Pricing','rsvpmaker'));
 
 				submit_button();
 
@@ -1345,7 +1345,7 @@ function rsvpmaker_template_list() {
 
 
 
-		printf( '<h3>%s</h3><form action="%s" method="post"><input name="import_shared_template" />', __( 'Import Shared Template', 'rsvpmaker' ), admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) );
+		printf( '<h3>%s</h3><form action="%s" method="post"><input name="import_shared_template" />', __( 'Import Shared Template', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) ) );
 
 		submit_button( __( 'Import', 'rsvpmaker' ) );
 
@@ -1357,7 +1357,7 @@ function rsvpmaker_template_list() {
 
 		if ( $template_options ) {
 
-			printf( '<h3>%s</h3><form action="%s" method="post"><select name="share_template">%s</select>', __( 'Share Template', 'rsvpmaker' ), admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ), $template_options );
+			printf( '<h3>%s</h3><form action="%s" method="post"><select name="share_template">%s</select>', __( 'Share Template', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list' ) ), $template_options );
 
 			submit_button( __( 'Share Template', 'rsvpmaker' ) );
 
@@ -1461,7 +1461,7 @@ function rsvpmaker_template_list() {
 
 		}
 
-		printf('<h3 id="holidays">Holidays and Blackout Dates (<a href="%s">Customize</a>)</h3>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&setholidays=1#holidays'));
+		printf('<h3 id="holidays">Holidays and Blackout Dates (<a href="%s">Customize</a>)</h3>',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&setholidays=1#holidays') ));
 
 		if(isset($_GET['setholidays'])) {
 
@@ -1471,7 +1471,7 @@ function rsvpmaker_template_list() {
 
 		echo '<p>The defaults are based on U.S. federal holidays but can be customized for other regions and traditions.</p>';
 
-		printf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list#holidays'));
+		printf('<form method="post" action="%s">',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list#holidays') ));
 
 		$schedule = rsvpmakerDefaultHolidays();
 
@@ -1493,7 +1493,7 @@ function rsvpmaker_template_list() {
 
 			<br><input type="checkbox" name="holiday_include[]" value="%d" checked="checked"> include <input type="checkbox" name="default[%d]" value="1" %s> block by default</p>',
 
-			$index,$s['name'],$index,$s['schedule'],$index,$s['overflow'],$s['overflow'],$index,$index,$isdefault);
+			$index,esc_attr($s['name']),$index,esc_attr($s['schedule']),$index,esc_attr($s['overflow']),esc_html($s['overflow']),$index,$index,$isdefault);
 
 		}
 
@@ -1549,7 +1549,7 @@ $sql = $wpdb->prepare("SELECT * FROM %i events JOIN %i posts ON events.event=pos
 $wpdb->prefix.'rsvpmaker_event',$wpdb->posts,$wpdb->postmeta);
 $notemplate = $wpdb->get_results($sql);
 if(!empty($totemplate)) {
-printf('<h2>No Template</h2><form action="" method="post">',admin_url('https://op.toastmost.org/wp-admin/edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list'));
+printf('<h2>No Template</h2><form action="%s" method="post">',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list') ));
 echo '<p><select name="template_target">' . wp_kses_post( $template_options ) . '</select></p>';
 foreach($notemplate as $event) {
 	printf('<p><input type="checkbox" name="add_template_to[]" value="%d"> %s %s</p>',$event->event, esc_html($event->date),esc_html($event->post_title));
@@ -1774,7 +1774,7 @@ function rsvp_template_checkboxes( $t ) {
 
 				$donotproject[] = rsvpmaker_date( 'Y-m-j', $thistime, $template_timezone );
 
-				$nomeeting .= sprintf( '<option value="%s">%s (%s)</option>', $sched->postID, rsvpmaker_date( 'F j, Y', $thistime, $template_timezone ), __( 'Already Scheduled', 'rsvpmaker' ) );
+				$nomeeting .= sprintf( '<option value="%s">%s (%s)</option>', esc_attr($sched->postID), rsvpmaker_date( 'F j, Y', $thistime, $template_timezone ), __( 'Already Scheduled', 'rsvpmaker' ) );
 
 				$cy = rsvpmaker_date( 'Y', $thistime, $template_timezone ); // advance starting time
 
@@ -1799,7 +1799,7 @@ function rsvp_template_checkboxes( $t ) {
 
 				$ifdraft = ( $sched->post_status == 'draft' ) ? ' (draft) ' : '';
 
-				$edit = ( ( $sched->post_author == $current_user->ID ) || $template_editor ) ? sprintf( '<a href="%s?post=%d&action=edit">' . __( 'Edit', 'rsvpmaker' ) . '</a>', admin_url( 'post.php' ), $sched->postID ) : '-';
+				$edit = ( ( $sched->post_author == $current_user->ID ) || $template_editor ) ? sprintf( '<a href="%s?post=%d&action=edit">' . __( 'Edit', 'rsvpmaker' ) . '</a>', esc_url( admin_url( 'post.php' ) ), $sched->postID ) : '-';
 
 				$class = (get_post_meta($sched->postID,'_nomeeting',true)) ? 'nomeeting' : 'update_from_template';
 				$schedule_note = rsvp_x_day_month($thistime);
@@ -1953,7 +1953,7 @@ function rsvp_template_checkboxes( $t ) {
 					continue;
 				}
 
-				$nomeeting .= sprintf( '<option value="%s">%s</option>', rsvpmaker_date( 'Y-m-d', $ts, $template_timezone ), rsvpmaker_date( 'F j, Y', $ts, $template_timezone ) );
+				$nomeeting .= sprintf( '<option value="%s">%s</option>', esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $template_timezone )), rsvpmaker_date( 'F j, Y', $ts, $template_timezone ) );
 
 				?>
 
@@ -1997,7 +1997,7 @@ function rsvp_template_checkboxes( $t ) {
 
 				<?php
 
-				printf( '<option value="%s">%s</option>', $today, $today );
+				printf( '<option value="%s">%s</option>', esc_attr($today), esc_html($today) );
 
 				?>
 
@@ -2374,7 +2374,7 @@ $post = get_post(intval($_GET['t']));
 					$nomeeting = '';
 				}
 
-				$nomeeting .= sprintf( '<option value="%s">%s</option>', rsvpmaker_date( 'Y-m-d', $ts, $timezone ), rsvpmaker_date( 'F j, Y', $ts, $timezone ) );
+				$nomeeting .= sprintf( '<option value="%s">%s</option>', esc_attr(rsvpmaker_date( 'Y-m-d', $ts, $timezone )), rsvpmaker_date( 'F j, Y', $ts, $timezone ) );
 
 				?>
 
@@ -2418,7 +2418,7 @@ $post = get_post(intval($_GET['t']));
 
 				<?php
 
-				echo sprintf( '<option value="%s">%s</option>', $today, $today );
+				echo sprintf( '<option value="%s">%s</option>', esc_attr($today), esc_html($today) );
 
 				?>
 
