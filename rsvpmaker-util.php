@@ -147,6 +147,8 @@ function add_rsvpmaker_event($post_id,$date,$enddate='',$display_type='',$tz='')
 
 		$wpdb->insert($wpdb->prefix."rsvpmaker_event",$values);
 
+	// Invalidate cache for this event
+	wp_cache_delete('rsvpmaker_event_' . intval($post_id));
 }
 add_action('save_post','add_rsvpmaker_new_event_defaults',12,3);
 
@@ -384,6 +386,9 @@ function rsvpmaker_update_event_fields ($event_post_id, $nv) {
 		// error_log('rsvpmaker_update_event_fields '.$sql);
 		$result = $wpdb->query( $sql );
 		// error_log('rsvpmaker_update_event_fields result '.var_export($result,true));
+		
+		// Invalidate cache for this event
+		wp_cache_delete('rsvpmaker_event_' . intval($event_post_id));
 	}
 }
 
@@ -429,6 +434,9 @@ function rsvpmaker_update_event_field ($event_post_id, $field, $value) {
 
 	$result = $wpdb->query($sql);
 	// error_log('rsvpmaker_update_event_field result '.var_export($result,true));
+	
+	// Invalidate cache for this event
+	wp_cache_delete('rsvpmaker_event_' . intval($event_post_id));
 
 }
 
@@ -446,6 +454,15 @@ function get_rsvpmaker_event( $post_id ) {
 		return;
 
 	}
+
+	// Check cache first
+	$cache_key = 'rsvpmaker_event_' . intval($post_id);
+	$row = wp_cache_get($cache_key);
+	
+	if (false !== $row) {
+		return $row;
+	}
+
 	global $wpdb;
 	$wpdb->show_errors();
 
@@ -507,6 +524,9 @@ function get_rsvpmaker_event( $post_id ) {
 		}
 
 	}
+
+	// Cache the event data for 1 hour
+	wp_cache_set($cache_key, $row, '', HOUR_IN_SECONDS);
 
 	return $row;
 
@@ -6222,4 +6242,20 @@ function is_rsvpmaker() {
 
 	return ( 'rsvpmaker' === get_post_type( $post->ID ) );
 }
+
+// Cache invalidation hooks for event data
+function rsvpmaker_invalidate_event_cache( $post_id ) {
+	if ( 'rsvpmaker' !== get_post_type( $post_id ) ) {
+		return;
+	}
+	
+	wp_cache_delete('rsvpmaker_event_' . intval($post_id));
+	wp_cache_delete('rsvpmaker_future_events');
+	wp_cache_delete('rsvp_event_timestamps');
+	wp_cache_delete('rsvp_past_event_timestamps');
+}
+
+add_action('save_post_rsvpmaker', 'rsvpmaker_invalidate_event_cache');
+add_action('delete_post', 'rsvpmaker_invalidate_event_cache');
+add_action('restore_post', 'rsvpmaker_invalidate_event_cache');
 
