@@ -427,7 +427,7 @@ if(isset($_POST["unit"]))
 
 
 function rsvpmaker_print_group_list_options($list_type, $vars) {
-	printf('<h3>%s List</h3>',ucfirst($list_type));
+	printf('<h3>%s List</h3>', esc_html(ucfirst($list_type)));
 	$postmark = get_rsvpmaker_postmark_options();
 	$fields = array('user','password','subject_prefix','whitelist','blocked','additional_recipients');
 
@@ -734,12 +734,12 @@ else
 			$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&timelord='.rsvpmaker_nonce('value');
 			$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 			if($next) {
-				printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),esc_url( $cancel ));
+				printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>', esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next)), esc_url( $cancel ));
 			}
 			$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 			if($next) {
 				$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
-				printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,esc_url( $cancel ));
+				printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>', esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next)), esc_html($recurrence), esc_url( $cancel ));
 			}	
 		}		
 	}
@@ -1578,7 +1578,7 @@ $wpdb->show_errors();
 				$notification .=  "</p>";
 				$notification .=  "<h3>Event Details</h3>\n".str_replace('#rsvpnow">','#rsvpnow">'.esc_html__( 'Update','rsvptoast').' ',preg_replace('/(\*|){0,1}EMAIL(|\*){0,1}/',$notify, $event_content));
 
-				echo "Notification for $notify<br />$notification";
+				echo "Notification for " . esc_html($notify) . "<br />" . wp_kses_post($notification);
 
 			//if this is a follow up, we don't need all the RSVP data
 			if($hours > 0)
@@ -1810,7 +1810,7 @@ if(isset($_GET["webinar"]))
 if(isset($_GET['delete']))
 {
 	$key = '_rsvp_reminder_msg_'. (int) $_GET['delete'];
-	printf('<p>Deleting %s</p>',$key);
+	printf('<p>Deleting %s</p>', esc_html($key));
 	delete_post_meta($post_id,$key);
 }
 
@@ -1856,7 +1856,7 @@ if(rsvpmaker_is_template($post_id))
 	printf('<p><em>%s</em></p>',esc_html__( 'This is an event template: The confirmation and reminder messages you set here will become the defaults for future events based on this template. The [datetime] placeholder in subject lines will be replaced with the specific event date.','rsvpmaker'));
 
 //$confirm = rsvp_get_confirm($post_id, true);
-printf('<form action="%s" method="post">',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post_id);
+printf('<form action="%s" method="post">', esc_url(admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=') . $post_id));
 rsvpmaker_nonce();
 echo rsvpmaker_get_confirmation_options($post_id, $documents);
 echo '<button>Save</button></form>';
@@ -1868,7 +1868,7 @@ $payment_confirmation = (int) get_post_meta($post_id,'payment_confirmation_messa
 if($payment_confirmation)
 {
 	$pconf = get_post($payment_confirmation);
-	echo (empty($pconf->post_content)) ? '<p>[not set]</p>' : $pconf->post_content;
+	echo (empty($pconf->post_content)) ? '<p>[not set]</p>' : wp_kses_post($pconf->post_content);
 }
 
 foreach($documents as $d) {
