@@ -734,12 +734,12 @@ else
 			$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&timelord='.rsvpmaker_nonce('value');
 			$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 			if($next) {
-				printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
+				printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),esc_url( $cancel ));
 			}
 			$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 			if($next) {
 				$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
-				printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,$cancel);
+				printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$recurrence,esc_url( $cancel ));
 			}	
 		}		
 	}
@@ -769,7 +769,7 @@ if($results)
 				$label = esc_html__( 'Follow up','rsvpmaker').': '.$hour.' '.esc_html__( 'hours after','rsvpmaker');
 			else
 				$label = esc_html__( 'Reminder','rsvpmaker').': '.abs($hour).' '.esc_html__( 'hours before','rsvpmaker');
-		$txt .= sprintf(' | <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&hours='.$hour.'&page=rsvp_reminders&message_type=reminder&post_id=').$post_id,$label);
+		$txt .= sprintf(' | <a href="%s">%s</a>',esc_url( admin_url('edit.php?post_type=rsvpmaker&hours='.$hour.'&page=rsvp_reminders&message_type=reminder&post_id=').$post_id ),$label);
 		}
 	}
 return $txt;
@@ -793,7 +793,7 @@ function rsvpmaker_essentials () {
 		);
 		$id = wp_insert_post($post);
 		$link = get_permalink($id);
-		$message .= '<p>'.esc_html__( 'Calendar page created: ','rsvpmaker').sprintf('<a href="%s">%s</a>',$link,$link).'</p>';
+		$message .= '<p>'.esc_html__( 'Calendar page created: ','rsvpmaker').sprintf('<a href="%s">%s</a>',esc_url( $link ),esc_html( $link )).'</p>';
 	}
 	if(isset($_POST["clear_calendar_page_notice"]) && !isset($_POST["create_calendar_page"])) {
 		update_option('noeventpageok',1);
@@ -816,7 +816,7 @@ function rsvpmaker_essentials () {
 			$message .= '<p>Confirmation message (can be edited in RSVPMaker Settings): '.$conf_message.'</p>';
 		}
 		else
-			$message .= sprintf('<p><a href="%s">%s</a></p>',admin_url('options-privacy.php'),esc_html__( 'Set up your privacy page','rsvpmaker'));
+			$message .= sprintf('<p><a href="%s">%s</a></p>',esc_url( admin_url('options-privacy.php') ),esc_html__( 'Set up your privacy page','rsvpmaker'));
 		update_option('RSVPMAKER_Options',$rsvp_options);
 	}
 	$message .= '<p>'.esc_html__( 'You can set additional options, including default settings for RSVPMaker events, on the','rsvpmaker').' <a href="'.admin_url('options-general.php?page=rsvpmaker_settings').'">'.esc_html__( 'RSVPMaker settings page','rsvpmaker').'</a>.</p>';
@@ -1135,7 +1135,7 @@ if($landing = get_post_meta($post->ID,'_webinar_landing_page_id',true))
 	$message = '<div class="notice notice-info"><p>'.esc_html__( 'Edit the','rsvpmaker').' <a href="'.admin_url('post.php?action=edit&post='.$landing).'">'.__("webinar landing page",'rsvpmaker').'</a> '.esc_html__( 'associated with this event').'.</p>';
 	$message .= '<p>';
 	$message .= esc_html__( 'Related messages:','rsvpmaker');
-	$message .= sprintf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post->ID,esc_html__( 'Confirmation','rsvpmaker'));
+	$message .= sprintf(' <a href="%s">%s</a>',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$post->ID ),esc_html__( 'Confirmation','rsvpmaker'));
 	$message .= rsvpmaker_reminders_list($post->ID);
 	$message .=  '</p></div>';
 	$notice[] = rsvpmaker_admin_notice_format($message, 'Landing page', $cleared, $type='notice');
@@ -1145,7 +1145,7 @@ if($event = get_post_meta($post->ID,'_webinar_event_id',true))
 	$message = '<div class="notice notice-info"><p>'.esc_html__( 'Edit the','rsvpmaker').' <a href="'.admin_url('post.php?action=edit&post='.$event).'">'.__("webinar event post",'rsvpmaker').'</a> '.esc_html__( 'associated with this landing page').'.</p>';
 	$message .=  '<p>';
 	$message .=  esc_html__( 'Related messages:','rsvpmaker');
-	$message .=  sprintf(' <a href="%s">%s</a>',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$event,esc_html__( 'Confirmation','rsvpmaker'));	
+	$message .=  sprintf(' <a href="%s">%s</a>',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&message_type=confirmation&post_id=').$event ),esc_html__( 'Confirmation','rsvpmaker'));	
 	$message .=  rsvpmaker_reminders_list($event);
 	$message .=  '</p></div>';
 	$notice[] = rsvpmaker_admin_notice_format($message, 'Webinar event', $cleared, $type='notice');
@@ -1657,7 +1657,7 @@ global $current_user;
 	rsvpmaker_reminder_cron($hours, $start_time, $post_id);
 
 	if($show)
-		printf('<p>%s <a href="%s">%s</a> (<a href="%s">%s</a>)</p>',esc_html__( 'YouTube Live landing page created at'),$landing_permalink,$landing_permalink, admin_url('post.php?action=edit&post='.$landing_id), esc_html__( 'Edit','rsvpmaker'));
+		printf('<p>%s <a href="%s">%s</a> (<a href="%s">%s</a>)</p>',esc_html__( 'YouTube Live landing page created at'),esc_url( $landing_permalink ),esc_html( $landing_permalink ), esc_url( admin_url('post.php?action=edit&post='.$landing_id) ), esc_html__( 'Edit','rsvpmaker'));
 
 }
 
@@ -1728,11 +1728,11 @@ function rsvp_list_reminders_all_events() {
 		$results = $wpdb->get_results($sql);
 		foreach($results as $row) {
 			$time = str_replace('_rsvp_reminder_msg_','',$row->meta_key);
-			$output .= sprintf('<p><input type="checkbox" name="delete_reminder[]" value="%d:%s"> <a href="%s">Edit Reminders</a> %s %s %s hours</p>',$event->ID, $row->meta_key, admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&post_id='.$event->ID),$event->post_title,$event->datetime,$time);
+			$output .= sprintf('<p><input type="checkbox" name="delete_reminder[]" value="%d:%s"> <a href="%s">Edit Reminders</a> %s %s %s hours</p>',$event->ID, $row->meta_key, esc_url( admin_url('edit.php?page=rsvp_reminders&post_type=rsvpmaker&post_id='.$event->ID) ),esc_html( $event->post_title ),esc_html( $event->datetime ),$time);
 		}
 	}
 	if(!empty($output))
-		return 	sprintf('<form method="post" action="%s">',admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders')).$output.'<p><button>Delete Checked</button>'.rsvpmaker_nonce('return').'</p></form>';
+		return 	sprintf('<form method="post" action="%s">',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders') )).$output.'<p><button>Delete Checked</button>'.rsvpmaker_nonce('return').'</p></form>';
 }
 
 function rsvp_get_reminder($post_id,$hours) {
@@ -1833,7 +1833,7 @@ if($post_id && $hours)
 	$reminder = rsvp_get_reminder($post_id,$hours);
 	if(!empty($reminder))
 	{
-		printf('<p>%s %s %s</p><h2>%s</h2>%s<p><a href="%s">%s</a></p>',esc_html__( 'Added reminder ','rsvpmaker'), (int) $_GET['hours'],esc_html__( 'hours','rsvpmaker'),esc_html($reminder->post_title),wp_kses_post($reminder->post_content),admin_url('post.php?action=edit&post='.intval($reminder->ID)),esc_html__( 'Edit','rsvpmaker'));	
+		printf('<p>%s %s %s</p><h2>%s</h2>%s<p><a href="%s">%s</a></p>',esc_html__( 'Added reminder ','rsvpmaker'), (int) $_GET['hours'],esc_html__( 'hours','rsvpmaker'),esc_html($reminder->post_title),wp_kses_post($reminder->post_content),esc_url( admin_url('post.php?action=edit&post='.intval($reminder->ID)) ),esc_html__( 'Edit','rsvpmaker'));	
 	if(rsvpmaker_is_template($post_id))
 	{
 		echo 'This is a template';
@@ -1874,7 +1874,7 @@ if($payment_confirmation)
 foreach($documents as $d) {
 	$id = $d['id'];
 	if(($id == 'edit_payment_confirmation') || ($id == 'edit_payment_confirmation_custom'))
-	printf('<p><a href="%s">Edit: %s</a></p>',$d['href'],$d['title']);
+	printf('<p><a href="%s">Edit: %s</a></p>',esc_url( $d['href'] ),esc_html( $d['title'] ));
 }
 
 if(!empty($pconf->post_content))
@@ -1899,11 +1899,11 @@ else {
 		printf('<h2>%s (%s hours)</h2><h3>%s</h3>%s',esc_html($type),esc_html($hours),esc_html($reminder->post_title),wp_kses_post($reminder->post_content));
 		$parent = $reminder->post_parent;
 		if($parent != $post_id)
-			printf('<p>%s<br /><a href="%s">%s</a></p>',esc_html__( 'This is the standard reminder from the event template','rsvpmaker'), admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id.'&hours='.$hours.'&was='. $reminder->ID),esc_html__( 'Customize for this event','rsvpmaker'));
+			printf('<p>%s<br /><a href="%s">%s</a></p>',esc_html__( 'This is the standard reminder from the event template','rsvpmaker'), esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvp_reminders&post_id='.$post_id.'&hours='.$hours.'&was='. $reminder->ID) ),esc_html__( 'Customize for this event','rsvpmaker'));
 		foreach($documents as $d) {
 			$id = $d['id'];
 			if(($id == 'reminder'.$hours) || ($id == 'reminder'.$hours.'custom'))
-			printf('<p><a href="%s">Edit: %s</a></p>',esc_attr($d['href']),esc_html($d['title']));
+			printf('<p><a href="%s">Edit: %s</a></p>',esc_url( $d['href'] ),esc_html( $d['title'] ));
 		}
 		$paid_only = get_post_meta($reminder->ID,'paid_only_confirmation',true);
 		if($paid_only)
@@ -1989,11 +1989,11 @@ if($list)
 
 <p><?php esc_html_e('Using Unix cron, the command you would set to execute would be','rsvpmaker');?>:</p>
 <code>
-curl <?php echo site_url('/wp-cron.php?doing_wp_cron=1');?> > /dev/null 2>&1
+curl <?php echo esc_url( site_url('/wp-cron.php?doing_wp_cron=1') ); ?> > /dev/null 2>&1
 </code>
 <p><?php esc_html_e('If curl does not work, you can also try this variation (seems to work better on some systems)','rsvpmaker');?>:</p>
 <code>
-wget -qO- <?php echo site_url('/wp-cron.php?doing_wp_cron=1');?>  &> /dev/null
+wget -qO- <?php echo esc_url( site_url('/wp-cron.php?doing_wp_cron=1') ); ?>  &> /dev/null
 </code>
 </div>
 <?php
@@ -2357,12 +2357,12 @@ function rsvpmaker_show_debug_log() {
 	}
 	if(isset($_GET['wp'])) {
 		$log = file_get_contents(WP_DEBUG_LOG);
-		printf('<p><a href="%s">Show RSVPMaker Debug Log</a></p>', admin_url('tools.php?page=rsvpmaker_show_debug_log'));
+		printf('<p><a href="%s">Show RSVPMaker Debug Log</a></p>', esc_url( admin_url('tools.php?page=rsvpmaker_show_debug_log') ));
 		printf('<form method="post" action=""><input type="hidden" name="wpclear" value="1"><button>Clear WP Log</button><form>');
 		echo '<textarea rows="20" style="width: 100%;">'.htmlentities($log).'</textarea>';		
 		return;
 	}
-	printf('<p><a href="%s">Show WP DEBUG LOG</a></p>', admin_url('tools.php?page=rsvpmaker_show_debug_log&wp=1'));
+	printf('<p><a href="%s">Show WP DEBUG LOG</a></p>', esc_url( admin_url('tools.php?page=rsvpmaker_show_debug_log&wp=1') ));
 	global $rsvp_options;
 	$filename_base = 'rsvpmaker';
 	$upload_dir   = wp_upload_dir();
@@ -2508,7 +2508,7 @@ function add_rsvpmaker_from_template($post, $template, $date, $ts, $hthis = '') 
 			if($post_id = wp_insert_post( $my_post ) )
 				{
 				$prettydate = rsvpmaker_date($rsvp_options['long_date'],$ts);
-				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> %s</p>',$prettydate,get_permalink($post_id),esc_html__( 'View','rsvpmaker'),admin_url("post.php?post=$post_id&action=edit"),esc_html__( 'Edit','rsvpmaker'),admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1"),esc_html__( 'Trash','rsvpmaker'),$hthis);
+				$added = sprintf('<p>%s <a href="%s">%s</a> / <a href="%s">%s</a> / <a href="%s">%s</a> %s</p>',$prettydate,esc_url( get_permalink($post_id) ),esc_html__( 'View','rsvpmaker'),esc_url( admin_url("post.php?post=$post_id&action=edit") ),esc_html__( 'Edit','rsvpmaker'),esc_url( admin_url("edit.php?post_type=rsvpmaker&page=rsvpmaker_details&post_id=$post_id&trash=1") ),esc_html__( 'Trash','rsvpmaker'),$hthis);
 				add_rsvpmaker_date($post_id,$date,$duration,$timezone);
 				add_post_meta($post_id,'_meet_recur',$t,true);
 				$upts = $wpdb->get_var($wpdb->prepare("SELECT post_modified from %i WHERE ID=%d",$wpdb->posts,$post_id));
@@ -3428,7 +3428,7 @@ if(!strpos($rsvp_options["time_format"],'T') )
 <option value="UTC+14">UTC+14</option>
 </optgroup></select>
 <?php
-	printf('<a href="%s" >%s</a>',admin_url('post.php?action=edit&post='.$post_id),esc_html__( 'More Event Options','rsvpmaker'));
+	printf('<a href="%s" >%s</a>',esc_url( admin_url('post.php?action=edit&post='.$post_id) ),esc_html__( 'More Event Options','rsvpmaker'));
 }//end content not displayed on initial setup page	
 ?>
 
@@ -3629,7 +3629,7 @@ function rsvpmaker_quick_post() {
 			$confirmation = sprintf('<h3>%s</h3>',esc_html__( 'Event Posts Created','rsvpmaker'));
 			echo wp_kses_post($confirmation);
 		}
-		printf('<p><a href="%s">View</a> <a href="%s">Edit</a> %s %s</p>',get_permalink($post_id),admin_url("post.php?post=$post_id&action=edit"),$title,$datetime);
+		printf('<p><a href="%s">View</a> <a href="%s">Edit</a> %s %s</p>',esc_url( get_permalink($post_id) ),esc_url( admin_url("post.php?post=$post_id&action=edit") ),esc_html( $title ),esc_html( $datetime ));
 		}		
 	}
 }
@@ -3766,7 +3766,7 @@ if(isset($_GET['t']))
 	$shortlist = $morelist = '';
 	if($future) {
 		foreach($future as $index => $event) {
-			$temp = sprintf('<p><a href="%s">Edit event</a>: %s %s</p>',admin_url('post.php?action=edit&post='.$event->ID),esc_html($event->post_title),esc_html($event->date));
+			$temp = sprintf('<p><a href="%s">Edit event</a>: %s %s</p>',esc_url( admin_url('post.php?action=edit&post='.$event->ID) ),esc_html($event->post_title),esc_html($event->date));
 			if($index < 5)
 				$shortlist .= $temp;
 			else
@@ -3785,10 +3785,10 @@ if(isset($_GET['t']))
 
 if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 	echo '<div style="background-color: #fff; padding: 10px; border: thin dotted #555; width: 50%;">';
-	printf('%s %s<br /><a href="%s">%s</a>',esc_html__( 'For recurring events','rsvpmaker'),esc_html__( 'create a' ,'rsvpmaker'),admin_url('post-new.php?post_type=rsvpmaker_template'),esc_html__( 'New Template','rsvpmaker'));
-	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker"><br />%s  %s<br >%s</form>',admin_url('post-new.php'),esc_html__( 'Or add an event based on'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
+	printf('%s %s<br /><a href="%s">%s</a>',esc_html__( 'For recurring events','rsvpmaker'),esc_html__( 'create a' ,'rsvpmaker'),esc_url( admin_url('post-new.php?post_type=rsvpmaker_template') ),esc_html__( 'New Template','rsvpmaker'));
+	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker"><br />%s  %s<br >%s</form>',esc_url( admin_url('post-new.php') ),esc_html__( 'Or add an event based on'),rsvpmaker_templates_dropdown('t'),get_submit_button('Submit'));
 	do_action('rsvpmaker_setup_template_prompt');
-	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_setup">%s <select name="quick"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option></select> %s %s</form>',admin_url('edit.php'),esc_html__( 'Or quickly create up to','rsvpmaker'),esc_html__( 'events without a template','rsvpmaker'),get_submit_button('Show Form'));
+	printf('<form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_setup">%s <select name="quick"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option></select> %s %s</form>',esc_url( admin_url('edit.php') ),esc_html__( 'Or quickly create up to','rsvpmaker'),esc_html__( 'events without a template','rsvpmaker'),get_submit_button('Show Form'));
 	echo '</div>';
 }				
 
@@ -3798,7 +3798,7 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 		printf('<h3>%s</h3>',esc_html__( 'Your Event Posts','rsvpmaker'));
 		foreach($myevents as $event){
 			$draft = ($event->post_status == 'draft') ? ' <strong>(draft)</strong>' : '';
-			printf('<p><a href="%s">Edit event</a>: %s %s %s</p>',admin_url('post.php?action=edit&post='. $event->ID),esc_html($event->post_title),esc_html($event->date),esc_html($draft));
+			printf('<p><a href="%s">Edit event</a>: %s %s %s</p>',esc_url( admin_url('post.php?action=edit&post='. $event->ID) ),esc_html($event->post_title),esc_html($event->date),esc_html($draft));
 		}
 	}
 	$templates = rsvpmaker_get_templates();
@@ -3815,11 +3815,11 @@ if(!isset($_GET['new_template']) && !isset($_GET['t'])){
 		if($event)
 		{
 		$draft = ($event->post_status == 'draft') ? ' <strong>(draft)</strong>' : '';
-		$list .= sprintf('<p><a href="%s">Edit next event</a>: %s %s %s</p>',admin_url('post.php?action=edit&post='.$event->ID),esc_html($event->post_title),esc_html($event->date), esc_html($draft));			
+		$list .= sprintf('<p><a href="%s">Edit next event</a>: %s %s %s</p>',esc_url( admin_url('post.php?action=edit&post='.$event->ID) ),esc_html($event->post_title),esc_html($event->date), esc_html($draft));			
 		}
-		$list .= sprintf('<p><a href="%s">Add event</a> based on template: %s</p>',admin_url('post-new.php?post_type=rsvpmaker&t='.$template->ID),esc_html($template->post_title));			
-		$list .= sprintf('<p><a href="%s">Create / Update</a> multiple events based on: %s</p>',admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$template->ID),esc_html($template->post_title));
-		$list .= sprintf('<p><a href="%s">Edit template</a> %s</p>',admin_url('post.php?action=edit&post='.$template->ID),esc_html($template->post_title));		
+		$list .= sprintf('<p><a href="%s">Add event</a> based on template: %s</p>',esc_url( admin_url('post-new.php?post_type=rsvpmaker&t='.$template->ID) ),esc_html($template->post_title));			
+		$list .= sprintf('<p><a href="%s">Create / Update</a> multiple events based on: %s</p>',esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$template->ID) ),esc_html($template->post_title));
+		$list .= sprintf('<p><a href="%s">Edit template</a> %s</p>',esc_url( admin_url('post.php?action=edit&post='.$template->ID) ),esc_html($template->post_title));		
 	}
 
 	}
@@ -3906,13 +3906,13 @@ else {
 	$jt = (empty($parts[1])) ? 0 : (int) $parts[1]; 	
 }
 if(empty($export_code) || ($jt < time())) {
-	printf('<p>Coded url is expired or has not been set. To enable importing of event records from this site into another site, (<a href="%s">set code</a>)</p>',admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1'));
+	printf('<p>Coded url is expired or has not been set. To enable importing of event records from this site into another site, (<a href="%s">set code</a>)</p>',esc_url( admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1') ));
 }
 else {
 	$url = rest_url('/rsvpmaker/v1/import/'.$export_code);
 	printf('<p>To move your club\'s event records to another website that also uses this software, copy this web address:</p>
 	<pre>%s</pre>
-	<p>This link will expire at %s. (<a href="%s">reset</a>)</p>',$url,rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'].' T',$jt),admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1'));	
+	<p>This link will expire at %s. (<a href="%s">reset</a>)</p>',esc_html( $url ),esc_html( rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'].' T',$jt) ),esc_url( admin_url('tools.php?page=rsvpmaker_export_screen&resetrsvpcode=1') ));
 }
 ?>
 <h3>Import Events</h3>
@@ -4145,7 +4145,7 @@ echo str_replace('<option selected="selected" value="">Select a city</option>','
 <div><em>If you want your contact information to be published as part of the event listing, also include it in the description below.</em></div>
 <p>Event Details<br /><textarea id="rsvpmaker_submission_description" name="rsvpmaker_submission_description" rows="5" cols="100"></textarea></p>
 <input type="hidden" name="to" value="<?php echo esc_attr($to); ?>" /> 
-<input type="hidden" name="rsvpmaker_submission_post" value="<?php echo get_permalink(); ?>" />
+<input type="hidden" name="rsvpmaker_submission_post" value="<?php echo esc_url( get_permalink() ); ?>" />
 <?php rsvpmaker_recaptcha_output(); ?>
 	<p><button>Submit</button></p></form>
 <script>
@@ -4307,7 +4307,7 @@ if(!$event)
 	switch( $column_name ) :
 		case 'event_dates': {
 		echo '<fieldset class="inline-edit-col-right"><div class="inline-edit-col"><div class="inline-edit-group wp-clearfix">';
-		printf('<label><em>%s</em><br /><span><strong>%s</strong>: <a href="%s">%s %s</a></span></label>',esc_htmlesc_html__( 'The date shown above is the *publication* date. Here is the event date. Click to change the date and RSVP options in the editor.'),esc_html__( 'Event Date'),esc_attr(admin_url('post.php?action=edit&post='.$post->ID)),rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start,$event->timezone),$event->timezone);
+		printf('<label><em>%s</em><br /><span><strong>%s</strong>: <a href="%s">%s %s</a></span></label>',esc_html__( 'The date shown above is the *publication* date. Here is the event date. Click to change the date and RSVP options in the editor.'),esc_html__( 'Event Date'),esc_url( admin_url('post.php?action=edit&post='.$post->ID) ),esc_html( rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$event->ts_start,$event->timezone) ),esc_html( $event->timezone ));
 		echo '</div></div></fieldset>';
 		break;
 		}
@@ -4667,7 +4667,7 @@ function rsvpmaker_additional_editors() {
 			esc_html_e( 'None', 'rsvpmaker' );
 		}
 
-		printf( '<p><a href="%s">' . esc_html__( 'Edit Template', 'rsvpmaker' ) . '</a></p>', admin_url( 'post.php?action=edit&post=' . $t ) );
+		printf( '<p><a href="%s">' . esc_html__( 'Edit Template', 'rsvpmaker' ) . '</a></p>', esc_url( admin_url( 'post.php?action=edit&post=' . $t ) ) );
 
 		}
 
@@ -4702,11 +4702,11 @@ function rsvpmaker_dashboard_widget_function() {
 
 				$draft = ( $row->post_status == 'draft' ) ? ' (draft)' : '';
 
-				printf( '<p><a href="%s">(' . esc_html__( 'Edit', 'rsvpmaker' ) . ')</a> <a href="%s">%s %s%s</a></p>', admin_url( 'post.php?action=edit&post=' . $row->ID ), get_post_permalink( $row->ID ), esc_html( $row->post_title ), mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $row->datetime ) ), 'UTF-8' ), $draft );
+				printf( '<p><a href="%s">(' . esc_html__( 'Edit', 'rsvpmaker' ) . ')</a> <a href="%s">%s %s%s</a></p>', esc_url( admin_url( 'post.php?action=edit&post=' . $row->ID ) ), esc_url( get_post_permalink( $row->ID ) ), esc_html( $row->post_title ), esc_html( mb_convert_encoding( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $row->datetime ) ), 'UTF-8' ) ), esc_html( $draft ) );
 
 				if ( $index == 10 ) {
 
-					printf( '<p><a href="%s">&gt; &gt; ' . esc_html__( 'More', 'rsvpmaker' ) . '</a></p>', admin_url( 'edit.php?post_type=rsvpmaker&rsvpsort=chronological&author=' . $current_user->ID ) );
+					printf( '<p><a href="%s">&gt; &gt; ' . esc_html__( 'More', 'rsvpmaker' ) . '</a></p>', esc_url( admin_url( 'edit.php?post_type=rsvpmaker&rsvpsort=chronological&author=' . $current_user->ID ) ) );
 
 					break;
 
@@ -4718,7 +4718,7 @@ function rsvpmaker_dashboard_widget_function() {
 
 		}
 
-		printf( '<p><a href="%s">' . esc_html__( 'Add Event', 'rsvpmaker' ) . '</a></p>', admin_url( 'post-new.php?post_type=rsvpmaker' ) );
+		printf( '<p><a href="%s">' . esc_html__( 'Add Event', 'rsvpmaker' ) . '</a></p>', esc_url( admin_url( 'post-new.php?post_type=rsvpmaker' ) ) );
 
 		$sql = $wpdb->prepare("SELECT posts.ID as editid FROM %i posts JOIN %i meta ON posts.ID = meta.post_id 
 WHERE posts.post_type = 'rsvpmaker' AND meta.meta_key = '_additional_editors' AND meta.meta_value = %d",
