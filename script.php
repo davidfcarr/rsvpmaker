@@ -4,7 +4,7 @@
 */
 
 function rsvpmaker_rest_array() {
-	global $post, $rsvpmaker_nonce, $rsvp_options;
+	global $post, $rsvp_options;
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
 	$post_type = isset( $post->post_type ) ? $post->post_type : '';
 	$time = '';
@@ -66,15 +66,17 @@ function rsvpmaker_rest_array() {
 
 		if($sked)
 		{
-			$projected_label = __('Create/Update events from template','rsvpmaker');
+			$projected_label = esc_html__('Create/Update events from template','rsvpmaker');
 			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id);
 			$template_msg = rsvpmaker_sked_to_text($sked);
 		}
 		$template_id = (int) get_post_meta($post_id,'_meet_recur',true);
+		$override_template_url = '';
 		if($template_id && !$sked)
 		{
-		$template_label = __('Edit Template','rsvpmaker');
+		$template_label = esc_html__('Edit Template','rsvpmaker');
 		$template_url = admin_url('post.php?action=edit&post='.$template_id);
+		$override_template_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&override_template='.$template_id.'&event='.$post_id);
 		}
 
 	$post_id = (empty($post_id)) ? 0 : $post_id;
@@ -116,7 +118,7 @@ function rsvpmaker_rest_array() {
 	if($confirm->post_parent == 0)
 		$confirmation_type =__('Message is default from settings','rsvpmaker');
 	elseif($confirm->post_parent != $post_id)
-		$confirmation_type = __('Message inherited from template','rsvpmaker');
+		$confirmation_type = esc_html__('Message inherited from template','rsvpmaker');
 
 	$form_id = get_post_meta($post_id,'_rsvp_form',true);
 	if(empty($form_id))
@@ -150,9 +152,9 @@ function rsvpmaker_rest_array() {
 	$form_fields = sprintf('Fields: %s, Guests: %s, Note field: %s',$merged_fields,$guest,$note);
 	$form_type = '';
 	if($fpost->post_parent == 0)
-		$form_type = __('Form is default from settings','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+		$form_type = esc_html__('Form is default from settings','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 	elseif($fpost->post_parent != $post_id)
-		$form_type = __('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+		$form_type = esc_html__('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 	$email_templates_array = get_rsvpmaker_email_template();
 	if($email_templates_array)
 	foreach($email_templates_array as $index => $template) {
@@ -171,7 +173,7 @@ function rsvpmaker_rest_array() {
 		'rest_url' => rest_url(),
 		'ajaxurl' => admin_url( 'admin-ajax.php' ),
 		'rsvpmaker_json_url' => rest_url( 'rsvpmaker/v1/' ),
-		'timelord' => $rsvpmaker_nonce['value'],
+		RSVPMAKER_NONCE_FIELD => wp_create_nonce( RSVPMAKER_NONCE_ACTION ),
 		'default_email_template' => $email_template,
 		'email_design_screen' => $email_template_design,
 		'default_incoming_nonce' => $default_incoming_nonce,
@@ -189,6 +191,7 @@ function rsvpmaker_rest_array() {
 		'projected_url' => $projected_url,
 		'template_label' => $template_label,
 		'template_url' => $template_url,
+		'override_template_url' => $override_template_url,
 		'eventdata' => get_rsvpmaker_event($post_id),
 		'event_id' => $post_id,
 		'top_message' => $top_message,
@@ -253,7 +256,7 @@ function rsvpmaker_enqueue_block_assets() {
 
 function rsvpmaker_event_scripts() {
 	$scriptversion = get_rsvpversion();
-	global $post, $rsvpmaker_nonce;
+	global $post;
 	$post_id       = isset( $post->ID ) ? $post->ID : 0;
 	global $rsvp_options;
 	wp_enqueue_script( 'jquery' );

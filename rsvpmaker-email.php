@@ -15,7 +15,7 @@ function rsvpemail_tag($post_id = 0, $blog_id = 0) {
 function rsvpmailer($mail, $bypass = []) {
 	if(defined('RSVPMAILOFF'))
 	{
-		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>', esc_html( var_export( $mail, true ) ) );
+		$log = sprintf('<p style="color:red">RSVPMaker Email Disabled</p><pre>%s</pre>',  esc_html( var_export( $mail, true ) ) );
 		// error_log('RSVPMaker Email Disabled '.var_export($mail,true));
 		return;
 	}
@@ -223,7 +223,7 @@ if(isset($mail['attachments']) && is_array($mail['attachments']))
 	foreach($mail['attachments'] as $path) {
 		$rsvpmail->AddAttachment($path);
 		if(isset($_GET['debug']))
-		printf('<p>Trying to add %s</p>', esc_html( $path ) );
+		printf('<p>Trying to add %s</p>',  esc_html( $path ) );
 	}
 $site_url = get_site_url();
 $p = explode('//',$site_url);
@@ -274,10 +274,10 @@ if($mail["html"])
 	try {
 		$rsvpmail->Send();
 	} catch (phpmailerException $e) {
-		echo esc_html($e->errorMessage());
+		echo  esc_html($e->errorMessage());
 		$errors .= $e->errorMessage();
 	} catch (Exception $e) {
-		echo esc_html($e->getMessage()); //Boring error messages from anything else!
+		echo  esc_html($e->getMessage()); //Boring error messages from anything else!
 		$errors .= $e->getMessage();
 	}
 	$errors .= $rsvpmail->ErrorInfo;
@@ -352,7 +352,7 @@ function rsvpemail_error_log($errors,$mail = array()) {
           // handle the options page
           function handle_options()
           {
-			if(isset($_POST["add_cap"])  && rsvpmaker_verify_nonce())
+			if(isset($_POST["add_cap"])  && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 			{
 				foreach($_POST["add_cap"] as $role => $type)
 					{
@@ -364,7 +364,7 @@ function rsvpemail_error_log($errors,$mail = array()) {
 					}
 			}
 
-		if(isset($_POST["remove_cap"]) && rsvpmaker_verify_nonce())
+		if(isset($_POST["remove_cap"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 			{
 				foreach($_POST["remove_cap"] as $role => $type)
 					{
@@ -372,14 +372,14 @@ function rsvpemail_error_log($errors,$mail = array()) {
 					}
 			}
 
-			if(isset($_POST['rsvpmailer_list_confirmation_message']) || isset($_POST['rsvpmail_list_rsvpmodal_css']) && rsvpmaker_verify_nonce()) {
+			if(isset($_POST['rsvpmailer_list_confirmation_message']) || isset($_POST['rsvpmail_list_rsvpmodal_css']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION )) {
 				update_option('rsvpmailer_list_confirmation_message',wp_kses_post(stripslashes($_POST['rsvpmailer_list_confirmation_message'])));
 				update_option('rsvpmail_list_rsvpmodal_on',isset($_POST['rsvpmail_list_rsvpmodal_on']));
 				update_option('rsvpmail_list_rsvpmodal_css',array_map('sanitize_text_field',$_POST['rsvpmail_list_rsvpmodal_css']));
 				update_option('rsvpmail_list_rsvpmodal_content',array_map('sanitize_text_field',$_POST['rsvpmail_list_rsvpmodal_content']));
 			}
 			if(!empty($_POST['rsvpelist'])) {
-				if(!wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+				if(!wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 					die('data error');
 			}
 
@@ -397,7 +397,7 @@ function rsvpemail_error_log($errors,$mail = array()) {
 					 $options['chimp_add_new_users'] = false;
                   update_option($this->db_option, $options);
 
-                  echo '<div class="updated fade"><p>'.esc_html__( 'Plugin settings saved - mailing list.','rsvpmaker').'</p></div>';
+                  echo '<div class="updated fade"><p>'. esc_html__( 'Plugin settings saved - mailing list.','rsvpmaker').'</p></div>';
               }
 
               // URL for form submit, equals our current page
@@ -420,7 +420,7 @@ remove_script_host : false,
 });	
 </script>
 <div class="wrap" style="max-width:950px !important;">
-<?php rsvpmaker_admin_heading(esc_html__( 'RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
+<?php rsvpmaker_admin_heading( esc_html__( 'RSVPMaker Email List','rsvpmaker'),__FUNCTION__,'email_list'); ?>
 <p>RSVPMaker provides its own mailing list management for sending event invitations and email newsletters. Because you shouldn't rely on the email server bundled with your website hosting for large-volume sending of email, the mailing list features are most useful in combination with the <a href="<?php echo esc_url( admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark') ); ?>">Postmark integration</a>.</p><p>Postmark is a good all-in-one solution for both broadcast / mailing list messages and reliable delivery of transactional messages such as RSVP confirmations.</p>
 <h3>Postmark Integration</h3>
 <?php
@@ -458,16 +458,16 @@ printf('<p>Title<br><input type="text" name="rsvpmail_list_rsvpmodal_content[tit
 printf('<p>Footer Text<br><input type="text" name="rsvpmail_list_rsvpmodal_content[footer_text]" value="%s" ></p>', esc_attr( $footer_text ) );
 printf('<p>Width <input type="text" name="rsvpmail_list_rsvpmodal_css[width]" value="%s" > Distance from Top <input type="text" name="rsvpmail_list_rsvpmodal_css[top]" value="%s" > </p>', esc_attr( array_shift( $rsvpmail_list_rsvpmodal_css ) ), esc_attr( array_shift( $rsvpmail_list_rsvpmodal_css ) ) );
 foreach($rsvpmail_list_rsvpmodal_css as $label => $content) {
-	printf('<p>CSS for %s<br><textarea rows="4" cols="80" name="rsvpmail_list_rsvpmodal_css[%s]">%s</textarea></p>', esc_html( $label ), esc_attr( $label ), esc_html( $content ) );
+	printf('<p>CSS for %s<br><textarea rows="4" cols="80" name="rsvpmail_list_rsvpmodal_css[%s]">%s</textarea></p>',  esc_html( $label ), esc_attr( $label ),  esc_html( $content ) );
 }
 echo '<p>Examples of an additional CSS customization: .rsvpmodal-header h3 {font-size: 20px;} .rsvpmodal-body p {font-size: 18px;} .rsvpmodal-footer p {font-size: 12px;} </p>';
 echo '<h2 id="theme_colors">Colors used in your theme</h2>';
 foreach($theme_colors as $index => $color) {
-	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-color:%s"></div></div>', esc_html( $index ), esc_html( $color ), esc_attr( $color ) );
+	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-color:%s"></div></div>',  esc_html( $index ),  esc_html( $color ), esc_attr( $color ) );
 }
 echo '<h2 id="theme_gradients">Gradients used in your theme</h2>';
 foreach($theme_gradients as $index => $color) {
-	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-gradient:%s"></div></div>', esc_html( $index ), esc_html( $color ), esc_attr( $color ) );
+	printf('<div style="display: inline-block; width: 200px;">%s<br>%s<br><div style="width: 200px; height: 15px; border: thin solid #000; background-gradient:%s"></div></div>',  esc_html( $index ),  esc_html( $color ), esc_attr( $color ) );
 }
 //echo '</div>';
 ?>
@@ -483,10 +483,10 @@ foreach($theme_gradients as $index => $color) {
 <p><textarea name="rsvpmailer_list_confirmation_message" class="mce"><?php echo wp_kses_post( get_option('rsvpmailer_list_confirmation_message') );?></textarea></p>
 <input type="hidden" name="tab" value="email">
 <?php 
-rsvpmaker_nonce();
+wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 submit_button();
 $form = rsvpmail_signup_form();
-printf('<p>This snippet of code can be embedded in any external site from which you accept email list signups.</p><pre>%s</pre>', esc_html( $form ) );
+printf('<p>This snippet of code can be embedded in any external site from which you accept email list signups.</p><pre>%s</pre>',  esc_html( $form ) );
 ?>
 </form>
 <p>See also: <a target="_blank" href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>">Email Template</a></p>
@@ -576,9 +576,9 @@ function rsvpmaker_next_scheduled( $post_id, $returnint = false ) {
 						$rsvpnext_time[$post_id] = $timestamp;
 						if($returnint)
 							return $timestamp;
-						$query = array('cancel' => implode('-',$property_array["args"]),'timelord' => rsvpmaker_nonce('value'));
+						$query = array('cancel' => implode('-',$property_array["args"]),RSVPMAKER_NONCE_FIELD => wp_create_nonce( RSVPMAKER_NONCE_ACTION ));
 						$cancel = add_query_arg($query,get_permalink());
-						$query = array('cronemailpreview' => implode('-',$property_array["args"]),'timelord' => rsvpmaker_nonce('value'));
+						$query = array('cronemailpreview' => implode('-',$property_array["args"]),RSVPMAKER_NONCE_FIELD => wp_create_nonce( RSVPMAKER_NONCE_ACTION ));
 						$preview = add_query_arg($query,get_permalink());
 						$note = admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&editor_note='.$post_id);
 						return mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp),'UTF-8').' '.$schedule . '<br><a href="'.$preview.'">Send Preview</a> | <a href="'.$cancel.'">Cancel</a>';
@@ -597,15 +597,15 @@ if( empty( get_category_by_slug( 'rsvpmail-editors-note' ) ) )
 	wp_create_category( 'RSVPMail Editors Note' );
 ?>
 <div class="wrap">
-<?php rsvpmaker_admin_heading(esc_html__( 'Scheduled Email List','rsvpmaker'),__FUNCTION__); ?>
-<p><?php esc_html_e('Use this screen to create or edit a schedule for sending your email at a specific date and time or on a recurring schedule.','rsvpmaker'); ?></p>
+<?php rsvpmaker_admin_heading( esc_html__( 'Scheduled Email List','rsvpmaker'),__FUNCTION__); ?>
+<p><?php  esc_html_e('Use this screen to create or edit a schedule for sending your email at a specific date and time or on a recurring schedule.','rsvpmaker'); ?></p>
 <?php
 	if(isset($_REQUEST['post_id']))
 	{
 		$post_id = (int) $_REQUEST['post_id'];
 		$permalink = get_permalink($post_id);
 		$post = get_post($post_id);
-		echo wp_kses_post(rsvpmaker_email_send_ui('', ''));
+		echo wp_kses( rsvpmaker_email_send_ui('', ''), dcarr_kses_form() );
 		echo '<p><a href="'.esc_url($permalink).'">View Controls with Content</a></p>';
 		//printf('<iframe width="%s" height="1000" src="%s"></iframe>','100%',add_query_arg('scheduling',1,$permalink));
 	}
@@ -614,14 +614,14 @@ if( empty( get_category_by_slug( 'rsvpmail-editors-note' ) ) )
 	}
 	else {
 ?>
-<form method="get" action="edit.php"><input type="hidden" name="post_type" value="rsvpemail" /><input type="hidden" name="page" value="rsvpmaker_scheduled_email_list" /><h3><?php esc_html_e('Choose a RSVP Mailer Post','rsvpmaker'); ?></h3>
+<form method="get" action="edit.php"><input type="hidden" name="post_type" value="rsvpemail" /><input type="hidden" name="page" value="rsvpmaker_scheduled_email_list" /><h3><?php  esc_html_e('Choose a RSVP Mailer Post','rsvpmaker'); ?></h3>
 	<select name="post_id"><?php
 $sql = "SELECT ID, post_title FROM $wpdb->posts WHERE post_type='rsvpemail' AND (post_status='publish' OR post_status='draft') ORDER BY ID DESC ";
 $results = $wpdb->get_results($sql);
 if(is_array($results))
 foreach($results as $row)
 {
-	printf('<option value="%d">%s</option>',esc_attr($row->ID),esc_html($row->post_title));
+	printf('<option value="%d">%s</option>',esc_attr($row->ID), esc_html($row->post_title));
 }
 		  ?></select>
 <button>Get</button>
@@ -638,11 +638,11 @@ foreach($results as $row)
 
     $crons = _get_cron_array();
     if ( empty($crons) )
-        esc_html_e('None','rsvpmaker');
+         esc_html_e('None','rsvpmaker');
 	else
 	{
-	printf('<h3>%s</h3>',esc_html__( 'Scheduled','rsvpmaker'));
-	printf('<table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th></tr></thead><tbody>',esc_html__( 'Title','rsvpmaker'),esc_html__( 'Schedule','rsvpmaker'));
+	printf('<h3>%s</h3>', esc_html__( 'Scheduled','rsvpmaker'));
+	printf('<table  class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>%s</th><th>%s</th></tr></thead><tbody>', esc_html__( 'Title','rsvpmaker'), esc_html__( 'Schedule','rsvpmaker'));
     foreach ( $crons as $timestamp => $cron ) {
 		foreach($cron as $hook => $properties)
 			{
@@ -654,10 +654,10 @@ foreach($results as $row)
 					$post = get_post($post_id);
 					if(!empty($post))
 						{
-					printf('<tr><td>%s <br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>', esc_html( $post->post_title ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ), esc_html__( 'Edit Post', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id=' . $post_id ) ), esc_html__( 'Schedule Options', 'rsvpmaker' ) );
+					printf('<tr><td>%s <br /><a href="%s">%s</a> | <a href="%s">%s</a></td><td>',  esc_html( $post->post_title ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ),  esc_html__( 'Edit Post', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&post_id=' . $post_id ) ),  esc_html__( 'Schedule Options', 'rsvpmaker' ) );
 						$schedule = (empty($property_array["schedule"])) ? '' : $property_array["schedule"];
 
-						echo esc_html(mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp),'UTF-8')).' '.esc_html($schedule);
+						echo  esc_html(mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$rsvp_options["time_format"],$timestamp),'UTF-8')).' '. esc_html($schedule);
 						echo '</td></tr>';
 						}
 					}
@@ -674,7 +674,7 @@ foreach($results as $row)
 						$signatures = get_post_meta($post_id,'signatures');
 						$cancel_links = '';
 						foreach($signatures as $signature) {
-							$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink($post_id)).'&timelord='.rsvpmaker_nonce('value');
+							$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink($post_id)).'&' . RSVPMAKER_NONCE_FIELD . '='.wp_create_nonce( RSVPMAKER_NONCE_ACTION );
 							$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 							if($next) {
 								$cancel_links .= sprintf('<p>%s | <a href="%s">cancel</a></p>',rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next),$cancel);
@@ -694,7 +694,7 @@ foreach($results as $row)
 						$post = get_post($post_id);
 						if(!empty($post))
 							{
-							printf( '<tr><td>%s (%s)<br /><a href="%s">%s</a></td><td>%s</td></tr>', esc_html( $post->post_title ), esc_html__( 'Delayed Send', 'rsvpmaker' ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ), esc_html__( 'Edit Post', 'rsvpmaker' ), wp_kses_post( $cancel_links ) );
+							printf( '<tr><td>%s (%s)<br /><a href="%s">%s</a></td><td>%s</td></tr>',  esc_html( $post->post_title ),  esc_html__( 'Delayed Send', 'rsvpmaker' ), esc_url( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) ),  esc_html__( 'Edit Post', 'rsvpmaker' ), wp_kses_post( $cancel_links ) );
 							}
 						}
 					}
@@ -704,16 +704,16 @@ foreach($results as $row)
 	}
 	rsvpmailer_post_promo_summary();
 ?>
-<h3><?php esc_html_e('Shortcodes for Scheduled Email Newsletters','rsvpmaker');?></h3>
-<p><?php esc_html_e('Shortcodes you can include with scheduled email include [rsvpmaker_upcoming] (which should be used without the calendar grid) and these others, intended specifically for newsletter style messages. The attributes are optional and shown with the default values.','rsvpmaker');?></p>
-<p>[rsvpmaker_recent_blog_posts weeks=&quot;1&quot;] (<?php esc_html_e('shows blog posts published within the timeframe, default 1 week','rsvpmaker');?>)</p>
-<p>[rsvpmaker_looking_ahead days=&quot;30&quot; limit=&quot;10&quot;] (<?php esc_html_e('include after rsvpmaker_upcoming for a linked listing of just the headlines and dates of events farther out on the schedule','rsvpmaker');?>)</p>
+<h3><?php  esc_html_e('Shortcodes for Scheduled Email Newsletters','rsvpmaker');?></h3>
+<p><?php  esc_html_e('Shortcodes you can include with scheduled email include [rsvpmaker_upcoming] (which should be used without the calendar grid) and these others, intended specifically for newsletter style messages. The attributes are optional and shown with the default values.','rsvpmaker');?></p>
+<p>[rsvpmaker_recent_blog_posts weeks=&quot;1&quot;] (<?php  esc_html_e('shows blog posts published within the timeframe, default 1 week','rsvpmaker');?>)</p>
+<p>[rsvpmaker_looking_ahead days=&quot;30&quot; limit=&quot;10&quot;] (<?php  esc_html_e('include after rsvpmaker_upcoming for a linked listing of just the headlines and dates of events farther out on the schedule','rsvpmaker');?>)</p>
 <?php
 }
 
 function rsvpmailer_post_promo_summary() {
 	global $wpdb, $rsvp_options;
-	if(isset($_GET['cancel_promo']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+	if(isset($_GET['cancel_promo']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 	{
 		delete_post_meta(intval($_GET['cancel_promo']),'pending_post_promo');
 		echo '<p>Post promo cancelled</p>';
@@ -723,13 +723,13 @@ function rsvpmailer_post_promo_summary() {
 	$results = $wpdb->get_results("select * from $wpdb->postmeta WHERE meta_key='pending_post_promo' ");
 	$titles = '';
 	foreach($results as $row) {
-		$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>$row->post_id);
+		$cancel = array(RSVPMAKER_NONCE_FIELD => wp_create_nonce( RSVPMAKER_NONCE_ACTION ),'cancel_promo'=>$row->post_id);
 		$cancel_url = add_query_arg($cancel,admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list'));
 		if($titles)
 			$titles .= ', ';
 		$titles .= '<strong>'.get_the_title($row->post_id).'</strong> (<a href="'.get_permalink($row->post_id).'">Send Now</a> | <a href="'.$cancel_url.'">Cancel</a>)';
 	}
-	printf('<p>Promo of latest blog post scheduled to send at %s, %d waiting %s</p>',esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$promo_scheduled)),absint(sizeof($results)),wp_kses_post($titles));
+	printf('<p>Promo of latest blog post scheduled to send at %s, %d waiting %s</p>', esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$promo_scheduled)),absint(sizeof($results)),wp_kses_post($titles));
 	$checkstamp = $promo_scheduled + (5 * MINUTE_IN_SECONDS);
 	$timestamp = wp_next_scheduled( 'rsvpmail_latest_post_promo_check' );
 	if($timestamp != $checkstamp) {
@@ -739,7 +739,7 @@ function rsvpmailer_post_promo_summary() {
 
 	}
 
-	if(isset($_GET['cancel_batch']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+	if(isset($_GET['cancel_batch']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 	{
 		$post_id = intval($_GET['cancel_batch']);
 		delete_post_meta($post_id,'rsvprelay_to_batch');
@@ -751,16 +751,16 @@ function rsvpmailer_post_promo_summary() {
 		if(is_array($results) && !empty($results)) {
 			echo '<h3>Pending Post Promo</h3>';
 			echo '<p>Pending post promo for the following posts:</p>';
-			echo '<table class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>'.esc_html__( 'Post Title','rsvpmaker').'</th><th>'.esc_html__( 'Scheduled','rsvpmaker').'</th></tr></thead><tbody>';
+			echo '<table class="wp-list-table widefat fixed posts" cellspacing="0"><thead><tr><th>'. esc_html__( 'Post Title','rsvpmaker').'</th><th>'. esc_html__( 'Scheduled','rsvpmaker').'</th></tr></thead><tbody>';
 			foreach($results as $row) {
 				$post = get_post($row->post_id);
 				if(!empty($post)) {
 					//delete_post_meta($post->ID,'rsvprelay_to_batch');
-					printf('<tr><td>%s</td><td>%s</td></tr>',esc_html($post->post_title),absint(sizeof(unserialize($row->meta_value))));
+					printf('<tr><td>%s</td><td>%s</td></tr>', esc_html($post->post_title),absint(sizeof(unserialize($row->meta_value))));
 				}
 			}
 			echo '</tbody></table>';
-			printf('<p><a href="%s">%s</a></p>',esc_url(add_query_arg(array('cancel_batch' => $results[0]->post_id,'timelord' => rsvpmaker_nonce('value')),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list'))),esc_html__( 'Cancel Batch Sending','rsvpmaker') );
+			printf('<p><a href="%s">%s</a></p>',esc_url(add_query_arg(array('cancel_batch' => $results[0]->post_id,RSVPMAKER_NONCE_FIELD => wp_create_nonce( RSVPMAKER_NONCE_ACTION )),admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list'))), esc_html__( 'Cancel Batch Sending','rsvpmaker') );
 		}
 	}
 }
@@ -790,13 +790,13 @@ else
 	$hour = date('G',$ts);
 	}
 ?>
-<p><input type="hidden" name="cron_active" value="1" <?php if(!empty($cron["cron_active"]) && ($cron['cron_active']) == '1') echo 'checked="checked"' ?> /> <?php echo esc_html__( 'Create schedule relative to this day/time','rsvpmaker');?>: <select name="cronday">
+<p><input type="hidden" name="cron_active" value="1" <?php if(!empty($cron["cron_active"]) && ($cron['cron_active']) == '1') echo 'checked="checked"' ?> /> <?php echo  esc_html__( 'Create schedule relative to this day/time','rsvpmaker');?>: <select name="cronday">
 <?php
-$days = array(esc_html__( 'Sunday','rsvpmaker'),esc_html__( 'Monday','rsvpmaker'),esc_html__( 'Tuesday','rsvpmaker'),esc_html__( 'Wednesday','rsvpmaker'),esc_html__( 'Thursday','rsvpmaker'),esc_html__( 'Friday','rsvpmaker'),esc_html__( 'Saturday','rsvpmaker'));
+$days = array( esc_html__( 'Sunday','rsvpmaker'), esc_html__( 'Monday','rsvpmaker'), esc_html__( 'Tuesday','rsvpmaker'), esc_html__( 'Wednesday','rsvpmaker'), esc_html__( 'Thursday','rsvpmaker'), esc_html__( 'Friday','rsvpmaker'), esc_html__( 'Saturday','rsvpmaker'));
 foreach($days as $index => $daytext)
 	{
 	$selected = ($index == $day) ? ' selected="selected" ' : '';
-	printf('<option  value="%s" %s>%s</option>', esc_attr( $index ), $selected, esc_html( $daytext ) );
+	printf('<option  value="%s" %s>%s</option>', esc_attr( $index ), esc_attr( $selected ),  esc_html( $daytext ) );
 	}
 ?>
 </select>
@@ -815,18 +815,18 @@ for($i=0; $i < 24; $i++)
 	else		
 		$twelvehour = $i." a.m.";
 
-	printf('<option  value="%s" %s>%s / %s</option>', esc_attr( $padded ), $selected, esc_html( $twelvehour ), esc_html( $padded ) );
+	printf('<option  value="%s" %s>%s / %s</option>', esc_attr( $padded ), esc_attr( $selected ),  esc_html( $twelvehour ),  esc_html( $padded ) );
 	}
 ?>
 </select>
-<?php esc_html_e('Recurrence','rsvpmaker');?> <select name="cronrecur"><option value=""><?php echo esc_html__( 'None','rsvpmaker');?></option>
+<?php  esc_html_e('Recurrence','rsvpmaker');?> <select name="cronrecur"><option value=""><?php echo  esc_html__( 'None','rsvpmaker');?></option>
 <?php
 $sked_meta = (empty($cron["cronrecur"])) ? ''  : $cron["cronrecur"];
 $schedules = array('weekly','daily');
 foreach ($schedules as $sked)
 	{
 	$selected = ($sked == $sked_meta) ? ' selected="selected" ' : '';
-	printf('<option  value="%s" %s>%s</option>',esc_attr($sked),$selected,esc_html($sked));
+	printf('<option  value="%s" %s>%s</option>',esc_attr($sked),esc_attr( $selected ), esc_html($sked));
 	}
 ?>
 </select>
@@ -864,7 +864,7 @@ if($event_timestamp)
 		$evopt .= '<option value="'.esc_attr($reminder).'"'.$s.'>'.rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$reminder).$dtext.'</option>';
 	}
 	$checked = (!empty($cron["cron_active"]) && ($cron["cron_active"]) == "relative") ? 'checked="checked"' : '';
-printf('<p><input type="radio" name="cron_active" value="relative" '.$checked.' /> Set reminder relative to event %s<br /><select name="cron_relative">%s</select></p>',esc_html(rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$event_timestamp)),wp_kses_post($evopt));
+printf('<p><input type="radio" name="cron_active" value="relative" %s /> Set reminder relative to event %s<br /><select name="cron_relative">%s</select></p>',esc_attr( $checked ), esc_html(rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$event_timestamp)),wp_kses($evopt, dcarr_kses_form()));
 }
 $checked = (!empty($cron["cron_active"]) && ($cron["cron_active"]) == "rsvpmaker_strtotime") ? 'checked="checked"' : '';
 $timestring = ($ts) ? rsvpmaker_date('Y-m-d H:i:s',$ts) : rsvpmaker_date('Y-m-d H:00:00',rsvpmaker_strtotime('+ 1 hour'));
@@ -880,25 +880,25 @@ for($i = 0; $i < 25; $i++)
 	{
 	$s = ($i == $preview) ? ' selected="selected"' : '';
 	$label = ($i) ? $i.' hours before' : 'none';
-	$preview_options .= sprintf('<option value="%d" %s>%s</option>', esc_attr( $i ), $s, esc_html( $label ) );
+	$preview_options .= sprintf('<option value="%d" %s>%s</option>', esc_attr( $i ), $s,  esc_html( $label ) );
 	}
 ?>
-<?php esc_html_e('Preview','rsvpmaker');?> <select name="cron_preview"><?php echo wp_kses_post($preview_options); ?></select>
+<?php  esc_html_e('Preview','rsvpmaker');?> <select name="cron_preview"><?php echo wp_kses($preview_options, dcarr_kses_form()); ?></select>
 </p>
 
 <p>
 <?php
 $condition = (!empty($cron["cron_condition"]) ) ? $cron["cron_condition"] : 'none';
 $blog_options = $condition_options = '';
-$conditions = array('none' => esc_html__( 'none','rsvpmaker'),'events' => esc_html__( 'Future events','rsvpmaker'),'posts' => esc_html__( 'Recent posts','rsvpmaker'),'and' => esc_html__( 'Both events and posts','rsvpmaker'),'or' => esc_html__( 'Either events or posts','rsvpmaker'));
+$conditions = array('none' =>  esc_html__( 'none','rsvpmaker'),'events' =>  esc_html__( 'Future events','rsvpmaker'),'posts' =>  esc_html__( 'Recent posts','rsvpmaker'),'and' =>  esc_html__( 'Both events and posts','rsvpmaker'),'or' =>  esc_html__( 'Either events or posts','rsvpmaker'));
 foreach($conditions as $slug => $text)
 	{
 	$s = ($slug == $condition) ? ' selected="selected"' : '';
-	$condition_options .= sprintf('<option value="%s" %s>%s</option>', esc_attr( $slug ), $s, esc_html( $text ) );
+	$condition_options .= sprintf('<option value="%s" %s>%s</option>', esc_attr( $slug ), $s,  esc_html( $text ) );
 	}
 ?>
-<?php esc_html_e('Test for','rsvpmaker');?>: <select name="cron_condition"><?php echo wp_kses_post($condition_options); ?></select>
-<br /><em><?php esc_html_e('Broadcast will not be sent if it does not meet this test.','rsvpmaker');?></em>
+<?php  esc_html_e('Test for','rsvpmaker');?>: <select name="cron_condition"><?php echo wp_kses($condition_options, dcarr_kses_form()); ?></select>
+<br /><em><?php  esc_html_e('Broadcast will not be sent if it does not meet this test.','rsvpmaker');?></em>
 </p>
 <?php
 }
@@ -919,11 +919,11 @@ function save_rsvpemail_data() {
 
 if(empty($_POST) || empty($_REQUEST['post_id']) || empty($_REQUEST['page']) || ($_REQUEST['page'] != 'rsvpmaker_scheduled_email_list'))
 	return;
-if( ! wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if( ! wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	return;
 $post_id = (int) $_REQUEST['post_id'];
 
-if(isset($_POST['scheduled_email'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(isset($_POST['scheduled_email'])  && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 {
 	if(is_array($_POST['scheduled_email']))
 		$scheduled_email = array_map('sanitize_text_field',$_POST['scheduled_email']);
@@ -932,7 +932,7 @@ if(isset($_POST['scheduled_email'])  && wp_verify_nonce(rsvpmaker_nonce_data('da
 	update_post_meta($post_id,'scheduled_email',$scheduled_email);
 }
 
-if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	{
 	global $wpdb, $current_user, $post;
 	$post_id = $post->ID;		
@@ -956,7 +956,7 @@ if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data(
 				delete_post_meta($post_id, $field, $current);
 			}
 	}
-	if( (isset($_POST["cron_active"]) || !empty($_POST["cron_relative"])) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	if( (isset($_POST["cron_active"]) || !empty($_POST["cron_relative"])) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) ) {
 	$chosen = (int) $_POST["chosen"]; 
 	if(empty($_POST['cronday']))
 	{
@@ -964,7 +964,7 @@ if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data(
 		$days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
 		$day = $days[$cronday];
 	}
-	if(!empty($_POST['notesubject']) || !empty($_POST['notebody']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+	if(!empty($_POST['notesubject']) || !empty($_POST['notebody']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	{
 		global $current_user;
 		$newpost['post_title'] = sanitize_text_field(stripslashes($_POST['notesubject']));
@@ -975,9 +975,9 @@ if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data(
 		$chosen = wp_insert_post( $newpost );
 	}
 
-	if(!empty($_POST['notekey']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )	
+	if(!empty($_POST['notekey']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )	
 	{
-		if(!empty($_POST['notesubject']) || !empty($_POST['notebody']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+		if(!empty($_POST['notesubject']) || !empty($_POST['notebody']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 		{
 			global $current_user;
 			$newpost['post_title'] = sanitize_text_field(stripslashes($_POST['notesubject']));
@@ -1012,9 +1012,9 @@ if(!empty($_POST["email"]["from_name"]) && wp_verify_nonce(rsvpmaker_nonce_data(
 			if($t < time())
 				$t = rsvpmaker_strtotime('next '. $days[$cron["cronday"]] .' '.$cron["cronhour"].':00');
 		}
-	elseif(($cron["cron_active"] == 'relative') && !empty($_POST["cron_relative"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+	elseif(($cron["cron_active"] == 'relative') && !empty($_POST["cron_relative"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 		$t = (int) $_POST["cron_relative"];
-	elseif(($cron["cron_active"] == 'rsvpmaker_strtotime') && !empty($_POST["cron_rsvpmaker_strtotime"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	elseif(($cron["cron_active"] == 'rsvpmaker_strtotime') && !empty($_POST["cron_rsvpmaker_strtotime"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) ) {
 		$t = rsvpmaker_strtotime(sanitize_text_field($_POST["cron_rsvpmaker_strtotime"]));
 	}
 
@@ -1227,7 +1227,7 @@ function rsvpmaker_blogs_by_email($email, $path = '/wp-admin/edit.php?post_type=
 		return array('WEB-DOMAIN-GOES-HERE'.$path);
 	if (!is_multisite()) {
 		$url = site_url().$path;
-		$link = sprintf('<a href="%s">%s</a>', esc_url( $url ), esc_html( $url ) );		
+		$link = sprintf('<a href="%s">%s</a>', esc_url( $url ),  esc_html( $url ) );		
 		return array($link);
 	}
 	$blog_urls = array();
@@ -1241,7 +1241,7 @@ function rsvpmaker_blogs_by_email($email, $path = '/wp-admin/edit.php?post_type=
 			foreach($blogs as $blog)
 				{
 				$url = $blog->siteurl . $path;
-				$blog_urls[] = sprintf('<a href="%s">%s</a>', esc_url( $url ), esc_html( $url ) );
+				$blog_urls[] = sprintf('<a href="%s">%s</a>', esc_url( $url ),  esc_html( $url ) );
 				}
 			}
 	}
@@ -1281,7 +1281,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	$mail['post_id'] = $post_id;
 	$mail['html'] = $html;
 	$from = $postvars["from_email"];
-	printf('<p>from %s</p>', esc_html( $from ) );
+	printf('<p>from %s</p>',  esc_html( $from ) );
 	update_post_meta($post_id,'rsvprelay_from',$from);
 	update_post_meta($post_id,'rsvprelay_fromname',$postvars["from_name"]);
 
@@ -1352,7 +1352,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	$campaign = $MailChimp->post("campaigns", $input);
 	if(!$MailChimp->success())
 		{
-		echo '<div>'.esc_html__( 'MailChimp API error','rsvpmaker').': '.esc_html($MailChimp->getLastError()).'</div>';
+		echo '<div>'. esc_html__( 'MailChimp API error','rsvpmaker').': '. esc_html($MailChimp->getLastError()).'</div>';
 		return;
 		}
 	if(!empty($campaign["id"]))
@@ -1363,20 +1363,20 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	'html' => $html, 'text' => $text) );
 	if(!$MailChimp->success())
 		{
-		echo '<div>'.esc_html__( 'MailChimp API error','rsvpmaker').': '.esc_html($MailChimp->getLastError()).'</div>';
+		echo '<div>'. esc_html__( 'MailChimp API error','rsvpmaker').': '. esc_html($MailChimp->getLastError()).'</div>';
 		return;
 		}
 	if(empty($postvars["chimp_send_now"]))
 		{
-		echo '<div>'.esc_html__( 'View draft on mailchimp.com','rsvpmaker').'</div>';
+		echo '<div>'. esc_html__( 'View draft on mailchimp.com','rsvpmaker').'</div>';
 		}
 	else // send now
 		{
 	$send_result = $MailChimp->post("campaigns/".$campaign["id"].'/actions/send');
 	if($MailChimp->success())
-		echo '<div>'.esc_html__( 'Sent MailChimp campaign','rsvpmaker').': '.esc_html($campaign["id"]).'</div>';
+		echo '<div>'. esc_html__( 'Sent MailChimp campaign','rsvpmaker').': '. esc_html($campaign["id"]).'</div>';
 	else
-		echo '<div>'.esc_html__( 'MailChimp API error','rsvpmaker').': '.esc_html($MailChimp->getLastError()).'</div>';
+		echo '<div>'. esc_html__( 'MailChimp API error','rsvpmaker').': '. esc_html($MailChimp->getLastError()).'</div>';
 		}
 	}
 
@@ -1389,7 +1389,7 @@ function rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id) {
 	if(!empty($unsubscribed))
 	{
 		/* translators: placeholder for number unsubscribed */
-		printf(esc_html__( 'Skipped %d unsubscribed emails','rsvpmaker'),count($unsubscribed) );
+		printf( esc_html__( 'Skipped %d unsubscribed emails','rsvpmaker'),count($unsubscribed) );
 	}
 
 	//if any messages queued, make sure group email schedule is set
@@ -1404,24 +1404,22 @@ function rsvpmaker_postvars_to_recipients($postvars) {
 	if(1 == $rsvpmaker_cron_context) // preview
 	{
 		$recipients[] = $postvars["previewto"];
-		echo '<p>Sending preview to '.esc_html($postvars["previewto"]).'</p>';
+		echo '<p>Sending preview to '. esc_html($postvars["previewto"]).'</p>';
 		return $recipients;
 	}
 	$post_id = $postvars['post_id'];
 	$recipients = array();
 	if(!empty($postvars["preview"])) {
 		$recipients[] = $postvars["previewto"];
-		echo '<p>Sending preview to '.esc_html($postvars["previewto"]).'</p>';
+		echo '<p>Sending preview to '. esc_html($postvars["previewto"]).'</p>';
 	}
 
 if(!empty($postvars["attendees"]) && !empty($postvars["event"]) )
 {
 $sending_to[] = 'event attendees';
-
 if($postvars["event"] == 'any')
 {
-$sql = "SELECT DISTINCT email 
-FROM  `".$wpdb->prefix."rsvpmaker`";
+$sql = $wpdb->prepare("SELECT DISTINCT email FROM %i", $wpdb->prefix."rsvpmaker");
 $title = 'one of our previous events';	
 }
 else {
@@ -1435,7 +1433,7 @@ $title = $event_post->post_title;
 $results = $wpdb->get_results($sql);
 if(!empty($results))
 {
-echo '<p>'.esc_html__( 'Looking up','rsvpmaker').' '. esc_html__( 'event attendees','rsvpmaker').'</p>';
+echo '<p>'. esc_html__( 'Looking up','rsvpmaker').' '.  esc_html__( 'event attendees','rsvpmaker').'</p>';
 foreach($results as $row)
 	{
 	//todo bypass
@@ -1469,7 +1467,7 @@ $title = 'one of our previous events';
 $results = $wpdb->get_results($sql);
 if(!empty($results))
 {
-echo '<p>'.esc_html__( 'Looking up','rsvpmaker').' '.esc_html(sizeof($results)).' '. esc_html__( 'RSVPs within the last ','rsvpmaker').' '.esc_html(sanitize_text_field($postvars["since"])).' days</p>';
+echo '<p>'. esc_html__( 'Looking up','rsvpmaker').' '. esc_html(sizeof($results)).' '.  esc_html__( 'RSVPs within the last ','rsvpmaker').' '. esc_html(sanitize_text_field($postvars["since"])).' days</p>';
 foreach($results as $row)
 	{
 	if($problem = rsvpmail_is_problem($row->email))
@@ -1561,7 +1559,7 @@ foreach($guests as $guest)
 		$recipients[] = $email;
 	//		add_post_meta($post_id,'rsvprelay_to',$guest->email);
 	}
-	printf('<p>Looking up %s members of the guest email list %s</p>', esc_html( $count ), esc_html( $segment_text ) );
+	printf('<p>Looking up %s members of the guest email list %s</p>',  esc_html( $count ),  esc_html( $segment_text ) );
 	$sending_to[] = 'guest list';
 }
 
@@ -1587,7 +1585,7 @@ foreach($users as $user)
 	}
 }
 if(!empty($sending_to))
-update_post_meta($post_id,'message_description',esc_html__( 'This message was sent from','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']).' to '.implode(', ',$sending_to));
+update_post_meta($post_id,'message_description', esc_html__( 'This message was sent from','rsvpmaker').' '.sanitize_text_field($_SERVER['SERVER_NAME']).' to '.implode(', ',$sending_to));
 
 if(!empty($postvars["members_rsvp"]) && !empty($recipients))
 {
@@ -1608,7 +1606,7 @@ foreach($emails as $email)
 	$recipients[] = $email;
 	//		add_post_meta($post_id,'rsvprelay_to',$user->user_email);
 	}
-	printf('<p>Filtering to %s by RSVP status (%s)</p>', esc_html( $count ), esc_html( $rule ) );
+	printf('<p>Filtering to %s by RSVP status (%s)</p>',  esc_html( $count ),  esc_html( $rule ) );
 }
 return array_unique($recipients);
 }
@@ -1625,7 +1623,7 @@ function rsvpmaker_template_inline_test($atts) {
 
 function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null, $type='') {
 	if(defined('RSVPMAKER_DEBUG') && RSVPMAKER_DEBUG) {
-		// error_log('rsvpmailer_delayed_send: '.$post_id.' '.$user_id.' '.$posthash);
+		error_log('rsvpmailer_delayed_send: '.$post_id.' '.$user_id.' '.$posthash);
 	}
 	if(empty($postvars))
 		$postvars = get_post_meta($post_id,'scheduled_send_vars'.$posthash,true);
@@ -1634,7 +1632,9 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null, 
 	$epost = get_post($post_id);
 	if($epost->post_status != 'publish')
 		{
-			rsvpmaker_debug_log('rsvpmailer_delayed_send not sent, post status='.$epost->post_status);
+			if(defined('RSVPMAKER_DEBUG') && RSVPMAKER_DEBUG) {
+					error_log('rsvpmailer_delayed_send not sent, post status='.$epost->post_status);
+			}
 			return;
 		}
 	$html = rsvpmaker_email_html($epost);
@@ -1642,8 +1642,10 @@ function rsvpmailer_delayed_send($post_id,$user_id,$posthash, $postvars = null, 
 	ob_start();
 	$result = rsvpmailer_submitted($html,$text,$postvars,$post_id,$user_id);
 	$result .= ob_get_clean();
+	if(defined('RSVPMAKER_DEBUG') && RSVPMAKER_DEBUG) {
+		error_log('rsvpmailer_delayed_send, rsvpmailer_submitted result: '.$result);
+	}
 }
-
 
 add_action('rsvpmailer_delayed_send','rsvpmailer_delayed_send',10,3);
 
@@ -1665,13 +1667,13 @@ $post_id = $post->ID;
 
 ob_start();
 
-if(isset($_POST['preview_text'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(isset($_POST['preview_text'])  && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	update_post_meta($post->ID,'_rsvpmailer_preview',sanitize_text_field(stripslashes($_POST['preview_text'])));
 
 if(!current_user_can('publish_rsvpemails') )
 	return;
 
-if(!empty($_POST["subject"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(!empty($_POST["subject"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	{
 		$subject = sanitize_text_field(stripslashes($_POST["subject"]));
 		if($post->post_title != $subject)
@@ -1690,7 +1692,7 @@ if(!empty($_POST["subject"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsv
 		}
 	}
 
-if(!empty($_POST["send_when"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(!empty($_POST["send_when"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 {
 	$postvars = $_POST;
 	//delete temporary log entries
@@ -1706,7 +1708,7 @@ if(!empty($_POST["send_when"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),r
 elseif(!empty($_POST["send_when"])) {
 	echo "<p>Postvars not saved, nonce error</p>";
 }
-if(isset($_POST['bigsend']) && rsvpmaker_verify_nonce()) {
+if(isset($_POST['bigsend']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION )) {
 	echo '<p>Big email broadcast confirmed!</p>';
 	$posthash = get_post_meta($post->ID,'rsvpmail_last_hash',true);
 	$postvars = get_post_meta($post->ID,'scheduled_send_vars'.$posthash,true);
@@ -1726,9 +1728,9 @@ if(!empty($postvars)) {
 	if($size > 100 && empty($_POST['bigsend'])) {
 		//better get confirmation
 		$bigsend_prompt = '<div style="border: medium solid red; padding: 10px; margin-bottom: 20px;">';
-		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>Email broadcasts to more than 100 emails require confirmation. This list is %d, including %s. Do you wish to proceed?</p>', esc_html( $size ), esc_html( $sample ) );
+		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>Email broadcasts to more than 100 emails require confirmation. This list is %d, including %s. Do you wish to proceed?</p>',  esc_html( $size ),  esc_html( $sample ) );
 		$bigsend_prompt .= sprintf('<form id="confirmation" method="post" action="%s"><input type="hidden" name="bigsend" value="1"><button onclick="this.style=\'display:none;\';document.getElementById(\'status\').innerHTML=\'Sending ...\';">Confirm</button><div id="status"></div>',esc_url(get_permalink()));
-		$bigsend_prompt .= rsvpmaker_nonce('field');
+		$bigsend_prompt .= wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false );
 		$bigsend_prompt .= '</form>';
 		$bigsend_prompt .= '</div>';
 		$bigsend_prompt = apply_filters('rsvpmail_bigsend_prompt',$bigsend_prompt,get_current_blog_id(),$size);
@@ -1737,27 +1739,27 @@ if(!empty($postvars)) {
 	elseif(!empty($postvars["send_check"]) && empty($_POST['send_confirmed'])) {
 		//better get confirmation
 		$bigsend_prompt = '<div style="border: medium solid red; padding: 10px; margin-bottom: 20px;">';
-		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>If confirmed, this email will be sent to %d recipients including %s. Do you wish to proceed?</p>', esc_html( $size ), esc_html( $sample ) );
+		$bigsend_prompt .= sprintf('<h3>Confirmation Required</h3><p>If confirmed, this email will be sent to %d recipients including %s. Do you wish to proceed?</p>',  esc_html( $size ),  esc_html( $sample ) );
 		$bigsend_prompt .= sprintf('<form id="confirmation" method="post" action="%s"><input type="hidden" name="send_confirmed" value="1"><button onclick="this.style=\'display:none;\';document.getElementById(\'status\').innerHTML=\'Sending ...\';">Confirm</button><div id="status"></div>',esc_url(get_permalink()));
-		$bigsend_prompt .= rsvpmaker_nonce('field');
+		$bigsend_prompt .= wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false );
 		$bigsend_prompt .= '</form>';
 		$bigsend_prompt .= '</div>';
 		$bigsend_prompt = apply_filters('rsvpmail_bigsend_prompt',$bigsend_prompt,get_current_blog_id(),$size);
 		echo wp_kses_post($bigsend_prompt);
 	}
 	elseif('now' == $postvars["send_when"]) {
-		echo "<p>Size of list ".esc_html($size)."</p>";
+		echo "<p>Size of list ". esc_html($size)."</p>";
 			rsvpmailer_delayed_send($post->ID, $current_user->ID, $posthash, $postvars);
 	}
 	elseif('schedule' == $postvars["send_when"])
 	{
 		$t = rsvpmaker_strtotime($postvars['send_date'].' '.$postvars['send_time']);
 		wp_schedule_single_event( $t, 'rsvpmailer_delayed_send', $signature);
-		printf('<p><em>Scheduling to send at %s to %s recipients.</em></p>',esc_html(rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t)),absint(sizeof($recipients)));
+		printf('<p><em>Scheduling to send at %s to %s recipients.</em></p>', esc_html(rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t)),absint(sizeof($recipients)));
 	}
 	elseif('advanced' == $postvars["send_when"])
 	{
-	if( (isset($postvars["cron_active"]) || !empty($postvars["cron_relative"])) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+	if( (isset($postvars["cron_active"]) || !empty($postvars["cron_relative"])) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) ) {
 		$chosen = isset($postvars["chosen"]) ? (int) $postvars["chosen"] : 0; 
 		if(empty($postvars['cronday']))
 		{
@@ -1765,7 +1767,7 @@ if(!empty($postvars)) {
 			$days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
 			$day = $days[$cronday];
 		}
-		if(!empty($postvars['notesubject']) || !empty($postvars['notebody']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+		if(!empty($postvars['notesubject']) || !empty($postvars['notebody']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 		{
 			global $current_user;
 			$newpost['post_title'] = sanitize_text_field(stripslashes($postvars['notesubject']));
@@ -1775,7 +1777,7 @@ if(!empty($postvars)) {
 			$newpost['post_author'] = $current_user->ID;
 			$chosen = wp_insert_post( $newpost );
 		}		
-		if(!empty($postvars['notekey']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )	
+		if(!empty($postvars['notekey']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )	
 			update_post_meta($post_id,sanitize_text_field($postvars['notekey']),$chosen);
 		$cron_checkboxes = array("cron_active", "cron_preview");
 		foreach($cron_checkboxes as $check)
@@ -1797,9 +1799,9 @@ if(!empty($postvars)) {
 				if($t < time())
 					$t = rsvpmaker_strtotime('next '. $days[$cron["cronday"]] .' '.$cron["cronhour"].':00');
 			}
-		elseif(($cron["cron_active"] == 'relative') && !empty($postvars["cron_relative"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+		elseif(($cron["cron_active"] == 'relative') && !empty($postvars["cron_relative"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 			$t = (int) $postvars["cron_relative"];
-		elseif(($cron["cron_active"] == 'rsvpmaker_strtotime') && !empty($postvars["cron_rsvpmaker_strtotime"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+		elseif(($cron["cron_active"] == 'rsvpmaker_strtotime') && !empty($postvars["cron_rsvpmaker_strtotime"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) ) {
 			$t = rsvpmaker_strtotime(sanitize_text_field($postvars["cron_rsvpmaker_strtotime"]));
 		}
 
@@ -1843,7 +1845,7 @@ $events_dropdown = rsvpmaker_get_events_dropdown ();
 $queued = get_post_meta($post->ID,'rsvprelay_to');
 $delayed = wp_next_scheduled( 'rsvpmailer_delayed_send' );
 if($delayed) {
-	printf('<p>Scheduled to send at %s</p>',esc_html(rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$delayed)));
+	printf('<p>Scheduled to send at %s</p>', esc_html(rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$delayed)));
 }
 if($queued) {
 	rsvpmaker_relay_queue();
@@ -1856,7 +1858,7 @@ if($queued) {
 		//if more in queue
 		printf('<p>%d emails queued to send (<a href="%s">Refresh</a>)</p>',absint(sizeof($queued)),esc_url($permalink));
 		if(isset($_GET['show_log']))
-			printf('<p>%s</p>',esc_html(implode(', ',$queued)));
+			printf('<p>%s</p>', esc_html(implode(', ',$queued)));
 	}
 }
 $sent = get_post_meta($post->ID,'rsvpmail_sent');
@@ -1881,9 +1883,9 @@ if(empty($cronpostvars))
 ?>
 <div style="width: 150px; float:right;"><button onclick="hideControls()">Hide Controls</button></div>
 <form method="post" id="emailui" action="<?php echo esc_attr($permalink); ?>">
-<?php rsvpmaker_nonce(); ?>
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
 <table>
-<tr><td><?php esc_html_e('Subject','rsvpmaker');?>:</td><td><input type="text"  size="50" name="subject" value="<?php echo esc_attr($post->post_title); ?>" /></td></tr>
+<tr><td><?php  esc_html_e('Subject','rsvpmaker');?>:</td><td><input type="text"  size="50" name="subject" value="<?php echo esc_attr($post->post_title); ?>" /></td></tr>
 <?php 
 
 $from_name =  (isset($custom_fields["_email_from_name"]) && isset($custom_fields["_email_from_name"][0])) ? esc_attr($custom_fields["_email_from_name"][0]) : esc_attr($from_options["email-name"]);
@@ -1891,19 +1893,19 @@ $from_email = (isset($custom_fields["_email_from_email"][0])) ? esc_attr($custom
 if(empty($from_email))
 	$from_email = $current_user->user_email;
 ?>
-<tr><td><?php esc_html_e('From Name','rsvpmaker');?>:</td><td><input type="text"  size="50" name="from_name" value="<?php echo esc_attr($from_name); ?>" /></td></tr>
-<tr><td><?php esc_html_e('From Email','rsvpmaker');?>:</td><td><input type="text" size="50"  name="from_email" value="<?php echo esc_attr($from_email); ?>" />
+<tr><td><?php  esc_html_e('From Name','rsvpmaker');?>:</td><td><input type="text"  size="50" name="from_name" value="<?php echo esc_attr($from_name); ?>" /></td></tr>
+<tr><td><?php  esc_html_e('From Email','rsvpmaker');?>:</td><td><input type="text" size="50"  name="from_email" value="<?php echo esc_attr($from_email); ?>" />
 </td></tr>
 <?php
 if(current_user_can('manage_options')) {
 	if(empty($from_options["mailing_address"])) {
-		printf('<tr><td></td><td><em><a href="%s">%s</a> ',esc_url(admin_url('options-general.php?page=rsvpmaker_settings&tab=email')),esc_html__( 'Set default addressing options'));
-		echo '<br><strong>'.esc_html__( 'Recommended: add a physical mailing address','rsvpmaker').'</strong>';
+		printf('<tr><td></td><td><em><a href="%s">%s</a> ',esc_url(admin_url('options-general.php?page=rsvpmaker_settings&tab=email')), esc_html__( 'Set default addressing options'));
+		echo '<br><strong>'. esc_html__( 'Recommended: add a physical mailing address','rsvpmaker').'</strong>';
 	echo '</td></tr>';
 	}
 }
 ?>
-<tr><td><?php esc_html_e('Preview Text','rsvpmaker');?>:</td><td><input type="text" size="50"  name="preview_text" value="<?php echo esc_attr(rsvpmailer_preview(array())); ?>" />
+<tr><td><?php  esc_html_e('Preview Text','rsvpmaker');?>:</td><td><input type="text" size="50"  name="preview_text" value="<?php echo esc_attr(rsvpmailer_preview(array())); ?>" />
 </td></tr>
 </table>
 <?php
@@ -1911,47 +1913,47 @@ if(!empty($chimp_options["chimp-key"]))
 {
 ?>
 <div id="mailchimp-option">
-<input type="checkbox" name="mailchimp" onclick="hideNonChimp()" value="1" <?php if(isset($_GET['mailchimp']) || !empty($cronpostvars['mailchimp'])) echo ' checked="checked" '; ?> > <?php esc_html_e('MailChimp list','rsvpmaker');?> <select name="mailchimp_list">
+<input type="checkbox" name="mailchimp" onclick="hideNonChimp()" value="1" <?php if(isset($_GET['mailchimp']) || !empty($cronpostvars['mailchimp'])) echo ' checked="checked" '; ?> > <?php  esc_html_e('MailChimp list','rsvpmaker');?> <select name="mailchimp_list">
 <?php
 $chosen = (isset($custom_fields["_email_list"][0])) ? $custom_fields["_email_list"][0] : $chimp_options["chimp-list"];
-echo wp_kses_post(rsvpmaker_mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen));
+echo wp_kses( rsvpmaker_mailchimp_list_dropdown($chimp_options["chimp-key"], $chosen), dcarr_kses_form() );
 ?>
-</select> <select name="chimp_send_now"><option value="1"><?php esc_html_e('Create and Send','rsvpmaker'); ?></option><option value="" <?php if(isset($postvars["mailchimp"]) && empty($postvars["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php esc_html_e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select>
+</select> <select name="chimp_send_now"><option value="1"><?php  esc_html_e('Create and Send','rsvpmaker'); ?></option><option value="" <?php if(isset($postvars["mailchimp"]) && empty($postvars["chimp_send_now"])) echo ' selected="selected" '; ?> ><?php  esc_html_e('Save as draft on mailchimp.com','rsvpmaker'); ?></option></select>
 </div>
 <?php
 }
 ?>
 <div id="nonchimp">
-<div><input type="checkbox" id="preview" name="preview" value="1" <?php if(!empty($cronpostvars['preview'])) echo 'checked="checked"'; ?> > <?php esc_html_e('Preview to','rsvpmaker');?>: <input style="width: 300px;" type="text" name="previewto" id="previewto" value="<?php echo esc_attr($current_user->user_email); ?>" />
+<div><input type="checkbox" id="preview" name="preview" value="1" <?php if(!empty($cronpostvars['preview'])) echo 'checked="checked"'; ?> > <?php  esc_html_e('Preview to','rsvpmaker');?>: <input style="width: 300px;" type="text" name="previewto" id="previewto" value="<?php echo esc_attr($current_user->user_email); ?>" />
 <br><em>Send yourself a test first to check email formatting.</em>
 </div>
-<div><input type="checkbox" name="members" value="1" <?php if(isset($_GET['list']) && ($_GET['list'] == 'members') || !empty($cronpostvars['members'])) echo 'checked="checked"'; ?> > <?php esc_html_e('Website members','rsvpmaker');?></div>
+<div><input type="checkbox" name="members" value="1" <?php if(isset($_GET['list']) && ($_GET['list'] == 'members') || !empty($cronpostvars['members'])) echo 'checked="checked"'; ?> > <?php  esc_html_e('Website members','rsvpmaker');?></div>
 <div>
 <input type="checkbox" name="rsvp_guest_list" value="1" <?php if(!empty($cronpostvars['rsvp_guest_list'])) echo ' checked="checked" '; ?> > RSVP Mail Email List <?php rsvpmaker_email_segments_dropdown(); ?>
 </div>
-<div><input type="checkbox" name="attendees" id="attendees" value="1" <?php if(!empty($cronpostvars['attendees'])) echo ' checked="checked" '; ?> > <?php esc_html_e('Signed Up or Past Attendees','rsvpmaker');?> <select name="event" id="event"><option value=""><?php esc_html_e('Select Event','rsvpmaker');?></option><option value="any"><?php esc_html_e('Any event','rsvpmaker');?></option><?php echo wp_kses_post($events_dropdown); ?></select></div>
+<div><input type="checkbox" name="attendees" id="attendees" value="1" <?php if(!empty($cronpostvars['attendees'])) echo ' checked="checked" '; ?> > <?php  esc_html_e('Signed Up or Past Attendees','rsvpmaker');?> <select name="event" id="event"><option value=""><?php  esc_html_e('Select Event','rsvpmaker');?></option><option value="any"><?php  esc_html_e('Any event','rsvpmaker');?></option><?php echo wp_kses($events_dropdown, dcarr_kses_form()); ?></select></div>
 <details>
 <summary>More Options</summary>
-<div><?php esc_html_e('Custom List','rsvpmaker');?><br /><textarea name="custom_list" rows="3" cols="80"></textarea><br /><input type="checkbox" name="add_to_list" value="1"> <?php esc_html_e('Add Custom List emails to active email list','rsvpmaker');?></div>
+<div><?php  esc_html_e('Custom List','rsvpmaker');?><br /><textarea name="custom_list" rows="3" cols="80"></textarea><br /><input type="checkbox" name="add_to_list" value="1"> <?php  esc_html_e('Add Custom List emails to active email list','rsvpmaker');?></div>
 <?php if(is_multisite() && current_user_can('manage_network') && (get_current_blog_id() == 1)) {
 ?>
 <div style="border: thin dotted red;"><strong>Network Administrator Only:</strong><br /> 
-<input type="checkbox" name="network_members" value="1" <?php if(!empty($cronpostvars['network_members'])) echo ' checked="checked" '; ?> > <?php esc_html_e('All users','rsvpmaker');?>
+<input type="checkbox" name="network_members" value="1" <?php if(!empty($cronpostvars['network_members'])) echo ' checked="checked" '; ?> > <?php  esc_html_e('All users','rsvpmaker');?>
 </div>
 <?php
 } ?>
-<div><input type="checkbox" name="rsvps_since" value="1" <?php if(!empty($cronpostvars['rsvps_since'])) echo ' checked="checked" '; ?> > <?php esc_html_e('RSVPs more recent than ','rsvpmaker');?> <input style="width: 50px;" type="text" name="since" value="30" /> <?php esc_html_e('Days','rsvpmaker');?></div>
+<div><input type="checkbox" name="rsvps_since" value="1" <?php if(!empty($cronpostvars['rsvps_since'])) echo ' checked="checked" '; ?> > <?php  esc_html_e('RSVPs more recent than ','rsvpmaker');?> <input style="width: 50px;" type="text" name="since" value="30" /> <?php  esc_html_e('Days','rsvpmaker');?></div>
 <?php
 do_action("rsvpmaker_email_send_ui_options");
 ?>
 <div style="padding: 10px; border: medium solid #000;">
 <p><strong>EXCLUDE Recipients</strong> For any of the above (not Mailchimp), send ONLY to list members who<br>
 <input type="radio" name="members_rsvp" value="1" <?php if(!empty($cronpostvars['members_rsvp']) && 1 == $cronpostvars['members_rsvp'] ) echo ' checked="checked" '; ?>>
-<?php esc_html_e('RSVP\'ed to the event specified below','rsvpmaker');?><br><input type="radio" name="members_rsvp" value="2" <?php if(!empty($cronpostvars['members_rsvp']) && 2 == $cronpostvars['members_rsvp'] ) echo ' checked="checked" '; ?> > <?php esc_html_e('DID NOT RSVP to the event specified below','rsvpmaker');?><br><input type="radio" name="members_rsvp" value="0" checked="checked" > N/A
+<?php  esc_html_e('RSVP\'ed to the event specified below','rsvpmaker');?><br><input type="radio" name="members_rsvp" value="2" <?php if(!empty($cronpostvars['members_rsvp']) && 2 == $cronpostvars['members_rsvp'] ) echo ' checked="checked" '; ?> > <?php  esc_html_e('DID NOT RSVP to the event specified below','rsvpmaker');?><br><input type="radio" name="members_rsvp" value="0" checked="checked" > N/A
 <br><select name="members_rsvp_event">
 <option value="">Choose Event</option>
 <?php
-echo wp_kses_post($events_dropdown);
+echo wp_kses( $events_dropdown, dcarr_kses_form() );
 ?>
 </select>	
 </p>
@@ -1965,24 +1967,24 @@ else
 	$no_style = get_post_meta($post->ID,'_rsvpmail_no_style',true);
 if($no_style)
 {
-printf('<p><a href="%s?no_style=0"> %s</a></p>',esc_url(get_permalink($post->ID)),esc_html__( 'Include default styles','rsvpmaker'));
+printf('<p><a href="%s?no_style=0"> %s</a></p>',esc_url(get_permalink($post->ID)), esc_html__( 'Include default styles','rsvpmaker'));
 }
 else {
-printf('<p><a href="%s?no_style=1"> %s</a></p>',esc_url(get_permalink($post->ID)),esc_html__( 'Exclude default styles','rsvpmaker'));
+printf('<p><a href="%s?no_style=1"> %s</a></p>',esc_url(get_permalink($post->ID)), esc_html__( 'Exclude default styles','rsvpmaker'));
 }
 ?>
 <div><input type="checkbox" name="send_check" value="1"> Prompt for list confirmation before sending</div>
-<p><input type="radio" name="send_when" value="now" <?php if(!isset($_GET['post_id'])) echo 'checked="checked"'; ?>> Send Now <input type="radio" name="send_when" <?php if(isset($_GET['post_id'])) echo 'checked="checked"'; ?> value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo esc_attr(rsvpmaker_date('Y-m-d')); ?>"> <input name="send_time" type="time" value="<?php echo esc_attr(rsvpmaker_date('H:i',strtotime('+1 hour'))); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" > Advanced Scheduling </p>
+<p><input type="radio" name="send_when" value="now" <?php if(!isset($_GET['post_id'])) echo 'checked="checked"'; ?>> Send Now <input type="radio" name="send_when" id="schedule" <?php if(isset($_GET['post_id'])) echo 'checked="checked"'; ?> value="schedule" > Schedule for <input type="date" name="send_date" value="<?php echo esc_attr(rsvpmaker_date('Y-m-d')); ?>"> <input name="send_time" type="time" value="<?php echo esc_attr(rsvpmaker_date('H:i',strtotime('+1 hour'))); ?>"> <input type="radio" name="send_when" value="advanced" onclick="showCron()" > Advanced Scheduling </p>
 <?php 
 printf('<div id="cron_schedule_options" %s>',(isset($_GET['scheduling'])) ? '' : 'style="display:none"');
 rsvpmaker_cron_schedule_options();
 echo '</div>';
 if('publish' != $post->post_status)
-	printf('<p>Sending will change the post status from "%s" to "publish"</p>',esc_html($post->post_status));
+	printf('<p>Sending will change the post status from "%s" to "publish"</p>', esc_html($post->post_status));
 ?>
 </details>
 </div><!--end nonchimp -->
-<p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> </p>
+<p><button onclick="this.style='display:none';document.getElementById('sendbutton_status').innerHTML='Sending ...';"><?php  esc_html_e('Send','rsvpmaker');?></button><div id="sendbutton_status"></div> </p>
 </form>
 <script>
 function hideControls() {
@@ -2002,10 +2004,14 @@ x.style.display = "block";
 }
 document.getElementById("event").addEventListener("change", () => {document.getElementById("attendees").checked = true;});
 document.getElementById("previewto").addEventListener("change", () => {document.getElementById("preview").checked = true;});
+
+// Check schedule radio button when date or time fields are focused
+document.querySelector('input[name="send_date"]')?.addEventListener("focus", () => {document.getElementById("schedule").checked = true;});
+document.querySelector('input[name="send_time"]')?.addEventListener("focus", () => {document.getElementById("schedule").checked = true;});
 </script>
 <?php
 
-if(isset($_GET['cancel']) && rsvpmaker_verify_nonce())
+if(isset($_GET['cancel']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 {
 	foreach(explode('-',$_GET['cancel']) as $item)
 		$signature[] = intval($item);
@@ -2017,16 +2023,16 @@ if(isset($_GET['cancel']) && rsvpmaker_verify_nonce())
 
 $signatures = get_post_meta($post->ID,'signatures');
 foreach($signatures as $signature) {
-	$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&timelord='.rsvpmaker_nonce('value');
+	$cancel = add_query_arg('cancel',implode('-',$signature),get_permalink()).'&' . RSVPMAKER_NONCE_FIELD . '='.wp_create_nonce( RSVPMAKER_NONCE_ACTION );
 	//
 	$next = wp_next_scheduled('rsvpmailer_delayed_send',$signature);
 	if($next) {
-		printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>',esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next)),esc_url($cancel));
+		printf('<p>Scheduled send: %s | <a href="%s">cancel</a></p>', esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next)),esc_url($cancel));
 	}
 	$next = wp_next_scheduled('rsvpmaker_cron_email',$signature);
 	if($next) {
 		$recurrence = wp_get_schedule( 'rsvpmaker_cron_email',$signature );
-		printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>',esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next)),esc_html($recurrence),esc_url($cancel));
+		printf('<p>Scheduled send: %s %s | <a href="%s">cancel</a></p>', esc_html(rsvpmaker_date($rsvp_options['long_date'].' '.$rsvp_options['time_format'],$next)), esc_html($recurrence),esc_url($cancel));
 	}	
 }
 
@@ -2035,7 +2041,7 @@ rsvpmailer_post_promo_summary();
 rsvpmaker_cron_email_preview_now();
 $ts = rsvpmaker_next_scheduled($post->ID);
 if($ts)
-	echo '<p>Scheduled broadcast: '.esc_html($ts).'</p>';
+	echo '<p>Scheduled broadcast: '. esc_html($ts).'</p>';
 show_rsvpmaker_postmark_status();
 if(isset($_GET['meta']) && current_user_can('manage_options')) {
 	echo '<pre>';
@@ -2074,9 +2080,9 @@ textarea {
 }
 
 </style>
-<?php rsvpmaker_admin_heading(esc_html__( 'RSVPMaker Email Design Templates','rsvpmaker'),__FUNCTION__); ?>
+<?php rsvpmaker_admin_heading( esc_html__( 'RSVPMaker Email Design Templates','rsvpmaker'),__FUNCTION__); ?>
 <?php
-if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+if(!empty($_POST[ RSVPMAKER_NONCE_FIELD ])  && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 {
 	$reset_default_template = ! empty( $_POST['reset_default_template'] );
 	$reset_tx_template = ! empty( $_POST['reset_tx_template'] );
@@ -2107,7 +2113,7 @@ if(isset($_POST['welcome']))
 $candidates = rsvpmail_candidate_templates();
 $options = '';
 foreach($candidates as $candidate) {
-	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
+	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ),  esc_html( $candidate->post_title ),  esc_html( $candidate->post_modified ) );
 }
 ?>
 <p style="text-align: center;"><strong>Jump to: </strong> <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#emailtemplates') ) ?>">Email Templates</a> | <a href="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template#customcss') ) ?>">Custom CSS</a></p>
@@ -2117,47 +2123,47 @@ if(!empty($options)) {
 ?>
 <form id="email_style" name="email_style" method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>">
 <?php
-	$options = '<option value="">'.esc_html__( 'Choose Message','rsvpmaker').'</option>'.$options;
+	$options = '<option value="">'. esc_html__( 'Choose Message','rsvpmaker').'</option>'.$options;
 	$default = rsvpmaker_post_option_by_setting('rsvpmailer_default_block_template');
-	echo "<p>".esc_html__( 'Template for Editor','rsvpmaker')."<br><select name=\"newtemplate\">".wp_kses($default, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select></p>";
+	echo "<p>". esc_html__( 'Template for Editor','rsvpmaker')."<br><select name=\"newtemplate\">".wp_kses($default, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select></p>";
 	$default = rsvpmaker_post_option_by_setting('rsvpmailer_tx_block_template');
-	echo "<p>".esc_html__( 'Template for Transactional Messages','rsvpmaker')."<br><select name=\"txtemplate\">".wp_kses($default, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select>
+	echo "<p>". esc_html__( 'Template for Transactional Messages','rsvpmaker')."<br><select name=\"txtemplate\">".wp_kses($default, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select>
 	<br>Example: RSVP confirmation messages.
 	</p>";
 	$welcome = rsvpmaker_post_option_by_setting('rsvpmaker_guest_email_welcome');
-	echo "<p>".esc_html__( 'Welcome Message','rsvpmaker')."<br><select name=\"welcome\">".wp_kses($welcome, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select>
+	echo "<p>". esc_html__( 'Welcome Message','rsvpmaker')."<br><select name=\"welcome\">".wp_kses($welcome, dcarr_kses_form())." ".wp_kses($options, dcarr_kses_form())."</select>
 	<br>Optional: send to new members of list upon registration
 	</p>";
-	echo "<p>".esc_html__( 'Add Alternate Templates','rsvpmaker')."<br><select name=\"alt_template\">".wp_kses($options, dcarr_kses_form())."</select>
+	echo "<p>". esc_html__( 'Add Alternate Templates','rsvpmaker')."<br><select name=\"alt_template\">".wp_kses($options, dcarr_kses_form())."</select>
 	<br>Example: a newsletter template containing a latest posts block that you use, but not all the time.";
 	$candidates = rsvpmail_candidate_templates(true);
 foreach($candidates as $candidate) {
-	$alts[] = sprintf('<a href="%s">%s</a>', esc_url( admin_url( 'post.php?post=' . $candidate->ID . '&action=edit' ) ), esc_html( $candidate->post_title . ' ' . $candidate->post_modified ) );
+	$alts[] = sprintf('<a href="%s">%s</a>', esc_url( admin_url( 'post.php?post=' . $candidate->ID . '&action=edit' ) ),  esc_html( $candidate->post_title . ' ' . $candidate->post_modified ) );
 }
 if(!empty($alts)) {
 	echo '<br>Previously registered: '.wp_kses_post(implode(', ',$alts));
 }
 echo "</p>\n";
-rsvpmaker_nonce();
+wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 global $rsvp_options;
 $from_options = get_rsvpemail_from_settings();
 if(empty($from_options['mailing_address']))
-	printf('<p><strong>%s</strong></p>',esc_html__( 'A physical mailing address should be entered in in RSVPMaker Mailing List settings.','rsvpmaker'));
+	printf('<p><strong>%s</strong></p>', esc_html__( 'A physical mailing address should be entered in in RSVPMaker Mailing List settings.','rsvpmaker'));
 ?>
 <p>
-<button><?php esc_html_e('Save','rsvpmaker');?></button>
+<button><?php  esc_html_e('Save','rsvpmaker');?></button>
 </p>
 </form>
 <div>
 <form method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>" style="display: inline-block; margin-right: 10px;">
 	<input type="hidden" name="reset_default_template" value="1" />
-	<?php echo wp_kses_post(rsvpmaker_nonce('return')); ?>
-	<button type="submit"><?php esc_html_e('Reset default template','rsvpmaker');?></button>
+	<?php echo wp_kses_post(wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false )); ?>
+	<button type="submit"><?php  esc_html_e('Reset default template','rsvpmaker');?></button>
 </form>
 <form method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>" style="display: inline-block;">
 	<input type="hidden" name="reset_tx_template" value="1" />
-	<?php echo wp_kses_post(rsvpmaker_nonce('return')); ?>
-	<button type="submit"><?php esc_html_e('Reset transactional template','rsvpmaker');?></button>
+	<?php echo wp_kses_post(wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false )); ?>
+	<button type="submit"><?php  esc_html_e('Reset transactional template','rsvpmaker');?></button>
 </form>
 </div>
 
@@ -2171,7 +2177,7 @@ foreach($candidates as $candidate) {
 
 $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Previous Emails">'.$options.'</optgroup>';
 
-echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
+echo '<h2>'. esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
 
 printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select><button>Copy to New Message</button></form>',esc_url(admin_url('post-new.php')),wp_kses($options, dcarr_kses_form()));
 
@@ -2195,12 +2201,12 @@ $welcome = get_option('rsvpmaker_guest_email_welcome');
 if($welcome)
 {
 	$welcome_post = get_post($welcome);
-	printf('<p>Current welcome message</p><div id="currentwelcome"  class="currentdefault" >%s</div>','<p><a href="'.esc_url(admin_url("post.php?post=$welcome&action=edit")).'">'.esc_html__( 'Edit','rsvpmaker').'</a></p>'.wp_kses_post(rsvpmaker_email_html($welcome_post)));
+	printf('<p>Current welcome message</p><div id="currentwelcome"  class="currentdefault" >%s</div>','<p><a href="'.esc_url(admin_url("post.php?post=$welcome&action=edit")).'">'. esc_html__( 'Edit','rsvpmaker').'</a></p>'.wp_kses_post(rsvpmaker_email_html($welcome_post)));
 }
 
 $candidates = rsvpmail_candidate_templates(true);
 foreach($candidates as $candidate) {
-	printf('<p>Alternate template %s</p><div  class="currentdefault" >%s</div>',esc_html($candidate->post_title),'<p><a href="'.esc_url(admin_url("post.php?post=$candidate->ID&action=edit")).'">'.esc_html__( 'Edit','rsvpmaker').'</p>'.wp_kses_post(rsvpmaker_email_html($candidate)));
+	printf('<p>Alternate template %s</p><div  class="currentdefault" >%s</div>', esc_html($candidate->post_title),'<p><a href="'.esc_url(admin_url("post.php?post=$candidate->ID&action=edit")).'">'. esc_html__( 'Edit','rsvpmaker').'</p>'.wp_kses_post(rsvpmaker_email_html($candidate)));
 }
 
 if(isset($_POST['rsvpmaker_email_base_font'])) {
@@ -2258,28 +2264,28 @@ Exemple: set the font size and font family<br><code>font-family: Verdana, sans-s
 <label style="display:inline-block; width: 100px;">CSS for h4</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[h4]" value="%s" /><br>
 <label style="display:inline-block; width: 100px;">CSS for a (link style)</label> <input type="text" name="rsvpmaker_custom_email_tag_styles[a]" value="%s" /><br>
 %s
-<button>Submit</button></form>', esc_html( esc_html__( 'Custom Inline Styles','rsvpmaker') ), esc_html( esc_html__( 'Add custom styles that will replace a single class in the format ','rsvpmaker') ), esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ), esc_textarea( $custom ), esc_attr( $rsvpmaker_email_base_font ),
+<button>Submit</button></form>',  esc_html(  esc_html__( 'Custom Inline Styles','rsvpmaker') ),  esc_html(  esc_html__( 'Add custom styles that will replace a single class in the format ','rsvpmaker') ), esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ), esc_textarea( $custom ), esc_attr( $rsvpmaker_email_base_font ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['p'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['h1'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['h2'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['h3'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['h4'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['a'] ),
-wp_kses_post( rsvpmaker_nonce('return') ) );
+wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) ) );
 echo '<p>Notes: customizations may not be reflected in the editor. If changing the font family, use <a href="https://www.w3schools.com/cssref/css_websafe_fonts.asp">web safe fonts</a> that do not rely on external stylesheets.</p>';
 
 echo '<h2>Current Class-to-Style Conversions</h2><div style="background-color: #fff">';
 $style_sub = rsvpmaker_get_style_substitutions();
 foreach($style_sub as $index => $value) {
-	printf('<p>class to CSS<code>.%s{%s}</code></p>',esc_html($index),esc_html($value));
+	printf('<p>class to CSS<code>.%s{%s}</code></p>', esc_html($index), esc_html($value));
 	if(strpos($index,'lign'))
-		printf('<div style="clear: both; border: thin solid #000;  font-size: 20px; %s">Aligned content</div><p>ipsum lorem ipsum lorem</p><p>ipsum lorem ipsum lorem</p>',esc_html($value));
+		printf('<div style="clear: both; border: thin solid #000;  font-size: 20px; %s">Aligned content</div><p>ipsum lorem ipsum lorem</p><p>ipsum lorem ipsum lorem</p>', esc_html($value));
 	elseif(strpos($index,'background'))
-		printf('<div style="clear: both; border: thin solid #000; font-size: 20px; %s">ipsum lorem ipsum lorem</div>',esc_html($value));
+		printf('<div style="clear: both; border: thin solid #000; font-size: 20px; %s">ipsum lorem ipsum lorem</div>', esc_html($value));
 	elseif(strpos($index,'column'))
-		printf('<div style="20px; %s">ipsum lorem ipsum lorem</div><div style="20px; %s">ipsum lorem ipsum lorem</div>',esc_html($value),esc_html($value));
+		printf('<div style="20px; %s">ipsum lorem ipsum lorem</div><div style="20px; %s">ipsum lorem ipsum lorem</div>', esc_html($value), esc_html($value));
 	else
-		printf('<div><span style="background-color: white; font-size: 20px; %s">Sample on white background</span> <span style="background-color: gray; font-size: 20px; %s">Sample on gray background</span> <span style="background-color: black; font-size: 20px; %s">Sample on black background</span></div>',esc_html($value),esc_html($value),esc_html($value));
+		printf('<div><span style="background-color: white; font-size: 20px; %s">Sample on white background</span> <span style="background-color: gray; font-size: 20px; %s">Sample on gray background</span> <span style="background-color: black; font-size: 20px; %s">Sample on black background</span></div>', esc_html($value), esc_html($value), esc_html($value));
 }
 echo '</div>';
 
@@ -2302,7 +2308,7 @@ function rsvpmaker_post_option_by_setting($option_slug) {
 	if($id) {
 		$post = get_post($id);
 		if($post)
-			$option = sprintf('<option value="%d">%s</option>', esc_attr( $id ), esc_html( $post->post_title ) );
+			$option = sprintf('<option value="%d">%s</option>', esc_attr( $id ),  esc_html( $post->post_title ) );
 	}
 	return $option;
 }	
@@ -2311,7 +2317,7 @@ function my_rsvpemail_menu() {
 global $rsvp_options;
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Newsletter Builder",'rsvpmaker');
+$page_title = esc_html__("Newsletter Builder",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "email_get_content";
@@ -2320,7 +2326,7 @@ $function = "rsvpmaker_email_get_content";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("RSVPMaker Email List",'rsvpmaker');
+$page_title = esc_html__("RSVPMaker Email List",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_guest_list";
@@ -2329,7 +2335,7 @@ $function = "rsvpmaker_guest_list";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Unsubscribed List",'rsvpmaker');
+$page_title = esc_html__("Unsubscribed List",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "unsubscribed_list";
@@ -2338,7 +2344,7 @@ $function = "rsvpmaker_unsubscribed_list";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Email Design Templates",'rsvpmaker');
+$page_title = esc_html__("Email Design Templates",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_email_template";
@@ -2347,7 +2353,7 @@ $function = "rsvpmaker_email_template";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Notification Templates",'rsvpmaker');
+$page_title = esc_html__("Notification Templates",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_notification_templates";
@@ -2356,7 +2362,7 @@ $function = "rsvpmaker_notification_templates";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Scheduled Email",'rsvpmaker');
+$page_title = esc_html__("Scheduled Email",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_scheduled_email_list";
@@ -2365,7 +2371,7 @@ $function = "rsvpmaker_scheduled_email_list";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Extract Addresses",'rsvpmaker');
+$page_title = esc_html__("Extract Addresses",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_extract_email";
@@ -2374,7 +2380,7 @@ $function = "rsvpmaker_extract_email";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Email Inline Block Test",'rsvpmaker');
+$page_title = esc_html__("Email Inline Block Test",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'edit_others_rsvpemails';
 $menu_slug = "rsvpmaker_email_inline_block_test";
@@ -2383,7 +2389,7 @@ $function = "rsvpmaker_email_inline_block_test";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Mailing Lists",'rsvpmaker');
+$page_title = esc_html__("Email Discussion Lists",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'manage_options';
 $menu_slug = "rsvpmaker_email_handler_mailing_lists";
@@ -2392,7 +2398,7 @@ $function = "rsvpmaker_email_handler_mailing_lists";
 add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
 $parent_slug = "edit.php?post_type=rsvpemail";
-$page_title = __("Forwarders",'rsvpmaker');
+$page_title = esc_html__("Forwarders",'rsvpmaker');
 $menu_title = $page_title;
 $capability = 'manage_options';
 $menu_slug = "rsvpmaker_email_handler_forwarders";
@@ -2407,8 +2413,8 @@ else {
 
 	add_submenu_page(
 		$parent_slug,
-		esc_html__( 'Group Email', 'rsvpmaker' ),
-		esc_html__( 'Group Email', 'rsvpmaker' ),
+		 esc_html__( 'Group Email', 'rsvpmaker' ),
+		 esc_html__( 'Group Email', 'rsvpmaker' ),
 		'manage_options',
 		'rsvpmaker_relay_manual_test',
 		'rsvpmaker_relay_manual_test'
@@ -2416,8 +2422,8 @@ else {
 
 	add_submenu_page(
 		$parent_slug,
-		esc_html__( 'Group Email Log', 'rsvpmaker' ),
-		esc_html__( 'Group Email Log', 'rsvpmaker' ),
+		 esc_html__( 'Group Email Log', 'rsvpmaker' ),
+		 esc_html__( 'Group Email Log', 'rsvpmaker' ),
 		'manage_options',
 		'rsvpmaker_relay_queue_monitor',
 		'rsvpmaker_relay_queue_monitor'
@@ -2497,7 +2503,7 @@ function rsvpmaker_email_block_test_samples() {
 
 function rsvpmaker_email_inline_block_test() {
 	if(!current_user_can('edit_others_rsvpemails')) {
-		wp_die(esc_html__( 'You do not have permission to access this page.','rsvpmaker'));
+		wp_die( esc_html__( 'You do not have permission to access this page.','rsvpmaker'));
 	}
 	$samples = rsvpmaker_email_block_test_samples();
 	echo '<div class="wrap">';
@@ -2538,19 +2544,19 @@ function rsvpmaker_email_inline_block_test() {
 		$rendered_web = do_blocks($block_markup);
 		$rendered_email = rsvpmaker_email_html($block_markup,0);
 		echo '<hr />';
-		echo '<h2>'.esc_html($label).'</h2>';
+		echo '<h2>'. esc_html($label).'</h2>';
 		echo '<div class="rsvpmail-test-grid">';
 		echo '<div class="rsvpmail-test-panel">';
 		echo '<h3>Web Render</h3>';
 		echo '<div class="rsvpmail-test-preview">'.wp_kses_post($rendered_web).'</div>';
 		echo '<h4>Source Block Markup</h4>';
-		echo '<div class="rsvpmail-test-code">'.esc_html($block_markup).'</div>';
+		echo '<div class="rsvpmail-test-code">'. esc_html($block_markup).'</div>';
 		echo '</div>';
 		echo '<div class="rsvpmail-test-panel">';
 		echo '<h3>Email Inline Render</h3>';
 		echo '<div class="rsvpmail-test-preview">'.wp_kses_post($rendered_email).'</div>';
 		echo '<h4>Email HTML Output</h4>';
-		echo '<div class="rsvpmail-test-code">'.esc_html($rendered_email).'</div>';
+		echo '<div class="rsvpmail-test-code">'. esc_html($rendered_email).'</div>';
 		echo '</div>';
 		echo '</div>';
 	}
@@ -2577,7 +2583,7 @@ Useful formatting codes for email ("excerpt" works well in most cases):
 <?php
 	$events = rsvpmaker_get_future_events(array('limit' => 20));
 	foreach($events as $event) {
-		printf('[custom:rsvpmaker_one post_id="%d" format="excerpt"] %s %s'."\n",absint($event->ID),esc_html($event->post_title),esc_html($event->date));
+		printf('[custom:rsvpmaker_one post_id="%d" format="excerpt"] %s %s'."\n",absint($event->ID), esc_html($event->post_title), esc_html($event->date));
 	}
 echo '</textarea>';
 }
@@ -2607,7 +2613,7 @@ if(is_multisite() && !current_user_can('manage_network')) {
 	$local_emails = rsvpmaker_local_emails($blog_id);
 }
 
-if(!empty($_POST) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) ) {
+if(!empty($_POST) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) ) {
 	if(!empty($_POST['remove'])) {	
 	foreach($_POST['remove'] as $email) {
 		rsvpmail_remove_problem($email);
@@ -2628,9 +2634,9 @@ if(!empty($_POST) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonc
 	}
 }
 
-rsvpmaker_admin_heading(esc_html__( 'Unsubscribed and Blocked','rsvpmaker'),__FUNCTION__);
+rsvpmaker_admin_heading( esc_html__( 'Unsubscribed and Blocked','rsvpmaker'),__FUNCTION__);
 
-printf('<p>%s</p>',esc_html__( 'If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
+printf('<p>%s</p>', esc_html__( 'If recipients have clicked unsubscribe on a confirmation message or any other message sent directly from RSVPMaker (as opposed to via MailChimp) they will be listed here. You can also track messages that are being blocked by the recipient\'s ISP (not currently automated). You can manually remove emails from this list, but should only do so <strong><em>at the request of the recipient</em></strong>.','rsvpmaker'));
 
 $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i ORDER BY code, ID DESC",$table));
 printf('<form method="post" action="%s">',esc_url($action));
@@ -2643,8 +2649,7 @@ printf('<h2>Add Email Addresses as Unsubscribed Or Blocked</h2><form method="pos
 <input type="radio" name="code" value="unsubscribed" checked="checked"> Unsubscribed
 <input type="radio" name="code" value="blocked"> Blocked 
 <input type="radio" name="code" value="bypass"> Bypass *
-<button>Add</button>',esc_url($action),wp_kses_post(rsvpmaker_nonce('return')));
-echo '<p>'.esc_html__( '* Bypass protects an email from being unsubscribed or blocked. If the Postmark integration is active, it will not be used for messages to these addresses. Use it sparingly, in cases where users say they were erroneously added to the unsubscribed list.','rsvpmaker').'</p>';
+<button>Add</button>',esc_url($action),wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ));
 
 if(!empty($results))
 {
@@ -2657,9 +2662,9 @@ foreach($results as $row)
 		$row->code .= ' (Postmark unsubscribe)';
 	$date = (strpos($row->timestamp,'00-')) ? '' : date('F j, Y',strtotime($row->timestamp));
 	if($row->code == 'bypass')
-	printf('<tr><td></td><td>%s</td><td>%s %s</td></tr>',esc_html($row->email),'bypass - protected',esc_html($date));	
+	printf('<tr><td></td><td>%s</td><td>%s %s</td></tr>', esc_html($row->email),'bypass - protected', esc_html($date));	
 	else
-	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s %s</td></tr>',esc_attr($row->email),esc_html($row->email),esc_html($row->code),esc_html($date));	
+	printf('<tr><td><input type="checkbox" name="remove[]" value="%s" /></td><td>%s</td><td>%s %s</td></tr>',esc_attr($row->email), esc_html($row->email), esc_html($row->code), esc_html($date));	
 }
 echo '</table><p><button>Update</button></p>';
 }
@@ -2764,7 +2769,7 @@ function rsvpmaker_choice_to_email_content($choice) {
 			<h2 class="wp-block-heading">From the Blog</h2>
 			<!-- /wp:heading -->'."\n\n";
 			foreach($posts as $post) {
-				$content .= "<!-- wp:paragraph -->\n<p><a href=".'"'.get_permalink($post->ID).'">'.esc_html($post->post_title)."</a></p>\n<!-- /wp:paragraph -->\n\n";
+				$content .= "<!-- wp:paragraph -->\n<p><a href=".'"'.get_permalink($post->ID).'">'. esc_html($post->post_title)."</a></p>\n<!-- /wp:paragraph -->\n\n";
 			}
 			$content .= '</div>
 			<!-- /wp:group -->'."\n\n";
@@ -2803,7 +2808,7 @@ if(isset($_REQUEST['newsletter_choice'])) {
 		$content .= $content_title['content'];
 		if(empty($newsletter_title))
 			$newsletter_title = $content_title['title'];
-		$log .= sprintf('<p>%s</p>', esc_html( $choice ) );
+		$log .= sprintf('<p>%s</p>',  esc_html( $choice ) );
 	}
 	if(!empty($content)) {
 		$content = '<!-- wp:paragraph {"placeholder":"Add email content here"} -->'."\n<p></p>\n<!-- /wp:paragraph -->\n\n".$content;
@@ -2819,30 +2824,30 @@ if(isset($_REQUEST['newsletter_choice'])) {
 		$newpost['post_status'] = 'publish';
 		$post_id = wp_insert_post($newpost);
 		if($post_id)
-			printf('<div class="notice notice-success is-dismissible"><p>Newsletter created: %s <a href="%s">Edit</a> | <a href="%s">View</a></p></div>',esc_html($newpost['post_title']),esc_url(admin_url('post.php?action=edit&post='.$post_id)),esc_url(get_permalink($post_id)));
+			printf('<div class="notice notice-success is-dismissible"><p>Newsletter created: %s <a href="%s">Edit</a> | <a href="%s">View</a></p></div>', esc_html($newpost['post_title']),esc_url(admin_url('post.php?action=edit&post='.$post_id)),esc_url(get_permalink($post_id)));
 	}
 }
 
 $candidates = rsvpmail_candidate_templates();
 $options = '';
 foreach($candidates as $candidate) {
-	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
+	$options .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ),  esc_html( $candidate->post_title ),  esc_html( $candidate->post_modified ) );
 }
 $candidates = rsvpmail_candidate_templates(true);
 $alt = '';
 foreach($candidates as $candidate) {
-	$alt .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ), esc_html( $candidate->post_title ), esc_html( $candidate->post_modified ) );
+	$alt .= sprintf('<option value="%d">%s %s</option>', esc_attr( $candidate->ID ),  esc_html( $candidate->post_title ),  esc_html( $candidate->post_modified ) );
 }
 
 $options = '<optgroup label="Templates">'.$alt.'</optgroup><optgroup label="Previous Emails">'.$options.'</optgroup>';
 
-$event_options = '<option value="upcoming">'.esc_html__( 'Upcoming Events','rsvpmaker').'</option>';
+$event_options = '<option value="upcoming">'. esc_html__( 'Upcoming Events','rsvpmaker').'</option>';
 $posts = '';
 $future = rsvpmaker_get_future_events();
 if(is_array($future))
 foreach($future as $event)
 	{
-	$event_options .= sprintf('<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ), esc_html( $event->post_title ), esc_html( date( 'F j, Y', $event->ts_start ) ) );
+	$event_options .= sprintf('<option value="%s">%s - %s</option>' . "\n", esc_attr( $event->ID ),  esc_html( $event->post_title ),  esc_html( date( 'F j, Y', $event->ts_start ) ) );
 	}
 $event_options = '<optgroup label="Events">'.$event_options.'</optgroup>';
 
@@ -2853,37 +2858,37 @@ if($results)
 {
 foreach ($results as $row)
 	{
-	$posts .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $row["ID"] ), esc_html( substr( $row["post_title"], 0, 80 ) ) );
+	$posts .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $row["ID"] ),  esc_html( substr( $row["post_title"], 0, 80 ) ) );
 	}
-$postlists = '<option value="headlines10">'.esc_html__( '10 Latest Blog Headline Links','rsvpmaker').'</option><option value="posts10">'.esc_html__( '10 Latest Blog Posts','rsvpmaker').'</option><option value="posts5">'.esc_html__( '5 Latest Blog Posts','rsvpmaker').'</option><option value="posts3">'.esc_html__( '3 Latest Blog Posts','rsvpmaker').'</option>';
-$posts = '<optgroup label="'.esc_html__( 'Recent Posts','rsvpmaker').'">'.$postlists.$posts."</optgroup>\n";
+$postlists = '<option value="headlines10">'. esc_html__( '10 Latest Blog Headline Links','rsvpmaker').'</option><option value="posts10">'. esc_html__( '10 Latest Blog Posts','rsvpmaker').'</option><option value="posts5">'. esc_html__( '5 Latest Blog Posts','rsvpmaker').'</option><option value="posts3">'. esc_html__( '3 Latest Blog Posts','rsvpmaker').'</option>';
+$posts = '<optgroup label="'. esc_html__( 'Recent Posts','rsvpmaker').'">'.$postlists.$posts."</optgroup>\n";
 }
 
 $other = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE post_status='publish' AND post_type != 'post' AND post_type != 'rsvpmaker' AND post_type != 'rsvpmaker_template' AND post_type != 'rsvpmaker_form' AND post_type != 'rsvpemail'  AND post_type != 'attachment'  AND post_type != 'wp_navigation' AND post_type != 'wp_template' AND post_type != 'wp_template_part' ORDER BY post_modified DESC LIMIT 0,30");
 $oopt = '';
 foreach($other as $row)
-	$oopt .= sprintf( "<option value=\"%d\">%s (%s)</option>\n", esc_attr( $row->ID ), esc_html( substr( $row->post_title, 0, 80 ) ), esc_html( $row->post_type ) );
-$oopt = '<optgroup label="'.esc_html__( 'Other Content','rsvpmaker').'">'.$oopt."</optgroup>\n";
+	$oopt .= sprintf( "<option value=\"%d\">%s (%s)</option>\n", esc_attr( $row->ID ),  esc_html( substr( $row->post_title, 0, 80 ) ),  esc_html( $row->post_type ) );
+$oopt = '<optgroup label="'. esc_html__( 'Other Content','rsvpmaker').'">'.$oopt."</optgroup>\n";
 
 $po = '';
 $pages = get_pages();
 foreach($pages as $page)
-	$po .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $page->ID ), esc_html( substr( $page->post_title, 0, 80 ) ) );
+	$po .= sprintf( "<option value=\"%d\">%s</option>\n", esc_attr( $page->ID ),  esc_html( substr( $page->post_title, 0, 80 ) ) );
 ?>
 
 <form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=email_get_content') ); ?>" method="post" style="padding: 5px; background-color:#fff;">
-<?php rsvpmaker_nonce(); 
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); 
 ?>
-<h2><?php esc_html_e('Newsletter Builder','rsvpmaker');?></h2>
-<p><input type="text" name="newsletter_title" placeholder="<?php esc_attresc_html_e( 'Newsletter Title','rsvpmaker'); ?>">
-<em><?php esc_html_e('Leave blank to use the title of the first selected post or event.','rsvpmaker');?></em></p>
+<h2><?php  esc_html_e('Newsletter Builder','rsvpmaker');?></h2>
+<p><input type="text" name="newsletter_title" placeholder="<?php esc_attr(esc_html_e( 'Newsletter Title','rsvpmaker')); ?>">
+<em><?php  esc_html_e('Leave blank to use the title of the first selected post or event.','rsvpmaker');?></em></p>
 <p>Choose multiple blog posts or events to include as starting points for your newsletter.</p>
-<p><select name="newsletter_choice[]"><?php echo wp_kses_post($posts. $event_options. $oopt); ?></select>
-<p><select name="newsletter_choice[]"><option value=""></option><?php echo wp_kses_post($posts. $event_options. $oopt); ?></select>
+<p><select name="newsletter_choice[]"><?php echo wp_kses($posts. $event_options. $oopt, dcarr_kses_form()); ?></select>
+<p><select name="newsletter_choice[]"><option value=""></option><?php echo wp_kses($posts. $event_options. $oopt, dcarr_kses_form()); ?></select>
 <div id="addhere"><a href="#" id="addchoice">+ More choices</a></div>
 <p><input type="checkbox" name="excerpt" value="1" checked="checked"> <strong>Use Excerpt</strong> Blog posts should include a Read More link* </p>
 <p><strong>Number of Events</strong> for upcoming events listing <input type="number" name="number_of_events" value="20" min="1"></p>
-<p><button><?php esc_html_e('Create Newsletter','rsvpmaker');?></button></p>
+<p><button><?php  esc_html_e('Create Newsletter','rsvpmaker');?></button></p>
 </form>	
 <p><em>* For better control over what content will be chosen for the excerpt, use the <a target="_blank" href="https://rsvpmaker.com/knowledge-base/how-to-import-blog-and-event-content-into-invitation-emails-and-email-newsletters/#moreblock">More block</a> in the body of the blog post.</em></p>
 <script>
@@ -2897,39 +2902,34 @@ var addChoice = function () {
 el.addEventListener('click', addChoice);
 </script>
 <?php
-echo '<h2>'.esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
+echo '<h2>'. esc_html('Create Based on Template or Previous Message','rsvpmaker').'</h2>';
 
-printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p></form>',esc_url(admin_url('post-new.php')),wp_kses($options, dcarr_kses_form()),esc_html__( 'Load Content','rsvpmaker'));
+printf('<form id="alt_template" name="alt_template" method="get" action="%s"><input type="hidden" name="post_type" value="rsvpemail"><select name="template">%s</select></p><p><button>%s</button></p></form>',esc_url(admin_url('post-new.php')),wp_kses($options, dcarr_kses_form()), esc_html__( 'Load Content','rsvpmaker'));
 ?>
 <form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail') ); ?>" method="get">
-<?php rsvpmaker_nonce(); ?>
-<h2><?php esc_html_e('Email Based on Event','rsvpmaker');?></h2><p><select name="rsvpevent_to_email"><?php echo wp_kses_post($event_options); ?></select>
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
+<h2><?php  esc_html_e('Email Based on Event','rsvpmaker');?></h2><p><select name="rsvpevent_to_email"><?php echo wp_kses($event_options, dcarr_kses_form()); ?></select>
 </select>
 </p>
-<button><?php esc_html_e('Load Content','rsvpmaker');?></button>
+<button><?php  esc_html_e('Load Content','rsvpmaker');?></button>
 </form>	
 <form action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail') ); ?>" method="get">
-<?php rsvpmaker_nonce(); ?>
-<h2><?php esc_html_e('Email Based on Post','rsvpmaker');?></h2><p><select name="post_to_email"><?php echo wp_kses_post($posts); ?></select>
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
+<h2><?php  esc_html_e('Email Based on Post','rsvpmaker');?></h2><p><select name="post_to_email"><?php echo wp_kses($posts, dcarr_kses_form()); ?></select>
 </select>
-<br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php esc_html_e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php esc_html_e('Excerpt','rsvpmaker');?>
+<br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php  esc_html_e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php  esc_html_e('Excerpt','rsvpmaker');?>
 </p>
-<button><?php esc_html_e('Load Content','rsvpmaker');?></button>
+<button><?php  esc_html_e('Load Content','rsvpmaker');?></button>
 </form>	
-<h2><?php esc_html_e('Email Based on Page','rsvpmaker');?></h2>
-<p><select name="post_to_email"><?php echo wp_kses_post($po); ?></select>
+<h2><?php  esc_html_e('Email Based on Page','rsvpmaker');?></h2>
+<p><select name="post_to_email"><?php echo wp_kses($po, dcarr_kses_form()); ?></select>
 </select>
-<br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php esc_html_e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php esc_html_e('Excerpt','rsvpmaker');?>
+<br /><input type="radio" name="excerpt" value="0" checked="checked"> <?php  esc_html_e('Full text','rsvpmaker');?> <input type="radio" name="excerpt" value="1"> <?php  esc_html_e('Excerpt','rsvpmaker');?>
 </p>
-<button><?php esc_html_e('Load Content','rsvpmaker');?></button>
+<button><?php  esc_html_e('Load Content','rsvpmaker');?></button>
 </form>	
-
-<h2>Shortcodes for MailPoet</h2>
-<p>If you use the MailPoet integration, you can include a variations on the <a href="https://rsvpmaker.com/knowledge-base/shortcodes/" target="_blank">RSVPMaker Shortcodes</a> that include the custom: prefix.</p>
 
 <?php
-
-rsvpmaker_mailpoet_shortcodes();
 
 } // end chimp get content
 
@@ -3051,7 +3051,7 @@ $problem = rsvpmail_is_problem($mail["to"]);
 			// error_log('rsvpmailer blocked sending to email: '.$problem.' '.var_export($mail,true));
 			return;
 		}
-	$result = rsvpmailer($mail,esc_html__( '<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>' );
+	$result = rsvpmailer($mail, esc_html__( '<div class="rsvpexplain">This message was sent to you as a follow up to your registration for','rsvpmaker').' '.$title.'</div>' );
 	// error_log('2993 rsvpmailer sending to '.$mail["to"].' subject: '.$mail["subject"].' '.var_export($mail,true).' '.$result);
 }
 
@@ -3075,7 +3075,7 @@ foreach($wp_filter["the_content"] as $priority => $filters)
 		if(!in_array($name,$corefilters) && !strpos($name,'hortcode'))
 			{
 			if(isset($_GET["debug"]))
-				echo '<br />Remove '.esc_html($name).' '.esc_html($priority);
+				echo '<br />Remove '. esc_html($name).' '. esc_html($priority);
 			$r = remove_filter( 'the_content', $name, $priority );
 			}
 		}
@@ -3119,7 +3119,7 @@ $options = '';
 if (is_array($retval)){
 	foreach ($retval["lists"] as $list){
 		$s = ($chosen == $list['id']) ? ' selected="selected" ' : '';
-		$options .=  '<option value= "'.esc_attr($list['id']).'"'. " $s >".esc_html($list['name']).'</option>';
+		$options .=  '<option value= "'.esc_attr($list['id']).'"'. " $s >". esc_html($list['name']).'</option>';
 	}
 }
 return $options;
@@ -3214,7 +3214,7 @@ function rsvpmaker_upcoming_email($atts) {
 				{
 					$output .= $label."\n";
 					foreach($upcoming as $ahead)
-						$output .= sprintf('<p><a href="%s">%s - %s</a></p>', esc_url( get_permalink( $ahead->ID ) ), esc_html( $ahead->post_title ), esc_html( date( 'F j', rsvpmaker_strtotime( $ahead->datetime ) ) ) );
+						$output .= sprintf('<p><a href="%s">%s - %s</a></p>', esc_url( get_permalink( $ahead->ID ) ),  esc_html( $ahead->post_title ),  esc_html( date( 'F j', rsvpmaker_strtotime( $ahead->datetime ) ) ) );
 				}
 		}	
 	return $output;
@@ -3253,30 +3253,30 @@ function rsvpmaker_row_actions( $actions, WP_Post $post ) {
         return $actions;
     }
 	if($post->post_type == 'rsvpmaker_template') {
-		$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='). $post->ID ), esc_html__( 'Create / Update','rsvpmaker'));
+		$actions['rsvpmaker_options'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='). $post->ID ),  esc_html__( 'Create / Update','rsvpmaker'));
 	}
 
 	if(current_user_can('edit_post',$post->ID))
 	{
 		if($post->post_type == 'rsvpmaker') {
-			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email='). $post->ID ), esc_html__( 'Embed in RSVP Email','rsvpmaker'));	
+			$actions['rsvpmaker_invite2'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&rsvpevent_to_email='). $post->ID ),  esc_html__( 'Embed in RSVP Email','rsvpmaker'));	
 		}
-		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&post_to_email='). $post->ID ), esc_html__( 'Copy to RSVP Email','rsvpmaker'));
+		$actions['rsvpmaker_invite'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&post_to_email='). $post->ID ),  esc_html__( 'Copy to RSVP Email','rsvpmaker'));
 		if($post->post_type != 'rsvpmaker') {
-			$actions['excerpt_to_email'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email='). $post->ID ), esc_html__( 'Excerpt to RSVP Email','rsvpmaker'));
+			$actions['excerpt_to_email'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpemail&excerpt=1&post_to_email='). $post->ID ),  esc_html__( 'Excerpt to RSVP Email','rsvpmaker'));
 		}
 		if($post->post_type == 'rsvpmaker') {
-			$actions['switch_template'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target='). $post->ID . '#applytemplate' ), esc_html__( 'Switch Template','rsvpmaker'));
+			$actions['switch_template'] = sprintf('<a href="%s">%s</a>', esc_url( admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&apply_target='). $post->ID . '#applytemplate' ),  esc_html__( 'Switch Template','rsvpmaker'));
 		}
 		if(($post->post_type == 'rsvpmaker') || ($post->post_type == 'rsvpmaker_template'))
-			$actions['copy_to_template'] = sprintf('<a href="%s">%s</a>',esc_url(admin_url('?copy_to_rsvp_template=').$post->ID),esc_html__( 'Copy to New Template','rsvpmaker'));
+			$actions['copy_to_template'] = sprintf('<a href="%s">%s</a>',esc_url(admin_url('?copy_to_rsvp_template=').$post->ID), esc_html__( 'Copy to New Template','rsvpmaker'));
 	}
 	else {
 	if($post->post_type == 'rsvpmaker')
 	{
 		$eds = rsvpmaker_get_additional_editors($post->ID);
 		if(!empty($eds) && in_array($current_user->ID,$eds))
-			$actions['edit_override'] = sprintf('<a href="%s">%s</a>',esc_url(admin_url('post.php?action=edit&post=').$post->ID),esc_html__( 'Edit','rsvpmaker'));
+			$actions['edit_override'] = sprintf('<a href="%s">%s</a>',esc_url(admin_url('post.php?action=edit&post=').$post->ID), esc_html__( 'Edit','rsvpmaker'));
 	}
 	}
 return $actions;
@@ -3344,7 +3344,7 @@ $output .= '<h4><a href="'. get_permalink() .'" rel="bookmark">'. get_the_title(
 endif;
 remove_filter('posts_where', 'rsvpmaker_filter_where_recent');
 if(!empty($output))
-	$output = '<h3>'.esc_html__( 'From the Blog','rsvpmaker')."</h3>\n".$output;
+	$output = '<h3>'. esc_html__( 'From the Blog','rsvpmaker')."</h3>\n".$output;
 $wp_query = $backup;
 $post = $was;
 return $output;
@@ -3358,25 +3358,25 @@ if(! $cron_active)
 if($cron["cron_condition"] == 'events')
 	{
 	if(!empty($_GET["cron_filter_debug"]))
-	echo "<p>test:".esc_html($cron["cron_condition"])."</p>";
+	echo "<p>test:". esc_html($cron["cron_condition"])."</p>";
 	return rsvpmaker_count_future_events();
 	}
 elseif($cron["cron_condition"] == 'posts')
 	{
 	if(!empty($_GET["cron_filter_debug"]))
-	echo "<p>test:".esc_html($cron["cron_condition"])."</p>";
+	echo "<p>test:". esc_html($cron["cron_condition"])."</p>";
 	return rsvpmaker_count_recent_posts();
 	}
 elseif($cron["cron_condition"] == 'and')
 	{
 	if(!empty($_GET["cron_filter_debug"]))
-	echo "<p>test:".esc_html($cron["cron_condition"])."</p>";
+	echo "<p>test:". esc_html($cron["cron_condition"])."</p>";
 	return (rsvpmaker_count_recent_posts() && rsvpmaker_count_future_events()) ? 1 : 0;
 	}
 elseif($cron["cron_condition"] == 'or')
 	{
 	if(!empty($_GET["cron_filter_debug"]))
-	echo "<p>test:".esc_html($cron["cron_condition"])."</p>";
+	echo "<p>test:". esc_html($cron["cron_condition"])."</p>";
 	return (rsvpmaker_count_recent_posts() || rsvpmaker_count_future_events()) ? 1 : 0;
 	}
 return $cron_active;
@@ -3394,7 +3394,7 @@ global $wpdb;
 <html>
 <head>
 <meta charset="utf-8">
-<title><?php bloginfo( 'name' ); echo ' - '.esc_html__( 'Email Unsubscribe'); ?></title>
+<title><?php bloginfo( 'name' ); echo ' - '. esc_html__( 'Email Unsubscribe'); ?></title>
 <style>
 body {background-color: #000;}
 #main {background-color: #FFF; max-width: 600px; margin-left: auto; margin-right: auto; margin-top: 25px; padding: 25px;}
@@ -3403,9 +3403,9 @@ h1 {font-size: 20px;}
 </head>
 <body>
 <div id="main">
-<h1><?php bloginfo( 'name' ); echo ' - '.esc_html__( 'Email Unsubscribe'); ?></h1>
+<h1><?php bloginfo( 'name' ); echo ' - '. esc_html__( 'Email Unsubscribe'); ?></h1>
 <?php
-if(isset($_POST['rsvpmail_unsubscribe']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(isset($_POST['rsvpmail_unsubscribe']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 {
 $e = sanitize_text_field(strtolower(trim($_POST['rsvpmail_unsubscribe'])));
 if(!rsvpmail_contains_email($e))
@@ -3413,7 +3413,7 @@ if(!rsvpmail_contains_email($e))
 else
 	{
 	rsvpmail_add_problem($e,'unsubscribed');
-	echo '<p>'.esc_html__( 'Unsubscribed','rsvpmaker').'<strong> '.esc_html($e).'</strong> '.esc_html__( 'from website email lists','rsvpmaker').'</p>';
+	echo '<p>'. esc_html__( 'Unsubscribed','rsvpmaker').'<strong> '. esc_html($e).'</strong> '. esc_html__( 'from website email lists','rsvpmaker').'</p>';
 	$msg = 'RSVPMaker unsubscribe: '.$e;
 	$chimp_options = get_option('chimp', array());
 	if(!empty($chimp_options) && !empty($chimp_options["chimp-key"]))
@@ -3425,17 +3425,17 @@ else
 				'status' => 'unsubscribed'));
 	if($MailChimp->success())
 		{
-		echo '<p>'.esc_html__( 'Unsubscribed from MailChimp email list','rsvpmaker').': '.esc_html($listId).'</p>';
+		echo '<p>'. esc_html__( 'Unsubscribed from MailChimp email list','rsvpmaker').': '. esc_html($listId).'</p>';
 		$msg .= "\n\nRemoved from MailChimp list";
 		}
 	else
 		{
-		echo '<p>'.esc_html__( 'Error attempting to unsubscribe from MailChimp email list','rsvpmaker').': '.esc_html($listId).'</p>';	
+		echo '<p>'. esc_html__( 'Error attempting to unsubscribe from MailChimp email list','rsvpmaker').': '. esc_html($listId).'</p>';	
 		$msg .= "\n\nMailChimp unsubscribe error";
 		}
 	}
 
-	wp_mail(get_option('admin_email'), $e.' '.esc_html__( 'unsubscribed','rsvpmaker').': '.get_option('blogname').' (RSVPMaker)',$msg);
+	wp_mail(get_option('admin_email'), $e.' '. esc_html__( 'unsubscribed','rsvpmaker').': '.get_option('blogname').' (RSVPMaker)',$msg);
 
 	do_action('rsvpmail_unsubscribe',$e);
 	}
@@ -3445,7 +3445,7 @@ if(isset($_POST['change_to'])) {
 	if(is_email($to)) {
 		$native = rsvpmaker_guest_list_lookup_by_email ($e);
 		rsvpmaker_guest_list_add($to,$native->first_name,$native->last_name,$native->segment,0);
-		printf('<p><strong>Important:</strong> Check your email for a message asking you to confirm the new address <strong>%s</strong></p>',esc_html($to));
+		printf('<p><strong>Important:</strong> Check your email for a message asking you to confirm the new address <strong>%s</strong></p>', esc_html($to));
 	}
 	else
 		echo '<p>Error: new email is invalid</p>';
@@ -3455,9 +3455,9 @@ if(isset($_GET['rsvpmail_unsubscribe']))
 $e = sanitize_text_field(trim($_GET['rsvpmail_unsubscribe']));
 ?>
 <form method="post" action="<?php echo esc_url( site_url() ); ?>">
-<?php rsvpmaker_nonce(); ?>
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
 <input type="text" name="rsvpmail_unsubscribe" value="<?php echo esc_attr($e); ?>">
-<button><?php esc_html_e('Unsubscribe','rsvpmaker'); ?></button>
+<button><?php  esc_html_e('Unsubscribe','rsvpmaker'); ?></button>
 </form>
 <?php
 $native = rsvpmaker_guest_list_lookup_by_email ($e);
@@ -3465,19 +3465,19 @@ if($native) {
 ?>
 <h3>Or: Change Email</h3>
 <form method="post" action="<?php echo esc_url( site_url() ); ?>">
-<?php rsvpmaker_nonce(); ?>
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
 <p>Change From<br>
 <input type="email" name="rsvpmail_unsubscribe" value="<?php echo esc_attr($e); ?>">
 <p>Change To<br>
 <input type="email" name="change_to">
-<button><?php esc_html_e('Change Email','rsvpmaker'); ?></button>
+<button><?php  esc_html_e('Change Email','rsvpmaker'); ?></button>
 </form>
 <?php
 }
 
 }
 
-printf('<p>%s <a href="%s">%s</a></p>',esc_html__( 'Continue to','rsvpmaker'),esc_url(site_url()),esc_html(site_url()));
+printf('<p>%s <a href="%s">%s</a></p>', esc_html__( 'Continue to','rsvpmaker'),esc_url(site_url()), esc_html(site_url()));
 
 ?>
 </div>
@@ -3496,7 +3496,7 @@ function rsvpmail_confirm_subscribe () {
 	<html>
 	<head>
 	<meta charset="utf-8">
-	<title><?php bloginfo( 'name' ); echo ' - '.esc_html__( 'Email Confirm Subscription','rsvpmaker'); ?></title>
+	<title><?php bloginfo( 'name' ); echo ' - '. esc_html__( 'Email Confirm Subscription','rsvpmaker'); ?></title>
 	<style>
 	body {background-color: #000;}
 	#main {background-color: #FFF; max-width: 600px; margin-left: auto; margin-right: auto; margin-top: 25px; padding: 25px;}
@@ -3505,7 +3505,7 @@ function rsvpmail_confirm_subscribe () {
 	</head>
 	<body>
 	<div id="main">
-	<h1><?php bloginfo( 'name' ); echo ' - '.esc_html__( 'Confirm Email List Subscription','rsvpmaker'); ?></h1>
+	<h1><?php bloginfo( 'name' ); echo ' - '. esc_html__( 'Confirm Email List Subscription','rsvpmaker'); ?></h1>
 	<?php
 	$e = sanitize_text_field(strtolower(trim($_REQUEST['rsvpmail_subscribe'])));
 	if(!rsvpmail_contains_email($e))
@@ -3516,11 +3516,11 @@ function rsvpmail_confirm_subscribe () {
 		rsvpmail_remove_problem($e);
 		echo wp_kses_post(rsvpmail_replace_email_placeholder(get_option('rsvpmailer_list_confirmation_message'), $e));
 		rsvpmaker_guest_email_welcome($e);
-		echo '<p>'.esc_html__( 'Confirmed subscription to website email list for ','rsvpmaker').esc_html($e).'</p>';
+		echo '<p>'. esc_html__( 'Confirmed subscription to website email list for ','rsvpmaker'). esc_html($e).'</p>';
 		do_action('rsvpmail_subscribe',$e);
 		}
 
-	printf('<p>%s <a href="%s">%s</a></p>',esc_html__( 'Continue to','rsvpmaker'),esc_url(site_url()),esc_html(site_url()));
+	printf('<p>%s <a href="%s">%s</a></p>', esc_html__( 'Continue to','rsvpmaker'),esc_url(site_url()), esc_html(site_url()));
 
 	?>
 	</div>
@@ -3532,11 +3532,11 @@ exit();
 
 function rsvpmaker_notification_templates () {
 
-rsvpmaker_admin_heading(esc_html__( 'Notification Templates','rsvpmaker'),__FUNCTION__);
-echo '<p>'.esc_html__( 'Use this form to customize notification and confirmation messages and the information to be included in them. Template placeholders such as [rsvpdetails] are documented at the bottom of the page.').'</p>';
+rsvpmaker_admin_heading( esc_html__( 'Notification Templates','rsvpmaker'),__FUNCTION__);
+echo '<p>'. esc_html__( 'Use this form to customize notification and confirmation messages and the information to be included in them. Template placeholders such as [rsvpdetails] are documented at the bottom of the page.').'</p>';
 
-if ( isset( $_POST['ntemp'] ) && rsvpmaker_verify_nonce() ) {
-	$output = '<h2>' . esc_html__( 'Updated', 'rsvpmaker' ) . '</h2>';
+if ( isset( $_POST['ntemp'] ) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) ) {
+	$output = '<h2>' .  esc_html__( 'Updated', 'rsvpmaker' ) . '</h2>';
 	$ntemp = $_POST['ntemp'];
 	foreach($ntemp as $index => $data) {
 		$ntemp[$index]['subject'] = sanitize_text_field($ntemp[$index]['subject']);
@@ -3548,29 +3548,29 @@ if ( isset( $_POST['ntemp'] ) && rsvpmaker_verify_nonce() ) {
 		$ntemp[ $index ]['body']    = wp_kses_post( $_POST['newtemplate']['body'] );
 	}
 	update_option( 'rsvpmaker_notification_templates', stripslashes_deep( $ntemp ) );
-	$output .= sprintf( '<p><a href="%s">%s</a></p>', esc_url(admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates' )), esc_html__( 'Edit', 'rsvpmaker' ) );
+	$output .= sprintf( '<p><a href="%s">%s</a></p>', esc_url(admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates' )),  esc_html__( 'Edit', 'rsvpmaker' ) );
 }
 
-$sample_data = array('rsvpdetails' => "first: John\nlast: Smith\nemail:js@example.com",'rsvpyesno' => esc_html__( 'YES','rsvpmaker'), 'rsvptitle' => 'Special Event', 'rsvpdate' => 'January 1, 2020','rsvpmessage' => 'Thank you!', 'rsvpupdate' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">'. esc_html__( 'RSVP Update','rsvpmaker').'</a></p>');
+$sample_data = array('rsvpdetails' => "first: John\nlast: Smith\nemail:js@example.com",'rsvpyesno' =>  esc_html__( 'YES','rsvpmaker'), 'rsvptitle' => 'Special Event', 'rsvpdate' => 'January 1, 2020','rsvpmessage' => 'Thank you!', 'rsvpupdate' => '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">'.  esc_html__( 'RSVP Update','rsvpmaker').'</a></p>');
 $sample_data = apply_filters('rsvpmaker_notification_sample_data',$sample_data);
 $template_forms = get_rsvpmaker_notification_templates ();
 printf('<form id="rsvpmaker_notification_templates" action="%s" method="post">',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates')));
-rsvpmaker_nonce();
+wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 foreach($template_forms as $slug => $form)
 	{
 	if(!is_array($form))
 		continue;
 	echo '<div style="border: thin dotted #555; margin-bottom: 5px;">';
-	printf('<h2>%s</h2>',esc_html(ucfirst(str_replace('_',' ',$slug))));
+	printf('<h2>%s</h2>', esc_html(ucfirst(str_replace('_',' ',$slug))));
 	foreach($form as $field => $value)
 		{
-			printf('<div>%s</div>',esc_html(ucfirst(str_replace('_',' ',$field))));
+			printf('<div>%s</div>', esc_html(ucfirst(str_replace('_',' ',$field))));
 			if($field == 'body')
-				echo '<p><textarea name="ntemp['.$slug.']['.$field.']" style="width: 90%; height: 100px;">'.esc_textarea($value).'</textarea></p>';
+				printf('<p><textarea name="ntemp[%s][%s]" style="width: 90; height: 100px;">%s</textarea></p>', esc_attr( $slug ), esc_attr( $field ), esc_textarea($value));
 			elseif($field == 'sample_data')
 				$sample_data = $value;
 			else
-				echo '<p><input type="text" name="ntemp['.$slug.']['.$field.']" value="'.esc_attr($value).'" style ="width: 90%" /></p>';
+				printf('<p><input type="text" name="ntemp[%s][%s]" value="%s" style ="width: 90%%" /></p>', esc_attr( $slug ), esc_attr( $field ), esc_attr($value));
 		}
 	if(isset($_GET[$slug]))
 	{
@@ -3585,11 +3585,11 @@ foreach($template_forms as $slug => $form)
 	echo '</div>';//end border
 
 	}
-	printf('<h3>%s: <input type="text" name="newtemplate_label"></h3>',esc_html__( 'Custom Label','rsvpmaker-for-toastmasters'));
+	printf('<h3>%s: <input type="text" name="newtemplate_label"></h3>', esc_html__( 'Custom Label','rsvpmaker-for-toastmasters'));
 	echo '<p>Subject<br /><input type="text" name="newtemplate[subject]" value="" style ="width: 90%" /></p>';
 	echo '<p>Body<br /><textarea name="newtemplate[body]" style="width: 90%; height: 100px;"></textarea></p>';
 
-echo wp_kses_post(submit_button()).'</form>';
+echo wp_kses( submit_button(), dcarr_kses_form() ).'</form>';
 
 printf('<p><a href="%s">Reset to defaults</a></p>',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_notification_templates&reset=1')));
 echo   '<p>'.wp_kses_post(__("RSVPMaker template placeholders:<br />[rsvpyesno] YES/NO<br />[rsvptitle] event post title<br />[rsvpdate] event date<br />[datetime] event date and time<br />[rsvpmessage] the message you supplied when you created/edited the event (default is Thank you!)<br />[rsvpdetails] information supplied by attendee<br />[rsvpupdate] button users can click on to update their RSVP<br />[rsvpcount] number of people registered<br />[event_title_link] a link to the event, with the event title and date/time",'rsvpmaker')).'</p>';
@@ -3650,9 +3650,9 @@ if(!$post_id)
 $sql = $wpdb->prepare("SELECT count(*) FROM %i WHERE event=%d AND yesno=1 ORDER BY id DESC",$wpdb->prefix."rsvpmaker",$post_id);
 $total = (int) $wpdb->get_var($sql);
 $rsvp_max = get_post_meta($post_id,'_rsvp_max',true);
-$output = $total.' '.esc_html__( 'signed up so far.','rsvpmaker');
+$output = $total.' '. esc_html__( 'signed up so far.','rsvpmaker');
 if($rsvp_max)
-	$output .= ' '.esc_html__( 'Limit','rsvpmaker').': '.$rsvp_max;
+	$output .= ' '. esc_html__( 'Limit','rsvpmaker').': '.$rsvp_max;
 return '<p class="signed_up">'.$output.'</p>';
 }
 
@@ -3669,7 +3669,7 @@ function rsvp_message_via_template ($rsvpdata,$slug,$event) {
 	if($rsvpdata['event_id']) {
 		$event_title = get_the_title($rsvpdata['event_id']);
 		$dateblock = rsvp_date_block_email( $rsvpdata['event_id'] );
-		$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];	
+		$mail['html'] = '<h1>'. esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];	
 	}
 
 	$mail['to'] = $rsvpdata['email'];
@@ -3732,7 +3732,7 @@ foreach($rsvpdata as $field => $value)
 		$mail["ical"] = rsvpmaker_to_ical_email ($post->ID, $rsvp_to, $rsvp["email"], rsvpmaker_text_version($confirmation_body));
 		$event_title = get_the_title($post->ID);
 		$dateblock = rsvp_date_block_email( $post->ID );
-		$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];
+		$mail['html'] = '<h1>'. esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];
 	} 
 	$mail["to"] = $rsvp["email"];
 	if(!empty($rsvp['first']))
@@ -3813,7 +3813,7 @@ if($rsvp['fee_total'] <= $rsvp['amountpaid'])
 $details = '';
 
 if(!empty($rsvp_options['cancel_unpaid_hours'])) {
-	$details = esc_html__( 'If not paid, your registration will expire at','rsvpmaker').' '.rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t)."\n\n";
+	$details =  esc_html__( 'If not paid, your registration will expire at','rsvpmaker').' '.rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t)."\n\n";
 	$t = wp_next_scheduled( 'rsvp_nonpayment_delete',array($rsvp_id) );
 	if($t)
 		wp_unschedule_event($t,'rsvp_nonpayment_delete',array($rsvp_id));
@@ -3901,7 +3901,7 @@ function rsvp_confirmation_after_payment ($rsvp_id) {
 	$rsvp_options['rsvplink'] = get_rsvp_link( $rsvp['event'], false, $rsvp['email'], $rsvp['id'] );
 	$rsvpupdate_link = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'],$rsvp_options['rsvplink']);
 	if ( ! empty( $rsvp['fee_total'] ) ) {
-		$rsvpupdate_link .= '<p><em>' . esc_html__( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
+		$rsvpupdate_link .= '<p><em>' .  esc_html__( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
 	}
 
 	$notification_body = str_replace('[rsvpupdate]',$rsvpupdate_link,$notification_body);
@@ -3960,13 +3960,13 @@ function rsvpmaker_event_title_link () {
 	$t = get_rsvpmaker_timestamp($post->ID);
 	$display_date = mb_convert_encoding(rsvpmaker_date($rsvp_options["long_date"].' '.$time_format,$t),'UTF-8');
 	$permalink = get_permalink($post->ID);
-	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink,esc_html($post->post_title),esc_html($display_date));
+	return sprintf('<p class="event-title-link"><a href="%s">%s - %s</a></p>',$permalink, esc_html($post->post_title), esc_html($display_date));
 }
 
 
 function rsvptitle_shortcode($atts) {
 	global $post;
-	return esc_html($post->post_title);
+	return  esc_html($post->post_title);
 }
 
 function rsvpdate_shortcode($atts = array()) {
@@ -4240,7 +4240,7 @@ function rsvpmaker_template_inline($query_post_id = 0) {
 			the_post();
 			$content = get_the_content();
 			$head_pattern = '/<head\b[^>]*>(.*?)<\/head>/is';
-echo preg_replace_callback($head_pattern, function($matches) {
+echo wp_kses_post( preg_replace_callback($head_pattern, function($matches) {
     // $matches[1] contains everything strictly *inside* the <head> tags
     $head_contents = $matches[1];
     
@@ -4257,7 +4257,7 @@ echo preg_replace_callback($head_pattern, function($matches) {
     
     // If no style block was found, return nothing (empties the head)
     return '';
-}, $content);
+}, $content) );
 			if(!strpos($post->post_content,'*|LIST:DESCRIPTION|*'))
 			{
 			?>
@@ -5520,7 +5520,7 @@ function rsvpmail_csv_export() {
 		return;
 	}
 
-	if ( ! rsvpmaker_verify_nonce()) { 
+	if ( ! wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION )) { 
 		die( 'Security error' );
 	}
 
@@ -5580,12 +5580,8 @@ function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $sear
     }
 
     // always filter out blocked emails
-    $where_sql = '';
-    if ( ! empty( $where_clauses ) ) {
-        $where_sql = ' WHERE ' . implode( ' AND ', $where_clauses ) . ' AND b.email IS NULL';
-    } else {
-        $where_sql = ' WHERE b.email IS NULL';
-    }
+    $where_clauses[] = 'b.email IS NULL';
+    $where_sql = ' WHERE ' . implode( ' AND ', $where_clauses );
 
     $sql = "
         SELECT t.*, t.email AS user_email, m.meta_value AS segment
@@ -5599,7 +5595,9 @@ function get_rsvpmaker_guest_list($start = 0, $limit = false, $active = 1, $sear
 	if($limit) {
 		$start = intval($start);
 		$limit = intval($limit);
-		$sql .= " LIMIT $start, $limit";
+		$sql .= " LIMIT %d, %d";
+		$params[] = $start;
+		$params[] = $limit;
 	}
 	$results = $wpdb->get_results($wpdb->prepare( $sql, $params ));
 	foreach($results as $row) {
@@ -5616,10 +5614,9 @@ function get_rsvpmaker_email_segment($segment, $active = true) {
 	$table = rsvpmaker_guest_list_table();
 	$table_meta = $table.'_meta';
 	if($active)
-		$sql = "SELECT $table.*, email as user_email, meta_value as segment, $table_meta.id as segment_id FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE active=1 AND meta_value='$segment' ORDER BY last_name, first_name";
+		$sql = $wpdb->prepare("SELECT %i.*, email as user_email, meta_value as segment, %i.id as segment_id FROM %i LEFT JOIN %i ON %i.id = %i.guest_id WHERE active=%d AND meta_value=%s ORDER BY last_name, first_name", $table, $table_meta, $table, $table_meta, $table, $table_meta, 1, $segment);
 	else
-		$sql = "SELECT $table.*, email as user_email, meta_value as segment, $table_meta.id as segment_id FROM $table LEFT JOIN $table_meta ON `$table`.id = `$table_meta`.guest_id WHERE meta_value='$segment' ORDER BY last_name, first_name";
-	// error_log('email segment lookup '.$sql);
+		$sql = $wpdb->prepare("SELECT %i.*, email as user_email, meta_value as segment, %i.id as segment_id FROM %i LEFT JOIN %i ON %i.id = %i.guest_id WHERE meta_value=%s ORDER BY last_name, first_name", $table, $table_meta, $table, $table_meta, $table, $table_meta, $segment);
 	return $wpdb->get_results($sql);
 }
 
@@ -5715,18 +5712,50 @@ function rsvpmaker_add_contact_segment($id, $segment='') {
 }
 
 function rsvpmaker_email_segments_dropdown($field_name='segment', $echo = true, $selected = '') {
+	global $wpdb;
+	$table = rsvpmaker_guest_list_table();
+	
 	$segments = get_option('rsvpmail_segments');
 	if(!is_array($segments))
 		$segments = array();
 	if(empty($segments['rsvp_form_signup']))
 		$segments['rsvp_form_signup'] = 'RSVP Form Signup';
-	$segment_options = '<option value="">General List</option>';
+	
+	// Get count of recipients in general list
+	$general_count = $wpdb->get_var($wpdb->prepare('SELECT count(*) from %i', $table));
+	$general_count = (int) $general_count;
+	
+	// Build array of segments with their counts for sorting
+	$segments_with_counts = array();
 	foreach($segments as $index => $segment) {
 		if(!empty($segment)) {
-			$s = ($index == $selected) ? ' selected="selected" ' : '';
-			$segment_options .= sprintf('<option value="%s" %s>%s</option>', esc_attr( $index ), $s, esc_html( $segment ) );
+			// Count recipients in this segment
+			$sql = $wpdb->prepare(
+				"SELECT count(distinct %i.id) from %i LEFT JOIN %i ON %i.id = %i.guest_id WHERE %i.meta_key='segment' AND %i.meta_value=%s",
+				$table."_meta", $table."_meta", $table, $table, $table."_meta", $table."_meta", $table."_meta", $index
+			);
+			$segment_count = $wpdb->get_var($sql);
+			$segment_count = (int) $segment_count;
+			
+			$segments_with_counts[] = array(
+				'index' => $index,
+				'name' => $segment,
+				'count' => $segment_count
+			);
 		}
-		}
+	}
+	
+	// Sort segments by count in descending order
+	usort($segments_with_counts, function($a, $b) {
+		return $b['count'] - $a['count'];
+	});
+	
+	$segment_options = '<option value="">General List (' .  esc_html($general_count) . ')</option>';
+	foreach($segments_with_counts as $seg) {
+		$s = ($seg['index'] == $selected) ? ' selected="selected" ' : '';
+		$segment_options .= sprintf('<option value="%s" %s>%s (%d)</option>', esc_attr( $seg['index'] ), $s,  esc_html( $seg['name'] ), $seg['count'] );
+	}
+	
 	$output = sprintf('<select name="'.$field_name.'">'.$segment_options.'</select>');
 	if($echo)
 		echo wp_kses($output, dcarr_kses_form());
@@ -5736,7 +5765,7 @@ function rsvpmaker_email_segments_dropdown($field_name='segment', $echo = true, 
 function rsvpmaker_guest_list() {
 	global $wpdb;
 	$table = rsvpmaker_guest_list_table();
-	rsvpmaker_admin_heading(esc_html__( 'RSVPMaker Email List','rsvpmaker'),__FUNCTION__);
+	rsvpmaker_admin_heading( esc_html__( 'RSVPMaker Email List','rsvpmaker'),__FUNCTION__);
 	$active = (int) get_option('rsvpmaker_guest_list_active');
 	$segments = get_option('rsvpmail_segments');
 	if(!is_array($segments))
@@ -5767,7 +5796,7 @@ function rsvpmaker_guest_list() {
 		}
 	}
 
-	if(!empty($_POST['timelord'])  && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')))
+	if(!empty($_POST[ RSVPMAKER_NONCE_FIELD ])  && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ))
 	{	
 		if(isset($_POST['active'])) {
 			$active = intval($_POST['active']);
@@ -5802,7 +5831,7 @@ function rsvpmaker_guest_list() {
 		if(isset($_POST['add_to_segment']) && !empty($_POST['segment'])) {
 			$segment = sanitize_text_field($_POST['segment']);
 			foreach($_POST['add_to_segment'] as $id) {
-				echo "<br>".esc_html($id)." ".esc_html($segment);
+				echo "<br>". esc_html($id)." ". esc_html($segment);
 				rsvpmaker_add_contact_segment(intval($id), $segment);
 			}
 		}
@@ -5862,11 +5891,11 @@ function rsvpmaker_guest_list() {
 		$segment_options = '<option value="">General List</option>';
 		foreach($segments as $index => $segment) {
 			if(!empty($segment))
-				$segment_options .= sprintf('<option value="%s">%s</option>', esc_attr( $index ), esc_html( $segment ) );
+				$segment_options .= sprintf('<option value="%s">%s</option>', esc_attr( $index ),  esc_html( $segment ) );
 		}
 	}
 
-	if(isset($_POST['edit_email']) && rsvpmaker_verify_nonce()) {
+	if(isset($_POST['edit_email']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION )) {
 		$sql = $wpdb->prepare("update %i set email=%s, first_name=%s,last_name=%s WHERE id=%d",$table,sanitize_text_field($_POST['edit_email']),sanitize_text_field($_POST['first_name']),sanitize_text_field($_POST['last_name']),intval($_POST['id']));
 		$wpdb->query($sql);
 	}
@@ -5877,43 +5906,43 @@ function rsvpmaker_guest_list() {
 		//patchstack fix
 		printf('<div>Email</div><div><input type="text" name="edit_email" value="%s"> ></div><div>First Name</div><div><input type="text" name="first_name" value="%s"></div><div>Last Name</div><div><input type="text" name="last_name" value="%s"></div><input type="hidden" name="id" value="%d"> </p>',esc_attr($row->email),esc_attr($row->first_name),esc_attr($row->last_name),absint($row->id));
 		submit_button('Update');
-		rsvpmaker_nonce();
+		wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 		echo '</form>';	
 	}
 
 	?>
 	<p>This built-in email list is an optional feature of RSVPMaker that allows you to maintain an email list from within WordPress, independent of an external service such as Mailchimp or MailPoet. For lists of more than 100 recipients, consider using the <a href="https://rsvpmaker.com/rsvpmaker-postmark/">RSVPMaker Mailer for Postmark</a> integration for better management of anti-spam issues.</p>
 	<?php
-	printf('<p>You can <a href="%s">export the list</a>, work with it in a spreadsheet, and import it again. Or use the form below to make changes.</p>',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&rsvpmail_csv&timelord='.rsvpmaker_nonce('value'))));
+	printf('<p>You can <a href="%s">export the list</a>, work with it in a spreadsheet, and import it again. Or use the form below to make changes.</p>',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&rsvpmail_csv&' . RSVPMAKER_NONCE_FIELD . '='.wp_create_nonce( RSVPMAKER_NONCE_ACTION ))));
 
 	printf('<form method="post" enctype="multipart/form-data" action="%s">',esc_url(admin_url('admin.php?page=rsvpmaker_guest_list')));
-	rsvpmaker_nonce();
+	wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 	if($active)
-		printf('<p>%s <input type="radio" name="active" value="1" checked="checked"> %s <input type="radio" name="active" value="0" > %s </p>',esc_html__( 'Active','rsvpmaker'),esc_html__( 'Yes','rsvpmaker'),esc_html__( 'No','rsvpmaker'));
+		printf('<p>%s <input type="radio" name="active" value="1" checked="checked"> %s <input type="radio" name="active" value="0" > %s </p>', esc_html__( 'Active','rsvpmaker'), esc_html__( 'Yes','rsvpmaker'), esc_html__( 'No','rsvpmaker'));
 	else
-		printf('<p>%s <input type="radio" name="active" value="1"> %s <input type="radio" name="active" value="0"  checked="checked"> %s </p>',esc_html__( 'Active','rsvpmaker'),esc_html__( 'Yes','rsvpmaker'),esc_html__( 'No','rsvpmaker'));
+		printf('<p>%s <input type="radio" name="active" value="1"> %s <input type="radio" name="active" value="0"  checked="checked"> %s </p>', esc_html__( 'Active','rsvpmaker'), esc_html__( 'Yes','rsvpmaker'), esc_html__( 'No','rsvpmaker'));
 		rsvpmaker_add_to_list_on_rsvp_form();
 		rsvpmail_signup_page_add();
 		printf('<p>See <a href="%s">other options</a> including popup mailing list signup prompt.</p>',esc_url(admin_url('options-general.php?page=rsvpmaker_settings&tab=email')));
 		echo '<p>Any email recipients you add through this screen should be people who have given explicit permission. You can add contacts to the list one of three ways.</p><ol>';
-		printf('<li>%s: Email <input type="text" name="email[]"> First Name <input type="text" name="first_name[]"> Last Name <input type="text" name="last_name[]"> </li>',esc_html__( 'One at a time','rsvpmaker'));
-		printf('<li>%s: <input type="file" name="upload_file" /><br>You can upload a CSV data file with columns in the order email, first name, and last name, such as a list exported from Mailchimp.</li>',esc_html__( 'Select file to upload','rsvpmaker'));
-		printf('<li>%s: One contact per line with email, first name, last name (separated with commas or tabs)<br><textarea name="emailtextarea" rows="3" cols="80" placeholder="email@example.com,First Name,Last Name" /></textarea></li>',esc_html__( 'Copy-Paste','rsvpmaker'));
+		printf('<li>%s: Email <input type="text" name="email[]"> First Name <input type="text" name="first_name[]"> Last Name <input type="text" name="last_name[]"> </li>', esc_html__( 'One at a time','rsvpmaker'));
+		printf('<li>%s: <input type="file" name="upload_file" /><br>You can upload a CSV data file with columns in the order email, first name, and last name, such as a list exported from Mailchimp.</li>', esc_html__( 'Select file to upload','rsvpmaker'));
+		printf('<li>%s: One contact per line with email, first name, last name (separated with commas or tabs)<br><textarea name="emailtextarea" rows="3" cols="80" placeholder="email@example.com,First Name,Last Name" /></textarea></li>', esc_html__( 'Copy-Paste','rsvpmaker'));
 		echo '</ol>';
 
 		
 		if($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s ",$mailpoet_table)))
-			printf('<p><input type="checkbox" name="mailpoet" value="1" /> %s</p>',esc_html__( 'Import MailPoet subscriber list','rsvpmaker'));
-		printf('<p>List segment (optional): <select name="segment">%s</select>.</p>',wp_kses_post($segment_options));
+			printf('<p><input type="checkbox" name="mailpoet" value="1" /> %s</p>', esc_html__( 'Import MailPoet subscriber list','rsvpmaker'));
+		printf('<p>List segment (optional): <select name="segment">%s</select>.</p>',wp_kses($segment_options, dcarr_kses_form()));
 	submit_button();
 	echo '</form>';
 
 	printf('<form method="post" action="%s"><h3>New Segment</h3> <input type="text" name="newsegment">',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list')));
 	submit_button('Add');
-	rsvpmaker_nonce();
+	wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 	echo '</form>';
 
-		echo '<h2>'.esc_html__( 'Current List','rsvpmaker').' (total: '. absint($totalcount).' active: '. absint($activecount) .')</h2>';
+		echo '<h2>'. esc_html__( 'Current List','rsvpmaker').' (total: '. absint($totalcount).' active: '. absint($activecount) .')</h2>';
 		$start = (isset($_GET['start'])) ? intval($_GET['start']) : 0;
 		$search = (isset($_GET['s'])) ? sanitize_text_field($_GET['s']) : '';
 		if(isset($_GET['unconfirmed']))
@@ -5944,7 +5973,7 @@ function rsvpmaker_guest_list() {
 			echo '<div style="width: 200px; margin-left: auto; margin-right: auto;">';
 			submit_button('Apply to Checked Items Below');
 			echo '</div>';
-			echo '<table class="wp-list-table widefat striped"><tr><th>Delete</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Segment</th><th>Add checked to<br>'.wp_kses_post(rsvpmaker_email_segments_dropdown('segment',false)).'<br></th></tr>';
+			echo '<table class="wp-list-table widefat striped"><tr><th>Delete</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Segment</th><th>Add checked to<br>'.wp_kses( rsvpmaker_email_segments_dropdown('segment',false), dcarr_kses_form() ).'<br></th></tr>';
 			foreach($list as $index => $item) {
 				$prompt = rsvpmail_is_problem($item->email) ? '<br><strong>Unsubscribed or Error</strong>' : '';
 				if(empty($prompt))
@@ -5953,10 +5982,10 @@ function rsvpmaker_guest_list() {
 				if(!empty($segment_list) && strpos($item->segment,$segment_list) !== false) {
 					$segment_remove = sprintf('<br><input type="checkbox" name="unsegment[%d]" value="%s" /> Remove from %s',$item->id,$segment_list,$segment_list);
 				}
-				printf( '<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>', esc_attr( $item->id ), esc_url( admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit=' . $item->id ) ), wp_kses_post( $item->email . $prompt ), esc_html( $item->first_name ), esc_html( $item->last_name ), esc_html( $item->segment ), wp_kses_post( $segment_remove ), esc_attr( $item->id ) );
+				printf( '<tr><td><input type="checkbox" name="delete[]" value="%s"> <a href="%s">Edit</a></td><td>%s</td><td>%s</td><td>%s</td><td>%s%s</td><td><input type="checkbox" name="add_to_segment[]" value="%s"></td></tr>', esc_attr( $item->id ), esc_url( admin_url( 'edit.php?post_type=rsvpemail&page=rsvpmaker_guest_list&edit=' . $item->id ) ), wp_kses( $item->email . $prompt, dcarr_kses_form() ),  esc_html( $item->first_name ),  esc_html( $item->last_name ),  esc_html( $item->segment ), wp_kses( $segment_remove, dcarr_kses_form() ), esc_attr( $item->id ) );
 			}
 			echo '</table>';
-			rsvpmaker_nonce();
+			wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 			echo '<div style="width: 200px; margin-left: auto; margin-right: auto;">';
 			submit_button('Apply to Checked Items Above');
 			echo '</div>';
@@ -6129,7 +6158,7 @@ if($thumburl)
 if(!strpos($excerpt,$permalink))
 {
 ?>
-<p class="email-read-more"><a href="<?php echo esc_url($permalink.'#more-'.$post->ID); ?>"><?php esc_html_e( 'Read More','rsvpmaker'); ?></a></p>
+<p class="email-read-more"><a href="<?php echo esc_url($permalink.'#more-'.$post->ID); ?>"><?php  esc_html_e( 'Read More','rsvpmaker'); ?></a></p>
 <?php 
 }
 ?>
@@ -6272,7 +6301,7 @@ function rsvpmail_latest_post_promo($args = array()) {
 			update_post_meta($promo_id,'pending_post_promo',$t);
 			wp_unschedule_hook('rsvpmailer_post_promo');
 			wp_schedule_single_event( $t,'rsvpmailer_post_promo');
-			$cancel = array('timelord' => rsvpmaker_nonce('value'),'cancel_promo'=>1);
+			$cancel = array(RSVPMAKER_NONCE_FIELD => wp_create_nonce( RSVPMAKER_NONCE_ACTION ),'cancel_promo'=>1);
 			$schedule = sprintf('<p><em>Scheduling to send at %s to %s mailing list. Options: <a href="%s">Edit</a> | <a href="%s">Send Now</a> | <a href="%s">Cancel</a>.</em></p>',rsvpmaker_date($rsvp_options['short_date'].' '.$rsvp_options['time_format'],$t), $segment, esc_url(admin_url("post.php?post=$promo_id&action=edit")), esc_url(get_permalink($promo_id)), esc_url(add_query_arg($cancel,get_permalink($promo_id))) );
 			$html = $schedule.$html;
 			if(defined('RSVPMAKER_DEBUG')) {
@@ -6308,7 +6337,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	rsvpmaker_admin_heading('New Posts Promo',__FUNCTION__);
 	$button_label = get_option('rsvpmail_button_label');
 	if(empty($button_label))
-		$button_label = esc_html__( 'Read More','rsvpmaker');
+		$button_label =  esc_html__( 'Read More','rsvpmaker');
 	echo '<style>
 	h2 {line-height: 1.5}
 	h3 {line-height: 1.5}
@@ -6336,10 +6365,10 @@ function rsvpmail_latest_posts_notification_setup() {
 	else {
 		$button_label = get_option('rsvpmail_button_label');
 		if(empty($button_label))
-			$button_label = esc_html__( 'Read More','rsvpmaker');	
+			$button_label =  esc_html__( 'Read More','rsvpmaker');	
 	}
 
-	if(isset($_POST['rsvpmaker_new_post_promos']) && rsvpmaker_verify_nonce() )
+	if(isset($_POST['rsvpmaker_new_post_promos']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	{
 		$args = $_POST['rsvpmaker_new_post_promos'];
 		foreach($args as $key => $value)
@@ -6375,7 +6404,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	$segment = (isset($args['segment'])) ? $args['segment'] : '';
 	rsvpmaker_email_segments_dropdown('rsvpmaker_new_post_promos[segment]',true,$segment);
 	echo '</p>';
-	rsvpmaker_nonce();
+	wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 	submit_button();
 	echo '</form>';
 
@@ -6386,7 +6415,7 @@ function rsvpmail_latest_posts_notification_setup() {
 	}
 	rsvpmailer_post_promo_summary();
 
-	echo "<h3>New post promo:".esc_html($subject_html['subject']).'</h3>'.wp_kses_post(rsvpmaker_email_html($subject_html['html']));
+	echo "<h3>New post promo:". esc_html($subject_html['subject']).'</h3>'.wp_kses_post(rsvpmaker_email_html($subject_html['html']));
 }
 
 add_action( 'transition_post_status', 'rsvpmail_schedule_latest_posts_notification', 10, 3 );
@@ -6488,9 +6517,9 @@ function add_rsvpmail_arg($match) {
 function rsvpmail_editors_note_ui($post_id) {
 global $wpdb;
 $notekey = get_rsvp_notekey($post_id);
-if(!empty($_POST['notekey']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )	
+if(!empty($_POST['notekey']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )	
 {
-	if(!empty($_POST['notesubject']) || !empty($_POST['notebody']) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+	if(!empty($_POST['notesubject']) || !empty($_POST['notebody']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	{
 		global $current_user;
 		$newpost['post_title'] = sanitize_text_field(stripslashes($_POST['notesubject']));
@@ -6511,13 +6540,13 @@ else
 	$chosen = get_post_meta($post_id,$notekey,true);
 
 printf('<form action="%s" method="post">',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_scheduled_email_list&editor_note='.$post_id)));
-rsvpmaker_nonce();
+wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 ?>
-<h3 id="editorsnote"><?php esc_html_e("Add Editor's Note for",'rsvpmaker'); if(empty($stamp)) echo ' Next broadcast'; else echo ' '.esc_html($ts);?> (optional)</h3>
+<h3 id="editorsnote"><?php  esc_html_e("Add Editor's Note for",'rsvpmaker'); if(empty($stamp)) echo ' Next broadcast'; else echo ' '. esc_html($ts);?> (optional)</h3>
 
 <input type="hidden" name="notekey" value="<?php echo esc_attr($notekey); ?>">
 
-<p><?php esc_html_e("A blog post, either public or draft, can be featured as the editor's note at the top of your next email newsletter broadcast. The content of the post title will be added to the end of the email subject line, and the content of the post (up to the more tag, if included) will be included in the body of your email.",'rsvpmaker');?></p>
+<p><?php  esc_html_e("A blog post, either public or draft, can be featured as the editor's note at the top of your next email newsletter broadcast. The content of the post title will be added to the end of the email subject line, and the content of the post (up to the more tag, if included) will be included in the body of your email.",'rsvpmaker');?></p>
 
 <?php
 $ts = rsvpmaker_next_scheduled($post_id);
@@ -6529,26 +6558,26 @@ foreach($recent as $blog)
 	if($blog->ID == $chosen)
 		$chosentitle = $blog->post_title;
 	$title = ($blog->post_status == 'draft') ? $blog->post_title. ' (draft)' : $blog->post_title;
-	$blog_options .= sprintf('<option value="%d" %s>%s</option>',esc_attr($blog->ID),$s,esc_html($title));
+	$blog_options .= sprintf('<option value="%d" %s>%s</option>',esc_attr($blog->ID),$s, esc_html($title));
 	}
 
 if($chosen)
 {
 	$blog = get_post($chosen);
 	$chosentitle = $blog->post_title;
-	$blog_options .= sprintf('<option value="%d" selected="selected">%s</option><option value="">(Clear Selection)</option>',esc_attr($blog->ID),esc_html($blog->post_title));
-	printf('<p>The current editor\'s note is based on the blog post <strong>%s</strong>. <a href="%s">(Edit)</a></p>',esc_html($chosentitle),esc_url(admin_url('post.php?action=edit&post='.(int)$chosen)));
+	$blog_options .= sprintf('<option value="%d" selected="selected">%s</option><option value="">(Clear Selection)</option>',esc_attr($blog->ID), esc_html($blog->post_title));
+	printf('<p>The current editor\'s note is based on the blog post <strong>%s</strong>. <a href="%s">(Edit)</a></p>', esc_html($chosentitle),esc_url(admin_url('post.php?action=edit&post='.(int)$chosen)));
 	echo '<p><input type="radio" name="status" value="reset"> Reset</p>';
 }
 ?>
 
 <p><input type="radio" name="status" value="" checked="checked" /> <strong>
-<?php esc_html_e('Pick a blog post to feature','rsvpmaker');?>:</strong> <select name="chosen"><option value=""><?php esc_html_e('None','rsvpmaker');?></option>
-<?php echo wp_kses_post($blog_options); ?></select></p>
+<?php  esc_html_e('Pick a blog post to feature','rsvpmaker');?>:</strong> <select name="chosen"><option value=""><?php  esc_html_e('None','rsvpmaker');?></option>
+<?php echo wp_kses($blog_options, dcarr_kses_form()); ?></select></p>
 
-<p><input type="radio" name="status" value="draft" /> <strong>Create a draft</strong> based on the headline and message below (will not appear on the live website unless you subsequently choose to publish the draft)<br /><input type="radio" name="status" value="publish" /> <strong>Create and publish</strong> blog based on the headline and message below</strong><br /> <em>(<?php esc_html_e('This post will be used as the editors note at the top of your broadcast. Making it public on the blog is optional.','rsvpmaker');?>)</em></p>
+<p><input type="radio" name="status" value="draft" /> <strong>Create a draft</strong> based on the headline and message below (will not appear on the live website unless you subsequently choose to publish the draft)<br /><input type="radio" name="status" value="publish" /> <strong>Create and publish</strong> blog based on the headline and message below</strong><br /> <em>(<?php  esc_html_e('This post will be used as the editors note at the top of your broadcast. Making it public on the blog is optional.','rsvpmaker');?>)</em></p>
 
-<p><?php esc_html_e('Title/Subject','rsvpmaker');?>: <input type="text" name="notesubject" value="" /></p>
+<p><?php  esc_html_e('Title/Subject','rsvpmaker');?>: <input type="text" name="notesubject" value="" /></p>
 <p>Message:<br />
 <textarea cols="100" rows="5" name="notebody"></textarea></p>
 <?php submit_button(); ?>
@@ -6843,10 +6872,10 @@ $footer_text = $options['footer_text'];
   <div class="rsvpmodal-content">
     <div class="rsvpmodal-header">
       <span class="close">&times;</span>
-      <h3><?php echo esc_html($title); ?></h3>
+      <h3><?php echo  esc_html($title); ?></h3>
     </div>
     <div class="rsvpmodal-body">
-	<?php echo wp_kses_post(rsvpmail_signup_form()); ?>
+	<?php echo dcarr_kses_with_inline_script(rsvpmail_signup_form()); ?>
     </div>
     <div class="rsvpmodal-footer">
       <p><?php echo wp_kses_post($footer_text); ?></p>
@@ -6862,7 +6891,7 @@ if(isset($_SERVER['HTTP_REFERER'])) {
 	  echo '<h1>Hello email visitor</h1>';
 	}
 	else
-		echo '<p>Referrer: '.esc_html($ref).'</p>';
+		echo '<p>Referrer: '. esc_html($ref).'</p>';
 }
  ?>
 <script>
@@ -6983,7 +7012,7 @@ function update_rsvpemail_from_settings($from) {
 }
 
 function rsvpemail_from_settings() {
-if(isset($_POST['rsvpemail_from_settings']) && rsvpmaker_verify_nonce()) {
+if(isset($_POST['rsvpemail_from_settings']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION )) {
 	update_rsvpemail_from_settings($_POST['rsvpemail_from_settings']);
 }
 ?>
@@ -6992,17 +7021,17 @@ if(isset($_POST['rsvpemail_from_settings']) && rsvpmaker_verify_nonce()) {
 <p>
 <?php
 $from_options = get_rsvpemail_from_settings();
-esc_html_e("These apply to any of the supported email distriution methods.",'rsvpmaker');?></p>			
-<p><?php esc_html_e('Email or ReplyTo Address for Sender','rsvpmaker');?>:<br> 
+ esc_html_e("These apply to any of the supported email distriution methods.",'rsvpmaker');?></p>			
+<p><?php  esc_html_e('Email or ReplyTo Address for Sender','rsvpmaker');?>:<br> 
 	<input type="text" name="rsvpemail_from_settings[email-from]" id="email-from" value="<?php if(isset($from_options["email-from"])) echo esc_attr($from_options["email-from"]); ?>" />
 </p>
-<p><?php esc_html_e('Email Name','rsvpmaker');?>: <br>
+<p><?php  esc_html_e('Email Name','rsvpmaker');?>: <br>
 	<input type="text" name="rsvpemail_from_settings[email-name]" id="email-name" value="<?php if(isset($from_options["email-name"])) echo esc_attr($from_options["email-name"]); ?>" />
 </p>
-<p><?php esc_html_e('Company','rsvpmaker');?>: <br>
+<p><?php  esc_html_e('Company','rsvpmaker');?>: <br>
 	<input type="text" name="rsvpemail_from_settings[company]" id="company" value="<?php if(isset($from_options["company"])) echo esc_attr($from_options["company"]); ?>" />
 </p>
-<p><?php esc_html_e('Mailing Address','rsvpmaker');?>:<br> 
+<p><?php  esc_html_e('Mailing Address','rsvpmaker');?>:<br> 
 	<input type="text" name="rsvpemail_from_settings[mailing_address]" id="mailing_address" value="<?php if(isset($from_options["mailing_address"])) echo esc_attr($from_options["mailing_address"]); ?>" />
 	<br><em>Providing a physical mailing address is recommended for compliance with mailing list regulations.</em>
 </p>
@@ -7438,7 +7467,7 @@ function rsvpmail_post_format($epost) {
 
     // Properly wrap heading and content inside a valid Block Group structure
     $title_link = esc_url(get_permalink($post->ID));
-    $title_text = esc_html($epost->post_title);
+    $title_text =  esc_html($epost->post_title);
 
     $formatted_content  = '<!-- wp:group {"layout":{"type":"constrained"}} -->';
     $formatted_content .= '<div class="wp-block-group">';
@@ -7465,7 +7494,7 @@ function rsvpemail_readmore_button ($link, $post_id = 0) {
 	$link .= '#more-'.$post_id;
 	$readmore = get_option('rsvpmail_button_label');
 	if(empty($readmore))
-		$readmore = esc_html__( 'Read More','rsvpmaker');
+		$readmore =  esc_html__( 'Read More','rsvpmaker');
 	return '<!-- wp:buttons -->
 	<div class="wp-block-buttons"><!-- wp:button {"style":{"color":{"background":"#00008b"}}} -->
 	<div class="wp-block-button"><a class="wp-block-button__link has-background wp-element-button" href="'.$link.'" style="background-color:#00008b">'.$readmore.'</a></div>
@@ -7497,7 +7526,7 @@ function rsvpmaker_get_confirmation_options( $post_id = 0, $documents = array() 
 
 	$confirm = rsvp_get_confirm( $post_id, true );
 
-	$output = sprintf( '<h3 id="confirmation">%s</h3>', esc_html__( 'Confirmation Message', 'rsvpmaker' ) );
+	$output = sprintf( '<h3 id="confirmation">%s</h3>',  esc_html__( 'Confirmation Message', 'rsvpmaker' ) );
 
 	$output .= $confirm->post_content;
 
@@ -7507,7 +7536,7 @@ function rsvpmaker_get_confirmation_options( $post_id = 0, $documents = array() 
 
 		if ( ( $id == 'edit_confirm' ) || ( $id == 'customize_confirmation' ) ) {
 
-			$output .= sprintf( '<p><a href="%s">Edit: %s</a></p>', esc_attr( $d['href'] ), esc_html( $d['title'] ) );
+			$output .= sprintf( '<p><a href="%s">Edit: %s</a></p>', esc_attr( $d['href'] ),  esc_html( $d['title'] ) );
 		}
 	}
 
@@ -7516,9 +7545,9 @@ function rsvpmaker_get_confirmation_options( $post_id = 0, $documents = array() 
 		$payment_confirmation = (int) get_post_meta( $post_id, 'payment_confirmation_message', true );
 		if ( empty( $payment_confirmation ) || empty( get_post( $payment_confirmation ) ) ) {
 				$add_payment_conf = esc_url(admin_url( 'edit.php?title=Payment%20Confirmation&post_type=rsvpmaker&page=rsvpmaker_details&rsvpcz=payment_confirmation_message&post_id=' . $post_id ));
-				$output          .= sprintf( '<p><a href="%s">%s</a></p>', $add_payment_conf, esc_html__( 'Add Payment Confirmation Message' ) );
+				$output          .= sprintf( '<p><a href="%s">%s</a></p>', $add_payment_conf,  esc_html__( 'Add Payment Confirmation Message' ) );
 		} else {
-			$output .= sprintf( '<p><a href="%s">%s</a></p>', esc_url(admin_url( 'post.php?post=' . $payment_confirmation . '&action=edit' )), esc_html__( 'Edit Payment Confirmation Message' ) );
+			$output .= sprintf( '<p><a href="%s">%s</a></p>', esc_url(admin_url( 'post.php?post=' . $payment_confirmation . '&action=edit' )),  esc_html__( 'Edit Payment Confirmation Message' ) );
 		}
 	}
 
@@ -7553,13 +7582,13 @@ function rsvpmaker_lookup_copy_email_send( $event, $row ) {
 	$mail['to'] = $row->email;
 	$mail['from'] = empty( $rsvp_options['rsvp_to'] ) ? get_option( 'admin_email' ) : $rsvp_options['rsvp_to'];
 	$mail['fromname'] = get_bloginfo( 'name' );
-	$mail['subject'] = sprintf( esc_html__( 'Your RSVP lookup link for %s', 'rsvpmaker' ), wp_specialchars_decode( get_the_title( $event ), ENT_QUOTES ) );
+	$mail['subject'] = sprintf(  esc_html__( 'Your RSVP lookup link for %s', 'rsvpmaker' ), wp_specialchars_decode( get_the_title( $event ), ENT_QUOTES ) );
 	$mail['html'] = sprintf(
 		'<p>%s</p><p><a href="%s">%s</a></p><p>%s</p>',
-		esc_htmlesc_html__( 'Use this secure link to copy details from your previous RSVP into this form.', 'rsvpmaker' ),
+		 esc_html__( 'Use this secure link to copy details from your previous RSVP into this form.', 'rsvpmaker' ),
 		esc_url( $copy_link ),
-		esc_htmlesc_html__( 'Copy Previous RSVP Details', 'rsvpmaker' ),
-		esc_htmlesc_html__( 'If you did not request this link, you can ignore this email.', 'rsvpmaker' )
+		 esc_html__( 'Copy Previous RSVP Details', 'rsvpmaker' ),
+		 esc_html__( 'If you did not request this link, you can ignore this email.', 'rsvpmaker' )
 	);
 
 	rsvpmailer( $mail );
@@ -7591,13 +7620,13 @@ function rsvpmaker_lookup_update_email_send( $event, $row ) {
 	$mail['to'] = $row->email;
 	$mail['from'] = empty( $rsvp_options['rsvp_to'] ) ? get_option( 'admin_email' ) : $rsvp_options['rsvp_to'];
 	$mail['fromname'] = get_bloginfo( 'name' );
-	$mail['subject'] = sprintf( esc_html__( 'Your RSVP update link for %s', 'rsvpmaker' ), wp_specialchars_decode( get_the_title( $event ), ENT_QUOTES ) );
+	$mail['subject'] = sprintf(  esc_html__( 'Your RSVP update link for %s', 'rsvpmaker' ), wp_specialchars_decode( get_the_title( $event ), ENT_QUOTES ) );
 	$mail['html'] = sprintf(
 		'<p>%s</p><p><a href="%s">%s</a></p><p>%s</p>',
-		esc_htmlesc_html__( 'Use this secure link to review or update your RSVP registration.', 'rsvpmaker' ),
+		  esc_html__( 'Use this secure link to review or update your RSVP registration.', 'rsvpmaker' ),
 		esc_url( $update_link ),
-		esc_htmlesc_html__( 'Update RSVP Registration', 'rsvpmaker' ),
-		esc_htmlesc_html__( 'If you did not request this link, you can ignore this email.', 'rsvpmaker' )
+		  esc_html__( 'Update RSVP Registration', 'rsvpmaker' ),
+		  esc_html__( 'If you did not request this link, you can ignore this email.', 'rsvpmaker' )
 	);
 
 	rsvpmailer( $mail );
@@ -7607,7 +7636,7 @@ function rsvpmaker_lookup_update_email_send( $event, $row ) {
 function ajax_rsvp_email_lookup( $email, $event, $send_requested = false ) {
 
 	if ( ! rsvpmail_contains_email( $email ) ) {
-		return '<div class="previous_rsvp_prompt_note">' . esc_html__( 'Please enter a valid email address.', 'rsvpmaker' ) . '</div>';
+		return '<div class="previous_rsvp_prompt_note">' .  esc_html__( 'Please enter a valid email address.', 'rsvpmaker' ) . '</div>';
 	}
 
 	global $wpdb;
@@ -7631,7 +7660,7 @@ function ajax_rsvp_email_lookup( $email, $event, $send_requested = false ) {
 
 	if ( ! $send_requested ) {
 		if ( ! empty( $row ) || ! empty( $any_row ) ) {
-			return '<div class="previous_rsvp_prompt_note previous_rsvp_lookup_offer">' . esc_html__( 'We found a previous RSVP for this email. Should we send you a secure link to retrieve your details?', 'rsvpmaker' ) . ' <button type="button" class="rsvp_lookup_send_yes">' . esc_html__( 'Yes', 'rsvpmaker' ) . '</button> <button type="button" class="rsvp_lookup_send_no">' . esc_html__( 'No', 'rsvpmaker' ) . '</button></div>';
+			return '<div class="previous_rsvp_prompt_note previous_rsvp_lookup_offer">' .  esc_html__( 'We found a previous RSVP for this email. Should we send you a secure link to retrieve your details?', 'rsvpmaker' ) . ' <button type="button" class="rsvp_lookup_send_yes">' .  esc_html__( 'Yes', 'rsvpmaker' ) . '</button> <button type="button" class="rsvp_lookup_send_no">' .  esc_html__( 'No', 'rsvpmaker' ) . '</button></div>';
 		}
 
 		return '';
@@ -7646,7 +7675,7 @@ function ajax_rsvp_email_lookup( $email, $event, $send_requested = false ) {
 			}
 		}
 
-		return '<div class="previous_rsvp_prompt_note">' . esc_html__( 'Check your inbox for a secure link you can use to fill this form with details you\'ve provided previously.', 'rsvpmaker' ) . '</div>';
+		return '<div class="previous_rsvp_prompt_note">' .  esc_html__( 'Check your inbox for a secure link you can use to fill this form with details you\'ve provided previously.', 'rsvpmaker' ) . '</div>';
 	}
 
 	if ( ! empty( $any_row ) ) {
@@ -7658,10 +7687,10 @@ function ajax_rsvp_email_lookup( $email, $event, $send_requested = false ) {
 			}
 		}
 
-		return '<div class="previous_rsvp_prompt_note">' . esc_html__( 'Check your inbox for a secure link you can use to fill this form with details you\'ve provided previously.', 'rsvpmaker' ) . '</div>';
+		return '<div class="previous_rsvp_prompt_note">' .  esc_html__( 'Check your inbox for a secure link you can use to fill this form with details you\'ve provided previously.', 'rsvpmaker' ) . '</div>';
 	}
 
-	return '<div class="previous_rsvp_prompt_note">' . esc_html__( 'No registration associated with that email address was found.', 'rsvpmaker' ) . '</div>';
+	return '<div class="previous_rsvp_prompt_note">' .  esc_html__( 'No registration associated with that email address was found.', 'rsvpmaker' ) . '</div>';
 
 }
 
@@ -7699,7 +7728,7 @@ function rsvp_notifications( $rsvp, $rsvp_to, $subject, $message, $rsvp_confirm 
 			$mail['ical'] = rsvpmaker_to_ical_email( $post->ID, $rsvp_to, $rsvp['email'] );
 			$event_title = get_the_title($post->ID);
 			$dateblock = rsvp_date_block_email( $post->ID );
-			$mail['html'] = '<h1>'.esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];	
+			$mail['html'] = '<h1>'. esc_html($event_title).'</h1>'."\n".$dateblock."\n".$mail['html'];	
 		}
 
 		$mail['to'] = $rsvp['email'];
@@ -7767,7 +7796,7 @@ function rsvp_daily_reminder() {
 
 				$q = "p=$post_id&post_type=rsvpmaker";
 
-				echo "Post ".esc_html($post_id)." is scheduled for a reminder ".esc_html($q)."<br />";
+				echo "Post ". esc_html($post_id)." is scheduled for a reminder ". esc_html($q)."<br />";
 
 				global $post;
 
@@ -7813,13 +7842,13 @@ function rsvp_daily_reminder() {
 
 							$row['yesno'] = ( $row['yesno'] ) ? 'YES' : 'NO';
 
-							$notification = '<p>' . esc_html__( 'This is an automated reminder that we have you on the RSVP list for the event shown below. If your plans have changed, you can update your response by clicking on the RSVP button again.', 'rsvpmaker' ) . '</p>';
+							$notification = '<p>' .  esc_html__( 'This is an automated reminder that we have you on the RSVP list for the event shown below. If your plans have changed, you can update your response by clicking on the RSVP button again.', 'rsvpmaker' ) . '</p>';
 
-							$notification .= '<h3>' . esc_html( $row['yesno'] . ' ' . $row['first'] . ' ' . $row['last'] . ' ' . $row['email'] );
+							$notification .= '<h3>' .  esc_html( $row['yesno'] . ' ' . $row['first'] . ' ' . $row['last'] . ' ' . $row['email'] );
 
 							if ( $row['guestof'] ) {
 
-								$notification .= esc_html( ' (' . esc_html__( 'guest of', 'rsvpmaker' ) . ' ' . $row['guestof'] . ')' );
+								$notification .=  esc_html( ' (' .  esc_html__( 'guest of', 'rsvpmaker' ) . ' ' . $row['guestof'] . ')' );
 							}
 
 							$notification .= "</h3>\n";
@@ -7836,7 +7865,7 @@ function rsvp_daily_reminder() {
 
 										if ( $value ) {
 
-											$notification .= esc_html( "$name: $value" ) . '<br />';
+											$notification .=  esc_html( "$name: $value" ) . '<br />';
 
 										}
 									}
@@ -7858,13 +7887,13 @@ function rsvp_daily_reminder() {
 
 							$notification = wp_kses_post( $notification );
 
-							echo "Notification for ".esc_html($notify)."<br />".wp_kses_post($notification);
+							echo "Notification for ". esc_html($notify)."<br />".wp_kses_post($notification);
 
-							$subject = '=?UTF-8?B?' . base64_encode( esc_html__( 'Event Reminder for', 'rsvpmaker' ) . ' ' . $event_title ) . '?=';
+							$subject = '=?UTF-8?B?' . base64_encode(  esc_html__( 'Event Reminder for', 'rsvpmaker' ) . ' ' . $event_title ) . '?=';
 
 							if ( isset( $rsvp_options['smtp'] ) && ! empty( $rsvp_options['smtp'] ) ) {
 
-								$mail['subject'] = esc_html__( 'Event Reminder for', 'rsvpmaker' ) . ' ' . $event_title;
+								$mail['subject'] =  esc_html__( 'Event Reminder for', 'rsvpmaker' ) . ' ' . $event_title;
 
 								$mail['html'] = $notification;
 
@@ -7878,7 +7907,7 @@ function rsvp_daily_reminder() {
 
 							} else {
 
-								$subject = '=?UTF-8?B?' . base64_encode( esc_html__( 'Event Reminder for', 'rsvpmaker' ) . ' ' . $event_title ) . '?=';
+								$subject = '=?UTF-8?B?' . base64_encode(  esc_html__( 'Event Reminder for', 'rsvpmaker' ) . ' ' . $event_title ) . '?=';
 
 								mail( $notify, $subject, $notification, "From: $rsvpto\nContent-Type: text/html; charset=UTF-8" );
 
@@ -7897,7 +7926,7 @@ function rsvpmaker_extract_email() {
 
 global $wpdb;
 $inchimp = '';
-if(isset($_POST["emails"]) && wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+if(isset($_POST["emails"]) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 	{
 
 $chimp_options = get_option('chimp');
@@ -7919,7 +7948,7 @@ $inguest = [];
 		{
 		$email = strtolower($email);
 		if(!empty($_POST["in_guestlist"])) {
-			$sql = $wpdb->prepare( "SELECT email FROM $guestlist WHERE email LIKE %s", $email );
+			$sql = $wpdb->prepare( "SELECT email FROM %i WHERE email LIKE %s", $guestlist, $email );
 			$in = $wpdb->get_var( $sql );
 			if($in)
 				{
@@ -7940,7 +7969,7 @@ $inguest = [];
 				continue;
 				}
 			}
-		echo "\n<br />".esc_html($email);
+		echo "\n<br />". esc_html($email);
 		}
 if($inchimp)
 	echo "<h3>In MailChimp</h3>".wp_kses_post($inchimp);
@@ -7948,21 +7977,21 @@ if(!empty($inguest))
 	echo "<h3>In Guest List</h3>" . wp_kses_post(implode("\n<br />", $inguest));
 	}
 
-rsvpmaker_admin_heading(esc_html__( 'Extract Email Addresses','rsvpmaker'),__FUNCTION__); ?>
-<p><?php esc_html_e('You can enter an disorganized list of emails mixed in with other text, and this utility will extract just the email addresses.','rsvpmaker');?></p>
+rsvpmaker_admin_heading( esc_html__( 'Extract Email Addresses','rsvpmaker'),__FUNCTION__); ?>
+<p><?php  esc_html_e('You can enter an disorganized list of emails mixed in with other text, and this utility will extract just the email addresses.','rsvpmaker');?></p>
 <form id="form1" name="form1" method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_extract_email') ); ?>">
-<?php rsvpmaker_nonce(); ?>
+<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
   <p>
     <textarea name="emails" id="emails" cols="45" rows="5"></textarea>
   </p>
-  <p><?php esc_html_e('Filter out emails that','rsvpmaker');?>:</p>
+  <p><?php  esc_html_e('Filter out emails that','rsvpmaker');?>:</p>
   <p>
     <input name="in_guestlist" type="checkbox" id="in_guestlist"  />
-  <?php esc_html_e('Are On the Built-in Email List','rsvpmaker');?></p>
+  <?php  esc_html_e('Are On the Built-in Email List','rsvpmaker');?></p>
   <p>
   <p>
     <input name="in_mailchimp" type="checkbox" id="in_mailchimp"  />
-  <?php esc_html_e('Are Registered in MailChimp','rsvpmaker');?></p>
+  <?php  esc_html_e('Are Registered in MailChimp','rsvpmaker');?></p>
   <p>
     <input type="submit" name="button" id="button" value="Submit" />
   </p>
@@ -8048,14 +8077,14 @@ function rsvpmaker_admin_resend_receipt( $rsvp_id ) {
 		$receipt_code = wp_generate_password( 20, false, false );
 		update_post_meta( $post->ID, 'rsvpmaker_receipt_' . $rsvp_id, $receipt_code );
 	}
-	$receipt_link = sprintf( '<p><a href="%s">%s</a></p>', esc_url(add_query_arg( array( 'rsvp_receipt' => $rsvp_id, 'receipt' => $receipt_code, 't' => time() ), get_permalink( $post->ID ) )), esc_html__( 'Print Receipt', 'rsvpmaker' ) );
+	$receipt_link = sprintf( '<p><a href="%s">%s</a></p>', esc_url(add_query_arg( array( 'rsvp_receipt' => $rsvp_id, 'receipt' => $receipt_code, 't' => time() ), get_permalink( $post->ID ) )),  esc_html__( 'Print Receipt', 'rsvpmaker' ) );
 	$notification_body = $receipt_link . $notification_body;
 	
 	// Add RSVP update link
 	$rsvp_options['rsvplink'] = get_rsvp_link( $rsvp->event, false, $rsvp->email, $rsvp->id );
 	$rsvpupdate_link = preg_replace( '/#rsvpnow">[^<]+/', '#rsvpnow">' . $rsvp_options['update_rsvp'], $rsvp_options['rsvplink'] );
 	if ( ! empty( $rsvp->fee_total ) ) {
-		$rsvpupdate_link .= '<p><em>' . esc_html__( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
+		$rsvpupdate_link .= '<p><em>' .  esc_html__( 'Updating your RSVP will recalculate your total. Previous payments are credited, and any new balance due will be shown before payment.', 'rsvpmaker' ) . '</em></p>';
 	}
 	$notification_body = str_replace( '[rsvpupdate]', $rsvpupdate_link, $notification_body );
 	$notification_body = rsvpmaker_email_html( $notification_body );
@@ -8088,6 +8117,6 @@ function rsvpmaker_admin_resend_receipt( $rsvp_id ) {
 	rsvpmaker_tx_email( $post, $mail );
 	
 	// Show success message
-	printf( '<div class="notice notice-success"><p>%s</p></div>', esc_html( sprintf( esc_html__( 'Receipt resent to %s %s (%s)', 'rsvpmaker' ), $rsvp->first, $rsvp->last, $rsvp->email ) ) );
+	printf( '<div class="notice notice-success"><p>%s</p></div>',  esc_html( sprintf(  esc_html__( 'Receipt resent to %s %s (%s)', 'rsvpmaker' ), $rsvp->first, $rsvp->last, $rsvp->email ) ) );
 }
 

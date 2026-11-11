@@ -52,13 +52,13 @@ if(is_array($notes_array)) {
             $user_info = get_userdata($user_id);
             $number_of_ratings = count($ratings_array[$attributes['blockId']]);
             if($user_info) {
-                printf('<p class="agenda-item-notes">Rating by %s: %s</p>', esc_html($user_info->display_name), esc_html($rating));
+                printf('<p class="agenda-item-notes">Rating by %s: %s</p>',  esc_html($user_info->display_name),  esc_html($rating));
             } else {
-                printf('<p class="agenda-item-notes">Rating by user ID %d: %s</p>', esc_html($user_id), esc_html($rating));
+                printf('<p class="agenda-item-notes">Rating by user ID %d: %s</p>',  esc_html($user_id),  esc_html($rating));
             }
         }
         $average_rating = array_sum($ratings_array[$attributes['blockId']]) / $number_of_ratings;
-        printf('<p>Average rating: %.2f based on %d ratings.</p>', esc_html($average_rating), esc_html($number_of_ratings));
+        printf('<p>Average rating: %.2f based on %d ratings.</p>',  esc_html($average_rating),  esc_html($number_of_ratings));
         }
     }
     if(is_array($images_array) && (isset($images_array[$attributes['blockId']]) || isset($_GET['allNotes']))) {
@@ -67,7 +67,7 @@ if(is_array($notes_array)) {
                 $user_info = get_userdata($user_id);
                 echo '<p><img src="' . esc_url($image) . '" style="max-width:95%;" /></p>';
                 if($user_info) {
-                    printf('<p class="agenda-item-notes"><small>Uploaded by %s</small></p>', esc_html($user_info->display_name));
+                    printf('<p class="agenda-item-notes"><small>Uploaded by %s</small></p>',  esc_html($user_info->display_name));
                 }
             }
         }
@@ -88,7 +88,7 @@ add_filter('the_content', 'rsvpmaker_event_content_agendanotes', 99, 2);
 function rsvpmaker_event_content_agendanotes($content) {
     if(isset($_GET['agenda_note_confirm'])) {
         $saved = sanitize_text_field($_GET['agenda_note_confirm']);
-        $content = '<div class="rsvpconfirm"><p>'.__('Saved: ','rsvpmaker').esc_html($saved).'</p></div>'.$content;
+        $content = '<div class="rsvpconfirm"><p>'.__('Saved: ','rsvpmaker'). esc_html($saved).'</p></div>'.$content;
     }
     return $content;
 }
@@ -299,7 +299,7 @@ function rsvpmaker_passwordless_login_shortcode() {
             <?php
         }
         else {
-            echo '<p>Welcome back, ' . esc_html( $current_user->display_name ) . '!</p>';
+            echo '<p>Welcome back, ' .  esc_html( $current_user->display_name ) . '!</p>';
         }
 
         } 

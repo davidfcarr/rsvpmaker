@@ -235,7 +235,7 @@ function qckply_form_demo_rsvpmaker_content($settings) {
     if(!empty($settings['demo_rsvpmakers']) && is_array($settings['demo_rsvpmakers'])) {
     foreach($settings['demo_rsvpmakers'] as $r) {
         $event = get_rsvpmaker_event($r);
-        printf('<p>Keep Event: <input type="checkbox" name="demo_rsvpmakers[]" value="%s" checked="checked" /> %s </p>',intval($r),esc_html($event->post_title));
+        printf('<p>Keep Event: <input type="checkbox" name="demo_rsvpmakers[]" value="%s" checked="checked" /> %s </p>',intval($r), esc_html($event->post_title));
     }
     }
     $events_dropdown = rsvpmaker_get_events_dropdown (true, false);//events dropdown including drafts
@@ -243,7 +243,7 @@ function qckply_form_demo_rsvpmaker_content($settings) {
     $classAndID = ($i > 0) ? ' class="hidden_item rsvpmaker" id="rsvpmaker_'.$i.'" ' : ' class="rsvpmaker" id="rsvpmaker_'.$i.'" ';
     printf('<p%s><label>Demo Event</label> <select class="select_with_hidden" name="demo_rsvpmakers[]">%s</select></p>'."\n",wp_kses($classAndID, qckply_kses_allowed()),'<option value="">Choose Event</option>'.wp_kses($events_dropdown, qckply_kses_allowed()));
     }
-    printf('<p><input type="radio" name="settings[rsvpmaker_prompt]" value="1" %s /> %s <input type="radio" name="settings[rsvpmaker_prompt]" value="0" %s /> %s </p>', empty($settings['rsvpmaker_prompt']) ? '' : ' checked="checked" ',esc_html__('SHOW','quick-playground'), !empty($settings['rsvpmaker_prompt']) ? '' : ' checked="checked" ', esc_html__('DO NOT SHOW RSVPMaker help prompts in demo.','quick-playground' ) );
+    printf('<p><input type="radio" name="settings[rsvpmaker_prompt]" value="1" %s /> %s <input type="radio" name="settings[rsvpmaker_prompt]" value="0" %s /> %s </p>', empty($settings['rsvpmaker_prompt']) ? '' : ' checked="checked" ', esc_html__('SHOW','quick-playground'), !empty($settings['rsvpmaker_prompt']) ? '' : ' checked="checked" ',  esc_html__('DO NOT SHOW RSVPMaker help prompts in demo.','quick-playground' ) );
     }
 }
 

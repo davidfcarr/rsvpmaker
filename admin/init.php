@@ -17,13 +17,13 @@ function rsvpmaker_block_category( $categories, $post ) {
 	if ( 'rsvpmaker_form' === $post_type ) {
 		$custom_categories[] = array(
 			'slug'  => 'rsvpmaker-form',
-			'title' => __( 'RSVPMaker Form Fields', 'rsvpmaker' ),
+			'title' => esc_html__( 'RSVPMaker Form Fields', 'rsvpmaker' ),
 		);
 	}
 
 	$custom_categories[] = array(
 		'slug'  => 'rsvpmaker',
-		'title' => __( 'RSVPMaker', 'rsvpmaker' ),
+		'title' => esc_html__( 'RSVPMaker', 'rsvpmaker' ),
 	);
 
 	return array_merge( $custom_categories, $categories );

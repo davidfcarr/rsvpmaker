@@ -276,7 +276,7 @@ function rsvpmaker_paypal_choice($atts = []) {
       } elseif ( $currency == 'EUR' ) {
         $currency_symbol = 'â‚¬';
       }
-      $output .= sprintf( '<p>%s %s<br />%s</p>', esc_html( $currency_symbol.$vars['amount'] ), esc_html( $currency ), esc_html( $vars['description'] ) );
+      $output .= sprintf( '<p>%s %s<br />%s</p>',  esc_html( $currency_symbol.$vars['amount'] ),  esc_html( $currency ),  esc_html( $vars['description'] ) );
     }
   } else {
     $output .= sprintf('<p>%s:</p>',__('Choices','rsvpmaker'));
@@ -412,7 +412,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     return ob_get_clean();
   }
 
-function rsvpmaker_paypay_button_embed($atts) {
+function rsvpmaker_paypal_button_embed($atts) {
 global $rsvp_options;
 global $paypal_rest_keys, $post;
 if(!$paypal_rest_keys)
@@ -431,7 +431,7 @@ if ( isset( $atts['paymentType'] ) && ( $atts['paymentType'] == 'donation' ) ) {
         $atts['amount'] = sanitize_text_field($_GET['amount']);
     }
   else
-    return sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value=""><br><button class="stripebutton">%s</button>%s</form>', get_permalink(), __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $currency ) ), __( 'Pay with PayPal' ), rsvpmaker_nonce('return') );
+    return sprintf( '<form action="%s" method="get">%s (%s): <input type="text" name="amount" value=""><br><button class="stripebutton">%s</button>%s</form>', get_permalink(), esc_html__( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $currency ) ), esc_html__( 'Pay with PayPal' ), wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) );
 }
 if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id']))
   return 'client ID not set';
@@ -463,7 +463,7 @@ $output = $explanation . rsvpmaker_paypal_button( $charge, $currency, $descripti
 
 $show = ( ! empty( $atts['showdescription'] ) && ( $atts['showdescription'] == 'yes' ) ) ? true : false;
 if ( $show && empty($atts['paypal']) ) {
-  $output .= sprintf( '<p>%s %s<br />%s</p>', esc_html( $currency_symbol.$atts['amount'] ), esc_html( $currency ), esc_html( $atts['description'] ) );
+  $output .= sprintf( '<p>%s %s<br />%s</p>',  esc_html( $currency_symbol.$atts['amount'] ),  esc_html( $currency ),  esc_html( $atts['description'] ) );
 }
 
 return $output;

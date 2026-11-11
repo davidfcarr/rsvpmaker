@@ -1,5 +1,5 @@
 <div <?php echo wp_kses_post(get_block_wrapper_attributes()); ?>>
 <?php
-echo rsvpmaker_emailpostorposts($attributes);
+echo wp_kses(rsvpmaker_emailpostorposts($attributes), dcarr_kses_form());
 ?>
 </div>

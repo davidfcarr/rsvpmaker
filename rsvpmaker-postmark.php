@@ -73,10 +73,10 @@ function show_rsvpmaker_postmark_status() {
 }
 
 function rsvpmaker_postmark_options() {
-return printf('<p>Postmark Email Settings can now be found on a the <a href="%s">Postmark tab</a> of the main RSVPMaker settings page.</p>',admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark'));    
+return printf('<p>Postmark Email Settings can now be found on a the <a href="%s">Postmark tab</a> of the main RSVPMaker settings page.</p>',esc_url(admin_url('options-general.php?page=rsvpmaker_settings&tab=postmark')));    
 //disabled
     global $postmark_settings, $wpdb;
-    if(isset($_POST['postmark_mode']) && rsvpmaker_verify_nonce()){
+    if(isset($_POST['postmark_mode']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION )){
         $postmark_settings['postmark_mode'] = sanitize_text_field($_POST['postmark_mode']);
         $postmark_settings['postmark_sandbox_key'] = sanitize_text_field($_POST['postmark_sandbox_key']);
         $postmark_settings['postmark_production_key'] = sanitize_text_field($_POST['postmark_production_key']);
@@ -138,7 +138,7 @@ return printf('<p>Postmark Email Settings can now be found on a the <a href="%s"
         if(empty($postmark_settings['postmark_load_alert_emails']))
             $postmark_settings['postmark_load_alert_emails'] = rsvpmaker_postmark_admin_email();
     echo '<p>To fill in these variables, first <a href="https://account.postmarkapp.com/sign_up" target="_blank">create a Postmark account</a>. Postmark provides reliable email deliver for both broadcast / mailing list messages and transactional messages such as RSVP confirmations. Premium add-ons and customization services for managing email forwarding and metered access for multisite site owners are available from <a href="mailto:david@rsvpmaker.com" target="_blank">david@rsvpmaker.com</a>.</p>';        
-    printf('<form method="post" action="%s">',admin_url('options-general.php?page=rsvpmaker_settings&tab=email'));
+    printf('<form method="post" action="%s">', esc_url(admin_url('options-general.php?page=rsvpmaker_settings&tab=email')));
     $checked = (empty($postmark_settings['postmark_mode'])) ? ' checked="checked" ' : '';
     printf('<p><input type="radio" name="postmark_mode" value="" %s> Off - Postmark not managing email</p>',$checked);
     $checked = ($postmark_settings['postmark_mode'] == 'sandbox') ? ' checked="checked" ' : '';
@@ -153,24 +153,24 @@ return printf('<p>Postmark Email Settings can now be found on a the <a href="%s"
     $url = rest_url('rsvpmaker/v1/postmark_incoming/'.$code);
     $ckyes = (!empty($postmark_settings['handle_incoming'])) ? ' checked="checked" ' : '';
     $ckno = (empty($postmark_settings['handle_incoming'])) ? ' checked="checked" ' : '';
-    printf('<p>Handle Incoming Webhook: <input type="radio" name="handle_incoming" value="%s" %s> Yes <input type="radio" name="handle_incoming" value="" %s> No<br>Webhook address to register in Postmark %s</p>',$code,$ckyes, $ckno,esc_url($url));
+    printf('<p>Handle Incoming Webhook: <input type="radio" name="handle_incoming" value="%s" %s> Yes <input type="radio" name="handle_incoming" value="" %s> No<br>Webhook address to register in Postmark %s</p>',esc_attr($code),wp_kses($ckyes, dcarr_kses_form()), wp_kses($ckno, dcarr_kses_form()),esc_url($url));
     if(is_multisite()) {
         $sites = get_sites(array('orderby' => 'domain'));
         $col1 = $col2 = '';
         $checkyes = ($postmark_settings['restricted']) ? 'checked="checked"' : '';
         $checkno = (!$postmark_settings['restricted']) ? 'checked="checked"' : '';
-        printf('<p><strong>Enable for</strong> <input type="radio" name="restricted" value="0" %s> All sites <input type="radio" name="restricted" value="1" %s> Just the sites checked below&nbsp;&nbsp;&nbsp;</p>',$checkno,$checkyes);
+        printf('<p><strong>Enable for</strong> <input type="radio" name="restricted" value="0" %s> All sites <input type="radio" name="restricted" value="1" %s> Just the sites checked below&nbsp;&nbsp;&nbsp;</p>',wp_kses($checkno, dcarr_kses_form()),wp_kses($checkyes, dcarr_kses_form()) );
         foreach($sites as $site) {
             $checked = (in_array($site->blog_id,$postmark_settings['enabled'])) ? 'checked="checked"' : '';
-            $col1 .= sprintf('<div class="enabled_sites"><input type="checkbox" name="enabled[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,esc_html($site->domain));
+            $col1 .= sprintf('<div class="enabled_sites"><input type="checkbox" name="enabled[]" value="%d" %s> %s</div>',$site->blog_id, wp_kses($checked, dcarr_kses_form()) , esc_html($site->domain));
             $checked = (in_array($site->blog_id,$postmark_settings['sandbox_only'])) ? 'checked="checked"' : '';
-            $col2 .= sprintf('<div class="enabled_sites"><input type="checkbox" name="sandbox_only[]" value="%d" %s> %s</div>',$site->blog_id, $checked ,esc_html($site->domain));
+            $col2 .= sprintf('<div class="enabled_sites"><input type="checkbox" name="sandbox_only[]" value="%d" %s> %s</div>',$site->blog_id, wp_kses($checked, dcarr_kses_form()) , esc_html($site->domain));
         }
-        printf('<table><tr><th>Enabled</th><th>Sandbox Only</th></tr><tr><td>%s</td><td>%s</td></tr></table>',$col1,$col2);
+        printf('<table><tr><th>Enabled</th><th>Sandbox Only</th></tr><tr><td>%s</td><td>%s</td></tr></table>',wp_kses($col1, dcarr_kses_form()),wp_kses($col2, dcarr_kses_form()));
         $message = isset($postmark_settings['site_admin_message']) ? $postmark_settings['site_admin_message'] : 'Your site is not currently allowed to send to more than 100 recipients. Contact the network administrator.';
         echo '<p>Message to administrators of sites not authorized to send to > 100 recipients.<br><textarea name="site_admin_message" cols="100" rows="5">'.esc_textarea($message).'</textarea></p>';
     }
-    rsvpmaker_nonce();
+    wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
     echo '<input type="hidden" name="tab" value="email">';
     submit_button();
     echo '</form>';
@@ -216,8 +216,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         return;
     if(sizeof($recipients) > 200) {
         $chunks = array_chunk($recipients,200);
-        echo $log = sprintf('message split into %s chunks for '.intval($post_id),sizeof($chunks));
-        // error_log($log);
+        echo $log =  esc_html(sprintf('message split into %s chunks for '.intval($post_id),sizeof($chunks)));
         $recipients = array_shift($chunks);
         foreach($chunks as $chunk) {
             $size = sizeof($chunk);
@@ -227,6 +226,9 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
         }
         // error_log('scheduling rsvpmaker_postmark_chunked_batches');
         wp_schedule_event( strtotime('+95 seconds'), 'minute', 'rsvpmaker_postmark_chunked_batches' );
+        if(defined('RSVPMAKER_DEBUG') && RSVPMAKER_DEBUG) {
+		error_log('rsvpmaker_postmark_broadcast scheduled chunked batches for post '.$post_id.' chunks:'.sizeof($chunks));
+	    }
     }
 
     $postmark_settings = get_rsvpmaker_postmark_options();
@@ -304,7 +306,7 @@ function rsvpmaker_postmark_broadcast($recipients,$post_id,$message_stream='',$r
     }
     if(count($sent)) {
         rsvpmaker_postmark_sent_log($sent,$mail['Subject'],$hash,$mail['Tag'],get_current_blog_id());
-        printf('Successful sends %d ending with %s',count($sent),$sent[sizeof($sent)-1]);
+        printf('Successful sends %d ending with %s',count($sent), esc_html($sent[sizeof($sent)-1]));
         update_post_meta($post_id,'rsvpmail_sent_postmark',count($sent).' ending with '.array_pop($sent));
     }
     if(count($send_error)) {
@@ -616,7 +618,7 @@ function rsvpmaker_postmark_incoming($forwarders,$emailobj,$post_id) {
                 rsvpmaker_testlog('postmark_incoming_output',$testoutput);
                 continue;
             }
-        $output .= sprintf('<p>%s = %s</p>',esc_html($email),esc_html(var_export($result,true)));
+        $output .= sprintf('<p>%s = %s</p>', esc_html($email), esc_html(var_export($result,true)));
         if('info' == $result['type']) {
             $from = is_multisite() ? get_blog_option($result['blog_id'],'admin_email') : get_option('admin_email');
             do_action('rsvpmaker_postmark_autoreply',$emailobj,$result['blog_id'],$from);
@@ -1153,10 +1155,10 @@ function rsvpmaker_postmark_search_stream_messages($client, $stream_id, $stream_
         $messages_debug = rsvpmaker_postmark_debug_collection($response,'Messages');
         $msg_count = count($messages_debug);
         $sample = $msg_count ? array_slice(array_map('rsvpmaker_postmark_debug_to_array',$messages_debug), 0, 3) : array();
-        echo '<details open><summary><strong>Debug: getOutboundMessages &mdash; '.esc_html($stream_label).' ('.esc_html($stream_id).')</strong></summary>';
-        echo '<p><strong>Params:</strong> <code>'.esc_html(json_encode($params)).'</code></p>';
-        echo '<p><strong>TotalCount:</strong> '.esc_html((string) rsvpmaker_postmark_message_value($raw,'TotalCount','?')).' | <strong>Messages in response:</strong> '.$msg_count.'</p>';
-        if($sample) echo '<pre style="overflow:auto;max-height:300px;background:#f6f7f7;padding:10px">'.esc_html(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)).'</pre>';
+        echo '<details open><summary><strong>Debug: getOutboundMessages &mdash; '. esc_html($stream_label).' ('. esc_html($stream_id).')</strong></summary>';
+        echo '<p><strong>Params:</strong> <code>'. esc_html(json_encode($params)).'</code></p>';
+        echo '<p><strong>TotalCount:</strong> '. esc_html((string) rsvpmaker_postmark_message_value($raw,'TotalCount','?')).' | <strong>Messages in response:</strong> '. esc_html($msg_count).'</p>';
+        if($sample) echo '<pre style="overflow:auto;max-height:300px;background:#f6f7f7;padding:10px">'. esc_html(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)).'</pre>';
         echo '</details>';
     }
     $messages = rsvpmaker_postmark_message_value($response,'Messages',array());
@@ -1188,10 +1190,10 @@ function rsvpmaker_postmark_search_stream_engagement($client, $stream_id, $strea
         $items_debug = rsvpmaker_postmark_debug_collection($response,$response_key);
         $item_count = count($items_debug);
         $sample = $item_count ? array_slice(array_map('rsvpmaker_postmark_debug_to_array',$items_debug), 0, 3) : array();
-        echo '<details open><summary><strong>Debug: '.esc_html($endpoint).' &mdash; '.esc_html($stream_label).' ('.esc_html($stream_id).')</strong></summary>';
-        echo '<p><strong>Params:</strong> <code>'.esc_html(json_encode($params)).'</code></p>';
-        echo '<p><strong>TotalCount:</strong> '.esc_html((string) rsvpmaker_postmark_message_value($raw,'TotalCount','?')).' | <strong>Items in response:</strong> '.$item_count.'</p>';
-        if($sample) echo '<pre style="overflow:auto;max-height:300px;background:#f6f7f7;padding:10px">'.esc_html(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)).'</pre>';
+        echo '<details open><summary><strong>Debug: '. esc_html($endpoint).' &mdash; '. esc_html($stream_label).' ('. esc_html($stream_id).')</strong></summary>';
+        echo '<p><strong>Params:</strong> <code>'. esc_html(json_encode($params)).'</code></p>';
+        echo '<p><strong>TotalCount:</strong> '. esc_html((string) rsvpmaker_postmark_message_value($raw,'TotalCount','?')).' | <strong>Items in response:</strong> '.$item_count.'</p>';
+        if($sample) echo '<pre style="overflow:auto;max-height:300px;background:#f6f7f7;padding:10px">'. esc_html(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)).'</pre>';
         echo '</details>';
     }
     if(empty($items) || !(is_array($items) || $items instanceof Traversable))
@@ -1332,7 +1334,7 @@ function rsvpmaker_postmark_show_sent_log() {
             foreach($results as $row) {
                 $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
                 $home = (is_multisite()) ? get_blog_option($row->blog_id,'home') : get_option('home');
-                printf('<tr><td>%s</td><td><a href="%s">%s</a></td><td>%s</td><td>%s</td></tr>',esc_html($name),esc_url($home),esc_html($home),$row->ym,$row->total);
+                printf('<tr><td>%s</td><td><a href="%s">%s</a></td><td>%s</td><td>%s</td></tr>', esc_html($name),esc_url($home), esc_html($home), esc_html($row->ym), esc_html($row->total));
             }
             echo '</table>';    
         }
@@ -1357,7 +1359,7 @@ function rsvpmaker_postmark_show_sent_log() {
     @media (max-width: 782px) { .postmark-search-grid { grid-template-columns: 1fr; } }
     </style>';
 
-    printf('<form method="get" action="%s">',admin_url('edit.php'));
+    printf('<form method="get" action="%s">',esc_url(admin_url('edit.php')));
     echo '<input type="hidden" name="post_type" value="rsvpemail">';
     echo '<input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log">';
     if(isset($_GET['blog_id']))
@@ -1413,7 +1415,7 @@ function rsvpmaker_postmark_show_sent_log() {
                 }
             }
             catch(PostmarkException $e) {
-                printf('<p><strong>Search error:</strong> %s</p>',esc_html($e->getMessage()));
+                printf('<p><strong>Search error:</strong> %s</p>', esc_html($e->getMessage()));
                 $search_results = array();
             }
 
@@ -1442,13 +1444,13 @@ function rsvpmaker_postmark_show_sent_log() {
                     $ts = !empty($row['_ts']) ? intval($row['_ts']) : 0;
                     $when = $ts ? rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,$ts) : 'n/a';
                     printf('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s<br><small>%s</small></td><td>%s<br><small>%s</small></td></tr>',
-                        esc_html($subject),
-                        esc_html($when),
-                        esc_html($recipient),
-                        esc_html($row['stream_label']),
-                        esc_html($row['stream_id']),
-                        rsvpmaker_postmark_status_badges($row),
-                        esc_html($status)
+                         esc_html($subject),
+                         esc_html($when),
+                         esc_html($recipient),
+                         esc_html($row['stream_label']),
+                         esc_html($row['stream_id']),
+                        wp_kses(rsvpmaker_postmark_status_badges($row), dcarr_kses_form()),
+                         esc_html($status)
                     );
                 }
                 echo '</tbody></table>';
@@ -1475,13 +1477,13 @@ function rsvpmaker_postmark_show_sent_log() {
     $results = $wpdb->get_results($sql);
     foreach($results as $row) {
         $name = (is_multisite()) ? get_blog_option($row->blog_id,'blogname') : get_option('blogname');
-        $text = sprintf('<strong>%s</strong>: %d (<a href="%s">monthly</a>)',esc_html($name),$row->total,esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&blog_id='.$row->blog_id)));
+        $text = sprintf('<strong>%s</strong>: %d (<a href="%s">monthly</a>)', esc_html($name),$row->total,esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&monthly=1&blog_id='.$row->blog_id)));
         $sums[$name] = $text;
         $grandtotal += $row->total;
     }
     if(!empty($sums)) {
         ksort($sums);
-        echo '<p>Totals: '.implode(', ',$sums).'</p>';
+        echo '<p>Totals: '. esc_html(implode(', ',$sums)).'</p>';
         if($blog_id == 1)
             echo '<p><strong>Combined</strong>: '.intval($grandtotal).'</p>';
     }
@@ -1507,25 +1509,25 @@ function rsvpmaker_postmark_show_sent_log() {
                     else {
                         $tag = empty($click['Tag']) ? 'misc' : $click['tag'];
                         $email = isset($_GET['hide']) ? rsvpmaker_partiallyHideEmail($click['recipient']) : $click['recipient'];
-                        $clicklog[$tag][] = sprintf('%s clicked by <strong>%s</strong> %s, Message ID %s',esc_html($click['originallink']),esc_html($email),esc_html($click['geo']['country']),esc_html($click['MessageId']));
+                        $clicklog[$tag][] = sprintf('%s clicked by <strong>%s</strong> %s, Message ID %s', esc_html($click['originallink']), esc_html($email), esc_html($click['geo']['country']), esc_html($click['MessageId']));
                     }
                 }
             }
             if($clickcount)
             {
-                printf('<h3>Clicks: %d <a href="%s">(details)</a></h3>',$clickcount,esc_url($detailsurl));
+                printf('<h3>Clicks: %d <a href="%s">(details)</a></h3>',intval($clickcount),esc_url($detailsurl));
                 foreach($clicklog as $tag => $items)
                 {
                     $title = ('misc' == $tag) ? 'miscellaneous' : rsvpmaker_postmark_tag_to_title($tag);
                     if(empty($title))
                         $title = 'miscellaneous';
-                    printf('<p><strong>%s</strong> %s clicks</p>',esc_html($title),sizeof($items));
+                    printf('<p><strong>%s</strong> %s clicks</p>', esc_html($title),sizeof($items));
                     if(isset($_GET['details']))
-                        echo '<p>'.esc_html(implode('<br>',$items)).'</p>';
+                        echo '<p>'. esc_html(implode('<br>',$items)).'</p>';
                 }
             }
             if(!empty($unsub))
-                printf('<p>Unsubscribe clicks: %s</p>',esc_html(implode(', ',$unsub)));
+                printf('<p>Unsubscribe clicks: %s</p>', esc_html(implode(', ',$unsub)));
             $opens = $client->getOpenStatistics(500, $offset, $recipient, $target_tag);
             $opencount = 0;
             if($opens['totalcount']) {
@@ -1547,9 +1549,9 @@ function rsvpmaker_postmark_show_sent_log() {
                         $title = ('misc' == $tag) ? 'miscellaneous' : rsvpmaker_postmark_tag_to_title($tag);
                         if(empty($title))
                             $title = 'miscellaneous';
-                        printf('<p><strong>%s</strong> (<a href="%s">Details</a>) %s opens</p>',esc_html($title),esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$tag)),sizeof($items));
+                        printf('<p><strong>%s</strong> (<a href="%s">Details</a>) %s opens</p>', esc_html($title),esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$tag)),sizeof($items));
                         if(isset($_GET['details']))
-                            echo '<p>'.esc_html(implode(', ',$items)).'</p>';
+                            echo '<p>'. esc_html(implode(', ',$items)).'</p>';
                     }
             }
             else {
@@ -1557,17 +1559,17 @@ function rsvpmaker_postmark_show_sent_log() {
             }
 
         } catch(PostmarkException $e) {
-            printf('<p><strong>Postmark stats error:</strong> %s</p>',esc_html($e->getMessage()));
+            printf('<p><strong>Postmark stats error:</strong> %s</p>', esc_html($e->getMessage()));
         } }
     }
 
     echo '</div>';
 
     $days = (isset($_GET['days'])) ? intval($_GET['days']) : 31;
-    printf('<form method="get" action="%s">Showing outgoing message data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> days <button>Change</button></form>',admin_url('edit.php'),$days);
+    printf('<form method="get" action="%s">Showing outgoing message data for <input type="hidden" name="post_type" value="rsvpemail" ><input type="hidden" name="page" value="rsvpmaker_postmark_show_sent_log" ><input name="days" value="%s"> days <button>Change</button></form>',esc_url(admin_url('edit.php')),esc_attr($days));
 
     if($blog_id > 1) {
-        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) AND blog_id=%d ORDER BY id DESC",$table, $days, $blog_id));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE time > DATE_SUB(NOW(), INTERVAL %d DAY) AND blog_id=%d ORDER BY id DESC",esc_sql($table), $days, $blog_id));
         $showmulti = false;
     }
     else {
@@ -1581,8 +1583,8 @@ function rsvpmaker_postmark_show_sent_log() {
             $recipients = wp_kses_post(str_replace(',',', ',$row->recipients));
         else
             $recipients = wp_kses_post((strlen($row->recipients) > 200) ? substr($row->recipients,0,100).'... (<a href="'.esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&showall='.$row->id)).'#row'.intval($row->id).'">Show All</a>)' : $row->recipients);
-        $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a><br>%s',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag)),esc_html($row->tag));
-        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id,esc_html($row->subject),rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)).' '.esc_html($row->time),$row->count,$row->blog_id,$recipients,$prompt);
+        $prompt = empty($row->tag) ? '' : sprintf('<a href="%s">Opens/Clicks</a><br>%s',esc_url(admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_postmark_show_sent_log&details=1&tag='.$row->tag)), esc_html($row->tag));
+        printf('<tr id="row%d"><td>%s<br>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',$row->id, esc_html($row->subject),rsvpmaker_date($rsvp_options['long_date'].' '.$time_format,strtotime($row->time)).' '. esc_html($row->time), esc_html($row->count), esc_html($row->blog_id), esc_html($recipients),wp_kses($prompt, dcarr_kses_form()));
     }
     echo '</tbody></table>';
 
@@ -1605,7 +1607,7 @@ function rsvpmaker_postmark_show_sent_log() {
                     continue;
                 }
                 else {
-                    echo esc_html($email).' '.esc_html($s['CreatedAt']).' ';
+                    echo  esc_html($email).' '. esc_html($s['CreatedAt']).' ';
                     rsvpmail_add_problem($email,$s['SuppressionReason']);    
                 }
             } 
@@ -1622,10 +1624,10 @@ function rsvpmaker_postmark_show_sent_log() {
             preg_match('/inactive addresses: ([^\s]+). Inactive/',$row->meta_value,$matches);
             if(!empty($matches[1])) {
             // Do not auto-block from historical error-log text. Active suppressions are synced above.
-            echo '<li>inactive (log only): '.esc_html($matches[1]). ' '.esc_html(var_export(rsvpmail_is_problem($matches[1]),true)). '</li>';
+            echo '<li>inactive (log only): '. esc_html($matches[1]). ' '. esc_html(var_export(rsvpmail_is_problem($matches[1]),true)). '</li>';
             }
             else
-            echo '<li>'.esc_html(var_export($matches,true)).' '.esc_html($row->meta_value).'</li>';
+            echo '<li>'. esc_html(var_export($matches,true)).' '. esc_html($row->meta_value).'</li>';
         }
         echo '</ul>';
     }
@@ -1788,7 +1790,7 @@ function rsvpmaker_postmark_forwarder_tester() {
             }
 
         }
-        $output .= sprintf('<p>%s - %s %s</p>',esc_html($to),esc_html($domain_lookup),esc_html($femail));
+        $output .= sprintf('<p>%s - %s %s</p>', esc_html($to), esc_html($domain_lookup), esc_html($femail));
     }
 
     return $output.'<p>'.$original . ' combined: '.implode(', ',$combined).' <br>recipients '.implode(', ',$recipients).'</p>';

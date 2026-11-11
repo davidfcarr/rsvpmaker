@@ -206,6 +206,10 @@ if(rsvpmaker_rest.template_url != '') {
 						url: rsvpmaker_rest.template_url,
 						label: rsvpmaker_rest.template_label,
 					},
+					...(rsvpmaker_rest.override_template_url && rsvpmaker_rest.override_template_url != '' ? [{
+						url: rsvpmaker_rest.override_template_url,
+						label: __('Update template and related events'),
+					}] : []),
 				]
 			}
 	);
@@ -289,6 +293,47 @@ wp.data.dispatch('core/notices').createNotice(
 );
 		}
 } );
+}
+if(rsvpmaker_rest.post_type == 'rsvpmaker') {
+	if(rsvpmaker_rest.override_template_url && rsvpmaker_rest.override_template_url != '') {
+		let wasSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+		let wasAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+		let wasPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
+		// determine whether to show notice
+		subscribe( () => {
+			const isSavingPost = wp.data.select( 'core/editor' ).isSavingPost();
+			const isAutosavingPost = wp.data.select( 'core/editor' ).isAutosavingPost();
+			const isPreviewingPost = wp.data.select( 'core/editor' ).isPreviewingPost();
+			const shouldTriggerTemplateOverrideNotice = (
+					( wasSavingPost && ! isSavingPost && ! wasAutosavingPost ) ||
+					( wasAutosavingPost && wasPreviewingPost && ! isPreviewingPost )
+			);
+
+			// Save current state for next inspection.
+			wasSavingPost = isSavingPost;
+			wasAutosavingPost = isAutosavingPost;
+			wasPreviewingPost = isPreviewingPost;
+
+			if ( shouldTriggerTemplateOverrideNotice ) {
+		wp.data.dispatch('core/notices').createNotice(
+		'success', // Can be one of: success, info, warning, error.
+		__('Option: update the template and related events to match your changes.'), // Text string to display.
+		{
+			id: 'rsvptemplateovernide', //assigning an ID prevents the notice from being added repeatedly
+			isDismissible: true, // Whether the user can dismiss the notice.
+			// Any actions the user can perform.
+			type: 'snackbar',
+			actions: [
+				{
+					url: rsvpmaker_rest.override_template_url,
+					label: __('Update template'),
+				}
+			]
+		}
+		);
+			}
+	} );
+	}
 }
 
 }

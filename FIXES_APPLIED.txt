@@ -11,23 +11,23 @@ FIX SUMMARY TABLE
 
 # | Line | Pattern Type | Vulnerability | Escape Function(s) | Status
 --|------|--------------|----------------|-------------------|--------
-1 | 20 | Echo concat | Unescaped $schedule | esc_html() | FIXED
-2 | 311 | printf | Unescaped $opost->post_title | esc_html() | FIXED
-3 | 626 | printf | Unescaped $event->post_title | esc_html() | FIXED
-4 | 946 | String concat | Unescaped $post->post_title | esc_html() | FIXED
-5 | 1336 | printf | Unescaped $row->post_title | esc_html() | FIXED
-6 | 1532 | printf | Unescaped $template->post_title | esc_html() | FIXED
+1 | 20 | Echo concat | Unescaped $schedule |  esc_html() | FIXED
+2 | 311 | printf | Unescaped $opost->post_title |  esc_html() | FIXED
+3 | 626 | printf | Unescaped $event->post_title |  esc_html() | FIXED
+4 | 946 | String concat | Unescaped $post->post_title |  esc_html() | FIXED
+5 | 1336 | printf | Unescaped $row->post_title |  esc_html() | FIXED
+6 | 1532 | printf | Unescaped $template->post_title |  esc_html() | FIXED
 7 | 1553 | Echo concat | Unescaped $template_options | wp_kses_post() | FIXED
-8 | 1555 | printf | Unescaped $event->date, $event->post_title | esc_html() | FIXED
-9 | 1704 | printf | Unescaped $schedule | esc_html() | FIXED
+8 | 1555 | printf | Unescaped $event->date, $event->post_title |  esc_html() | FIXED
+9 | 1704 | printf | Unescaped $schedule |  esc_html() | FIXED
 10 | 1764 | sprintf | Unescaped $newtime (1st) | esc_attr() | FIXED
 11 | 1765 | sprintf | Unescaped $newtime (2nd) | esc_attr() | FIXED
 12 | 1794 | String concat | Unescaped $sched->postID in value attr | esc_attr() | FIXED
 13 | 1820 | sprintf | Multiple unescaped: $a, $sched->postID, $class, etc. | esc_attr(), esc_url(), wp_kses_post() | FIXED
 14 | 1832 | sprintf | Multiple unescaped: $a, $sched->postID, $class, $fulldate | esc_attr(), esc_url(), wp_kses_post() | FIXED
-15 | 1834 | sprintf | Unescaped rsvpmaker_date() output | esc_attr(), esc_html() | FIXED
+15 | 1834 | sprintf | Unescaped rsvpmaker_date() output | esc_attr(),  esc_html() | FIXED
 16 | 1875 | sprintf | Unescaped $action in href | esc_url() | FIXED
-17 | 1878 | sprintf | Unescaped $f->post_title, $f->date, $different | esc_html() | FIXED
+17 | 1878 | sprintf | Unescaped $f->post_title, $f->date, $different |  esc_html() | FIXED
 18 | 2182 | String concat | Unescaped $action in form action attr | esc_attr() | FIXED
 19 | 2311 | sprintf | Unescaped get_post_permalink() in href | esc_url() | FIXED
 20 | 2325 | sprintf | Unescaped get_post_permalink() in href | esc_url() | FIXED
@@ -39,7 +39,7 @@ VULNERABILITY BREAKDOWN BY TYPE
 
 Stored XSS via Post Titles: 6 instances
   - Lines: 311, 626, 946, 1336, 1532, 1555
-  - Fix: esc_html()
+  - Fix:  esc_html()
 
 HTML Attribute Injection: 8 instances
   - Lines: 1764, 1765, 1794, 1820, 1832, 1834, 2182
@@ -51,13 +51,13 @@ URL Injection: 4 instances
 
 HTML Content Injection: 5 instances
   - Lines: 20, 1553, 1704, 2505, and embedded in 1820/1832
-  - Fix: esc_html(), wp_kses_post()
+  - Fix:  esc_html(), wp_kses_post()
 
 ================================================================================
 ESCAPE FUNCTIONS DISTRIBUTION
 ================================================================================
 
-esc_html() - 12 instances
+ esc_html() - 12 instances
   - Purpose: Escape plain text for safe display in HTML
   - Used for: post titles, schedule text, date display, event data
 

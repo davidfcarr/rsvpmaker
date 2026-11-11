@@ -10,11 +10,19 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.3.5
+* Version: 12.3.4
 */
 
 function get_rsvpversion() {
-	return '12.3.5';
+	return '12.3.4';
+}
+
+if ( ! defined( 'RSVPMAKER_NONCE_FIELD' ) ) {
+	define( 'RSVPMAKER_NONCE_FIELD', 'timelord' );
+}
+
+if ( ! defined( 'RSVPMAKER_NONCE_ACTION' ) ) {
+	define( 'RSVPMAKER_NONCE_ACTION', 'galifrey' );
 }
 
 global $wp_version;
@@ -86,7 +94,7 @@ function rsvp_options_defaults() {
 
 		'add_timezone'                      => false,
 
-		'rsvp_form_title'                   => __( 'RSVP Now!', 'rsvpmaker' ),
+		'rsvp_form_title'                   => esc_html__( 'RSVP Now!', 'rsvpmaker' ),
 
 		'defaulthour'                       => '19',
 
@@ -112,7 +120,7 @@ function rsvp_options_defaults() {
 
 		'rsvpmaker_send_confirmation_email' => true,
 
-		'update_rsvp'                       => __( 'Update RSVP', 'rsvpmaker' ),
+		'update_rsvp'                       => esc_html__( 'Update RSVP', 'rsvpmaker' ),
 		'rsvp_recaptcha_site_key' => '',
 		'rsvp_recaptcha_secret' => '',
 		'rsvp_recaptcha_version' => '',
@@ -209,23 +217,23 @@ function rsvp_options_defaults() {
 
 		} else {
 
-			$form = '<p><label>' . __( 'Email', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="email" required="1"]</p>
+			$form = '<p><label>' . esc_html__( 'Email', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="email" required="1"]</p>
 
-		<p><label>' . __( 'First Name', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="first" required="1"]</p>
+		<p><label>' . esc_html__( 'First Name', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="first" required="1"]</p>
 
-		<p><label>' . __( 'Last Name', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="last" required="1"]</p>
+		<p><label>' . esc_html__( 'Last Name', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="last" required="1"]</p>
 
 		[rsvpprofiletable show_if_empty="phone"]
 
-		<p><label>' . __( 'Phone', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="phone" size="20"]</p>
+		<p><label>' . esc_html__( 'Phone', 'rsvpmaker' ) . ':</label> [rsvpfield textfield="phone" size="20"]</p>
 
-		<p><label>' . __( 'Phone Type', 'rsvpmaker' ) . ':</label> [rsvpfield selectfield="phone_type" options="Work Phone,Mobile Phone,Home Phone"]</p>
+		<p><label>' . esc_html__( 'Phone Type', 'rsvpmaker' ) . ':</label> [rsvpfield selectfield="phone_type" options="Work Phone,Mobile Phone,Home Phone"]</p>
 
 		[/rsvpprofiletable]
 
 		[rsvpguests]
 
-		<p>' . __( 'Note', 'rsvpmaker' ) . ':<br />
+		<p>' . esc_html__( 'Note', 'rsvpmaker' ) . ':<br />
 
 		<textarea name="note" cols="60" rows="2" id="note">[rsvpnote]</textarea></p>';
 
@@ -279,7 +287,7 @@ function rsvp_options_defaults() {
 
 	if ( ! strpos( $rsvp_options['rsvplink'], '</a>' ) ) {
 
-		$rsvp_options['rsvplink'] = '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">' . __( 'RSVP Now!', 'rsvpmaker' ) . '</a></p>';
+		$rsvp_options['rsvplink'] = '<p><a style="width: 8em; display: block; border: medium inset #FF0000; text-align: center; padding: 3px; background-color: #0000FF; color: #FFFFFF; font-weight: bolder; text-decoration: none;" class="rsvplink" href="%s">' . esc_html__( 'RSVP Now!', 'rsvpmaker' ) . '</a></p>';
 
 		$update = true;
 
@@ -289,7 +297,7 @@ function rsvp_options_defaults() {
 
 		$message = '<!-- wp:paragraph -->
 
-<p>' . __( 'Thank you!', 'rsvpmaker' ) . '</p>
+<p>' . esc_html__( 'Thank you!', 'rsvpmaker' ) . '</p>
 
 <!-- /wp:paragraph -->';
 
@@ -1141,7 +1149,7 @@ function rsvpmaker_sc_after_charge( $charge_response ) {
 
 	$row = $wpdb->get_row( $wpdb->prepare("SELECT * FROM %i WHERE id=%d",$wpdb->prefix.'rsvpmaker',$rsvp_id), ARRAY_A );
 
-	$message = sprintf( '<p>%s ' . __( 'payment for', 'rsvpmaker' ) . ' %s %s ' . __( ' c/o Stripe transaction', 'rsvpmaker' ) . ' %s<br />' . __( 'Post ID', 'rsvpmaker' ) . ': %s<br />' . __( 'Time', 'rsvpmaker' ) . ': %s</p>', esc_html( $charge ), esc_html( $row['first'] ), esc_html( $row['last'] ), esc_html( $tx_id ), esc_html( $event ), date( 'r' ) );
+	$message = sprintf( '<p>%s ' . esc_html__( 'payment for', 'rsvpmaker' ) . ' %s %s ' . esc_html__( ' c/o Stripe transaction', 'rsvpmaker' ) . ' %s<br />' . esc_html__( 'Post ID', 'rsvpmaker' ) . ': %s<br />' . esc_html__( 'Time', 'rsvpmaker' ) . ': %s</p>',  esc_html( $charge ),  esc_html( $row['first'] ),  esc_html( $row['last'] ),  esc_html( $tx_id ),  esc_html( $event ), date( 'r' ) );
 
 	add_post_meta( $event, '_paypal_log', $message );
 
@@ -1217,5 +1225,4 @@ function rsvpautog( $content ) {
 	return $content;
 
 }
-
 

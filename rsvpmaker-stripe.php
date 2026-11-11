@@ -41,7 +41,7 @@ function rsvpmaker_stripecharge( $atts ) {
 
 	global $current_user, $rsvp_options;
 
-	$vars['description'] = ( ! empty( $atts['description'] ) ) ? $atts['description'] : esc_html__( 'charge from', 'rsvpmaker' ) . ' ' . get_bloginfo( 'name' );
+	$vars['description'] = ( ! empty( $atts['description'] ) ) ? $atts['description'] :  esc_html__( 'charge from', 'rsvpmaker' ) . ' ' . get_bloginfo( 'name' );
 
 	$vars['paymentType'] = $paymentType = ( empty( $atts['paymentType'] ) ) ? 'once' : $atts['paymentType'];
 
@@ -167,24 +167,24 @@ function rsvpmaker_stripe_form( $vars, $show = false ) {
 	elseif ( isset( $vars['paymentType'] ) && ( $vars['paymentType'] == 'donation' ) ) {
 		if(isset($_GET['amount']))
 			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
-		$output = sprintf( '<form action="%s" method="get">%s (%s, %s %s): <input type="text" name="amount" value="%s"><br />%s<br /><textarea name="stripenote" cols="80" rows="2"></textarea><br /><input type="hidden" name="txid" value="%s"><input type="hidden" name="sb" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, __( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), __('minimum','rsvpmaker'), $rsvp_options['payment_minimum'], esc_attr( $vars['amount'] ), __('Note','rsvpmaker'), esc_attr( $idempotency_key ), esc_attr( $sandbox ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
+		$output = sprintf( '<form action="%s" method="get">%s (%s, %s %s): <input type="text" name="amount" value="%s"><br />%s<br /><textarea name="stripenote" cols="80" rows="2"></textarea><br /><input type="hidden" name="txid" value="%s"><input type="hidden" name="sb" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_html__( 'Amount', 'rsvpmaker' ), esc_attr( strtoupper( $vars['currency'] ) ), esc_html__('minimum','rsvpmaker'), $rsvp_options['payment_minimum'], esc_attr( $vars['amount'] ), esc_html__('Note','rsvpmaker'), esc_attr( $idempotency_key ), esc_attr( $sandbox ), esc_html__( 'Pay with Card' ), wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) );
 	} 
 	elseif(isset($vars['returnurl'])) {
 		$param = ['txid'=>$idempotency_key, 'sb' =>$sandbox];
 		return add_query_arg($param,$url);
 	}
 	else {
-		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><input type="hidden" name="sb" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), esc_attr( $sandbox ), __( 'Pay with Card' ), rsvpmaker_nonce('return') );
+		$output = sprintf( '<form action="%s" method="get"><input type="hidden" name="txid" value="%s"><input type="hidden" name="sb" value="%s"><button class="stripebutton">%s</button>%s</form>', $url, esc_attr( $idempotency_key ), esc_attr( $sandbox ), esc_html__( 'Pay with Card' ), wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) );
 	}
 
 	if(!empty($vars['paypal'])) {
-		$output .= '<p>'. __('Credit card processing by Stripe','rsvpmaker').'</p>'.rsvpmaker_paypay_button_embed($vars);
+		$output .= '<p>'. esc_html__('Credit card processing by Stripe','rsvpmaker').'</p>'.rsvpmaker_paypay_button_embed($vars);
 	}
 
 	if ( $show ) {
 		if(isset($_GET['amount']))
 			$vars['amount'] = sanitize_text_field($_GET['amount']); //needed when both Stripe and PayPal are active
-		$output .= sprintf( '<p>%s%s %s<br />%s</p>', $currency_symbol, esc_html( $vars['amount'] ), esc_html( $vars['currency'] ), esc_html( $vars['description'] ) );
+		$output .= sprintf( '<p>%s%s %s<br />%s</p>', $currency_symbol,  esc_html( $vars['amount'] ),  esc_html( $vars['currency'] ),  esc_html( $vars['description'] ) );
 	}
 
 	return $output;
@@ -291,7 +291,7 @@ function rsvpmaker_stripe_checkout() {
 	$varkey = $idempotency_key = sanitize_text_field( $_GET['txid'] );
 	$vars = get_option( $idempotency_key );
 	if ( empty( $vars ) ) {
-		return '<p>' . __( 'No pending payment found for', 'rsvpmaker' ) . ' ' . esc_html( $idempotency_key ) . '</p>';
+		return '<p>' . esc_html__( 'No pending payment found for', 'rsvpmaker' ) . ' ' .  esc_html( $idempotency_key ) . '</p>';
 	}
 
 	if ( !empty($vars['paymentType']) && ($vars['paymentType'] == 'donation') ) {
@@ -355,7 +355,7 @@ function rsvpmaker_stripe_checkout() {
 		$currency_symbol = '€';
 	}
 
-	$paylabel = __( 'Pay', 'rsvpmaker' ) . ' ' . $currency_symbol . esc_attr( $vars['amount'] ) . ' ' . esc_attr( strtoupper( $vars['currency'] ) );
+	$paylabel = esc_html__( 'Pay', 'rsvpmaker' ) . ' ' . $currency_symbol . esc_attr( $vars['amount'] ) . ' ' . esc_attr( strtoupper( $vars['currency'] ) );
 
 	\Stripe\Stripe::setApiKey( $secret );
 
@@ -404,7 +404,7 @@ function rsvpmaker_stripe_checkout() {
 
 <form id="payee-form">
 
-<div><input id="stripe-checkout-name" name="name" placeholder="<?php esc_html_e( 'Your Name Here', 'rsvpmaker' ); ?>" value="<?php echo esc_attr( $name ); ?>"></div>
+<div><input id="stripe-checkout-name" name="name" placeholder="<?php  esc_html_e( 'Your Name Here', 'rsvpmaker' ); ?>" value="<?php echo esc_attr( $name ); ?>"></div>
 
 <div><input id="stripe-checkout-email" name="email" placeholder="email@example.com" value="<?php echo esc_attr( $email ); ?>"></div>
 
@@ -416,7 +416,7 @@ function rsvpmaker_stripe_checkout() {
 
 <p><button id="card-button" class="stripebutton" data-secret="<?php echo esc_attr( $intent->client_secret ); ?>">
 
-	<?php echo esc_html( $paylabel ); ?>
+	<?php echo  esc_html( $paylabel ); ?>
 
 </button></p>
 
@@ -514,7 +514,7 @@ if((name == '') || (email == '')){
 	cardResult.innerHTML = 'Name and email are both required';
 	return;
 }
-cardResult.innerHTML = '<?php esc_html_e( 'Please wait', 'rsvpmaker' ); ?>';
+cardResult.innerHTML = '<?php  esc_html_e( 'Please wait', 'rsvpmaker' ); ?>';
 cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
   stripe.confirmCardPayment(clientSecret, {
@@ -536,7 +536,7 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 	console.log(result);
 	  if (result.paymentIntent.status === 'succeeded') {
 		  console.log(result);
-		cardResult.innerHTML = '<?php esc_html_e( 'Recording payment', 'rsvpmaker' ); ?> ...';
+		cardResult.innerHTML = '<?php  esc_html_e( 'Recording payment', 'rsvpmaker' ); ?> ...';
 		const form = new FormData(document.getElementById('payee-form'));
 		fetch(successurl, {
   method: 'POST',
@@ -556,12 +556,12 @@ cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
 
 			if(!myJson.name)			
 
-				cardResult.innerHTML = '<?php esc_html_e( 'Payment processed, but may not have been recorded correctly', 'rsvpmaker' ); ?>';
+				cardResult.innerHTML = '<?php  esc_html_e( 'Payment processed, but may not have been recorded correctly', 'rsvpmaker' ); ?>';
 
 			else {
-				cardResult.innerHTML = '<p><?php esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+'<br /><?php echo esc_attr($currency_symbol); ?>'+myJson.amount+' '+myJson.currency.toUpperCase()+'</p>';
+				cardResult.innerHTML = '<p><?php  esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+'<br /><?php echo esc_attr($currency_symbol); ?>'+myJson.amount+' '+myJson.currency.toUpperCase()+'</p>';
 				if(myJson.gift_certificate)
-					cardResult.innerHTML += '<h1><?php esc_html_e( 'Gift Certificate', 'rsvpmaker' ); ?><br />'+myJson.gift_certificate+'</h1>';
+					cardResult.innerHTML += '<h1><?php  esc_html_e( 'Gift Certificate', 'rsvpmaker' ); ?><br />'+myJson.gift_certificate+'</h1>';
 			}
 
 		});
@@ -684,7 +684,7 @@ function rsvpmaker_stripe_notify( $vars ) {
 
 	foreach ( $vars as $index => $value ) {
 
-		$mail['html'] .= sprintf( '<div>%s: %s</div>', $index, esc_html( $value ) );
+		$mail['html'] .= sprintf( '<div>%s: %s</div>', $index,  esc_html( $value ) );
 
 	}
 
@@ -693,7 +693,7 @@ function rsvpmaker_stripe_notify( $vars ) {
 	rsvpmailer( $mail );
 	if ( $receipt ) {
 		$mail['to']      = $vars['email'];
-		$mail['subject'] = __( 'Confirming your payment', 'rsvpmaker' ) . ': ' . $vars['description'];
+		$mail['subject'] = esc_html__( 'Confirming your payment', 'rsvpmaker' ) . ': ' . $vars['description'];
 		rsvpmailer( $mail );
 	}
 
@@ -726,16 +726,18 @@ function rsvpmaker_stripe_report() {
 		%s
 		<button>Get</button></form></div>',
 			esc_url( admin_url( 'edit.php' ) ),
-			rsvpmaker_nonce('return')
+			wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) )
 		);
 	}
 
 	$tx = rsvpmaker_stripe_transactions( );
-	echo wp_kses_post( $tx['content'] );
-	echo '<h3>Export Format</h3>
+	if ( ! empty( $tx ) && is_array( $tx ) ) {
+		echo wp_kses_post( $tx['content'] );
+		echo '<h3>Export Format</h3>
 	<p>Formatted for copy-paste into Excel or other spreadsheet program
 	<br />
 	<textarea rows="20" style="width: 100%">' . esc_textarea( $tx['export'] ) . '</textarea></p>';
+	}
 	if(!empty($detail))
 		echo '<h2>Detailed Output from Stripe API</h2>' . wp_kses_post( $detail );
 }
@@ -849,7 +851,7 @@ function rsvpmaker_stripe_balance_history( $limit = 20 ) {
 				'date'   => $date,
 			);
 		}
-		printf( '<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>', esc_html( $name ), esc_html( $date ), number_format( ( $data->amount / 100 ), 2 ), number_format( ( $data->fee / 100 ), 2 ), esc_html( $data->reporting_category ), esc_html( $data->id ) );
+		printf( '<p>%s %s<br />%s<br />Fee: %s %s<br />%s</p>',  esc_html( $name ),  esc_html( $date ), number_format( ( $data->amount / 100 ), 2 ), number_format( ( $data->fee / 100 ), 2 ),  esc_html( $data->reporting_category ),  esc_html( $data->id ) );
 	}
 
 	if ( ! empty( $tablerow ) ) {
@@ -865,10 +867,10 @@ function rsvpmaker_stripe_balance_history( $limit = 20 ) {
 
 		foreach ( $fees as $index => $fee ) {
 			$feetotal += $fee;
-			printf( '<p>%s %s</p>', esc_html( $index ), esc_html( $fee ) );
+			printf( '<p>%s %s</p>',  esc_html( $index ),  esc_html( $fee ) );
 		}
 
-		printf( '<p>Total Fees: %s</p>', esc_html( $feetotal ) );
+		printf( '<p>Total Fees: %s</p>',  esc_html( $feetotal ) );
 	}
 
 	if ( ! empty( $refunds ) ) {
@@ -876,9 +878,9 @@ function rsvpmaker_stripe_balance_history( $limit = 20 ) {
 		$rtotal = 0;
 		foreach ( $refunds as $index => $refund ) {
 			$rtotal += $refund['amount'];
-			printf( '<p>%s %s %s</p>', esc_html( $index ), esc_html( $refund['amount'] ), esc_html( $refund['date'] ) );
+			printf( '<p>%s %s %s</p>',  esc_html( $index ),  esc_html( $refund['amount'] ),  esc_html( $refund['date'] ) );
 		}
-		printf( '<p>Total Refunds: %s</p>', esc_html( $rtotal ) );
+		printf( '<p>Total Refunds: %s</p>',  esc_html( $rtotal ) );
 	}
 	return ob_get_clean();
 }
@@ -921,7 +923,7 @@ function rsvpmaker_stripe_transactions() {
 			}
 			*/
 			foreach ( $transaction as $column => $value ) {
-				$td .= '<td>' . esc_html( $value ) . '</td>';
+				$td .= '<td>' .  esc_html( $value ) . '</td>';
 				if ( strpos( $value, '"' ) ) {
 					$value = str_replace( '"', '\"', $value );
 				}
@@ -940,6 +942,10 @@ function rsvpmaker_stripe_transactions() {
 			'export'  => $export,
 		);
 	}
+	return array(
+		'content' => '<p>' . esc_html__( 'No transactions found.', 'rsvpmaker' ) . '</p>',
+		'export'  => '',
+	);
 }
 
 
@@ -957,8 +963,8 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 	if ( $start_date ) {
 		$where_clauses[] = $wpdb->prepare('date > %s', $start_date);
 	}
-	$sql = "SELECT * FROM {$stripetable} WHERE " . implode(' AND ', $where_clauses) . " ORDER BY date DESC";
-	return $wpdb->get_row( $sql );
+	$sql = "SELECT * FROM " . $stripetable . " WHERE " . implode(' AND ', $where_clauses) . " ORDER BY date DESC";
+	return $wpdb->get_row( $wpdb->prepare($sql) );
 }
 
 
@@ -966,10 +972,10 @@ function rsvpmaker_stripe_latest_transaction_by_user( $user_id, $start_date = ''
 function rsvpmaker_stripe_transactions_no_user( $limit = 50, $recent = true ) {
 	global $wpdb;
 	$stripetable = rsvpmaker_money_table();
-	$where_clauses = array('user_id=0');
+	$where_clauses = array( $wpdb->prepare('user_id=%d', 0) );
 	if ( $recent ) {
-		$where_clauses[] = 'date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH)';
+		$where_clauses[] = $wpdb->prepare('date > DATE_SUB(CURDATE(), INTERVAL %d MONTH)', 3);
 	}
-	$sql = "SELECT * FROM {$stripetable} WHERE " . implode(' AND ', $where_clauses) . " ORDER BY date DESC";
-	return $wpdb->get_results( $sql );
+	$sql = "SELECT * FROM " . $stripetable . " WHERE " . implode(' AND ', $where_clauses) . " ORDER BY date DESC";
+	return $wpdb->get_results( $wpdb->prepare($sql) );
 }

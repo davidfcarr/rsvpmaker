@@ -278,14 +278,14 @@ function get_rsvpmaker_rest() {
 
 		if($sked)
 		{
-			$projected_label = __('Create/update events from template','rsvpmaker');
+			$projected_label = esc_html__('Create/update events from template','rsvpmaker');
 			$projected_url = admin_url('edit.php?post_type=rsvpmaker&page=rsvpmaker_template_list&t='.$post_id);
 			$template_msg = rsvpmaker_sked_to_text($sked);
 		}
 		$template_id = (int) get_post_meta($post_id,'_meet_recur',true);
 		if($template_id && !$sked)
 		{
-		$template_label = __('Edit Template','rsvpmaker');
+		$template_label = esc_html__('Edit Template','rsvpmaker');
 		$template_url = admin_url('post.php?action=edit&post='.$template_id);
 		}
 
@@ -321,7 +321,7 @@ function get_rsvpmaker_rest() {
 	if($confirm->post_parent == 0)
 		$confirmation_type =__('Message is default from settings','rsvpmaker');
 	elseif($confirm->post_parent != $post_id)
-		$confirmation_type = __('Message inherited from template','rsvpmaker');
+		$confirmation_type = esc_html__('Message inherited from template','rsvpmaker');
 
 	$form_id = get_post_meta($post_id,'_rsvp_form',true);
 	if(empty($form_id))
@@ -351,9 +351,9 @@ function get_rsvpmaker_rest() {
 	$form_edit_post = (current_user_can('edit_post',$fpost->ID));
 	$form_edit_post = true;
 	if($fpost->post_parent == 0)
-		$form_type = __('Form is default from settings','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+		$form_type = esc_html__('Form is default from settings','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 	elseif($fpost->post_parent != $post_id)
-		$form_type = __('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
+		$form_type = esc_html__('Form inherited from template','rsvpmaker');//printf('<div id="editconfirmation"><a href="%s" target="_blank">Edit</a> (default from Settings)</div><div><a href="%s" target="_blank">Customize</a></div>',$edit,$customize);
 	$email_templates_array = get_rsvpmaker_email_template();
 	if($email_templates_array)
 	foreach($email_templates_array as $index => $template) {

@@ -22,7 +22,7 @@ function rsvpmaker_relay_manual_test() {
 			echo wp_kses_post( $html );
 
 		} else {
-			echo '<p>' . esc_html__( 'No messages', 'rsvpmaker' ) . '</p>';
+			echo '<p>' .  esc_html__( 'No messages', 'rsvpmaker' ) . '</p>';
 		}		
 	}
 }
@@ -397,7 +397,7 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 		$headerinfo = imap_headerinfo( $mail, $n );
 
 		if ( ! empty( $headerinfo->message_id ) && rsvpmaker_relay_duplicate( $headerinfo->message_id ) ) {
-			echo 'duplicate for ' . esc_html( $headerinfo->message_id );
+			echo 'duplicate for ' .  esc_html( $headerinfo->message_id );
 			continue; // already tried to process this, something is wrong
 		}
 
@@ -601,7 +601,7 @@ function rsvpmaker_relay_get_pop( $list_type = '', $return_count = false ) {
 
 						$qpost['post_content'] = str_replace( $cid, $atturl, $qpost['post_content'] );
 
-						$html .= printf( '<p>replace %s with %s</p>', esc_html( $cid ), esc_url( $atturl ) );
+						$html .= printf( '<p>replace %s with %s</p>',  esc_html( $cid ), esc_url( $atturl ) );
 
 					}
 
@@ -772,7 +772,7 @@ function rsvpmailer_embedded_images( $mailq ) {
 }
 function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $urlpath, $strFileName, $strFileType ) {
 
-		printf( '<p>Check %s %s part number %s</p>', esc_html( $strFileName ), esc_html( $strFileType ), esc_html( $file ) );
+		printf( '<p>Check %s %s part number %s</p>',  esc_html( $strFileName ),  esc_html( $strFileType ),  esc_html( $file ) );
 
 		$allowed = array( 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'jpg', 'jpeg', 'gif', 'png', 'svg', 'ics', 'ifb', 'txt' );
 
@@ -799,7 +799,7 @@ function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $ur
 
 	if ( isset( $_GET['debug'] ) ) {
 
-		printf( '<p>File characteristics: %s %s %s</p>', esc_html( $ContentType ), esc_html( $strFileName ), esc_html( $fileSize ) );
+		printf( '<p>File characteristics: %s %s %s</p>',  esc_html( $ContentType ),  esc_html( $strFileName ),  esc_html( $fileSize ) );
 	}
 
 	$strFileName = preg_replace('/[^\.a-zA-Z0-9]/','_',$strFileName);
@@ -822,7 +822,7 @@ function rsvpmaker_relay_save_attachment( $att, $file, $msgno, $mbox, $path, $ur
 
 	if ( isset( $_GET['debug'] ) ) {
 
-		printf( '<p>Writing to %s <a href="%s" target="_blank">%s</a></p>', esc_html( $writepath ), esc_url( $url ), esc_html( $url ) );
+		printf( '<p>Writing to %s <a href="%s" target="_blank">%s</a></p>',  esc_html( $writepath ), esc_url( $url ),  esc_html( $url ) );
 	}
 
 	 return $url;
@@ -837,14 +837,14 @@ function rsvpmaker_relay_interval( $schedules = array() ) {
 
 		'interval' => 60,
 
-		'display'  => esc_html__( 'Every Minute' ),
+		'display'  =>  esc_html__( 'Every Minute' ),
 	);
 
 	$schedules['doubleminute'] = array(
 
 		'interval' => 120,
 
-		'display'  => esc_html__( 'Every Two Minutes' ),
+		'display'  =>  esc_html__( 'Every Two Minutes' ),
 	);
 
 	return $schedules;
@@ -878,13 +878,13 @@ function rsvpmaker_relay_queue_monitor () {
 	foreach($results as $row)
 	{
 		if($row->ID != $was)
-			printf('<h2>%s</h2>', esc_html( $row->post_title ) );
+			printf('<h2>%s</h2>',  esc_html( $row->post_title ) );
 		if('rsvprelay_to' == $row->meta_key) {
-			$row->meta_key ='<strong>'.esc_html($row->meta_key).'</strong>';
-			printf('<p>%s %s <a href="%s%d">(cancel)</a></p>', $row->meta_key, esc_html( $row->meta_value ), esc_url( $action ), absint( $row->ID ) );
+			$row->meta_key ='<strong>'. esc_html($row->meta_key).'</strong>';
+			printf('<p>%s %s <a href="%s%d">(cancel)</a></p>', wp_kses_post( $row->meta_key ),  esc_html( $row->meta_value ), esc_url( $action ), absint( $row->ID ) );
 		}
 		else
-			printf('<p>%s %s</p>', esc_html( $row->meta_key ), esc_html( $row->meta_value ) );
+			printf('<p>%s %s</p>',  esc_html( $row->meta_key ),  esc_html( $row->meta_value ) );
 		$was = $row->ID;
 	}
 
@@ -910,14 +910,14 @@ function rsvpmaker_relay_queue_monitor () {
 	foreach($results as $row)
 	{
 		if($row->ID != $was) {
-			printf('<h2>%s status: %s</h2>', esc_html( $row->post_title ), esc_html( $row->post_status ) );
+			printf('<h2>%s status: %s</h2>',  esc_html( $row->post_title ),  esc_html( $row->post_status ) );
 			if('draft' == $row->post_status) {
 				$sql = $wpdb->prepare("update $wpdb->posts SET post_status='rsvpmessage' WHERE ID=%d", $row->ID);
-				printf( "<p>post status change result %s %s</p>", esc_html( $sql ), esc_html( var_export( $result, true ) ) );
+				printf( "<p>post status change result %s %s</p>",  esc_html( $sql ),  esc_html( var_export( $result, true ) ) );
 			}
 			$result = $wpdb->query($sql);
 		}
-		printf('<p>%s %s</p>', esc_html( $row->meta_key ), esc_html( $row->meta_value ) );
+		printf('<p>%s %s</p>',  esc_html( $row->meta_key ),  esc_html( $row->meta_value ) );
 		$was = $row->ID;
 	}
 }
@@ -976,7 +976,7 @@ function rsvpmail_recipients_by_slug_and_id($slug_and_id,$emailobj = NULL, $addr
 	$recipients = array();
 	$recipient_names = array();
 	if(is_numeric($slug_and_id['slug'])) {
-		printf('<p>numeric %s</p>', esc_html( $slug_and_id['slug'] ) );
+		printf('<p>numeric %s</p>',  esc_html( $slug_and_id['slug'] ) );
 		$user = get_userdata($slug_and_id['slug']);
 		if($user && !empty($user->user_email)) {
 			return array($user->user_email);
@@ -1324,7 +1324,7 @@ function rsvpmaker_all_flattened_forwarders() {
                     continue;
                 $local_forwarders = rsvpmaker_flattened_forwarders($blog_id, true, $list_targets['subdomains'][$index], $domain);
                 if(isset($_GET['debug'])) {
-                printf('<p>checking site %s</p><pre>', esc_html( $blog_id ) );
+                printf('<p>checking site %s</p><pre>',  esc_html( $blog_id ) );
                 print_r($local_forwarders);
                 echo '</pre>';
                 }
@@ -1335,7 +1335,7 @@ function rsvpmaker_all_flattened_forwarders() {
                 echo '</pre>';                    
                 }
                 if(isset($_GET['debug']))
-                    printf('<p><strong>added %s forwarders from %s</strong></p><pre>%s</pre>', intval( sizeof($local_forwarders) ), esc_html( $domain ), esc_html( var_export($local_forwarders,true) ) );
+                    printf('<p><strong>added %s forwarders from %s</strong></p><pre>%s</pre>', intval( sizeof($local_forwarders) ),  esc_html( $domain ),  esc_html( var_export($local_forwarders,true) ) );
             }
             set_transient('all_flattened_forwarders',$forwarders, HOUR_IN_SECONDS);
             restore_current_blog();
@@ -1344,7 +1344,7 @@ function rsvpmaker_all_flattened_forwarders() {
     else 
 		$forwarders = rsvpmaker_flattened_forwarders(0, true, $list_targets['subdomains'][0], $list_targets['domains'][0]);
     if(isset($_GET['debug']))
-        printf('<p>Total flattened forwarders %s</p><pre>%s</pre>', intval( sizeof($forwarders) ), esc_html( var_export($forwarders,true) ) );
+        printf('<p>Total flattened forwarders %s</p><pre>%s</pre>', intval( sizeof($forwarders) ),  esc_html( var_export($forwarders,true) ) );
     return $forwarders;
 }
 
@@ -1354,13 +1354,13 @@ function rsvpmaker_flattened_forwarders($site_id = 0, $inloop = false, $subdomai
 	$dp = rsvpmaker_domain_prefix($site_id);
 	$officer_emails = (function_exists('toastmasters_officer_email_array')) ? toastmasters_officer_email_array($site_id) : array();
     if(isset($_GET['debug']))
-        printf('<p>officer emails for site %s</p><pre>%s</pre>', esc_html( $site_id ), esc_html( var_export($officer_emails,true) ) );
+        printf('<p>officer emails for site %s</p><pre>%s</pre>',  esc_html( $site_id ),  esc_html( var_export($officer_emails,true) ) );
 	foreach($officer_emails as $key => $value) {
 		$forwarders[$key] = array($value);
 	}
     $wpt_email_handler_custom_forwarders = ($site_id) ? get_blog_option($site_id,'custom_forwarders') : get_option('custom_forwarders');
     if(isset($_GET['debug']))
-        printf('<p>custom forwarders for site %s</p><pre>%s</pre>', esc_html( $site_id ), esc_html( var_export($wpt_email_handler_custom_forwarders,true) ) );
+        printf('<p>custom forwarders for site %s</p><pre>%s</pre>',  esc_html( $site_id ),  esc_html( var_export($wpt_email_handler_custom_forwarders,true) ) );
     if(empty($wpt_email_handler_custom_forwarders))
         $wpt_email_handler_custom_forwarders = array();
     foreach($wpt_email_handler_custom_forwarders as $forwarder => $targets) 
@@ -1661,7 +1661,7 @@ function rsvpmaker_email_handler_mailing_lists() {
 <form action="<?php echo esc_url( admin_url('admin.php?page=rsvpmaker_email_handler_mailing_lists') ); ?>" method="post">
 <p>These are private distribution lists. By default, only messages from members are accepted for member-list distribution. You can whitelist additional senders, block senders, or add additional recipients.</p>
 <h3>List for Members</h3>
-<p>Member List: <input type="hidden" name="clubemail" value="<?php echo esc_attr($clubemail); ?>" /> <?php echo esc_html($clubemail); ?><br />
+<p>Member List: <input type="hidden" name="clubemail" value="<?php echo esc_attr($clubemail); ?>" /> <?php echo  esc_html($clubemail); ?><br />
 <input type="radio" name="clubchecked" value="1" <?php if($member_on) echo 'checked="checked"'; ?> > On
 <input type="radio" name="clubchecked" value="0" <?php if(!$member_on) echo 'checked="checked"'; ?> > Off
 </p>
@@ -1701,7 +1701,7 @@ function rsvpmaker_email_handler_forwarders() {
 	$site_domain = rsvpmaker_get_site_domain($blog_id);
 	$forwarder_sync_enabled = rsvpmaker_forwarder_sync_manifest_enabled();
 
-	if(!empty($_POST['slug']) && !wp_verify_nonce(rsvpmaker_nonce_data('data'),rsvpmaker_nonce_data('key')) )
+	if(!empty($_POST['slug']) && !wp_verify_nonce( isset( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ RSVPMAKER_NONCE_FIELD ] ) ) : '', RSVPMAKER_NONCE_ACTION ) )
 		die('security error');
 
 	$custom_forwarders = get_option('custom_forwarders');
@@ -1723,7 +1723,7 @@ function rsvpmaker_email_handler_forwarders() {
 		echo '<div class="notice notice-success"><p>Forwarders updated.</p></div>';
 		if ( $forwarder_sync_enabled ) {
 			$manifest_path = rsvpmaker_export_forwarder_sync_manifest();
-			printf('<div class="notice notice-info"><p>Forwarder sync manifest exported to %s</p></div>', esc_html($manifest_path));
+			printf('<div class="notice notice-info"><p>Forwarder sync manifest exported to %s</p></div>',  esc_html($manifest_path));
 		}
 	}
 
@@ -1741,14 +1741,14 @@ function rsvpmaker_email_handler_forwarders() {
 	$flattened_forwarders = rsvpmaker_all_flattened_forwarders();
 ?>
 <p>Use the form below to specify custom email forwarding addresses, or aliases.</p>
-<p>By default, <strong><?php echo esc_html(rsvpmaker_format_email_forwarder('members')); ?></strong> is used for a members email list.</p>
+<p>By default, <strong><?php echo  esc_html(rsvpmaker_format_email_forwarder('members')); ?></strong> is used for a members email list.</p>
 <?php
 	if($site_domain != $base_domain) {
-		printf('<div style="margin: 20px;background-color:#000;color:#fff; padding: 10px;"><p>For a site with a custom domain (other than %s), email addresses in the format %s / %s will work the same.</p><p>However, the @%s version requires proper email formatting setup for the domain.</p></div>',esc_html($base_domain),esc_html(rsvpmaker_format_email_forwarder('members')),esc_html(rsvpmaker_format_email_forwarder('members',0,'root')),esc_html($site_domain));
+		printf('<div style="margin: 20px;background-color:#000;color:#fff; padding: 10px;"><p>For a site with a custom domain (other than %s), email addresses in the format %s / %s will work the same.</p><p>However, the @%s version requires proper email formatting setup for the domain.</p></div>', esc_html($base_domain), esc_html(rsvpmaker_format_email_forwarder('members')), esc_html(rsvpmaker_format_email_forwarder('members',0,'root')), esc_html($site_domain));
 	}
-	printf('<p><strong>%s</strong> forwards to the current website administrator email registered in WordPress.<p>',esc_html(rsvpmaker_format_email_forwarder('admin')));
+	printf('<p><strong>%s</strong> forwards to the current website administrator email registered in WordPress.<p>', esc_html(rsvpmaker_format_email_forwarder('admin')));
 ?>
-<p>Custom forwarding addresses can be added in the format <?php echo esc_html(rsvpmaker_format_email_forwarder('mycustomlabel')); ?> (example: <?php echo esc_html(rsvpmaker_format_email_forwarder('mentors')); ?>).</p><p>For a default address that should be used if no other is a match, use <strong><?php echo esc_html(rsvpmaker_format_email_forwarder('default')); ?></strong>.</p> <p>Recipient email addresses may be entered on separate lines or separated by commas.</p>
+<p>Custom forwarding addresses can be added in the format <?php echo  esc_html(rsvpmaker_format_email_forwarder('mycustomlabel')); ?> (example: <?php echo  esc_html(rsvpmaker_format_email_forwarder('mentors')); ?>).</p><p>For a default address that should be used if no other is a match, use <strong><?php echo  esc_html(rsvpmaker_format_email_forwarder('default')); ?></strong>.</p> <p>Recipient email addresses may be entered on separate lines or separated by commas.</p>
 <form action="<?php echo esc_url( admin_url('admin.php?page=rsvpmaker_email_handler_forwarders') ); ?>" method="post">
 <?php
 printf('<p><label><input type="checkbox" name="rsvpmaker_forwarder_sync_manifest_enabled" value="1" %s /> Export custom forwarders to a server sync manifest every hour for optional shell-based alias reconciliation. Catch-all forwarding rules should remain managed separately.</label></p>', checked($forwarder_sync_enabled, true, false));
@@ -1758,29 +1758,29 @@ if(!empty($custom_forwarders)) {
 		$forward_from = trim($forward_from);
 		if(empty($forward_from))
 			continue;
-		printf('<p><strong>Forwarder</strong>: %s <input type="checkbox" name="delete_forwarder[]" value="%s" /> Delete</p>',esc_html($forward_from),esc_attr($forward_from));
+		printf('<p><strong>Forwarder</strong>: %s <input type="checkbox" name="delete_forwarder[]" value="%s" /> Delete</p>', esc_html($forward_from),esc_attr($forward_from));
 		printf('<p><strong>Forwards to</strong>: <br /><textarea name="forward_update[%s]" cols="120">%s</textarea></p>',esc_attr($forward_from), esc_textarea(implode(', ',$forward_to)));
 		$test = rsvpmaker_forwarder_recipients_test($forward_from, $flattened_forwarders);
 		if(!empty($test)) {
-			printf('<p><em>Final recipients for %s: %s</em></p>',esc_html($forward_from), esc_html(implode(', ',$test)));
+			printf('<p><em>Final recipients for %s: %s</em></p>', esc_html($forward_from),  esc_html(implode(', ',$test)));
 		}
 	}
 }
 for($i = 0; $i < 3; $i++) {
-	printf('<p><strong>Forwarder</strong>: %s<input type="text" name="slug[%d]" />@%s</p>', esc_html( $prefix ), esc_html( $i ), esc_html( $domain ) );
-	printf('<p><strong>Forwards to</strong>: <br /><textarea name="forwardto[%d]" cols="120"></textarea></p>', esc_html( $i ) );
+	printf('<p><strong>Forwarder</strong>: %s<input type="text" name="slug[%d]" />@%s</p>',  esc_html( $prefix ),  esc_html( $i ),  esc_html( $domain ) );
+	printf('<p><strong>Forwards to</strong>: <br /><textarea name="forwardto[%d]" cols="120"></textarea></p>',  esc_html( $i ) );
 }
 if(rsvpmaker_postmark_is_active()) {
 	$blacklist_text = (is_array($blacklist)) ? implode(',',$blacklist) : '';
 	printf('<h3>Blacklist (blocked senders)</h3><p>You can prevent messages from being delivered from spammers or other unwanted senders by adding them to this list.<br><textarea name="rsvpmail_blacklist" cols="120">%s</textarea></p>',esc_textarea($blacklist_text));
 }
-rsvpmaker_nonce();
+wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );
 submit_button();
 echo '</form>';
 
 echo '<h2>Current Forwarders</h2>';
 foreach($local_forwarders as $forwarder => $targets) {
-	printf('<p>%s forwards to %s</p>',esc_html($forwarder), esc_html(implode(', ',$targets)));
+	printf('<p>%s forwards to %s</p>', esc_html($forwarder),  esc_html(implode(', ',$targets)));
 }
 }
 

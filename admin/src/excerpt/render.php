@@ -2,6 +2,6 @@
 <?php
 global $post;
 $max = (isset($attributes["max"])) ? intval($attributes["max"]) : 55;
-echo rsvpmaker_excerpt_body($post, $max);
+echo wp_kses(rsvpmaker_excerpt_body($post, $max), dcarr_kses_form());
 ?>
 </div>

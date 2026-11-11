@@ -42,7 +42,7 @@ function rsvpmaker_roles() {
 function rsvpmaker_create_post_type() {
 	global $rsvp_options;
 
-	$menu_label = ( isset( $rsvp_options['menu_label'] ) ) ? $rsvp_options['menu_label'] : __( 'RSVP Events', 'rsvpmaker' );
+	$menu_label = ( isset( $rsvp_options['menu_label'] ) ) ? $rsvp_options['menu_label'] : esc_html__( 'RSVP Events', 'rsvpmaker' );
 	$rewrite = array('slug' => 'rsvpmaker','with_front' => false);
 
 	$supports = array( 'title', 'editor', 'author', 'excerpt', 'custom-fields', 'thumbnail', 'revisions','page-attributes','post-formats' );
@@ -56,13 +56,13 @@ function rsvpmaker_create_post_type() {
 
 				'name'          => $menu_label,
 
-				'add_new_item'  => __( 'Add New RSVP Event', 'rsvpmaker' ),
+				'add_new_item'  => esc_html__( 'Add New RSVP Event', 'rsvpmaker' ),
 
-				'edit_item'     => __( 'Edit RSVP Event', 'rsvpmaker' ),
+				'edit_item'     => esc_html__( 'Edit RSVP Event', 'rsvpmaker' ),
 
-				'new_item'      => __( 'RSVP Events', 'rsvpmaker' ),
+				'new_item'      => esc_html__( 'RSVP Events', 'rsvpmaker' ),
 
-				'singular_name' => __( 'RSVP Event', 'rsvpmaker' ),
+				'singular_name' => esc_html__( 'RSVP Event', 'rsvpmaker' ),
 
 			),
 
@@ -110,13 +110,13 @@ function rsvpmaker_create_post_type() {
 
 				'name'          => 'Event Templates',
 
-				'add_new_item'  => __( 'Add New RSVP Template', 'rsvpmaker' ),
+				'add_new_item'  => esc_html__( 'Add New RSVP Template', 'rsvpmaker' ),
 
-				'edit_item'     => __( 'Edit RSVP Template', 'rsvpmaker' ),
+				'edit_item'     => esc_html__( 'Edit RSVP Template', 'rsvpmaker' ),
 
-				'new_item'      => __( 'RSVP Template', 'rsvpmaker' ),
+				'new_item'      => esc_html__( 'RSVP Template', 'rsvpmaker' ),
 
-				'singular_name' => __( 'RSVP Template', 'rsvpmaker' ),
+				'singular_name' => esc_html__( 'RSVP Template', 'rsvpmaker' ),
 
 			),
 
@@ -169,13 +169,13 @@ function rsvpmaker_create_post_type() {
 
 				'name'          => 'Forms',
 
-				'add_new_item'  => __( 'Add New RSVP Form', 'rsvpmaker' ),
+				'add_new_item'  => esc_html__( 'Add New RSVP Form', 'rsvpmaker' ),
 
-				'edit_item'     => __( 'Edit RSVP Form', 'rsvpmaker' ),
+				'edit_item'     => esc_html__( 'Edit RSVP Form', 'rsvpmaker' ),
 
-				'new_item'      => __( 'RSVP Form', 'rsvpmaker' ),
+				'new_item'      => esc_html__( 'RSVP Form', 'rsvpmaker' ),
 
-				'singular_name' => __( 'RSVP Form', 'rsvpmaker' ),
+				'singular_name' => esc_html__( 'RSVP Form', 'rsvpmaker' ),
 
 			),
 
@@ -225,23 +225,23 @@ function rsvpmaker_create_post_type() {
 
 		'singular_name'     => _x( 'Event Type', 'taxonomy singular name', 'rsvpmaker' ),
 
-		'search_items'      => __( 'Search Event Types', 'rsvpmaker' ),
+		'search_items'      => esc_html__( 'Search Event Types', 'rsvpmaker' ),
 
-		'all_items'         => __( 'All Event Types', 'rsvpmaker' ),
+		'all_items'         => esc_html__( 'All Event Types', 'rsvpmaker' ),
 
-		'parent_item'       => __( 'Parent Event Type', 'rsvpmaker' ),
+		'parent_item'       => esc_html__( 'Parent Event Type', 'rsvpmaker' ),
 
-		'parent_item_colon' => __( 'Parent Event Type:', 'rsvpmaker' ),
+		'parent_item_colon' => esc_html__( 'Parent Event Type:', 'rsvpmaker' ),
 
-		'edit_item'         => __( 'Edit Event Type', 'rsvpmaker' ),
+		'edit_item'         => esc_html__( 'Edit Event Type', 'rsvpmaker' ),
 
-		'update_item'       => __( 'Update Event Type', 'rsvpmaker' ),
+		'update_item'       => esc_html__( 'Update Event Type', 'rsvpmaker' ),
 
-		'add_new_item'      => __( 'Add New Event Type', 'rsvpmaker' ),
+		'add_new_item'      => esc_html__( 'Add New Event Type', 'rsvpmaker' ),
 
-		'new_item_name'     => __( 'New Event Type', 'rsvpmaker' ),
+		'new_item_name'     => esc_html__( 'New Event Type', 'rsvpmaker' ),
 
-		'menu_name'         => __( 'Event Type', 'rsvpmaker' ),
+		'menu_name'         => esc_html__( 'Event Type', 'rsvpmaker' ),
 
 	);
 
@@ -372,15 +372,15 @@ function rsvpmaker_form_single($content) {
 			$atts['rsvpmulti'] = $rsvpmulti;
 			$atts['amount'] = $postdata['multi_event_price'] * $events_count;
 			$priceline = $currency_symbol.number_format($atts['discount_price'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']).' '.$currency;
-			$atts['description'] = __('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
+			$atts['description'] = esc_html__('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
 			$atts['showdescription'] = 'yes';
-			echo rsvpmaker_paypay_button_embed($atts);
+			echo wp_kses_post( rsvpmaker_paypay_button_embed($atts) );
 			$postdata['description'] = $atts['description'];
 			$postdata['events_count'] = $events_count;
 			set_transient($rsvpmulti, array_merge($postdata,$atts), HOUR_IN_SECONDS);
 		}
 		else {
-			echo $capacity_message;
+			echo wp_kses_post( $capacity_message );
 		}
 		return ob_get_clean().$content.'<div style="margin-top:500px;"></div>';
 	}
@@ -396,11 +396,11 @@ function create_rsvpemail_post_type() {
       register_post_type( 'rsvpemail',
         array(
           'labels' => array(
-            'name' => __( 'RSVP Email Newsletters and Notifications','rsvpmaker' ),
-            'add_new_item' => __( 'Add New Email','rsvpmaker' ),
-            'edit_item' => __( 'Edit Email','rsvpmaker' ),
-            'new_item' => __( 'RSVP Emails','rsvpmaker' ),
-            'singular_name' => __( 'RSVP Email','rsvpmaker' )
+            'name' => esc_html__( 'RSVP Email Newsletters and Notifications','rsvpmaker' ),
+            'add_new_item' => esc_html__( 'Add New Email','rsvpmaker' ),
+            'edit_item' => esc_html__( 'Edit Email','rsvpmaker' ),
+            'new_item' => esc_html__( 'RSVP Emails','rsvpmaker' ),
+            'singular_name' => esc_html__( 'RSVP Email','rsvpmaker' )
           ),
         'public' => true,
         'exclude_from_search' => true,

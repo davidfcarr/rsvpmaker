@@ -6,8 +6,8 @@ register_block_pattern_category( 'rsvpmaker',  array( 'label' => 'RSVPMaker' ) )
 register_block_pattern(
         'rsvpmaker/calendar-single-column',
         array(
-            'title'       => __( 'RSVPMaker Calendar, Single Column Events Listing', 'rsvpmaker' ),
-            'description' => __( 'Display calendar grid, followed by an event listing in a single column.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'RSVPMaker Calendar, Single Column Events Listing', 'rsvpmaker' ),
+            'description' => esc_html__( 'Display calendar grid, followed by an event listing in a single column.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker'],
             'content'     => '<!-- wp:query {"queryId":13,"query":{"perPage":10,"pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","rsvp_only":false,"excludeType":0},"namespace":"rsvpmaker/loop-plus-calendar"} -->
 <div class="wp-block-query"><!-- wp:rsvpmaker/calendar /-->
@@ -54,8 +54,8 @@ register_block_pattern(
 register_block_pattern(
         'rsvpmaker/event',
         array(
-            'title'       => __( 'RSVPMaker Featured Event, Followed by Headline Listing', 'rsvpmaker' ),
-            'description' => __( 'A pattern for displaying a single event with RSVP button, followed by a headline listing of upcoming events.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'RSVPMaker Featured Event, Followed by Headline Listing', 'rsvpmaker' ),
+            'description' => esc_html__( 'A pattern for displaying a single event with RSVP button, followed by a headline listing of upcoming events.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker'],
             'content'     => '<!-- wp:group {"layout":{"type":"constrained"}} -->
 <div class="wp-block-group"><!-- wp:query {"queryId":11,"query":{"perPage":1,"pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0},"namespace":"rsvpmaker/loop-event"} -->
@@ -91,8 +91,8 @@ register_block_pattern(
 register_block_pattern(
         'rsvpmaker/featured-title-button',
         array(
-            'title'       => __( 'RSVPMaker Featured Event, Followed by Title/Date/Button', 'rsvpmaker' ),
-            'description' => __( 'A compact event listing format.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'RSVPMaker Featured Event, Followed by Title/Date/Button', 'rsvpmaker' ),
+            'description' => esc_html__( 'A compact event listing format.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker'],
             'content'     => '<!-- wp:group {"layout":{"type":"constrained"}} -->
 <div class="wp-block-group"><!-- wp:query {"queryId":11,"query":{"perPage":1,"pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0},"namespace":"rsvpmaker/loop-event"} -->
@@ -145,8 +145,8 @@ register_block_pattern(
 register_block_pattern(
         'rsvpmaker/compact-cover',
         array(
-            'title'       => __( 'RSVPMaker Upcoming Events, Title and Date in Featured Image Cover Block', 'rsvpmaker' ),
-            'description' => __( 'A fancy events listing that uses the featured image as a background with title and date overlay.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'RSVPMaker Upcoming Events, Title and Date in Featured Image Cover Block', 'rsvpmaker' ),
+            'description' => esc_html__( 'A fancy events listing that uses the featured image as a background with title and date overlay.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker'],
             'content'     => '<!-- wp:query {"queryId":0,"query":{"perPage":"12","pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":""},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
 <div class="wp-block-query"><!-- wp:post-template {"layout":{"type":"grid","columnCount":1}} -->
@@ -189,8 +189,8 @@ register_block_pattern(
 register_block_pattern(
         'rsvpmaker/title-button',
         array(
-            'title'       => __( 'RSVPMaker Title/Date/Button', 'rsvpmaker' ),
-            'description' => __( 'A compact event listing format.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'RSVPMaker Title/Date/Button', 'rsvpmaker' ),
+            'description' => esc_html__( 'A compact event listing format.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker'],
             'content'     => '<!-- wp:query {"queryId":1,"query":{"perPage":"5","pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0,"rsvp_only":false},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
 <div class="wp-block-query"><!-- wp:post-template {"layout":{"type":"grid","columnCount":1}} -->
@@ -215,8 +215,8 @@ register_block_pattern(
 register_block_pattern(
         'rsvpmaker/next-summary-nomeetings',
         array(
-            'title'       => __( 'Next RSVP Event, plus summary + no meetings list', 'rsvpmaker' ),
-            'description' => __( 'Show the next event, plus a summary of others for which RSVPs are being collected, followed by a summary of dates where there is no meeting.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'Next RSVP Event, plus summary + no meetings list', 'rsvpmaker' ),
+            'description' => esc_html__( 'Show the next event, plus a summary of others for which RSVPs are being collected, followed by a summary of dates where there is no meeting.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker'],
             'content'     => '<!-- wp:group {"layout":{"type":"constrained"}} -->
 <div class="wp-block-group"><!-- wp:query {"queryId":0,"query":{"perPage":"1","pages":0,"offset":0,"postType":"rsvpmaker","order":"asc","author":"","search":"","exclude":[],"sticky":"","inherit":false,"eventOrder":"future","excludeType":0,"rsvp_only":true},"namespace":"rsvpmaker/rsvpmaker-loop"} -->
@@ -257,8 +257,8 @@ register_block_pattern(
 register_block_pattern(
         'rsvpmaker/qr-codes',
         array(
-            'title'       => __( 'QR Codes', 'rsvpmaker' ),
-            'description' => __( 'QR Codes for home page and RSVP Events.', 'rsvpmaker' ),
+            'title'       => esc_html__( 'QR Codes', 'rsvpmaker' ),
+            'description' => esc_html__( 'QR Codes for home page and RSVP Events.', 'rsvpmaker' ),
             'categories'    => ['rsvpmaker','qr','qr code'],
             'content'     => '<!-- wp:group {"layout":{"type":"constrained"}} -->
 <div class="wp-block-group"><!-- wp:paragraph -->

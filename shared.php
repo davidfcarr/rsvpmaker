@@ -215,3 +215,47 @@ if ( ! function_exists( 'dcarr_kses_form' ) ) {
 		);
 	}
 }
+
+if ( ! function_exists( 'dcarr_kses_with_inline_script' ) ) {
+	/**
+	 * Sanitize HTML while preserving inline script content.
+	 * 
+	 * This function allows inline JavaScript inside <script></script> tags
+	 * while still using wp_kses to sanitize the rest of the HTML content.
+	 *
+	 * @param string $content HTML content to sanitize
+	 * @return string Sanitized HTML with inline scripts preserved
+	 */
+	function dcarr_kses_with_inline_script( $content ) {
+		// Extract inline scripts with a placeholder pattern
+		$script_pattern = '/<script\s*([^>]*)>(.*?)<\/script>/is';
+		$scripts = array();
+		$counter = 0;
+		
+		$content = preg_replace_callback(
+			$script_pattern,
+			function( $matches ) use ( &$scripts, &$counter ) {
+				$attrs = $matches[1];
+				$script_content = $matches[2];
+				$placeholder = '___DCARR_SCRIPT_' . $counter . '___';
+				$scripts[ $placeholder ] = array(
+					'attrs' => $attrs,
+					'content' => $script_content,
+				);
+				$counter++;
+				return '<script' . $attrs . '>' . $placeholder . '</script>';
+			},
+			$content
+		);
+		
+		// Apply standard KSES sanitization
+		$sanitized = wp_kses( $content, dcarr_kses_form() );
+		
+		// Restore script contents from placeholders
+		foreach ( $scripts as $placeholder => $script_data ) {
+			$sanitized = str_replace( $placeholder, $script_data['content'], $sanitized );
+		}
+		
+		return $sanitized;
+	}
+}
