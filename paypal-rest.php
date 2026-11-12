@@ -363,6 +363,11 @@ function rsvpmaker_paypal_choice($atts = []) {
 function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description='', $vars = array()) {
   global $paypal_rest_keys, $post, $current_user;
   
+  // Make sure $paypal_rest_keys is loaded
+  if(!is_array($paypal_rest_keys)) {
+    $paypal_rest_keys = rsvpmaker_get_rspmaker_paypal_rest_keys();
+  }
+  
   if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id'])) {
     error_log('PayPal Button: PayPal keys not configured. client_id=' . (isset($paypal_rest_keys['client_id']) ? '**set**' : 'empty') . ', sandbox_client_id=' . (isset($paypal_rest_keys['sandbox_client_id']) ? '**set**' : 'empty'));
     return '';
@@ -382,7 +387,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     $event = $post->ID;
   }
   
-  if($paypal_rest_keys['sandbox']) {
+  if(!empty($paypal_rest_keys['sandbox'])) {
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
       if(empty($paypal_client_id)) {
         error_log('PayPal Button: Sandbox mode enabled but sandbox_client_id is empty');
