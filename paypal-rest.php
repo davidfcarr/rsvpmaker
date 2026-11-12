@@ -370,7 +370,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   
   if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id'])) {
     error_log('PayPal Button: PayPal keys not configured. client_id=' . (isset($paypal_rest_keys['client_id']) ? '**set**' : 'empty') . ', sandbox_client_id=' . (isset($paypal_rest_keys['sandbox_client_id']) ? '**set**' : 'empty'));
-    return '';
+    return '<!-- PayPal Button Error: Keys not configured -->';
   }
 
   if(strlen($description) > 50)
@@ -391,13 +391,13 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
       if(empty($paypal_client_id)) {
         error_log('PayPal Button: Sandbox mode enabled but sandbox_client_id is empty');
-        return '';
+        return '<!-- PayPal Button Error: Sandbox enabled but no sandbox client ID -->';
       }
   } else {
       $paypal_client_id = $paypal_rest_keys['client_id'];
       if(empty($paypal_client_id)) {
         error_log('PayPal Button: Live mode but client_id is empty');
-        return '';
+        return '<!-- PayPal Button Error: Live mode but no live client ID -->';
       }
   }
   $verify = add_query_arg($vars, rest_url('rsvpmaker/v1/paypal_paid'));
