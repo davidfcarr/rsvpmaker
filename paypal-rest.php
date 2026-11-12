@@ -2,6 +2,32 @@
 
 $paypal_rest_keys = rsvpmaker_get_rspmaker_paypal_rest_keys();
 
+function rsvpmaker_paypal_recover_from_database($data) {
+  global $wpdb;
+  // Try to recover transaction details from post meta if transient expired
+  if(empty($data->id)) {
+    return array();
+  }
+  
+  // Search for transaction in post meta by looking for the transaction ID
+  $results = $wpdb->get_results($wpdb->prepare(
+    "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key='rsvpmaker_paypal_tracking' AND meta_value LIKE %s",
+    '%' . $wpdb->esc_like($data->id) . '%'
+  ));
+  
+  if(!empty($results)) {
+    foreach($results as $row) {
+      $tracking = maybe_unserialize($row->meta_value);
+      if(is_array($tracking) && !empty($tracking['amount'])) {
+        error_log('PayPal: Successfully recovered transaction from post meta. Transaction ID: ' . $data->id);
+        return $tracking;
+      }
+    }
+  }
+  
+  return array();
+}
+
 function rsvpmaker_paypal_test_connection($type = 'live') {
   global $paypal_rest_keys;
   try {
@@ -48,34 +74,64 @@ function rsvpmaker_paypal_verify_rest () {
     global $wpdb, $rsvp_options, $paypal_rest_keys;
     $paid = $paidnow = $owed = $fee_total = $paidbefore = 0;
     $rsvptable = $wpdb->prefix.'rsvpmaker';
-        $request_body = file_get_contents('php://input');        
-        $data = json_decode($request_body);
-        
-        // Add debug logging for all payment attempts
-        $log_entry = array(
-          'timestamp' => current_time('mysql'),
-          'transaction_id' => !empty($data->id) ? $data->id : 'unknown',
-          'rsvp_tx' => !empty($data->rsvp_tx) ? $data->rsvp_tx : 'unknown',
-          'status' => !empty($data->status) ? $data->status : 'no_status',
-          'amount' => !empty($data->purchase_units[0]->amount->value) ? $data->purchase_units[0]->amount->value : 0
-        );
-        error_log('PayPal Payment Attempt: ' . json_encode($log_entry));
-        
-        if(empty($data) || empty($data->rsvp_tx) || empty($data->id) || empty($data->status))
-          return array('status' => 'Invalid PayPal payload');
-        $saved = get_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);
-        if(empty($saved))
-          return array('status' => 'Pending transaction not found');
-        delete_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);//one time use
-        if(
-          empty($data->purchase_units[0]->amount->value)
-          || abs(floatval($data->purchase_units[0]->amount->value) - floatval($saved['amount'])) > 0.01
-        )
-          return array('status' => 'Payment amount mismatch');
-        if(!empty($rsvp_options['paypal_currency']) && !empty($data->purchase_units[0]->amount->currency_code) && strtoupper($data->purchase_units[0]->amount->currency_code) !== strtoupper($rsvp_options['paypal_currency']))
-          return array('status' => 'Payment currency mismatch');
-        if('COMPLETED' !== strtoupper($data->status))
-          return array('status' => 'Payment not completed');
+    $request_body = file_get_contents('php://input');        
+    $data = json_decode($request_body);
+    
+    // Add comprehensive debug logging for all payment attempts
+    $log_entry = array(
+      'timestamp' => current_time('mysql'),
+      'transaction_id' => !empty($data->id) ? $data->id : 'unknown',
+      'rsvp_tx' => !empty($data->rsvp_tx) ? $data->rsvp_tx : 'unknown',
+      'status' => !empty($data->status) ? $data->status : 'no_status',
+      'amount' => !empty($data->purchase_units[0]->amount->value) ? $data->purchase_units[0]->amount->value : 0,
+      'payer_email' => !empty($data->payer->email_address) ? $data->payer->email_address : 'unknown'
+    );
+    error_log('PayPal Payment Attempt: ' . json_encode($log_entry));
+    
+    if(empty($data)) {
+      error_log('PayPal: ERROR - Empty request body received');
+      return array('status' => 'Invalid PayPal payload - empty body');
+    }
+    if(empty($data->rsvp_tx) || empty($data->id) || empty($data->status)) {
+      error_log('PayPal: ERROR - Missing required fields. rsvp_tx: ' . (!empty($data->rsvp_tx) ? 'set' : 'MISSING') 
+        . ', id: ' . (!empty($data->id) ? 'set' : 'MISSING') 
+        . ', status: ' . (!empty($data->status) ? $data->status : 'MISSING'));
+      return array('status' => 'Invalid PayPal payload - missing fields');
+    }
+    
+    $saved = get_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);
+    if(empty($saved)) {
+      error_log('PayPal: ERROR - Transient not found for rsvp_tx: ' . $data->rsvp_tx . '. Transaction ID: ' . $data->id);
+      // Try to recover from database if transient expired
+      $saved = rsvpmaker_paypal_recover_from_database($data);
+      if(empty($saved)) {
+        return array('status' => 'Pending transaction not found - transient expired or invalid');
+      }
+      error_log('PayPal: Recovered transaction from database for rsvp_tx: ' . $data->rsvp_tx);
+    }
+    delete_transient('rsvpmaker_paypal_payment_'.$data->rsvp_tx);//one time use
+        if(empty($data->purchase_units[0]->amount->value)) {
+          error_log('PayPal: ERROR - Missing amount in purchase_units. Transaction ID: ' . $data->id);
+          return array('status' => 'Payment amount missing from capture');
+        }
+        $received_amount = floatval($data->purchase_units[0]->amount->value);
+        $expected_amount = floatval($saved['amount']);
+        if(abs($received_amount - $expected_amount) > 0.01) {
+          error_log('PayPal: ERROR - Amount mismatch. Expected: ' . $expected_amount . ', Received: ' . $received_amount . ', Transaction ID: ' . $data->id);
+          return array('status' => 'Payment amount mismatch. Expected ' . $expected_amount . ', got ' . $received_amount);
+        }
+        if(!empty($rsvp_options['paypal_currency']) && !empty($data->purchase_units[0]->amount->currency_code)) {
+          $received_currency = strtoupper($data->purchase_units[0]->amount->currency_code);
+          $expected_currency = strtoupper($rsvp_options['paypal_currency']);
+          if($received_currency !== $expected_currency) {
+            error_log('PayPal: ERROR - Currency mismatch. Expected: ' . $expected_currency . ', Received: ' . $received_currency . ', Transaction ID: ' . $data->id);
+            return array('status' => 'Payment currency mismatch');
+          }
+        }
+        if('COMPLETED' !== strtoupper($data->status)) {
+          error_log('PayPal: ERROR - Payment status not COMPLETED. Status: ' . $data->status . ', Transaction ID: ' . $data->id);
+          return array('status' => 'Payment not completed - status: ' . $data->status);
+        }
         
         // Add secondary duplicate check via money transaction table
         $money_table = rsvpmaker_money_table();
@@ -93,8 +149,12 @@ function rsvpmaker_paypal_verify_rest () {
         $already_processed = false;
         if($rsvp_id) {
           $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id=%d",$rsvptable,$rsvp_id));
-          if(empty($row))
-            return array('status' => 'RSVP record not found');
+          if(empty($row)) {
+            error_log('PayPal: ERROR - RSVP record not found for ID ' . $rsvp_id . ', Transaction ID: ' . $data->id);
+            return array('status' => 'RSVP record not found - ID ' . $rsvp_id);
+          }
+          error_log('PayPal: Found RSVP record ID ' . $rsvp_id . ', Current paid: ' . $row->amountpaid . ', Owed: ' . $row->owed);
+          
           $details = maybe_unserialize($row->details);
           if(!is_array($details))
             $details = array();
@@ -126,6 +186,7 @@ function rsvpmaker_paypal_verify_rest () {
             $details['paypal_payment_amount'] = $paidnow;
             $details['paypal_payment_currency'] = $data->purchase_units[0]->amount->currency_code;
             $details['paypal_payment_processed_at'] = current_time('mysql');
+            error_log('PayPal: Preparing to update RSVP - Old paid: ' . $paidbefore . ', New paid: ' . $paid . ', Old owed: ' . ($fee_total - $paidbefore) . ', New owed: ' . $owed);
           }
           if(!empty($details['gift_certificate'])) {
             $gift = get_option($details['gift_certificate']);
@@ -133,13 +194,16 @@ function rsvpmaker_paypal_verify_rest () {
           }
           if(!$already_processed) {
             $updatesql = $wpdb->prepare("UPDATE %i SET amountpaid=%s, owed=%s, details=%s WHERE id=%d",$rsvptable,$paid,$owed,maybe_serialize($details),$rsvp_id);
+            error_log('PayPal: Executing update query for RSVP ' . $rsvp_id . '. SQL: ' . $updatesql);
             $result = $wpdb->query($updatesql);
             if($result === false) {
-              error_log('PayPal: Database update failed for RSVP ID ' . $rsvp_id . ', Error: ' . $wpdb->last_error);
-              return array('status' => 'Database update failed');
+              error_log('PayPal: Database update FAILED for RSVP ID ' . $rsvp_id . ', Query Error: ' . $wpdb->last_error . ', Transaction ID: ' . $data->id);
+              return array('status' => 'Database update failed: ' . $wpdb->last_error);
             }
-            error_log('PayPal: RSVP record updated - ID ' . $rsvp_id . ', New Amount: ' . $paid . ', Owed: ' . $owed);
+            error_log('PayPal: RSVP record successfully updated - ID ' . $rsvp_id . ', New Amount Paid: ' . $paid . ', New Owed: ' . $owed . ', Transaction ID: ' . $data->id);
           }
+        } else {
+          error_log('PayPal: No RSVP ID provided - Payment for non-RSVP transaction. Transaction ID: ' . $data->id);
         }
         $gift_certificate = '';
         $atts['name'] = $data->payer->name->given_name.' '.$data->payer->name->surname;
@@ -361,19 +425,58 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
           details.user_id = '<?php if(isset($current_user->ID)) echo esc_js($current_user->ID); ?>';
           result = 'Recording transaction by ' + details.payer.name.given_name+'... ';
           document.getElementById("paypal-button-container").innerHTML = result;
-          // Call your server to save the transaction
-          return fetch('<?php echo esc_url($verify); ?>', {
-            method: 'post',
-            headers: {
-              'content-type': 'application/json'
-            },
-            body: JSON.stringify(details)
-          }).then(function(response) {
-      return response.json();
-    })
-    .then(function(myJson) {
-      if(myJson.status)
-          {
+          
+          // Helper function for retry logic with exponential backoff
+          function sendPaymentWithRetry(paymentData, retryCount = 0, maxRetries = 3) {
+            const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+            
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                fetch('<?php echo esc_url($verify); ?>', {
+                  method: 'post',
+                  headers: {
+                    'content-type': 'application/json'
+                  },
+                  body: JSON.stringify(paymentData)
+                })
+                .then(function(response) {
+                  console.log('PayPal verification response status:', response.status);
+                  return response.json().then(data => ({status: response.status, body: data}));
+                })
+                .then(function(result) {
+                  // Success - server accepted the payment
+                  if (result.status >= 200 && result.status < 300) {
+                    console.log('PayPal payment verified successfully:', result.body);
+                    resolve(result.body);
+                  } else {
+                    // Server error, but might be retryable
+                    if (retryCount < maxRetries && result.status >= 500) {
+                      console.log('Server error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
+                      resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
+                    } else {
+                      console.error('Payment verification failed:', result.body);
+                      resolve(result.body);
+                    }
+                  }
+                })
+                .catch(function(error) {
+                  console.error('Fetch error:', error);
+                  if (retryCount < maxRetries) {
+                    console.log('Network error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
+                    resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
+                  } else {
+                    resolve({
+                      status: 'Network error after ' + maxRetries + ' retries. Your payment was captured by PayPal. Please contact support with Transaction ID: ' + paymentData.id
+                    });
+                  }
+                });
+              }, delay);
+            });
+          }
+          
+          // Send payment with retry logic
+          return sendPaymentWithRetry(details).then(function(myJson) {
+            if(myJson.status) {
               result = '<p>'+myJson.status+'</p>';
               if(myJson.gift_certificate) {
                 console.log('gift certificate');
@@ -382,16 +485,15 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
               }
               if(myJson.receipt_link)
                 result += '<p><a href="'+myJson.receipt_link+'">Print Receipt</a></p>';
-          }
-          else {
+            } else {
               result = 'Transaction error';
-          }
-          const confirmblock = document.getElementById("rsvpconfirm");
-          if(confirmblock && confirmblock.innerHTML) // removes the language saying money is still owed
-            confirmblock.innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
-          else
-            document.getElementById("paypal-button-container").innerHTML  = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
-        });
+            }
+            const confirmblock = document.getElementById("rsvpconfirm");
+            if(confirmblock && confirmblock.innerHTML) // removes the language saying money is still owed
+              confirmblock.innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
+            else
+              document.getElementById("paypal-button-container").innerHTML  = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
+          });
         });
       },
       onError: function (err) {

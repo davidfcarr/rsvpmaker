@@ -3496,7 +3496,7 @@ public function get_items_permissions_check( $request ) {
 
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
-		global $wpdb;
+		global $wpdb, $rsvp_options;
 		$params = $request->get_json_params();
 		if(!empty($params)) {
 			$type = $params['event_type'];
@@ -3505,12 +3505,16 @@ public function get_items_permissions_check( $request ) {
 				$order_id = (empty($params['resource']['supplementary_data']['related_ids']['order_id'])) ? '' : sanitize_text_field($params['resource']['supplementary_data']['related_ids']['order_id']);
 				$fee = (empty($params['resource']['seller_receivable_breakdown']['paypal_fee']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['paypal_fee']['value']);
 				$gross = (empty($params['resource']['seller_receivable_breakdown']['gross_amount']['value'])) ? '' : sanitize_text_field($params['resource']['seller_receivable_breakdown']['gross_amount']['value']);
+				$capture_status = (empty($params['resource']['status'])) ? '' : sanitize_text_field($params['resource']['status']);
+				$payer_email = (empty($params['resource']['supplementary_data']['payer']['email_address'])) ? '' : sanitize_text_field($params['resource']['supplementary_data']['payer']['email_address']);
 				$rsvpmaker_money = $wpdb->prefix.'rsvpmaker_money';
-				$order_id = esc_sql($order_id);
-				$fee = esc_sql($fee);
-				$gross = esc_sql($gross);
+				$rsvptable = $wpdb->prefix.'rsvpmaker';
+				
+				error_log('PayPal Webhook: Processing PAYMENT.CAPTURE.COMPLETED - Order ID: ' . $order_id . ', Amount: ' . $gross . ', Status: ' . $capture_status);
+				
 				$sql_check = $wpdb->prepare("SELECT * FROM %i WHERE transaction_id=%s",$rsvpmaker_money,$order_id);
 				$existing = $wpdb->get_row($sql_check);
+				
 				if ( $existing ) {
 					$sql = $wpdb->prepare(
 						"UPDATE %i SET fee = %s WHERE transaction_id = %s",
@@ -3518,6 +3522,7 @@ public function get_items_permissions_check( $request ) {
 						$fee,
 						$order_id
 					);
+					error_log('PayPal Webhook: Updating existing money transaction for Order ID: ' . $order_id);
 				} else {
 					$sql = $wpdb->prepare(
 						"INSERT INTO %i (amount, fee, name, transaction_id) VALUES (%s, %s, %s, %s)",
@@ -3527,9 +3532,65 @@ public function get_items_permissions_check( $request ) {
 						'added from webhook',
 						$order_id
 					);
+					error_log('PayPal Webhook: Creating new money transaction for Order ID: ' . $order_id . ', Amount: ' . $gross);
 				}
 				$wpdb->query($sql);
-				rsvpmaker_log('PayPal Webhook Processed: ' . $sql);
+				
+				// Now check if this payment needs to be marked as paid in the RSVP record
+				// Search for RSVP records with this transaction ID in their details
+				$rsvps_to_update = $wpdb->get_results($wpdb->prepare(
+					"SELECT id, details, amountpaid, fee_total FROM %i WHERE details LIKE %s",
+					$rsvptable,
+					'%' . $wpdb->esc_like($order_id) . '%'
+				));
+				
+				foreach($rsvps_to_update as $rsvp_row) {
+					$details = maybe_unserialize($rsvp_row->details);
+					
+					// Check if this RSVP's payment hasn't been marked as paid yet
+					if(!empty($details['paypal_transaction_id']) && $details['paypal_transaction_id'] === $order_id) {
+						// Transaction is already recorded in RSVP details
+						error_log('PayPal Webhook: RSVP ' . $rsvp_row->id . ' already has transaction ID recorded');
+						continue;
+					}
+					
+					// This RSVP needs updating - mark the payment as captured
+					$paidbefore = floatval($rsvp_row->amountpaid);
+					$fee_total = floatval($rsvp_row->fee_total);
+					$paid = $paidbefore + floatval($gross);
+					$owed = max(0, $fee_total - $paid);
+					
+					// Store webhook confirmation details
+					if(!is_array($details)) {
+						$details = array();
+					}
+					$details['paypal_transaction_id'] = $order_id;
+					$details['paypal_capture_status'] = $capture_status;
+					$details['paypal_payment_amount'] = $gross;
+					$details['paypal_payment_confirmed_by_webhook'] = current_time('mysql');
+					
+					$update_sql = $wpdb->prepare(
+						"UPDATE %i SET amountpaid=%s, owed=%s, details=%s WHERE id=%d",
+						$rsvptable,
+						$paid,
+						$owed,
+						maybe_serialize($details),
+						$rsvp_row->id
+					);
+					
+					$result = $wpdb->query($update_sql);
+					
+					if($result === false) {
+						error_log('PayPal Webhook: ERROR updating RSVP ' . $rsvp_row->id . ' - ' . $wpdb->last_error);
+					} else {
+						error_log('PayPal Webhook: Successfully updated RSVP ' . $rsvp_row->id . ' - marked as paid. Previous: ' . $paidbefore . ', Now: ' . $paid . ', Owed: ' . $owed);
+						
+						// Send receipt email if not already sent
+						do_action('rsvpmaker_paypal_webhook_confirmation', $rsvp_row->id, $order_id);
+					}
+				}
+				
+				rsvpmaker_log('PayPal Webhook Completed for Order ID: ' . $order_id);
 			}
 		} 
 	return new WP_REST_Response( [], 200 );
