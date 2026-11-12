@@ -426,130 +426,142 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   if($disable_funding)
     $disable_funding = '&disable-funding='.$disable_funding;
   ob_start();
+  $verify_url = esc_url($verify);
+  $tx_code = esc_attr($transaction_code);
+  $user_id = isset($current_user->ID) ? intval($current_user->ID) : 0;
+  $desc = esc_attr($description);
+  $amt = esc_attr($amount);
+  $curr = esc_attr($currency_code);
+  $rsvp = intval($rsvp_id);
+  $inv = esc_attr($invoice_id);
   ?>
   <script
       src="<?php echo esc_url('https://www.paypal.com/sdk/js?client-id='.$paypal_client_id.'&currency='.$currency_code.$enable_funding.$disable_funding);?>">
   </script>
+  <script type="application/json" id="paypal-config-<?php echo $rsvp; ?>">{
+    "verifyUrl": "<?php echo $verify_url; ?>",
+    "txCode": "<?php echo $tx_code; ?>",
+    "userId": "<?php echo $user_id; ?>",
+    "description": "<?php echo $desc; ?>",
+    "amount": "<?php echo $amt; ?>",
+    "currency": "<?php echo $curr; ?>",
+    "rsvpId": "<?php echo $rsvp; ?>"
+    <?php if($invoice_id) { echo ', "invoiceId": "' . $inv . '"'; } ?>
+  }</script>
   <script>
-    // Wait for PayPal SDK to load before rendering button
-    function initPayPalButton() {
+    function initPayPalButton<?php echo $rsvp; ?>() {
       if (typeof paypal === 'undefined') {
-        // SDK not loaded yet, try again in 100ms
-        setTimeout(initPayPalButton, 100);
+        setTimeout(initPayPalButton<?php echo $rsvp; ?>, 100);
         return;
       }
       
-    var purchase = {
-          custom_id: '<?php echo intval($rsvp_id); ?>',
-          <?php if($invoice_id) {
-            echo "invoice_id: '".esc_js($invoice_id)."',\n";
-          }
-          ?>
-          description: '<?php echo esc_js($description); ?>',
-            amount: {
-              value: '<?php echo esc_js($amount); ?>',
-              currency_code: '<?php echo esc_js($currency_code); ?>'
-            }
-          };
-    paypal.Buttons({
-      createOrder: function(data, actions) {
-        return actions.order.create({
-          purchase_units: [purchase]
-        });
-      },
-      onApprove: function(data, actions) {
-        return actions.order.capture().then(function(details) {
-          details.rsvp_tx = '<?php echo esc_js($transaction_code); ?>';
-          details.user_id = '<?php if(isset($current_user->ID)) echo esc_js($current_user->ID); ?>';
-          result = 'Recording transaction by ' + details.payer.name.given_name+'... ';
-          document.getElementById("paypal-button-container").innerHTML = result;
-          
-          // Helper function for retry logic with exponential backoff
-          function sendPaymentWithRetry(paymentData, retryCount = 0, maxRetries = 3) {
-            const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+      var config = JSON.parse(document.getElementById('paypal-config-<?php echo $rsvp; ?>').textContent);
+      var invoice_id = config.invoiceId || '';
+      
+      var purchase = {
+        custom_id: config.rsvpId,
+        description: config.description,
+        amount: {
+          value: config.amount,
+          currency_code: config.currency
+        }
+      };
+      
+      if (invoice_id) {
+        purchase.invoice_id = invoice_id;
+      }
+      
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [purchase]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            details.rsvp_tx = config.txCode;
+            details.user_id = config.userId;
+            result = 'Recording transaction by ' + details.payer.name.given_name+'... ';
+            document.getElementById("paypal-button-container").innerHTML = result;
             
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                fetch('<?php echo esc_url($verify); ?>', {
-                  method: 'post',
-                  headers: {
-                    'content-type': 'application/json'
-                  },
-                  body: JSON.stringify(paymentData)
-                })
-                .then(function(response) {
-                  console.log('PayPal verification response status:', response.status);
-                  return response.json().then(data => ({status: response.status, body: data}));
-                })
-                .then(function(result) {
-                  // Success - server accepted the payment
-                  if (result.status >= 200 && result.status < 300) {
-                    console.log('PayPal payment verified successfully:', result.body);
-                    resolve(result.body);
-                  } else {
-                    // Server error, but might be retryable
-                    if (retryCount < maxRetries && result.status >= 500) {
-                      console.log('Server error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
+            function sendPaymentWithRetry(paymentData, retryCount = 0, maxRetries = 3) {
+              const delay = Math.pow(2, retryCount) * 1000;
+              
+              return new Promise((resolve) => {
+                setTimeout(() => {
+                  fetch(config.verifyUrl, {
+                    method: 'post',
+                    headers: {
+                      'content-type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                  })
+                  .then(function(response) {
+                    console.log('PayPal verification response status:', response.status);
+                    return response.json().then(data => ({status: response.status, body: data}));
+                  })
+                  .then(function(result) {
+                    if (result.status >= 200 && result.status < 300) {
+                      console.log('PayPal payment verified successfully:', result.body);
+                      resolve(result.body);
+                    } else {
+                      if (retryCount < maxRetries && result.status >= 500) {
+                        console.log('Server error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
+                        resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
+                      } else {
+                        console.error('Payment verification failed:', result.body);
+                        resolve(result.body);
+                      }
+                    }
+                  })
+                  .catch(function(error) {
+                    console.error('Fetch error:', error);
+                    if (retryCount < maxRetries) {
+                      console.log('Network error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
                       resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
                     } else {
-                      console.error('Payment verification failed:', result.body);
-                      resolve(result.body);
+                      resolve({
+                        status: 'Network error after ' + maxRetries + ' retries. Your payment was captured by PayPal. Please contact support with Transaction ID: ' + paymentData.id
+                      });
                     }
-                  }
-                })
-                .catch(function(error) {
-                  console.error('Fetch error:', error);
-                  if (retryCount < maxRetries) {
-                    console.log('Network error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
-                    resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
-                  } else {
-                    resolve({
-                      status: 'Network error after ' + maxRetries + ' retries. Your payment was captured by PayPal. Please contact support with Transaction ID: ' + paymentData.id
-                    });
-                  }
-                });
-              }, delay);
-            });
-          }
-          
-          // Send payment with retry logic
-          return sendPaymentWithRetry(details).then(function(myJson) {
-            if(myJson.status) {
-              result = '<p>'+myJson.status+'</p>';
-              if(myJson.gift_certificate) {
-                console.log('gift certificate');
-                console.log(myJson);
-                result += '<h1>'+myJson.gift_certificate+'</h1><p>Give this code to the recipient of your gift. To redeem, enter into the coupon field of the registration form for any event on this site.</p>';
-              }
-              if(myJson.receipt_link)
-                result += '<p><a href="'+myJson.receipt_link+'">Print Receipt</a></p>';
-            } else {
-              result = 'Transaction error';
+                  });
+                }, delay);
+              });
             }
-            const confirmblock = document.getElementById("rsvpconfirm");
-            if(confirmblock && confirmblock.innerHTML) // removes the language saying money is still owed
-              confirmblock.innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
-            else
-              document.getElementById("paypal-button-container").innerHTML  = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
+            
+            return sendPaymentWithRetry(details).then(function(myJson) {
+              if(myJson.status) {
+                result = '<p>'+myJson.status+'</p>';
+                if(myJson.gift_certificate) {
+                  console.log('gift certificate');
+                  console.log(myJson);
+                  result += '<h1>'+myJson.gift_certificate+'</h1><p>Give this code to the recipient of your gift. To redeem, enter into the coupon field of the registration form for any event on this site.</p>';
+                }
+                if(myJson.receipt_link)
+                  result += '<p><a href="'+myJson.receipt_link+'">Print Receipt</a></p>';
+              } else {
+                result = 'Transaction error';
+              }
+              const confirmblock = document.getElementById("rsvpconfirm");
+              if(confirmblock && confirmblock.innerHTML)
+                confirmblock.innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
+              else
+                document.getElementById("paypal-button-container").innerHTML  = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
+            });
           });
-        });
-      },
-      onError: function (err) {
-        document.getElementById("paypal-error-container").innerHTML = 'Error connecting to PayPal service. Please Try again';
-    // Show an error page here, when an error occurs
-      }
-    }).render('#paypal-button-container');
-
-    let interval = 30*60000;
-    setTimeout(() => {
-      document.getElementById("paypal-button-container").innerHTML = '<h1>Time to pay expired</h1>';
-    }, interval);//30 minutes
+        },
+        onError: function (err) {
+          document.getElementById("paypal-error-container").innerHTML = 'Error connecting to PayPal service. Please Try again';
+        }
+      }).render('#paypal-button-container');
+      
+      let interval = 30*60000;
+      setTimeout(() => {
+        document.getElementById("paypal-button-container").innerHTML = '<h1>Time to pay expired</h1>';
+      }, interval);
+    }
     
-    } // Close initPayPalButton function
-    
-    // Start the initialization - wait for SDK to load
-    initPayPalButton();
-
+    initPayPalButton<?php echo $rsvp; ?>();
   </script>
   <div id="paypal-error-container" style="color: red; font-weight: bold;"></div>
   <div id="paypal-button-container"></div>
