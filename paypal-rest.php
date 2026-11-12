@@ -362,8 +362,16 @@ function rsvpmaker_paypal_choice($atts = []) {
 //rsvpmaker_paypal_button( $charge, $rsvp_options['paypal_currency'], $post->post_title, array('rsvp'=>$rsvp_id,'event' => $post->ID) )
 function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description='', $vars = array()) {
   global $paypal_rest_keys, $post, $current_user;
-  if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id']))
-    return;
+  
+  if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id'])) {
+    error_log('PayPal Button: PayPal keys not configured. client_id=' . (isset($paypal_rest_keys['client_id']) ? '**set**' : 'empty') . ', sandbox_client_id=' . (isset($paypal_rest_keys['sandbox_client_id']) ? '**set**' : 'empty'));
+    return '';
+  }
+
+  if(!$post || !isset($post->ID)) {
+    error_log('PayPal Button: Global $post is not available or invalid');
+    return '';
+  }
 
   if(strlen($description) > 50)
     $description = substr($description,0,50) . ' ...';
@@ -371,24 +379,31 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $rsvp_id = (empty($vars['rsvp'])) ? 0 : $vars['rsvp'];
   $invoice_id = (empty($vars['invoice_id'])) ? '' : $vars['invoice_id'];
   $event = (empty($vars['event'])) ? $post->ID : $vars['event'];
-  if($paypal_rest_keys['sandbox'])
+  
+  if($paypal_rest_keys['sandbox']) {
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
-  else
+      if(empty($paypal_client_id)) {
+        error_log('PayPal Button: Sandbox mode enabled but sandbox_client_id is empty');
+        return '';
+      }
+  } else {
       $paypal_client_id = $paypal_rest_keys['client_id'];
+      if(empty($paypal_client_id)) {
+        error_log('PayPal Button: Live mode but client_id is empty');
+        return '';
+      }
+  }
   $verify = add_query_arg($vars, rest_url('rsvpmaker/v1/paypal_paid'));
   $vars['amount'] = $amount;
   $vars['description'] = $description;
   $vars['post_id'] = $post->ID;
   $details = [];
-  mail('david@carrcommunications','paypal button vars',var_export($vars,true));
-  if(!empty($vars['details'])) {
-    $details = unserialize($vars['details']);
-    mail('david@carrcommunications','paypal button details',var_export($details,true));
-  }
   $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
   $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
   $transaction_code = wp_generate_password(20,false,false);
-  set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,(15 * MINUTE_IN_SECONDS));
+  if(!set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,(15 * MINUTE_IN_SECONDS))) {
+    error_log('PayPal Button: WARNING - Failed to set transient for transaction code ' . $transaction_code);
+  }
   $enable_funding = (empty($paypal_rest_keys['funding_sources'])) ? '' : $paypal_rest_keys['funding_sources'];
   if($enable_funding)
     $enable_funding = '&enable-funding='.$enable_funding;
@@ -511,7 +526,11 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   <div id="paypal-error-container" style="color: red; font-weight: bold;"></div>
   <div id="paypal-button-container"></div>
   <?php
-    return ob_get_clean();
+    $button_html = ob_get_clean();
+    if(empty($button_html)) {
+      error_log('PayPal Button: ob_get_clean() returned empty/false. Transaction code: ' . (isset($transaction_code) ? $transaction_code : 'not set'));
+    }
+    return $button_html;
   }
 
 function rsvpmaker_paypal_button_embed($atts) {
