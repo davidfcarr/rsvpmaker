@@ -431,6 +431,14 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
       src="<?php echo esc_url('https://www.paypal.com/sdk/js?client-id='.$paypal_client_id.'&currency='.$currency_code.$enable_funding.$disable_funding);?>">
   </script>
   <script>
+    // Wait for PayPal SDK to load before rendering button
+    function initPayPalButton() {
+      if (typeof paypal === 'undefined') {
+        // SDK not loaded yet, try again in 100ms
+        setTimeout(initPayPalButton, 100);
+        return;
+      }
+      
     var purchase = {
           custom_id: '<?php echo intval($rsvp_id); ?>',
           <?php if($invoice_id) {
@@ -536,6 +544,11 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     setTimeout(() => {
       document.getElementById("paypal-button-container").innerHTML = '<h1>Time to pay expired</h1>';
     }, interval);//30 minutes
+    
+    } // Close initPayPalButton function
+    
+    // Start the initialization - wait for SDK to load
+    initPayPalButton();
 
   </script>
   <div id="paypal-error-container" style="color: red; font-weight: bold;"></div>
