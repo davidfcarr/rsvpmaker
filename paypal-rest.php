@@ -448,8 +448,8 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
           description: '<?php echo esc_js($description); ?>',
             amount: {
               value: '<?php echo esc_js($amount); ?>',
-              currency_code: '<?php echo esc_js($currency_code); ?>',
-            },
+              currency_code: '<?php echo esc_js($currency_code); ?>'
+            }
           };
     paypal.Buttons({
       createOrder: function(data, actions) {
