@@ -1,0 +1,41 @@
+🚨 URGENT DEBUG STEPS 🚨
+
+The PayPal button is returning empty. We need to figure out WHY.
+
+STEP 1: UPLOAD NEW FILE
+=======================
+Upload this file to your live server:
+  paypal-rest.php → /wp-content/plugins/rsvpmaker/paypal-rest.php
+
+STEP 2: CLEAR CACHE
+===================
+Browser cache: Ctrl+Shift+Delete
+
+STEP 3: TEST PAGE
+================
+1. Create a test RSVP with a fee ($1 minimum)
+2. Go to confirmation page
+3. IMPORTANT: Right-click on page → "View Page Source"
+4. Search for: "PayPal Button Error"
+
+STEP 4: REPORT
+==============
+Tell me what you find:
+
+Option A: You see an HTML comment like:
+  <!-- PayPal Button Error: Keys not configured -->
+  
+  If YES - report the exact error message (copy-paste it)
+
+Option B: You don't see any "PayPal Button Error" comment
+  
+  If so - tell me that, and I'll check the error log for PHP errors
+
+STEP 5: I'LL FIX IT
+==================
+Once you tell me what the debug comment says (or that there's no comment),
+I can fix the specific issue.
+
+---
+
+DON'T SKIP THIS - The debug comments will tell us exactly what's wrong!
