@@ -1,0 +1,42 @@
+🚨 DEPLOYMENT INSTRUCTIONS - DO THIS NOW 🚨
+
+PROBLEM: All PayPal buttons stopped displaying after upload
+
+SOLUTION: Upload the fixed file
+
+STEP 1: Upload This ONE File
+=============================
+File: paypal-rest.php
+Location: /wp-content/plugins/rsvpmaker/paypal-rest.php
+Action: Replace the existing file with the new version
+
+STEP 2: Delete This File (if uploaded)
+======================================
+File: paypal-display.php
+This file doesn't exist - if you uploaded it, delete it
+It was a mistake in the instructions
+
+STEP 3: Test
+============
+1. Clear browser cache (Ctrl+Shift+Delete)
+2. Go to: [Your Site]/wp-admin/admin.php?page=rsvpmaker_settings
+3. Create a test RSVP with a fee
+4. Check the confirmation page
+5. Look for PayPal button (not generic "Pay Online" link)
+
+STEP 4: Check Error Log
+======================
+Location: /wp-content/debug.log
+If there are "PayPal Button:" errors, report them
+
+COMPLETE!
+========
+After upload and testing confirms it works, you're done.
+
+NOTES:
+- Only paypal-rest.php is needed right now
+- The other files (rsvpmaker-api-endpoints.php, rsvpmaker-display.php, 
+  rsvpmaker.php) are optional enhancements for later
+- You do NOT need to update those files for buttons to work
+
+Questions? See URGENT_FIX_DEPLOYMENT.md for detailed info.
