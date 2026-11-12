@@ -10,11 +10,11 @@
 * Requires at least: 5.2
 * License:           GPL v2 or later
 * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
-* Version: 12.3.4
+* Version: 12.3.4.1
 */
 
 function get_rsvpversion() {
-	return '12.3.4';
+	return '12.3.4.1';
 }
 
 if ( ! defined( 'RSVPMAKER_NONCE_FIELD' ) ) {
@@ -23,6 +23,14 @@ if ( ! defined( 'RSVPMAKER_NONCE_FIELD' ) ) {
 
 if ( ! defined( 'RSVPMAKER_NONCE_ACTION' ) ) {
 	define( 'RSVPMAKER_NONCE_ACTION', 'galifrey' );
+}
+
+function rsvpmaker_get_nonce_field() {
+	return defined( 'RSVPMAKER_NONCE_FIELD' ) ? RSVPMAKER_NONCE_FIELD : 'timelord';
+}
+
+function rsvpmaker_get_nonce_action() {
+	return defined( 'RSVPMAKER_NONCE_ACTION' ) ? RSVPMAKER_NONCE_ACTION : 'galifrey';
 }
 
 global $wp_version;

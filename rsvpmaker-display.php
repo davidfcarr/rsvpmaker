@@ -1851,7 +1851,7 @@ function rsvpmaker_replay_form( $event_id ) {
 	?>
 
 <form id="rsvpform" action="<?php echo esc_attr($permalink); ?>" method="post">
-<?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD );?>
+<?php if ( defined( 'RSVPMAKER_NONCE_ACTION' ) && defined( 'RSVPMAKER_NONCE_FIELD' ) ) { wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); } ?>
 <input type="hidden" name="replay_rsvp" value="<?php echo esc_attr($permalink); ?>" />
 
 <h3 id="rsvpnow"><?php  esc_html_e( 'Please Register', 'rsvpmaker' ); ?></h3> 
@@ -1890,7 +1890,7 @@ function rsvpmaker_replay_form( $event_id ) {
 		<p>
 		  <input type="submit" id="rsvpsubmit" style="<?php echo esc_attr(get_rsvp_submit_button_css()); ?>" name="Submit" value="<?php  esc_html_e( 'Submit', 'rsvpmaker' ); ?>" /> 
 		</p> 
-<input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo esc_attr( $event_id ); ?>" /><input type="hidden" name="landing_id" value="<?php echo esc_attr( $post->ID ); ?>" /><?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
+<input type="hidden" name="rsvp_id" id="rsvp_id" value="" /><input type="hidden" id="event" name="event" value="<?php echo esc_attr( $event_id ); ?>" /><input type="hidden" name="landing_id" value="<?php echo esc_attr( $post->ID ); ?>" /><?php if ( defined( 'RSVPMAKER_NONCE_ACTION' ) && defined( 'RSVPMAKER_NONCE_FIELD' ) ) { wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); } ?>
 
 </form>	
 
@@ -3703,7 +3703,10 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 			$content .= '<p class="rsvp_status">' .  esc_html( esc_html__( 'RSVPs are closed', 'rsvpmaker' ) ) . '</p>';
 			if ( isset( $rsvpwithdraw ) ) {
 
-				$form_html = sprintf( '<h3>%s</h3><form method="post" action="%s">%s<p><button>%s</button></p>%s</form>',  esc_html( esc_html__( 'To cancel, check the attendee names to be removed', 'rsvpmaker' ) ), esc_url_raw( $rsvplink ), $rsvpwithdraw, esc_html__( 'Cancel RSVP', 'rsvpmaker' ), wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) );
+				$nonce_field = ( defined( 'RSVPMAKER_NONCE_ACTION' ) && defined( 'RSVPMAKER_NONCE_FIELD' ) ) 
+					? wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) 
+					: '';
+				$form_html = sprintf( '<h3>%s</h3><form method="post" action="%s">%s<p><button>%s</button></p>%s</form>',  esc_html( esc_html__( 'To cancel, check the attendee names to be removed', 'rsvpmaker' ) ), esc_url_raw( $rsvplink ), $rsvpwithdraw, esc_html__( 'Cancel RSVP', 'rsvpmaker' ), $nonce_field );
 				$content .= wp_kses( $form_html, dcarr_kses_form() );
 
 			}
@@ -3990,7 +3993,7 @@ function rsvpmaker_event_content( $content, $formonly = false, $form = '' ) {
 			if ( isset( $profile['id'] ) ) {
 				echo esc_attr( $profile['id'] );}
 			?>
-" /><input type="hidden" name="event" id="event" value="<?php echo esc_attr( $post->ID ); ?>" /><?php wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); ?>
+" /><input type="hidden" name="event" id="event" value="<?php echo esc_attr( $post->ID ); ?>" /><?php if ( defined( 'RSVPMAKER_NONCE_ACTION' ) && defined( 'RSVPMAKER_NONCE_FIELD' ) ) { wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD ); } ?>
 
 </form>	
 

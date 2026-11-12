@@ -369,209 +369,75 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   }
   
   if(empty($paypal_rest_keys['client_id']) && empty($paypal_rest_keys['sandbox_client_id'])) {
-    error_log('PayPal Button: PayPal keys not configured. client_id=' . (isset($paypal_rest_keys['client_id']) ? '**set**' : 'empty') . ', sandbox_client_id=' . (isset($paypal_rest_keys['sandbox_client_id']) ? '**set**' : 'empty'));
-    return '<!-- PayPal Button Error: Keys not configured -->';
+    error_log('PayPal Button: PayPal keys not configured.');
+    return '';
   }
 
   if(strlen($description) > 50)
-    $description = substr($description,0,50) . ' ...';
+    $description = substr($description, 0, 50) . ' ...';
 
   $rsvp_id = (empty($vars['rsvp'])) ? 0 : $vars['rsvp'];
   $invoice_id = (empty($vars['invoice_id'])) ? '' : $vars['invoice_id'];
   
-  // Get event ID from vars or global post
-  $event = 0;
-  if(!empty($vars['event'])) {
-    $event = $vars['event'];
-  } elseif($post && isset($post->ID)) {
-    $event = $post->ID;
-  }
-  
   if(!empty($paypal_rest_keys['sandbox'])) {
-      $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
-      if(empty($paypal_client_id)) {
-        error_log('PayPal Button: Sandbox mode enabled but sandbox_client_id is empty');
-        return '<!-- PayPal Button Error: Sandbox enabled but no sandbox client ID -->';
-      }
+    $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
+    if(empty($paypal_client_id)) {
+      error_log('PayPal Button: Sandbox mode enabled but sandbox_client_id is empty');
+      return '';
+    }
   } else {
-      $paypal_client_id = $paypal_rest_keys['client_id'];
-      if(empty($paypal_client_id)) {
-        error_log('PayPal Button: Live mode but client_id is empty');
-        return '<!-- PayPal Button Error: Live mode but no live client ID -->';
-      }
+    $paypal_client_id = $paypal_rest_keys['client_id'];
+    if(empty($paypal_client_id)) {
+      error_log('PayPal Button: Live mode but client_id is empty');
+      return '';
+    }
   }
+
   $verify = add_query_arg($vars, rest_url('rsvpmaker/v1/paypal_paid'));
-  $vars['amount'] = $amount;
-  $vars['description'] = $description;
-  if($post && isset($post->ID)) {
-    $vars['post_id'] = $post->ID;
-  }
-  $details = [];
-  $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
+  $transaction_code = wp_generate_password(20, false, false);
   
-  // Only add post meta if we have a valid post ID
-  $tracking = false;
-  if($post && isset($post->ID)) {
-    $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
-  }
-  
-  $transaction_code = wp_generate_password(20,false,false);
-  if(!set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,(15 * MINUTE_IN_SECONDS))) {
+  // Set transient with payment tracking data
+  if(!set_transient('rsvpmaker_paypal_payment_' . $transaction_code, array_merge($vars, array('amount' => $amount, 'description' => $description)), (15 * MINUTE_IN_SECONDS))) {
     error_log('PayPal Button: WARNING - Failed to set transient for transaction code ' . $transaction_code);
   }
+
   $enable_funding = (empty($paypal_rest_keys['funding_sources'])) ? '' : $paypal_rest_keys['funding_sources'];
   if($enable_funding)
-    $enable_funding = '&enable-funding='.$enable_funding;
+    $enable_funding = '&enable-funding=' . $enable_funding;
   $disable_funding = (empty($paypal_rest_keys['excluded_funding_sources'])) ? '' : $paypal_rest_keys['excluded_funding_sources'];
   if($disable_funding)
-    $disable_funding = '&disable-funding='.$disable_funding;
-  ob_start();
-  $verify_url = esc_url($verify);
-  $tx_code = esc_attr($transaction_code);
-  $user_id = isset($current_user->ID) ? intval($current_user->ID) : 0;
-  $desc = esc_attr($description);
-  $amt = esc_attr($amount);
-  $curr = esc_attr($currency_code);
-  $rsvp = intval($rsvp_id);
-  $inv = esc_attr($invoice_id);
-  ?>
-  <script
-      src="<?php echo esc_url('https://www.paypal.com/sdk/js?client-id='.$paypal_client_id.'&currency='.$currency_code.$enable_funding.$disable_funding);?>">
-  </script>
-  <script type="application/json" id="paypal-config-<?php echo $rsvp; ?>">{
-    "verifyUrl": "<?php echo $verify_url; ?>",
-    "txCode": "<?php echo $tx_code; ?>",
-    "userId": "<?php echo $user_id; ?>",
-    "description": "<?php echo $desc; ?>",
-    "amount": "<?php echo $amt; ?>",
-    "currency": "<?php echo $curr; ?>",
-    "rsvpId": "<?php echo $rsvp; ?>"
-    <?php if($invoice_id) { echo ', "invoiceId": "' . $inv . '"'; } ?>
-  }</script>
-  <script>
-    function initPayPalButton<?php echo $rsvp; ?>() {
-      if (typeof paypal === 'undefined') {
-        setTimeout(initPayPalButton<?php echo $rsvp; ?>, 100);
-        return;
-      }
-      
-      var config = JSON.parse(document.getElementById('paypal-config-<?php echo $rsvp; ?>').textContent);
-      var invoice_id = config.invoiceId || '';
-      
-      var purchase = {
-        custom_id: config.rsvpId,
-        description: config.description,
-        amount: {
-          value: config.amount,
-          currency_code: config.currency
-        }
-      };
-      
-      if (invoice_id) {
-        purchase.invoice_id = invoice_id;
-      }
-      
-      paypal.Buttons({
-        createOrder: function(data, actions) {
-          return actions.order.create({
-            purchase_units: [purchase]
-          });
-        },
-        onApprove: function(data, actions) {
-          return actions.order.capture().then(function(details) {
-            details.rsvp_tx = config.txCode;
-            details.user_id = config.userId;
-            result = 'Recording transaction by ' + details.payer.name.given_name+'... ';
-            document.getElementById("paypal-button-container").innerHTML = result;
-            
-            function sendPaymentWithRetry(paymentData, retryCount = 0, maxRetries = 3) {
-              const delay = Math.pow(2, retryCount) * 1000;
-              
-              return new Promise((resolve) => {
-                setTimeout(() => {
-                  fetch(config.verifyUrl, {
-                    method: 'post',
-                    headers: {
-                      'content-type': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                  })
-                  .then(function(response) {
-                    console.log('PayPal verification response status:', response.status);
-                    return response.json().then(data => ({status: response.status, body: data}));
-                  })
-                  .then(function(result) {
-                    if (result.status >= 200 && result.status < 300) {
-                      console.log('PayPal payment verified successfully:', result.body);
-                      resolve(result.body);
-                    } else {
-                      if (retryCount < maxRetries && result.status >= 500) {
-                        console.log('Server error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
-                        resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
-                      } else {
-                        console.error('Payment verification failed:', result.body);
-                        resolve(result.body);
-                      }
-                    }
-                  })
-                  .catch(function(error) {
-                    console.error('Fetch error:', error);
-                    if (retryCount < maxRetries) {
-                      console.log('Network error, retrying... (attempt ' + (retryCount + 1) + ' of ' + maxRetries + ')');
-                      resolve(sendPaymentWithRetry(paymentData, retryCount + 1, maxRetries));
-                    } else {
-                      resolve({
-                        status: 'Network error after ' + maxRetries + ' retries. Your payment was captured by PayPal. Please contact support with Transaction ID: ' + paymentData.id
-                      });
-                    }
-                  });
-                }, delay);
-              });
-            }
-            
-            return sendPaymentWithRetry(details).then(function(myJson) {
-              if(myJson.status) {
-                result = '<p>'+myJson.status+'</p>';
-                if(myJson.gift_certificate) {
-                  console.log('gift certificate');
-                  console.log(myJson);
-                  result += '<h1>'+myJson.gift_certificate+'</h1><p>Give this code to the recipient of your gift. To redeem, enter into the coupon field of the registration form for any event on this site.</p>';
-                }
-                if(myJson.receipt_link)
-                  result += '<p><a href="'+myJson.receipt_link+'">Print Receipt</a></p>';
-              } else {
-                result = 'Transaction error';
-              }
-              const confirmblock = document.getElementById("rsvpconfirm");
-              if(confirmblock && confirmblock.innerHTML)
-                confirmblock.innerHTML = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
-              else
-                document.getElementById("paypal-button-container").innerHTML  = '<div class="rsvpmakerpaypalresult"><p><strong>PayPal Result</strong></p>'+result+'</div>';
-            });
-          });
-        },
-        onError: function (err) {
-          document.getElementById("paypal-error-container").innerHTML = 'Error connecting to PayPal service. Please Try again';
-        }
-      }).render('#paypal-button-container');
-      
-      let interval = 30*60000;
-      setTimeout(() => {
-        document.getElementById("paypal-button-container").innerHTML = '<h1>Time to pay expired</h1>';
-      }, interval);
-    }
-    
-    initPayPalButton<?php echo $rsvp; ?>();
-  </script>
-  <div id="paypal-error-container" style="color: red; font-weight: bold;"></div>
-  <div id="paypal-button-container"></div>
-  <?php
-    $button_html = ob_get_clean();
-    if(empty($button_html)) {
-      error_log('PayPal Button: ob_get_clean() returned empty/false. Transaction code: ' . (isset($transaction_code) ? $transaction_code : 'not set'));
-    }
-    return $button_html;
+    $disable_funding = '&disable-funding=' . $disable_funding;
+
+  // Enqueue the static PayPal button script
+  wp_enqueue_script(
+    'rsvpmaker-paypal-button',
+    plugins_url('assets/paypal-button.js', __FILE__),
+    array(),
+    '1.0.0',
+    true
+  );
+
+  // Output PayPal SDK script
+  $output = '<script src="' . esc_url('https://www.paypal.com/sdk/js?client-id=' . $paypal_client_id . '&currency=' . $currency_code . $enable_funding . $disable_funding) . '"></script>' . "\n";
+  
+  // Output button container with configuration as data attributes
+  $output .= '<div id="paypal-button-container-' . esc_attr($rsvp_id) . '" ';
+  $output .= 'data-paypal-button="1" ';
+  $output .= 'data-verify-url="' . esc_attr($verify) . '" ';
+  $output .= 'data-tx-code="' . esc_attr($transaction_code) . '" ';
+  $output .= 'data-user-id="' . esc_attr(isset($current_user->ID) ? $current_user->ID : '') . '" ';
+  $output .= 'data-description="' . esc_attr($description) . '" ';
+  $output .= 'data-amount="' . esc_attr($amount) . '" ';
+  $output .= 'data-currency="' . esc_attr($currency_code) . '" ';
+  $output .= 'data-rsvp-id="' . esc_attr($rsvp_id) . '"';
+  if($invoice_id) {
+    $output .= ' data-invoice-id="' . esc_attr($invoice_id) . '"';
   }
+  $output .= '></div>' . "\n";
+  $output .= '<div id="paypal-error-container" style="color: red; font-weight: bold;"></div>' . "\n";
+
+  return $output;
+}
 
 function rsvpmaker_paypal_button_embed($atts) {
 global $rsvp_options;
