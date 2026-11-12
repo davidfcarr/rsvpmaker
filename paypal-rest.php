@@ -368,17 +368,19 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     return '';
   }
 
-  if(!$post || !isset($post->ID)) {
-    error_log('PayPal Button: Global $post is not available or invalid');
-    return '';
-  }
-
   if(strlen($description) > 50)
     $description = substr($description,0,50) . ' ...';
 
   $rsvp_id = (empty($vars['rsvp'])) ? 0 : $vars['rsvp'];
   $invoice_id = (empty($vars['invoice_id'])) ? '' : $vars['invoice_id'];
-  $event = (empty($vars['event'])) ? $post->ID : $vars['event'];
+  
+  // Get event ID from vars or global post
+  $event = 0;
+  if(!empty($vars['event'])) {
+    $event = $vars['event'];
+  } elseif($post && isset($post->ID)) {
+    $event = $post->ID;
+  }
   
   if($paypal_rest_keys['sandbox']) {
       $paypal_client_id = $paypal_rest_keys['sandbox_client_id'];
@@ -396,10 +398,18 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $verify = add_query_arg($vars, rest_url('rsvpmaker/v1/paypal_paid'));
   $vars['amount'] = $amount;
   $vars['description'] = $description;
-  $vars['post_id'] = $post->ID;
+  if($post && isset($post->ID)) {
+    $vars['post_id'] = $post->ID;
+  }
   $details = [];
   $purchase_code = (empty($vars['purchase_code'])) ? '' : $vars['purchase_code'];
-  $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
+  
+  // Only add post meta if we have a valid post ID
+  $tracking = false;
+  if($post && isset($post->ID)) {
+    $tracking = add_post_meta($post->ID,'rsvpmaker_paypal_tracking',$vars);
+  }
+  
   $transaction_code = wp_generate_password(20,false,false);
   if(!set_transient('rsvpmaker_paypal_payment_'.$transaction_code,$vars,(15 * MINUTE_IN_SECONDS))) {
     error_log('PayPal Button: WARNING - Failed to set transient for transaction code ' . $transaction_code);
