@@ -6606,86 +6606,45 @@ function get_rsvpmail_signup_key () {
 }
 
 function rsvpmail_signup_form( $atts = array() ) {
-$key = get_rsvpmail_signup_key();
-$rand = rand();
-if(isset($_POST['em']) && isset($_POST['code']) ) {
-	$email = trim($_POST['em']);
-	if($_POST['code'] != $key )
-		$result['message'] = 'Error';
-	elseif(!wp_verify_nonce($_REQUEST['rsvp_mailing_list'],'rsvp_mailing_list'))
-	{
-		$result['message'] = 'Something went wrong';
-	}
-	elseif(rsvpmail_contains_email($email))
-	{
-		$first = isset($_POST['first']) ? sanitize_text_field($_POST['first']) : '';
-		$last = isset($_POST['last']) ? sanitize_text_field($_POST['last']) : '';
-		$result['message'] = rsvpmaker_guest_list_add($email,$first,$last,'',0);
-		$result['success'] = true;
-		$result['code'] = urldecode($request['code']);
-		$result['key'] = get_rsvpmail_signup_key();
-	}
-	else {
-		$result['message'] = 'Please enter a valid email address!';
-		$result['success'] = false;
-	}
-	printf('<div style="margin: 20px; padding: 20px; border: medium solid gray">%s</div>',wp_kses_post($result['message']));
-}
+  // Enqueue the static signup form script
+  wp_enqueue_script(
+    'rsvpmaker-signup-form',
+    plugins_url('assets/signup-form.js', dirname(__FILE__) . '/rsvpmaker.php'),
+    array(),
+    '1.0.0',
+    true
+  );
 
-if(empty($atts['fields']))
-{
-	$fields = '<p>Email<br>
-	<input name="em"> *</p>
-	<p>First Name<br>
-	<input name="first"></p>
-	<p>Last Name<br>
-	<input name="last"></p>
-';
-}
-elseif('first' == $atts['fields'])
-{
-	$fields = '<p>Email<br>
-	<input name="em"></p>
-	<p>First Name<br>
-	<input name="first"></p>
-';
-}
-elseif('email' == $atts['fields'])
-{
-	$fields = '<p>Email<br>
-	<input name="em"></p>
-';
-}
+  $key = get_rsvpmail_signup_key();
+  $rand = rand();
+  
+  if(empty($atts['fields'])) {
+    $fields = '<p>Email<br><input name="em"> *</p>';
+    $fields .= '<p>First Name<br><input name="first"></p>';
+    $fields .= '<p>Last Name<br><input name="last"></p>';
+  } elseif('first' == $atts['fields']) {
+    $fields = '<p>Email<br><input name="em"></p>';
+    $fields .= '<p>First Name<br><input name="first"></p>';
+  } elseif('email' == $atts['fields']) {
+    $fields = '<p>Email<br><input name="em"></p>';
+  }
 
-$fields .= rsvphoney_ui(true);
-$fields .= wp_nonce_field( 'rsvp_mailing_list', 'rsvp_mailing_list', false, false );
+  $fields .= rsvphoney_ui(true);
+  $fields .= wp_nonce_field( 'rsvp_mailing_list', 'rsvp_mailing_list', false, false );
 
-$url = rest_url('rsvpmaker/v1/rsvpmailer_signup/'.$key);
-return "
-<form id=\"email_signup_form$rand\" method=\"post\" 
-  action=\"$url\">
-$fields
-<p><button class=\"rsvpsubscribe\">Subscribe</button></p>
-</form>
-<div id=\"signup_message$rand\"></div>
-<script>
-const form$rand = document.getElementById('email_signup_form$rand');
-console.log(form$rand);
-const message$rand = document.getElementById('signup_message$rand');
-form$rand.addEventListener('submit', function(e) {
-    // Prevent default behavior:
-    e.preventDefault();
-    // Create payload as new FormData object:
-    const payload = new FormData(form$rand);
-    // Post the payload using Fetch:
-    fetch('$url', {
-    method: 'POST',
-    body: payload,
-    })
-    .then(res => res.json())
-    .then(data => alert(data.message))
-})
-</script>";
+  $url = rest_url('rsvpmaker/v1/rsvpmailer_signup/' . $key);
+  
+  $output = '<form id="email_signup_form' . $rand . '" ';
+  $output .= 'data-signup-form="email_signup_form' . $rand . '" ';
+  $output .= 'data-signup-url="' . esc_attr($url) . '" ';
+  $output .= 'data-signup-message="signup_message' . $rand . '" ';
+  $output .= 'method="post">' . "\n";
+  $output .= $fields . "\n";
+  $output .= '<p><button type="submit" class="rsvpsubscribe">Subscribe</button></p>' . "\n";
+  $output .= '</form>' . "\n";
+  $output .= '<div id="signup_message' . $rand . '"></div>' . "\n";
+  
+  return $output;
 }
 
 function rsvpmaker_partiallyHideEmail($email)
@@ -6751,6 +6710,14 @@ function rsvpmail_list_rsvpmodal_controller() {
 	}
 	elseif((!is_user_logged_in() && empty($_COOKIE['rsvpmail']) && empty($_COOKIE['rsvpmail_subscriber']) && empty($_COOKIE['rsvpmail_shown_popup']) && get_option('rsvpmail_list_rsvpmodal_on')) || isset($_GET['show_rsvp_popup']))
 	{
+		// Enqueue the modal script early (before wp_footer)
+		wp_enqueue_script(
+			'rsvpmaker-modal-popup',
+			plugins_url('assets/modal-popup.js', __FILE__),
+			array(),
+			'1.0.0',
+			true
+		);
 		add_action('wp_head','rsvpmail_list_rsvpmodal_css');
 		add_action('wp_footer','rsvpmail_list_rsvpmodal',99);
 		setcookie('rsvpmail_shown_popup',1,time()+DAY_IN_SECONDS);
@@ -6807,7 +6774,9 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
   -webkit-animation-name: animatetop;
   -webkit-animation-duration: 0.4s;
   animation-name: animatetop;
-  animation-duration: 0.4s
+  animation-duration: 0.4s;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Add Animation */
@@ -6847,6 +6816,59 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
 .rsvpmodal-footer {
 <?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['footer']); ?>
 }
+
+/* Mobile responsiveness - Tablets and below (768px and smaller) */
+@media screen and (max-width: 768px) {
+  .rsvpmodal {
+    padding-top: 20px !important;
+  }
+  
+  .rsvpmodal-content {
+    width: 90% !important;
+    margin: 20px auto !important;
+  }
+}
+
+/* Small mobile phones (480px and smaller) */
+@media screen and (max-width: 480px) {
+  .rsvpmodal {
+    padding-top: 10px !important;
+  }
+  
+  .rsvpmodal-content {
+    width: 95% !important;
+    margin: 10px auto !important;
+  }
+  
+  .close {
+    font-size: 24px;
+  }
+  
+  .rsvpmodal-header {
+    padding: 8px !important;
+  }
+  
+  .rsvpmodal-body {
+    padding: 8px !important;
+  }
+  
+  .rsvpmodal-footer {
+    padding: 8px !important;
+  }
+}
+
+/* Extra small phones (under 360px) */
+@media screen and (max-width: 360px) {
+  .rsvpmodal-content {
+    width: 98% !important;
+    margin: 5px auto !important;
+  }
+  
+  .close {
+    font-size: 20px;
+  }
+}
+
 <?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['additional']); ?>
 </style>
 <?php
@@ -6860,22 +6882,27 @@ function get_rsvpmail_list_rsvpmodal_content() {
 }
 
 function rsvpmail_list_rsvpmodal($atts=array()) {
-$options = get_option('rsvpmail_list_rsvpmodal_content');
-$title = $options['title'];
-$footer_text = $options['footer_text'];
-?>
+  $options = get_option('rsvpmail_list_rsvpmodal_content');
+  $title = $options['title'];
+  $footer_text = $options['footer_text'];
+  ?>
 </div></div>
 <!-- The Modal -->
-<div id="myModal" class="rsvpmodal">
+<div id="myModal" 
+     class="rsvpmodal"
+     data-rsvp-modal="true"
+     data-rsvp-modal-delay="5000"
+     data-rsvp-modal-cookie="rsvpmail"
+     data-rsvp-modal-close-selector=".close">
 
   <!-- Modal content -->
   <div class="rsvpmodal-content">
     <div class="rsvpmodal-header">
       <span class="close">&times;</span>
-      <h3><?php echo  esc_html($title); ?></h3>
+      <h3><?php echo esc_html($title); ?></h3>
     </div>
     <div class="rsvpmodal-body">
-	<?php echo dcarr_kses_with_inline_script(rsvpmail_signup_form()); ?>
+      <?php echo dcarr_kses_with_inline_script(rsvpmail_signup_form()); ?>
     </div>
     <div class="rsvpmodal-footer">
       <p><?php echo wp_kses_post($footer_text); ?></p>
@@ -6883,43 +6910,6 @@ $footer_text = $options['footer_text'];
   </div>
 
 </div>
-<?php 
-if(isset($_SERVER['HTTP_REFERER'])) {
-	$ref = $_SERVER['HTTP_REFERER'];
-	if(strpos($ref,'pstmrk.it')) {
-	  // Output string and stop execution
-	  echo '<h1>Hello email visitor</h1>';
-	}
-	else
-		echo '<p>Referrer: '. esc_html($ref).'</p>';
-}
- ?>
-<script>
-// Get the rsvpmodal
-var rsvpmodal = document.getElementById("myModal");
-
-// Get the <span> element that closes the rsvpmodal
-var span = document.getElementsByClassName("close")[0];
-
-// When the user clicks the button, open the rsvpmodal 
-function showMyModal() {
-  rsvpmodal.style.display = "block";
-}
-
-const myTimeout = setTimeout(showMyModal, 5000);
-
-// When the user clicks on <span> (x), close the rsvpmodal
-span.onclick = function() {
-  rsvpmodal.style.display = "none";
-}
-
-// When the user clicks anywhere outside of the rsvpmodal, close it
-window.onclick = function(event) {
-  if (event.target == rsvpmodal) {
-    rsvpmodal.style.display = "none";
-  }
-}
-</script>
 <?php
 }
 

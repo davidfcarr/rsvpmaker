@@ -280,6 +280,15 @@ function rsvpmaker_stripe_validate($public, $secret) {
 function rsvpmaker_stripe_checkout() {
 
 	global $post, $rsvp_options, $current_user;
+	
+	// Enqueue the static Stripe checkout script
+	wp_enqueue_script(
+		'rsvpmaker-stripe-checkout',
+		plugins_url('assets/stripe-checkout.js', __FILE__),
+		array(),
+		'1.0.0',
+		true
+	);
 
 	$keys = get_rsvpmaker_stripe_keys();
 
@@ -389,6 +398,7 @@ function rsvpmaker_stripe_checkout() {
 	update_post_meta( $post->ID, $varkey, $vars );
 
 	$price = $vars['amount'] * 100;
+	$success_url = esc_url( rest_url( 'rsvpmaker/v1/stripesuccess/' . $idempotency_key.'?nonce=' . $nonce ) );
 
 	?>
 
@@ -400,11 +410,21 @@ function rsvpmaker_stripe_checkout() {
 
 <div id="card-result" role="alert"></div>
 
-<div id="stripe-checkout-form">
+<div id="stripe-checkout-form"
+     data-stripe-checkout="true"
+     data-stripe-public-key="<?php echo esc_attr($public); ?>"
+     data-stripe-client-secret="<?php echo esc_attr($intent->client_secret); ?>"
+     data-stripe-success-url="<?php echo esc_attr($success_url); ?>"
+     data-stripe-form-id="payee-form"
+     data-stripe-card-element="card-element"
+     data-stripe-result-element="card-result"
+     data-stripe-button-id="card-button"
+     data-stripe-name-input="stripe-checkout-name"
+     data-stripe-email-input="stripe-checkout-email">
 
 <form id="payee-form">
 
-<div><input id="stripe-checkout-name" name="name" placeholder="<?php  esc_html_e( 'Your Name Here', 'rsvpmaker' ); ?>" value="<?php echo esc_attr( $name ); ?>"></div>
+<div><input id="stripe-checkout-name" name="name" placeholder="<?php esc_attr_e( 'Your Name Here', 'rsvpmaker' ); ?>" value="<?php echo esc_attr( $name ); ?>"></div>
 
 <div><input id="stripe-checkout-email" name="email" placeholder="email@example.com" value="<?php echo esc_attr( $email ); ?>"></div>
 
@@ -414,9 +434,9 @@ function rsvpmaker_stripe_checkout() {
 
 </div>
 
-<p><button id="card-button" class="stripebutton" data-secret="<?php echo esc_attr( $intent->client_secret ); ?>">
+<p><button id="card-button" type="button" class="stripebutton">
 
-	<?php echo  esc_html( $paylabel ); ?>
+	<?php echo esc_html( $paylabel ); ?>
 
 </button></p>
 
@@ -431,150 +451,6 @@ function rsvpmaker_stripe_checkout() {
 	?>
 
 </div>
-
-<script>
-
-var stripe = Stripe('<?php echo esc_attr($public); ?>');
-
-var elements = stripe.elements();
-
-var style = {
-
-  base: {
-
-	iconColor: '#111111',
-
-	color: "#111111",
-
-	fontWeight: 400,
-
-	fontSize: '16px',
-
-	'::placeholder': {
-
-	color: '#333333',
-
-	},
-
-	'::-ms-clear': {
-
-	backgroundColor: '#fff',
-
-	},
-
-	  },
-
-	empty: {
-
-	backgroundColor: '#fff',
-
-	  },
-
-	completed: {
-
-	backgroundColor: '#eee',
-
-	  },
-
-};
-var card = elements.create("card", { style: style });
-
-card.mount("#card-element");
-
-card.addEventListener('change', ({error}) => {
-
-  const displayError = document.getElementById('card-result');
-
-  if (error) {
-
-	displayError.textContent = error.message;
-
-  } else {
-
-	displayError.textContent = '';
-
-  }
-
-});
-
-var cardFields = document.getElementById('stripe-checkout-form');
-
-var submitButton = document.getElementById('card-button');
-
-var cardResult = document.getElementById('card-result');
-
-var clientSecret = document.getElementById('card-button').getAttribute('data-secret');
-
-submitButton.addEventListener('click', function(ev) {
-ev.preventDefault();
-var name = document.getElementById('stripe-checkout-name').value;
-var email = document.getElementById('stripe-checkout-email').value;
-var successurl = '<?php echo esc_url( rest_url( 'rsvpmaker/v1/stripesuccess/' . $idempotency_key.'?nonce=' . $nonce ) ); ?>';
-if((name == '') || (email == '')){
-	cardResult.innerHTML = 'Name and email are both required';
-	return;
-}
-cardResult.innerHTML = '<?php  esc_html_e( 'Please wait', 'rsvpmaker' ); ?>';
-cardResult.style.cssText = 'background-color: #fff; padding: 10px;';
-
-  stripe.confirmCardPayment(clientSecret, {
-	payment_method: {
-	  card: card,
-	  billing_details: {
-		name: name,
-		email: email,
-	  }
-	}
-  }).then(function(result) {
-	if (result.error) {
-		cardResult.innerHTML = result.error.message;
-	  console.log(result.error.message);
-	  console.log(result);
-	} else {
-	submitButton.style = 'display: none';
-	cardFields.style = 'display: none';
-	console.log(result);
-	  if (result.paymentIntent.status === 'succeeded') {
-		  console.log(result);
-		cardResult.innerHTML = '<?php  esc_html_e( 'Recording payment', 'rsvpmaker' ); ?> ...';
-		const form = new FormData(document.getElementById('payee-form'));
-		fetch(successurl, {
-  method: 'POST',
-  body: form,
-})
-
-		.then((response) => {
-
-			return response.json();
-
-		})
-
-		.then((myJson) => {
-
-			console.log('json returned:');
-			console.log(myJson);
-
-			if(!myJson.name)			
-
-				cardResult.innerHTML = '<?php  esc_html_e( 'Payment processed, but may not have been recorded correctly', 'rsvpmaker' ); ?>';
-
-			else {
-				cardResult.innerHTML = '<p><?php  esc_html_e( 'Payment processed for', 'rsvpmaker' ); ?> '+myJson.name+', '+myJson.description+'<br /><?php echo esc_attr($currency_symbol); ?>'+myJson.amount+' '+myJson.currency.toUpperCase()+'</p>';
-				if(myJson.gift_certificate)
-					cardResult.innerHTML += '<h1><?php  esc_html_e( 'Gift Certificate', 'rsvpmaker' ); ?><br />'+myJson.gift_certificate+'</h1>';
-			}
-
-		});
-
-	  }
-
-	}
-
-  });
-
-});
-
-</script>
 
 	<?php
 
