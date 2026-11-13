@@ -6708,7 +6708,7 @@ function rsvpmail_list_rsvpmodal_controller() {
 		$result = setcookie('rsvpmail',1,time()+31556952);
 		//hooray, already a subscriber
 	}
-	elseif((!is_user_logged_in() && empty($_COOKIE['rsvpmail']) && empty($_COOKIE['rsvpmail_subscriber']) && empty($_COOKIE['rsvpmail_shown_popup']) && get_option('rsvpmail_list_rsvpmodal_on')) || isset($_GET['show_rsvp_popup']))
+	elseif((!is_user_logged_in() && empty($_COOKIE['rsvpmail']) && empty($_COOKIE['rsvpmail_subscriber']) && empty($_COOKIE['rsvpmail_shown_popup']) && (get_option('rsvpmail_list_rsvpmodal_on') || get_rsvpemail_from_settings_option('rsvpmail_list_rsvpmodal_on'))) || isset($_GET['show_rsvp_popup']))
 	{
 		// Enqueue the modal script early (before wp_footer)
 		wp_enqueue_script(
@@ -6993,12 +6993,22 @@ function get_rsvpemail_from_settings() {
 
 function update_rsvpemail_from_settings($from) {
 	$current = get_rsvpemail_from_settings();
-	$allowed = array('email-from', 'email-name', 'company', 'mailing_address');
+	$allowed = array('email-from', 'email-name', 'company', 'mailing_address', 'rsvpmail_list_rsvpmodal_on');
 	foreach($allowed as $name) {
-		if(isset($from[$name]))
-			$current[$name] = sanitize_text_field($from[$name]);
+		if(isset($from[$name])) {
+			if($name === 'rsvpmail_list_rsvpmodal_on') {
+				$current[$name] = (bool) $from[$name];
+			} else {
+				$current[$name] = sanitize_text_field($from[$name]);
+			}
+		}
 	}
 	update_option('rsvpemail_from_settings',$current);
+}
+
+function get_rsvpemail_from_settings_option($key) {
+	$settings = get_rsvpemail_from_settings();
+	return isset($settings[$key]) ? $settings[$key] : false;
 }
 
 function rsvpemail_from_settings() {

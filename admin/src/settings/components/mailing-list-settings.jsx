@@ -28,6 +28,7 @@ const MailingListSettings = () => {
 		{ id: 'email-name', label: __( 'Email Name', 'rsvpmaker' ), type: 'string', Edit: 'text' },
 		{ id: 'company', label: __( 'Company/Organization', 'rsvpmaker' ), type: 'string', Edit: 'text' },
 		{ id: 'mailing_address', label: __( 'Mailing Address', 'rsvpmaker' ), type: 'string', Edit: 'text' },
+		{ id: 'rsvpmail_list_rsvpmodal_on', label: __( 'Enable Newsletter Signup Popup', 'rsvpmaker' ), type: 'boolean', Edit: 'checkbox' },
 	];
 
 	const fromForm = {
@@ -37,6 +38,12 @@ const MailingListSettings = () => {
 				label: __( 'Email Basic Settings', 'rsvpmaker' ),
 				children: [ 'email-from', 'email-name', 'company', 'mailing_address' ],
 				layout: { type: 'card', isOpened: true, withHeader: true },
+			},
+			{
+				id: 'modal_settings',
+				label: __( 'Newsletter Signup Popup', 'rsvpmaker' ),
+				children: [ 'rsvpmail_list_rsvpmodal_on' ],
+				layout: { type: 'card', isOpened: false, withHeader: true },
 			},
 		],
 	};

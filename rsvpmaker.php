@@ -541,6 +541,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 		'email-name' => array( 'type' => 'string' ),
 		'company' => array( 'type' => 'string' ),
 		'mailing_address' => array( 'type' => 'string' ),
+		'rsvpmail_list_rsvpmodal_on' => array( 'type' => 'boolean' ),
 	);
 	$email_from_schema = array(
 		'type'                 => 'object',
@@ -557,6 +558,7 @@ function rsvpmaker_register_settings( $properties, $defaults ) {
 				'email-name' => get_option( 'blogname' ),
 				'company' => get_option( 'blogname' ),
 				'mailing_address' => get_option( 'mailing_address', '' ),
+				'rsvpmail_list_rsvpmodal_on' => false,
 			),
 			'sanitize_callback' => 'rsvpmaker_sanitize_options',
 			'show_in_rest'      => array(
