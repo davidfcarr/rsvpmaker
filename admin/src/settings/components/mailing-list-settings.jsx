@@ -36,14 +36,8 @@ const MailingListSettings = () => {
 			{
 				id: 'from_main',
 				label: __( 'Email Basic Settings', 'rsvpmaker' ),
-				children: [ 'email-from', 'email-name', 'company', 'mailing_address' ],
+				children: [ 'email-from', 'email-name', 'company', 'mailing_address', 'rsvpmail_list_rsvpmodal_on' ],
 				layout: { type: 'card', isOpened: true, withHeader: true },
-			},
-			{
-				id: 'modal_settings',
-				label: __( 'Newsletter Signup Popup', 'rsvpmaker' ),
-				children: [ 'rsvpmail_list_rsvpmodal_on' ],
-				layout: { type: 'card', isOpened: false, withHeader: true },
 			},
 		],
 	};

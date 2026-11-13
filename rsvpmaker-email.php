@@ -6747,6 +6747,11 @@ background-color: #fefefe;'
 
 function rsvpmail_list_rsvpmodal_css() {
 $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
+// Ensure all keys exist and are not null
+$header = isset($rsvpmail_list_rsvpmodal_css['header']) && $rsvpmail_list_rsvpmodal_css['header'] !== null ? $rsvpmail_list_rsvpmodal_css['header'] : '';
+$body = isset($rsvpmail_list_rsvpmodal_css['body']) && $rsvpmail_list_rsvpmodal_css['body'] !== null ? $rsvpmail_list_rsvpmodal_css['body'] : '';
+$footer = isset($rsvpmail_list_rsvpmodal_css['footer']) && $rsvpmail_list_rsvpmodal_css['footer'] !== null ? $rsvpmail_list_rsvpmodal_css['footer'] : '';
+$additional = isset($rsvpmail_list_rsvpmodal_css['additional']) && $rsvpmail_list_rsvpmodal_css['additional'] !== null ? $rsvpmail_list_rsvpmodal_css['additional'] : '';
 ?>
 <style>
 /* The Modal (background) */
@@ -6806,15 +6811,15 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
 }
 
 .rsvpmodal-header {
-<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['header']); ?>
+<?php echo wp_kses_post($header); ?>
 }
 
 .rsvpmodal-body {
-	<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['body']); ?>
+	<?php echo wp_kses_post($body); ?>
 }
 
 .rsvpmodal-footer {
-<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['footer']); ?>
+<?php echo wp_kses_post($footer); ?>
 }
 
 /* Mobile responsiveness - Tablets and below (768px and smaller) */
@@ -6869,7 +6874,7 @@ $rsvpmail_list_rsvpmodal_css = get_rsvpmail_list_rsvpmodal_css();
   }
 }
 
-<?php echo wp_kses_post($rsvpmail_list_rsvpmodal_css['additional']); ?>
+<?php echo wp_kses_post($additional); ?>
 </style>
 <?php
 }
@@ -6883,8 +6888,11 @@ function get_rsvpmail_list_rsvpmodal_content() {
 
 function rsvpmail_list_rsvpmodal($atts=array()) {
   $options = get_option('rsvpmail_list_rsvpmodal_content');
-  $title = $options['title'];
-  $footer_text = $options['footer_text'];
+  if(!is_array($options)) {
+    $options = array('title' => 'Join Our Mailing List', 'footer_text' => 'Stay informed!');
+  }
+  $title = isset($options['title']) ? $options['title'] : 'Join Our Mailing List';
+  $footer_text = isset($options['footer_text']) ? $options['footer_text'] : 'Stay informed!';
   ?>
 </div></div>
 <!-- The Modal -->
