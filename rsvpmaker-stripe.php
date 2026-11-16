@@ -286,7 +286,14 @@ function rsvpmaker_stripe_checkout() {
 		'rsvpmaker-stripe-checkout',
 		plugins_url('assets/stripe-checkout.js', __FILE__),
 		array(),
-		'1.0.0',
+		get_rsvpversion(),
+		true
+	);
+	wp_enqueue_script(
+		'rsvpmaker-stripe-sdk',
+		'https://js.stripe.com/v3/',
+		array(),
+		null,
 		true
 	);
 
@@ -401,10 +408,6 @@ function rsvpmaker_stripe_checkout() {
 	$success_url = esc_url( rest_url( 'rsvpmaker/v1/stripesuccess/' . $idempotency_key.'?nonce=' . $nonce ) );
 
 	?>
-
-<!-- Stripe library must be loaded stripe.com per https://stripe.com/docs/js/including -->
-
-<script src="https://js.stripe.com/v3/"></script>
 
 <!-- We'll put the success / error messages in this element -->
 
@@ -602,7 +605,7 @@ function rsvpmaker_stripe_report() {
 		%s
 		<button>Get</button></form></div>',
 			esc_url( admin_url( 'edit.php' ) ),
-			wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) )
+			wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() )
 		);
 	}
 

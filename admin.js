@@ -231,8 +231,6 @@ jQuery( document ).ready(
 		$('.quick-rsvp-date').change( function() {
 			let datetext = $(this).val();
 			let count = parseInt($(this).attr('count'));
-			console.log(datetext);
-			console.log(count);
 			$('.quick-rsvp-date').each(
 				function (i) {
 					if(i > count)
@@ -244,7 +242,7 @@ jQuery( document ).ready(
 		$('.quick-rsvp-time').change( function() {
 			let timetext = $(this).val();
 			let count = parseInt($(this).attr('count'));
-			console.log('start:'+timetext);
+			console.log('quick-rsvp-time start:'+timetext);
 			console.log(count);
 			var date = new Date('2000-01-01T'+timetext);
 			date.setTime(date.getTime()+(60*60*1000));
@@ -279,8 +277,7 @@ jQuery( document ).ready(
 				/*try template*/
 				start_date_sql = '2001-01-01 ' + $( '#sql-time' ).val();
 			}
-			console.log( 'start date sql' );
-			console.log( start_date_sql );
+			console.log( 'start date sql',start_date_sql  );
 			var t  = Date.parse( start_date_sql ) + (60 * 60 * 1000);
 			var dt = new Date( t );
 			$( '#' + end_id ).val( rsvpsql_end_time( dt ) );
@@ -676,6 +673,140 @@ $('.stripe_keys').change( function() {
 		$('#payment_gateway').val('Stripe');
 	}
 });
+
+		if ( $( '#create_calendar_clear' ).length ) {
+			$( '#create_calendar_clear' ).hide();
+		}
+
+		$( '#create_calendar' ).on(
+			'click',
+			function() {
+				$( '#create_calendar_clear' ).show();
+			}
+		);
+
+		$( document ).on(
+			'click',
+			'.default_field',
+			function() {
+				$( '#all' ).prop( 'checked', false );
+			}
+		);
+
+		$( document ).on(
+			'click',
+			'.rsvpmaker-notice .notice-dismiss',
+			function () {
+				var type = $( this ).closest( '.rsvpmaker-notice' ).data( 'notice' );
+				$.ajax(
+					rsvpmaker_rest.ajaxurl,
+					{
+						type: 'POST',
+						data: {
+							action: 'rsvpmaker_dismissed_notice_handler',
+							type: type,
+						}
+					}
+				);
+			}
+		);
+
+		$( document ).on(
+			'change',
+			'.checkall, .trashall, .sametime_checkbox, .update_from_template[id^="recur_check_"]',
+			function(event) {
+				var target = event.target;
+				var $target = $( target );
+				if ( $target.is( '.checkall' ) ) {
+					var fieldset = target.closest( 'fieldset' );
+					if ( fieldset ) {
+						$( fieldset ).find( '.update_from_template[type="checkbox"]' ).prop( 'checked', target.checked );
+					}
+					if ( target.checked ) {
+						$( '.sametime_checkbox' ).prop( 'checked', false );
+					}
+				}
+				if ( $target.is( '.trashall' ) ) {
+					var fieldsetTrash = target.closest( 'fieldset' );
+					if ( fieldsetTrash ) {
+						$( fieldsetTrash ).find( '.trash_template[type="checkbox"]' ).prop( 'checked', target.checked );
+					}
+				}
+				if ( target.id && target.id.indexOf( 'recur_check_' ) === 0 && target.checked ) {
+					var sameTimeId = target.id.replace( 'recur_check_','sametime_' );
+					var sameTimeCheckbox = document.getElementById( sameTimeId );
+					if ( sameTimeCheckbox ) {
+						sameTimeCheckbox.checked = false;
+					}
+				}
+				if ( target.id && target.id.indexOf( 'sametime_' ) === 0 && target.checked ) {
+					var recurId = target.id.replace( 'sametime_','recur_check_' );
+					var recurCheckbox = document.getElementById( recurId );
+					if ( recurCheckbox ) {
+						recurCheckbox.checked = false;
+					}
+				}
+			}
+		);
+
+		var importInProgress = false;
+		var totalImported = 0;
+
+		function importRSVP(url, data) {
+			$.post(
+				url,
+				data,
+				function(response) {
+					if (response.error) {
+						$( '#import-result' ).html( response.error ).css( { borderColor: 'red' } );
+						importInProgress = false;
+						return;
+					}
+					$( '#import-result' ).css( { borderColor: 'green' } );
+					$( '#importform' ).hide();
+					if (response.imported && response.top) {
+						$( '#import-result' ).html( 'Imported ' + response.imported + ' events, ending with #' + response.top + ', fetching more' );
+						data.start = response.top;
+						totalImported += parseInt( response.imported, 10 );
+						importRSVP( url, data );
+						return;
+					}
+					totalImported += parseInt( response.imported, 10 );
+					$( '#import-result' ).html( 'Total imported ' + totalImported + ', done' );
+					importInProgress = false;
+				}
+			);
+		}
+
+		$( '#import-button' ).on(
+			'click',
+			function(event) {
+				event.preventDefault();
+				if (importInProgress) {
+					return;
+				}
+				importInProgress = true;
+				totalImported = 0;
+				var remoteurl = $( '#importrsvp' ).val();
+				$( '#importrsvp' ).val( '' );
+				$( '#import-result' ).css( { padding: '10px', borderWidth: 'thick', borderStyle: 'solid', borderColor: 'gray' } );
+				$( '#import-result' ).html( 'Trying ' + remoteurl + ' please wait ...' );
+				var data = {
+					importrsvp: remoteurl,
+					start: 0,
+				};
+				var importNowUrl = $( '#importnowurl' ).val();
+				if ( ! importNowUrl ) {
+					importNowUrl = $( '#rsvpmaker-import-config' ).data( 'import-now-url' );
+				}
+				if ( ! importNowUrl ) {
+					$( '#import-result' ).html( 'Import endpoint not configured.' ).css( { borderColor: 'red' } );
+					importInProgress = false;
+					return;
+				}
+				importRSVP( importNowUrl, data );
+			}
+		);
 	
 	
 });

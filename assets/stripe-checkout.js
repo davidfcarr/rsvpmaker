@@ -143,7 +143,7 @@ function initializeStripeForm(config) {
           })
           .then(response => response.json())
           .then(data => {
-            displayError.innerHTML = data.message || 'Payment successful';
+            displayError.innerHTML = data.payment_confirmation_message || 'Payment successful (may not have been recorded correctly)';
             if (data.redirect_url) {
               window.location.href = data.redirect_url;
             }

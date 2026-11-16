@@ -374,7 +374,7 @@ function rsvpmaker_form_single($content) {
 			$priceline = $currency_symbol.number_format($atts['discount_price'], 2, $rsvp_options['currency_decimal'], $rsvp_options['currency_thousands']).' '.$currency;
 			$atts['description'] = esc_html__('Registration for a party of','rsvpmaker').' '.$party.', '.$events_count.' events: '.implode(', ',$events).' @ '.$priceline.' '.__('per person, per event','rsvpmaker');
 			$atts['showdescription'] = 'yes';
-			echo wp_kses_post( rsvpmaker_paypay_button_embed($atts) );
+			echo wp_kses( rsvpmaker_paypay_button_embed($atts), dcarr_kses_form() );
 			$postdata['description'] = $atts['description'];
 			$postdata['events_count'] = $events_count;
 			set_transient($rsvpmulti, array_merge($postdata,$atts), HOUR_IN_SECONDS);

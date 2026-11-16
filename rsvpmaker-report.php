@@ -135,7 +135,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAK
 				 esc_html( $row->last ),
 				absint( $delete ),
 				wp_kses( $guestcheck, dcarr_kses_form() ),
-				wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) )
+				wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() )
 			);
 
 		}
@@ -316,7 +316,7 @@ if(isset($_GET['unpaid_upcoming']) && wp_verify_nonce( isset( $_REQUEST[ RSVPMAK
 
 							$rsvpconfirm .= '<form method="post" name="donationform" id="donationform" action="' . admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . $eventid ) . '">
 
-<p>' .  esc_html__( 'Amount Owed', 'rsvpmaker' ) . ': ' . $charge . '<input name="markpaid[]" type="hidden" id="markpaid_' . intval( $master_rsvp ) . '"  value="' . esc_attr( $charge ) . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . esc_attr( $rsvp_id ) . '" ><input type="submit" name="Submit" value="' .  esc_html__( 'Mark Paid 1', 'rsvpmaker' ) . '"></p>
+<p>' .  esc_html__( 'Amount Owed', 'rsvpmaker' ) . ': ' . $charge . '319 <input name="markpaid[]" type="hidden" id="markpaid_' . intval( $master_rsvp ) . '"  value="' . esc_attr( $charge ) . '"> ' . $rsvp_options['paypal_currency'] . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . esc_attr( $master_rsvp ) . '" ><input type="submit" name="Submit" value="' .  esc_html__( 'Mark Paid 1', 'rsvpmaker' ) . '"></p>
 '.wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ).'
 </form>';
 
@@ -618,8 +618,11 @@ function format_rsvp_row($row, $fields, $pricing = null, $form_label_to_slug = [
 		$details = unserialize( $row['details'] );
 	}
 	foreach ( $form_label_to_slug as $label => $slug ) {
-		if ( isset( $details[ $slug ] ) && ! empty( $details[ $slug ] ) ) {
-			echo '<div><strong>' .  esc_html( $label ) . ':</strong> ' .  esc_html( $details[ $slug ] ) . '</div>';
+		if ( isset( $row[ $slug ] ) && ! empty( $row[ $slug ] ) ) {
+			echo '<div><strong>' .  esc_html( $label ) . ':</strong> ' .  esc_html( $row[ $slug ] ).'</div>';
+		}
+		elseif ( isset( $details[ $slug ] ) && ! empty( $details[ $slug ] ) ) {
+			echo '<div><strong>' .  esc_html( $label ) . ':</strong> ' .  esc_html( $details[ $slug ] ).'</div>';
 		}
 		else {
 			$slug = preg_replace('/[^a-z0-9]/','_',$slug);
@@ -654,9 +657,9 @@ function format_rsvp_row($row, $fields, $pricing = null, $form_label_to_slug = [
 			printf('<p>Payment link: <a href="%s" target="_blank">%s</a></p>',esc_url( $url ), esc_html( $url ));
 			if ( $owed > 0 ) {
 				if(is_admin()) {
-					echo '<form method="post" name="donationform" id="donationform" action="' . esc_url( admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . intval($row['event']) ) ) . '"><input name="markpaid[' . intval($row['id']) . ']" type="text" id="markpaid_' . intval($row['id']) . '"  value="' . esc_attr( $owed ) . '"> ' .  esc_html( $rsvp_options['paypal_currency'] ) . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . intval($rsvp_id) . '" ><input type="submit" name="Submit" value="' .  esc_html__( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) ).'</form>';	
+					echo '<form method="post" name="donationform" id="donationform" action="' . esc_url( admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . intval($row['event']) ) ) . '">657<input name="markpaid[' . intval($row['id']) . ']" type="text" id="markpaid_' . intval($row['id']) . '"  value="' . esc_attr( $owed ) . '"> ' .  esc_html( $rsvp_options['paypal_currency'] ) . '</p><input name="rsvp_id" type="hidden" id="rsvp_id" value="' . intval($row['id']) . '" ><input type="submit" name="Submit" value="' .  esc_html__( 'Mark Paid', 'rsvpmaker' ) . '"></p>'.wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ).'</form>';	
 				}
-					$owed_list = sprintf( '<p><input type="checkbox" name="markpaid[%s]" value="%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_attr( $owed ),  esc_html( $row['first'] ),  esc_html( $row['last'] ),  esc_html( $owed ),  esc_html__( 'Owed', 'rsvpmaker' ) );
+					$owed_list = sprintf( '<p>659 <input type="checkbox" name="markpaid[%s]" value="%s">%s %s %s %s</p>', esc_attr( $row['id'] ), esc_attr( $owed ),  esc_html( $row['first'] ),  esc_html( $row['last'] ),  esc_html( $owed ),  esc_html__( 'Owed', 'rsvpmaker' ) );
 			}
 		}
 	}
@@ -755,7 +758,6 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 		$unpaidcount = 0;
 
 		foreach ( $results as $index => $row ) {
-
 			$row['yesno'] = ( $row['yesno'] ) ? 'YES' : 'NO';
 
 			if ( $row['yesno'] ) {
@@ -988,7 +990,7 @@ function format_rsvp_details( $results, $editor_options = true, $check_guests = 
 			<?php
 			if ( ! empty( $owed_list ) ) {
 
-				printf( '<h3>%s</h3><form action="%s" method="post">%s',  esc_html__( 'Record Payments', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . intval( $_GET['event'] ) ) ), wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) ) );
+				printf( '<h3>%s</h3><form action="%s" method="post">%s',  esc_html__( 'Record Payments', 'rsvpmaker' ), esc_url( admin_url( 'edit.php?page=rsvp_report&post_type=rsvpmaker&event=' . intval( $_GET['event'] ) ) ), wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ) );
 
 				echo wp_kses( $owed_list, dcarr_kses_form() );
 

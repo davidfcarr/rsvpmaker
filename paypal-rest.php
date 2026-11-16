@@ -407,6 +407,7 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
   $disable_funding = (empty($paypal_rest_keys['excluded_funding_sources'])) ? '' : $paypal_rest_keys['excluded_funding_sources'];
   if($disable_funding)
     $disable_funding = '&disable-funding=' . $disable_funding;
+  $paypal_sdk_url = esc_url_raw('https://www.paypal.com/sdk/js?client-id=' . $paypal_client_id . '&currency=' . $currency_code . $enable_funding . $disable_funding);
 
   // Enqueue the static PayPal button script
   wp_enqueue_script(
@@ -417,8 +418,15 @@ function rsvpmaker_paypal_button ($amount, $currency_code = 'USD', $description=
     true
   );
 
-  // Output PayPal SDK script
-  $output = '<script src="' . esc_url('https://www.paypal.com/sdk/js?client-id=' . $paypal_client_id . '&currency=' . $currency_code . $enable_funding . $disable_funding) . '"></script>' . "\n";
+  wp_enqueue_script(
+    'rsvpmaker-paypal-sdk-' . md5($paypal_sdk_url),
+    $paypal_sdk_url,
+    array(),
+    null,
+    true
+  );
+
+  $output = '';
   
   // Output button container with configuration as data attributes
   $output .= '<div id="paypal-button-container-' . esc_attr($rsvp_id) . '" ';

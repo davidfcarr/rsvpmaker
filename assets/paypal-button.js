@@ -107,10 +107,9 @@ function initializePayPalButtons() {
             
             return sendPaymentWithRetry(details).then(function(myJson) {
               if (myJson.status) {
+                console.log('sendPaymentWithRetry response',myJson);
                 result = '<p>' + myJson.status + '</p>';
                 if (myJson.gift_certificate) {
-                  console.log('gift certificate');
-                  console.log(myJson);
                   result += '<h1>' + myJson.gift_certificate + '</h1><p>Give this code to the recipient of your gift. To redeem, enter into the coupon field of the registration form for any event on this site.</p>';
                 }
                 if (myJson.receipt_link) {

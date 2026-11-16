@@ -480,7 +480,7 @@ function rsvpmaker_template_list() {
 
 
 
-				printf( '<h1 style="color: red;">Update Template?</h1><p>Click &quot;Confirm&quot; to override template with the contents of your %s event<p><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" /><input type="hidden" name="t" value="%d" /><input type="hidden" name="event" value="%d" /><input type="hidden" name="overconfirm" value="1" /><button class="button button-primary">Confirm</button>%s</form> ',  esc_html( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) ), esc_url( admin_url( 'edit.php' ) ), (int) $t, (int) $e, wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) ) );
+				printf( '<h1 style="color: red;">Update Template?</h1><p>Click &quot;Confirm&quot; to override template with the contents of your %s event<p><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" /><input type="hidden" name="page" value="rsvpmaker_template_list" /><input type="hidden" name="t" value="%d" /><input type="hidden" name="event" value="%d" /><input type="hidden" name="overconfirm" value="1" /><button class="button button-primary">Confirm</button>%s</form> ',  esc_html( rsvpmaker_date( $rsvp_options['long_date'], rsvpmaker_strtotime( $ts ) ) ), esc_url( admin_url( 'edit.php' ) ), (int) $t, (int) $e, wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ) );
 
 
 
@@ -774,9 +774,7 @@ function rsvpmaker_template_list() {
 
 		if ( empty( $_REQUEST['t'] ) ) {
 
-
-
-			printf( '<h3>Add One or More Events Based on a Template</h3><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select><br /><br />%s %s<br >%s %s</form>', esc_url( admin_url( 'edit.php' ) ), wp_kses_post( esc_html__( 'Add', 'rsvpmaker' ) ), wp_kses_post( esc_html__( 'One event', 'rsvpmaker' ) ), wp_kses_post( esc_html__( 'Multiple events', 'rsvpmaker' ) ), wp_kses_post( esc_html__( 'based on', 'rsvpmaker' ) ), wp_kses( rsvpmaker_templates_dropdown( 't' ), dcarr_kses_form() ), wp_kses( get_submit_button( 'Submit', 'button button-primary' ), dcarr_kses_form() ), wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ) );
+		printf( '<h3>Add One or More Events Based on a Template</h3><form method="get" action="%s"><input type="hidden" name="post_type" value="rsvpmaker" />%s <select name="page"><option value="rsvpmaker_setup">%s</option><option value="rsvpmaker_template_list">%s</option></select><br /><br />%s %s<br >%s %s</form>', esc_url( admin_url( 'edit.php' ) ), wp_kses( esc_html__( 'Add', 'rsvpmaker' ), dcarr_kses_form() ), wp_kses( esc_html__( 'One event', 'rsvpmaker' ), dcarr_kses_form() ), wp_kses( esc_html__( 'Multiple events', 'rsvpmaker' ), dcarr_kses_form() ), wp_kses( esc_html__( 'based on', 'rsvpmaker' ), dcarr_kses_form() ), wp_kses( rsvpmaker_templates_dropdown( 't' ), dcarr_kses_form() ), wp_kses( get_submit_button( 'Submit', 'button button-primary' ), dcarr_kses_form() ), wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ) );
 
 		}
 
@@ -2213,60 +2211,6 @@ function rsvp_template_checkboxes( $t ) {
 
 		}
 
-		echo "
-		<script>
-		document.addEventListener('change', function (event) {
-  const target = event.target;
-
-  // 1. Check All functionality within the same fieldset
-  if (target.matches('.checkall')) {
-    const fieldset = target.closest('fieldset');
-    if (fieldset) {
-      fieldset.querySelectorAll('.update_from_template[type=\"checkbox\"]').forEach(cb => {
-        cb.checked = target.checked;
-      });
-    }
-    // Uncheck all sametime_checkbox elements when checkall is checked
-    if (target.checked) {
-      document.querySelectorAll('.sametime_checkbox').forEach(cb => {
-        cb.checked = false;
-      });
-    }
-  }
-
-  // 2. Trash All functionality within the same fieldset
-  if (target.matches('.trashall')) {
-    const fieldset = target.closest('fieldset');
-    if (fieldset) {
-      fieldset.querySelectorAll('.trash_template[type=\"checkbox\"]').forEach(cb => {
-        cb.checked = target.checked;
-      });
-    }
-  }
-
-  // 3. When recur_check_[id] is checked, uncheck sametime_[id]
-  console.log('target.id',target.id);
-  if (target.id && target.id.startsWith('recur_check_')) {
-    if (target.checked) {
-      const sibling = target.id.replace('recur_check_', 'sametime_');
-  	console.log('sibling',sibling);
-      const sametimeCb = document.getElementById(sibling);
-	  console.log('sametimeCb',sametimeCb);
-      if (sametimeCb) sametimeCb.checked = false;
-    }
-  }
-
-  // 4. Vice versa: When sametime_[id] is checked, uncheck recur_check_[id]
-  if (target.id && target.id.startsWith('sametime_')) {
-    if (target.checked) {
-      const sibling = target.id.replace('sametime_', 'recur_check_');
-      const recurCb = document.getElementById(sibling);
-      if (recurCb) recurCb.checked = false;
-    }
-  }
-});
-</script>
-";
 	rsvpmaker_number_events_ui($t);
 
 }

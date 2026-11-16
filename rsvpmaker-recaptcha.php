@@ -37,59 +37,34 @@ if($return)
 	if ( rsvpmaker_recaptcha_enabled() ) {
 		$mode = rsvpmaker_recaptcha_mode();
 		if ( 'v3' === $mode ) {
-			static $v3_script_printed = false;
+			static $v3_script_enqueued = false;
 			?>
 <input type="hidden" name="g-recaptcha-response" class="rsvpmaker-recaptcha-response" value="" />
+<div class="rsvpmaker-recaptcha-v3-config" data-site-key="<?php echo esc_attr( $rsvp_options['rsvp_recaptcha_site_key'] ); ?>" data-action="rsvpmaker_form"></div>
 			<?php
-			if ( ! $v3_script_printed ) {
-				$v3_script_printed = true;
-				?>
-<script type="text/javascript"
-		src="https://www.google.com/recaptcha/api.js?render=<?php echo esc_attr( $rsvp_options['rsvp_recaptcha_site_key'] ); ?>&hl=<?php echo esc_attr( get_locale() ); ?>">
-</script>
-<script type="text/javascript">
-(function () {
-	if ( window.rsvpmakerRecaptchaV3Init ) {
-		return;
-	}
-	window.rsvpmakerRecaptchaV3Init = true;
-	window.rsvpmakerRecaptchaV3SiteKey = '<?php echo esc_js( $rsvp_options['rsvp_recaptcha_site_key'] ); ?>';
-
-	window.rsvpmakerRecaptchaV3Refresh = function () {
-		if ( typeof grecaptcha === 'undefined' ) {
-			return Promise.resolve('');
-		}
-		return new Promise(function (resolve) {
-			grecaptcha.ready(function () {
-				grecaptcha.execute(window.rsvpmakerRecaptchaV3SiteKey, { action: 'rsvpmaker_form' }).then(function (token) {
-					var nodes = document.querySelectorAll('.rsvpmaker-recaptcha-response');
-					for (var i = 0; i < nodes.length; i++) {
-						nodes[i].value = token;
-					}
-					resolve(token);
-				});
-			});
-		});
-	};
-
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', window.rsvpmakerRecaptchaV3Refresh);
-	} else {
-		window.rsvpmakerRecaptchaV3Refresh();
-	}
-
-	setInterval(window.rsvpmakerRecaptchaV3Refresh, 90000);
-})();
-</script>
-				<?php
+			if ( ! $v3_script_enqueued ) {
+				$v3_script_enqueued = true;
+				$api_url = add_query_arg(
+					array(
+						'render' => $rsvp_options['rsvp_recaptcha_site_key'],
+						'hl'     => get_locale(),
+					),
+					'https://www.google.com/recaptcha/api.js'
+				);
+				wp_enqueue_script( 'rsvpmaker_recaptcha_v3', esc_url_raw( $api_url ), array(), get_rsvpversion(), true );
+				wp_enqueue_script( 'rsvpmaker_recaptcha_v3_init', esc_url_raw( plugins_url('assets/recaptcha.js', __FILE__) ), array(), get_rsvpversion(), true );
 			}
 		} else {
 		?>
 <div class="g-recaptcha" data-sitekey="<?php echo esc_attr( $rsvp_options['rsvp_recaptcha_site_key'] ); ?>"></div>
-<script type="text/javascript"
-		src="https://www.google.com/recaptcha/api.js?hl=<?php echo get_locale(); ?>">
-</script>
 		<?php
+			$api_url = add_query_arg(
+				array(
+					'hl' => get_locale(),
+				),
+				'https://www.google.com/recaptcha/api.js'
+			);
+			wp_enqueue_script( 'rsvpmaker_recaptcha_v2', esc_url_raw( $api_url ), array(), get_rsvpversion(), true );
 		}
 	}
 
@@ -132,4 +107,3 @@ function rsvpmaker_recaptcha_check( $siteKey, $secret ) {
 
 	}
 }
-

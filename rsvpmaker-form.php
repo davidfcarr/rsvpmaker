@@ -483,12 +483,13 @@ function rsvp_form_guests( $atts, $content = '' ) {
 	//$output .= $template;
 
 	$max_guests = $blanks_allowed + $count;
+	if(is_admin()) 
+		$max_guests = PHP_INT_MAX;
 
 	if ( $max_party ) {
-
 		$max_guests = ( $max_party > $max_guests ) ? $max_guests : $max_party; // use the lower limit
 	}
-
+		
 	$output = '<input type="hidden" id="max_guests" value="' . $max_guests . '" />'."\n" . $output;
 
 	$max_attr = '';
@@ -529,7 +530,7 @@ function rsvp_form_guests( $atts, $content = '' ) {
 
 	$output = '<div id="guest_section" tabindex="-1">' . "\n" . $output . '</div>' . '<!-- end of guest section-->';
 
-	$output .= sprintf('<input type="hidden" id="guestcount" value="%d" />',$count);//'<script type="text/javascript"> var guestcount =' . $count . '; </script>';
+	$output .= sprintf('<input type="hidden" id="guestcount" value="%d" />',$count);
 
 	return $output;
 
@@ -1044,7 +1045,7 @@ $is_preview = !empty($attributes['preview']);
 $post_id = (isset($post->ID)) ? $post->ID : 0;
 $user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
 ?>
-<form id="rsvpmaker_contact_form"><input type="hidden" name="post_id" value="<?php echo esc_attr($post_id); ?>" /><input type="hidden" name="form_id" value="<?php if(isset($attributes['unique_id'])) echo esc_attr($attributes['unique_id']); ?>" />
+<form id="rsvpmaker_contact_form" data-contact-url="<?php echo esc_url( rest_url( 'rsvpmaker/v1/contact_form' ) ); ?>"><input type="hidden" name="post_id" value="<?php echo esc_attr($post_id); ?>" /><input type="hidden" name="form_id" value="<?php if(isset($attributes['unique_id'])) echo esc_attr($attributes['unique_id']); ?>" />
 <?php
 if(empty($attributes['order']) && empty($attributes['sale']))
 {
@@ -1084,56 +1085,6 @@ if (!$is_preview && ! empty( $rsvp_options['rsvp_recaptcha_site_key'] ) && ! emp
 ?>
 <p><button id="rsvpmaker_contact_send"><?php echo  esc_html( $button_label ); ?></button></p>
 </form>
-<?php if(!$is_preview) { ?>
-<script>
-const form = document.querySelector("#rsvpmaker_contact_form");
-console.log(form);
-
-async function sendData() {
-	if (window.rsvpmakerRecaptchaV3Refresh) {
-		await window.rsvpmakerRecaptchaV3Refresh();
-	}
-  // Associate the FormData object with the form element
-  const formData = new FormData(form);
-  const contactUrl = "<?php echo esc_url( rest_url( 'rsvpmaker/v1/contact_form' ) ); ?>";
-
-  try {
-    const response = await fetch(contactUrl, {
-      method: "POST",
-      // Set the FormData instance as the request body
-      body: formData,
-    });
-	const json = await response.json();
-	console.log('senddata response',json);
-	if(json.purchase_link) {
-		console.log('attempt redirect to '+json.purchase_link);
-		form.innerHTML += '<div style="color:green;border: thin solid red; padding: 15px; margin: 15px;"><a href="'+json.purchase_link+'">Pay Now</a></div>';
-		location.assign(json.purchase_link);
-	}
-	else {
-	if(json.no_note)
-		form.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">Note field left blank</div>';
-    if(json.sending)
-		form.innerHTML = '<div style="color:green;border: thin solid green; padding: 15px; margin: 15px;">Sent</div>';
-	if(json.error)
-		form.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">'+json.error+'</div>';
-	}
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-// Take over form submission
-form.addEventListener("submit", (event) => {
-if (!form.checkValidity()) {
-    form.reportValidity(); 
-    return;
-  }
-  event.preventDefault();
-  sendData();
-});
-</script>
-<?php } ?>
 <?php
 }
 
@@ -1851,7 +1802,11 @@ function save_rsvp($postdata, $live = true) {
 
 			$rsvp_form_id = intval($postdata['rsvp_form_id']);
 			$max_party_limit = ( ! is_admin() ) ? rsvpmaker_guest_party_limit_for_form( $rsvp_form_id ) : 0;
-			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $rsvp ), 'participants'=>1, 'user_id'=>$current_user->ID,'owed'=>$owed,'fee_total'=>$rsvp['fee_total'], 'form_id'=>$rsvp_form_id);
+			$basic_details = $rsvp;
+			// Remove changeable payment information from basic details before storing in serialized form
+			unset($basic_details['owed']);
+			unset($basic_details['amountpaid']);
+			$nv = array('first'=>$rsvp['first'], 'last'=>$rsvp['last'], 'email'=>$rsvp['email'], 'yesno' => $yesno, 'event'=>$event, 'note' => $note, 'details'=>serialize( $basic_details ), 'participants'=>1, 'user_id'=>$current_user->ID,'owed'=>$owed,'fee_total'=>$rsvp['fee_total'], 'form_id'=>$rsvp_form_id);
 			if(!empty($postdata['multi_event_price'])) {
 				$nv['amountpaid'] = floatval($postdata['multi_event_price']);
 				$nv['owed'] = 0;

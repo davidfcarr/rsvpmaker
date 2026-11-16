@@ -222,14 +222,7 @@ class RSVPMakerByJSON extends WP_Widget {
 						echo wp_kses_post( $before_title ) .  esc_html( $title ) . wp_kses_post( $after_title );}
 
 					?>
-<div id="rsvpjsonwidget-<?php echo esc_attr( $slug ); ?>"><?php  esc_html_e( 'Loading', 'rsvpmaker' ); ?> ...</div>
-<script>
-
-jQuery(document).ready(function($) {
-var jsonwidget<?php echo esc_attr( $slug ); ?> = new RSVPJsonWidget('rsvpjsonwidget-<?php echo esc_attr( $slug ); ?>','<?php echo esc_attr( $url ); ?>',<?php echo esc_attr( $limit ); ?>,'<?php echo esc_attr( $morelink ); ?>');
-});
-
-</script>
+<div id="rsvpjsonwidget-<?php echo esc_attr( $slug ); ?>" class="rsvpmaker-json-widget" data-rsvpjson-url="<?php echo esc_url( $url ); ?>" data-rsvpjson-limit="<?php echo esc_attr( $limit ); ?>" data-rsvpjson-morelink="<?php echo esc_url( $morelink ); ?>"><?php  esc_html_e( 'Loading', 'rsvpmaker' ); ?> ...</div>
 		<?php
 		echo wp_kses_post( $after_widget );
 

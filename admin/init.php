@@ -283,10 +283,7 @@ $morelink = (empty($atts['morelink'])) ? '' : $atts['morelink'];
 $slug = rand(0,1000000);
 ob_start();
 ?>
-	<div id="rsvpjsonwidget-<?php echo esc_attr($slug); ?>">Loading ...</div>
-<script>
-var jsonwidget<?php echo esc_attr($slug); ?> = new RSVPJsonWidget('rsvpjsonwidget-<?php echo esc_attr($slug); ?>','<?php echo esc_attr($url); ?>',<?php echo esc_attr($limit); ?>,'<?php echo esc_attr($morelink); ?>');
-</script>
+	<div id="rsvpjsonwidget-<?php echo esc_attr($slug); ?>" class="rsvpmaker-json-widget" data-rsvpjson-url="<?php echo esc_url( $url ); ?>" data-rsvpjson-limit="<?php echo esc_attr( $limit ); ?>" data-rsvpjson-morelink="<?php echo esc_url( $morelink ); ?>">Loading ...</div>
 <?php
 return ob_get_clean();
 }
@@ -359,4 +356,3 @@ function rsvpmaker_limited_time ($atts, $content) {
 
 return $content.$debug;
 }
-

@@ -3480,21 +3480,6 @@ submit_button( 'Check Now' );
 	}
 
 ?>
-
-<script>
-
-jQuery(document).ready(function( $ ) {
-
-$(document).on( 'click', '.default_field', function() {
-
-	$("#all").prop("checked", false);
-
-});
-
-});
-
-</script>
-
 		<?php 
 
 	}
@@ -5701,9 +5686,9 @@ function rsvpmaker_guestparty($rsvp_id, $master = false, $receipt = false) {
 				$guestparty .= '<p style="color:red;"><strong>Owed: '.$currency.number_format($row['owed'],2).'</strong></p>';
 
 				$payurl = add_query_arg(array('rsvp'=>$rsvp_id,'e'=>$row['email']),get_permalink($row['event']));
+				$gateway = get_rsvpmaker_payment_gateway();
 
-				if('Cash or Custom' != get_rsvpmaker_payment_gateway())
-
+				if(empty($gateway) || 'Cash or Custom' == $gateway)
 					$guestparty .= sprintf('<p><a href="%s" class="noprint wp-block-button__link" target="_blank">%s</a></p>'."\n", esc_url($payurl), esc_html__('Pay Online','rsvpmaker'));
 
 			}
@@ -6460,3 +6445,61 @@ function rsvpmaker_invalidate_event_cache( $post_id ) {
 add_action('save_post_rsvpmaker', 'rsvpmaker_invalidate_event_cache');
 add_action('delete_post', 'rsvpmaker_invalidate_event_cache');
 add_action('restore_post', 'rsvpmaker_invalidate_event_cache');
+
+function rsvpmaker_add_event_payment( $vars ) {
+	global $wpdb, $rsvp_options;
+	
+			$rsvp_id = intval($vars['rsvp_id']);
+
+			$rsvp_post_id = intval($vars['rsvp_post_id']);
+
+			$paid = $vars['amount'];
+
+			$invoice_id = get_post_meta( $rsvp_post_id, '_open_invoice_' . $rsvp_id, true );
+
+			$charge = get_post_meta( $rsvp_post_id, '_invoice_' . $rsvp_id, true );
+			$row = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i  WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$rsvp_id), ARRAY_A);
+			$previous_paid = (float) $row['amountpaid'];
+			$totalpaid = $previous_paid + $paid;
+			$owed = $row['fee_total'] - $totalpaid;
+			$vars['previous_paid'] = $previous_paid;
+			$updatesql = $wpdb->prepare("UPDATE %i SET amountpaid=%s, owed=%s WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$totalpaid,$owed,$rsvp_id);
+			$wpdb->query( $updatesql );
+
+			add_post_meta( $rsvp_post_id, '_paid_' . $rsvp_id, $vars['amount'] );
+
+			$vars['payment_confirmation_message'] = '<p>';
+
+			$message_id = get_post_meta( $rsvp_post_id, 'payment_confirmation_message', true );
+			$vars['payment_confirmation_message'] = number_format($paid, 2) . ' '.__('paid', 'rsvpmaker');
+			if($paid != $totalpaid)
+				$vars['payment_confirmation_message'] .= ' (' . __('Total payments', 'rsvpmaker') . ': ' . number_format($totalpaid, 2) . ')';
+			$vars['payment_confirmation_message'] .= ' ' . $rsvp_options['paypal_currency'] . '</p>';
+
+			if ( $message_id ) {
+				$message_post = get_post( $message_id );
+				$vars['payment_confirmation_message'] .= rsvpmaker_email_html( $message_post->post_content );
+			}
+
+			delete_post_meta( $rsvp_post_id, '_open_invoice_' . $rsvp_id );
+
+			delete_post_meta( $rsvp_post_id, '_invoice_' . $rsvp_id );
+
+		$gift_certificate = '';
+        if(!empty($vars['purchase_code'])) {
+          $purchase = get_transient($vars['purchase_code']);
+          if(!empty($purchase[2]))
+            $details['rsvp_to'] = sanitize_text_field($purchase[2]);
+          if(!empty($vars['is_gift_certificate'])) {
+			$rsvptable = $wpdb->prefix.'rsvpmaker';
+			$details = $wpdb->get_var($wpdb->prepare("SELECT details FROM %i WHERE id=",$rsvptable,$rsvp_id));
+			$details = unserialize($details); 
+            $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
+            $vars['gift_certificate'] = $details['gift_certficate'] = $gift_certificate;
+            $sql = $wpdb->prepare("UPDATE %i set details=%s WHERE id=%d",$rsvptable,serialize($details),$rsvp_id);
+            $wpdb->query($sql);
+            add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
+          }
+        }
+	return $vars;
+}

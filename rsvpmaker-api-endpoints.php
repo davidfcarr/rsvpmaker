@@ -386,7 +386,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 
-		global $wpdb;
+		global $wpdb, $rsvp_options;
 
 		$base = get_option( sanitize_text_field($request['txkey']), true );
 
@@ -406,63 +406,7 @@ class RSVPMaker_StripeSuccess_Controller extends WP_REST_Controller {
 
 		if ( ! empty( $vars['rsvp_id'] ) ) {
 
-			$rsvp_id = intval($vars['rsvp_id']);
-
-			$rsvp_post_id = intval($vars['rsvp_post_id']);
-
-			$paid = $vars['amount'];
-
-			$invoice_id = get_post_meta( $rsvp_post_id, '_open_invoice_' . $rsvp_id, true );
-
-			$charge = get_post_meta( $rsvp_post_id, '_invoice_' . $rsvp_id, true );
-
-			$paid_amounts = get_post_meta( $rsvp_post_id, '_paid_' . $rsvp_id );
-
-			if ( is_array( $paid_amounts ) ) {
-
-				foreach ( $paid_amounts as $payment ) {
-
-					$paid += $payment;
-				}
-			}
-
-			$wpdb->query( $wpdb->prepare("UPDATE %i SET amountpaid=%s WHERE id=%d ",$wpdb->prefix . "rsvpmaker",$paid,$rsvp_id) );
-
-			add_post_meta( $rsvp_post_id, '_paid_' . $rsvp_id, $vars['amount'] );
-
-			$vars['payment_confirmation_message'] = '';
-
-			$message_id = get_post_meta( $rsvp_post_id, 'payment_confirmation_message', true );
-
-			if ( $message_id ) {
-
-				$message_post = get_post( $message_id );
-
-				$vars['payment_confirmation_message'] = rsvpmaker_email_html( $message_post->post_content );
-
-			}
-
-			delete_post_meta( $rsvp_post_id, '_open_invoice_' . $rsvp_id );
-
-			delete_post_meta( $rsvp_post_id, '_invoice_' . $rsvp_id );
-
-		}
-		$gift_certificate = '';
-        if(!empty($vars['purchase_code'])) {
-          $purchase = get_transient($vars['purchase_code']);
-          if(!empty($purchase[2]))
-            $details['rsvp_to'] = sanitize_text_field($purchase[2]);
-          if(!empty($vars['is_gift_certificate'])) {
-			$rsvptable = $wpdb->prefix.'rsvpmaker';
-			$details = $wpdb->get_var($wpdb->prepare("SELECT details FROM %i WHERE id=",$rsvptable,$rsvp_id));
-			$details = unserialize($details); 
-            $gift_certificate = 'GIFT'.wp_generate_password(12, false, false);
-            $vars['gift_certificate'] = $details['gift_certficate'] = $gift_certificate;
-            $sql = $wpdb->prepare("UPDATE %i set details=%s WHERE id=%d",$rsvptable,serialize($details),$rsvp_id);
-            $wpdb->query($sql);
-            add_option($gift_certificate,trim(preg_replace('/[^0-9\.]/','',$purchase[1])));
-          }
-        }
+			$vars = rsvpmaker_add_event_payment( $vars );
 		rsvpmaker_stripe_payment_log( $vars, $key );
 		delete_option( $request['txkey'] );
         wp_schedule_single_event( time() + 30, 'rsvpmaker_after_payment',array('stripe'));
@@ -1139,41 +1083,44 @@ class RSVPMaker_Flux_Capacitor extends WP_REST_Controller {
 	public function get_items( $request ) {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $default_tz, $rsvp_options, $post;
-		$originaltime = $time   = sanitize_text_field( $_POST['time'] );
-		$end    = sanitize_text_field( $_POST['end'] );
+		$post_id = intval($_POST['post_id']);
+		$post   = get_post( $post_id );
+		$event = get_rsvpmaker_event( $post_id );
+		$time   = $event->ts_start;
+		$originaltime = $event->date;
+		$end    = $event->ts_end;
 		$tz     = sanitize_text_field( $_POST['tzstring'] );
 		$format = sanitize_text_field( $_POST['format'] );
 		$timezone_abbrev = sanitize_text_field($_POST['timezone_abbrev']);
-		$post   = get_post( $_POST['post_id'] );
-		$time   = rsvpmaker_strtotime( $time );
+		$event_id = $post_id;
+	
 		$s3 = rsvpmaker_date( 'T', $time );
-		if ( $end ) {
-			$end = rsvpmaker_strtotime( $end );
-		}
-		date_default_timezone_set( $tz );
-		// strip off year
-		$times['new_time'] = date('Y-m-d H:i:s',$time);
+		$times['post_id'] = $post_id;
+		$times['original_time'] = $originaltime;
+		$times['event'] = $event;
+		$times['new_time'] = rsvpmaker_date('Y-m-d H:i:s',$time,$tz);
 		$times['original_time'] = $originaltime;
 		if($times['new_time'] == $times['original_time'])
 			$times['content'] = '';
 		else {
+			// strip off year
 			$rsvp_options['long_date'] = str_replace( ', %Y', '', $rsvp_options['long_date'] );
 			$times['content']          = '<span class="rsvpmaker-alternative-time"><em>';
 			if ( $format == 'time' ) {
-				$times['content'] .= date( $rsvp_option['time_format'], $time );
+				$times['content'] .= rsvpmaker_date( $rsvp_options['time_format'], $time, $tz );
 				if ( $end ) {
-					$times['content'] .= ' to ' . date( 'g:i A T', $end );
+					$times['content'] .= ' to ' . rsvpmaker_date( 'g:i A T', $end, $tz );
 				}
 			} else {
-				$times['content'] .= $day1 = date( $rsvp_options['long_date'], $time );
-				$times['content'] .= ' ' . date( 'g:i A T', $time );
-				if ( $end ) {
+				$times['content'] .= $day1 = rsvpmaker_date( $rsvp_options['long_date'], $time, $tz );
+				$times['content'] .= ' ' . rsvpmaker_date( 'g:i A T', $time, $tz );
+				if ( !empty($event->display_type) ) {
 					$times['content'] .= ' to ';
-					$day2              = date( $rsvp_options['long_date'], $end );
+					$day2              = rsvpmaker_date( $rsvp_options['long_date'], $end, $tz );
 					if ( $day2 != $day1 ) {
 						$times['content'] .= $day2 . ' ';
 					}
-					$times['content'] .= date( 'g:i A T', $end );
+					$times['content'] .= rsvpmaker_date( 'g:i A T', $end, $tz );
 				}
 			}
 			$times['content']          .= '</em></span>';
@@ -1693,12 +1640,12 @@ class RSVPMaker_Flex_Form extends WP_REST_Controller {
 	rsvpmaker_debug_log($_SERVER['SERVER_NAME'].' '.$_SERVER['REQUEST_URI'],'rsvpmaker_api');
 		global $wpdb;
 		ob_start();
-		$formvars = array_map('sanitize_textarea_field',$_POST['profile']);
+		$rsvpformvars = array_map('sanitize_textarea_field',$_POST['profile']);
 		$slug = sanitize_text_field($_POST['appslug']);
 		if('contact' == $slug)
-			$result = rsvpmaker_contact_form($formvars);
+			$result = rsvpmaker_contact_form($rsvpformvars);
 		else {
-			$result = apply_filters('rsvpflexform_'.$slug,array('message' => 'Error: unrecognized app, '.$slug),$formvars);
+			$result = apply_filters('rsvpflexform_'.$slug,array('message' => 'Error: unrecognized app, '.$slug),$rsvpformvars);
 		}
 		$result['message'] .= trim(strip_tags(ob_get_clean()));
 		return new WP_REST_Response( $result, 200 );

@@ -2157,12 +2157,12 @@ if(empty($from_options['mailing_address']))
 <div>
 <form method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>" style="display: inline-block; margin-right: 10px;">
 	<input type="hidden" name="reset_default_template" value="1" />
-	<?php echo wp_kses_post(wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false )); ?>
+	<?php echo wp_kses(wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form()); ?>
 	<button type="submit"><?php  esc_html_e('Reset default template','rsvpmaker');?></button>
 </form>
 <form method="post" action="<?php echo esc_url( admin_url('edit.php?post_type=rsvpemail&page=rsvpmaker_email_template') ); ?>" style="display: inline-block;">
 	<input type="hidden" name="reset_tx_template" value="1" />
-	<?php echo wp_kses_post(wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false )); ?>
+	<?php echo wp_kses(wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form()); ?>
 	<button type="submit"><?php  esc_html_e('Reset transactional template','rsvpmaker');?></button>
 </form>
 </div>
@@ -2271,7 +2271,7 @@ esc_attr( $rsvpmaker_custom_email_tag_styles['h2'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['h3'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['h4'] ),
 esc_attr( $rsvpmaker_custom_email_tag_styles['a'] ),
-wp_kses_post( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ) ) );
+wp_kses( wp_nonce_field( RSVPMAKER_NONCE_ACTION, RSVPMAKER_NONCE_FIELD, true, false ), dcarr_kses_form() ) );
 echo '<p>Notes: customizations may not be reflected in the editor. If changing the font family, use <a href="https://www.w3schools.com/cssref/css_websafe_fonts.asp">web safe fonts</a> that do not rely on external stylesheets.</p>';
 
 echo '<h2>Current Class-to-Style Conversions</h2><div style="background-color: #fff">';
@@ -2444,8 +2444,6 @@ function rsvpmaker_mailpoet_notice() {
 ?>
 <script>
 jQuery(document).ready(function( $ ) {
-
-console.log('mailpoet shortcodes button');
 
 $('#rsvpmaker_mailpoet_shortcodes_notice').hide();
 var mailpoetshow = false;

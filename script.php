@@ -210,15 +210,19 @@ function rsvpmaker_rest_array() {
 
 function rsvpmaker_admin_enqueue(  ) {
 	global $post, $rsvpscript;
-	$scriptversion = get_rsvpversion().'.2';
+	$scriptversion = get_rsvpversion();
 
 	if(is_network_admin())
 		return;
 	// rsvpmaker_event_scripts() is hooked to wp_enqueue_scripts for frontend only
 	// Styles for block editor are enqueued via rsvpmaker_enqueue_block_editor_assets()
 	$post_id = isset( $post->ID ) ? $post->ID : 0;
-	if ( ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) ) || ( isset( $_GET['post_type'] ) && (( $_GET['post_type'] == 'rsvpmaker' ) || ( $_GET['post_type'] == 'rsvpmaker_template' )) ) || ( ( isset( $_GET['page'] ) &&
-	( ( strpos( $_GET['page'], 'rsvp_report' ) !== false ) || ( strpos( $_GET['page'], 'rsvpmaker_settings' ) !== false ) || ( strpos( $_GET['page'], 'toast' ) !== false ) ) ) ) ) {
+	$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+	$admin_script_pages = array( 'rsvpmaker_export_screen', 'rsvpmaker_cleanup', 'rsvpmaker_share' );
+	$load_admin_script = ( ! function_exists( 'do_blocks' ) && isset( $_GET['action'] ) )
+		|| ( isset( $_GET['post_type'] ) && (( $_GET['post_type'] == 'rsvpmaker' ) || ( $_GET['post_type'] == 'rsvpmaker_template' )) )
+		|| ( $page && (( strpos( $page, 'rsvp_report' ) !== false ) || ( strpos( $page, 'rsvpmaker_settings' ) !== false ) || ( strpos( $page, 'toast' ) !== false ) || ( strpos( $page, 'rsvpmaker_' ) === 0 ) || in_array( $page, $admin_script_pages, true ) ) );
+	if ( $load_admin_script ) {
 		wp_enqueue_script( 'jquery-ui-datepicker', array( 'jquery' ) );
 		wp_enqueue_script( 'jquery-ui-dialog' );
 		wp_enqueue_style( 'rsvpmaker_jquery_ui', plugin_dir_url( __FILE__ ) . 'jquery-ui.css', array(), '4.1', 'all' );
@@ -273,65 +277,12 @@ function rsvpmaker_event_scripts() {
 } // end event scripts
 
 function rsvpmaker_jquery_inline( $routine, $atts = array() ) {
-	global $post, $current_user, $wpdb;
-	?>
-<script>
-jQuery(document).ready(function($) {
-$.ajaxSetup({
-	headers: {
-		'X-WP-Nonce': '<?php echo esc_attr(wp_create_nonce( 'wp_rest' )); ?>',
+	if ( 'import' === $routine ) {
+		printf(
+			'<div id="rsvpmaker-import-config" data-import-now-url="%s"></div>',
+			esc_url( rest_url( '/rsvpmaker/v1/importnow' ) )
+		);
 	}
-});
-	<?php
-	if ( $routine == 'import' ) {
-		?>
-var totalImported = 0;
-function importRSVP(url, data) {
-	$.post(url, data, function(response) {
-	console.log(response);
-	if(response.error) {
-		$('#import-result').html(response.error);
-		$('#import-result').css({borderColor: 'red'});
-	}
-	else
-	{
-		$('#import-result').css({borderColor: 'green'});
-		$('#importform').hide();
-		if(response.imported && response.top) {
-			$('#import-result').html('Imported '+response.imported+' events, ending with #'+response.top+', fetching more');
-			data.start = response.top;
-			totalImported += parseInt(response.imported);
-			importRSVP(url, data);
-		} else {
-			totalImported += parseInt(response.imported);
-			$('#import-result').html('Total imported '+totalImported+', done');
-		}
-	} 
-
-	});
-} 
-
-$('#import-button').click(function(e) {
-e.preventDefault();
-var remoteurl = $('#importrsvp').val();
-$('#importrsvp').val('');//clear the field
-$('#import-result').css({padding: '10px',borderWidth: 'thick',borderStyle: 'solid',borderColor: 'gray'});
-$('#import-result').html('Trying '+remoteurl+' please wait ...');
-
-var data = {
-	'importrsvp': remoteurl,
-	'start': 0,
-};
-var importnowurl = $('#importnowurl').val();
-importRSVP(importnowurl,data);
-});
-		<?php
-	}//end import
-	?>
-});
-
-</script>
-	<?php
 }
 
 function rsvp_form_jquery( $atts = array()) {
@@ -340,19 +291,16 @@ function rsvp_form_jquery( $atts = array()) {
 	$hide = get_post_meta( $post->ID, '_hiddenrsvpfields', true );
 	if($hide)
 		$hide = json_encode($hide, true);
-	return sprintf('<div id="formvars" hide="%s" events_to_add="%d" is_admin="%d" email_lookup="%s" ></div>',$hide, isset($atts['events_to_add']) ? $atts['events_to_add'] : 0, is_admin() ? 1 : 0, rest_url( 'rsvpmaker/v1/email_lookup/' . wp_create_nonce( 'rsvp_email_lookup' ) .'/'.$post->ID));
+	return sprintf('<div id="rsvpformvars" hide="%s" events_to_add="%d" is_admin="%d" email_lookup="%s" ></div>',$hide, isset($atts['events_to_add']) ? $atts['events_to_add'] : 0, is_admin() ? 1 : 0, rest_url( 'rsvpmaker/v1/email_lookup/' . wp_create_nonce( 'rsvp_email_lookup' ) .'/'.$post->ID));
 }
 
 function rsvpmaker_timezone_footer() {
 	if ( isset( $_GET['tz'] ) ) {
 		$id = (int) $_GET['tz'];
-		?>
-<script>
-jQuery(document).ready(function($) {
-	$('#timezone_on<?php echo esc_attr($id); ?>').click();
-});
-</script>
-		<?php
+		printf(
+			'<div class="rsvpmaker-timezone-click" data-timezone-target="%s"></div>',
+			esc_attr( 'timezone_on' . $id )
+		);
 	}
 }
 

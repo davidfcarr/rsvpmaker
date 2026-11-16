@@ -1,6 +1,127 @@
+const submissionForm = document.querySelector('#rsvpmaker_submission[data-rsvpmaker-submission="1"]');
+if (submissionForm) {
+	const submissionTime = submissionForm.querySelector('#time');
+	const submissionEndTime = submissionForm.querySelector('#endtime');
+	if (submissionTime && submissionEndTime) {
+		submissionTime.addEventListener('change', function() {
+			const time = submissionTime.value;
+			if (!time) {
+				return;
+			}
+			const date = new Date('2000-01-01T' + time);
+			date.setTime(date.getTime() + (60 * 60 * 1000));
+			submissionEndTime.value = date.toLocaleTimeString('en-GB');
+		});
+	}
+	if (typeof tinymce !== 'undefined' && tinymce.init) {
+		const documentBaseUrl = submissionForm.getAttribute('data-document-base-url') || '';
+		tinymce.init(
+			{
+				selector: '#rsvpmaker_submission_description.rsvpmaker-submission-editor',
+				plugins: 'link',
+				block_formats: 'Paragraph=p',
+				menu: {
+					format: { title: 'Format', items: 'bold italic | removeformat' },
+					style_formats: [
+						{ title: 'Inline', items: [
+							{ title: 'Bold', format: 'bold' },
+							{ title: 'Italic', format: 'italic' },
+						] },
+					],
+				},
+				toolbar: 'bold italic link',
+				relative_urls: false,
+				remove_script_host: false,
+				document_base_url: documentBaseUrl,
+			}
+		);
+	}
+}
+
+const contactForm = document.querySelector('#rsvpmaker_contact_form[data-contact-url]');
+if (contactForm) {
+	const sendData = async function() {
+		if (window.rsvpmakerRecaptchaV3Refresh) {
+			await window.rsvpmakerRecaptchaV3Refresh();
+		}
+		const formData = new FormData(contactForm);
+		const contactUrl = contactForm.getAttribute('data-contact-url');
+		try {
+			const response = await fetch(
+				contactUrl,
+				{
+					method: 'POST',
+					body: formData,
+				}
+			);
+			const json = await response.json();
+			if (json.purchase_link) {
+				contactForm.innerHTML += '<div style="color:green;border: thin solid red; padding: 15px; margin: 15px;"><a href="' + json.purchase_link + '">Pay Now</a></div>';
+				location.assign(json.purchase_link);
+				return;
+			}
+			if (json.no_note) {
+				contactForm.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">Note field left blank</div>';
+			}
+			if (json.sending) {
+				contactForm.innerHTML = '<div style="color:green;border: thin solid green; padding: 15px; margin: 15px;">Sent</div>';
+			}
+			if (json.error) {
+				contactForm.innerHTML += '<div style="color:red;border: thin solid red; padding: 15px; margin: 15px;">' + json.error + '</div>';
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	};
+	contactForm.addEventListener(
+		'submit',
+		function(event) {
+			if (!contactForm.checkValidity()) {
+				contactForm.reportValidity();
+				return;
+			}
+			event.preventDefault();
+			sendData();
+		}
+	);
+}
+
+function detectTimezone( select ) {
+	var tzstring = '';
+	if (typeof jstz !== 'undefined' && jstz.determine) {
+		try {
+			tzstring = jstz.determine().name();
+		} catch (e) {}
+	}
+	if (!tzstring && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+		try {
+			tzstring = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		} catch (e) {}
+	}
+	if (!tzstring || !select) {
+		return;
+	}
+	var found = false;
+	for (var i = 0; i < select.options.length; i++) {
+		if (select.options[i].value === tzstring) {
+			select.value = tzstring;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		var option = new Option(tzstring, tzstring, true, true);
+		select.insertBefore(option, select.firstChild);
+	}
+}
+
+const tzselect = document.querySelector('select[data-rsvpmaker-detect-timezone="1"]');
+if (tzselect) {
+	detectTimezone(tzselect);
+}
+
 jQuery( document ).ready(
 	function($) {
-
 		$.ajaxSetup(
 			{
 				headers: {
@@ -9,13 +130,13 @@ jQuery( document ).ready(
 			}
 		);
 /** Begin form js */
-if($('#formvars')) {
-	const hide = $('#formvars').attr('hide');
-	const events_to_add = $('#formvars').attr('events_to_add');
-	const options = $('#formvars').attr('options');
-	const is_admin = $('#formvars').attr('is_admin');
+if($('#rsvpformvars')) {
+	const hide = $('#rsvpformvars').attr('hide');
+	const events_to_add = $('#rsvpformvars').attr('events_to_add');
+	const options = $('#rsvpformvars').attr('options');
+	const is_admin = $('#rsvpformvars').attr('is_admin');
 	const is_front_end = (String(is_admin) !== '1');
-	const email_lookup = $('#formvars').attr('email_lookup');
+	const email_lookup = $('#rsvpformvars').attr('email_lookup');
 	let guestcount = parseInt($('#guestcount').val());
 	$('.multieventhide').hide();
 	$('#rsvp_more_events_click').click(
@@ -44,15 +165,12 @@ if($('#formvars')) {
 
 	});
 	var max_guests = parseInt($('#max_guests').val(),10);
-	console.log('max guests ',max_guests);
 	let first;
 	let last;
 	var blank = $('#guest_blank_template').html();
-	console.log('guest_blank_template',blank);
 	$('#guest_blank_template').remove();
 	let newcount;
 	let guestline = '';
-	console.log('starting guestcount',guestcount);
 	$('#people_in_party').change(function(event){
 		first = $('#first').val();
 		last = $('#last').val();
@@ -72,7 +190,6 @@ if($('#formvars')) {
 				blank.replace(/\[2\]/g,'['+guestcount+']').replace('###',guestcount).replace(/\[first\][^\>]+value="/,'$&Guest '+guestcount).replace(/\[last\][^\>]+value="/,'$&'+last) +
 				'</div>';
 			$('#guest_section').append(guestline);
-			console.log('guestline',guestline);
 			}
 		}
 		else if (newcount < guestcount) {
@@ -161,6 +278,10 @@ if($('#formvars')) {
 			'email_search': value,
 			'send_lookup_mail': sendLookupMail ? 1 : 0,
 		};
+		const timelord = document.getElementById('timelord');
+		const tl = (timelord) ? timelord.value : '';
+		const rsvp_id = document.getElementById('rsvp_id');
+		const rsvp_id_val = (rsvp_id) ? rsvp_id.value.trim() : 0;
 		searchRequest = jQuery.get(email_lookup, data, function(response) {
 			renderLookupResponse(targetSelector, response, showNotFound);
 		});
@@ -199,10 +320,8 @@ if($('#formvars')) {
 		$('.wp-block-rsvpmaker-formfield input').change( function () {
 			let v = $(this).val();
 			let h = v.includes('//');
-			console.log(v+' '+h);
 			if(h) {
-				v = v.replace(/[a-z]{0,8}:{0,1}\/\//,'');	
-				console.log('strip prefix');
+				v = v.replace(/[a-z]{0,8}:{0,1}\/\//,'');
 				$(this).val(v);	
 			}
 		});
@@ -308,9 +427,58 @@ if($('#formvars')) {
 								$( this ).css( 'font-weight','bold' );
 							}
 						}
+		
+						function detectTimezone(select) {
+							let tzstring = '';
+							if (typeof jstz !== 'undefined' && jstz.determine) {
+								try {
+									tzstring = jstz.determine().name();
+								} catch (e) {}
+							}
+							if (!tzstring && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+								try {
+									tzstring = Intl.DateTimeFormat().resolvedOptions().timeZone;
+								} catch (e) {}
+							}
+							if (!tzstring || !select) {
+								return;
+							}
+							let found = false;
+							for (let i = 0; i < select.options.length; i++) {
+								if (select.options[i].value === tzstring) {
+									select.value = tzstring;
+									found = true;
+									break;
+								}
+							}
+							if (!found) {
+								const option = new Option(tzstring, tzstring, true, true);
+								select.insertBefore(option, select.firstChild);
+							}
+						}
+
+						$('select[data-rsvpmaker-detect-timezone="1"]').each(
+							function() {
+								detectTimezone(this);
+							}
+						);
+
+						$('.rsvpmaker-timezone-click').each(
+							function() {
+								const target = $(this).attr('data-timezone-target');
+								if (target) {
+									$('#' + target).trigger('click');
+								}
+							}
+						);
+
+
+
 
 					}
-				);
+				); // end jquery
+
+
 
 				var checkrow = true;
 				$( '.tz-table1 table tr td:first-child, .tz-table2 table tr td:nth-child(2), .tz-table3 table tr td:nth-child(3)' ).each(
@@ -380,8 +548,6 @@ if($('#formvars')) {
 					var timezone_abbrev = $( this ).attr( 'timezone_abbrev' );
 					var tz_url = $( this ).attr( 'tz_url' );
 					var nofluxbutton = $( this ).attr( 'nofluxbutton' );
-					console.log('post '+id+' noflux '+nofluxbutton);
-					console.log(timezone_abbrev);
 					var select          = {};
 					var fluxbutton      = {};
 					if ( ! reveal ) {
@@ -412,12 +578,10 @@ if($('#formvars')) {
 						'post_id' : post_id,
 						'timezone_abbrev' : timezone_abbrev,
 					};
-					console.log( data );
 					jQuery.post(
 						rsvpmaker_rest.rest_url + 'rsvpmaker/v1/flux_capacitor',
 						data,
 						function(response) {
-							console.log( response );
 							$( '#' + id ).html( response.content + ' ' );// + '<select class="timezone_options">'+response.tzoptions+'</select>');
 							select[id]               = document.createElement( "SELECT" );
 							select[id].innerHTML     = response.tzoptions;
@@ -432,7 +596,7 @@ if($('#formvars')) {
 								}
 							);
 							fluxbutton[id]                = document.createElement( "A" );
-							fluxbutton[id].innerHTML      = 'Switch Time Zone?';
+							fluxbutton[id].innerHTML      = '<div>Switch Time Zone?</div>';
 							fluxbutton[id].className      = 'tzswitch';
 							fluxbutton[id].style.fontSize = 'small';
 							document.getElementById( id ).appendChild( fluxbutton[id] );
@@ -452,7 +616,7 @@ if($('#formvars')) {
 		}
 		var tz       = jstz.determine();
 		var tzstring = tz.name();
-		flux_capacitor( tzstring, false );
+		flux_capacitor( tzstring, true );
 
 		var guestlist = '';
 		function format_guestlist(guest) {
@@ -511,7 +675,7 @@ if($('#formvars')) {
 
 			.catch(
 				err => {
-                console.log( err );
+                console.log( 'display_guestlist error',err );
                 $( '#attendees-' + post_id ).html( 'Error fetching guestlist from ' + url );
 				}
 			);
@@ -541,8 +705,6 @@ if($('#formvars')) {
 				(dropdown, dropindex) => {
 					if(dropdown.className.includes('rsvpmaker_menu_dropdown')) {
 						index++;
-						console.log('dropdown',dropdown);
-						console.log('dropdown children',dropdown.children);
 						if(dropdown.className.includes('rsvpmaker_menu_type')) {
 							const match = dropdown.className.match(/rsvpmaker_menu_type_([^\s]+)/);
 							if(match && match[1]) {
@@ -577,7 +739,6 @@ if($('#formvars')) {
 								return response.json(); 
 							} ).then((json) => {
 								inners.push('');
-								console.log(json);
 								let showmore = false;
 								if(Array.isArray(json))
 								json.forEach(
@@ -695,13 +856,35 @@ class RSVPJsonWidget {
 
 }
 
+function initRsvpJsonWidgets() {
+	document.querySelectorAll('.rsvpmaker-json-widget[data-rsvpjson-url]').forEach(
+		(widget) => {
+			const id = widget.getAttribute('id');
+			const url = widget.getAttribute('data-rsvpjson-url');
+			if (!id || !url) {
+				return;
+			}
+			const limitText = widget.getAttribute('data-rsvpjson-limit') || '0';
+			const limit = parseInt(limitText, 10) || 0;
+			const morelink = widget.getAttribute('data-rsvpjson-morelink') || '';
+			new RSVPJsonWidget(id, url, limit, morelink);
+		}
+	);
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initRsvpJsonWidgets);
+} else {
+	initRsvpJsonWidgets();
+}
+
 const flexforms = document.querySelectorAll('.rsvpmaker-flexible-form');
 flexforms.forEach(flexform => {
   flexform.addEventListener('submit', function handleClick(e) {
     e.preventDefault();
     // Create payload as new FormData object:
     const payload = new FormData(this);
-	console.log(payload);
+	console.log('flexforms payload:', payload);
 	fetch(rsvpmaker_rest.rest_url+'rsvpmaker/v1/flexform', {
 		method: 'POST',
 		body: payload,
@@ -717,3 +900,4 @@ function showMessage(data) {
 	document.getElementById( 'flexible-form-'+appslug ).innerHTML = '';
 	document.getElementById( 'flexform-result-'+appslug ).innerHTML = data.message;
 }
+
